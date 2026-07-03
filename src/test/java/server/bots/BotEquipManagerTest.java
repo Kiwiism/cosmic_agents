@@ -5,6 +5,7 @@ import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
+import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 
 import client.Character;
 import client.Job;
@@ -45,9 +46,9 @@ class BotEquipManagerTest {
         Character bot = mock(Character.class);
         when(bot.getJob()).thenReturn(Job.BOWMAN);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(bot, WeaponType.BOW));
-        assertTrue(BotEquipManager.isWeaponCompatible(bot, WeaponType.CROSSBOW));
-        assertFalse(BotEquipManager.isWeaponCompatible(bot, WeaponType.CLAW));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.BOW));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.CROSSBOW));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.CLAW));
     }
 
     @Test
@@ -55,8 +56,8 @@ class BotEquipManagerTest {
         Character bot = mock(Character.class);
         when(bot.getJob()).thenReturn(Job.HUNTER);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(bot, WeaponType.BOW));
-        assertFalse(BotEquipManager.isWeaponCompatible(bot, WeaponType.CROSSBOW));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.BOW));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.CROSSBOW));
     }
 
     @Test
@@ -67,8 +68,8 @@ class BotEquipManagerTest {
         when(gunPirate.getSkillLevel(Pirate.FLASH_FIST)).thenReturn(0);
         when(gunPirate.getSkillLevel(Pirate.SOMERSAULT_KICK)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(gunPirate, WeaponType.GUN));
-        assertFalse(BotEquipManager.isWeaponCompatible(gunPirate, WeaponType.KNUCKLE));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(gunPirate, WeaponType.GUN));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(gunPirate, WeaponType.KNUCKLE));
 
         Character knucklePirate = mock(Character.class);
         when(knucklePirate.getJob()).thenReturn(Job.PIRATE);
@@ -76,8 +77,8 @@ class BotEquipManagerTest {
         when(knucklePirate.getSkillLevel(Pirate.FLASH_FIST)).thenReturn(1);
         when(knucklePirate.getSkillLevel(Pirate.SOMERSAULT_KICK)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(knucklePirate, WeaponType.KNUCKLE));
-        assertFalse(BotEquipManager.isWeaponCompatible(knucklePirate, WeaponType.GUN));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(knucklePirate, WeaponType.KNUCKLE));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(knucklePirate, WeaponType.GUN));
     }
 
     @Test
@@ -89,9 +90,9 @@ class BotEquipManagerTest {
         when(swordFighter.getSkillLevel(Fighter.AXE_MASTERY)).thenReturn(0);
         when(swordFighter.getSkillLevel(Fighter.AXE_BOOSTER)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(swordFighter, WeaponType.SWORD1H));
-        assertTrue(BotEquipManager.isWeaponCompatible(swordFighter, WeaponType.SWORD2H));
-        assertFalse(BotEquipManager.isWeaponCompatible(swordFighter, WeaponType.GENERAL1H_SWING));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(swordFighter, WeaponType.SWORD1H));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(swordFighter, WeaponType.SWORD2H));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(swordFighter, WeaponType.GENERAL1H_SWING));
 
         Character axeFighter = mock(Character.class);
         when(axeFighter.getJob()).thenReturn(Job.FIGHTER);
@@ -100,9 +101,9 @@ class BotEquipManagerTest {
         when(axeFighter.getSkillLevel(Fighter.AXE_MASTERY)).thenReturn(1);
         when(axeFighter.getSkillLevel(Fighter.AXE_BOOSTER)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(axeFighter, WeaponType.GENERAL1H_SWING));
-        assertTrue(BotEquipManager.isWeaponCompatible(axeFighter, WeaponType.GENERAL2H_SWING));
-        assertFalse(BotEquipManager.isWeaponCompatible(axeFighter, WeaponType.SWORD1H));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(axeFighter, WeaponType.GENERAL1H_SWING));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(axeFighter, WeaponType.GENERAL2H_SWING));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(axeFighter, WeaponType.SWORD1H));
     }
 
     @Test
@@ -114,9 +115,9 @@ class BotEquipManagerTest {
         when(spearBot.getSkillLevel(Spearman.POLEARM_MASTERY)).thenReturn(0);
         when(spearBot.getSkillLevel(Spearman.POLEARM_BOOSTER)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(spearBot, WeaponType.SPEAR_STAB));
-        assertTrue(BotEquipManager.isWeaponCompatible(spearBot, WeaponType.SPEAR_SWING));
-        assertFalse(BotEquipManager.isWeaponCompatible(spearBot, WeaponType.POLE_ARM_SWING));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(spearBot, WeaponType.SPEAR_STAB));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(spearBot, WeaponType.SPEAR_SWING));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(spearBot, WeaponType.POLE_ARM_SWING));
 
         Character polearmBot = mock(Character.class);
         when(polearmBot.getJob()).thenReturn(Job.SPEARMAN);
@@ -125,9 +126,9 @@ class BotEquipManagerTest {
         when(polearmBot.getSkillLevel(Spearman.POLEARM_MASTERY)).thenReturn(1);
         when(polearmBot.getSkillLevel(Spearman.POLEARM_BOOSTER)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(polearmBot, WeaponType.POLE_ARM_SWING));
-        assertTrue(BotEquipManager.isWeaponCompatible(polearmBot, WeaponType.POLE_ARM_STAB));
-        assertFalse(BotEquipManager.isWeaponCompatible(polearmBot, WeaponType.SPEAR_STAB));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(polearmBot, WeaponType.POLE_ARM_SWING));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(polearmBot, WeaponType.POLE_ARM_STAB));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(polearmBot, WeaponType.SPEAR_STAB));
     }
 
     @Test
@@ -139,8 +140,8 @@ class BotEquipManagerTest {
         when(hero.getSkillLevel(Crusader.AXE_COMA)).thenReturn(0);
         when(hero.getSkillLevel(Crusader.AXE_PANIC)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(hero, WeaponType.SWORD1H));
-        assertFalse(BotEquipManager.isWeaponCompatible(hero, WeaponType.GENERAL1H_SWING));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(hero, WeaponType.SWORD1H));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(hero, WeaponType.GENERAL1H_SWING));
 
         Character darkKnight = mock(Character.class);
         when(darkKnight.getJob()).thenReturn(Job.DARKKNIGHT);
@@ -149,8 +150,8 @@ class BotEquipManagerTest {
         when(darkKnight.getSkillLevel(DragonKnight.POLE_ARM_CRUSHER)).thenReturn(1);
         when(darkKnight.getSkillLevel(DragonKnight.POLE_ARM_DRAGON_FURY)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(darkKnight, WeaponType.POLE_ARM_SWING));
-        assertFalse(BotEquipManager.isWeaponCompatible(darkKnight, WeaponType.SPEAR_STAB));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(darkKnight, WeaponType.POLE_ARM_SWING));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(darkKnight, WeaponType.SPEAR_STAB));
     }
 
     @Test
@@ -160,8 +161,8 @@ class BotEquipManagerTest {
         when(bot.getSkillLevel(Rogue.LUCKY_SEVEN)).thenReturn(1);
         when(bot.getSkillLevel(Rogue.DOUBLE_STAB)).thenReturn(0);
 
-        assertTrue(BotEquipManager.isWeaponCompatible(bot, WeaponType.CLAW));
-        assertFalse(BotEquipManager.isWeaponCompatible(bot, WeaponType.DAGGER_OTHER));
+        assertTrue(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.CLAW));
+        assertFalse(AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, WeaponType.DAGGER_OTHER));
     }
 
     @Test

@@ -417,7 +417,7 @@ public class BotEquipManager {
             short primary = (short) eslot.getPrimarySlot();
             if (primary == 0) continue;
             if (primary == (short) -11
-                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
+                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
             if (ii.canWearEquipment(bot, equip, primary) || statOnlyBlocked(bot, ii, equip)) {
                 bySlot.computeIfAbsent(primary, k -> new ArrayList<>()).add(equip);
             }
@@ -427,7 +427,7 @@ public class BotEquipManager {
             if (!(it instanceof Equip e) || ii.isCash(e.getItemId())) continue;
             short pos = e.getPosition();
             if (pos == (short) -11
-                    && !isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
+                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
             short key = AgentEquipmentSlotResolver.isRingSlot(pos) ? (short) -12 : pos;
             List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
             if (!pool.contains(e)) pool.add(e);
@@ -469,7 +469,7 @@ public class BotEquipManager {
             short pslot = (short) eslot.getPrimarySlot();
             if (pslot == 0) continue;
             if (pslot == (short) -11
-                    && !isWeaponCompatible(bot, ii.getWeaponType(ex.getItemId()))) continue;
+                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(ex.getItemId()))) continue;
             if (!isRecommendationCandidate(bot, ii, ex, pslot, scope)) continue;
             // Rings live in the shared -12 pool regardless of which equipped position they came from.
             short key = AgentEquipmentSlotResolver.isRingSlot(pslot) ? (short) -12 : pslot;
@@ -605,7 +605,7 @@ public class BotEquipManager {
                     AgentEquipmentStatSnapshot ns = prev.snap.swap(null, cand);
                     int nHp = prev.hp + cand.getHp();
                     int nMp = prev.mp + cand.getMp();
-                    int nStat = prev.statSum + usefulStatSum(cand, ns.job());
+                    int nStat = prev.statSum + AgentEquipmentScoringPolicy.usefulStatSum(cand, ns.job());
                     Equip[] picks = prev.picks.clone();
                     picks[i] = cand;
                     next.add(new DpNode(ns, nHp, nMp, nStat, picks));
@@ -668,7 +668,7 @@ public class BotEquipManager {
             snap = snap.swap(null, cand);
             hp += cand.getHp();
             mp += cand.getMp();
-            statSum += usefulStatSum(cand, snap.job());
+            statSum += AgentEquipmentScoringPolicy.usefulStatSum(cand, snap.job());
             picks[i] = cand;
         }
         return new DpNode(snap, hp, mp, statSum, picks);
@@ -734,7 +734,7 @@ public class BotEquipManager {
     }
 
     private static int damagePotential(DpNode n, WeaponType wt) {
-        return isMageJob(n.snap.job()) ? magicScore(n.snap) : rawPhysicalMax(n.snap, wt);
+        return AgentWeaponCompatibilityPolicy.isMageJob(n.snap.job()) ? magicScore(n.snap) : rawPhysicalMax(n.snap, wt);
     }
 
     private static List<DpNode> dedupEquivalentNodes(List<DpNode> nodes, WeaponType wt, boolean[] reqRel,
@@ -764,7 +764,7 @@ public class BotEquipManager {
             AgentEquipmentStatSnapshot s = node.snap;
             return new DpSignature(
                     damagePotential(node, wt),
-                    isMageJob(s.job()) ? 0 : s.totalAcc(),
+                    AgentWeaponCompatibilityPolicy.isMageJob(s.job()) ? 0 : s.totalAcc(),
                     reqRel != null && reqRel[0] ? s.str() : 0,
                     reqRel != null && reqRel[1] ? s.dex() : 0,
                     reqRel != null && reqRel[2] ? s.int_() : 0,
@@ -781,7 +781,7 @@ public class BotEquipManager {
         int[] vec = new int[2 + reqCount];
         int k = 0;
         vec[k++] = damagePotential(n, wt);
-        vec[k++] = isMageJob(s.job()) ? 0 : s.totalAcc();
+        vec[k++] = AgentWeaponCompatibilityPolicy.isMageJob(s.job()) ? 0 : s.totalAcc();
         if (reqRel != null) {
             for (int i = 0; i < reqRel.length; i++) {
                 if (reqRel[i]) vec[k++] = statByIdx(s, i);
@@ -864,7 +864,7 @@ public class BotEquipManager {
                     s = withoutSelf;
                     hp -= p.getHp();
                     mp -= p.getMp();
-                    statSum -= usefulStatSum(p, s.job());
+                    statSum -= AgentEquipmentScoringPolicy.usefulStatSum(p, s.job());
                     picks[i] = null;
                     changed = true;
                 }
@@ -880,7 +880,7 @@ public class BotEquipManager {
     }
 
     private static AgentEquipmentScore scoreNode(DpNode node, Equip weapon, WeaponType wt, AgentMapDamageProfile mob) {
-        if (isMageJob(node.snap.job())) {
+        if (AgentWeaponCompatibilityPolicy.isMageJob(node.snap.job())) {
             return new AgentEquipmentScore(magicScore(node.snap), node.statSum);
         }
         if (wt == null) return new AgentEquipmentScore(0, node.statSum);
@@ -902,7 +902,7 @@ public class BotEquipManager {
 
     private static AgentWeaponScoreBreakdown weaponScoreBreakdown(AgentEquipmentStatSnapshot sim, Equip weapon, WeaponType wt,
         AgentMapDamageProfile mob) {
-        if (isMageJob(sim.job()) || wt == null) {
+        if (AgentWeaponCompatibilityPolicy.isMageJob(sim.job()) || wt == null) {
             return new AgentWeaponScoreBreakdown(0, 0, 0, 0);
         }
         int rawMax = rawPhysicalMax(sim, wt);
@@ -994,7 +994,7 @@ public class BotEquipManager {
             short primary = (short) eslot.getPrimarySlot();
             if (primary == 0) continue;
             if (primary == (short) -11
-                    && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
+                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
             if (!futureOnlyBlocked(bot, ii, equip)) continue;
             short key = AgentEquipmentSlotResolver.isRingSlot(primary) ? (short) -12 : primary;
             bySlot.computeIfAbsent(key, k -> new ArrayList<>()).add(equip);
@@ -1003,7 +1003,7 @@ public class BotEquipManager {
             if (!(it instanceof Equip e) || ii.isCash(e.getItemId())) continue;
             short pos = e.getPosition();
             if (pos == (short) -11
-                    && !isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
+                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
             if (!futureOnlyBlocked(bot, ii, e)) continue;
             short key = AgentEquipmentSlotResolver.isRingSlot(pos) ? (short) -12 : pos;
             List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
@@ -1132,11 +1132,6 @@ public class BotEquipManager {
         return AgentEquipmentUnequipService.unequipSlot(bot, slots);
     }
 
-    /** Returns the equipped slot(s) that match the given slot name from chat. Empty array = unknown. */
-    public static short[] slotsFromName(String name) {
-        return AgentEquipmentSlotResolver.slotsFromName(name);
-    }
-
     private static int compareScores(AgentEquipmentScore left, AgentEquipmentScore right) {
         int cmp = Integer.compare(left.damage(), right.damage());
         if (cmp != 0) return cmp;
@@ -1156,7 +1151,7 @@ public class BotEquipManager {
         if (mobProfile == null) {
             return rawMax;
         }
-        double expectedAfterDef = expectedDamageAfterDef(rawMax, mobProfile.mobWdef());
+        double expectedAfterDef = AgentEquipmentScoringPolicy.expectedDamageAfterDef(rawMax, mobProfile.mobWdef());
         double hitChance;
         try {
             hitChance = CombatFormulaProvider.getInstance().calculatePhysicalMobHitChance(
@@ -1192,17 +1187,6 @@ public class BotEquipManager {
     }
 
     /**
-     * Expected per-hit damage when each roll is {@code uniform[rawMax/2, rawMax] - wdef} clamped
-     * to 1. The previous {@code (rawMin + rawMax)/2 - wdef} approximation collapsed to the floor
-     * once wdef exceeded the midpoint, erasing the upper-tail damage that higher STR/WATK
-     * actually delivers — so two candidates with different rawMax both scored ≈1 against a
-     * high-WDEF mob, even when one cleared the defense and the other barely did.
-     */
-    static double expectedDamageAfterDef(int rawMax, int wdef) {
-        return AgentEquipmentScoringPolicy.expectedDamageAfterDef(rawMax, wdef);
-    }
-
-    /**
      * Returns the effective attack cycle in milliseconds for a weapon using the same formula
      * as Agent combat planning.
      * The raw animation comes from the weapon's WZ XML; the speed value scales playback rate,
@@ -1231,29 +1215,17 @@ public class BotEquipManager {
 
     private static int defScore(Equip e)  { return e != null ? e.getWdef() + e.getMdef() : 0; }
 
-    static int usefulStatSum(Equip e, Job job) {
-        return AgentEquipmentScoringPolicy.usefulStatSum(e, job);
-    }
-
     private static int magicScore(AgentEquipmentStatSnapshot sim) {
         // Weights INT and MAGIC almost equally — INT*1.1 nudges main-stat ties toward INT
         // (matches v83 mage growth where INT scales magic damage and unlocks better gear).
         return (int) Math.round(sim.int_() * 1.1d) + sim.magic();
     }
 
-    public static boolean isMageJob(Job job) {
-        return AgentWeaponCompatibilityPolicy.isMageJob(job);
-    }
-
-    public static boolean isWeaponCompatible(Character bot, WeaponType weaponType) {
-        return AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, weaponType);
-    }
-
     private static Equip compatibleWeaponOrNull(Character bot, ItemInformationProvider ii, Equip equip) {
         if (equip == null) {
             return null;
         }
-        return isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId())) ? equip : null;
+        return AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId())) ? equip : null;
     }
 
     // ---- helper records / pruning ------------------------------------------------------
@@ -1323,7 +1295,7 @@ public class BotEquipManager {
                                                        Job job, boolean[] reqRel) {
         if (items == null || items.size() <= 1) return items;
         int[] priority = jobStatPriority(job);
-        boolean isMage = isMageJob(job);
+        boolean isMage = AgentWeaponCompatibilityPolicy.isMageJob(job);
         boolean accRel = isAccRelevantJob(job);
         // Precompute vec + tiebreak per item; the dominance scan is O(N^2) but the per-item
         // computation is O(N).
@@ -1357,7 +1329,7 @@ public class BotEquipManager {
      */
     private static int[] jobStatPriority(Job job) {
         if (job == null) return new int[]{0, 1};
-        if (isMageJob(job)) return new int[]{2};
+        if (AgentWeaponCompatibilityPolicy.isMageJob(job)) return new int[]{2};
         int id = job.getId();
         int niche = (id / 100) % 10;
         return switch (niche) {

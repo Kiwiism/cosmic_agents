@@ -3695,6 +3695,10 @@ Recent reconstruction notes:
 - Equipment slot planning and labels now live in `AgentEquipmentSlotResolver`;
   ring slot detection, DP slot expansion/order, chat slot aliases, and
   equipment recommendation labels share the same Agent-owned source.
+- Equipment tests and remaining optimizer internals now call Agent scoring,
+  slot, and weapon compatibility policies directly instead of bot-owned wrapper
+  methods for slot lookup, expected-damage scoring, useful-stat scoring, mage
+  checks, or weapon compatibility.
 
 Initial reconstruction order:
 
