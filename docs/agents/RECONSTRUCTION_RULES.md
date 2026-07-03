@@ -4022,6 +4022,10 @@ Recent reconstruction notes:
 - Grind navigation and fallback target runtime hooks now call
   `AgentNavigationRegionService` and `AgentNavigationPathService` directly
   instead of passing through `BotNavigationManager` compatibility delegates.
+- Dead private `BotNavigationManager` target-resolution helper bodies were
+  removed after live target resolution moved to `AgentNavigationTargetService`.
+  Remaining BotNavigationManager methods are compatibility/test-facing
+  delegates or waypoint/readiness helpers still awaiting Agent test migration.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

@@ -2,37 +2,23 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
-import server.agents.capabilities.navigation.AgentNavigationEdgeExecutor;
-import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
-import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
-import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
-import server.agents.capabilities.navigation.AgentNavigationPreciseTargetService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.movement.AgentGroundCollisionService;
-import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
-import constants.game.CharacterStance;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.agents.integration.AgentBotShopStateRuntime;
-import server.agents.runtime.AgentFollowAnchorService;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Rope;
@@ -60,34 +46,6 @@ public final class BotNavigationManager {
     public static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
         return AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(entry, rawTargetPos);
     }
-    private static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,
-                                                                       BotEntry entry,
-                                                                       Character bot,
-                                                                       Point botPos,
-                                                                       int startRegionId,
-                                                                       int targetRegionId,
-                                                                       Point targetPos,
-                                                                       AgentNavigationGraph.Edge edge,
-                                                                       boolean runAiTick) {
-        return AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(graph, entry, bot, botPos,
-                startRegionId, targetRegionId, targetPos, edge, runAiTick,
-                (activeGraph, activeBot, activeBotPos, activeEdge) ->
-                        canExecuteClimbExitFromCurrentPosition(activeGraph, activeBot.getMap(), activeBotPos, activeEdge),
-                BotNavigationManager::findNextEdge);
-    }
-
-    private static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
-                                                                      BotEntry entry,
-                                                                      Character bot,
-                                                                      int startRegionId,
-                                                                      int targetRegionId,
-                                                                      Point targetPos,
-                                                                      AgentNavigationGraph.Edge edge,
-                                                                      boolean runAiTick) {
-        return AgentNavigationCommittedEdgeService.refreshCommittedGroundEdge(graph, entry, bot,
-                startRegionId, targetRegionId, targetPos, edge, runAiTick, BotNavigationManager::findNextEdge);
-    }
-
     static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
                                                       BotEntry entry,
                                                       int startRegionId,
@@ -96,98 +54,11 @@ public final class BotNavigationManager {
                 BotNavigationManager::isEdgeUsable, BotNavigationManager::isRopeEntryEdge);
     }
 
-    private static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
-                                                      BotEntry entry,
-                                                      Character bot,
-                                                      Point botPos,
-                                                      Point rawTargetPos,
-                                                      AgentNavigationGraph.Edge edge,
-                                                      boolean runAiTick) {
-        AgentNavigationEdgeExecutor.NavigationDirective directive = AgentNavigationEdgeExecutor.tryExecuteEdge(
-                graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
-        if (directive == null) {
-            return null;
-        }
-        return new NavigationDirective(directive.targetPos(), directive.consumedTick());
-    }
-
     static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
                                                      MapleMap map,
                                                      Point botPos,
                                                      AgentNavigationGraph.Edge edge) {
         return AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, botPos, edge);
-    }
-
-    private static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,
-                                                  BotEntry entry,
-                                                  Point botPos,
-                                                  AgentNavigationGraph.Edge edge) {
-        return AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
-                graph,
-                entry,
-                botPos,
-                edge,
-                new AgentNavigationPreciseTargetService.EdgeReadiness() {
-                    @Override
-                    public boolean canExecuteSelectedJump(AgentNavigationGraph readinessGraph,
-                                                          BotEntry readinessEntry,
-                                                          Point readinessBotPos,
-                                                          AgentNavigationGraph.Edge readinessEdge) {
-                        return canExecuteSelectedJumpFromCurrentPosition(
-                                readinessGraph,
-                                readinessEntry,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                readinessBotPos,
-                                readinessEdge);
-                    }
-
-                    @Override
-                    public boolean canExecuteDrop(AgentNavigationGraph readinessGraph,
-                                                  BotEntry readinessEntry,
-                                                  Point readinessBotPos,
-                                                  AgentNavigationGraph.Edge readinessEdge) {
-                        return canExecuteDropFromCurrentPosition(
-                                readinessGraph,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                readinessBotPos,
-                                readinessEdge);
-                    }
-
-                    @Override
-                    public boolean canExecuteClimbExit(AgentNavigationGraph readinessGraph,
-                                                       BotEntry readinessEntry,
-                                                       Point readinessBotPos,
-                                                       AgentNavigationGraph.Edge readinessEdge) {
-                        return canExecuteClimbExitFromCurrentPosition(
-                                readinessGraph,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                readinessBotPos,
-                                readinessEdge);
-                    }
-
-                    @Override
-                    public boolean canExecuteClimbEntry(AgentNavigationGraph readinessGraph,
-                                                        BotEntry readinessEntry,
-                                                        Point readinessBotPos,
-                                                        AgentNavigationGraph.Edge readinessEdge) {
-                        return canExecuteClimbEntryFromCurrentPosition(
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                readinessBotPos,
-                                readinessEdge,
-                                findRopeForRegion(AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                        readinessGraph.getRegion(readinessEdge.toRegionId)));
-                    }
-                });
-    }
-
-    private static Point selectWaypoint(BotEntry entry, AgentNavigationGraph graph, Point botPos, AgentNavigationGraph.Edge edge) {
-        return switch (edge.type) {
-            case WALK -> new Point(edge.endPoint);
-            case CLIMB -> selectClimbWaypoint(graph, entry, botPos, edge);
-            case JUMP -> AgentBotMovementStateRuntime.inAir(entry) ? new Point(edge.endPoint) : selectJumpWaypoint(graph, entry, botPos, edge);
-            case DROP -> selectDropWaypoint(entry, graph, botPos, edge);
-            case PORTAL -> AgentBotMovementStateRuntime.inAir(entry) ? new Point(edge.endPoint) : new Point(edge.startPoint);
-        };
     }
 
     static Point selectJumpWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
@@ -425,10 +296,6 @@ public final class BotNavigationManager {
         return AgentNavigationPathService.isEdgeUsable(graph, bot, edge);
     }
 
-    private static boolean sameEdge(AgentNavigationGraph.Edge left, AgentNavigationGraph.Edge right) {
-        return AgentNavigationCommittedEdgeService.sameEdge(left, right);
-    }
-
     static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
                                                    AgentNavigationGraph.Edge replacement) {
         return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
@@ -439,56 +306,6 @@ public final class BotNavigationManager {
                                                      Point botPos,
                                                      AgentNavigationGraph.Edge edge) {
         return AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(graph, botPos, edge);
-    }
-
-    private static boolean canExecuteSelectedJumpFromCurrentPosition(AgentNavigationGraph graph,
-                                                                     BotEntry entry,
-                                                                     MapleMap map,
-                                                                     Point botPos,
-                                                                     AgentNavigationGraph.Edge edge) {
-        if (!canExecuteJumpFromCurrentPosition(graph, map, botPos, edge)) {
-            return false;
-        }
-        int launchX = selectedJumpLaunchX(entry, graph, edge);
-        int tolerance = Math.max(1, AgentMovementKinematicsService.walkStep(map,
-                entry != null ? AgentBotMovementStateRuntime.movementProfile(entry) : null));
-        return AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
-                graph, botPos, edge, launchX, tolerance);
-    }
-
-    private static boolean isReachableWithinRegion(AgentNavigationGraph graph,
-                                                   MapleMap map,
-                                                   int regionId,
-                                                   Point fromPos,
-                                                   Point toPos) {
-        AgentNavigationGraph.Region region = graph.getRegion(regionId);
-        if (region == null || fromPos == null || toPos == null) {
-            return false;
-        }
-        if (region.isRopeRegion) {
-            return fromPos.x == toPos.x;
-        }
-
-        int dir = Integer.compare(toPos.x, fromPos.x);
-        Point previous = region.pointAt(fromPos.x);
-        if (graph.findRegionId(map, previous) != regionId) {
-            return false;
-        }
-        if (dir == 0) {
-            return Math.abs(toPos.y - previous.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
-        }
-
-        for (int x = fromPos.x + dir; x != toPos.x + dir; x += dir) {
-            Point current = region.pointAt(x);
-            if (graph.findRegionId(map, current) != regionId) {
-                return false;
-            }
-            if (!AgentNavigationPhysicsService.isWalkableEndpointStep(Math.abs(current.x - previous.x), current.y - previous.y)) {
-                return false;
-            }
-            previous = current;
-        }
-        return true;
     }
 
     static boolean isWithinJumpLaunchWindow(AgentNavigationGraph graph,
@@ -513,27 +330,12 @@ public final class BotNavigationManager {
         return AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
     }
 
-    private static boolean canExecuteClimbEntryFromCurrentPosition(MapleMap map,
-                                                                   Point botPos,
-                                                                   AgentNavigationGraph.Edge edge,
-                                                                   Rope rope) {
-        return AgentNavigationRopeEdgeService.canExecuteClimbEntryFromCurrentPosition(botPos, edge, rope);
-    }
-
     private static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,
                                                                   MapleMap map,
                                                                   Point botPos,
                                                                   AgentNavigationGraph.Edge edge) {
         return AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
                 graph, botPos, edge, region -> findRopeForRegion(map, region));
-    }
-
-    private static Point adjustPathTarget(BotEntry entry,
-                                          AgentNavigationGraph graph,
-                                          int targetRegionId,
-                                          Point rawTargetPos) {
-        return AgentNavigationGrindTargetService.adjustPathTarget(
-                AgentBotModeStateRuntime.grinding(entry), graph, targetRegionId, rawTargetPos);
     }
 
     public static int resolveCurrentRegionId(AgentNavigationGraph graph,
