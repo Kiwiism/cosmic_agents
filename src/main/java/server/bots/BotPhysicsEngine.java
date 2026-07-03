@@ -343,7 +343,7 @@ public final class BotPhysicsEngine {
      * If no foothold is found the bot has walked off the edge — physics starts a fall and this
      * returns null. Movement must check for null and return early without applying ground actions.
      */
-    static Foothold syncAndDetectGround(BotEntry entry, Character bot) {
+    public static Foothold syncAndDetectGround(BotEntry entry, Character bot) {
         syncGroundPosition(entry, bot.getPosition().x);
         Foothold fh = findGroundFoothold(bot.getMap(), bot.getPosition());
         if (fh == null) {
@@ -765,7 +765,7 @@ public final class BotPhysicsEngine {
         launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
 
-    static void beginDownJump(BotEntry entry, Character bot) {
+    public static void beginDownJump(BotEntry entry, Character bot) {
         if (!canStartDownJump(bot.getMap(), bot.getPosition())) {
             AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
             AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
@@ -778,7 +778,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, cfg.DOWN_JUMP_GRACE_MS);
     }
 
-    static void beginTopRopeEntry(BotEntry entry, Character bot) {
+    public static void beginTopRopeEntry(BotEntry entry, Character bot) {
         Rope rope = AgentBotClimbStateRuntime.ropeEntryRope(entry);
         int ropeY = AgentBotClimbStateRuntime.ropeEntryY(entry);
         clearRopeEntryIntent(entry);

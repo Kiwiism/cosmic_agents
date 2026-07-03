@@ -128,8 +128,10 @@ Capability bins:
   `AgentClimbMovementService`; grind target shaping lives in
   `AgentGroundTargetService`; mob-avoidance lane scanning and landing checks
   live in `AgentMobAvoidanceService`; ground action planning/execution routes
-  through `AgentGroundActionPlanner` and `AgentGroundActionExecutor`. Remaining
-  ground runtime and cleanup slices continue to migrate.
+  through `AgentGroundActionPlanner` and `AgentGroundActionExecutor`.
+  `AgentGroundMovementRuntimeService` owns grounded tick orchestration.
+  Remaining cleanup slices continue to remove temporary bot compatibility
+  clutter and physics seams.
 - `supplies`
 - `trade`
 - `shop`

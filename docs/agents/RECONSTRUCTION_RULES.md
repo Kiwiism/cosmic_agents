@@ -3004,6 +3004,13 @@ Recent reconstruction notes:
   helpers remain temporary dead compatibility clutter until the ground body is
   fully cleaned up. `BotPhysicsEngine.GroundMotion` and the ground-wall check
   are public compatibility seams only until physics migrates.
+- Grounded movement tick orchestration now lives in
+  `AgentGroundMovementRuntimeService`; `BotMovementManager.tickGrounded` is a
+  compatibility delegate. The same swim-state clear, motion timer tick, ground
+  sync/detect, rope-entry/down-jump priority, graph-warmup fallback, target
+  shaping, action planning, execution, and `move-ground` timing label are
+  preserved. `BotPhysicsEngine.syncAndDetectGround`, `beginDownJump`, and
+  `beginTopRopeEntry` are public compatibility seams only until physics migrates.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

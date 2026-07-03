@@ -15,6 +15,7 @@ import server.agents.capabilities.movement.AgentGroundAction;
 import server.agents.capabilities.movement.AgentGroundActionExecutor;
 import server.agents.capabilities.movement.AgentGroundActionPlanner;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
+import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentJumpActionService;
@@ -537,41 +538,7 @@ public class BotMovementManager {
     }
 
     public static void tickGrounded(BotEntry entry, Point targetPos) {
-        long startedAt = System.nanoTime();
-        try {
-            AgentBotSwimStateRuntime.setSwimming(entry, false);
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-
-            BotPhysicsEngine.tickMotionTimers(entry);
-
-            Foothold currentFh = BotPhysicsEngine.syncAndDetectGround(entry, bot);
-            if (currentFh == null) {
-                broadcastMovement(entry);
-                return;
-            }
-
-            Point botPos = bot.getPosition();
-            if (AgentBotClimbStateRuntime.ropeEntryPending(entry)) {
-                performTopRopeEntry(entry);
-                return;
-            }
-            if (AgentBotMovementStateRuntime.hasDownJumpPending(entry)) {
-                performDownJump(entry);
-                return;
-            }
-
-            targetPos = adjustGrindingTargetPosition(entry, currentFh, targetPos);
-            if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
-                if (AgentFallbackMovementService.tryImmediateAction(entry, botPos, targetPos)) {
-                    return;
-                }
-                targetPos = AgentFallbackMovementService.resolveSteeringTarget(entry, botPos, targetPos);
-            }
-            AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, currentFh, botPos, targetPos);
-            AgentGroundActionExecutor.applyGroundAction(entry, currentFh, action);
-        } finally {
-            AgentPerformanceMonitor.record("move-ground", System.nanoTime() - startedAt);
-        }
+        AgentGroundMovementRuntimeService.tickGrounded(entry, targetPos);
     }
 
     static int preciseNavStopDist(AgentNavigationGraph.Edge navEdge) {
