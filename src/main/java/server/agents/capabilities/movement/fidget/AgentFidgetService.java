@@ -1,5 +1,7 @@
 package server.agents.capabilities.movement.fidget;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -87,7 +89,7 @@ public final class AgentFidgetService {
         clear(entry);
         if (shouldReturnToOrigin(trigger, origin, botPos)) {
             AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, origin);
-            BotMovementManager.clearNavigationState(entry);
+            AgentMovementStateResetService.clearNavigationState(entry);
         }
     }
 

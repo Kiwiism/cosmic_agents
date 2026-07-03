@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
@@ -21,7 +23,7 @@ public final class AgentMovementOnlyMapChangeRuntime {
                         BotMovementManager::buildFhIndex,
                         BotPhysicsEngine::findGroundPoint,
                         BotPhysicsEngine::teleportTo,
-                        BotMovementManager::resetEntryStateAfterTeleport,
+                        AgentMovementStateResetService::resetEntryStateAfterTeleport,
                         AgentMovementBroadcastService::broadcastMovement,
                         AgentShopService::onMapChange,
                         AgentBotManagerStatusRuntime::checkManagerStatus));

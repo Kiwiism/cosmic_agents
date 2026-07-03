@@ -1,10 +1,11 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
@@ -55,7 +56,7 @@ public final class AgentBotMovementCommandRuntime {
                 () -> dest != null && AgentBotRuntimeIdentityRuntime.hasBot(entry),
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
-                () -> AgentModeService.startFarmHere(entry, dest, BotMovementManager::clearNavigationState));
+                () -> AgentModeService.startFarmHere(entry, dest, AgentMovementStateResetService::clearNavigationState));
     }
 
     public static void patrol(BotEntry entry, Point ownerPos) {
@@ -74,7 +75,7 @@ public final class AgentBotMovementCommandRuntime {
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
-                () -> AgentModeService.startPatrol(entry, regionId, BotMovementManager::clearNavigationState));
+                () -> AgentModeService.startPatrol(entry, regionId, AgentMovementStateResetService::clearNavigationState));
     }
 
     public static void grind(BotEntry entry) {
@@ -82,6 +83,6 @@ public final class AgentBotMovementCommandRuntime {
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
-                () -> AgentModeService.startGrind(entry, BotMovementManager::clearNavigationState));
+                () -> AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState));
     }
 }

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
@@ -8,7 +10,6 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 
@@ -107,7 +108,7 @@ public final class AgentLeaderSafetyRuntime {
                         post -> AgentLeaderSafetyService.townClusterAnchorsByLeaderId()
                                 .putIfAbsent(leaderCharId, post),
                         (returnMap, anchor) -> resolveTownClusterTarget(entry, leaderCharId, returnMap, anchor),
-                        () -> BotMovementManager.resetEntryState(entry),
+                        () -> AgentMovementStateResetService.resetEntryState(entry),
                         target -> AgentModeService.startMoveTo(entry, target, true)));
     }
 

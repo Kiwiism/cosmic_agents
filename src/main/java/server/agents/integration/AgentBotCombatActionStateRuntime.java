@@ -1,7 +1,8 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentBotCombatActionStateRuntime {
     private AgentBotCombatActionStateRuntime() {
@@ -11,7 +12,7 @@ public final class AgentBotCombatActionStateRuntime {
         AgentBotGrindTargetStateRuntime.clear(entry);
         AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
         AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-        BotMovementManager.clearNavigationState(entry);
+        AgentMovementStateResetService.clearNavigationState(entry);
         AgentBotMovementBroadcastStateRuntime.invalidate(entry);
     }
 }

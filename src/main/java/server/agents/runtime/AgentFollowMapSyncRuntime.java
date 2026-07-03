@@ -1,8 +1,9 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 public final class AgentFollowMapSyncRuntime {
@@ -18,6 +19,6 @@ public final class AgentFollowMapSyncRuntime {
                         BotPhysicsEngine::findGroundPoint,
                         BotPhysicsEngine::idleOnGround,
                         Character::changeMap,
-                        BotMovementManager::resetEntryState));
+                        AgentMovementStateResetService::resetEntryState));
     }
 }

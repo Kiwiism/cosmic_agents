@@ -57,6 +57,8 @@ Target package groups:
   `server.agents.capabilities.movement.AgentMovementTimers`. Packet-visible
   movement broadcasts live in
   `server.agents.capabilities.movement.AgentMovementBroadcastService`.
+  Movement reset and transient cleanup live in
+  `server.agents.capabilities.movement.AgentMovementStateResetService`.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

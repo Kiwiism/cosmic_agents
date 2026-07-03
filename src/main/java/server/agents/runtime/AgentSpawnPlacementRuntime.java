@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
@@ -36,7 +38,7 @@ public final class AgentSpawnPlacementRuntime {
         return new AgentSpawnPlacementService.Hooks(
                 AgentSpawnPositionService::resolveSpawnPosition,
                 BotPhysicsEngine::teleportTo,
-                BotMovementManager::resetEntryStateAfterTeleport,
+                AgentMovementStateResetService::resetEntryStateAfterTeleport,
                 AgentBotDeathStateRuntime::clear,
                 (entry, map, mapId) -> AgentBotMapStateRuntime.setMapTracking(
                         entry,

@@ -637,7 +637,7 @@ public final class BotPhysicsEngine {
         AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
     }
 
-    static void resetMotion(BotEntry entry, Point position) {
+    public static void resetMotion(BotEntry entry, Point position) {
         clearMovementState(entry, position);
         syncCharacterState(entry);
     }

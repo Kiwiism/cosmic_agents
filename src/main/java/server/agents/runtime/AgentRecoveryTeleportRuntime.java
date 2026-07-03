@@ -1,10 +1,11 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 import java.awt.Point;
@@ -47,7 +48,7 @@ public final class AgentRecoveryTeleportRuntime {
         return new AgentRecoveryTeleportService.RecoveryHooks(
                 BotPhysicsEngine::findGroundPoint,
                 BotPhysicsEngine::teleportTo,
-                BotMovementManager::resetEntryStateAfterTeleport,
+                AgentMovementStateResetService::resetEntryStateAfterTeleport,
                 AgentMovementBroadcastService::broadcastMovement);
     }
 }

@@ -1,11 +1,12 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 
@@ -23,7 +24,7 @@ public final class AgentRespawnRuntime {
                                 respawnAgent.forceChangeMap(leaderMap, leaderMap.findClosestPortal(leaderPosition)),
                         MapleMap::getPointBelow,
                         BotPhysicsEngine::teleportTo,
-                        (respawnEntry, ignoredAgent) -> BotMovementManager.resetEntryStateAfterTeleport(respawnEntry),
+                        (respawnEntry, ignoredAgent) -> AgentMovementStateResetService.resetEntryStateAfterTeleport(respawnEntry),
                         (respawnEntry, ignoredAgent) -> AgentMovementBroadcastService.broadcastMovement(respawnEntry),
                         AgentBotManagerReplyRuntime::sayMapNow));
     }

@@ -97,6 +97,12 @@ Recent reconstruction notes:
   suppression, and `broadcast-move` performance timing are preserved; Agent
   callers now enter the Agent service directly and `BotMovementManager` keeps
   only a compatibility delegate.
+- Movement reset and transient-state cleanup ownership moved to
+  `server.agents.capabilities.movement.AgentMovementStateResetService`. Agent
+  map-transition, respawn, spawn-placement, leader-safety, action-state,
+  fidget, airshow, and command-mode callers now clear navigation/transient
+  movement state through the Agent service; `BotMovementManager` keeps only
+  compatibility delegates.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

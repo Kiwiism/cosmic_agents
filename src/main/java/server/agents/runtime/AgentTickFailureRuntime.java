@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +9,6 @@ import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.function.Consumer;
 
@@ -43,7 +44,7 @@ public final class AgentTickFailureRuntime {
                         (missingLeaderCharId, missingAgentCharId, missingFailure) ->
                                 log.error("Bot tick failed for missing entry ownerCharId={} botCharId={}",
                                         missingLeaderCharId, missingAgentCharId, missingFailure),
-                        (failedEntry, ignored) -> BotMovementManager.resetEntryStateAfterTeleport(failedEntry),
+                        (failedEntry, ignored) -> AgentMovementStateResetService.resetEntryStateAfterTeleport(failedEntry),
                         failedEntry -> AgentRuntimeCleanupService.removeAgentByCharacterId(agentCharId),
                         failedEntry -> forceIdleAfterTickFailure(failedEntry, log, stopAgent),
                         (context, disableFailure) -> log.error(

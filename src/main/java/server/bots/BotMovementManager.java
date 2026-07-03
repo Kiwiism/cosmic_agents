@@ -13,6 +13,7 @@ import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
@@ -226,29 +227,15 @@ public class BotMovementManager {
     }
 
     public static void resetEntryState(BotEntry entry) {
-        BotPhysicsEngine.resetMotion(entry, AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
-        clearTransientState(entry);
+        AgentMovementStateResetService.resetEntryState(entry);
     }
 
     public static void resetEntryStateAfterTeleport(BotEntry entry) {
-        clearTransientState(entry);
-    }
-
-    private static void clearTransientState(BotEntry entry) {
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotGrindSearchStateRuntime.clear(entry);
-        AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
-        AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
-        AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
-        AgentFidgetService.clear(entry);
-        clearNavigationState(entry);
-        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
+        AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
     }
 
     public static void clearNavigationState(BotEntry entry) {
-        AgentBotNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
-        AgentBotNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
-        AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
+        AgentMovementStateResetService.clearNavigationState(entry);
     }
 
     public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {

@@ -93,6 +93,10 @@ Recent map updates:
   `AgentMovementBroadcastService`; Agent callers no longer depend on
   `BotMovementManager.broadcastMovement`, while the bot method remains a
   temporary compatibility delegate.
+- Movement reset and transient-state cleanup moved to
+  `AgentMovementStateResetService`; Agent callers no longer depend on
+  `BotMovementManager.resetEntryState`, `resetEntryStateAfterTeleport`, or
+  `clearNavigationState`.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
@@ -1125,7 +1129,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build.AgentMakerService` | `MIGRATED_TO_AGENT`; Maker crystal and trash-disassembly batch orchestration moved unchanged |
 | `src/main/java/server/bots/BotManager.java` | `server.agents.runtime`, `commands`, `events`, capability orchestrators | `MIGRATED_TO_AGENT`; runtime/lifecycle/tick/chat/command/config/test callers moved to Agent runtime, registry, lifecycle, notification, cleanup, movement, combat, supply, and dialogue services; production bot file deleted after compile and focused parity tests passed |
-| `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math and helper entry points, packet-visible movement broadcast, climb idle/snap/rope identity decision policy, ground horizontal step policy, and movement command distance/config reads are Agent-owned |
+| `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; cooldown/delay countdown math and helper entry points, packet-visible movement broadcast, movement reset/transient cleanup, climb idle/snap/rope identity decision policy, ground horizontal step policy, and movement command distance/config reads are Agent-owned |
 | `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentBotMovementTargetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATED_TO_AGENT` |
