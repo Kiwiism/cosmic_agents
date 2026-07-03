@@ -69,7 +69,8 @@ Capability bins:
   Production equipment callers enter through `AgentEquipmentService`; the
   remaining legacy optimizer implementation is isolated behind that Agent
   capability boundary for future extraction. Slot alias resolution lives in
-  `AgentEquipmentSlotResolver`.
+  `AgentEquipmentSlotResolver`; pure scoring helpers live in
+  `AgentEquipmentScoringPolicy`.
 - `supplies`
 - `trade`
 - `shop`

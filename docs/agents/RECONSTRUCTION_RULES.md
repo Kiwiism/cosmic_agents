@@ -29,6 +29,9 @@ Recent reconstruction notes:
 - Equipment slot alias resolution moved to
   `AgentEquipmentSlotResolver`; the legacy bot method now delegates to the
   Agent resolver to preserve old chat aliases while moving ownership.
+- Equipment useful-stat scoring and defense-adjusted expected damage moved to
+  `AgentEquipmentScoringPolicy`; the legacy bot optimizer delegates to the
+  Agent scoring policy for these pure calculations.
 - Inventory/trade tick entry ownership moved fully to
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
   `AgentCommonTickRuntime` and legacy parity tests now call the Agent inventory

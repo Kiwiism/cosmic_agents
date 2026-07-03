@@ -162,46 +162,6 @@ class BotEquipManagerTest {
     }
 
     @Test
-    void mageUsefulGearScoreIgnoresDexAndValuesInt() {
-        Equip dexOverall = mock(Equip.class);
-        when(dexOverall.getDex()).thenReturn((short) 10);
-        Equip intOverall = mock(Equip.class);
-        when(intOverall.getInt()).thenReturn((short) 5);
-
-        assertTrue(BotEquipManager.usefulStatSum(intOverall, Job.MAGICIAN)
-                > BotEquipManager.usefulStatSum(dexOverall, Job.MAGICIAN));
-    }
-
-    @Test
-    void expectedDamageReducesToMidMinusWdefBelowMin() {
-        // wdef <= rawMin: every roll is unclamped, expected = (rawMin + rawMax)/2 - wdef
-        assertEquals(60.0, BotEquipManager.expectedDamageAfterDef(100, 15), 0.01);
-    }
-
-    @Test
-    void expectedDamageClampsToOneWhenWdefExceedsMax() {
-        assertEquals(1.0, BotEquipManager.expectedDamageAfterDef(100, 200), 0.01);
-    }
-
-    @Test
-    void expectedDamagePreservesUpperTailWhenWdefExceedsMid() {
-        // rawMax=100, rawMin=50, wdef=80 (between mid=75 and max=100). Old formula would have
-        // returned max(1, 75-80)=1, erasing the [80,100] upper tail. Integral of clamped uniform
-        // here equals 0.6 (clamped fraction) + 400/(2*50) = 0.6 + 4 = 4.6.
-        assertEquals(4.6, BotEquipManager.expectedDamageAfterDef(100, 80), 0.01);
-    }
-
-    @Test
-    void expectedDamageDifferentiatesCandidatesAgainstHighWdefMob() {
-        // Two candidates with slightly different rawMax against a high-WDEF mob: old formula
-        // collapsed both to 1; new formula keeps a meaningful gap.
-        double weaker = BotEquipManager.expectedDamageAfterDef(100, 80);
-        double stronger = BotEquipManager.expectedDamageAfterDef(120, 80);
-        assertTrue(stronger > weaker + 0.5,
-                "expected stronger > weaker by margin; got " + stronger + " vs " + weaker);
-    }
-
-    @Test
     void mapDamageProfilePrefersHigherLevelThenAvoidability() {
         MonsterStats weaker = new MonsterStats();
         weaker.setLevel(48);

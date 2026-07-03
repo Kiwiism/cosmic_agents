@@ -19,6 +19,7 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.SelfReserveHooks;
+import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
@@ -1508,20 +1509,7 @@ public class BotEquipManager {
      * high-WDEF mob, even when one cleared the defense and the other barely did.
      */
     static double expectedDamageAfterDef(int rawMax, int wdef) {
-        if (rawMax <= 0) return 1.0;
-        double rawMin = rawMax * 0.5;
-        if (wdef <= rawMin) {
-            return Math.max(1.0, (rawMin + rawMax) / 2.0 - wdef);
-        }
-        if (wdef >= rawMax) {
-            return 1.0;
-        }
-        // Partial clamp: fraction below wdef floors to 1; above-tail integrates as a triangle.
-        double range = rawMax - rawMin;
-        double clampedFraction = (wdef - rawMin) / range;
-        double aboveTail = rawMax - wdef;
-        double aboveContribution = (aboveTail * aboveTail) / (2.0 * range);
-        return Math.max(1.0, clampedFraction + aboveContribution);
+        return AgentEquipmentScoringPolicy.expectedDamageAfterDef(rawMax, wdef);
     }
 
     /**
@@ -1554,7 +1542,7 @@ public class BotEquipManager {
     private static int defScore(Equip e)  { return e != null ? e.getWdef() + e.getMdef() : 0; }
 
     static int usefulStatSum(Equip e, Job job) {
-        return AgentEquipmentReservePolicy.usefulStatSum(e, job);
+        return AgentEquipmentScoringPolicy.usefulStatSum(e, job);
     }
 
     private static int magicScore(StatSnapshot sim) {
