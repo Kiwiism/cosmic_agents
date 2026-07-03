@@ -75,6 +75,8 @@ Recent reconstruction notes:
   on leaving Agent control, and combat sibling target occupancy now call
   Agent-owned notification, cleanup, and runtime-registry services directly
   instead of reaching those behaviors through `BotManager.getInstance()`.
+- Dead `BotManager.getInstance()` declarations were removed from BotManager
+  parity tests after those tests moved to direct Agent services.
 - Manual and spawned registration entry points now enter through
   `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
   no longer owns a private tick callback.

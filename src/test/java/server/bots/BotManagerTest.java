@@ -629,7 +629,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldDisableBotAfterRepeatedTickFailures() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
         ScheduledFuture<?> task = mock(ScheduledFuture.class);
@@ -1133,7 +1132,6 @@ class BotManagerTest {
 
     @Test
     void shouldKeepTenMinutePotShareBackoffSeparateForHpAndMp() throws Exception {
-        BotManager manager = BotManager.getInstance();
         MapleMap map = mock(MapleMap.class);
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
@@ -1187,7 +1185,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldLetOwnerPotRequestsBypassShareCooldowns() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, owner, null);
@@ -1216,7 +1213,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldLetOwnerAmmoRequestsBypassShareCooldowns() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, owner, null);
@@ -1247,7 +1243,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldLetPlayerAskedBotPotRequestBypassShareCooldowns() throws Exception {
-        BotManager manager = BotManager.getInstance();
         MapleMap map = mock(MapleMap.class);
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
@@ -1282,7 +1277,6 @@ class BotManagerTest {
     @Test
     @SuppressWarnings("unchecked")
     void shouldLetPlayerAskedBotAmmoRequestBypassShareCooldowns() throws Exception {
-        BotManager manager = BotManager.getInstance();
         MapleMap map = mock(MapleMap.class);
         Character owner = mock(Character.class);
         Character bot = mock(Character.class);
@@ -1315,7 +1309,6 @@ class BotManagerTest {
 
     @Test
     void shouldPreferNonAmmoUsersWhenSharingArrows() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character needy = ammoBot(10, 1000, 100);
         Character nonBow800 = ammoBot(11, 1000, 800);
@@ -1356,7 +1349,6 @@ class BotManagerTest {
 
     @Test
     void shouldOnlyDonateHalfSurplusFromSameAmmoUser() throws Exception {
-        BotManager manager = BotManager.getInstance();
         Character owner = mock(Character.class);
         Character needy = ammoBot(10, 1000, 100);
         Character bow3000 = ammoBot(13, 1000, 3000);
