@@ -10,16 +10,13 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 
 import client.Character;
-import io.netty.buffer.Unpooled;
-import net.packet.ByteBufInPacket;
-import net.packet.InPacket;
-import net.packet.Packet;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
@@ -38,7 +35,6 @@ import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
-import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -923,69 +919,7 @@ public class BotMovementManager {
     }
 
     public static void broadcastMovement(BotEntry entry) {
-        if (!AgentPerformanceMonitor.enabled()) {
-            doBroadcastMovement(entry);
-            return;
-        }
-
-        long startedAt = System.nanoTime();
-        try {
-            doBroadcastMovement(entry);
-        } finally {
-            AgentPerformanceMonitor.record("broadcast-move", System.nanoTime() - startedAt);
-        }
-    }
-
-    private static void doBroadcastMovement(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        int x = bot.getPosition().x;
-        int y = bot.getPosition().y;
-        BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
-        int fhId = resolveBroadcastFhId(entry, bot);
-
-        if (AgentBotMovementBroadcastStateRuntime.matches(
-                entry, x, y, snapshot.velX(), snapshot.velY(), snapshot.stance(), fhId)) {
-            return;
-        }
-
-        AgentBotMovementBroadcastStateRuntime.record(
-                entry, x, y, snapshot.velX(), snapshot.velY(), snapshot.stance(), fhId);
-        sendMovementPacket(bot, snapshot, fhId);
-    }
-
-    // Real clients report the foothold ID they're standing on in every move packet; the
-    // client uses it to pick the render z-layer. Without it, bots draw on the top layer
-    // (in front of tiles/walls). While airborne, clients keep sending the last-known
-    // ground fh, so cache it on the bot entry.
-    private static int resolveBroadcastFhId(BotEntry entry, Character bot) {
-        Foothold fh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), bot.getPosition());
-        if (fh != null) {
-            AgentBotMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());
-        }
-        return AgentBotMovementPhysicsStateRuntime.lastGroundFhId(entry);
-    }
-
-    private static void sendMovementPacket(Character bot, BotPhysicsEngine.MovementSnapshot snapshot, int fhId) {
-        byte[] data = new byte[15];
-        data[0] = 1;
-        int x = bot.getPosition().x;
-        int y = bot.getPosition().y;
-        data[2] = (byte) (x & 0xFF);
-        data[3] = (byte) (x >> 8);
-        data[4] = (byte) (y & 0xFF);
-        data[5] = (byte) (y >> 8);
-        data[6] = (byte) (snapshot.velX() & 0xFF);
-        data[7] = (byte) (snapshot.velX() >> 8);
-        data[8] = (byte) (snapshot.velY() & 0xFF);
-        data[9] = (byte) (snapshot.velY() >> 8);
-        data[10] = (byte) (fhId & 0xFF);
-        data[11] = (byte) (fhId >> 8);
-        data[12] = (byte) snapshot.stance();
-        data[13] = (byte) (BotPhysicsEngine.cfg.TICK_MS & 0xFF);
-        data[14] = (byte) (BotPhysicsEngine.cfg.TICK_MS >> 8);
-        InPacket packet = new ByteBufInPacket(Unpooled.wrappedBuffer(data));
-        Packet movePacket = PacketCreator.movePlayer(bot.getId(), packet, data.length);
-        bot.getMap().broadcastMessage(bot, movePacket, false);
+        AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     public static Map<Integer, Foothold> buildFhIndex(MapleMap map) {

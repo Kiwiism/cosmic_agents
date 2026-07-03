@@ -127,7 +127,7 @@ public final class BotPhysicsEngine {
                                     Map<Integer, Foothold> footholdsById) {
     }
 
-    record MovementSnapshot(int velX, int velY, int stance) {
+    public record MovementSnapshot(int velX, int velY, int stance) {
     }
 
     public static final class JumpLanding {
@@ -1350,7 +1350,7 @@ public final class BotPhysicsEngine {
         syncCharacterState(entry);
     }
 
-    static MovementSnapshot movementSnapshot(BotEntry entry) {
+    public static MovementSnapshot movementSnapshot(BotEntry entry) {
         int stance = resolveStance(entry);
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot != null && bot.getStance() != stance) {

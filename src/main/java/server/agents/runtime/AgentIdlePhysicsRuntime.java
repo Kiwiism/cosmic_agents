@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
@@ -25,6 +27,6 @@ public final class AgentIdlePhysicsRuntime {
                 BotPhysicsEngine::resolveIdleGroundStance,
                 BotPhysicsEngine::resolveStance,
                 BotPhysicsEngine::idleOnGround,
-                BotMovementManager::broadcastMovement);
+                AgentMovementBroadcastService::broadcastMovement);
     }
 }

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
@@ -100,7 +102,7 @@ public final class AgentGrindModeRuntime {
                 BotPhysicsEngine::calculateMaxJumpHeight,
                 BotMovementManager::initiateJump,
                 BotPhysicsEngine::idleOnGround,
-                BotMovementManager::broadcastMovement);
+                AgentMovementBroadcastService::broadcastMovement);
     }
 
     private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {

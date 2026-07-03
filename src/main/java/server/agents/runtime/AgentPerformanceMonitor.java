@@ -104,7 +104,7 @@ public final class AgentPerformanceMonitor {
         notes.put("tick-map-change", "map change handler (rebuild footholds, regrounding)");
         notes.put("step-movement-core", "stepMovementCore wrapper (nav resolve + movement phase)");
         notes.put("opportunity-attack", "tryLocalOpportunityAttack");
-        notes.put("broadcast-move", "BotMovementManager.broadcastMovement (packet build + map broadcast)");
+        notes.put("broadcast-move", "AgentMovementBroadcastService.broadcastMovement (packet build + map broadcast)");
         notes.put("stuck-detect", "tickStuckDetection");
         notes.put("grind-loot-scan", "AgentPassiveLootRuntimeService grind loot target selection");
         notes.put("auto-equip", "AgentEquipmentService.autoEquip (Pareto DP) triggered on equip pickup");

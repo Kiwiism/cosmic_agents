@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotDeathStateRuntime;
@@ -46,7 +48,7 @@ public final class AgentSpawnPlacementRuntime {
                 AgentBotTickCadenceStateRuntime::reset,
                 AgentBotMovementStateRuntime::clearMoveDirection,
                 AgentBotMovementBroadcastStateRuntime::invalidate,
-                BotMovementManager::broadcastMovement,
+                AgentMovementBroadcastService::broadcastMovement,
                 Character::updatePartyMemberHP,
                 AgentPartyLifecycleService::joinAgentToLeaderParty);
     }

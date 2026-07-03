@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
@@ -46,6 +48,6 @@ public final class AgentRecoveryTeleportRuntime {
                 BotPhysicsEngine::findGroundPoint,
                 BotPhysicsEngine::teleportTo,
                 BotMovementManager::resetEntryStateAfterTeleport,
-                BotMovementManager::broadcastMovement);
+                AgentMovementBroadcastService::broadcastMovement);
     }
 }

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
@@ -80,7 +82,7 @@ public final class AgentLeaderSafetyRuntime {
                 () -> AgentLeaderSafetyService.idleInactiveAgentInPlace(
                         entry,
                         () -> BotPhysicsEngine.idleOnGround(entry, agent),
-                        () -> BotMovementManager.broadcastMovement(entry)));
+                        () -> AgentMovementBroadcastService.broadcastMovement(entry)));
     }
 
     private static void prepareInactiveIdle(BotEntry entry) {

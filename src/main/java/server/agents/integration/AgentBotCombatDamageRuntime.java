@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.BuffStat;
@@ -11,7 +13,6 @@ import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 import server.life.Monster;
 import tools.PacketCreator;
@@ -117,6 +118,6 @@ public final class AgentBotCombatDamageRuntime {
                             config.KNOCKBACK_VFORCE, AgentMovementPhysicsConfig.configuredMovementTickMs()),
                     knockbackAirVelX);
         }
-        BotMovementManager.broadcastMovement(entry);
+        AgentMovementBroadcastService.broadcastMovement(entry);
     }
 }

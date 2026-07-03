@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.bots.BotEntry;
@@ -22,7 +24,7 @@ public final class AgentRespawnRuntime {
                         MapleMap::getPointBelow,
                         BotPhysicsEngine::teleportTo,
                         (respawnEntry, ignoredAgent) -> BotMovementManager.resetEntryStateAfterTeleport(respawnEntry),
-                        (respawnEntry, ignoredAgent) -> BotMovementManager.broadcastMovement(respawnEntry),
+                        (respawnEntry, ignoredAgent) -> AgentMovementBroadcastService.broadcastMovement(respawnEntry),
                         AgentBotManagerReplyRuntime::sayMapNow));
     }
 }

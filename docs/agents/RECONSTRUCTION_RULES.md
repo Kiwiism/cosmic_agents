@@ -91,6 +91,12 @@ Recent reconstruction notes:
   bundles now use Agent-owned tick-down and delay-after-current-tick helpers;
   `BotMovementManager` delegates its compatibility timer methods to the same
   Agent helper.
+- Packet-visible movement broadcast ownership moved to
+  `server.agents.capabilities.movement.AgentMovementBroadcastService`. The
+  movement packet byte layout, foothold z-layer caching, duplicate broadcast
+  suppression, and `broadcast-move` performance timing are preserved; Agent
+  callers now enter the Agent service directly and `BotMovementManager` keeps
+  only a compatibility delegate.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

@@ -1,11 +1,12 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotPhysicsEngine;
 
 import java.awt.Point;
@@ -60,7 +61,7 @@ public final class AgentAnchoredFarmRuntime {
                 AgentIdlePhysicsRuntime::tickIdleEntry,
                 (entry, agent) -> {
                     BotPhysicsEngine.idleOnGround(entry, agent);
-                    BotMovementManager.broadcastMovement(entry);
+                    AgentMovementBroadcastService.broadcastMovement(entry);
                 },
                 (entry, targetPosition, runAiTick) -> AgentMovementTickRuntime.stepMovementCore(
                         entry,

@@ -38,7 +38,7 @@ public final class AgentFallbackMovementService {
             if (canDirectlyAttachToRope(botPos, rope)) {
                 int attachY = Math.max(rope.topY(), Math.min(botPos.y, rope.bottomY()));
                 BotPhysicsEngine.attachToRope(entry, bot, rope, attachY);
-                BotMovementManager.broadcastMovement(entry);
+                AgentMovementBroadcastService.broadcastMovement(entry);
                 return true;
             }
 
@@ -64,7 +64,7 @@ public final class AgentFallbackMovementService {
 
         if (shouldUseDownJump(entry, botPos, targetPos, rope)) {
             BotPhysicsEngine.queueDownJump(entry, bot);
-            BotMovementManager.broadcastMovement(entry);
+            AgentMovementBroadcastService.broadcastMovement(entry);
             return true;
         }
 

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
@@ -45,6 +47,6 @@ public final class AgentMapTransitionRuntime {
                 BotPhysicsEngine::teleportTo,
                 BotMovementManager::resetEntryStateAfterTeleport,
                 AgentNavigationGraphService::warmGraphAsync,
-                BotMovementManager::broadcastMovement);
+                AgentMovementBroadcastService::broadcastMovement);
     }
 }

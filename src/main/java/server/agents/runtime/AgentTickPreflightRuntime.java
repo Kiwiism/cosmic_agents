@@ -1,11 +1,12 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentTickPreflightRuntime {
     private static final long HEARTBEAT_INTERVAL_MS = 600_000L;
@@ -34,7 +35,7 @@ public final class AgentTickPreflightRuntime {
                         nowMs,
                         heartbeatIntervalMs,
                         heartbeatAgent -> heartbeatAgent.getClient().updateLastPacket(),
-                        BotMovementManager::broadcastMovement),
+                        AgentMovementBroadcastService::broadcastMovement),
                 AgentOfferService::expirePendingOffer,
                 AgentTickOrchestrator::prepareTick,
                 AgentMovementPhysicsConfig.configuredMovementTickMs(),

@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
@@ -92,7 +94,7 @@ public final class AgentBotCombatHealRuntime {
         AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, config.HEAL_MOVE_WINDOW_MS);
         if (!jumpHealing) {
             AgentBotMovementStateRuntime.clearMoveDirection(entry);
-            BotMovementManager.broadcastMovement(entry);
+            AgentMovementBroadcastService.broadcastMovement(entry);
         }
         return true;
     }

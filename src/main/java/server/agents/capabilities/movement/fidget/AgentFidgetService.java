@@ -1,5 +1,7 @@
 package server.agents.capabilities.movement.fidget;
 
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
@@ -309,13 +311,13 @@ public final class AgentFidgetService {
         return switch (AgentBotFidgetStateRuntime.mode(entry)) {
             case WAIT -> {
                 BotPhysicsEngine.idleOnGround(entry, bot);
-                BotMovementManager.broadcastMovement(entry);
+                AgentMovementBroadcastService.broadcastMovement(entry);
                 yield true;
             }
             case PRONE -> {
                 BotPhysicsEngine.proneOnGround(entry, bot);
                 maybeBroadcastProneAttackVisual(entry, now);
-                BotMovementManager.broadcastMovement(entry);
+                AgentMovementBroadcastService.broadcastMovement(entry);
                 yield true;
             }
             case SPAM_PRONE -> {
@@ -325,7 +327,7 @@ public final class AgentFidgetService {
                     } else {
                         BotPhysicsEngine.proneOnGround(entry, bot);
                     }
-                    BotMovementManager.broadcastMovement(entry);
+                    AgentMovementBroadcastService.broadcastMovement(entry);
                     AgentBotFidgetStateRuntime.setNextActionAtMs(entry, now + AgentRandom.randMs(120, 350));
                 }
                 maybeBroadcastProneAttackVisual(entry, now);
@@ -340,7 +342,7 @@ public final class AgentFidgetService {
                     initiateFidgetJump(entry, bot, botPos, targetPos, now, false);
                 } else {
                     BotPhysicsEngine.idleOnGround(entry, bot);
-                    BotMovementManager.broadcastMovement(entry);
+                    AgentMovementBroadcastService.broadcastMovement(entry);
                 }
                 yield true;
             }
@@ -349,7 +351,7 @@ public final class AgentFidgetService {
                     initiateFidgetJump(entry, bot, botPos, targetPos, now, true);
                 } else {
                     BotPhysicsEngine.idleOnGround(entry, bot);
-                    BotMovementManager.broadcastMovement(entry);
+                    AgentMovementBroadcastService.broadcastMovement(entry);
                 }
                 yield true;
             }
@@ -416,20 +418,20 @@ public final class AgentFidgetService {
             AgentBotFidgetStateRuntime.setMoveDir(entry, dir);
             if (!BotPhysicsEngine.canWalkGroundStep(bot.getMap(), botPos, dir * walkStep)) {
                 BotPhysicsEngine.idleOnGround(entry, bot);
-                BotMovementManager.broadcastMovement(entry);
+                AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
         }
 
         Foothold currentFh = BotPhysicsEngine.findGroundFoothold(bot.getMap(), botPos);
         if (currentFh == null) {
-            BotMovementManager.broadcastMovement(entry);
+            AgentMovementBroadcastService.broadcastMovement(entry);
             return;
         }
 
         AgentBotMovementStateRuntime.setMoveDirection(entry, dir);
         BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh);
-        BotMovementManager.broadcastMovement(entry);
+        AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     private static int nextSidewaysDir(BotEntry entry, Character bot, Point botPos) {
