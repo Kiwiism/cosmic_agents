@@ -5,9 +5,6 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import server.maps.Foothold;
 import server.maps.MapleMap;
-import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotNavigationManager;
 import server.bots.BotPhysicsEngine;
 
 import java.awt.*;
@@ -156,7 +153,7 @@ public final class AgentNavigationProbe {
                     continue;
                 }
                 pairs++;
-                BotNavigationManager.PathOptimality po = BotNavigationManager.measureOptimality(
+                AgentNavigationPathService.PathOptimality po = AgentNavigationPathService.measureOptimality(
                         graph, map, startPoint, start.id, target.id, target.centerPoint());
                 if (!po.reachable()) {
                     continue;
@@ -489,7 +486,7 @@ public final class AgentNavigationProbe {
         int targetRegionId = graph.findRegionId(map, pathProbe.target);
         List<AgentNavigationGraph.Edge> path = startRegionId < 0 || targetRegionId < 0 || startRegionId == targetRegionId
                 ? List.of()
-                : BotNavigationManager.findPath(graph, map, pathProbe.start, startRegionId, targetRegionId, pathProbe.target);
+                : AgentNavigationPathService.findPath(graph, map, pathProbe.start, startRegionId, targetRegionId, pathProbe.target);
 
         System.out.printf("%nPath probe %d,%d -> %d,%d  regions %d -> %d%n",
                 pathProbe.start.x, pathProbe.start.y, pathProbe.target.x, pathProbe.target.y, startRegionId, targetRegionId);
@@ -513,7 +510,7 @@ public final class AgentNavigationProbe {
         Point startPoint = startRegion == null ? null : startRegion.centerPoint();
         List<AgentNavigationGraph.Edge> path = targetPoint == null
                 ? List.of()
-                : BotNavigationManager.findPath(graph, AgentNavigationMapLoader.loadMapGeometry(graph.mapId),
+                : AgentNavigationPathService.findPath(graph, AgentNavigationMapLoader.loadMapGeometry(graph.mapId),
                 startPoint, regionPath.startRegionId, regionPath.targetRegionId, targetPoint);
 
         System.out.printf("%nRegion path %d -> %d%n", regionPath.startRegionId, regionPath.targetRegionId);

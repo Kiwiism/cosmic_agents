@@ -164,7 +164,8 @@ Capability bins:
   classification uses the same seam.
   Path logger, script move-target, and navigation debug overlay path searches
   enter through `AgentNavigationPathService`; shop approach reachability uses
-  the same path seam.
+  the same path seam. Navigation probe path/optimality diagnostics also use
+  this path seam.
 - `supplies`
 - `trade`
 - `shop`

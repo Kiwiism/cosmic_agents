@@ -3969,6 +3969,9 @@ Recent reconstruction notes:
 - Shop approach candidate reachability now uses `AgentNavigationRegionService`
   and `AgentNavigationPathService`, preserving the same candidate filtering
   while removing another direct navigation-manager dependency.
+- Navigation probe path and optimality measurement now enter through
+  `AgentNavigationPathService`, including an Agent-owned `PathOptimality`
+  record that mirrors the legacy diagnostic values.
 
 Initial reconstruction order:
 
