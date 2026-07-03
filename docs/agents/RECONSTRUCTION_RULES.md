@@ -3976,6 +3976,9 @@ Recent reconstruction notes:
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
   are unchanged.
+- Navigation region-classification implementation now lives in
+  `AgentNavigationRegionService`. `BotNavigationManager` retains only
+  compatibility delegates for current/target/character/point region lookup.
 
 Initial reconstruction order:
 

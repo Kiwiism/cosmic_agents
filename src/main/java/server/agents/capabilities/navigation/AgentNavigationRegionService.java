@@ -1,11 +1,23 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
+import constants.game.CharacterStance;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
+import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.runtime.AgentFollowAnchorService;
 import server.bots.BotEntry;
-import server.bots.BotNavigationManager;
 import server.maps.MapleMap;
+import server.maps.Rope;
 
 import java.awt.Point;
+import java.util.List;
 
 /**
  * Agent-owned seam for navigation region classification while path internals migrate.
@@ -18,25 +30,101 @@ public final class AgentNavigationRegionService {
                                              BotEntry entry,
                                              MapleMap map,
                                              Point botPos) {
-        return BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
+        if (AgentBotClimbStateRuntime.climbing(entry) || (AgentBotRuntimeIdentityRuntime.hasBot(entry) && CharacterStance.isClimbing(AgentBotRuntimeIdentityRuntime.bot(entry).getStance()))) {
+            // Rope climbing state is authoritative. Ground lookup below a rope often resolves to
+            // the nearby platform instead of the rope region, which can replan from the wrong side
+            // of the rope and bounce between entry/exit climb edges.
+            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+            int ropeX = climbRope != null ? climbRope.x() : botPos.x;
+            int ropeRegionId = graph.findRopeRegionId(new Point(ropeX, botPos.y));
+            if (ropeRegionId >= 0) {
+                return ropeRegionId;
+            }
+        }
+        if (AgentBotMovementStateRuntime.inAir(entry)) {
+            // Airborne points do not have a meaningful "current region". A ground lookup from an
+            // in-flight point resolves to whatever foothold is below the arc, which can be an
+            // unrelated upper platform. That makes runtime navigation discard the committed jump
+            // edge even though the authored graph and ballistic landing simulation still agree.
+            return -1;
+        }
+        return graph.findRegionId(map, botPos);
     }
 
     public static int resolveTargetRegionId(AgentNavigationGraph graph,
                                             BotEntry entry,
                                             MapleMap map,
                                             Point targetPos) {
-        return BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
+        if (targetPos == null) {
+            return -1;
+        }
+
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        List<BotEntry> siblingEntries = owner == null
+                ? List.of()
+                : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
+        Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
+        if (AgentBotModeStateRuntime.following(entry)
+                && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
+                && !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)
+                && !AgentBotShopStateRuntime.shopVisitPending(entry)
+                && !AgentBotModeStateRuntime.grinding(entry)
+                && followAnchor != null
+                && followAnchor.getMap() == map) {
+            // Follow mode + owner climbing: prioritise a rope target. The follow
+            // resolver may have already snapped targetPos to a rope's X, so the
+            // exact equality check below would miss - explicitly look for a rope
+            // at targetPos, and fall back to the follow anchor's own rope region if none
+            // is found there. This keeps the bot climbing onto rope alongside
+            // the anchor instead of clamping to the platform below the rope.
+            if (CharacterStance.isClimbing(followAnchor.getStance())) {
+                int ropeRegionId = graph.findRopeRegionId(targetPos);
+                if (ropeRegionId >= 0) {
+                    return ropeRegionId;
+                }
+                return resolveCharacterRegionId(graph, map, followAnchor);
+            }
+            if (targetPos.equals(followAnchor.getPosition())) {
+                return resolveCharacterRegionId(graph, map, followAnchor);
+            }
+        }
+
+        return resolvePointTargetRegionId(graph, map, targetPos);
     }
 
     public static int resolveCharacterRegionId(AgentNavigationGraph graph,
                                                MapleMap map,
                                                Character character) {
-        return BotNavigationManager.resolveCharacterRegionId(graph, map, character);
+        if (character == null) {
+            return -1;
+        }
+
+        Point position = character.getPosition();
+        if (position == null) {
+            return -1;
+        }
+
+        if (CharacterStance.isClimbing(character.getStance())) {
+            int ropeRegionId = graph.findRopeRegionId(position);
+            if (ropeRegionId >= 0) {
+                return ropeRegionId;
+            }
+        }
+
+        return resolvePointTargetRegionId(graph, map, position);
     }
 
     public static int resolvePointTargetRegionId(AgentNavigationGraph graph,
                                                  MapleMap map,
                                                  Point position) {
-        return BotNavigationManager.resolvePointTargetRegionId(graph, map, position);
+        int ropeRegionId = graph.findRopeRegionId(position);
+        if (ropeRegionId >= 0 && shouldPreferRopeRegion(map, position)) {
+            return ropeRegionId;
+        }
+        return graph.findRegionId(map, position);
+    }
+
+    private static boolean shouldPreferRopeRegion(MapleMap map, Point position) {
+        return AgentGroundCollisionService.isGroundFarBelow(map, position);
     }
 }

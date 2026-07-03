@@ -166,7 +166,9 @@ Capability bins:
   enter through `AgentNavigationPathService`; shop approach reachability uses
   the same path seam. Navigation probe path/optimality diagnostics also use
   this path seam. Combat grind-target region scoring and target-score path
-  checks use the same Agent navigation services.
+  checks use the same Agent navigation services. Region-classification logic
+  itself now lives in `AgentNavigationRegionService`; the bot navigation
+  manager delegates to it temporarily.
 - `supplies`
 - `trade`
 - `shop`
