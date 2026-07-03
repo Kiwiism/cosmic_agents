@@ -2,18 +2,14 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
-import server.agents.capabilities.navigation.AgentNavigationClimbEntryExecutionService;
-import server.agents.capabilities.navigation.AgentNavigationClimbExitExecutionService;
-import server.agents.capabilities.navigation.AgentNavigationDropExecutionService;
+import server.agents.capabilities.navigation.AgentNavigationEdgeExecutor;
 import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
-import server.agents.capabilities.navigation.AgentNavigationJumpExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationPreciseTargetService;
-import server.agents.capabilities.navigation.AgentNavigationPortalService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationWarmupService;
@@ -248,40 +244,12 @@ public final class BotNavigationManager {
                                                       Point rawTargetPos,
                                                       AgentNavigationGraph.Edge edge,
                                                       boolean runAiTick) {
-        if (!runAiTick) {
+        AgentNavigationEdgeExecutor.NavigationDirective directive = AgentNavigationEdgeExecutor.tryExecuteEdge(
+                graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
+        if (directive == null) {
             return null;
         }
-
-        return switch (edge.type) {
-            case JUMP -> AgentNavigationJumpExecutionService.tryExecuteJump(graph, entry, bot, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-            case DROP -> AgentNavigationDropExecutionService.tryExecuteDrop(graph, entry, bot, botPos, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-            case CLIMB -> tryExecuteClimb(graph, entry, bot, botPos, rawTargetPos, edge);
-            case PORTAL -> isReadyForEdge(botPos, edge)
-                    && AgentNavigationPortalService.tryExecutePortal(entry, bot, edge.portalId)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-            default -> null;
-        };
-    }
-
-    private static NavigationDirective tryExecuteClimb(AgentNavigationGraph graph,
-                                                       BotEntry entry,
-                                                       Character bot,
-                                                       Point botPos,
-                                                       Point rawTargetPos,
-                                                       AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.downJumpPending(entry)) {
-            return null;
-        }
-
-        if (AgentBotClimbStateRuntime.climbing(entry)) {
-            return AgentNavigationClimbExitExecutionService.tryExecuteClimbExit(graph, entry, bot, botPos, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-        } else {
-            return AgentNavigationClimbEntryExecutionService.tryExecuteClimbEntry(graph, entry, bot, botPos, edge)
-                    ? new NavigationDirective(rawTargetPos, true) : null;
-        }
+        return new NavigationDirective(directive.targetPos(), directive.consumedTick());
     }
 
     static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
@@ -605,10 +573,6 @@ public final class BotNavigationManager {
     static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
                                                    AgentNavigationGraph.Edge replacement) {
         return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
-    }
-
-    private static boolean isReadyForEdge(Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationEdgeReadinessService.isReadyForEdge(botPos, edge);
     }
 
     static boolean canExecuteJumpFromCurrentPosition(AgentNavigationGraph graph,

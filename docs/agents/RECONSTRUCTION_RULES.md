@@ -4010,6 +4010,9 @@ Recent reconstruction notes:
   `AgentNavigationClimbExitExecutionService`. Rope-to-rope jumps, top step-off
   no-op behavior, top-rope alignment, jump-off-rope behavior, and climb-exit
   readiness are preserved.
+- Navigation edge execution dispatch now lives in
+  `AgentNavigationEdgeExecutor`. The bot navigation shell only adapts the
+  Agent-owned directive record back to the legacy `NavigationDirective` type.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

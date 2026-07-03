@@ -184,6 +184,7 @@ Capability bins:
   `AgentNavigationClimbEntryExecutionService`.
   Climb-exit edge execution lives in
   `AgentNavigationClimbExitExecutionService`.
+  Edge execution dispatch lives in `AgentNavigationEdgeExecutor`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
