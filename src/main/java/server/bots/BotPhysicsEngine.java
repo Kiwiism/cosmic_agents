@@ -101,7 +101,7 @@ public final class BotPhysicsEngine {
         public int SWIM_JUMP_TRIGGER_DY_PX = 100;    // dy <= -this px = trigger JUMP burst (with cooldown)
     }
 
-    record GroundMotion(int stepX, boolean lostGround) {
+    public record GroundMotion(int stepX, boolean lostGround) {
     }
 
     record GroundTravelState(double physX, double hspeed, double carryMs) {
@@ -464,7 +464,7 @@ public final class BotPhysicsEngine {
         return preview != null && !preview.lostGround() && !preview.blocked();
     }
 
-    static boolean isGroundStepBlockedByWall(MapleMap map, Point currentPos, int stepX) {
+    public static boolean isGroundStepBlockedByWall(MapleMap map, Point currentPos, int stepX) {
         if (map == null || currentPos == null || stepX == 0) {
             return false;
         }

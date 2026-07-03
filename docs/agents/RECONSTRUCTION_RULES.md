@@ -2998,6 +2998,12 @@ Recent reconstruction notes:
 - Ground mob-avoidance lane scanning and simulated landing-region checks now
   live in `AgentMobAvoidanceService`; BotMovementManager preserves the same
   follow/grind guards and fixed-arc jump decision point.
+- Ground action planning and execution now enter through
+  `AgentGroundActionPlanner` and `AgentGroundActionExecutor`; BotMovementManager
+  routes grounded runtime through the Agent services while old private bot
+  helpers remain temporary dead compatibility clutter until the ground body is
+  fully cleaned up. `BotPhysicsEngine.GroundMotion` and the ground-wall check
+  are public compatibility seams only until physics migrates.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

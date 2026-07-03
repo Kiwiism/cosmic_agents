@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotPhysicsEngine;
@@ -14,6 +15,11 @@ public final class AgentJumpActionService {
         BotPhysicsEngine.beginGroundJump(entry, agent,
                 resolveAirVelocityX(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx));
         AgentMovementBroadcastService.broadcastMovement(entry);
+    }
+
+    public static void initiateFixedArcJump(BotEntry entry, Character agent, int dx) {
+        initiateJump(entry, agent, dx);
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
     }
 
     public static void initiateRopeJump(BotEntry entry, Character agent, int dx) {

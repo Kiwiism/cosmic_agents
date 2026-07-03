@@ -11,6 +11,9 @@ import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentGroundAction;
+import server.agents.capabilities.movement.AgentGroundActionExecutor;
+import server.agents.capabilities.movement.AgentGroundActionPlanner;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
@@ -564,8 +567,8 @@ public class BotMovementManager {
                 }
                 targetPos = AgentFallbackMovementService.resolveSteeringTarget(entry, botPos, targetPos);
             }
-            MoveAction action = planGroundAction(entry, currentFh, botPos, targetPos);
-            applyGroundAction(entry, currentFh, action);
+            AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, currentFh, botPos, targetPos);
+            AgentGroundActionExecutor.applyGroundAction(entry, currentFh, action);
         } finally {
             AgentPerformanceMonitor.record("move-ground", System.nanoTime() - startedAt);
         }
