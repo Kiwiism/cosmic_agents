@@ -184,6 +184,8 @@ Capability bins:
   `AgentNavigationLaunchWindowService`.
   Pure jump, cached jump-launch, climb, and straight-drop waypoint selection
   lives in `AgentNavigationWaypointService`.
+  Precise waypoint targeting policy lives in
+  `AgentNavigationPreciseTargetService`.
   Dead bot-only landing-region helper code has been removed rather than moved.
 - `supplies`
 - `trade`

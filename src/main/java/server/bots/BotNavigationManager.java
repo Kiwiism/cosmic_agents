@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGrindTargetService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationPreciseTargetService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
@@ -634,21 +635,62 @@ public final class BotNavigationManager {
                                                   BotEntry entry,
                                                   Point botPos,
                                                   AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            return false;
-        }
-        return switch (edge.type) {
-            case WALK -> shouldUsePreciseWalkTarget(edge);
-            case JUMP -> !canExecuteSelectedJumpFromCurrentPosition(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, edge);
-            case DROP -> edge.launchStepX == 0
-                    && !canExecuteDropFromCurrentPosition(graph, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, edge);
-            case CLIMB -> AgentBotClimbStateRuntime.climbing(entry)
-                    ? edge.launchStepX != 0
-                    && !canExecuteClimbExitFromCurrentPosition(graph, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, edge)
-                    : !canExecuteClimbEntryFromCurrentPosition(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, edge,
-                    findRopeForRegion(AgentBotRuntimeIdentityRuntime.botMap(entry), graph.getRegion(edge.toRegionId)));
-            case PORTAL -> !isReadyForEdge(botPos, edge);
-        };
+        return AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
+                graph,
+                entry,
+                botPos,
+                edge,
+                new AgentNavigationPreciseTargetService.EdgeReadiness() {
+                    @Override
+                    public boolean canExecuteSelectedJump(AgentNavigationGraph readinessGraph,
+                                                          BotEntry readinessEntry,
+                                                          Point readinessBotPos,
+                                                          AgentNavigationGraph.Edge readinessEdge) {
+                        return canExecuteSelectedJumpFromCurrentPosition(
+                                readinessGraph,
+                                readinessEntry,
+                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                readinessBotPos,
+                                readinessEdge);
+                    }
+
+                    @Override
+                    public boolean canExecuteDrop(AgentNavigationGraph readinessGraph,
+                                                  BotEntry readinessEntry,
+                                                  Point readinessBotPos,
+                                                  AgentNavigationGraph.Edge readinessEdge) {
+                        return canExecuteDropFromCurrentPosition(
+                                readinessGraph,
+                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                readinessBotPos,
+                                readinessEdge);
+                    }
+
+                    @Override
+                    public boolean canExecuteClimbExit(AgentNavigationGraph readinessGraph,
+                                                       BotEntry readinessEntry,
+                                                       Point readinessBotPos,
+                                                       AgentNavigationGraph.Edge readinessEdge) {
+                        return canExecuteClimbExitFromCurrentPosition(
+                                readinessGraph,
+                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                readinessBotPos,
+                                readinessEdge);
+                    }
+
+                    @Override
+                    public boolean canExecuteClimbEntry(AgentNavigationGraph readinessGraph,
+                                                        BotEntry readinessEntry,
+                                                        Point readinessBotPos,
+                                                        AgentNavigationGraph.Edge readinessEdge) {
+                        return canExecuteClimbEntryFromCurrentPosition(
+                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                readinessBotPos,
+                                readinessEdge,
+                                findRopeForRegion(AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                        readinessGraph.getRegion(readinessEdge.toRegionId)));
+                    }
+                });
     }
 
     private static Point selectWaypoint(BotEntry entry, AgentNavigationGraph graph, Point botPos, AgentNavigationGraph.Edge edge) {

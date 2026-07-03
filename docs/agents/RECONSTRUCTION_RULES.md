@@ -4021,6 +4021,9 @@ Recent reconstruction notes:
   temporary helper while larger waypoint routing migrates.
 - Climb waypoint selection now lives in `AgentNavigationWaypointService` with
   `BotNavigationManager` supplying the existing climb-exit readiness callback.
+- Precise waypoint targeting policy now lives in
+  `AgentNavigationPreciseTargetService`; `BotNavigationManager` supplies the
+  existing jump/drop/climb readiness callbacks.
 
 Initial reconstruction order:
 
