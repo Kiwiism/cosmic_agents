@@ -2,9 +2,9 @@ package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.plans.AgentTask;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ class AgentScriptTaskRuntimeTest {
             executionService.when(() -> AgentScriptTaskExecutionService.isComplete(
                             eq(entry),
                             eq(task),
-                            eq(BotMovementManager.configuredStopDist())))
+                            eq(AgentMovementPhysicsConfig.configuredStopDist())))
                     .thenAnswer(invocation -> {
                         calls.add("complete");
                         return true;

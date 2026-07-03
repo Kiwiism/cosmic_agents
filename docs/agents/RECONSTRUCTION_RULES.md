@@ -3809,6 +3809,11 @@ Recent reconstruction notes:
   state or warm the matching navigation graph. The same unchanged-profile
   short-circuit, async graph warmup, profile write, and navigation-state clear
   behavior are preserved.
+- Agent trade/inventory runtime adapters and script task tests now read
+  movement tick/stop distances from `AgentMovementPhysicsConfig`; standalone
+  move-target runtime uses `AgentMovementProfileService` for profile refresh.
+  These paths no longer depend on `BotMovementManager` for config/profile
+  access.
 
 Initial reconstruction order:
 

@@ -1,10 +1,10 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementProfileService;
 
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentStandaloneMoveTargetRuntime {
     private AgentStandaloneMoveTargetRuntime() {
@@ -32,7 +32,7 @@ public final class AgentStandaloneMoveTargetRuntime {
                 runAiTick,
                 new AgentStandaloneMoveTargetTickService.Hooks(
                         AgentMapTransitionRuntime::groundAfterMapChange,
-                        BotMovementManager::refreshMovementProfile,
+                        AgentMovementProfileService::refreshMovementProfile,
                         (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
                                 moveEntry,
                                 targetPosition,

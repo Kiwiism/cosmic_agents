@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.Character;
@@ -28,7 +29,6 @@ import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
-import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
 
@@ -61,7 +61,7 @@ public final class AgentBotInventoryRuntimeAdapters {
         return AgentManualTradeRuntimeService.RuntimeCallbacks.of(
                 () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
                 AgentMovementTimers::tickDown,
-                BotMovementManager::configuredTickMs,
+                AgentMovementPhysicsConfig::configuredMovementTickMs,
                 peer -> peer.getClient() instanceof client.BotClient,
                 (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
                 AgentTradeDialogueService::manualTradeGreeting,
@@ -73,7 +73,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentMovementTimers::tickDown,
                 Character::getTrade,
                 AgentMovementTimers::delayAfterCurrentTick,
-                BotMovementManager::configuredTickMs,
+                AgentMovementPhysicsConfig::configuredMovementTickMs,
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentTradeRecipientService::resolveTradeRecipient,
