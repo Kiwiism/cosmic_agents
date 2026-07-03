@@ -32,6 +32,9 @@ Recent reconstruction notes:
 - Equipment useful-stat scoring and defense-adjusted expected damage moved to
   `AgentEquipmentScoringPolicy`; the legacy bot optimizer delegates to the
   Agent scoring policy for these pure calculations.
+- Auto-equip throttle state moved to `AgentAutoEquipThrottle`; the legacy bot
+  optimizer delegates the same force and 30-second duplicate-trigger behavior
+  to Agent-owned state.
 - Inventory/trade tick entry ownership moved fully to
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
   `AgentCommonTickRuntime` and legacy parity tests now call the Agent inventory

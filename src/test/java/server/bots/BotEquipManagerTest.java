@@ -867,21 +867,6 @@ class BotEquipManagerTest {
     }
 
     @Test
-    void autoEquipTriggerIsThrottledPerBotUnlessForced() {
-        Character bot = mock(Character.class);
-        when(bot.getId()).thenReturn(9_876_543);
-
-        assertTrue(BotEquipManager.shouldRunAutoEquip(bot, 1_000L, false));
-        assertFalse(BotEquipManager.shouldRunAutoEquip(bot, 5_000L, false),
-                "duplicate mode-command triggers should not rerun the optimizer");
-        assertTrue(BotEquipManager.shouldRunAutoEquip(bot, 6_000L, true),
-                "explicit autoequip command should bypass the throttle");
-        assertFalse(BotEquipManager.shouldRunAutoEquip(bot, 7_000L, false),
-                "forced runs still refresh the normal throttle window");
-        assertTrue(BotEquipManager.shouldRunAutoEquip(bot, 36_001L, false));
-    }
-
-    @Test
     void clawerFullEquipLogDoesNotHitParetoCap() {
         Character bot = mock(Character.class);
         when(bot.getJob()).thenReturn(Job.ASSASSIN);

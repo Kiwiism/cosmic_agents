@@ -70,7 +70,8 @@ Capability bins:
   remaining legacy optimizer implementation is isolated behind that Agent
   capability boundary for future extraction. Slot alias resolution lives in
   `AgentEquipmentSlotResolver`; pure scoring helpers live in
-  `AgentEquipmentScoringPolicy`.
+  `AgentEquipmentScoringPolicy`; auto-equip duplicate-trigger state lives in
+  `AgentAutoEquipThrottle`.
 - `supplies`
 - `trade`
 - `shop`

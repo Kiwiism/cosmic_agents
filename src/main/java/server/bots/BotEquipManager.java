@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
@@ -51,9 +52,6 @@ public class BotEquipManager {
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
     /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
     private static final int MAX_PARETO_STATES = 2000;
-    private static final long AUTOEQUIP_THROTTLE_MS = 30_000L;
-    private static final Map<Integer, Long> LAST_AUTOEQUIP_MS = new java.util.concurrent.ConcurrentHashMap<>();
-
     record EquipScore(int damage, int statSum) {}
     record WeaponScoreBreakdown(int rawMax, int preCycleDamage, int cycleMs, int normalizedDamage) {}
 
@@ -152,22 +150,7 @@ public class BotEquipManager {
     }
 
     static boolean shouldRunAutoEquip(Character bot, long nowMs, boolean force) {
-        if (force) {
-            if (bot != null) {
-                LAST_AUTOEQUIP_MS.put(bot.getId(), nowMs);
-            }
-            return true;
-        }
-        if (bot == null) {
-            return true;
-        }
-        int botId = bot.getId();
-        Long previous = LAST_AUTOEQUIP_MS.get(botId);
-        if (previous != null && nowMs - previous < AUTOEQUIP_THROTTLE_MS) {
-            return false;
-        }
-        LAST_AUTOEQUIP_MS.put(botId, nowMs);
-        return true;
+        return AgentAutoEquipThrottle.shouldRun(bot, nowMs, force);
     }
 
     /**
