@@ -3997,6 +3997,9 @@ Recent reconstruction notes:
 - Navigation edge readiness thresholds now live in
   `AgentNavigationEdgeReadinessService`; `BotNavigationManager` delegates while
   execution sequencing remains in the temporary bot navigation shell.
+- Rope/climb navigation entry and exit predicates now live in
+  `AgentNavigationRopeEdgeService`; `BotNavigationManager` delegates while
+  side-effecting climb attach/broadcast behavior remains unchanged.
 
 Initial reconstruction order:
 

@@ -176,6 +176,8 @@ Capability bins:
   `AgentNavigationCommittedEdgeService`.
   Edge execution readiness thresholds live in
   `AgentNavigationEdgeReadinessService`.
+  Rope/climb edge entry and exit predicates live in
+  `AgentNavigationRopeEdgeService`.
 - `supplies`
 - `trade`
 - `shop`

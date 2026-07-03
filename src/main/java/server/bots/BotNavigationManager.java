@@ -6,6 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
+import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -1276,40 +1277,27 @@ public final class BotNavigationManager {
     }
 
     private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
-        return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
-                && botPos.y >= AgentNavigationPhysicsService.firstClimbableY(rope)
-                && botPos.y <= rope.bottomY();
+        return AgentNavigationRopeEdgeService.canGrabRopeAtCurrentPosition(botPos, rope);
     }
 
     private static boolean canAttachToRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
-        return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
-                && edge.endPoint.y == AgentNavigationPhysicsService.firstClimbableY(rope)
-                && botPos.y < rope.topY()
-                && rope.topY() - botPos.y <= AgentMovementPhysicsConfig.configuredMaxSnapDrop();
+        return AgentNavigationRopeEdgeService.canAttachToRopeFromTopPlatform(edge, botPos, rope);
     }
 
     private static boolean canGrabRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
-        return edge.startPoint.y <= rope.topY() + AgentMovementPhysicsConfig.configuredJumpYThreshold()
-                && Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX();
+        return AgentNavigationRopeEdgeService.canGrabRopeFromTopPlatform(edge, botPos, rope);
     }
 
     private static boolean canExecuteClimbEntryFromCurrentPosition(MapleMap map,
                                                                    Point botPos,
                                                                    AgentNavigationGraph.Edge edge,
                                                                    Rope rope) {
-        return rope != null && (canGrabRopeAtCurrentPosition(botPos, rope)
-                || canAttachToRopeFromTopPlatform(edge, botPos, rope)
-                || canGrabRopeFromTopPlatform(edge, botPos, rope)
-                || canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge));
+        return AgentNavigationRopeEdgeService.canExecuteClimbEntryFromCurrentPosition(botPos, edge, rope);
     }
 
     private static boolean canExecuteGroundRopeJumpEntryFromCurrentPosition(Point botPos,
                                                                            AgentNavigationGraph.Edge edge) {
-        if (botPos == null || edge == null || edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
-            return false;
-        }
-        return edge.containsLaunchX(botPos.x)
-                && Math.abs(botPos.y - edge.startPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
+        return AgentNavigationRopeEdgeService.canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge);
     }
 
     private static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,
@@ -1344,23 +1332,7 @@ public final class BotNavigationManager {
     }
 
     private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
-        // Top-of-rope tolerance window only: the bot lands at firstClimbableY when grabbing
-        // from above (canTopGrab/canTopStep), and the launch arc is invariant within the first
-        // climbStep below the top. Non-top anchors are single-point launch windows whose arcs
-        // are precomputed by simulateRopeJumpLanding — launching from any other Y misses the
-        // destination. The bot reaches non-top anchors exactly via the precise-target snap in
-        // AgentClimbMovementService.shouldSnapToClimbTarget (sub-tick clamp; the only one in the
-        // physics path), so the bypass `botPos.y == edge.startPoint.y` in
-        // canExecuteClimbExitFromCurrentPosition covers those without tolerance here.
-        if (rope == null || botPos == null || edge == null || edge.launchStepX == 0) {
-            return false;
-        }
-        int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
-        return edge.startPoint.x == rope.x()
-                && edge.startPoint.y == firstClimbableY
-                && botPos.x == rope.x()
-                && botPos.y >= firstClimbableY
-                && botPos.y <= firstClimbableY + AgentMovementKinematicsService.climbStepPerTick() + 2;
+        return AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(rope, botPos, edge);
     }
 
     private static void startClimbing(BotEntry entry, Character bot, Rope rope, int climbY) {
@@ -1429,22 +1401,11 @@ public final class BotNavigationManager {
     }
 
     private static boolean isRopeEntryEdge(AgentNavigationGraph graph, AgentNavigationGraph.Edge edge) {
-        if (edge.type != AgentNavigationGraph.EdgeType.CLIMB) {
-            return false;
-        }
-
-        AgentNavigationGraph.Region from = graph.getRegion(edge.fromRegionId);
-        AgentNavigationGraph.Region to = graph.getRegion(edge.toRegionId);
-        return from != null && to != null && !from.isRopeRegion && to.isRopeRegion;
+        return AgentNavigationRopeEdgeService.isRopeEntryEdge(graph, edge);
     }
 
     static boolean isTopStepOffExit(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
-        if (rope == null || botPos == null || edge == null || edge.launchStepX != 0) {
-            return false;
-        }
-        return edge.startPoint.y == rope.topY()
-                && Math.abs(edge.endPoint.y - rope.topY()) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2
-                && botPos.y <= rope.topY() + AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
+        return AgentNavigationRopeEdgeService.isTopStepOffExit(rope, botPos, edge);
     }
 
     private static Rope findRopeForRegion(MapleMap map, AgentNavigationGraph.Region region) {
