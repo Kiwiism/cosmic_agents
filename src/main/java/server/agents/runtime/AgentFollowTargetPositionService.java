@@ -5,7 +5,7 @@ import constants.game.CharacterStance;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotNavigationManager;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -58,7 +58,7 @@ public final class AgentFollowTargetPositionService {
             AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
             if (graph != null) {
                 int leaderRegionId = leader != null
-                        ? BotNavigationManager.resolveCharacterRegionId(graph, map, leader)
+                        ? AgentNavigationRegionService.resolveCharacterRegionId(graph, map, leader)
                         : graph.findRegionId(map, leaderPos);
                 AgentNavigationGraph.Region leaderRegion = graph.getRegion(leaderRegionId);
                 if (leaderRegion != null) {

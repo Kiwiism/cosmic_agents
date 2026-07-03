@@ -3959,6 +3959,9 @@ Recent reconstruction notes:
 - Movement capability ground-target and mob-avoidance region classification
   now enter through `AgentNavigationRegionService`. The service delegates to
   the existing navigation manager until the pathfinding internals migrate.
+- Follow-target character region classification now also enters through
+  `AgentNavigationRegionService`, preserving the existing rope/platform clamp
+  behavior while removing another direct navigation-manager dependency.
 
 Initial reconstruction order:
 

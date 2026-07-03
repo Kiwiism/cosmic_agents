@@ -160,7 +160,8 @@ Capability bins:
   `AgentNavigationPhysicsService`, including the graph-build walk-region
   lookup lifecycle used while navigation edges are generated.
   Ground-target and mob-avoidance region classification enter through
-  `AgentNavigationRegionService`.
+  `AgentNavigationRegionService`; follow-target character region
+  classification uses the same seam.
 - `supplies`
 - `trade`
 - `shop`
