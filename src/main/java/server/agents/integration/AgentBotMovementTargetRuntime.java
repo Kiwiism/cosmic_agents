@@ -4,7 +4,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.bots.BotEntry;
 
 /**
- * Agent-owned target snapshot facade over temporary BotManager target capture.
+ * Agent-owned target snapshot facade.
  */
 public final class AgentBotMovementTargetRuntime {
     private AgentBotMovementTargetRuntime() {

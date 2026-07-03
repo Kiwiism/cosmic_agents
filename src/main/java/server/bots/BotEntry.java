@@ -1960,7 +1960,7 @@ public class BotEntry {
         this.pendingGearPromptAt = pendingGearPromptAt;
     }
 
-    // Last known owner position (set each tick in BotManager, read by pathLogger)
+    // Last known leader position (set each tick by Agent runtime, read by pathLogger)
     Point lastOwnerPos = null;
     boolean lastTickWasAi = false;
     long lastTickAtMs = 0L;

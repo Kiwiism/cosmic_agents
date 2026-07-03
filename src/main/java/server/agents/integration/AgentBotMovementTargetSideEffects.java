@@ -13,8 +13,8 @@ import java.awt.Point;
 import java.util.List;
 
 /**
- * Temporary bot-side gateway for AgentTargetSnapshot reads while BotManager
- * still assembles target resolution.
+ * Gateway for AgentTargetSnapshot reads while target resolution continues to be
+ * split into Agent runtime services.
  */
 public final class AgentBotMovementTargetSideEffects {
     private static final int PLATFORM_EDGE_INSET_PX = 12;

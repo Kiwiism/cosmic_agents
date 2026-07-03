@@ -4,8 +4,7 @@ import client.Character;
 import server.bots.BotEntry;
 
 /**
- * Temporary Agent-owned bridge for status callbacks still triggered by the
- * legacy BotManager tick and lifecycle shell.
+ * Agent-owned bridge for status callbacks from tick and lifecycle services.
  */
 public final class AgentBotManagerStatusRuntime {
     private AgentBotManagerStatusRuntime() {

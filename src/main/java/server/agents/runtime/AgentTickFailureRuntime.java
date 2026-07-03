@@ -12,8 +12,7 @@ import server.bots.BotMovementManager;
 import java.util.function.Consumer;
 
 /**
- * Temporary runtime hook bundle for tick failure side effects while BotManager
- * still owns the guarded tick entry point.
+ * Runtime hook bundle for tick failure side effects.
  */
 public final class AgentTickFailureRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentTickFailureRuntime.class);

@@ -59,14 +59,14 @@ Recent reconstruction notes:
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
   `AgentCommonTickRuntime` and legacy parity tests now call the Agent inventory
   tick facade directly; `server.bots.BotInventoryManager` has been deleted.
-- BotManager runtime/lifecycle/tick reconstruction milestone audit: production
-  source no longer imports `server.bots.BotManager` or calls
-  `BotManager.getInstance()`. BotManager remains as a legacy compatibility
-  facade whose methods delegate to Agent runtime/capability modules.
+- BotManager runtime/lifecycle/tick reconstruction milestone is complete:
+  production source no longer imports `server.bots.BotManager` or calls
+  `BotManager.getInstance()`, focused runtime/config/supply/combat parity tests
+  passed, and the production `server.bots.BotManager` file has been deleted.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
-  `server.bots.BotManager`, reducing the remaining test gate before deleting
-  the BotManager compatibility shell.
+  `server.bots.BotManager`; this removed the final compatibility-shell test
+  gate before deleting the BotManager production file.
 - Movement simulation, follow perf harness, and BotManager parity tests now
   read shared tick/loot/follow config from `AgentRuntimeConfig` instead of
   `BotManager.cfg`. This preserves the same values while removing another
@@ -89,8 +89,9 @@ Recent reconstruction notes:
 - Server chat/spawn integration now enters through
   `AgentInteractionRuntime`. General chat, party chat, messenger invite
   fallback, party invite fallback, and `@spawnbot` no longer call
-  `BotManager.getInstance()` for chat/spawn behavior; BotManager keeps only
-  legacy compatibility delegates for those entry points.
+  `BotManager.getInstance()` for chat/spawn behavior. The later BotManager
+  deletion removed those legacy compatibility delegates after callers moved to
+  Agent-owned entry points.
 - Dead BotManager script-task and script-item compatibility wrappers were
   removed. Script queueing, drop-item execution, queued-task checks, and cheap
   move-target checks now use Agent script services directly.

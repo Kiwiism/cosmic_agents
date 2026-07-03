@@ -10,8 +10,7 @@ import server.bots.BotEntry;
 import java.util.List;
 
 /**
- * Temporary legacy hook bundle for transferring live Agents between leaders
- * while stop/register side effects still enter through BotManager.
+ * Runtime hook bundle for transferring live Agents between leaders.
  */
 public final class AgentTransferRuntime {
     private AgentTransferRuntime() {

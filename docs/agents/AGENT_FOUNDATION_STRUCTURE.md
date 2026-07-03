@@ -29,12 +29,12 @@ Target package groups:
   Formation state, target snapshots, and movement-only stepping are now called
   directly by Agent tests/harnesses through `AgentFormationRuntime`,
   `AgentTargetSnapshotRuntime`, and `AgentMovementOnlyStepRuntime` instead of
-  temporary BotManager helper methods.
+  temporary manager helper methods.
   Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
   Ownerless movement-only tick preparation enters through
   `AgentMovementOnlyStepRuntime`, including default movement-only config
-  assembly for BotManager compatibility entry points.
+  assembly for Agent runtime entry points.
   Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
   Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.
   Standalone move-target config-bound dispatch enters through
@@ -42,8 +42,8 @@ Target package groups:
   Tick-failure default hook wiring enters through `AgentTickFailureRuntime`.
   Inactive-leader town-return timeout ownership enters through
   `AgentLeaderSafetyRuntime`.
-  BotManager remains only a temporary compatibility caller for legacy entry
-  points.
+  The production `server.bots.BotManager` compatibility shell has been
+  deleted; runtime/lifecycle entry points are Agent-owned.
 - `server.agents.model`: identity, mode, profile, leader reference.
 - `server.agents.commands`: command parsing/routing/result boundaries.
 - `server.agents.plans`: objective and plan execution framework.

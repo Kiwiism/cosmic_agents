@@ -14,7 +14,7 @@ import server.maps.MapleMap;
 import java.awt.Point;
 
 /**
- * Agent-owned movement command facade over temporary BotManager side effects.
+ * Agent-owned movement command facade.
  */
 public final class AgentBotMovementCommandRuntime {
     private AgentBotMovementCommandRuntime() {

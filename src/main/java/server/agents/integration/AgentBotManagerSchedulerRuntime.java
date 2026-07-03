@@ -3,8 +3,7 @@ package server.agents.integration;
 import server.bots.BotEntry;
 
 /**
- * Temporary Agent-owned bridge for delayed callbacks still triggered by the
- * legacy BotManager shell.
+ * Agent-owned bridge for delayed runtime callbacks.
  */
 public final class AgentBotManagerSchedulerRuntime {
     private AgentBotManagerSchedulerRuntime() {

@@ -7,7 +7,7 @@ import java.awt.Point;
 
 /**
  * Agent-owned read-only target snapshot used by movement, navigation, and tick
- * orchestration while target assembly is still being migrated out of BotManager.
+ * orchestration.
  */
 public record AgentTargetSnapshot(AgentFormationService.FormationState formation,
                                   Point rawOwnerPos,

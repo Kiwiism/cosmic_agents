@@ -5,8 +5,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.bots.BotEntry;
 
 /**
- * Temporary Agent-owned bridge for reply delivery still triggered by the
- * legacy BotManager shell.
+ * Agent-owned bridge for reply delivery from runtime services.
  */
 public final class AgentBotManagerReplyRuntime {
     private AgentBotManagerReplyRuntime() {

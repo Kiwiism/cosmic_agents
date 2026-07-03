@@ -6,8 +6,7 @@ import server.bots.BotEntry;
 import java.util.function.Consumer;
 
 /**
- * Agent-owned lifecycle chat command wiring while BotManager remains a
- * compatibility facade for legacy callers.
+ * Agent-owned lifecycle chat command wiring for recruit, transfer, and dismiss.
  */
 public final class AgentLifecycleChatCommandRuntime {
     private AgentLifecycleChatCommandRuntime() {

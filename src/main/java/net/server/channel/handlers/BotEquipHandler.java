@@ -2,8 +2,8 @@
     Android/bot equip window — server side of the Kaentake client CP_BotEquip /
     LP_BotEquip protocol (see ANDROID_EQUIP_SERVER_HANDOFF + tooltip handoff).
 
-    The window shows/edits a player's OWNED BOTS (real Characters in
-    server.bots.BotManager). The client only REQUESTS; the server validates and
+    The window shows/edits a player's live Agents (real Characters tracked by
+    Agent runtime services). The client only REQUESTS; the server validates and
     is the source of truth, replying with a fresh RESP_SNAPSHOT.
 
     Wire (client -> server, RecvOpcode.BOT_EQUIP):
