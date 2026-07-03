@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationClimbExecutionService;
+import server.agents.capabilities.navigation.AgentNavigationClimbEntryExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationDropExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
@@ -23,13 +24,10 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
-import server.agents.capabilities.movement.AgentJumpActionService;
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.capabilities.movement.AgentQueuedMovementActionService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -282,56 +280,9 @@ public final class BotNavigationManager {
         if (AgentBotClimbStateRuntime.climbing(entry)) {
             return tryExecuteClimbExit(graph, entry, bot, botPos, rawTargetPos, edge);
         } else {
-            return tryExecuteClimbEntry(graph, entry, bot, botPos, rawTargetPos, edge);
+            return AgentNavigationClimbEntryExecutionService.tryExecuteClimbEntry(graph, entry, bot, botPos, edge)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
         }
-    }
-
-    private static NavigationDirective tryExecuteClimbEntry(AgentNavigationGraph graph,
-                                                             BotEntry entry,
-                                                             Character bot,
-                                                             Point botPos,
-                                                             Point rawTargetPos,
-                                                             AgentNavigationGraph.Edge edge) {
-        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
-        Rope rope = findRopeForRegion(bot.getMap(), toRegion);
-        if (rope == null) {
-            return null;
-        }
-        if (!canExecuteClimbEntryFromCurrentPosition(bot.getMap(), botPos, edge, rope)) {
-            AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-pos");
-            return null;
-        }
-
-        if (canGrabRopeAtCurrentPosition(botPos, rope)) {
-            // Bot is already within the rope's Y range — attach at its current Y, not the edge
-            // endPoint. Using endPoint.y (rope top) would teleport a bot at the bottom of the
-            // rope all the way to the top instantly.
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentNavigationClimbExecutionService.startClimbing(entry, bot, rope, botPos.y);
-            return new NavigationDirective(rawTargetPos, true);
-        }
-        if (canAttachToRopeFromTopPlatform(edge, botPos, rope)) {
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentNavigationClimbExecutionService.startClimbing(entry, bot, rope, edge.endPoint.y);
-            return new NavigationDirective(rawTargetPos, true);
-        }
-        if (canGrabRopeFromTopPlatform(edge, botPos, rope)) {
-            // Top-of-rope entry is a separate intent from down-jump. Queue it and let grounded
-            // physics consume the request on the next tick, just like other input-driven actions.
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentQueuedMovementActionService.queueTopRopeEntry(entry, bot, rope, edge.endPoint.y);
-            AgentMovementBroadcastService.broadcastMovement(entry);
-            return new NavigationDirective(rawTargetPos, true);
-        }
-
-        if (canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge)) {
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
-            AgentJumpActionService.initiateRopeJump(entry, bot, edge.launchStepX);
-            return new NavigationDirective(rawTargetPos, true);
-        }
-
-        AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-reach");
-        return null;
     }
 
     private static NavigationDirective tryExecuteClimbExit(AgentNavigationGraph graph,
@@ -778,28 +729,11 @@ public final class BotNavigationManager {
         return AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
     }
 
-    private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
-        return AgentNavigationRopeEdgeService.canGrabRopeAtCurrentPosition(botPos, rope);
-    }
-
-    private static boolean canAttachToRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
-        return AgentNavigationRopeEdgeService.canAttachToRopeFromTopPlatform(edge, botPos, rope);
-    }
-
-    private static boolean canGrabRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
-        return AgentNavigationRopeEdgeService.canGrabRopeFromTopPlatform(edge, botPos, rope);
-    }
-
     private static boolean canExecuteClimbEntryFromCurrentPosition(MapleMap map,
                                                                    Point botPos,
                                                                    AgentNavigationGraph.Edge edge,
                                                                    Rope rope) {
         return AgentNavigationRopeEdgeService.canExecuteClimbEntryFromCurrentPosition(botPos, edge, rope);
-    }
-
-    private static boolean canExecuteGroundRopeJumpEntryFromCurrentPosition(Point botPos,
-                                                                           AgentNavigationGraph.Edge edge) {
-        return AgentNavigationRopeEdgeService.canExecuteGroundRopeJumpEntryFromCurrentPosition(botPos, edge);
     }
 
     private static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,

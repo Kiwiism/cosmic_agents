@@ -180,6 +180,8 @@ Capability bins:
   Climb-start side effects live in `AgentNavigationClimbExecutionService`.
   Explicit drop edge execution lives in `AgentNavigationDropExecutionService`.
   Jump edge execution lives in `AgentNavigationJumpExecutionService`.
+  Climb-entry edge execution lives in
+  `AgentNavigationClimbEntryExecutionService`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell

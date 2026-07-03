@@ -4002,6 +4002,10 @@ Recent reconstruction notes:
   The same in-air/climbing guards, selected jump readiness calculation,
   top-of-rope fallback attach, block reason, edge target state write, and
   jump action initiation behavior are preserved.
+- Climb-entry edge execution now lives in
+  `AgentNavigationClimbEntryExecutionService`. The same rope lookup,
+  climb-entry readiness, block reasons, direct attach paths, queued top-rope
+  entry, movement broadcast, and ground rope-jump behavior are preserved.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
