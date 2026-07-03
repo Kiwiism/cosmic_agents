@@ -83,6 +83,8 @@ Capability bins:
   optimizer stat snapshot data lives in `AgentEquipmentStatSnapshot`;
   optimizer metadata and requirement hooks live in
   `AgentEquipmentOptimizerHooks`;
+  weapon-branch debug score breakdown data lives in
+  `AgentWeaponScoreBreakdown`;
   unequip command execution lives in `AgentEquipmentUnequipService`.
 - `supplies`
 - `trade`

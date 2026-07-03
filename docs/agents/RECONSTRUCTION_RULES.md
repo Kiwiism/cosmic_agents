@@ -3689,6 +3689,9 @@ Recent reconstruction notes:
   `AgentEquipmentOptimizerHooks`; immediate and future requirement hook
   adapters preserve the same ItemInformationProvider calls and test stubbing
   surface while `BotEquipManager` no longer owns that boundary type.
+- Weapon-branch debug score breakdown data now lives in
+  `AgentWeaponScoreBreakdown`; raw max, pre-cycle damage, cycle timing, and
+  normalized-damage reporting are unchanged.
 
 Initial reconstruction order:
 

@@ -34,6 +34,7 @@ import server.agents.capabilities.equipment.AgentEquipmentStatSnapshot;
 import server.agents.capabilities.equipment.AgentEquipmentUnequipService;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
+import server.agents.capabilities.equipment.AgentWeaponScoreBreakdown;
 import server.agents.integration.AgentBotEquipmentRuntime;
 import server.agents.integration.AgentBotRangeReportRuntime;
 import server.combat.CombatFormulaProvider;
@@ -61,8 +62,6 @@ public class BotEquipManager {
     private static final short[] RING_SLOTS = {-12, -13, -15, -16};
     /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
     private static final int MAX_PARETO_STATES = 2000;
-    record WeaponScoreBreakdown(int rawMax, int preCycleDamage, int cycleMs, int normalizedDamage) {}
-
     /**
      * Pareto-frontier DP across equipment slots. Outer loop iterates each viable weapon
      * (currently-wearable + stat-only-blocked, dominance-pruned); inner DP enumerates non-
@@ -248,7 +247,7 @@ public class BotEquipManager {
                 AgentEquipmentScore s = b.result().score();
                 AgentEquipmentStatSnapshot branchSnap = snapshotForBranch(naked, b.weapon(), b.result().picks());
                 WeaponType wt = b.weapon() != null ? ii.getWeaponType(b.weapon().getItemId()) : null;
-                WeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.weapon(), wt, mob);
+                AgentWeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.weapon(), wt, mob);
                 String tag = i == 0 ? "*" : " ";
                 out.add(tag + " W=" + wName
                         + " dmg=" + s.damage()
@@ -386,7 +385,7 @@ public class BotEquipManager {
             AgentEquipmentScore s = b.r().score();
             AgentEquipmentStatSnapshot branchSnap = snapshotForBranch(naked, b.w(), b.r().picks());
             WeaponType wt = b.w() != null ? ii.getWeaponType(b.w().getItemId()) : null;
-            WeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.w(), wt, mob);
+            AgentWeaponScoreBreakdown breakdown = weaponScoreBreakdown(branchSnap, b.w(), wt, mob);
             sb.append(i == 0 ? "[*] " : "[ ] ").append(wName)
               .append(" id=").append(b.w() == null ? 0 : b.w().getItemId())
               .append(" dmg=").append(s.damage())
@@ -929,10 +928,10 @@ public class BotEquipManager {
         return snap;
     }
 
-    private static WeaponScoreBreakdown weaponScoreBreakdown(AgentEquipmentStatSnapshot sim, Equip weapon, WeaponType wt,
-                                                             AgentMapDamageProfile mob) {
+    private static AgentWeaponScoreBreakdown weaponScoreBreakdown(AgentEquipmentStatSnapshot sim, Equip weapon, WeaponType wt,
+        AgentMapDamageProfile mob) {
         if (isMageJob(sim.job()) || wt == null) {
-            return new WeaponScoreBreakdown(0, 0, 0, 0);
+            return new AgentWeaponScoreBreakdown(0, 0, 0, 0);
         }
         int rawMax = rawPhysicalMax(sim, wt);
         int preCycleDamage = damageWith(sim, null, wt, mob);
@@ -941,7 +940,7 @@ public class BotEquipManager {
         if (cycleMs > 0) {
             normalizedDamage = (int) (preCycleDamage * 1000.0 / cycleMs);
         }
-        return new WeaponScoreBreakdown(rawMax, preCycleDamage, cycleMs, normalizedDamage);
+        return new AgentWeaponScoreBreakdown(rawMax, preCycleDamage, cycleMs, normalizedDamage);
     }
 
     /** Naked stat snapshot: bot totals minus all currently-equipped non-cash gear. */
