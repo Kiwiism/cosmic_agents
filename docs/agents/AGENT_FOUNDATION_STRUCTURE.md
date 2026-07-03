@@ -171,6 +171,8 @@ Capability bins:
   manager delegates to it temporarily. Movement tick target resolution and
   committed-edge continuation now live in `AgentNavigationTargetService`;
   the bot navigation manager keeps compatibility delegates for old callers.
+  Grind navigation/fallback runtime hooks call Agent region and path services
+  directly.
   Path cost, heuristic, no-op walk collapse, precise walk-target policy, edge
   usability policy, production path search entry points, next-edge selection,
   optimality measurement, slow-path logging, and path reconstruction live in

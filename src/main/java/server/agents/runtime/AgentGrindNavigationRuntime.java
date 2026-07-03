@@ -3,8 +3,9 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.bots.BotEntry;
-import server.bots.BotNavigationManager;
 
 import java.awt.Point;
 
@@ -45,9 +46,9 @@ public final class AgentGrindNavigationRuntime {
 
     private static AgentGrindNavigationTargetSelector.NavigationHooks hooks() {
         return new AgentGrindNavigationTargetSelector.NavigationHooks(
-                BotNavigationManager::resolveCurrentRegionId,
-                BotNavigationManager::resolveTargetRegionId,
-                BotNavigationManager::findPath,
+                AgentNavigationRegionService::resolveCurrentRegionId,
+                AgentNavigationRegionService::resolveTargetRegionId,
+                AgentNavigationPathService::findPath,
                 AgentMovementPhysicsConfig.configuredGrindEdgeMargin(),
                 AgentMovementPhysicsConfig.configuredJumpYThreshold());
     }

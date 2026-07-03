@@ -4019,6 +4019,9 @@ Recent reconstruction notes:
   that adapt the Agent-owned directive result back to the legacy wrapper type.
   Directional-drop waypoint matching still reads the legacy walk-off physics
   result until the physics engine body moves in a later slice.
+- Grind navigation and fallback target runtime hooks now call
+  `AgentNavigationRegionService` and `AgentNavigationPathService` directly
+  instead of passing through `BotNavigationManager` compatibility delegates.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
