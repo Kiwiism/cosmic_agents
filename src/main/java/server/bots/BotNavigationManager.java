@@ -59,27 +59,11 @@ public final class BotNavigationManager {
     }
 
     static Point selectJumpWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
-        return selectJumpWaypoint(graph, entry, botPos, edge);
+        return AgentNavigationWaypointService.selectJumpWaypoint(entry, botPos, edge);
     }
 
     static Point selectJumpWaypoint(AgentNavigationGraph graph, Point botPos, AgentNavigationGraph.Edge edge) {
-        return selectJumpWaypoint(graph, null, botPos, edge);
-    }
-
-    private static Point selectJumpWaypoint(AgentNavigationGraph graph,
-                                            BotEntry entry,
-                                            Point botPos,
-                                            AgentNavigationGraph.Edge edge) {
-        if (entry == null) {
-            return AgentNavigationWaypointService.selectJumpWaypoint(graph, botPos, edge);
-        }
-        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
-        if (fromRegion == null || fromRegion.isRopeRegion) {
-            return new Point(edge.startPoint);
-        }
-        int targetX = selectedJumpLaunchX(entry, graph, edge);
-        return fromRegion.pointAt(targetX);
+        return AgentNavigationWaypointService.selectJumpWaypoint(graph, botPos, edge);
     }
 
     static Point selectClimbWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
@@ -266,12 +250,6 @@ public final class BotNavigationManager {
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
         return AgentNavigationLaunchWindowService.isWithinDropLaunchWindow(graph, botPos, edge);
-    }
-
-    private static int selectedJumpLaunchX(BotEntry entry,
-                                           AgentNavigationGraph graph,
-                                           AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, edge);
     }
 
     static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {

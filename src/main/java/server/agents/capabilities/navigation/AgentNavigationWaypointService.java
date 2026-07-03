@@ -36,6 +36,30 @@ public final class AgentNavigationWaypointService {
         return fromRegion.pointAt(targetX);
     }
 
+    public static Point selectJumpWaypoint(BotEntry entry,
+                                           Point botPos,
+                                           AgentNavigationGraph.Edge edge) {
+        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(
+                AgentBotRuntimeIdentityRuntime.botMap(entry),
+                AgentBotMovementStateRuntime.movementProfile(entry));
+        return selectJumpWaypoint(graph, entry, botPos, edge);
+    }
+
+    public static Point selectJumpWaypoint(AgentNavigationGraph graph,
+                                           BotEntry entry,
+                                           Point botPos,
+                                           AgentNavigationGraph.Edge edge) {
+        if (entry == null) {
+            return selectJumpWaypoint(graph, botPos, edge);
+        }
+        AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
+        if (fromRegion == null || fromRegion.isRopeRegion) {
+            return new Point(edge.startPoint);
+        }
+        int targetX = selectJumpLaunchX(entry, graph, edge);
+        return fromRegion.pointAt(targetX);
+    }
+
     public static Point selectStraightDropWaypoint(AgentNavigationGraph graph,
                                                    Point botPos,
                                                    AgentNavigationGraph.Edge edge) {

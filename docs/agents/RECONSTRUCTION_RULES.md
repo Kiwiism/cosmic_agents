@@ -4030,6 +4030,9 @@ Recent reconstruction notes:
   `AgentNavigationWaypointService`. `AgentNavigationTargetService` and the
   `BotNavigationManager` compatibility shell both call the same Agent-owned
   method, preserving the walk-off landing match behavior.
+- Entry-backed jump waypoint selection now also lives in
+  `AgentNavigationWaypointService`; the bot navigation shell delegates its
+  test-visible jump waypoint helpers to the Agent-owned overloads.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
