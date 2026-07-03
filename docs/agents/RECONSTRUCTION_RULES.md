@@ -3011,6 +3011,9 @@ Recent reconstruction notes:
   shaping, action planning, execution, and `move-ground` timing label are
   preserved. `BotPhysicsEngine.syncAndDetectGround`, `beginDownJump`, and
   `beginTopRopeEntry` are public compatibility seams only until physics migrates.
+- Movement phase dispatch now calls `AgentGroundMovementRuntimeService`
+  directly for grounded ticks; Agent production dispatch no longer imports
+  `BotMovementManager` for live ground movement.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

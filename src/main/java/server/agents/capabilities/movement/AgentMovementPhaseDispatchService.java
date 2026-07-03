@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -22,6 +21,6 @@ public final class AgentMovementPhaseDispatchService {
     }
 
     public static void tickGrounded(BotEntry entry, Point targetPos) {
-        BotMovementManager.tickGrounded(entry, targetPos);
+        AgentGroundMovementRuntimeService.tickGrounded(entry, targetPos);
     }
 }
