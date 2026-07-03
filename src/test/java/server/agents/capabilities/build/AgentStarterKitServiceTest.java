@@ -7,7 +7,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -61,12 +61,12 @@ class AgentStarterKitServiceTest {
 
         try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class);
              MockedStatic<AgentBotBuildStatusRuntime> statusRuntime = mockStatic(AgentBotBuildStatusRuntime.class);
-             MockedStatic<BotEquipManager> equipManager = mockStatic(BotEquipManager.class)) {
+             MockedStatic<AgentEquipmentService> equipManager = mockStatic(AgentEquipmentService.class)) {
             AgentStarterKitService.advanceJob(entry, Job.HUNTER);
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> AgentBuildService.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));
-            equipManager.verify(() -> BotEquipManager.autoEquip(bot, owner, null));
+            equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
             statusRuntime.verify(() -> AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot));
         }
     }

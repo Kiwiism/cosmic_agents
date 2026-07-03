@@ -10,7 +10,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,12 +59,12 @@ class AgentOfferServiceTest {
         Item item = new Item(1002000, (short) 1, (short) 1);
 
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class);
-             MockedStatic<BotEquipManager> equipment = mockStatic(BotEquipManager.class)) {
+             MockedStatic<AgentEquipmentService> equipment = mockStatic(AgentEquipmentService.class)) {
             offers.when(() -> AgentBotOfferRuntime.isOwnerIdleForOffer(entry)).thenReturn(true);
 
             AgentOfferService.notifyOwnerGainedEquip(entry, bot, item);
 
-            equipment.verify(() -> BotEquipManager.findRecommendationForItem(bot, owner, item), never());
+            equipment.verify(() -> AgentEquipmentService.findRecommendationForItem(bot, owner, item), never());
         }
     }
 

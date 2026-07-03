@@ -8,6 +8,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentBotActiveModeRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +25,7 @@ class AgentBotActiveModeRuntimeTest {
         entry.setNextGearSuggestionAt(99L);
         AgentChatStatusRuntime.ActiveModeActions actions = AgentBotActiveModeRuntime.activeModeActions(entry);
 
-        try (MockedStatic<BotEquipManager> equips = mockStatic(BotEquipManager.class);
+        try (MockedStatic<AgentEquipmentService> equips = mockStatic(AgentEquipmentService.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             offers.when(() -> AgentOfferService.offerBestGearToSibling(entry, bot)).thenReturn(true);
@@ -35,7 +36,7 @@ class AgentBotActiveModeRuntimeTest {
             actions.setupAutopot();
             actions.checkPotShareOnModeStart();
 
-            equips.verify(() -> BotEquipManager.autoEquip(bot, owner, null));
+            equips.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
             assertTrue(entry.nextGearSuggestionAt() > System.currentTimeMillis());
             offers.verify(() -> AgentOfferService.offerBestGearToSibling(entry, bot));
             potions.verify(() -> AgentPotionService.setupAutopotForBot(bot));
@@ -50,13 +51,13 @@ class AgentBotActiveModeRuntimeTest {
         BotEntry entry = new BotEntry(bot, owner, null);
         entry.setNextGearSuggestionAt(44L);
 
-        try (MockedStatic<BotEquipManager> equips = mockStatic(BotEquipManager.class);
+        try (MockedStatic<AgentEquipmentService> equips = mockStatic(AgentEquipmentService.class);
              MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             offers.when(() -> AgentOfferService.offerBestGearToSibling(entry, bot)).thenReturn(false);
 
             AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
 
-            equips.verify(() -> BotEquipManager.autoEquip(bot, owner, null));
+            equips.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
             offers.verify(() -> AgentOfferService.offerBestGearToSibling(entry, bot));
             assertEquals(0L, entry.nextGearSuggestionAt());
         }
