@@ -118,8 +118,9 @@ Capability bins:
   route through `AgentJumpProbeService`; ground and rope jump initiation routes
   through `AgentJumpActionService`; movement phase dispatch routes through
   `AgentMovementPhaseDispatchService` while the underlying physics implementation and
-  phase bodies remain later migration slices. Remaining climb, ground, rope,
-  swim, and airborne runtime slices continue to migrate.
+  phase bodies remain later migration slices. Movement speed/jump profile
+  refresh lives in `AgentMovementProfileService`. Remaining climb, ground,
+  rope, swim, and airborne runtime slices continue to migrate.
 - `supplies`
 - `trade`
 - `shop`

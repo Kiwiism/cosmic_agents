@@ -1,9 +1,9 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 public final class AgentLiveTickContextRuntime {
     private AgentLiveTickContextRuntime() {
@@ -20,7 +20,7 @@ public final class AgentLiveTickContextRuntime {
                 agent,
                 leader,
                 new AgentLiveTickContextService.Hooks(
-                        BotMovementManager::refreshMovementProfile,
+                        AgentMovementProfileService::refreshMovementProfile,
                         followAnchorResolver,
                         targetSnapshotCapture,
                         AgentTickStateMaintenanceService::updateObservedLeaderMotion,

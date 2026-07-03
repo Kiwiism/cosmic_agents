@@ -18,6 +18,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -212,22 +213,7 @@ public class BotMovementManager {
     }
 
     public static boolean refreshMovementProfile(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        AgentMovementProfile updated = AgentMovementProfile.fromCharacter(bot);
-        if (updated.equals(AgentBotMovementStateRuntime.movementProfile(entry))) {
-            return false;
-        }
-
-        MapleMap map = bot != null ? bot.getMap() : null;
-        if (map != null
-                && map.getFootholds() != null
-                && AgentNavigationGraphService.peekGraph(map, updated) == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, updated);
-        }
-
-        AgentBotMovementStateRuntime.setMovementProfile(entry, updated);
-        clearNavigationState(entry);
-        return true;
+        return AgentMovementProfileService.refreshMovementProfile(entry);
     }
 
     public static void resetEntryState(BotEntry entry) {

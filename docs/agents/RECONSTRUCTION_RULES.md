@@ -3804,6 +3804,11 @@ Recent reconstruction notes:
   their hooks directly to `BotMovementManager` phase methods. The phase method
   bodies remain temporary bot delegates until climb/swim/air/ground are moved
   one at a time.
+- Movement profile refresh now lives in `AgentMovementProfileService`; live
+  tick context no longer asks `BotMovementManager` to refresh speed/jump bucket
+  state or warm the matching navigation graph. The same unchanged-profile
+  short-circuit, async graph warmup, profile write, and navigation-state clear
+  behavior are preserved.
 
 Initial reconstruction order:
 

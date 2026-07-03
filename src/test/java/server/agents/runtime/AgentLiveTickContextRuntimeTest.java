@@ -3,8 +3,8 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -38,7 +38,7 @@ class AgentLiveTickContextRuntimeTest {
                 targetPosition,
                 "follow");
 
-        try (MockedStatic<BotMovementManager> movementManager = mockStatic(BotMovementManager.class)) {
+        try (MockedStatic<AgentMovementProfileService> movementProfileService = mockStatic(AgentMovementProfileService.class)) {
             AgentLiveTickContextService.Context context = AgentLiveTickContextRuntime.prepareLiveTickContext(
                     entry,
                     agent,
@@ -46,7 +46,7 @@ class AgentLiveTickContextRuntimeTest {
                     (tickEntry, tickLeader) -> followAnchor,
                     tickEntry -> snapshot);
 
-            movementManager.verify(() -> BotMovementManager.refreshMovementProfile(entry));
+            movementProfileService.verify(() -> AgentMovementProfileService.refreshMovementProfile(entry));
             assertEquals(agentPosition, context.agentPosition());
             assertSame(followAnchor, context.followAnchor());
             assertSame(snapshot, context.targetSnapshot());
