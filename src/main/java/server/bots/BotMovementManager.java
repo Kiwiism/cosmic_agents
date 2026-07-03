@@ -9,11 +9,7 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
-import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
-import server.agents.capabilities.movement.AgentGroundAction;
-import server.agents.capabilities.movement.AgentGroundActionExecutor;
-import server.agents.capabilities.movement.AgentGroundActionPlanner;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundMovementService;
@@ -23,7 +19,6 @@ import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
-import server.agents.capabilities.movement.AgentMobAvoidanceService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
@@ -549,96 +544,8 @@ public class BotMovementManager {
         return AgentGroundTargetService.adjustGrindingTargetPosition(entry, currentFh, targetPos);
     }
 
-    private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
-        AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
-        boolean directionalDrop = AgentGroundMovementPolicy.isDirectionalDropEdge(navEdge);
-        int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? preciseNavStopDist(navEdge) : cfg.STOP_DIST;
-        // No hysteresis when navigating to an edge — always move toward the waypoint
-        int followDist = directionalDrop ? 0
-                : (navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) ? stopDist : cfg.FOLLOW_DIST;
-        int stepX = resolveGroundStepX(entry, botPos, targetPos, stopDist, followDist);
-        if (stepX == 0) {
-            return MoveAction.idle();
-        }
-        boolean canWalkStep = BotPhysicsEngine.canWalkGroundStep(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
-        if (!canWalkStep) {
-            boolean blockedByWall = BotPhysicsEngine.isGroundStepBlockedByWall(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
-            if (!blockedByWall
-                    && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
-                    || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
-                // Walk-off drops should keep walking in the authored direction until physics
-                // detects lost ground and transitions into a fall with preserved momentum.
-                return MoveAction.walk(stepX);
-            }
-            // Wall-blocked nav edges are stale or invalid. Clear them so the next AI tick can
-            // replan instead of holding a walk stance into the wall.
-            if (blockedByWall && navEdge != null) {
-                clearNavigationState(entry);
-            } else if (navEdge != null && navEdge.type == AgentNavigationGraph.EdgeType.WALK) {
-                clearNavigationState(entry);
-            }
-            return MoveAction.idle();
-        }
-        if (AgentMobAvoidanceService.shouldJumpToAvoidMob(entry, currentFh, botPos, stepX)) {
-            return MoveAction.jump(stepX);
-        }
-        return MoveAction.walk(stepX);
-    }
-
     public static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
         return AgentGroundMovementService.resolveGroundStepX(entry, botPos, targetPos, stopDist, followDist);
-    }
-
-    private static void applyGroundAction(BotEntry entry, Foothold currentFh, MoveAction action) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        AgentBotMovementStateRuntime.setMoveDirection(entry, switch (action.type()) {
-            case WALK, JUMP -> Integer.compare(action.stepX(), 0);
-            default -> 0;
-        });
-
-        if (action.type() == ActionType.CROUCH) {
-            BotPhysicsEngine.queueDownJump(entry, bot);
-            broadcastMovement(entry);
-            return;
-        }
-        if (action.type() == ActionType.JUMP) {
-            initiateFixedArcJump(entry, bot, action.stepX());
-            return;
-        }
-
-        BotPhysicsEngine.GroundMotion motion =
-                BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh);
-        if (motion.lostGround()) {
-            broadcastMovement(entry);
-            return;
-        }
-
-        if (motion.stepX() == 0) {
-            applyIdleOrInPlaceMotion(entry, action);
-            return;
-        }
-
-        broadcastMovement(entry);
-    }
-
-    private static void applyIdleOrInPlaceMotion(BotEntry entry, MoveAction action) {
-        // Preserve ground momentum while still trying to walk/jump toward a nav target.
-        // Otherwise subpixel uphill/transition movement gets zeroed every tick and the bot
-        // can stall forever short of a valid launch window.
-        if (AgentBotMovementStateRuntime.movementVelocityX(entry) == 0 && action.type() == ActionType.IDLE) {
-            BotPhysicsEngine.idleOnGround(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
-        }
-        broadcastMovement(entry);
-    }
-
-    private static void performDownJump(BotEntry entry) {
-        BotPhysicsEngine.beginDownJump(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
-        broadcastMovement(entry);
-    }
-
-    private static void performTopRopeEntry(BotEntry entry) {
-        BotPhysicsEngine.beginTopRopeEntry(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
-        broadcastMovement(entry);
     }
 
     static int calcStepX(MapleMap map, int botX, int targetX, boolean wasMovingX) {

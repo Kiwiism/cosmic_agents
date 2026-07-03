@@ -3014,6 +3014,10 @@ Recent reconstruction notes:
 - Movement phase dispatch now calls `AgentGroundMovementRuntimeService`
   directly for grounded ticks; Agent production dispatch no longer imports
   `BotMovementManager` for live ground movement.
+- Dead BotMovementManager ground planner/executor compatibility clutter was
+  removed after grounded runtime moved to Agent services. The local climb
+  `MoveAction` helper remains temporarily because climb cleanup is a separate
+  slice.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner
