@@ -32,11 +32,11 @@ public final class AgentEquipmentService {
     }
 
     public static String unequipSlot(Character agent, short[] slots) {
-        return BotEquipManager.unequipSlot(agent, slots);
+        return AgentEquipmentUnequipService.unequipSlot(agent, slots);
     }
 
     public static String unequipAll(Character agent) {
-        return BotEquipManager.unequipAll(agent);
+        return AgentEquipmentUnequipService.unequipAll(agent);
     }
 
     public static short[] slotsFromName(String slotName) {

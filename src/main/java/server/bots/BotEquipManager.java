@@ -24,6 +24,7 @@ import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
+import server.agents.capabilities.equipment.AgentEquipmentUnequipService;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 import server.agents.integration.AgentBotEquipmentRuntime;
@@ -1343,31 +1344,7 @@ public class BotEquipManager {
     }
 
     public static String unequipAll(Character bot) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
-        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-
-        List<Short> equippedSlots = new ArrayList<>();
-        for (Item item : eqdInv.list()) {
-            if (ii.isCash(item.getItemId())) continue;
-            equippedSlots.add(item.getPosition());
-        }
-        if (equippedSlots.isEmpty()) return "nothing to unequip";
-
-        int freeSlots = eqpInv.getNumFreeSlot();
-        if (freeSlots < equippedSlots.size()) {
-            return "need " + equippedSlots.size() + " free equip slots, only have " + freeSlots;
-        }
-
-        equippedSlots.sort(Short::compare);
-        for (short src : equippedSlots) {
-            short dst = eqpInv.getNextFreeSlot();
-            if (dst < 0) {
-                return "ran out of equip slots while unequipping";
-            }
-            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, src, dst, (short) 1);
-        }
-        return "unequipped " + equippedSlots.size() + " item" + (equippedSlots.size() != 1 ? "s" : "");
+        return AgentEquipmentUnequipService.unequipAll(bot);
     }
 
     /**
@@ -1390,33 +1367,7 @@ public class BotEquipManager {
     }
 
     public static String unequipSlot(Character bot, short[] slots) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
-        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-
-        List<Short> toUnequip = new ArrayList<>();
-        for (short slot : slots) {
-            Item item = eqdInv.getItem(slot);
-            if (item != null && !ii.isCash(item.getItemId())) {
-                toUnequip.add(slot);
-            }
-        }
-        if (toUnequip.isEmpty()) {
-            return "nothing equipped there";
-        }
-        if (eqpInv.getNumFreeSlot() < toUnequip.size()) {
-            return "equip bag full";
-        }
-        StringBuilder names = new StringBuilder();
-        for (short src : toUnequip) {
-            Item item = eqdInv.getItem(src);
-            short dst = eqpInv.getNextFreeSlot();
-            if (dst < 0) return "ran out of equip slots";
-            InventoryManipulator.handleItemMove(bot.getClient(), InventoryType.EQUIP, src, dst, (short) 1);
-            if (!names.isEmpty()) names.append(", ");
-            names.append(ii.getName(item.getItemId()));
-        }
-        return "unequipped " + names;
+        return AgentEquipmentUnequipService.unequipSlot(bot, slots);
     }
 
     /** Returns the equipped slot(s) that match the given slot name from chat. Empty array = unknown. */

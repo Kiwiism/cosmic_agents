@@ -3658,6 +3658,11 @@ Recent reconstruction notes:
   `AgentEquipmentRecommendationPolicy`; immediate and future recommendation
   scopes preserve the same can-wear/stat-only gates while the legacy optimizer
   remains the temporary DP execution seam.
+- Equipment unequip command execution now lives in
+  `AgentEquipmentUnequipService`; unequip-all and unequip-slot reply strings,
+  cash-item skipping, free-slot guards, slot ordering, and item move side
+  effects are unchanged, while the service boundary no longer enters
+  `BotEquipManager` for those commands.
 
 Initial reconstruction order:
 
