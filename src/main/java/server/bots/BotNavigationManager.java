@@ -9,6 +9,7 @@ import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationPreciseTargetService;
+import server.agents.capabilities.navigation.AgentNavigationPortalService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationWarmupService;
@@ -44,18 +45,12 @@ import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.maps.MapleMap;
 import server.maps.Foothold;
-import server.maps.Portal;
 import server.maps.Rope;
 
 import java.awt.*;
 import java.util.List;
 
 public final class BotNavigationManager {
-    // After a bot takes a portal, suppress further portal usage for this long. Prevents a bot from
-    // immediately re-entering a portal (e.g. bouncing back through the return portal). Gates ONLY
-    // portal execution — movement, attacks and every other action continue unaffected.
-    private static final long PORTAL_USE_COOLDOWN_MS = 250L;
-
     public static final class NavigationDirective {
         public final Point targetPos;
         public final boolean consumedTick;
@@ -263,7 +258,9 @@ public final class BotNavigationManager {
             case JUMP -> tryExecuteJump(graph, entry, bot, rawTargetPos, edge);
             case DROP -> tryExecuteDrop(graph, entry, bot, botPos, rawTargetPos, edge);
             case CLIMB -> tryExecuteClimb(graph, entry, bot, botPos, rawTargetPos, edge);
-            case PORTAL -> isReadyForEdge(botPos, edge) ? tryExecutePortal(entry, bot, rawTargetPos, edge) : null;
+            case PORTAL -> isReadyForEdge(botPos, edge)
+                    && AgentNavigationPortalService.tryExecutePortal(entry, bot, edge.portalId)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
             default -> null;
         };
     }
@@ -436,24 +433,6 @@ public final class BotNavigationManager {
                                                      Point botPos,
                                                      AgentNavigationGraph.Edge edge) {
         return AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, botPos, edge);
-    }
-
-    private static NavigationDirective tryExecutePortal(BotEntry entry,
-                                                        Character bot,
-                                                        Point rawTargetPos,
-                                                        AgentNavigationGraph.Edge edge) {
-        if (AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
-            return null;
-        }
-        if (!usePortal(bot, edge.portalId)) {
-            return null;
-        }
-
-        AgentBotNavigationDebugStateRuntime.setPortalUseCooldownUntilMs(
-                entry, System.currentTimeMillis() + PORTAL_USE_COOLDOWN_MS);
-        AgentMovementStateResetService.clearNavigationState(entry);
-        AgentMovementStateResetService.resetEntryState(entry);
-        return new NavigationDirective(rawTargetPos, true);
     }
 
     private static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,
@@ -770,18 +749,6 @@ public final class BotNavigationManager {
     static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
                                                    AgentNavigationGraph.Edge replacement) {
         return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
-    }
-
-    private static boolean usePortal(Character bot, int portalId) {
-        Portal portal = bot.getMap().getPortal(portalId);
-        if (portal == null || !portal.getPortalStatus()) {
-            return false;
-        }
-
-        int oldMapId = bot.getMapId();
-        Point oldPos = bot.getPosition();
-        portal.enterPortal(bot.getClient());
-        return bot.getMapId() != oldMapId || !bot.getPosition().equals(oldPos);
     }
 
     private static boolean isReadyForEdge(Point botPos, AgentNavigationGraph.Edge edge) {

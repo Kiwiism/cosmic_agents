@@ -3988,6 +3988,9 @@ Recent reconstruction notes:
 - Bot navigation target resolution now calls Agent-owned movement reset and
   movement target snapshot services directly instead of keeping local
   `clearNavigation` / `captureTargetSnapshot` forwarding helpers.
+- Portal edge execution now lives in `AgentNavigationPortalService`. The same
+  portal-open check, enter-portal result check, 250 ms cooldown, navigation
+  clear, and entry movement reset ordering are preserved.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
