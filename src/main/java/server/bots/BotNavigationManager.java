@@ -43,8 +43,7 @@ public final class BotNavigationManager {
                                                       BotEntry entry,
                                                       int startRegionId,
                                                       int targetRegionId) {
-        return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId,
-                BotNavigationManager::isEdgeUsable, BotNavigationManager::isRopeEntryEdge);
+        return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
     }
 
     static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
@@ -205,10 +204,6 @@ public final class BotNavigationManager {
         return AgentNavigationPathService.collapseLeadingWalkEdges(path);
     }
 
-    private static boolean isEdgeUsable(AgentNavigationGraph graph, Character bot, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationPathService.isEdgeUsable(graph, bot, edge);
-    }
-
     static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
                                                    AgentNavigationGraph.Edge replacement) {
         return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
@@ -261,10 +256,6 @@ public final class BotNavigationManager {
                                                  MapleMap map,
                                                  Point position) {
         return AgentNavigationRegionService.resolvePointTargetRegionId(graph, map, position);
-    }
-
-    private static boolean isRopeEntryEdge(AgentNavigationGraph graph, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationRopeEdgeService.isRopeEntryEdge(graph, edge);
     }
 
     static boolean isTopStepOffExit(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {

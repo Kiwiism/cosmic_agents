@@ -118,6 +118,19 @@ public final class AgentNavigationCommittedEdgeService {
     public static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
                                                                BotEntry entry,
                                                                int startRegionId,
+                                                               int targetRegionId) {
+        return reuseCommittedEdge(
+                graph,
+                entry,
+                startRegionId,
+                targetRegionId,
+                AgentNavigationPathService::isEdgeUsable,
+                AgentNavigationRopeEdgeService::isRopeEntryEdge);
+    }
+
+    public static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
+                                                               BotEntry entry,
+                                                               int startRegionId,
                                                                int targetRegionId,
                                                                EdgeUsabilityChecker edgeUsabilityChecker,
                                                                RopeEntryChecker ropeEntryChecker) {

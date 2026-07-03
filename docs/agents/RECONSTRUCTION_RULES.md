@@ -4036,6 +4036,9 @@ Recent reconstruction notes:
 - Default climb waypoint selection and climb-exit readiness wiring now live in
   `AgentNavigationWaypointService`; `AgentNavigationTargetService` and the bot
   navigation compatibility shell call the same Agent-owned overload.
+- Default committed-edge reuse wiring now lives in
+  `AgentNavigationCommittedEdgeService`; the bot navigation shell no longer
+  supplies local edge-usability or rope-entry callbacks.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
