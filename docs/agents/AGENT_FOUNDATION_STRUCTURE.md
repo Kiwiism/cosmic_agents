@@ -136,8 +136,9 @@ Capability bins:
   through `AgentGroundActionPlanner` and `AgentGroundActionExecutor`.
   `AgentGroundMovementRuntimeService` owns grounded tick orchestration.
   Dead bot-side grounded, climb, swim, and airborne phase-body clutter has been
-  removed; remaining cleanup slices continue to remove temporary navigation and
-  physics seams. BotNavigationManager now calls Agent movement services directly
+  removed; remaining cleanup slices continue to remove temporary movement and
+  physics seams. The old bot navigation manager has been deleted after callers
+  moved to Agent services. Navigation calls Agent movement services directly
   for movement side effects and reads navigation-facing movement thresholds
   from `AgentMovementPhysicsConfig`; climb-step reads route through
   `AgentMovementKinematicsService`; remaining references are navigation and
@@ -169,8 +170,9 @@ Capability bins:
   checks use the same Agent navigation services. Region-classification logic
   itself now lives in `AgentNavigationRegionService`; the bot region
   compatibility delegates have been removed. Movement tick target resolution and
-  committed-edge continuation now live in `AgentNavigationTargetService`;
-  the bot navigation manager keeps compatibility delegates for old callers.
+  committed-edge continuation now live in `AgentNavigationTargetService`; the
+  old bot navigation manager has been deleted after tests moved to Agent
+  services.
   Grind navigation/fallback runtime hooks call Agent region and path services
   directly. Dead private target-resolution helper bodies have been removed
   from the bot navigation shell.
@@ -192,11 +194,9 @@ Capability bins:
   Edge execution dispatch lives in `AgentNavigationEdgeExecutor`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
-  `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
-  now supplies only compatibility delegates while Agent navigation owns the
-  default path search, climb-exit readiness, edge-usability, and rope-entry
-  callback wiring. Bot committed-edge compatibility delegates have been
-  removed from the navigation shell.
+  `AgentNavigationCommittedEdgeService`; Agent navigation owns the default
+  path search, climb-exit readiness, edge-usability, and rope-entry callback
+  wiring. Bot committed-edge compatibility delegates have been removed.
   Navigation edge execution target state lives in
   `AgentNavigationEdgeExecutionStateService`.
   Edge execution readiness thresholds plus jump/drop and selected-jump

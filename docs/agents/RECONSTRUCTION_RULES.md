@@ -4061,6 +4061,9 @@ Recent reconstruction notes:
 - Committed-edge reuse and retention tests now target
   `AgentNavigationCommittedEdgeService` directly; the matching
   `BotNavigationManager` compatibility delegates have been removed.
+- Target-resolution tests now target `AgentNavigationTargetService` directly;
+  `BotNavigationManager` has no remaining production or test callers and has
+  been deleted.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
@@ -4140,6 +4143,13 @@ Recent reconstruction notes:
 - Precise waypoint targeting policy now lives in
   `AgentNavigationPreciseTargetService`; `BotNavigationManager` supplies the
   existing jump/drop/climb readiness callbacks.
+
+Current navigation correction:
+
+- `BotNavigationManager` has been fully migrated into Agent navigation services
+  and deleted. Older notes above are historical breadcrumbs for the slice that
+  introduced each Agent seam; they no longer describe the current navigation
+  shell state.
 
 Initial reconstruction order:
 
