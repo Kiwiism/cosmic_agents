@@ -1,8 +1,9 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ public final class AgentFormationRuntime {
     public static AgentFormationService.FormationState defaultFormationState() {
         return AgentFormationService.defaultStagger(
                 AgentRuntimeConfig.cfg.FOLLOW_STAGGER,
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
     public static AgentFormationService.FormationState formationStateFor(BotEntry entry) {

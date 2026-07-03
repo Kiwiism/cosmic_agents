@@ -1,8 +1,9 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -22,7 +23,7 @@ public final class AgentFollowIdleMovementRuntime {
                 agent,
                 targetPosition,
                 nowMs,
-                BotMovementManager.configuredFollowDist(),
-                BotMovementManager.configuredStopDist());
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist());
     }
 }

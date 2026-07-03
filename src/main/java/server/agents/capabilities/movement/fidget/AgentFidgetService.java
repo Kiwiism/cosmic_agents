@@ -176,7 +176,7 @@ public final class AgentFidgetService {
                 && !AgentBotMovementStateRuntime.climbing(entry)
                 && (!inAir || airborneJumpFidget)
                 && !AgentBotMovementStateRuntime.downJumpPending(entry)
-                && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= BotMovementManager.configuredJumpYThreshold() * 2);
+                && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2);
     }
 
     private static boolean shouldKeepRunning(BotEntry entry, Point botPos, Point targetPos, long now) {
@@ -189,7 +189,7 @@ public final class AgentFidgetService {
         }
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
-        return absDx <= BotMovementManager.configuredFollowDist() + walkStep * 3;
+        return absDx <= AgentMovementPhysicsConfig.configuredFollowDist() + walkStep * 3;
     }
 
     private static boolean isJumpFidget(AgentFidgetMode mode) {
@@ -200,7 +200,7 @@ public final class AgentFidgetService {
         if (!AgentBotTickStateRuntime.lastTickWasAi(entry) || !isOwnerMostlyIdle(entry)) {
             return;
         }
-        if (Math.abs(targetPos.x - botPos.x) > BotMovementManager.configuredFollowDist()) {
+        if (Math.abs(targetPos.x - botPos.x) > AgentMovementPhysicsConfig.configuredFollowDist()) {
             return;
         }
         if (AgentBotFidgetStateRuntime.idleRollNotScheduled(entry)) {
@@ -247,7 +247,7 @@ public final class AgentFidgetService {
         int walkStep = BotPhysicsEngine.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         int absDx = Math.abs(targetPos.x - botPos.x);
         int ownerStep = AgentBotOwnerMotionStateRuntime.maxObservedOwnerStep(entry);
-        return absDx <= BotMovementManager.configuredFollowDist() + walkStep
+        return absDx <= AgentMovementPhysicsConfig.configuredFollowDist() + walkStep
                 && ownerStep < walkStep;
     }
 

@@ -17,6 +17,13 @@ class AgentMovementProfileTest {
         assertEquals(8, AgentMovementPhysicsConfig.configuredRopeGrabX());
         assertEquals(16, AgentMovementPhysicsConfig.configuredMaxSnapDrop());
         assertEquals(26, AgentMovementPhysicsConfig.configuredMaxSlopeUp());
+        assertEquals(30, AgentMovementPhysicsConfig.configuredStopDist());
+        assertEquals(80, AgentMovementPhysicsConfig.configuredFollowDist());
+        assertEquals(40, AgentMovementPhysicsConfig.configuredGrindEdgeMargin());
+        assertEquals(30, AgentMovementPhysicsConfig.configuredJumpYThreshold());
+        assertEquals(4000, AgentMovementPhysicsConfig.configuredTeleportDist());
+        assertEquals(600, AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist());
+        assertEquals(200, AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
     @Test

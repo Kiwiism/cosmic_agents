@@ -130,31 +130,31 @@ public class BotMovementManager {
     }
 
     public static int configuredFollowDist() {
-        return cfg.FOLLOW_DIST;
+        return AgentMovementPhysicsConfig.configuredFollowDist();
     }
 
     public static int configuredStopDist() {
-        return cfg.STOP_DIST;
+        return AgentMovementPhysicsConfig.configuredStopDist();
     }
 
     public static int configuredTeleportDist() {
-        return cfg.TELEPORT_DIST;
+        return AgentMovementPhysicsConfig.configuredTeleportDist();
     }
 
     public static int configuredOutOfBoundsTeleportDist() {
-        return cfg.OOB_TELEPORT_DIST;
+        return AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist();
     }
 
     public static int configuredFollowYCap() {
-        return cfg.FOLLOW_Y_CAP;
+        return AgentMovementPhysicsConfig.configuredFollowYCap();
     }
 
     public static int configuredJumpYThreshold() {
-        return cfg.JUMP_Y_THRESH;
+        return AgentMovementPhysicsConfig.configuredJumpYThreshold();
     }
 
     public static int configuredGrindEdgeMargin() {
-        return cfg.GRIND_EDGE_MARGIN;
+        return AgentMovementPhysicsConfig.configuredGrindEdgeMargin();
     }
 
     private static Config bindConfig(Config config) {

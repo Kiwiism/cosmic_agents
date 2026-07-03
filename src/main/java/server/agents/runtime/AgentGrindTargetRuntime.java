@@ -1,7 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotNavigationManager;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -21,7 +22,7 @@ public final class AgentGrindTargetRuntime {
                 agentPosition,
                 map,
                 AgentRuntimeConfig.cfg.LOOT_RADIUS,
-                BotMovementManager.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
                 AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
                 BotNavigationManager::resolveCurrentRegionId);
     }
@@ -31,7 +32,7 @@ public final class AgentGrindTargetRuntime {
                 entry,
                 agentPosition,
                 AgentRuntimeConfig.cfg.LOOT_RADIUS,
-                BotMovementManager.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
                 AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
                 BotNavigationManager::resolveCurrentRegionId);
     }
@@ -74,7 +75,7 @@ public final class AgentGrindTargetRuntime {
                 agentPosition,
                 map,
                 AgentRuntimeConfig.cfg.LOOT_RADIUS,
-                BotMovementManager.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
                 AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
                 BotNavigationManager::resolveCurrentRegionId);
     }

@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -62,11 +61,11 @@ public final class AgentMovementOnlyStepRuntime {
         return new MovementOnlyStepConfig(
                 AgentMovementPhysicsConfig.configuredMovementTickMs(),
                 AgentRuntimeConfig.cfg.AI_TICK_MS,
-                BotMovementManager.configuredTeleportDist(),
-                BotMovementManager.configuredOutOfBoundsTeleportDist(),
+                AgentMovementPhysicsConfig.configuredTeleportDist(),
+                AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist(),
                 AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
-                BotMovementManager.configuredFollowDist(),
-                BotMovementManager.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
                 AgentRuntimeConfig.cfg.ENABLE_UNSTUCK);
     }
 

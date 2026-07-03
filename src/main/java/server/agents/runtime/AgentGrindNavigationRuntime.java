@@ -1,8 +1,9 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.bots.BotNavigationManager;
 
 import java.awt.Point;
@@ -47,7 +48,7 @@ public final class AgentGrindNavigationRuntime {
                 BotNavigationManager::resolveCurrentRegionId,
                 BotNavigationManager::resolveTargetRegionId,
                 BotNavigationManager::findPath,
-                BotMovementManager.configuredGrindEdgeMargin(),
-                BotMovementManager.configuredJumpYThreshold());
+                AgentMovementPhysicsConfig.configuredGrindEdgeMargin(),
+                AgentMovementPhysicsConfig.configuredJumpYThreshold());
     }
 }

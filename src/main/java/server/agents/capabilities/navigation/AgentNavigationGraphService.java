@@ -1584,7 +1584,7 @@ public final class AgentNavigationGraphService {
                         && anchor.y < rope.topY()
                         && rope.topY() - anchor.y <= AgentMovementPhysicsConfig.configuredMaxSnapDrop();
                 boolean canJumpGrab = BotMovementManager.canReachRopeFromGround(map, anchor, rope, movementProfile);
-                boolean canTopStep = anchor.y <= rope.topY() + BotMovementManager.configuredJumpYThreshold()
+                boolean canTopStep = anchor.y <= rope.topY() + AgentMovementPhysicsConfig.configuredJumpYThreshold()
                         && Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX();
 
                 if (canGrab) {
@@ -1824,7 +1824,7 @@ public final class AgentNavigationGraphService {
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, new Point(rope.x(), rope.bottomY() - 1)), rope.x());
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, new Point(rope.x(), rope.topY() - 1)), rope.x());
             addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId,
-                    new Point(rope.x(), rope.topY() - BotMovementManager.configuredJumpYThreshold() * 2)), rope.x());
+                    new Point(rope.x(), rope.topY() - AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2)), rope.x());
         }
 
         for (Portal portal : map.getPortals()) {
@@ -1947,10 +1947,10 @@ public final class AgentNavigationGraphService {
             addAnchor(points, new Point(segment.x1, segment.y1), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, new Point(segment.x2, segment.y2), ENDPOINT_ANCHOR_SPACING_PX);
         }
-        if (region.width() >= Math.max(BotMovementManager.configuredFollowDist() * 2, 140)) {
+        if (region.width() >= Math.max(AgentMovementPhysicsConfig.configuredFollowDist() * 2, 140)) {
             addAnchor(points, region.centerPoint());
         }
-        if (region.width() >= Math.max(BotMovementManager.configuredFollowDist() * 4, 260)) {
+        if (region.width() >= Math.max(AgentMovementPhysicsConfig.configuredFollowDist() * 4, 260)) {
             addAnchor(points, region.pointAt(region.minX + region.width() / 3));
             addAnchor(points, region.pointAt(region.maxX - region.width() / 3));
         }

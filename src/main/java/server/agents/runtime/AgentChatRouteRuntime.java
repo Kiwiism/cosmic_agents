@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatIngressService;
@@ -18,7 +20,6 @@ import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ public final class AgentChatRouteRuntime {
                 dismissAction,
                 AgentFormationRuntime.defaultFormationState(),
                 AgentRuntimeConfig.cfg.FOLLOW_STAGGER,
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
     public static void handleChat(Character leader,

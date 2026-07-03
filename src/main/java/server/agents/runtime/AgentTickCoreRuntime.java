@@ -1,8 +1,9 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -78,10 +79,10 @@ public final class AgentTickCoreRuntime {
                 movementCoreStep,
                 anchoredFarmTick,
                 grindModeTick,
-                BotMovementManager.configuredTeleportDist(),
-                BotMovementManager.configuredOutOfBoundsTeleportDist(),
+                AgentMovementPhysicsConfig.configuredTeleportDist(),
+                AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist(),
                 AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
-                BotMovementManager.configuredFollowDist());
+                AgentMovementPhysicsConfig.configuredFollowDist());
     }
 
     public static void tickCore(BotEntry entry,

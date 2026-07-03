@@ -51,8 +51,9 @@ Target package groups:
   Movement profile physics baselines live in
   `server.agents.capabilities.movement.AgentMovementPhysicsConfig`, including
   movement tick duration plus rope-grab and snap/slope thresholds used by
-  navigation and fallback movement; the remaining legacy physics runtime still
-  awaits reconstruction.
+  navigation and fallback movement. Movement command distances and caps also
+  live there while the remaining legacy movement/physics runtime still awaits
+  reconstruction.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

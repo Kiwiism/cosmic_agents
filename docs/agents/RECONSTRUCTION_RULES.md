@@ -78,6 +78,13 @@ Recent reconstruction notes:
   knockback/reporting, fidget delay, and navigation edge timing reads now use
   the Agent-owned movement tick value directly where they do not also require
   legacy bot timing callbacks.
+- Movement command distance/config ownership moved to
+  `AgentMovementPhysicsConfig`: stop distance, follow distance, grind edge
+  margin, jump-Y threshold, teleport distance, out-of-bounds teleport distance,
+  and follow Y cap. Agent runtime, fallback movement, fidget, target snapshot,
+  and navigation graph call sites now read these values from Agent-owned config
+  while `BotMovementManager` delegates its compatibility accessors to the same
+  source.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

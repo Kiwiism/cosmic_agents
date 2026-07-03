@@ -70,7 +70,7 @@ public final class AgentFallbackMovementService {
 
         Point steeringTarget = rope == null ? targetPos : new Point(rope.x(), targetPos.y);
             int stepX = BotMovementManager.resolveGroundStepX(entry, botPos, steeringTarget,
-                BotMovementManager.configuredStopDist(), BotMovementManager.configuredFollowDist());
+                AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
         if (stepX == 0 || BotPhysicsEngine.canWalkGroundStep(map, botPos, stepX)) {
             return false;
         }
@@ -99,7 +99,7 @@ public final class AgentFallbackMovementService {
         }
         // Target must be sufficiently above bot. dy < 0 = target higher in MS coords.
         int dy = targetPos.y - botPos.y;
-        return dy < -Math.max(BotMovementManager.configuredJumpYThreshold() * 2, 60);
+        return dy < -Math.max(AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2, 60);
     }
 
     public static boolean shouldWalkOffLedge(BotEntry entry, Point botPos, Point targetPos, int stepX) {
@@ -119,7 +119,7 @@ public final class AgentFallbackMovementService {
         }
 
         int dy = targetPos.y - botPos.y;
-        if (Math.abs(dy) < Math.max(BotMovementManager.configuredJumpYThreshold() * 2, 60)) {
+        if (Math.abs(dy) < Math.max(AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2, 60)) {
             return null;
         }
 
@@ -141,7 +141,7 @@ public final class AgentFallbackMovementService {
                 if (rope.bottomY() < botPos.y - AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {
                     continue;
                 }
-                if (rope.topY() > targetPos.y + BotMovementManager.configuredFollowYCap()) {
+                if (rope.topY() > targetPos.y + AgentMovementPhysicsConfig.configuredFollowYCap()) {
                     continue;
                 }
             } else {
@@ -151,7 +151,7 @@ public final class AgentFallbackMovementService {
                 if (rope.topY() > botPos.y + AgentMovementPhysicsConfig.configuredMaxSlopeUp()) {
                     continue;
                 }
-                if (rope.bottomY() < targetPos.y - BotMovementManager.configuredFollowYCap()) {
+                if (rope.bottomY() < targetPos.y - AgentMovementPhysicsConfig.configuredFollowYCap()) {
                     continue;
                 }
             }
@@ -213,7 +213,7 @@ public final class AgentFallbackMovementService {
                 || !BotPhysicsEngine.canStartDownJump(map, botPos)) {
             return false;
         }
-        return Math.abs(targetPos.x - botPos.x) <= Math.max(BotMovementManager.configuredFollowDist(),
+        return Math.abs(targetPos.x - botPos.x) <= Math.max(AgentMovementPhysicsConfig.configuredFollowDist(),
                 BotPhysicsEngine.walkStep(map, movementProfile(entry)) * 4);
     }
 

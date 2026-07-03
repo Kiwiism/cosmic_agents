@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import client.Character;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
@@ -16,7 +18,7 @@ public final class AgentStandaloneMoveTargetRuntime {
                 agent,
                 runAiTick,
                 AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
-                BotMovementManager.configuredStopDist());
+                AgentMovementPhysicsConfig.configuredStopDist());
     }
 
     public static void tickStandaloneMoveTarget(BotEntry entry,

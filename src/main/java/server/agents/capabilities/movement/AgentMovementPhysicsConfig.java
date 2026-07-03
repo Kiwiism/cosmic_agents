@@ -13,6 +13,13 @@ public final class AgentMovementPhysicsConfig {
     private static final int ROPE_GRAB_X = 8;
     private static final int MAX_SNAP_DROP = 16;
     private static final int MAX_SLOPE_UP = 26;
+    private static final int STOP_DIST = 30;
+    private static final int FOLLOW_DIST = 80;
+    private static final int GRIND_EDGE_MARGIN = 40;
+    private static final int JUMP_Y_THRESHOLD = 30;
+    private static final int TELEPORT_DIST = 4000;
+    private static final int OUT_OF_BOUNDS_TELEPORT_DIST = 600;
+    private static final int FOLLOW_Y_CAP = 200;
 
     private AgentMovementPhysicsConfig() {
     }
@@ -47,5 +54,33 @@ public final class AgentMovementPhysicsConfig {
 
     public static int configuredMaxSlopeUp() {
         return MAX_SLOPE_UP;
+    }
+
+    public static int configuredStopDist() {
+        return STOP_DIST;
+    }
+
+    public static int configuredFollowDist() {
+        return FOLLOW_DIST;
+    }
+
+    public static int configuredGrindEdgeMargin() {
+        return GRIND_EDGE_MARGIN;
+    }
+
+    public static int configuredJumpYThreshold() {
+        return JUMP_Y_THRESHOLD;
+    }
+
+    public static int configuredTeleportDist() {
+        return TELEPORT_DIST;
+    }
+
+    public static int configuredOutOfBoundsTeleportDist() {
+        return OUT_OF_BOUNDS_TELEPORT_DIST;
+    }
+
+    public static int configuredFollowYCap() {
+        return FOLLOW_Y_CAP;
     }
 }

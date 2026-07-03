@@ -1,7 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 
@@ -17,9 +18,9 @@ public final class AgentLocalAttackMoveWindowRuntime {
                 entry,
                 agentPosition,
                 referencePosition,
-                BotMovementManager.configuredFollowDist(),
-                BotMovementManager.configuredStopDist(),
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
     public static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
@@ -29,9 +30,9 @@ public final class AgentLocalAttackMoveWindowRuntime {
                 entry,
                 agentPosition,
                 targetSnapshot,
-                BotMovementManager.configuredFollowDist(),
-                BotMovementManager.configuredStopDist(),
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
     public static void clearActionMoveWindowIfSettled(BotEntry entry,
@@ -41,8 +42,8 @@ public final class AgentLocalAttackMoveWindowRuntime {
                 entry,
                 agentPosition,
                 targetPosition,
-                BotMovementManager.configuredFollowDist(),
-                BotMovementManager.configuredStopDist(),
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 }

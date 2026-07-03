@@ -5,7 +5,6 @@ import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 /**
  * Temporary legacy hook bundle for Agent registration scheduling while the live
@@ -52,6 +51,6 @@ public final class AgentRegistrationRuntime {
     private static AgentFormationService.FormationState defaultFormationState() {
         return AgentFormationService.defaultStagger(
                 AgentRuntimeConfig.cfg.FOLLOW_STAGGER,
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 }

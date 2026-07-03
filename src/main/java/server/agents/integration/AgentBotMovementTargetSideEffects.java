@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.runtime.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFormationService;
@@ -7,7 +9,6 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 
 import java.awt.Point;
 import java.util.List;
@@ -82,6 +83,6 @@ public final class AgentBotMovementTargetSideEffects {
     private static AgentFormationService.FormationState defaultFormationState() {
         return AgentFormationService.defaultStagger(
                 AgentRuntimeConfig.cfg.FOLLOW_STAGGER,
-                BotMovementManager.configuredFollowYCap());
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 }

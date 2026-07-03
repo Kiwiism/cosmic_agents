@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+
 import client.Character;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.bots.BotEntry;
@@ -22,7 +24,7 @@ public final class AgentAnchoredFarmRuntime {
                 agentPosition,
                 runAiTick,
                 AgentRuntimeConfig.cfg.ENABLE_UNSTUCK,
-                BotMovementManager.configuredStopDist());
+                AgentMovementPhysicsConfig.configuredStopDist());
     }
 
     public static void tickAnchoredFarm(BotEntry entry,
