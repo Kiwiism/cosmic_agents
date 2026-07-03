@@ -82,6 +82,8 @@ Capability bins:
   `AgentEquipmentOptimizer`;
   live equip-plan move execution and post-plan infeasible-equipment cleanup
   live in `AgentEquipmentPlanExecutor`;
+  offered-item and recommendation optimizer orchestration lives in
+  `AgentEquipmentOptimizationService`;
   optimizer result data lives in `AgentEquipmentOptimizerResult`;
   fixed-weapon DP result and score data live in `AgentEquipmentDpResult` and
   `AgentEquipmentScore`;

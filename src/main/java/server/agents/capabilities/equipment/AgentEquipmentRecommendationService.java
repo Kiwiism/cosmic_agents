@@ -9,7 +9,6 @@ import config.YamlConfig;
 import constants.inventory.EquipSlot;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
-import server.bots.BotEquipManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +20,7 @@ import java.util.Set;
 import java.util.function.IntFunction;
 
 /**
- * Agent-owned recommendation layer over the temporary legacy DP optimizer seam.
+ * Agent-owned recommendation layer over Agent equipment optimizer orchestration.
  */
 public final class AgentEquipmentRecommendationService {
     private AgentEquipmentRecommendationService() {
@@ -79,7 +78,7 @@ public final class AgentEquipmentRecommendationService {
                                                                        RecommendationScope scope) {
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
         List<AgentEquipRecommendation> recommendations = new ArrayList<>();
-        AgentEquipmentOptimizerResult opt = BotEquipManager.runOptimizerWithExtras(receiver, holderItems, scope);
+        AgentEquipmentOptimizerResult opt = AgentEquipmentOptimizationService.runOptimizerWithExtras(receiver, holderItems, scope);
         if (opt.weapon() != null && holderItems.contains(opt.weapon())) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
             recommendations.add(new AgentEquipRecommendation((short) -11, cur, opt.weapon()));
@@ -140,7 +139,7 @@ public final class AgentEquipmentRecommendationService {
         }
 
         Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-        AgentEquipmentOptimizerResult opt = BotEquipManager.runOptimizerWithExtras(receiver, List.of(candidate), scope);
+        AgentEquipmentOptimizerResult opt = AgentEquipmentOptimizationService.runOptimizerWithExtras(receiver, List.of(candidate), scope);
         if (opt.weapon() == candidate) {
             Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
             return new AgentEquipRecommendation((short) -11, cur, candidate);

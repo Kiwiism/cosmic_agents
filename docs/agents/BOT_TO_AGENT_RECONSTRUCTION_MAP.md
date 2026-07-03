@@ -22,6 +22,10 @@ Recent map updates:
 - Equipment plan application moved from `BotEquipManager` to
   `AgentEquipmentPlanExecutor`, including the live equip move loop and
   post-plan infeasible-equipment sweep.
+- `BotEquipManager.runOptimizerWithExtras` behavior moved to
+  `AgentEquipmentOptimizationService`; Agent recommendation code now calls the
+  Agent optimizer orchestration directly, and the bot methods remain only as
+  compatibility delegates.
 - Production callers of `server.bots.BotEquipManager` now call
   `server.agents.capabilities.equipment.AgentEquipmentService`. The old bot
   class remains the legacy implementation behind that Agent boundary until

@@ -19,12 +19,12 @@ import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizer;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerHooks;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizerResult;
+import server.agents.capabilities.equipment.AgentEquipmentOptimizationService;
 import server.agents.capabilities.equipment.AgentEquipmentPlanExecutor;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.SelfReserveHooks;
-import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationService;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
@@ -444,75 +444,12 @@ public class BotEquipManager {
      * weapon-compat filters before entering the DP.
      */
     public static AgentEquipmentOptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras) {
-        return runOptimizerWithExtras(bot, extras, RecommendationScope.IMMEDIATE);
+        return AgentEquipmentOptimizationService.runOptimizerWithExtras(bot, extras);
     }
 
     public static AgentEquipmentOptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras,
                                                           RecommendationScope scope) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
-        Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
-        AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
-
-        Map<Short, List<Equip>> bySlot = scope == RecommendationScope.IMMEDIATE
-                ? collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, null)
-                : collectFutureEquipCandidates(bot, ii, eqpInv, eqdInv);
-        for (Equip ex : extras) {
-            if (ex == null || ii.isCash(ex.getItemId())) continue;
-            String ts = ii.getEquipmentSlot(ex.getItemId());
-            if (ts == null) continue;
-            EquipSlot eslot = EquipSlot.getFromTextSlot(ts);
-            if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
-            short pslot = (short) eslot.getPrimarySlot();
-            if (pslot == 0) continue;
-            if (pslot == (short) -11
-                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(ex.getItemId()))) continue;
-            if (!isRecommendationCandidate(bot, ii, ex, pslot, scope)) continue;
-            // Rings live in the shared -12 pool regardless of which equipped position they came from.
-            short key = AgentEquipmentSlotResolver.isRingSlot(pslot) ? (short) -12 : pslot;
-            List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
-            if (!pool.contains(ex)) pool.add(ex);
-        }
-        // Re-prune so newly-added extras can knock out dominated incumbents (and vice versa).
-        Job receiverJob = bot.getJob();
-        boolean[] reqRel = AgentEquipmentOptimizer.scanReqRelevantDims(bySlot, ii);
-        for (Map.Entry<Short, List<Equip>> e : bySlot.entrySet()) {
-            e.setValue(pruneDominatedWithReqs(ii, e.getValue(), receiverJob, reqRel));
-        }
-
-        Map<Short, Equip> currentBySlot = new HashMap<>();
-        for (Item it : eqdInv.list()) {
-            if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
-        }
-
-        List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
-
-        List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
-        Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
-        if (currentWeapon != null && !weaponPool.contains(currentWeapon)) weaponPool.add(currentWeapon);
-        if (weaponPool.isEmpty()) weaponPool.add(null);
-
-        AgentEquipmentStatSnapshot naked = nakedBase(bot, ii, eqdInv);
-        AgentEquipmentOptimizerHooks hooks = scope == RecommendationScope.IMMEDIATE
-                ? AgentEquipmentOptimizerHooks.from(ii)
-                : AgentEquipmentOptimizerHooks.futureFrom(ii, bot);
-        Map<Short, Equip> bestPicks = null;
-        AgentEquipmentScore bestScore = null;
-        Equip bestWeapon = null;
-        for (Equip w : weaponPool) {
-            AgentEquipmentDpResult r = AgentEquipmentOptimizer.solveForWeapon(bot, hooks, naked, w, dpSlots, currentBySlot, bySlot, mob, reqRel);
-            if (r == null) continue;
-            if (bestScore == null || AgentEquipmentOptimizer.compareScores(r.score(), bestScore) > 0) {
-                bestScore = r.score();
-                bestPicks = r.picks();
-                bestWeapon = w;
-            }
-        }
-        if (bestPicks == null && !weaponPool.contains(null)) {
-            AgentEquipmentDpResult r = AgentEquipmentOptimizer.solveForWeapon(bot, hooks, naked, null, dpSlots, currentBySlot, bySlot, mob, reqRel);
-            if (r != null) { bestPicks = r.picks(); bestWeapon = null; }
-        }
-        return new AgentEquipmentOptimizerResult(bestWeapon, bestPicks != null ? bestPicks : Map.of());
+        return AgentEquipmentOptimizationService.runOptimizerWithExtras(bot, extras, scope);
     }
 
     /** Naked stat snapshot: bot totals minus all currently-equipped non-cash gear. */
@@ -539,44 +476,6 @@ public class BotEquipManager {
 
     static boolean futureOnlyBlocked(Character bot, ItemInformationProvider ii, Equip equip) {
         return AgentEquipmentReservePolicy.futureOnlyBlocked(bot, ii, equip);
-    }
-
-    private static boolean isRecommendationCandidate(Character bot, ItemInformationProvider ii, Equip equip,
-                                                     short primarySlot, RecommendationScope scope) {
-        return AgentEquipmentRecommendationPolicy.isRecommendationCandidate(bot, ii, equip, primarySlot, scope);
-    }
-
-    private static Map<Short, List<Equip>> collectFutureEquipCandidates(
-            Character bot, ItemInformationProvider ii, Inventory eqpInv, Inventory eqdInv) {
-        Map<Short, List<Equip>> bySlot = new LinkedHashMap<>();
-        for (Item item : eqpInv.list()) {
-            if (ii.isCash(item.getItemId())) continue;
-            if (!(item instanceof Equip equip)) continue;
-            String textSlot = ii.getEquipmentSlot(item.getItemId());
-            EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
-            if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
-            short primary = (short) eslot.getPrimarySlot();
-            if (primary == 0) continue;
-            if (primary == (short) -11
-                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
-            if (!futureOnlyBlocked(bot, ii, equip)) continue;
-            short key = AgentEquipmentSlotResolver.isRingSlot(primary) ? (short) -12 : primary;
-            bySlot.computeIfAbsent(key, k -> new ArrayList<>()).add(equip);
-        }
-        for (Item it : eqdInv.list()) {
-            if (!(it instanceof Equip e) || ii.isCash(e.getItemId())) continue;
-            short pos = e.getPosition();
-            if (pos == (short) -11
-                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
-            if (!futureOnlyBlocked(bot, ii, e)) continue;
-            short key = AgentEquipmentSlotResolver.isRingSlot(pos) ? (short) -12 : pos;
-            List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
-            if (!pool.contains(e)) pool.add(e);
-        }
-        for (Map.Entry<Short, List<Equip>> e : bySlot.entrySet()) {
-            e.setValue(pruneDominated(ii, e.getValue()));
-        }
-        return bySlot;
     }
 
     public static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
@@ -701,39 +600,6 @@ public class BotEquipManager {
             if (bs[i] > as[i]) strictlyBetter = true;
         }
         return strictlyBetter;
-    }
-
-    private static List<Equip> pruneDominated(ItemInformationProvider ii, List<Equip> items) {
-        if (items == null || items.size() <= 1) return items;
-        List<Equip> kept = new ArrayList<>(items.size());
-        for (Equip a : items) {
-            boolean dominated = false;
-            for (Equip b : items) {
-                if (a == b) continue;
-                if (!sameFutureTrack(ii, a, b)) continue;
-                if (dominates(b, a)) { dominated = true; break; }
-            }
-            if (!dominated) kept.add(a);
-        }
-        return kept.isEmpty() ? items : kept;
-    }
-
-    private static List<Equip> pruneDominatedSameTrackWithReqs(ItemInformationProvider ii, List<Equip> items) {
-        if (items == null || items.size() <= 1) return items;
-        List<Equip> kept = new ArrayList<>(items.size());
-        for (Equip a : items) {
-            boolean dominated = false;
-            for (Equip b : items) {
-                if (a == b) continue;
-                if (!sameFutureTrack(ii, a, b)) continue;
-                if (dominates(b, a) && reqsAtLeastAsEasy(ii, b, a)) {
-                    dominated = true;
-                    break;
-                }
-            }
-            if (!dominated) kept.add(a);
-        }
-        return kept.isEmpty() ? items : kept;
     }
 
     /**
@@ -878,14 +744,6 @@ public class BotEquipManager {
 
     private static boolean reqsAtLeastAsEasy(ItemInformationProvider ii, Equip b, Equip a) {
         return AgentEquipmentReservePolicy.reqsAtLeastAsEasy(ii, b, a);
-    }
-
-    private static boolean reqsAtLeastAsEasy(SelfReserveHooks hooks, Equip b, Equip a) {
-        return AgentEquipmentReservePolicy.reqsAtLeastAsEasy(hooks, b, a);
-    }
-
-    private static boolean sameFutureTrack(ItemInformationProvider ii, Equip a, Equip b) {
-        return AgentEquipmentReservePolicy.sameFutureTrack(ii, a, b);
     }
 
     private static int[] statVec(Equip e) {

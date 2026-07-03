@@ -27,6 +27,10 @@ Recent reconstruction notes:
 - Equipment plan application side effects now live in
   `AgentEquipmentPlanExecutor`. `BotEquipManager` no longer owns the
   `InventoryManipulator` move loop or post-plan infeasible-equipment sweep.
+- Offered-item and recommendation optimizer orchestration now lives in
+  `AgentEquipmentOptimizationService`. `AgentEquipmentRecommendationService`
+  no longer imports `BotEquipManager`; the old `BotEquipManager`
+  `runOptimizerWithExtras` methods are compatibility delegates.
 - Production equipment callers now enter through
   `server.agents.capabilities.equipment.AgentEquipmentService`.
   `server.bots.BotEquipManager` remains the legacy optimizer implementation
