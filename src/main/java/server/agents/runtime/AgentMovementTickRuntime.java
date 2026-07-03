@@ -3,8 +3,8 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
+import server.agents.capabilities.navigation.AgentNavigationTargetService;
 import server.bots.BotEntry;
-import server.bots.BotNavigationManager;
 
 import java.awt.Point;
 
@@ -38,13 +38,13 @@ public final class AgentMovementTickRuntime {
     private static AgentMovementTickService.MovementTickHooks hooks(boolean enableUnstuck, int stopDistance) {
         return new AgentMovementTickService.MovementTickHooks(
                 (entry, targetPosition, runAiTick) -> {
-                    BotNavigationManager.NavigationDirective directive =
-                            BotNavigationManager.resolveTarget(entry, targetPosition, runAiTick);
-                    return new AgentMovementTickService.NavigationResult(directive.consumedTick, directive.targetPos);
+                    AgentNavigationTargetService.NavigationDirective directive =
+                            AgentNavigationTargetService.resolveTarget(entry, targetPosition, runAiTick);
+                    return new AgentMovementTickService.NavigationResult(directive.consumedTick(), directive.targetPos());
                 },
                 AgentFidgetService::tryHandleTick,
                 AgentMovementPhaseRuntime::tickMovementPhase,
-                BotNavigationManager::tryExecuteCommittedEdgeAfterGroundMovement,
+                AgentNavigationTargetService::tryExecuteCommittedEdgeAfterGroundMovement,
                 entry -> AgentStuckDetectionRuntime.tickStuckDetection(entry, enableUnstuck),
                 entry -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
     }

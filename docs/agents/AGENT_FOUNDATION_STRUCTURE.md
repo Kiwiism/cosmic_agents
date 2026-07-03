@@ -168,7 +168,8 @@ Capability bins:
   this path seam. Combat grind-target region scoring and target-score path
   checks use the same Agent navigation services. Region-classification logic
   itself now lives in `AgentNavigationRegionService`; the bot navigation
-  manager delegates to it temporarily.
+  manager delegates to it temporarily. Movement tick target resolution and
+  committed-edge continuation enter through `AgentNavigationTargetService`.
 - `supplies`
 - `trade`
 - `shop`

@@ -3979,6 +3979,9 @@ Recent reconstruction notes:
 - Navigation region-classification implementation now lives in
   `AgentNavigationRegionService`. `BotNavigationManager` retains only
   compatibility delegates for current/target/character/point region lookup.
+- Movement tick target resolution and committed-edge continuation now enter
+  through `AgentNavigationTargetService`. The service delegates to the current
+  resolver body until the live path-following implementation moves.
 
 Initial reconstruction order:
 
