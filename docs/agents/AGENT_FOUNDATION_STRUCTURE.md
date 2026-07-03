@@ -154,7 +154,8 @@ Capability bins:
   Rope, ladder, and jump-launch actions enter through
   `AgentRopeMovementService`. Combat-driven knockback movement enters through
   `AgentKnockbackMovementService`. Airborne and swim integration enter through
-  `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`.
+  `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`. Fallback
+  movement jump and rope-reach probes enter through `AgentJumpProbeService`.
 - `supplies`
 - `trade`
 - `shop`

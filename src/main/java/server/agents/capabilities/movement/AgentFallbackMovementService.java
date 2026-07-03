@@ -45,7 +45,7 @@ public final class AgentFallbackMovementService {
             int ropeJumpRange = Math.max(AgentMovementPhysicsConfig.configuredRopeGrabX() * 2,
                     AgentMovementKinematicsService.walkStep(map, movementProfile(entry)) * 2);
             if (Math.abs(ropeDx) <= ropeJumpRange
-                    && BotPhysicsEngine.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
+                    && AgentJumpProbeService.canReachRopeFromGround(map, botPos, rope, movementProfile(entry))) {
                 AgentJumpActionService.initiateRopeJump(entry, bot, ropeDx);
                 return true;
             }
@@ -277,7 +277,7 @@ public final class AgentFallbackMovementService {
         int direction = Integer.signum(stepX);
         int jumpStep = direction * AgentMovementKinematicsService.walkStep(map, movementProfile(entry));
         BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(map, botPos, jumpStep, movementProfile(entry));
+                AgentJumpProbeService.simulateJumpLanding(map, botPos, jumpStep, movementProfile(entry));
         return isUsefulJumpProbeLanding(botPos, steeringTarget, direction, landing);
     }
 

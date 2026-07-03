@@ -3945,6 +3945,9 @@ Recent reconstruction notes:
   `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`. The Agent
   airborne phase uses `AgentAirborneStepResult` instead of the legacy bot enum,
   while preserving the same wall/ceiling/land/continue outcomes.
+- Fallback movement jump and rope-reach probes now route through
+  `AgentJumpProbeService` instead of calling the legacy physics probe methods
+  directly.
 
 Initial reconstruction order:
 
