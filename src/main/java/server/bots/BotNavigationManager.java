@@ -11,6 +11,7 @@ import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationPreciseTargetService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
+import server.agents.capabilities.navigation.AgentNavigationWarmupService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -49,17 +50,12 @@ import server.maps.Rope;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class BotNavigationManager {
     // After a bot takes a portal, suppress further portal usage for this long. Prevents a bot from
     // immediately re-entering a portal (e.g. bouncing back through the return portal). Gates ONLY
     // portal execution — movement, attacks and every other action continue unaffected.
     private static final long PORTAL_USE_COOLDOWN_MS = 250L;
-
-    /** Throttle warmup notifications per (ownerId -> mapId -> lastNotifyMs). */
-    private static final Map<Integer, Map<Integer, Long>> WARMUP_NOTIFIED = new ConcurrentHashMap<>();
 
     public static final class NavigationDirective {
         public final Point targetPos;
@@ -96,7 +92,7 @@ public final class BotNavigationManager {
             if (graph == null) {
                 AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
                 AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
-                notifyWarmup(entry, bot);
+                AgentNavigationWarmupService.notifyWarmup(entry, bot);
                 AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
                 clearNavigation(entry);
                 Point fallbackTarget = rawTargetPos != null ? new Point(rawTargetPos) : bot.getPosition();
@@ -215,25 +211,6 @@ public final class BotNavigationManager {
 
     private static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
         return AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos);
-    }
-
-    private static void notifyWarmup(BotEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner == null) return;
-        int ownerId = owner.getId();
-        int mapId = bot.getMap().getId();
-        long now = System.currentTimeMillis();
-        Map<Integer, Long> byMap = WARMUP_NOTIFIED.get(ownerId);
-        if (byMap != null) {
-            Long last = byMap.get(mapId);
-            if (last != null && (now - last) < 10_000L) return;
-        }
-        // Only count walkable footholds when we are about to send — lazy, inside throttle gate
-        long walkable = bot.getMap().getFootholds().getAllFootholds().stream()
-                .filter(fh -> !fh.isWall()).count();
-        if (walkable < 100) return;
-        WARMUP_NOTIFIED.computeIfAbsent(ownerId, k -> new ConcurrentHashMap<>()).put(mapId, now);
-        owner.dropMessage(5, bot.getName() + " is warming map navigation cache, using fallback movement...");
     }
 
     private static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,

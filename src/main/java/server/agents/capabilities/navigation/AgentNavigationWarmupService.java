@@ -1,0 +1,44 @@
+package server.agents.capabilities.navigation;
+
+import client.Character;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.bots.BotEntry;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Agent-owned map navigation warmup notification throttle.
+ */
+public final class AgentNavigationWarmupService {
+    private static final Map<Integer, Map<Integer, Long>> WARMUP_NOTIFIED = new ConcurrentHashMap<>();
+
+    private AgentNavigationWarmupService() {
+    }
+
+    public static void notifyWarmup(BotEntry entry, Character agent) {
+        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        if (leader == null) {
+            return;
+        }
+        int leaderId = leader.getId();
+        int mapId = agent.getMap().getId();
+        long now = System.currentTimeMillis();
+        Map<Integer, Long> byMap = WARMUP_NOTIFIED.get(leaderId);
+        if (byMap != null) {
+            Long last = byMap.get(mapId);
+            if (last != null && (now - last) < 10_000L) {
+                return;
+            }
+        }
+
+        long walkable = agent.getMap().getFootholds().getAllFootholds().stream()
+                .filter(fh -> !fh.isWall())
+                .count();
+        if (walkable < 100) {
+            return;
+        }
+        WARMUP_NOTIFIED.computeIfAbsent(leaderId, k -> new ConcurrentHashMap<>()).put(mapId, now);
+        leader.dropMessage(5, agent.getName() + " is warming map navigation cache, using fallback movement...");
+    }
+}

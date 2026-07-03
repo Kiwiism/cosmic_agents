@@ -3982,6 +3982,9 @@ Recent reconstruction notes:
   heuristic calculation, map-edge usability, slow-path logging, and path
   reconstruction were removed after the compatibility search method delegated
   to `AgentNavigationPathService`.
+- Navigation graph warmup notification throttling now lives in
+  `AgentNavigationWarmupService`. The same leader/map throttle, walkable
+  foothold threshold, and visible fallback message text are preserved.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

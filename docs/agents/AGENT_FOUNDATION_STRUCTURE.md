@@ -174,6 +174,8 @@ Capability bins:
   usability policy, production path search entry points, next-edge selection,
   optimality measurement, slow-path logging, and path reconstruction live in
   `AgentNavigationPathService`.
+  Navigation graph warmup notification throttling lives in
+  `AgentNavigationWarmupService`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
   `AgentNavigationCommittedEdgeService`; the temporary bot navigation shell
