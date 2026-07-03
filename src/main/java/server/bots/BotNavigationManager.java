@@ -699,11 +699,7 @@ public final class BotNavigationManager {
                                                         int startRegionId,
                                                         int targetRegionId,
                                                         Point targetPos) {
-        List<AgentNavigationGraph.Edge> path = findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
-        if (path.isEmpty()) {
-            return null;
-        }
-        return collapseLeadingWalkEdges(path);
+        return AgentNavigationPathService.findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,

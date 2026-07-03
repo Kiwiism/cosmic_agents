@@ -107,6 +107,18 @@ public final class AgentNavigationPathService {
         return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, "target-score");
     }
 
+    public static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
+                                                         Character bot,
+                                                         int startRegionId,
+                                                         int targetRegionId,
+                                                         Point targetPos) {
+        List<AgentNavigationGraph.Edge> path = findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
+        if (path.isEmpty()) {
+            return null;
+        }
+        return collapseLeadingWalkEdges(path);
+    }
+
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                            MapleMap map,
                                                            Point startPos,

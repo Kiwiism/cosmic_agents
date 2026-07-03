@@ -1,5 +1,6 @@
 package server.agents.capabilities.navigation;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -16,6 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentNavigationPathServiceTest {
     @Test
@@ -105,6 +108,32 @@ class AgentNavigationPathServiceTest {
         assertEquals(2, path.size());
         assertEquals(2, path.get(0).toRegionId);
         assertEquals(3, path.get(1).toRegionId);
+    }
+
+    @Test
+    void findNextEdgeCollapsesNoMovementLeadingWalks() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(
+                        1, List.of(edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                                new Point(0, 100), new Point(0, 100), 10)),
+                        2, List.of(edge(2, 3, AgentNavigationGraph.EdgeType.JUMP,
+                                new Point(0, 100), new Point(200, 100), 20))));
+        Character bot = mock(Character.class);
+        when(bot.getMap()).thenReturn(null);
+        when(bot.getPosition()).thenReturn(new Point(0, 100));
+
+        AgentNavigationGraph.Edge next = AgentNavigationPathService.findNextEdge(
+                graph, bot, 1, 3, new Point(200, 100));
+
+        assertNotNull(next);
+        assertEquals(1, next.fromRegionId);
+        assertEquals(3, next.toRegionId);
+        assertEquals(AgentNavigationGraph.EdgeType.JUMP, next.type);
+        assertEquals(30, next.cost);
     }
 
     @Test

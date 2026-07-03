@@ -171,8 +171,8 @@ Capability bins:
   manager delegates to it temporarily. Movement tick target resolution and
   committed-edge continuation enter through `AgentNavigationTargetService`.
   Path cost, heuristic, no-op walk collapse, precise walk-target policy, edge
-  usability policy, production path search entry points, optimality
-  measurement, slow-path logging, and path reconstruction live in
+  usability policy, production path search entry points, next-edge selection,
+  optimality measurement, slow-path logging, and path reconstruction live in
   `AgentNavigationPathService`.
   Committed-edge comparison, retention, committed ground-edge refresh, pending
   climb-exit refresh, and reuse/staleness policy live in
