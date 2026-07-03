@@ -11,9 +11,9 @@ import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.life.Monster;
 import tools.PacketCreator;
 
@@ -111,9 +111,9 @@ public final class AgentBotCombatDamageRuntime {
 
         AgentBotCombatActionStateRuntime.clearActionState(entry);
         if (AgentBotMovementStateRuntime.inAir(entry)) {
-            BotPhysicsEngine.applyAirKnockback(entry, bot, knockbackAirVelX);
+            AgentKnockbackMovementService.applyAirKnockback(entry, bot, knockbackAirVelX);
         } else {
-            BotPhysicsEngine.beginKnockback(entry, bot, botPos,
+            AgentKnockbackMovementService.beginKnockback(entry, bot, botPos,
                     -AgentMobKnockbackPolicy.scaledOpenStoryStep(
                             config.KNOCKBACK_VFORCE, AgentMovementPhysicsConfig.configuredMovementTickMs()),
                     knockbackAirVelX);

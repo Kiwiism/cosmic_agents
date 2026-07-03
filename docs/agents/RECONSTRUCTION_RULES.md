@@ -3937,6 +3937,10 @@ Recent reconstruction notes:
   `AgentRopeMovementService`. The service preserves legacy attach/hold/advance
   and ground/rope jump behavior while removing direct physics action calls from
   Agent movement callers and old movement/navigation shims.
+- Combat-driven knockback movement now routes through
+  `AgentKnockbackMovementService`. Combat damage code still preserves the
+  legacy facing-direction and airborne velocity behavior while no longer
+  calling knockback physics directly.
 
 Initial reconstruction order:
 

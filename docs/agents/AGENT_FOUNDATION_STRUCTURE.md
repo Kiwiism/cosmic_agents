@@ -152,7 +152,8 @@ Capability bins:
   movement timer countdowns enter through `AgentMotionTimerService`. Grounded
   collision and ledge queries enter through `AgentGroundCollisionService`.
   Rope, ladder, and jump-launch actions enter through
-  `AgentRopeMovementService`.
+  `AgentRopeMovementService`. Combat-driven knockback movement enters through
+  `AgentKnockbackMovementService`.
 - `supplies`
 - `trade`
 - `shop`
