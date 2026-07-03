@@ -44,7 +44,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,7 +58,6 @@ public class BotEquipManager {
             java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HHmmss");
     private static final java.time.format.DateTimeFormatter EQUIP_LOG_HEADER_FMT =
             java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final short[] RING_SLOTS = {-12, -13, -15, -16};
     /** Hard cap on Pareto-frontier size per DP step to bound worst-case runtime. */
     private static final int MAX_PARETO_STATES = 2000;
     /**
@@ -99,7 +97,7 @@ public class BotEquipManager {
             }
         }
 
-        List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
+        List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
         boolean[] reqRel = scanReqRelevantDims(bySlot, ii);
 
         // Outer weapon pool: currently-wearable + stat-only-blocked + currently equipped.
@@ -160,32 +158,6 @@ public class BotEquipManager {
         return AgentAutoEquipThrottle.shouldRun(bot, nowMs, force);
     }
 
-    /**
-     * Builds the ordered DP slot list from the merged candidate + currently-equipped slot
-     * sets. All four ring slots are included whenever any ring is in the pool, so the DP can
-     * place rings into now-empty positions. Sort is descending so {@code -5} (top) is solved
-     * before {@code -6} (pants) — the overall→pants block at -6 reads picks[-5].
-     */
-    private static List<Short> buildDpSlots(Map<Short, List<Equip>> bySlot,
-                                             Map<Short, Equip> currentBySlot) {
-        Set<Short> set = new HashSet<>();
-        for (Short s : bySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) set.add(s);
-        for (Short s : currentBySlot.keySet()) if (s != (short) -11 && !isRingSlot(s)) set.add(s);
-        boolean hasRings = !bySlot.getOrDefault((short) -12, List.of()).isEmpty();
-        if (!hasRings) {
-            for (Short s : currentBySlot.keySet()) if (isRingSlot(s)) { hasRings = true; break; }
-        }
-        if (hasRings) for (short rs : RING_SLOTS) set.add(rs);
-        List<Short> out = new ArrayList<>(set);
-        out.sort((a, b) -> Short.compare(b, a));
-        return out;
-    }
-
-    /**
-     * Diagnostic dump of what {@link #autoEquip} would do, without applying any moves.
-     * Returns multiple short lines suitable for sequential bot chat. Includes mob benchmark,
-     * naked stats, per-weapon score (top 3), changed slots vs current, and pareto-cap status.
-     */
     public static List<String> autoEquipDebug(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
@@ -206,7 +178,7 @@ public class BotEquipManager {
             if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
 
-        List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
+        List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
         boolean[] reqRel = scanReqRelevantDims(bySlot, ii);
 
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
@@ -263,7 +235,7 @@ public class BotEquipManager {
             for (Map.Entry<Short, Equip> e : best.result().picks().entrySet()) {
                 Equip cur = currentBySlot.get(e.getKey());
                 if (cur != e.getValue()) {
-                    diffs.add(slotLabel(e.getKey()) + ":"
+                    diffs.add(AgentEquipmentSlotResolver.slotLabel(e.getKey()) + ":"
                             + (cur == null ? "-" : ii.getName(cur.getItemId()))
                             + ">" + ii.getName(e.getValue().getItemId()));
                 }
@@ -353,7 +325,7 @@ public class BotEquipManager {
 
         sb.append("\n--- candidate pools by slot ---\n");
         for (Map.Entry<Short, List<Equip>> en : bySlot.entrySet()) {
-            sb.append(slotLabel(en.getKey())).append(" (").append(en.getKey()).append("): ");
+            sb.append(AgentEquipmentSlotResolver.slotLabel(en.getKey())).append(" (").append(en.getKey()).append("): ");
             if (en.getValue().isEmpty()) sb.append("(empty)\n");
             else {
                 sb.append(en.getValue().size()).append(" cands: ");
@@ -397,7 +369,7 @@ public class BotEquipManager {
             for (Map.Entry<Short, Equip> pick : b.r().picks().entrySet()) {
                 Equip cur = currentBySlot.get(pick.getKey());
                 String marker = cur == pick.getValue() ? "  =" : "  >";
-                sb.append(marker).append(' ').append(slotLabel(pick.getKey())).append(": ");
+                sb.append(marker).append(' ').append(AgentEquipmentSlotResolver.slotLabel(pick.getKey())).append(": ");
                 if (cur != pick.getValue() && cur != null) {
                     sb.append(ii.getName(cur.getItemId())).append(" -> ");
                 }
@@ -456,7 +428,7 @@ public class BotEquipManager {
             short pos = e.getPosition();
             if (pos == (short) -11
                     && !isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
-            short key = isRingSlot(pos) ? (short) -12 : pos;
+            short key = AgentEquipmentSlotResolver.isRingSlot(pos) ? (short) -12 : pos;
             List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
             if (!pool.contains(e)) pool.add(e);
         }
@@ -500,7 +472,7 @@ public class BotEquipManager {
                     && !isWeaponCompatible(bot, ii.getWeaponType(ex.getItemId()))) continue;
             if (!isRecommendationCandidate(bot, ii, ex, pslot, scope)) continue;
             // Rings live in the shared -12 pool regardless of which equipped position they came from.
-            short key = isRingSlot(pslot) ? (short) -12 : pslot;
+            short key = AgentEquipmentSlotResolver.isRingSlot(pslot) ? (short) -12 : pslot;
             List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
             if (!pool.contains(ex)) pool.add(ex);
         }
@@ -516,7 +488,7 @@ public class BotEquipManager {
             if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
 
-        List<Short> dpSlots = buildDpSlots(bySlot, currentBySlot);
+        List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
 
         List<Equip> weaponPool = new ArrayList<>(bySlot.getOrDefault((short) -11, List.of()));
         Equip currentWeapon = compatibleWeaponOrNull(bot, ii, (Equip) eqdInv.getItem((short) -11));
@@ -609,7 +581,7 @@ public class BotEquipManager {
             // Rings share a single pool keyed at -12; cross-slot dedupe prevents the same ring
             // instance being placed in two ring slots. The 4 ring positions are otherwise
             // interchangeable for stats, so the DP just picks up to 4 rings from the pool.
-            boolean ringSlot = isRingSlot(slot);
+            boolean ringSlot = AgentEquipmentSlotResolver.isRingSlot(slot);
             List<Equip> pool = ringSlot
                     ? bySlot.getOrDefault((short) -12, List.of())
                     : bySlot.getOrDefault(slot, List.of());
@@ -627,7 +599,7 @@ public class BotEquipManager {
                     if (cand == null) continue;
                     if (ringSlot) {
                         for (int j = 0; j < i; j++) {
-                            if (isRingSlot(dpSlots.get(j)) && prev.picks[j] == cand) continue candLoop;
+                            if (AgentEquipmentSlotResolver.isRingSlot(dpSlots.get(j)) && prev.picks[j] == cand) continue candLoop;
                         }
                     }
                     AgentEquipmentStatSnapshot ns = prev.snap.swap(null, cand);
@@ -706,7 +678,7 @@ public class BotEquipManager {
         return slot != (short) -5      // top/overall can block pants
                 && slot != (short) -6  // pants can be blocked by an overall
                 && slot != (short) -10 // shield can be blocked by 2H weapons
-                && !isRingSlot(slot);
+                && !AgentEquipmentSlotResolver.isRingSlot(slot);
     }
 
     private static final class DpNode {
@@ -1024,7 +996,7 @@ public class BotEquipManager {
             if (primary == (short) -11
                     && !isWeaponCompatible(bot, ii.getWeaponType(equip.getItemId()))) continue;
             if (!futureOnlyBlocked(bot, ii, equip)) continue;
-            short key = isRingSlot(primary) ? (short) -12 : primary;
+            short key = AgentEquipmentSlotResolver.isRingSlot(primary) ? (short) -12 : primary;
             bySlot.computeIfAbsent(key, k -> new ArrayList<>()).add(equip);
         }
         for (Item it : eqdInv.list()) {
@@ -1033,7 +1005,7 @@ public class BotEquipManager {
             if (pos == (short) -11
                     && !isWeaponCompatible(bot, ii.getWeaponType(e.getItemId()))) continue;
             if (!futureOnlyBlocked(bot, ii, e)) continue;
-            short key = isRingSlot(pos) ? (short) -12 : pos;
+            short key = AgentEquipmentSlotResolver.isRingSlot(pos) ? (short) -12 : pos;
             List<Equip> pool = bySlot.computeIfAbsent(key, k -> new ArrayList<>());
             if (!pool.contains(e)) pool.add(e);
         }
@@ -1271,34 +1243,6 @@ public class BotEquipManager {
 
     public static boolean isMageJob(Job job) {
         return AgentWeaponCompatibilityPolicy.isMageJob(job);
-    }
-
-    private static boolean isRingSlot(short slot) {
-        for (short rs : RING_SLOTS) if (slot == rs) return true;
-        return false;
-    }
-
-    private static String slotLabel(short slot) {
-        return switch (slot) {
-            case -11 -> "weapon";
-            case -10 -> "shield";
-            case -9 -> "cape";
-            case -8 -> "glove";
-            case -7 -> "shoes";
-            case -6 -> "pants";
-            case -5 -> "top";
-            case -4 -> "earring";
-            case -3 -> "face";
-            case -2 -> "eye";
-            case -1 -> "hat";
-            case -12, -13, -15, -16 -> "ring";
-            case -17 -> "pendant";
-            case -18 -> "tamed mob";
-            case -19 -> "saddle";
-            case -20 -> "medal";
-            case -21 -> "belt";
-            default -> "slot " + slot;
-        };
     }
 
     public static boolean isWeaponCompatible(Character bot, WeaponType weaponType) {

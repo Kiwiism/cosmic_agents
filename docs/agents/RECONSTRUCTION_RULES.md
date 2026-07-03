@@ -3692,6 +3692,9 @@ Recent reconstruction notes:
 - Weapon-branch debug score breakdown data now lives in
   `AgentWeaponScoreBreakdown`; raw max, pre-cycle damage, cycle timing, and
   normalized-damage reporting are unchanged.
+- Equipment slot planning and labels now live in `AgentEquipmentSlotResolver`;
+  ring slot detection, DP slot expansion/order, chat slot aliases, and
+  equipment recommendation labels share the same Agent-owned source.
 
 Initial reconstruction order:
 

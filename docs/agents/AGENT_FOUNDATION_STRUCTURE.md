@@ -68,7 +68,8 @@ Capability bins:
 - `equipment`
   Production equipment callers enter through `AgentEquipmentService`; the
   remaining legacy optimizer implementation is isolated behind that Agent
-  capability boundary for future extraction. Slot alias resolution lives in
+  capability boundary for future extraction. Slot alias resolution, ring slot
+  detection, DP slot ordering, and display labels live in
   `AgentEquipmentSlotResolver`; pure scoring helpers live in
   `AgentEquipmentScoringPolicy`; auto-equip duplicate-trigger state lives in
   `AgentAutoEquipThrottle`; auto-equip debug dump formatting lives in

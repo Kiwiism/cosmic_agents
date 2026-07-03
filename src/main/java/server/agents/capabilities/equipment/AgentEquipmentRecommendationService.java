@@ -176,7 +176,7 @@ public final class AgentEquipmentRecommendationService {
             if (i > 0) {
                 summary.append(", ");
             }
-            summary.append(slotLabel(recommendation.targetSlot()))
+            summary.append(AgentEquipmentSlotResolver.slotLabel(recommendation.targetSlot()))
                     .append(" -> ")
                     .append(itemName.apply(recommendation.candidate().getItemId()));
         }
@@ -184,28 +184,5 @@ public final class AgentEquipmentRecommendationService {
             summary.append(" +").append(recommendations.size() - count).append(" more");
         }
         return summary.toString();
-    }
-
-    private static String slotLabel(short slot) {
-        return switch (slot) {
-            case -11 -> "weapon";
-            case -10 -> "shield";
-            case -9 -> "cape";
-            case -8 -> "glove";
-            case -7 -> "shoes";
-            case -6 -> "pants";
-            case -5 -> "top";
-            case -4 -> "earring";
-            case -3 -> "face";
-            case -2 -> "eye";
-            case -1 -> "hat";
-            case -12, -13, -15, -16 -> "ring";
-            case -17 -> "pendant";
-            case -18 -> "tamed mob";
-            case -19 -> "saddle";
-            case -20 -> "medal";
-            case -21 -> "belt";
-            default -> "slot " + slot;
-        };
     }
 }
