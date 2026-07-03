@@ -244,23 +244,23 @@ public final class BotPhysicsEngine {
     }
 
     public static int configuredSwimArrivalRadiusPx() {
-        return cfg.SWIM_ARRIVAL_RADIUS_PX;
+        return AgentMovementPhysicsConfig.configuredSwimArrivalRadiusPx();
     }
 
     public static int configuredSwimJumpCooldownMs() {
-        return cfg.SWIM_JUMP_COOLDOWN_MS;
+        return AgentMovementPhysicsConfig.configuredSwimJumpCooldownMs();
     }
 
     public static int configuredSwimLevelBandPx() {
-        return cfg.SWIM_LEVEL_BAND_PX;
+        return AgentMovementPhysicsConfig.configuredSwimLevelBandPx();
     }
 
     public static int configuredSwimDownBandPx() {
-        return cfg.SWIM_DOWN_BAND_PX;
+        return AgentMovementPhysicsConfig.configuredSwimDownBandPx();
     }
 
     public static int configuredSwimJumpTriggerDyPx() {
-        return cfg.SWIM_JUMP_TRIGGER_DY_PX;
+        return AgentMovementPhysicsConfig.configuredSwimJumpTriggerDyPx();
     }
 
     private static AgentMovementProfile profileOrBase(AgentMovementProfile profile) {

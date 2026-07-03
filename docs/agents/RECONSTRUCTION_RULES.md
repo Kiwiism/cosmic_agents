@@ -94,6 +94,11 @@ Recent reconstruction notes:
   climb movement, movement report snapshots, and remaining bot shims now use
   the Agent-owned calculation while `BotPhysicsEngine` keeps its internal
   simulation body for later migration.
+- External swim steering threshold reads moved to `AgentMovementPhysicsConfig`.
+  Agent swim and airborne movement now read swim arrival radius, jump cooldown,
+  level/down bands, jump trigger, and rope-grab tolerance from Agent-owned
+  config. `BotPhysicsEngine` keeps compatibility accessors that delegate to the
+  same values while its swim integrator remains a later migration slice.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback

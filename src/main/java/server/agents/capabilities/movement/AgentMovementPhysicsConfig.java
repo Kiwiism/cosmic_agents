@@ -22,6 +22,11 @@ public final class AgentMovementPhysicsConfig {
     private static final int TELEPORT_DIST = 4000;
     private static final int OUT_OF_BOUNDS_TELEPORT_DIST = 600;
     private static final int FOLLOW_Y_CAP = 200;
+    private static final int SWIM_ARRIVAL_RADIUS_PX = 8;
+    private static final int SWIM_JUMP_COOLDOWN_MS = 500;
+    private static final int SWIM_LEVEL_BAND_PX = 30;
+    private static final int SWIM_DOWN_BAND_PX = 120;
+    private static final int SWIM_JUMP_TRIGGER_DY_PX = 100;
 
     private AgentMovementPhysicsConfig() {
     }
@@ -92,5 +97,25 @@ public final class AgentMovementPhysicsConfig {
 
     public static int configuredFollowYCap() {
         return FOLLOW_Y_CAP;
+    }
+
+    public static int configuredSwimArrivalRadiusPx() {
+        return SWIM_ARRIVAL_RADIUS_PX;
+    }
+
+    public static int configuredSwimJumpCooldownMs() {
+        return SWIM_JUMP_COOLDOWN_MS;
+    }
+
+    public static int configuredSwimLevelBandPx() {
+        return SWIM_LEVEL_BAND_PX;
+    }
+
+    public static int configuredSwimDownBandPx() {
+        return SWIM_DOWN_BAND_PX;
+    }
+
+    public static int configuredSwimJumpTriggerDyPx() {
+        return SWIM_JUMP_TRIGGER_DY_PX;
     }
 }

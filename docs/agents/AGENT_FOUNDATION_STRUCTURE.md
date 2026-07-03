@@ -51,9 +51,10 @@ Target package groups:
   Movement profile physics baselines live in
   `server.agents.capabilities.movement.AgentMovementPhysicsConfig`, including
   movement tick duration plus rope-grab and snap/slope thresholds used by
-  navigation and fallback movement. Movement command distances and caps also
-  live there while the remaining legacy movement/physics runtime still awaits
-  reconstruction. Movement tick countdown helpers live in
+  navigation, swim/airborne steering, and fallback movement. Movement command
+  distances and caps also live there while the remaining legacy
+  movement/physics runtime still awaits reconstruction. Movement tick countdown
+  helpers live in
   `server.agents.capabilities.movement.AgentMovementTimers`. Packet-visible
   movement broadcasts live in
   `server.agents.capabilities.movement.AgentMovementBroadcastService`.

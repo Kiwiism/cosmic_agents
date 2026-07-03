@@ -26,6 +26,11 @@ class AgentMovementProfileTest {
         assertEquals(4000, AgentMovementPhysicsConfig.configuredTeleportDist());
         assertEquals(600, AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist());
         assertEquals(200, AgentMovementPhysicsConfig.configuredFollowYCap());
+        assertEquals(8, AgentMovementPhysicsConfig.configuredSwimArrivalRadiusPx());
+        assertEquals(500, AgentMovementPhysicsConfig.configuredSwimJumpCooldownMs());
+        assertEquals(30, AgentMovementPhysicsConfig.configuredSwimLevelBandPx());
+        assertEquals(120, AgentMovementPhysicsConfig.configuredSwimDownBandPx());
+        assertEquals(100, AgentMovementPhysicsConfig.configuredSwimJumpTriggerDyPx());
     }
 
     @Test

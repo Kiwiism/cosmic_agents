@@ -35,7 +35,7 @@ public final class AgentAirborneMovementService {
             if (!AgentBotMovementStateRuntime.hasMoveDirection(entry) && targetPos != null && shouldApplyAirSteering(entry)) {
                 int dx = targetPos.x - agentPosition.x;
                 AgentBotMovementStateRuntime.setMoveDirection(entry,
-                        Math.abs(dx) > BotPhysicsEngine.configuredSwimArrivalRadiusPx()
+                        Math.abs(dx) > AgentMovementPhysicsConfig.configuredSwimArrivalRadiusPx()
                                 ? Integer.signum(dx) : 0);
             }
 
@@ -75,7 +75,7 @@ public final class AgentAirborneMovementService {
             if (AgentClimbMovementPolicy.sameRope(AgentBotClimbStateRuntime.blockedRopeGrab(entry), rope)) {
                 continue;
             }
-            if (Math.abs(rope.x() - agentPosition.x) > BotPhysicsEngine.configuredRopeGrabX()) {
+            if (Math.abs(rope.x() - agentPosition.x) > AgentMovementPhysicsConfig.configuredRopeGrabX()) {
                 continue;
             }
             if (agentPosition.y < rope.topY() || agentPosition.y > rope.bottomY() + 2) {

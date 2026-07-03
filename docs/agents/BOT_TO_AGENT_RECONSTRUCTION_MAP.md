@@ -94,6 +94,10 @@ Recent map updates:
   climb movement, movement report snapshots, and remaining bot compatibility
   code use the Agent-owned calculation; the physics engine retains only its
   own internal use until the simulation body is migrated.
+- External swim steering threshold reads moved to `AgentMovementPhysicsConfig`.
+  Agent swim and airborne movement no longer depend on `BotPhysicsEngine`
+  compatibility config accessors for swim arrival radius, swim jump cooldown,
+  swim vertical bands, swim jump trigger, or rope-grab tolerance.
 - Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
   combat, common tick, inventory/trade, shop, supplies, and stuck-detection
   callback bundles no longer depend on `BotMovementManager` for tick-down or

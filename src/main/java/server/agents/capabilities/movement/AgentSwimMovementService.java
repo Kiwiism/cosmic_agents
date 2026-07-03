@@ -42,14 +42,14 @@ public final class AgentSwimMovementService {
         int dx = targetPos.x - pos.x;
         int dy = targetPos.y - pos.y;
 
-        int hRadius = BotPhysicsEngine.configuredSwimArrivalRadiusPx();
+        int hRadius = AgentMovementPhysicsConfig.configuredSwimArrivalRadiusPx();
         if (dx > hRadius) {
             AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
         } else if (dx < -hRadius) {
             AgentBotSwimStateRuntime.setSwimMoveDirection(entry, -1);
         }
 
-        int levelBand = BotPhysicsEngine.configuredSwimLevelBandPx();
+        int levelBand = AgentMovementPhysicsConfig.configuredSwimLevelBandPx();
         if (Math.abs(dx) <= hRadius && Math.abs(dy) <= levelBand) {
             AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 0);
             AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
@@ -57,11 +57,11 @@ public final class AgentSwimMovementService {
         }
 
         long now = System.currentTimeMillis();
-        int jumpTrigger = BotPhysicsEngine.configuredSwimJumpTriggerDyPx();
-        int downBand = BotPhysicsEngine.configuredSwimDownBandPx();
+        int jumpTrigger = AgentMovementPhysicsConfig.configuredSwimJumpTriggerDyPx();
+        int downBand = AgentMovementPhysicsConfig.configuredSwimDownBandPx();
         if (dy <= -jumpTrigger && now >= AgentBotSwimStateRuntime.swimNextJumpAtMs(entry)) {
             AgentBotSwimStateRuntime.setSwimJumpRequested(entry, true);
-            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry, now + BotPhysicsEngine.configuredSwimJumpCooldownMs());
+            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry, now + AgentMovementPhysicsConfig.configuredSwimJumpCooldownMs());
             AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
         } else if (dy <= levelBand) {
             AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
