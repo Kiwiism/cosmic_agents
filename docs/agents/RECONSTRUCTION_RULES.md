@@ -2992,6 +2992,9 @@ Recent reconstruction notes:
   BotMovementManager preserves the same stop-distance, follow-distance,
   was-moving, direction, and walk-step inputs while keeping runtime movement
   state updates in the legacy compatibility layer.
+- Ground precise-navigation stop-distance and directional-drop edge detection
+  now live in `AgentGroundMovementPolicy`; BotMovementManager preserves the same
+  compatibility helper and ground action planning inputs.
 - Potion-share low-donor deflection templates now live in
   `AgentDialogueCatalog`; AgentPotionService preserves the same delayed map-chat
   callback and random selection timing while delegating the wording and owner

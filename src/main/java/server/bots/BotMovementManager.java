@@ -573,25 +573,8 @@ public class BotMovementManager {
         }
     }
 
-    /**
-     * Stop-distance used when navPreciseTarget is true.
-     * WALK edges use 4px to absorb terrain micro-bumps on sloped footholds.
-     * JUMP and straight down-jump DROP edges use 0px because the bot must walk INTO the
-     * authored launch window, not stop just outside it. Other precise edge types
-     * (CLIMB, PORTAL, non-windowed fallback cases) use 1px to reach the exact anchor.
-     */
     static int preciseNavStopDist(AgentNavigationGraph.Edge navEdge) {
-        if (navEdge != null
-                && (navEdge.type == AgentNavigationGraph.EdgeType.JUMP
-                || (navEdge.type == AgentNavigationGraph.EdgeType.DROP && navEdge.launchStepX == 0))) {
-            // Bot must walk INTO the launch window, not just near it. The launch window checks
-            // are strict, so stopDist=1 can halt the bot exactly 1px before the valid range.
-            return 0;
-        }
-        if (navEdge != null && navEdge.type != AgentNavigationGraph.EdgeType.WALK) {
-            return 1;
-        }
-        return 4;
+        return AgentGroundMovementPolicy.preciseNavStopDist(navEdge);
     }
 
     static Point adjustGrindingTargetPosition(BotEntry entry, Foothold currentFh, Point targetPos) {
@@ -600,7 +583,7 @@ public class BotMovementManager {
 
     private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
         AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
-        boolean directionalDrop = isDirectionalDropEdge(navEdge);
+        boolean directionalDrop = AgentGroundMovementPolicy.isDirectionalDropEdge(navEdge);
         int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? preciseNavStopDist(navEdge) : cfg.STOP_DIST;
         // No hysteresis when navigating to an edge — always move toward the waypoint
         int followDist = directionalDrop ? 0
@@ -730,12 +713,6 @@ public class BotMovementManager {
 
     private static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
         return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
-    }
-
-    private static boolean isDirectionalDropEdge(AgentNavigationGraph.Edge navEdge) {
-        return navEdge != null
-                && navEdge.type == AgentNavigationGraph.EdgeType.DROP
-                && navEdge.launchStepX != 0;
     }
 
     public static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {

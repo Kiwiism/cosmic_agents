@@ -112,9 +112,10 @@ Capability bins:
   The production `server.bots.BotEquipManager` file has been deleted; historical
   equipment tests still carry old class/package names until test cleanup.
 - `movement`
-  Ground horizontal step decisions are split between pure
-  `AgentGroundMovementPolicy` and stateful `AgentGroundMovementService`; the
-  old bot movement methods now delegate. Navigation jump/rope reach probes
+  Ground horizontal step decisions plus precise-navigation stop/drop-edge rules
+  are split between pure `AgentGroundMovementPolicy` and stateful
+  `AgentGroundMovementService`; the old bot movement methods now delegate.
+  Navigation jump/rope reach probes
   route through `AgentJumpProbeService`; ground and rope jump initiation routes
   through `AgentJumpActionService`; movement phase dispatch routes through
   `AgentMovementPhaseDispatchService` while the underlying physics implementation and
