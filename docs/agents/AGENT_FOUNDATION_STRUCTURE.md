@@ -62,8 +62,8 @@ Target package groups:
   `server.agents.capabilities.movement.AgentMovementStateResetService`.
   Foothold index construction lives in
   `server.agents.capabilities.movement.AgentFootholdIndexService`.
-  Walk-step and climb-step kinematics live in
-  `server.agents.capabilities.movement.AgentMovementKinematicsService`.
+  Walk-step, climb-step, jump-force, gravity, and jump/rope range kinematics
+  live in `server.agents.capabilities.movement.AgentMovementKinematicsService`.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

@@ -5,7 +5,6 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementKinematicsSnapshot;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.bots.BotPhysicsEngine;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
@@ -30,16 +29,16 @@ public final class AgentBotMovementKinematicsRuntime {
                         profile.totalJumpStat(),
                         profile.walkVelocityPxs(),
                         profile.hForcePxs(),
-                        BotPhysicsEngine.jumpForcePerTick(profile),
-                        BotPhysicsEngine.ropeJumpForcePerTick(profile),
-                        BotPhysicsEngine.calculateMaxJumpHeight(profile));
+                        AgentMovementKinematicsService.jumpForcePerTick(profile),
+                        AgentMovementKinematicsService.ropeJumpForcePerTick(profile),
+                        AgentMovementKinematicsService.calculateMaxJumpHeight(profile));
         AgentMovementKinematicsSnapshot.MapMovementProfile mapMovementProfile = map == null
                 ? null
                 : new AgentMovementKinematicsSnapshot.MapMovementProfile(
                         AgentMovementKinematicsService.walkStep(map, profile),
                         AgentMovementKinematicsService.climbStepPerTick(),
-                        BotPhysicsEngine.maxJumpHorizontalTravel(map, profile),
-                        BotPhysicsEngine.maxRopeJumpHorizontalTravel(map, profile));
+                        AgentMovementKinematicsService.maxJumpHorizontalTravel(map, profile),
+                        AgentMovementKinematicsService.maxRopeJumpHorizontalTravel(map, profile));
 
         return new AgentMovementKinematicsSnapshot(
                 movementProfile,

@@ -98,6 +98,11 @@ Recent map updates:
   Agent swim and airborne movement no longer depend on `BotPhysicsEngine`
   compatibility config accessors for swim arrival radius, swim jump cooldown,
   swim vertical bands, swim jump trigger, or rope-grab tolerance.
+- External jump/rope kinematics range reads moved to
+  `AgentMovementKinematicsService`. Agent navigation graph generation and
+  movement report snapshots no longer read those calculations directly from
+  `BotPhysicsEngine`; the Agent service remains a temporary delegation seam
+  until the physics simulation body is migrated.
 - Movement countdown helper ownership moved to `AgentMovementTimers`; Agent
   combat, common tick, inventory/trade, shop, supplies, and stuck-detection
   callback bundles no longer depend on `BotMovementManager` for tick-down or

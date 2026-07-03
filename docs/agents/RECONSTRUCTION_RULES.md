@@ -99,6 +99,12 @@ Recent reconstruction notes:
   level/down bands, jump trigger, and rope-grab tolerance from Agent-owned
   config. `BotPhysicsEngine` keeps compatibility accessors that delegate to the
   same values while its swim integrator remains a later migration slice.
+- External jump/rope kinematics range reads moved to
+  `AgentMovementKinematicsService`. Agent movement report snapshots and
+  navigation graph edge generation now use Agent-owned kinematics methods for
+  jump force, rope-jump force, gravity-per-tick, max jump height, jump travel,
+  rope-jump travel, and rope-grab simulation travel. These methods delegate to
+  the current physics implementation until the simulation body moves.
 - Movement countdown helpers moved to
   `server.agents.capabilities.movement.AgentMovementTimers`. Agent combat,
   common-tick, inventory/trade, shop, supplies, and stuck-detection callback

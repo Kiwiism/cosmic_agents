@@ -1018,7 +1018,7 @@ public final class AgentNavigationGraphService {
         }
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
-        int stepX = BotPhysicsEngine.walkStep(map, movementProfile) * direction;
+        int stepX = AgentMovementKinematicsService.walkStep(map, movementProfile) * direction;
         BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateFallLanding(map, endpoint, stepX);
         if (landing == null) {
             return;
@@ -1056,7 +1056,7 @@ public final class AgentNavigationGraphService {
                                      JumpLandingCache jumpLandingCache,
                                      AgentMovementProfile movementProfile) {
         long startedAt = System.nanoTime();
-        int jumpStep = BotPhysicsEngine.walkStep(map, movementProfile);
+        int jumpStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
         for (Point anchor : anchors) {
             for (int launchStepX : new int[]{-jumpStep, 0, jumpStep}) {
@@ -1646,7 +1646,7 @@ public final class AgentNavigationGraphService {
 
         int ropeX = rope.x();
         int jumpStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
-        int maxRopeJumpDx = BotPhysicsEngine.maxRopeGrabSimulationHorizontalTravel(map, movementProfile);
+        int maxRopeJumpDx = AgentMovementKinematicsService.maxRopeGrabSimulationHorizontalTravel(map, movementProfile);
 
         // Direct step-off at the top of the rope
         addTopStepOffEdge(ropeRegion, rope, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
@@ -1924,8 +1924,9 @@ public final class AgentNavigationGraphService {
             addAnchor(points, region.pointAt(region.maxX - edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
         }
         int ticksToApex = Math.max(1, (int) Math.ceil(
-                BotPhysicsEngine.jumpForcePerTick(movementProfile) / Math.max(0.001f, BotPhysicsEngine.gravityPerTick())));
-        int jumpInset = Math.max(edgeInset * 3, BotPhysicsEngine.walkStep(map, movementProfile) * ticksToApex);
+                AgentMovementKinematicsService.jumpForcePerTick(movementProfile)
+                        / Math.max(0.001f, AgentMovementKinematicsService.gravityPerTick())));
+        int jumpInset = Math.max(edgeInset * 3, AgentMovementKinematicsService.walkStep(map, movementProfile) * ticksToApex);
         if (region.width() > jumpInset * 2) {
             addAnchor(points, region.pointAt(region.minX + jumpInset), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, region.pointAt(region.maxX - jumpInset), ENDPOINT_ANCHOR_SPACING_PX);
@@ -1936,7 +1937,7 @@ public final class AgentNavigationGraphService {
         // Spacing matches walkStep so a launch window as narrow as a single pre-launch tick
         // (≈walkStep px) is guaranteed at least one seed sample. Repeated sims are absorbed by
         // jumpLandingCache.
-        int walkStep = BotPhysicsEngine.walkStep(map, movementProfile);
+        int walkStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
         int interiorSpacing = Math.max(walkStep, 1);
         if (region.width() > edgeInset * 2) {
             for (int x = region.minX + edgeInset;
