@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.TimerManager;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
@@ -39,7 +40,7 @@ public final class AgentRegistrationRuntime {
                 agent,
                 normalizeSpawnState,
                 new AgentLifecycleService.RegisterHooks(
-                        BotMovementManager.configuredTickMs(),
+                        AgentMovementPhysicsConfig.configuredMovementTickMs(),
                         TimerManager.getInstance()::register,
                         tickCallback,
                         AgentBotManagerSchedulerRuntime::cancelScheduledTask,

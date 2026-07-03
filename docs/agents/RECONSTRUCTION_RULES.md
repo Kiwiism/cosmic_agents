@@ -73,6 +73,11 @@ Recent reconstruction notes:
   `AgentMovementPhysicsConfig`. Agent movement fallback and navigation graph
   code now read those thresholds from Agent-owned config while the legacy
   physics engine keeps the collision/simulation body for later slices.
+- Movement tick duration ownership moved to `AgentMovementPhysicsConfig`.
+  Agent registration, preflight, movement-only, stuck detection, combat
+  knockback/reporting, fidget delay, and navigation edge timing reads now use
+  the Agent-owned movement tick value directly where they do not also require
+  legacy bot timing callbacks.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

@@ -126,7 +126,7 @@ public class BotMovementManager {
     }
 
     public static int configuredTickMs() {
-        return BotPhysicsEngine.cfg.TICK_MS;
+        return AgentMovementPhysicsConfig.configuredMovementTickMs();
     }
 
     public static int configuredFollowDist() {
@@ -163,11 +163,11 @@ public class BotMovementManager {
     }
 
     public static int tickDown(int remainingMs) {
-        return AgentMovementTimingPolicy.tickDown(remainingMs, BotPhysicsEngine.cfg.TICK_MS);
+        return AgentMovementTimingPolicy.tickDown(remainingMs, AgentMovementPhysicsConfig.configuredMovementTickMs());
     }
 
     public static int delayAfterCurrentTick(int durationMs) {
-        return AgentMovementTimingPolicy.delayAfterCurrentTick(durationMs, BotPhysicsEngine.cfg.TICK_MS);
+        return AgentMovementTimingPolicy.delayAfterCurrentTick(durationMs, AgentMovementPhysicsConfig.configuredMovementTickMs());
     }
 
     static int walkStep(MapleMap map) {

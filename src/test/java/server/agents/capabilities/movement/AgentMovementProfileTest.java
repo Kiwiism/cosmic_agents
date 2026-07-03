@@ -9,6 +9,7 @@ class AgentMovementProfileTest {
     void baseProfileUsesAgentOwnedPhysicsConfig() {
         AgentMovementProfile profile = AgentMovementProfile.base();
 
+        assertEquals(50, AgentMovementPhysicsConfig.configuredMovementTickMs());
         assertEquals(AgentMovementPhysicsConfig.configuredWalkVelocityPxs(), profile.walkVelocityPxs());
         assertEquals(AgentMovementPhysicsConfig.configuredHorizontalForcePxs(), profile.hForcePxs());
         assertEquals(AgentMovementPhysicsConfig.configuredJumpSpeedPxs(), profile.jumpSpeedPxs());

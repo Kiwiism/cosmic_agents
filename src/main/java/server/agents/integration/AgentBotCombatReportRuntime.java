@@ -7,9 +7,9 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.combat.AgentBuffService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotMovementManager;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -46,7 +46,7 @@ public final class AgentBotCombatReportRuntime {
 
         return AgentCombatDialogueReporter.debugStatsReport(
                 route, speed, cooldownSeconds, remainingSeconds,
-                BotMovementManager.configuredTickMs(), AgentRuntimeConfig.cfg.AI_TICK_MS, targetName);
+                AgentMovementPhysicsConfig.configuredMovementTickMs(), AgentRuntimeConfig.cfg.AI_TICK_MS, targetName);
     }
 
     public static String critDebugReport(Character bot) {

@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
@@ -36,7 +37,7 @@ public final class AgentTickPreflightRuntime {
                         BotMovementManager::broadcastMovement),
                 AgentOfferService::expirePendingOffer,
                 AgentTickOrchestrator::prepareTick,
-                BotMovementManager.configuredTickMs(),
+                AgentMovementPhysicsConfig.configuredMovementTickMs(),
                 AgentRuntimeConfig.cfg.AI_TICK_MS,
                 HEARTBEAT_INTERVAL_MS);
     }

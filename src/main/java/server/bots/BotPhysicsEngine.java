@@ -216,7 +216,7 @@ public final class BotPhysicsEngine {
     }
 
     public static int movementTickMs() {
-        return cfg.TICK_MS;
+        return AgentMovementPhysicsConfig.configuredMovementTickMs();
     }
 
     public static double configuredHorizontalForcePxs() {

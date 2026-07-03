@@ -50,8 +50,9 @@ Target package groups:
 - `server.agents.capabilities`: domain-specific action bins.
   Movement profile physics baselines live in
   `server.agents.capabilities.movement.AgentMovementPhysicsConfig`, including
-  rope-grab and snap/slope thresholds used by navigation and fallback
-  movement; the remaining legacy physics runtime still awaits reconstruction.
+  movement tick duration plus rope-grab and snap/slope thresholds used by
+  navigation and fallback movement; the remaining legacy physics runtime still
+  awaits reconstruction.
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.

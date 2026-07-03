@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
@@ -59,7 +60,7 @@ public final class AgentMovementOnlyStepRuntime {
 
     private static MovementOnlyStepConfig defaultConfig() {
         return new MovementOnlyStepConfig(
-                BotMovementManager.configuredTickMs(),
+                AgentMovementPhysicsConfig.configuredMovementTickMs(),
                 AgentRuntimeConfig.cfg.AI_TICK_MS,
                 BotMovementManager.configuredTeleportDist(),
                 BotMovementManager.configuredOutOfBoundsTeleportDist(),

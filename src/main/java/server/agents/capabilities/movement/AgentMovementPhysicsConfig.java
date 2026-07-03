@@ -5,6 +5,7 @@ package server.agents.capabilities.movement;
  * legacy physics runtime while reconstruction continues.
  */
 public final class AgentMovementPhysicsConfig {
+    private static final int MOVEMENT_TICK_MS = 50;
     private static final int WALK_VEL_PXS = 125;
     private static final double HFORCE_PXS = 16.667;
     private static final float JUMP_SPEED_PXS = 555.0f;
@@ -18,6 +19,10 @@ public final class AgentMovementPhysicsConfig {
 
     public static int configuredWalkVelocityPxs() {
         return WALK_VEL_PXS;
+    }
+
+    public static int configuredMovementTickMs() {
+        return MOVEMENT_TICK_MS;
     }
 
     public static double configuredHorizontalForcePxs() {

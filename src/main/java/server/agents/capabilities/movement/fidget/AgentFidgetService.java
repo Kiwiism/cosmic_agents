@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement.fidget;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
 import net.packet.Packet;
@@ -460,9 +461,10 @@ public final class AgentFidgetService {
     }
 
     private static int randomTickAlignedBaseDelayMs() {
-        int ticks = ThreadLocalRandom.current().nextInt(SPAM_BASE_DELAY_MIN_MS / BotMovementManager.configuredTickMs(),
-                SPAM_BASE_DELAY_MAX_MS / BotMovementManager.configuredTickMs() + 1);
-        return ticks * BotMovementManager.configuredTickMs();
+        int movementTickMs = AgentMovementPhysicsConfig.configuredMovementTickMs();
+        int ticks = ThreadLocalRandom.current().nextInt(SPAM_BASE_DELAY_MIN_MS / movementTickMs,
+                SPAM_BASE_DELAY_MAX_MS / movementTickMs + 1);
+        return ticks * movementTickMs;
     }
 
     private static long jitteredDelayMs(int baseDelayMs) {

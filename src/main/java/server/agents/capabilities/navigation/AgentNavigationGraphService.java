@@ -1590,13 +1590,13 @@ public final class AgentNavigationGraphService {
                 if (canGrab) {
                     Point ropePoint = new Point(ropeX, Math.max(firstClimbableY, Math.min(anchor.y, rope.bottomY())));
                     addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
-                            anchor, ropePoint, 0, 0, BotMovementManager.configuredTickMs(), outgoing, edgeKeys);
+                            anchor, ropePoint, 0, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(), outgoing, edgeKeys);
                     continue;
                 }
 
                 if (canTopGrab) {
                     addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
-                            anchor, new Point(ropeX, firstClimbableY), 0, 0, BotMovementManager.configuredTickMs(), outgoing, edgeKeys);
+                            anchor, new Point(ropeX, firstClimbableY), 0, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(), outgoing, edgeKeys);
                     continue;
                 }
 
@@ -1726,7 +1726,7 @@ public final class AgentNavigationGraphService {
 
         Point ropePoint = new Point(rope.x(), rope.topY());
         addEdge(ropeRegion.id, ground.id, AgentNavigationGraph.EdgeType.CLIMB,
-                ropePoint, landPoint, 0, 0, BotMovementManager.configuredTickMs(), outgoing, edgeKeys);
+                ropePoint, landPoint, 0, 0, AgentMovementPhysicsConfig.configuredMovementTickMs(), outgoing, edgeKeys);
     }
     private static List<Integer> ropeAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
@@ -1916,7 +1916,7 @@ public final class AgentNavigationGraphService {
         List<Point> points = new ArrayList<>();
         addAnchor(points, region.leftPoint());
         // Near-edge anchors for better jump/drop accuracy at platform boundaries
-        int edgeInset = Math.max(8, (int) Math.round(movementProfile.walkVelocityPxs() * BotMovementManager.configuredTickMs() / 1000.0));
+        int edgeInset = Math.max(8, (int) Math.round(movementProfile.walkVelocityPxs() * AgentMovementPhysicsConfig.configuredMovementTickMs() / 1000.0));
         if (region.width() > edgeInset * 2) {
             addAnchor(points, region.pointAt(region.minX + edgeInset), ENDPOINT_ANCHOR_SPACING_PX);
             addAnchor(points, region.pointAt(region.maxX - edgeInset), ENDPOINT_ANCHOR_SPACING_PX);

@@ -6,6 +6,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
@@ -25,7 +26,7 @@ public final class AgentBotCombatDamageRuntime {
         int dmg = AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
         AgentMobKnockbackPolicy.MobHitKnockback kb =
                 AgentMobKnockbackPolicy.resolveMobHitKnockback(
-                        bot.getPosition(), mob.getPosition(), config.KNOCKBACK_HSPEED, BotMovementManager.configuredTickMs());
+                        bot.getPosition(), mob.getPosition(), config.KNOCKBACK_HSPEED, AgentMovementPhysicsConfig.configuredMovementTickMs());
         applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX(), config);
     }
 
@@ -60,7 +61,7 @@ public final class AgentBotCombatDamageRuntime {
         if (dmg <= 0) return;
         int dirSign = AgentBotMovementStateRuntime.facingDirectionSign(entry);
         int airVelX = Math.round(-dirSign
-                * AgentMobKnockbackPolicy.scaledOpenStoryStep(config.KNOCKBACK_HSPEED, BotMovementManager.configuredTickMs()));
+                * AgentMobKnockbackPolicy.scaledOpenStoryStep(config.KNOCKBACK_HSPEED, AgentMovementPhysicsConfig.configuredMovementTickMs()));
         applyDamage(entry, bot, dmg, -3, 0, 0, airVelX, config);
     }
 
@@ -111,7 +112,7 @@ public final class AgentBotCombatDamageRuntime {
         } else {
             BotPhysicsEngine.beginKnockback(entry, bot, botPos,
                     -AgentMobKnockbackPolicy.scaledOpenStoryStep(
-                            config.KNOCKBACK_VFORCE, BotMovementManager.configuredTickMs()),
+                            config.KNOCKBACK_VFORCE, AgentMovementPhysicsConfig.configuredMovementTickMs()),
                     knockbackAirVelX);
         }
         BotMovementManager.broadcastMovement(entry);

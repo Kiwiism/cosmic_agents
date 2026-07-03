@@ -1,8 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.bots.BotEntry;
 import server.bots.BotMovementManager;
-import server.bots.BotPhysicsEngine;
 
 public final class AgentStuckDetectionRuntime {
     private AgentStuckDetectionRuntime() {
@@ -14,7 +14,7 @@ public final class AgentStuckDetectionRuntime {
                 new AgentStuckDetectionService.StuckDetectionHooks(
                         BotMovementManager::tickDown,
                         BotMovementManager::tickUnstuck,
-                        BotPhysicsEngine.movementTickMs(),
+                        AgentMovementPhysicsConfig.configuredMovementTickMs(),
                         enableUnstuck));
     }
 }
