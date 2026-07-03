@@ -3962,6 +3962,10 @@ Recent reconstruction notes:
 - Follow-target character region classification now also enters through
   `AgentNavigationRegionService`, preserving the existing rope/platform clamp
   behavior while removing another direct navigation-manager dependency.
+- Path logger, script move-target cost checks, and navigation debug overlay now
+  enter path search through `AgentNavigationPathService` and region
+  classification through `AgentNavigationRegionService`. The path service is a
+  temporary delegation seam until the search body moves.
 
 Initial reconstruction order:
 

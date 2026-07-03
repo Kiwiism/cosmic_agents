@@ -3,11 +3,12 @@ package server.agents.plans;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotNavigationManager;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -62,8 +63,8 @@ public final class AgentScriptMoveTargetService {
                     && Math.abs(targetPos.y - botPos.y) <= fallbackRangeY;
         }
 
-        int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        int targetRegionId = BotNavigationManager.resolvePointTargetRegionId(graph, map, targetPos);
+        int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, botPos);
+        int targetRegionId = AgentNavigationRegionService.resolvePointTargetRegionId(graph, map, targetPos);
         if (startRegionId < 0 || targetRegionId < 0) {
             return false;
         }
@@ -71,7 +72,7 @@ public final class AgentScriptMoveTargetService {
             return true;
         }
 
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(graph, bot, startRegionId, targetRegionId, targetPos);
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(graph, bot, startRegionId, targetRegionId, targetPos);
         if (path.isEmpty()) {
             return false;
         }

@@ -28,7 +28,8 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotNavigationManager;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -182,14 +183,14 @@ public final class AgentPathLogger {
         if (graph == null) {
             return -1;
         }
-        return BotNavigationManager.resolveCurrentRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
+        return AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
     }
 
     private static int resolveTargetRegionId(AgentNavigationGraph graph, BotEntry entry, Point point) {
         if (graph == null) {
             return -1;
         }
-        return BotNavigationManager.resolveTargetRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
+        return AgentNavigationRegionService.resolveTargetRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
     }
 
     private void appendHeader(StringBuilder sb, LocalDateTime now, String note) {
@@ -345,7 +346,7 @@ public final class AgentPathLogger {
             sb.append("  same region - no inter-region path\n");
         } else {
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-            List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
+            List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                     graph, bot, botRegionId, targetRegionId, targetPos);
             if (path.isEmpty()) {
                 sb.append("  no path found\n");

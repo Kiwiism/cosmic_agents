@@ -162,6 +162,8 @@ Capability bins:
   Ground-target and mob-avoidance region classification enter through
   `AgentNavigationRegionService`; follow-target character region
   classification uses the same seam.
+  Path logger, script move-target, and navigation debug overlay path searches
+  enter through `AgentNavigationPathService`.
 - `supplies`
 - `trade`
 - `shop`

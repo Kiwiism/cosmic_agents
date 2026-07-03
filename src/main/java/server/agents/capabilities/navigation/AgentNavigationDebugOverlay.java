@@ -13,9 +13,6 @@ import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotNavigationManager;
 import server.StatEffect;
 import server.TimerManager;
 import server.maps.MapleMap;
@@ -100,10 +97,10 @@ public final class AgentNavigationDebugOverlay {
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
         Point targetPos = targetSnapshot.primaryTargetPosition();
         AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(bot.getMap(), AgentMovementProfile.fromCharacter(bot));
-        int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
+        int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, bot.getMap(), bot.getPosition());
+        int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, bot.getMap(), targetPos);
         List<AgentNavigationGraph.Edge> path = startRegionId >= 0 && targetRegionId >= 0 && startRegionId != targetRegionId
-                ? BotNavigationManager.findPath(graph, bot, startRegionId, targetRegionId, targetPos)
+                ? AgentNavigationPathService.findPath(graph, bot, startRegionId, targetRegionId, targetPos)
                 : List.of();
 
         OverlayBuilder overlay = new OverlayBuilder(viewer);
