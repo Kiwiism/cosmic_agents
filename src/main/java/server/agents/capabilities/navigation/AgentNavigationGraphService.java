@@ -1581,7 +1581,7 @@ public final class AgentNavigationGraphService {
         JumpBuildStats stats = new JumpBuildStats();
         for (AgentNavigationGraph.Region ground : groundRegions) {
             for (Point anchor : anchorsByRegionId.getOrDefault(ground.id, List.of())) {
-                int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
+                int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
                 boolean canGrab = Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
                         && anchor.y >= firstClimbableY && anchor.y <= rope.bottomY();
                 boolean canTopGrab = Math.abs(anchor.x - ropeX) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
@@ -1734,7 +1734,7 @@ public final class AgentNavigationGraphService {
     }
     private static List<Integer> ropeAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
-        int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
+        int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
         ys.add(firstClimbableY);
         for (int y = rope.topY() + ROPE_ANCHOR_INTERVAL_PX; y < rope.bottomY(); y += ROPE_ANCHOR_INTERVAL_PX) {
             if (y > firstClimbableY) {
@@ -1761,7 +1761,7 @@ public final class AgentNavigationGraphService {
     private static List<Integer> ropeTransferAnchorYs(Rope rope) {
         List<Integer> ys = new ArrayList<>();
         int step = Math.max(1, AgentMovementKinematicsService.climbStepPerTick());
-        int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
+        int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
         for (int y = firstClimbableY; y <= rope.bottomY(); y += step) {
             ys.add(y);
         }
@@ -1990,7 +1990,7 @@ public final class AgentNavigationGraphService {
     private static boolean isWalkConnection(EndpointConnection connection) {
         int dx = Math.abs(connection.to.x - connection.from.x);
         int dy = connection.to.y - connection.from.y;
-        return BotPhysicsEngine.isWalkableEndpointStep(dx, dy);
+        return AgentNavigationPhysicsService.isWalkableEndpointStep(dx, dy);
     }
 
     private static void addEdge(int fromRegionId,

@@ -3948,6 +3948,10 @@ Recent reconstruction notes:
 - Fallback movement jump and rope-reach probes now route through
   `AgentJumpProbeService` instead of calling the legacy physics probe methods
   directly.
+- Navigation-facing physics helpers now route through
+  `AgentNavigationPhysicsService`, including first-climbable rope Y and
+  walkable endpoint-step policy. The wrapper preserves the legacy +1 Y offset
+  for first climbable rope/ladder positions.
 
 Initial reconstruction order:
 

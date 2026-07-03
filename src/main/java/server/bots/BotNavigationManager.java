@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -1235,7 +1236,7 @@ public final class BotNavigationManager {
             if (graph.findRegionId(map, current) != regionId) {
                 return false;
             }
-            if (!BotPhysicsEngine.isWalkableEndpointStep(Math.abs(current.x - previous.x), current.y - previous.y)) {
+            if (!AgentNavigationPhysicsService.isWalkableEndpointStep(Math.abs(current.x - previous.x), current.y - previous.y)) {
                 return false;
             }
             previous = current;
@@ -1354,13 +1355,13 @@ public final class BotNavigationManager {
 
     private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
         return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
-                && botPos.y >= BotPhysicsEngine.firstClimbableY(rope)
+                && botPos.y >= AgentNavigationPhysicsService.firstClimbableY(rope)
                 && botPos.y <= rope.bottomY();
     }
 
     private static boolean canAttachToRopeFromTopPlatform(AgentNavigationGraph.Edge edge, Point botPos, Rope rope) {
         return Math.abs(botPos.x - rope.x()) <= AgentMovementPhysicsConfig.configuredRopeGrabX()
-                && edge.endPoint.y == BotPhysicsEngine.firstClimbableY(rope)
+                && edge.endPoint.y == AgentNavigationPhysicsService.firstClimbableY(rope)
                 && botPos.y < rope.topY()
                 && rope.topY() - botPos.y <= AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
@@ -1432,7 +1433,7 @@ public final class BotNavigationManager {
         if (rope == null || botPos == null || edge == null || edge.launchStepX == 0) {
             return false;
         }
-        int firstClimbableY = BotPhysicsEngine.firstClimbableY(rope);
+        int firstClimbableY = AgentNavigationPhysicsService.firstClimbableY(rope);
         return edge.startPoint.x == rope.x()
                 && edge.startPoint.y == firstClimbableY
                 && botPos.x == rope.x()

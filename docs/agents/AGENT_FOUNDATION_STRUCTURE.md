@@ -156,6 +156,8 @@ Capability bins:
   `AgentKnockbackMovementService`. Airborne and swim integration enter through
   `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`. Fallback
   movement jump and rope-reach probes enter through `AgentJumpProbeService`.
+  Navigation-facing helper reads enter through
+  `AgentNavigationPhysicsService`.
 - `supplies`
 - `trade`
 - `shop`
