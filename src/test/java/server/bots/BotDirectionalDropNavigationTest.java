@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -31,7 +32,7 @@ class BotDirectionalDropNavigationTest {
         entry.physX = bot.getPosition().x;
         entry.physY = bot.getPosition().y;
 
-        Point waypoint = BotNavigationManager.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 
         assertEquals(fixture.edge.endPoint, waypoint,
                 "directional drops should keep the held walk direction while the bot is already on the runway");
@@ -45,7 +46,7 @@ class BotDirectionalDropNavigationTest {
         entry.physX = bot.getPosition().x;
         entry.physY = bot.getPosition().y;
 
-        Point waypoint = BotNavigationManager.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 
         assertEquals(fixture.edge.endPoint, waypoint,
                 "once the walk-off already has enough runway, nav should keep feeding the landing-side direction");
@@ -59,7 +60,7 @@ class BotDirectionalDropNavigationTest {
         entry.physX = bot.getPosition().x;
         entry.physY = bot.getPosition().y;
 
-        Point waypoint = BotNavigationManager.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 
         assertEquals(fixture.edge.endPoint, waypoint,
                 "once the bot has crossed the negative-direction drop anchor, nav should keep holding the drop direction");

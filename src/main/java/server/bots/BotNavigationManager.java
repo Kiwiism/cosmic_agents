@@ -68,13 +68,6 @@ public final class BotNavigationManager {
         return AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);
     }
 
-    static Point selectDropWaypoint(BotEntry entry,
-                                    AgentNavigationGraph graph,
-                                    Point botPos,
-                                    AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectDropWaypoint(entry, graph, botPos, edge);
-    }
-
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
                                                          Character bot,
                                                          int startRegionId,

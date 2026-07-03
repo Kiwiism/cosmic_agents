@@ -4043,6 +4043,9 @@ Recent reconstruction notes:
   `BotNavigationManager`; pathfinding and rope lookup ownership now stays in
   `AgentNavigationPathService`, `AgentNavigationTargetService`, and
   `AgentNavigationGraphService`.
+- Directional drop waypoint tests now target `AgentNavigationWaypointService`
+  directly, allowing the temporary `BotNavigationManager.selectDropWaypoint`
+  compatibility delegate to be removed.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
