@@ -1044,7 +1044,8 @@ public final class BotNavigationManager {
         int launchX = selectedJumpLaunchX(entry, graph, edge);
         int tolerance = Math.max(1, AgentMovementKinematicsService.walkStep(map,
                 entry != null ? AgentBotMovementStateRuntime.movementProfile(entry) : null));
-        return Math.abs(botPos.x - launchX) <= tolerance;
+        return AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
+                graph, botPos, edge, launchX, tolerance);
     }
 
     private static boolean isReachableWithinRegion(AgentNavigationGraph graph,

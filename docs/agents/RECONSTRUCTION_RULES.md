@@ -4017,6 +4017,9 @@ Recent reconstruction notes:
 - Jump and straight-drop execution readiness predicates now live in
   `AgentNavigationEdgeReadinessService`; `BotNavigationManager` keeps
   package-visible compatibility delegates for existing navigation tests.
+- Selected jump-launch execution readiness now lives in
+  `AgentNavigationEdgeReadinessService`; the bot navigation shell still
+  supplies the current selected launch X and movement-tolerance calculation.
 - Rope/climb navigation entry and exit predicates now live in
   `AgentNavigationRopeEdgeService`; `BotNavigationManager` delegates while
   side-effecting climb attach/broadcast behavior remains unchanged.

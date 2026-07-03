@@ -63,6 +63,22 @@ class AgentNavigationEdgeReadinessServiceTest {
     }
 
     @Test
+    void selectedJumpExecutionRequiresSelectedLaunchXTolerance() {
+        AgentNavigationGraph graph = graphWithGroundRegion(1, -100, 100, 0);
+        AgentNavigationGraph.Edge jump = edge(AgentNavigationGraph.EdgeType.JUMP);
+        int jumpY = AgentMovementPhysicsConfig.configuredJumpYThreshold();
+
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
+                graph, new Point(9, jumpY), jump, 10, 1));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
+                graph, new Point(8, jumpY), jump, 10, 1));
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
+                graph, new Point(9, jumpY), jump, 10, 0));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
+                graph, new Point(10, jumpY + 1), jump, 10, 10));
+    }
+
+    @Test
     void dropExecutionRequiresStraightDropEdgeAndLaunchWindow() {
         AgentNavigationGraph graph = graphWithGroundRegion(1, -100, 100, 0);
         AgentNavigationGraph.Edge drop = edge(AgentNavigationGraph.EdgeType.DROP);

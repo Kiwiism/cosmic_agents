@@ -38,6 +38,17 @@ public final class AgentNavigationEdgeReadinessService {
         return AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(graph, botPos, edge);
     }
 
+    public static boolean canExecuteSelectedJumpFromCurrentPosition(AgentNavigationGraph graph,
+                                                                    Point botPos,
+                                                                    AgentNavigationGraph.Edge edge,
+                                                                    int selectedLaunchX,
+                                                                    int tolerance) {
+        if (!canExecuteJumpFromCurrentPosition(graph, botPos, edge)) {
+            return false;
+        }
+        return Math.abs(botPos.x - selectedLaunchX) <= Math.max(1, tolerance);
+    }
+
     public static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
                                                             Point botPos,
                                                             AgentNavigationGraph.Edge edge) {
