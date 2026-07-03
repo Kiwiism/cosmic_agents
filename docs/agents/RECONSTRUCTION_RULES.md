@@ -4006,6 +4006,10 @@ Recent reconstruction notes:
   `AgentNavigationClimbEntryExecutionService`. The same rope lookup,
   climb-entry readiness, block reasons, direct attach paths, queued top-rope
   entry, movement broadcast, and ground rope-jump behavior are preserved.
+- Climb-exit edge execution now lives in
+  `AgentNavigationClimbExitExecutionService`. Rope-to-rope jumps, top step-off
+  no-op behavior, top-rope alignment, jump-off-rope behavior, and climb-exit
+  readiness are preserved.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

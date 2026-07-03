@@ -2,8 +2,8 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
-import server.agents.capabilities.navigation.AgentNavigationClimbExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationClimbEntryExecutionService;
+import server.agents.capabilities.navigation.AgentNavigationClimbExitExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationDropExecutionService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeExecutionStateService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
@@ -21,8 +21,6 @@ import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.agents.capabilities.movement.AgentClimbMovementPolicy;
-import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -278,49 +276,12 @@ public final class BotNavigationManager {
         }
 
         if (AgentBotClimbStateRuntime.climbing(entry)) {
-            return tryExecuteClimbExit(graph, entry, bot, botPos, rawTargetPos, edge);
+            return AgentNavigationClimbExitExecutionService.tryExecuteClimbExit(graph, entry, bot, botPos, edge)
+                    ? new NavigationDirective(rawTargetPos, true) : null;
         } else {
             return AgentNavigationClimbEntryExecutionService.tryExecuteClimbEntry(graph, entry, bot, botPos, edge)
                     ? new NavigationDirective(rawTargetPos, true) : null;
         }
-    }
-
-    private static NavigationDirective tryExecuteClimbExit(AgentNavigationGraph graph,
-                                                            BotEntry entry,
-                                                            Character bot,
-                                                            Point botPos,
-                                                            Point rawTargetPos,
-                                                            AgentNavigationGraph.Edge edge) {
-        if (!canExecuteClimbExitFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
-            return null;
-        }
-        AgentNavigationGraph.Region toRegion = graph.getRegion(edge.toRegionId);
-
-        if (toRegion != null && toRegion.isRopeRegion) {
-            // Rope-to-rope: jump to the other rope
-            Rope targetRope = findRopeForRegion(bot.getMap(), toRegion);
-            if (targetRope == null || AgentClimbMovementPolicy.sameRope(AgentBotClimbStateRuntime.climbRope(entry), targetRope)) {
-                return null;
-            }
-            AgentClimbMovementService.jumpToRope(entry, bot, edge.launchStepX);
-            return new NavigationDirective(rawTargetPos, true);
-        }
-
-        if (edge.launchStepX == 0) {
-            // launchStepX==0 means step off the top of the rope onto the foothold above.
-            // Physics already handles this: resolveClimbBoundary lands the bot when it reaches
-            // topY. Nav just lets the bot climb — the edge completes when the bot transitions
-            // to the destination region after physics lands it.
-            return null;
-        }
-
-        // Jump off rope
-        Rope sourceRope = findRopeForRegion(bot.getMap(), graph.getRegion(edge.fromRegionId));
-        if (isTopRopeJumpExitReady(sourceRope, botPos, edge) && botPos.y != edge.startPoint.y) {
-            AgentNavigationClimbExecutionService.startClimbing(entry, bot, sourceRope, edge.startPoint.y);
-        }
-        AgentClimbMovementService.jumpOffRope(entry, bot, edge.launchStepX);
-        return new NavigationDirective(rawTargetPos, true);
     }
 
     static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
@@ -742,10 +703,6 @@ public final class BotNavigationManager {
                                                                   AgentNavigationGraph.Edge edge) {
         return AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
                 graph, botPos, edge, region -> findRopeForRegion(map, region));
-    }
-
-    private static boolean isTopRopeJumpExitReady(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationRopeEdgeService.isTopRopeJumpExitReady(rope, botPos, edge);
     }
 
     private static Point adjustPathTarget(BotEntry entry,
