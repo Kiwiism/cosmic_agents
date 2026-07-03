@@ -10,7 +10,7 @@ public final class AgentMovementPhaseDispatchService {
     }
 
     public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
-        BotMovementManager.tickClimbing(entry, targetPos, runAiTick);
+        AgentClimbMovementService.tickClimbing(entry, targetPos, runAiTick);
     }
 
     public static void tickSwimming(BotEntry entry, Point targetPos) {

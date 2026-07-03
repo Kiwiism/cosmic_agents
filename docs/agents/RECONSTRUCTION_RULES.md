@@ -3829,6 +3829,11 @@ Recent reconstruction notes:
   broadcast, and performance timing. `BotMovementManager.tickAirborne` remains
   a temporary compatibility shell while old unreachable helper code is cleaned
   up in a later slice.
+- Climb phase runtime now enters `AgentClimbMovementService`; the Agent service
+  owns climb timer ticks, rope jump-off/transfer actions, idle/snap policy
+  routing, climb hold/advance dispatch, movement broadcast, and performance
+  timing. `BotMovementManager.tickClimbing` remains a temporary compatibility
+  shell while old helper wrappers are cleaned up later.
 
 Initial reconstruction order:
 

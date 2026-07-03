@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentPerformanceMonitor;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentFallbackMovementService;
@@ -230,6 +231,10 @@ public class BotMovementManager {
     }
 
     public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
+        if (useAgentClimbMovement()) {
+            AgentClimbMovementService.tickClimbing(entry, targetPos, runAiTick);
+            return;
+        }
         long startedAt = System.nanoTime();
         try {
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -395,6 +400,10 @@ public class BotMovementManager {
         } finally {
             AgentPerformanceMonitor.record("move-air", System.nanoTime() - startedAt);
         }
+    }
+
+    private static boolean useAgentClimbMovement() {
+        return true;
     }
 
     private static boolean useAgentAirborneMovement() {

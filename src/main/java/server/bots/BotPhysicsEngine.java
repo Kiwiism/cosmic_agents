@@ -755,12 +755,12 @@ public final class BotPhysicsEngine {
         launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
 
-    static void beginJumpOffRope(BotEntry entry, Character bot, int airVelX) {
+    public static void beginJumpOffRope(BotEntry entry, Character bot, int airVelX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
     }
 
-    static void beginRopeTransferJump(BotEntry entry, Character bot, Rope sourceRope, int airVelX) {
+    public static void beginRopeTransferJump(BotEntry entry, Character bot, Rope sourceRope, int airVelX) {
         AgentBotClimbStateRuntime.setBlockedRopeGrab(entry, sourceRope);
         launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
     }
@@ -893,7 +893,7 @@ public final class BotPhysicsEngine {
      * AgentBotClimbStateRuntime (-1=up, 0=idle, +1=down). Movement layer sets
      * intent before calling.
      */
-    static void advanceClimb(BotEntry entry, Character bot) {
+    public static void advanceClimb(BotEntry entry, Character bot) {
         Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
         if (rope == null) {
             beginFall(entry, bot, 0);
@@ -914,7 +914,7 @@ public final class BotPhysicsEngine {
         setClimbPosition(entry, bot, rope, nextY);
     }
 
-    static void holdClimb(BotEntry entry, Character bot) {
+    public static void holdClimb(BotEntry entry, Character bot) {
         Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
         if (rope == null) {
             beginFall(entry, bot, 0);

@@ -123,8 +123,9 @@ Capability bins:
   reads come from `AgentMovementPhysicsConfig`. Stuck recovery lives in
   `AgentMovementRecoveryService`. Swim runtime lives in
   `AgentSwimMovementService`; airborne runtime lives in
-  `AgentAirborneMovementService`. Remaining climb, ground, and rope runtime
-  slices continue to migrate.
+  `AgentAirborneMovementService`; climb runtime lives in
+  `AgentClimbMovementService`. Remaining ground runtime and cleanup slices
+  continue to migrate.
 - `supplies`
 - `trade`
 - `shop`
