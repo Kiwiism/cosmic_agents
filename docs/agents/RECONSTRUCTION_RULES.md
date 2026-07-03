@@ -77,6 +77,9 @@ Recent reconstruction notes:
   instead of reaching those behaviors through `BotManager.getInstance()`.
 - Dead `BotManager.getInstance()` declarations were removed from BotManager
   parity tests after those tests moved to direct Agent services.
+- Inventory legacy parity tests no longer mock `BotManager.getInstance()` for
+  patrol-loot target selection; the test now exercises the Agent loot target
+  service directly with only the navigation graph seam mocked.
 - Manual and spawned registration entry points now enter through
   `AgentInteractionRuntime`, which supplies the Agent tick callback. BotManager
   no longer owns a private tick callback.

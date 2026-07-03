@@ -354,14 +354,9 @@ class AgentInventoryLegacyParityTest {
         doReturn(List.of(loot)).when(map).getDroppedItems();
         doReturn(loot).when(map).getMapObject(1);
 
-        BotManager manager = mock(BotManager.class);
-
         try (MockedStatic<AgentNavigationGraphService> graphProvider =
-                     mockStatic(AgentNavigationGraphService.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<BotManager> botManagers =
-                     mockStatic(BotManager.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+                     mockStatic(AgentNavigationGraphService.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             graphProvider.when(() -> AgentNavigationGraphService.peekBestGraph(eq(map), any())).thenReturn(graph);
-            botManagers.when(BotManager::getInstance).thenReturn(manager);
 
             assertEquals(new Point(240, 100), AgentLootTargetService.findNearestPatrolLootTarget(entry, 1));
         }
