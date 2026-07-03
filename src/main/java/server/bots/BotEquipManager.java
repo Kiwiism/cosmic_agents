@@ -16,6 +16,7 @@ import server.ItemInformationProvider;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
+import server.agents.capabilities.equipment.AgentEquipmentDebugReportFormatter;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
@@ -316,7 +317,7 @@ public class BotEquipManager {
           .append(" job=").append(bot != null ? bot.getJob() : "?")
           .append(" lv=").append(bot != null ? bot.getLevel() : 0)
           .append(" fame=").append(bot != null ? bot.getFame() : 0).append('\n');
-        sb.append("map:     ").append(safeMapId(bot)).append('\n');
+        sb.append("map:     ").append(AgentEquipmentDebugReportFormatter.safeMapId(bot)).append('\n');
         sb.append("mob:     ");
         if (mob == null) sb.append("(no mob context)\n");
         else sb.append("avd=").append(mob.mobAvoid())
@@ -332,17 +333,19 @@ public class BotEquipManager {
         sb.append("range:   ").append(AgentBotRangeReportRuntime.rangeReport(bot, mob)).append('\n');
 
         sb.append("\n--- equipped ---\n");
-        sb.append(itemHeader(false));
+        sb.append(AgentEquipmentDebugReportFormatter.itemHeader(false));
         for (Item it : eqdInv.list()) {
-            if (it instanceof Equip e) appendItemRow(sb, ii, e, e.getPosition(), null);
+            if (it instanceof Equip e) {
+                AgentEquipmentDebugReportFormatter.appendItemRow(sb, ii, e, e.getPosition(), null);
+            }
         }
 
         sb.append("\n--- inventory (equip bag) ---\n");
-        sb.append(itemHeader(true));
+        sb.append(AgentEquipmentDebugReportFormatter.itemHeader(true));
         for (Item it : eqpInv.list()) {
             if (it instanceof Equip e) {
                 boolean reserveSelf = shouldReserveOwnedItem(bot, ii, e);
-                appendItemRow(sb, ii, e, e.getPosition(), reserveSelf);
+                AgentEquipmentDebugReportFormatter.appendItemRow(sb, ii, e, e.getPosition(), reserveSelf);
             }
         }
 
@@ -419,50 +422,6 @@ public class BotEquipManager {
             log.warn("Failed to write autoEquip dump", e);
             return null;
         }
-    }
-
-    private static String itemHeader(boolean includeSelfReserve) {
-        return String.format("%-3s %-30s %-7s %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s %5s %5s%s   reqs%n",
-                "pos", "name", "slot", "STR", "DEX", "INT", "LUK", "WAK", "MAK", "WDF", "MDF", "ACC", "AVD", "HP", "MP",
-                includeSelfReserve ? "  SELF" : "");
-    }
-
-    private static void appendItemRow(StringBuilder sb, ItemInformationProvider ii, Equip e, short pos,
-                                      Boolean selfReserve) {
-        String name = ii.getName(e.getItemId());
-        if (name == null) name = "id=" + e.getItemId();
-        if (name.length() > 30) name = name.substring(0, 30);
-        String textSlot = ii.getEquipmentSlot(e.getItemId());
-        sb.append(String.format("%-3d %-30s %-7s %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d %5d %5d%s   ",
-                pos, name, textSlot == null ? "?" : textSlot,
-                e.getStr(), e.getDex(), e.getInt(), e.getLuk(),
-                e.getWatk(), e.getMatk(), e.getWdef(), e.getMdef(),
-                e.getAcc(), e.getAvoid(), e.getHp(), e.getMp(),
-                selfReserve == null ? "" : String.format("  %-4s", selfReserve ? "Y" : "N")));
-        // Reqs from WZ stat map.
-        Map<String, Integer> stats = ii.getEquipStats(e.getItemId());
-        if (stats != null) {
-            int rl = ii.getEquipLevelReq(e.getItemId());
-            int rj = stats.getOrDefault("reqJob", 0);
-            int rs = stats.getOrDefault("reqSTR", 0);
-            int rd = stats.getOrDefault("reqDEX", 0);
-            int ri = stats.getOrDefault("reqINT", 0);
-            int rk = stats.getOrDefault("reqLUK", 0);
-            int rp = stats.getOrDefault("reqPOP", 0);
-            sb.append("lv").append(rl).append(" job").append(rj);
-            if (rs > 0) sb.append(" str").append(rs);
-            if (rd > 0) sb.append(" dex").append(rd);
-            if (ri > 0) sb.append(" int").append(ri);
-            if (rk > 0) sb.append(" luk").append(rk);
-            if (rp > 0) sb.append(" pop").append(rp);
-        }
-        sb.append('\n');
-    }
-
-    private static int safeMapId(Character bot) {
-        if (bot == null) return -1;
-        try { return bot.getMap() != null ? bot.getMap().getId() : -1; }
-        catch (Throwable t) { return -1; }
     }
 
     /**

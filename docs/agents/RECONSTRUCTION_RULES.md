@@ -3668,6 +3668,11 @@ Recent reconstruction notes:
   offer checks, recommended-item collection, and summary formatting preserve the
   same filters and reply wording. The service still calls
   `BotEquipManager.runOptimizerWithExtras` as the temporary DP optimizer seam.
+- Auto-equip debug dump formatting for headers, item rows, requirement summaries,
+  self-reserve markers, and safe map IDs now lives in
+  `AgentEquipmentDebugReportFormatter`; the chat-visible debug flow and dump
+  contents are unchanged while `BotEquipManager` keeps the temporary optimizer
+  branch walk.
 
 Initial reconstruction order:
 
