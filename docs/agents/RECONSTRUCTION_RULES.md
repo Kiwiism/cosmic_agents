@@ -4009,6 +4009,8 @@ Recent reconstruction notes:
 - Directional-drop runway checks now also live in
   `AgentNavigationLaunchWindowService`; the physics-coupled directional landing
   match remains in `BotNavigationManager` until the walk-off landing seam moves.
+- Dead `BotNavigationManager.landingRegionId` was removed after audit showed no
+  remaining production or test callers.
 
 Initial reconstruction order:
 

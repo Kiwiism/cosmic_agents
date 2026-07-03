@@ -1320,13 +1320,6 @@ public final class BotNavigationManager {
                 AgentBotModeStateRuntime.grinding(entry), graph, targetRegionId, rawTargetPos);
     }
 
-    private static int landingRegionId(AgentNavigationGraph graph, BotPhysicsEngine.JumpLanding landing) {
-        if (landing == null) {
-            return -1;
-        }
-        return graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
-    }
-
     public static int resolveCurrentRegionId(AgentNavigationGraph graph,
                                       BotEntry entry,
                                       MapleMap map,
