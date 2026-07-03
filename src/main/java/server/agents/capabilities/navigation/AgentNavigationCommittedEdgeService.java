@@ -1,10 +1,61 @@
 package server.agents.capabilities.navigation;
 
+import client.Character;
+import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.bots.BotEntry;
+
+import java.awt.Point;
+
 /**
  * Agent-owned committed-edge comparison and retention policy.
  */
 public final class AgentNavigationCommittedEdgeService {
     private AgentNavigationCommittedEdgeService() {
+    }
+
+    @FunctionalInterface
+    public interface NextEdgeFinder {
+        AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
+                                               Character bot,
+                                               int startRegionId,
+                                               int targetRegionId,
+                                               Point targetPos);
+    }
+
+    public static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
+                                                                       BotEntry entry,
+                                                                       Character bot,
+                                                                       int startRegionId,
+                                                                       int targetRegionId,
+                                                                       Point targetPos,
+                                                                       AgentNavigationGraph.Edge edge,
+                                                                       boolean runAiTick,
+                                                                       NextEdgeFinder nextEdgeFinder) {
+        if (!runAiTick
+                || edge == null
+                || AgentBotMovementStateRuntime.inAir(entry)
+                || AgentBotClimbStateRuntime.climbing(entry)
+                || startRegionId < 0
+                || targetRegionId < 0
+                || startRegionId == targetRegionId) {
+            return edge;
+        }
+
+        AgentNavigationGraph.Edge bestEdge = nextEdgeFinder.findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
+        if (bestEdge == null || sameEdge(edge, bestEdge)) {
+            return edge;
+        }
+        if (shouldRetainCommittedGroundEdge(edge, bestEdge)) {
+            return edge;
+        }
+
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
+        return bestEdge;
     }
 
     public static boolean sameEdge(AgentNavigationGraph.Edge left, AgentNavigationGraph.Edge right) {

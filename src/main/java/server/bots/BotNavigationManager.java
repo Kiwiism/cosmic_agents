@@ -318,29 +318,8 @@ public final class BotNavigationManager {
                                                                       Point targetPos,
                                                                       AgentNavigationGraph.Edge edge,
                                                                       boolean runAiTick) {
-        if (!runAiTick
-                || edge == null
-                || AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotClimbStateRuntime.climbing(entry)
-                || startRegionId < 0
-                || targetRegionId < 0
-                || startRegionId == targetRegionId) {
-            return edge;
-        }
-
-        AgentNavigationGraph.Edge bestEdge = findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
-        if (bestEdge == null || sameEdge(edge, bestEdge)) {
-            return edge;
-        }
-        if (shouldRetainCommittedGroundEdge(edge, bestEdge)) {
-            return edge;
-        }
-
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
-        return bestEdge;
+        return AgentNavigationCommittedEdgeService.refreshCommittedGroundEdge(graph, entry, bot,
+                startRegionId, targetRegionId, targetPos, edge, runAiTick, BotNavigationManager::findNextEdge);
     }
 
     static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
