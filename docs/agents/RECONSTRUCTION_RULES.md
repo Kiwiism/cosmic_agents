@@ -4011,6 +4011,8 @@ Recent reconstruction notes:
   match remains in `BotNavigationManager` until the walk-off landing seam moves.
 - Dead `BotNavigationManager.landingRegionId` was removed after audit showed no
   remaining production or test callers.
+- Stale `BotNavigationManager.NO_MOVEMENT_WALK_TOLERANCE` was removed after
+  no-movement walk policy moved to `AgentNavigationPathService`.
 
 Initial reconstruction order:
 

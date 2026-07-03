@@ -59,7 +59,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public final class BotNavigationManager {
     private static final Logger log = LoggerFactory.getLogger(BotNavigationManager.class);
-    private static final int NO_MOVEMENT_WALK_TOLERANCE = 4;
     // After a bot takes a portal, suppress further portal usage for this long. Prevents a bot from
     // immediately re-entering a portal (e.g. bouncing back through the return portal). Gates ONLY
     // portal execution — movement, attacks and every other action continue unaffected.
