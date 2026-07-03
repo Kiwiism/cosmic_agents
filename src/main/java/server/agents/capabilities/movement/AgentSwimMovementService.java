@@ -16,7 +16,7 @@ public final class AgentSwimMovementService {
     public static void tickSwimming(BotEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
-            BotPhysicsEngine.tickMotionTimers(entry);
+            AgentMotionTimerService.tickMotionTimers(entry);
             computeSwimIntents(entry, targetPos);
             BotPhysicsEngine.applySwimMotion(entry);
             AgentMovementBroadcastService.broadcastMovement(entry);

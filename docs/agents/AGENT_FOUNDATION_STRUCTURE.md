@@ -148,6 +148,8 @@ Capability bins:
   `AgentGroundTravelState` while the old physics implementation continues to
   supply the same `physX`, `hspeed`, and carry-ms values. Queued down-jump and
   top-rope entry actions enter through `AgentQueuedMovementActionService`.
+  Grounded physics entry points enter through `AgentGroundPhysicsService`, and
+  movement timer countdowns enter through `AgentMotionTimerService`.
 - `supplies`
 - `trade`
 - `shop`

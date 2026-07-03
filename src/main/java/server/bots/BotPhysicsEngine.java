@@ -325,7 +325,7 @@ public final class BotPhysicsEngine {
         return Math.max(40, step * 6);
     }
 
-    static int velocityFromDeltaX(double deltaX) {
+    public static int velocityFromDeltaX(double deltaX) {
         return (int) Math.round(deltaX * (1000.0 / cfg.TICK_MS));
     }
 
@@ -651,7 +651,7 @@ public final class BotPhysicsEngine {
         return x < segment.minX ? segment.minX - x : x - segment.maxX;
     }
 
-    static void stopGroundMotion(BotEntry entry) {
+    public static void stopGroundMotion(BotEntry entry) {
         AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
     }
 

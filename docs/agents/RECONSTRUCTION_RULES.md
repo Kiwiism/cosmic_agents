@@ -3924,6 +3924,11 @@ Recent reconstruction notes:
   `AgentQueuedMovementActionService`. The service still delegates to the
   legacy physics implementation, but Agent movement/navigation callers no
   longer reach those queue/begin methods directly.
+- Grounded physics entry points now route through `AgentGroundPhysicsService`,
+  and movement timer countdowns route through `AgentMotionTimerService`.
+  Agent movement callers no longer call legacy `applyGroundMotion`,
+  `syncAndDetectGround`, `stopGroundMotion`, `velocityFromDeltaX`, or
+  `tickMotionTimers` directly.
 
 Initial reconstruction order:
 

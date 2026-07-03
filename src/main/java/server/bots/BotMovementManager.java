@@ -11,6 +11,7 @@ import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundMovementService;
+import server.agents.capabilities.movement.AgentGroundPhysicsService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentJumpProbeService;
@@ -137,11 +138,11 @@ public class BotMovementManager {
     }
 
     static int velocityFromDeltaX(double deltaX) {
-        return BotPhysicsEngine.velocityFromDeltaX(deltaX);
+        return AgentGroundPhysicsService.velocityFromDeltaX(deltaX);
     }
 
     static void stopGroundMotion(BotEntry entry) {
-        BotPhysicsEngine.stopGroundMotion(entry);
+        AgentGroundPhysicsService.stopGroundMotion(entry);
     }
 
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {

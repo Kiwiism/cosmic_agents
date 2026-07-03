@@ -23,7 +23,7 @@ public final class AgentAirborneMovementService {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
-            BotPhysicsEngine.tickMotionTimers(entry);
+            AgentMotionTimerService.tickMotionTimers(entry);
 
             Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
             Point agentPosition = agent.getPosition();

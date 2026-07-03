@@ -27,7 +27,7 @@ public final class AgentClimbMovementService {
         long startedAt = System.nanoTime();
         try {
             Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
-            BotPhysicsEngine.tickMotionTimers(entry);
+            AgentMotionTimerService.tickMotionTimers(entry);
             Point agentPosition = agent.getPosition();
             int dy = targetPos.y - agentPosition.y;
             Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);

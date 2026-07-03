@@ -9,7 +9,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 
 public final class AgentGroundMovementRuntimeService {
@@ -22,9 +21,9 @@ public final class AgentGroundMovementRuntimeService {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
 
-            BotPhysicsEngine.tickMotionTimers(entry);
+            AgentMotionTimerService.tickMotionTimers(entry);
 
-            Foothold currentFoothold = BotPhysicsEngine.syncAndDetectGround(entry, bot);
+            Foothold currentFoothold = AgentGroundPhysicsService.syncAndDetectGround(entry, bot);
             if (currentFoothold == null) {
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;

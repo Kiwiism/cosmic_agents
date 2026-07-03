@@ -4,6 +4,7 @@ import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentGroundPhysicsService;
 import server.agents.capabilities.movement.AgentGroundingService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
@@ -436,7 +437,7 @@ public final class AgentFidgetService {
         }
 
         AgentBotMovementStateRuntime.setMoveDirection(entry, dir);
-        BotPhysicsEngine.applyGroundMotion(entry, bot, currentFh);
+        AgentGroundPhysicsService.applyGroundMotion(entry, bot, currentFh);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 

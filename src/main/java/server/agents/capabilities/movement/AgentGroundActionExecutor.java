@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 
 public final class AgentGroundActionExecutor {
@@ -28,8 +27,7 @@ public final class AgentGroundActionExecutor {
             return;
         }
 
-        BotPhysicsEngine.GroundMotion motion =
-                BotPhysicsEngine.applyGroundMotion(entry, bot, currentFoothold);
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, currentFoothold);
         if (motion.lostGround()) {
             AgentMovementBroadcastService.broadcastMovement(entry);
             return;
