@@ -10,7 +10,6 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -39,7 +38,7 @@ public final class AgentMovementBroadcastService {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         int x = bot.getPosition().x;
         int y = bot.getPosition().y;
-        BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
+        AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
         int fhId = resolveBroadcastFhId(entry, bot);
 
         if (AgentBotMovementBroadcastStateRuntime.matches(
@@ -64,7 +63,7 @@ public final class AgentMovementBroadcastService {
         return AgentBotMovementPhysicsStateRuntime.lastGroundFhId(entry);
     }
 
-    private static void sendMovementPacket(Character bot, BotPhysicsEngine.MovementSnapshot snapshot, int fhId) {
+    private static void sendMovementPacket(Character bot, AgentMovementPacketSnapshot snapshot, int fhId) {
         byte[] data = new byte[15];
         data[0] = 1;
         int x = bot.getPosition().x;

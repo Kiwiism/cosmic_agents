@@ -141,7 +141,10 @@ Capability bins:
   for movement side effects and reads navigation-facing movement thresholds
   from `AgentMovementPhysicsConfig`; climb-step reads route through
   `AgentMovementKinematicsService`; remaining references are navigation and
-  physics runtime seams for later extraction.
+  physics runtime seams for later extraction. Packet-facing movement snapshot
+  reads enter through `AgentMovementSnapshotService` and use
+  `AgentMovementPacketSnapshot` so broadcast code no longer depends on the bot
+  physics snapshot type.
 - `supplies`
 - `trade`
 - `shop`

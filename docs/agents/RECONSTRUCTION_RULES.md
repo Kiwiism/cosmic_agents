@@ -3912,6 +3912,10 @@ Recent reconstruction notes:
   legacy `BotMovementManager.adjustGrindingTargetPosition` helper delegates to
   the Agent service. Same-region edge clamping, cross-region no-op behavior,
   graph warmup fallback, and grind-edge margin are unchanged.
+- Packet-facing movement snapshot retrieval now enters through
+  `AgentMovementSnapshotService` and `AgentMovementPacketSnapshot`; the service
+  preserves the legacy `BotPhysicsEngine.movementSnapshot` behavior while
+  isolating broadcast packet code from the bot physics snapshot type.
 
 Initial reconstruction order:
 
