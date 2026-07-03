@@ -31,6 +31,9 @@ Recent reconstruction notes:
   `AgentEquipmentOptimizationService`. `AgentEquipmentRecommendationService`
   no longer imports `BotEquipManager`; the old `BotEquipManager`
   `runOptimizerWithExtras` methods are compatibility delegates.
+- Dead `BotEquipManager` recommendation wrapper methods were removed after
+  scans showed no source or test callers. Recommendation entry points remain
+  Agent-owned.
 - Production equipment callers now enter through
   `server.agents.capabilities.equipment.AgentEquipmentService`.
   `server.bots.BotEquipManager` remains the legacy optimizer implementation

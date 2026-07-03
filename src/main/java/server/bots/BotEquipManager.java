@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
-import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.capabilities.equipment.AgentEquipmentDebugReportFormatter;
 import server.agents.capabilities.equipment.AgentEquipmentDpResult;
 import server.agents.capabilities.equipment.AgentEquipmentOptimizer;
@@ -26,7 +25,6 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUse
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.SelfReserveHooks;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
-import server.agents.capabilities.equipment.AgentEquipmentRecommendationService;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentScore;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
@@ -478,34 +476,6 @@ public class BotEquipManager {
         return AgentEquipmentReservePolicy.futureOnlyBlocked(bot, ii, equip);
     }
 
-    public static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
-        return AgentEquipmentRecommendationService.findRecommendedEquips(receiver, holder);
-    }
-
-    static List<AgentEquipRecommendation> findFutureRecommendedEquips(Character receiver, Character holder) {
-        return AgentEquipmentRecommendationService.findFutureRecommendedEquips(receiver, holder);
-    }
-
-    public static List<AgentEquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
-        return AgentEquipmentRecommendationService.findRecommendedEquipsFromItems(receiver, holderItems);
-    }
-
-    static List<AgentEquipRecommendation> findFutureRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
-        return AgentEquipmentRecommendationService.findFutureRecommendedEquipsFromItems(receiver, holderItems);
-    }
-
-    static List<Item> collectRecommendedItems(Character receiver, Character holder) {
-        return AgentEquipmentRecommendationService.collectRecommendedItems(receiver, holder);
-    }
-
-    public static AgentEquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
-        return AgentEquipmentRecommendationService.findRecommendationForItem(receiver, holder, holderItem);
-    }
-
-    static AgentEquipRecommendation findFutureRecommendationForItem(Character receiver, Character holder, Item holderItem) {
-        return AgentEquipmentRecommendationService.findFutureRecommendationForItem(receiver, holder, holderItem);
-    }
-
     public static boolean shouldReserveOwnedItem(Character bot, Item item) {
         return AgentEquipmentReservePolicy.shouldReserveOwnedItem(bot, item);
     }
@@ -562,10 +532,6 @@ public class BotEquipManager {
                                           AgentEquipmentStatSnapshot naked, Equip equip) {
         return ii.meetsEquipRequirements(equip, bot.getJob(), bot.getLevel(),
                 naked.str(), naked.dex(), naked.int_(), naked.luk(), bot.getFame());
-    }
-
-    static String recommendationSummary(Character receiver, Character holder, int maxItems) {
-        return AgentEquipmentRecommendationService.recommendationSummary(receiver, holder, maxItems);
     }
 
     public static String unequipAll(Character bot) {

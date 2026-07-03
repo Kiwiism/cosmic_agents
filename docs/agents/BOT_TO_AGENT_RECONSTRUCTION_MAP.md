@@ -26,6 +26,8 @@ Recent map updates:
   `AgentEquipmentOptimizationService`; Agent recommendation code now calls the
   Agent optimizer orchestration directly, and the bot methods remain only as
   compatibility delegates.
+- Dead `BotEquipManager` recommendation wrapper methods were deleted after
+  callers moved to Agent recommendation APIs.
 - Production callers of `server.bots.BotEquipManager` now call
   `server.agents.capabilities.equipment.AgentEquipmentService`. The old bot
   class remains the legacy implementation behind that Agent boundary until
