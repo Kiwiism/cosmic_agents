@@ -4053,6 +4053,11 @@ Recent reconstruction notes:
   rope top-step tests now target their Agent navigation services directly,
   allowing the matching `BotNavigationManager` compatibility delegates to be
   removed.
+- Path search, path optimality/search-result adapters, and region resolution
+  tests now target `AgentNavigationPathService` and
+  `AgentNavigationRegionService` directly; the matching
+  `BotNavigationManager` compatibility delegates and record adapters have been
+  removed.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

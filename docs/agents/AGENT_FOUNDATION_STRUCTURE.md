@@ -167,8 +167,8 @@ Capability bins:
   the same path seam. Navigation probe path/optimality diagnostics also use
   this path seam. Combat grind-target region scoring and target-score path
   checks use the same Agent navigation services. Region-classification logic
-  itself now lives in `AgentNavigationRegionService`; the bot navigation
-  manager delegates to it temporarily. Movement tick target resolution and
+  itself now lives in `AgentNavigationRegionService`; the bot region
+  compatibility delegates have been removed. Movement tick target resolution and
   committed-edge continuation now live in `AgentNavigationTargetService`;
   the bot navigation manager keeps compatibility delegates for old callers.
   Grind navigation/fallback runtime hooks call Agent region and path services
@@ -177,7 +177,8 @@ Capability bins:
   Path cost, heuristic, no-op walk collapse, precise walk-target policy, edge
   usability policy, production path search entry points, next-edge selection,
   optimality measurement, slow-path logging, path reconstruction, and the old
-  private bot path helper ownership live in `AgentNavigationPathService`.
+  private bot path helper ownership live in `AgentNavigationPathService`; bot
+  path/search compatibility wrappers have been removed.
   Navigation graph warmup notification throttling lives in
   `AgentNavigationWarmupService`.
   Portal edge execution lives in `AgentNavigationPortalService`.

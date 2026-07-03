@@ -4,6 +4,7 @@ import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -191,7 +192,7 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldDropStaleCollapsedWalkEdgeWhenBotEntersIntermediateRegion() {
-        // Regression: pathlog-SLASH-2026-04-02 Ã¢â‚¬â€ collapsed r358Ã¢â€ â€™r355 WALK edge (via r359),
+        // Regression: pathlog-SLASH-2026-04-02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â collapsed r358ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢r355 WALK edge (via r359),
         // bot steps into r359 mid-traverse; old code returned null here (fromRegionId mismatch),
         // dropping the edge every tick and causing an oscillation loop.
         AgentNavigationGraph.Edge collapsedWalk = new AgentNavigationGraph.Edge(
@@ -206,7 +207,7 @@ class BotNavigationManagerTest {
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
-        // Bot is in intermediate region 359 Ã¢â‚¬â€ neither source (358) nor destination (355)
+        // Bot is in intermediate region 359 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â neither source (358) nor destination (355)
         AgentNavigationGraph.Edge result = BotNavigationManager.reuseCommittedEdge(graph, entry, 359, 355);
 
         assertNull(result, "Stale collapsed WALK edge must be dropped once the bot leaves its source region");
@@ -258,7 +259,7 @@ class BotNavigationManagerTest {
             lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId()))
                     .thenReturn(List.of(siblingEntry));
 
-            int regionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, siblingPosition);
+            int regionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, siblingPosition);
 
             assertEquals(77, regionId);
         }
@@ -348,9 +349,9 @@ class BotNavigationManagerTest {
                 Set.of()
         );
 
-        List<AgentNavigationGraph.Edge> leftPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> leftPath = AgentNavigationPathService.findPath(
                 graph, map, new Point(50, 100), 1, 2, new Point(40, 200));
-        List<AgentNavigationGraph.Edge> rightPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> rightPath = AgentNavigationPathService.findPath(
                 graph, map, new Point(50, 100), 1, 2, new Point(160, 200));
 
         assertEquals(List.of(leftEntry), leftPath,
@@ -376,9 +377,9 @@ class BotNavigationManagerTest {
         int leftTargetRegionId = graph.findRegionId(map, leftTarget);
         int rightTargetRegionId = graph.findRegionId(map, rightTarget);
 
-        List<AgentNavigationGraph.Edge> leftPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> leftPath = AgentNavigationPathService.findPath(
                 graph, map, botPos, startRegionId, leftTargetRegionId, leftTarget);
-        List<AgentNavigationGraph.Edge> rightPath = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> rightPath = AgentNavigationPathService.findPath(
                 graph, map, botPos, startRegionId, rightTargetRegionId, rightTarget);
 
         assertFalse(leftPath.isEmpty(), "fixture should produce a left-side drop path");
@@ -439,7 +440,7 @@ class BotNavigationManagerTest {
 
         Point botPos = new Point(100, 100);
         Point ownerPos = new Point(140, 40);
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                 graph, map, botPos, 1, 3, ownerPos);
         assertEquals(List.of(directJump), path,
                 "synthetic fixture should prefer the direct jump to the live owner region");
@@ -594,7 +595,7 @@ class BotNavigationManagerTest {
         int startRegionId = graph.findRegionId(lithHarbor, start);
         int targetRegionId = graph.findRopeRegionId(target);
 
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                 graph, lithHarbor, start, startRegionId, targetRegionId, target);
 
         assertFalse(path.isEmpty());
@@ -652,7 +653,7 @@ class BotNavigationManagerTest {
         Point target = new Point(1802, 647);
         int startRegionId = graph.findRopeRegionId(botPos);
         int targetRegionId = graph.findRegionId(lithHarbor, target);
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                 graph, lithHarbor, botPos, startRegionId, targetRegionId, target);
         assertFalse(path.isEmpty());
         AgentNavigationGraph.Edge ropeExit = path.getFirst();
@@ -688,7 +689,7 @@ class BotNavigationManagerTest {
         entry.movementProfile = new AgentMovementProfile(105, 100);
 
         assertEquals(graph.findRopeRegionId(ropeTop),
-                BotNavigationManager.resolveCurrentRegionId(graph, entry, map, ropeTop));
+                AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, ropeTop));
     }
 
     @Test
@@ -709,18 +710,18 @@ class BotNavigationManagerTest {
 
     @Test
     void shouldNotDismountFromRopeTopOnNonAiTickWhenFollowTargetIsAbove() {
-        // Regression: pathlog-Preston-2026-05-07T034012 Ã¢â‚¬â€ bot at firstClimbableY of a rope
+        // Regression: pathlog-Preston-2026-05-07T034012 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bot at firstClimbableY of a rope
         // whose top sits 1px below an above-foothold. Owner above the rope makes the raw follow
         // target's dy negative, so on every non-AI physics tick tickClimbing computed
         // climbVerticalDir=-1 and advanceClimb landed the bot onto the foothold above (climbing
         // cleared). The following AI tick saw the bot in the foothold region and re-grabbed the
-        // rope. Region oscillated r=foothold Ã¢â€ â€ r=rope at 50ms cadence for 10+ seconds.
+        // rope. Region oscillated r=foothold ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â r=rope at 50ms cadence for 10+ seconds.
         //
         // Climb direction is an AI-decided intent. Non-AI ticks must integrate the previously
         // chosen climbVerticalDir, not derive a fresh direction from the raw follow target.
         MapleMap map = new MapleMap(910000200, 0, 0, 910000200, 1.0f);
         FootholdTree footholds = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
-        // Foothold above the rope top (y=0), 2px gap to rope.topY=2 Ã¢â‚¬â€ same geometry as Preston r114/r173.
+        // Foothold above the rope top (y=0), 2px gap to rope.topY=2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â same geometry as Preston r114/r173.
         footholds.insert(new Foothold(new Point(80, 0), new Point(120, 0), 1));
         map.setFootholds(footholds);
         Rope rope = new Rope(100, 2, 154, false);
@@ -737,7 +738,7 @@ class BotNavigationManagerTest {
         assertEquals(BotPhysicsEngine.firstClimbableY(rope), bot.getPosition().y);
         assertEquals(0, entry.climbVerticalDir, "fresh attach must not carry stale climb intent");
 
-        // Follow target far above the bot Ã¢â‚¬â€ without the fix, dy<0 forces climb-up which dismounts.
+        // Follow target far above the bot ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â without the fix, dy<0 forces climb-up which dismounts.
         Point followTargetAbove = new Point(50, -54);
 
         // No nav edge committed (rope-entry was just executed; reuseCommittedEdge would drop it

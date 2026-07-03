@@ -2,6 +2,8 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -184,7 +186,7 @@ class AgentNavigationGraphServiceTest {
                                 && edge.launchStepX > 0),
                 "Expected rope-to-rope transfer from the left KPQ rope to the adjacent right rope");
 
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(kpqS1Graph(), kpqS1(),
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(kpqS1Graph(), kpqS1(),
                 new Point(-437, -892), leftRopeRegionId, targetRegionId, new Point(-86, -897));
 
         assertFalse(path.isEmpty(), "Left KPQ rope should route to the right upper platform");
@@ -193,7 +195,7 @@ class AgentNavigationGraphServiceTest {
 
     @Test
     void shouldResolveOwnerToUpperPlatformWhenPositionHasSubpixelRounding() {
-        // Regression: pathlog-SLASH-2026-04-02T125933 Ã¢â‚¬â€ owner at (2596,1696), bot at (2573,1935),
+        // Regression: pathlog-SLASH-2026-04-02T125933 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â owner at (2596,1696), bot at (2573,1935),
         // both resolved to region 187. findGroundFoothold returned the lower foothold because the
         // sloped upper foothold's interpolated Y rounds to 1px above the stored position, causing
         // findBelow to skip it. Must resolve to different regions.
@@ -456,7 +458,7 @@ class AgentNavigationGraphServiceTest {
         entry.climbRope = reuseCase.rope();
 
         assertEquals(reuseCase.edge().toRegionId,
-                BotNavigationManager.resolveCurrentRegionId(graph, entry, map, reuseCase.botPosition()));
+                AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, reuseCase.botPosition()));
     }
 
     @Test
@@ -475,7 +477,7 @@ class AgentNavigationGraphServiceTest {
         entry.following = true;
 
         assertEquals(reuseCase.edge().toRegionId,
-                BotNavigationManager.resolveTargetRegionId(graph, entry, map, owner.getPosition()));
+                AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, owner.getPosition()));
     }
 
     @Test
@@ -627,10 +629,10 @@ class AgentNavigationGraphServiceTest {
 
     @Test
     void shouldNotPathThroughRopeOscillationLoop() {
-        // Regression: pathlog-Leroy-2026-05-07T081138 Ã¢â‚¬â€ bot grounded on a foothold (r=31)
+        // Regression: pathlog-Leroy-2026-05-07T081138 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bot grounded on a foothold (r=31)
         // whose surface sits 2 px above a rope-top got stuck oscillating onto/off the rope
         // because rope-grab CLIMB edges had cost=0. A* tied the direct PORTAL+DROP path with
-        // a useless CLIMB-onto-ropeÃ¢â€ â€™CLIMB-off-rope+PORTAL+DROP detour and could pick the loop
+        // a useless CLIMB-onto-ropeÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢CLIMB-off-rope+PORTAL+DROP detour and could pick the loop
         // variant. With non-zero cost on the snap-grab/top-step CLIMB edges, the direct path
         // is strictly cheaper.
         AgentNavigationGraph graph = kerningGraph();
@@ -642,7 +644,7 @@ class AgentNavigationGraphServiceTest {
         assertTrue(fromRegionId > 0);
         assertTrue(targetRegionId > 0);
 
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                 graph, map, groundedAtRopeColumn, fromRegionId, targetRegionId, goalOnLowerPlatform);
         assertFalse(path.isEmpty(), "expected a path from r" + fromRegionId + " to r" + targetRegionId);
 
@@ -669,13 +671,13 @@ class AgentNavigationGraphServiceTest {
 
     @Test
     void shouldDiscoverJumpEdgesAcrossWideIntermediatePlatform() {
-        // Regression: pathlog-Clawer-2026-05-07T062632 Ã¢â‚¬â€ at base profile (100%) the bot at
+        // Regression: pathlog-Clawer-2026-05-07T062632 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â at base profile (100%) the bot at
         // (965,0) on r=114 had no direct JUMP edge to r=137 (owner foothold) and no JUMP edge
         // to the intermediate platform r=132 above r=137. A* fell back to a 4-edge climb
         // detour. Both jumps are physically achievable in-client; the missing edges were a
         // graph-generation gap caused by buildFeatureXsByRegionId only projecting endpoints
         // of platforms with width <= 64 down to the region below. r=132 is wider than 64px,
-        // so its right edge at xÃ¢â€°Ë†886 was never seeded as a feature anchor on r=114, leaving
+        // so its right edge at xÃƒÂ¢Ã¢â‚¬Â°Ã‹â€ 886 was never seeded as a feature anchor on r=114, leaving
         // the narrow launch windows for both jumps with zero sampled anchors.
         AgentNavigationGraph graph = kerningGraph();
         MapleMap map = kerning();
@@ -720,7 +722,7 @@ class AgentNavigationGraphServiceTest {
         assertTrue(startRegionId > 0, "Missing graph region for start point " + start);
         assertTrue(targetRegionId > 0, "Missing graph region for target point " + target);
 
-        return BotNavigationManager.findPath(graph, map, start, startRegionId, targetRegionId, target);
+        return AgentNavigationPathService.findPath(graph, map, start, startRegionId, targetRegionId, target);
     }
 
     private static AgentNavigationGraph.Edge findNearbyEdge(AgentNavigationGraph graph,

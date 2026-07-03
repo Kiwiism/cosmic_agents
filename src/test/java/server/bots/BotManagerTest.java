@@ -1,6 +1,8 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -403,9 +405,9 @@ class BotManagerTest {
         assertTrue(retreat.x <= 200);
         assertTrue(Math.abs(retreat.x - 330) > AgentCombatConfig.cfg.RANGED_DEGENERATE_RANGE_X);
 
-        int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, new Point(300, 100));
-        int retreatRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, retreat);
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPath(
+        int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, new Point(300, 100));
+        int retreatRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, retreat);
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                 graph, map, new Point(300, 100), startRegionId, retreatRegionId, retreat);
         assertFalse(path.isEmpty());
         assertEquals(AgentNavigationGraph.EdgeType.JUMP, path.get(0).type);
@@ -988,7 +990,7 @@ class BotManagerTest {
         bots.put(owner.getId(), List.of(followerEntry, anchorEntry));
         try {
             AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
-            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+            int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(
                     graph, followerEntry, map, new Point(300, 100));
             AgentNavigationGraph.Region targetRegion = graph.getRegion(targetRegionId);
 
@@ -1513,9 +1515,9 @@ class BotManagerTest {
 
     private static AgentGrindNavigationTargetSelector.NavigationHooks grindNavigationHooks() {
         return new AgentGrindNavigationTargetSelector.NavigationHooks(
-                BotNavigationManager::resolveCurrentRegionId,
-                BotNavigationManager::resolveTargetRegionId,
-                BotNavigationManager::findPath,
+                AgentNavigationRegionService::resolveCurrentRegionId,
+                AgentNavigationRegionService::resolveTargetRegionId,
+                AgentNavigationPathService::findPath,
                 BotMovementManager.cfg.GRIND_EDGE_MARGIN,
                 BotMovementManager.cfg.JUMP_Y_THRESH);
     }
