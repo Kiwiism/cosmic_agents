@@ -11,12 +11,8 @@ import server.agents.capabilities.navigation.AgentNavigationTargetService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.movement.AgentMovementProfile;
-
 import client.Character;
-import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -67,26 +63,11 @@ public final class BotNavigationManager {
     }
 
     static Point selectClimbWaypoint(BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        AgentNavigationGraph graph = resolveActiveGraph(AgentBotRuntimeIdentityRuntime.botMap(entry), AgentBotMovementStateRuntime.movementProfile(entry));
-        return selectClimbWaypoint(graph, entry, botPos, edge);
+        return AgentNavigationWaypointService.selectClimbWaypoint(entry, botPos, edge);
     }
 
     static Point selectClimbWaypoint(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectClimbWaypoint(
-                graph,
-                entry,
-                botPos,
-                edge,
-                (readinessGraph, readinessEntry, readinessBotPos, readinessEdge) ->
-                        canExecuteClimbExitFromCurrentPosition(
-                                readinessGraph,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                readinessBotPos,
-                                readinessEdge));
-    }
-
-    private static AgentNavigationGraph resolveActiveGraph(MapleMap map, AgentMovementProfile movementProfile) {
-        return AgentNavigationGraphService.peekBestGraph(map, movementProfile);
+        return AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);
     }
 
     static Point selectDropWaypoint(BotEntry entry,
@@ -254,14 +235,6 @@ public final class BotNavigationManager {
 
     static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
         return AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
-    }
-
-    private static boolean canExecuteClimbExitFromCurrentPosition(AgentNavigationGraph graph,
-                                                                  MapleMap map,
-                                                                  Point botPos,
-                                                                  AgentNavigationGraph.Edge edge) {
-        return AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
-                graph, botPos, edge, region -> findRopeForRegion(map, region));
     }
 
     public static int resolveCurrentRegionId(AgentNavigationGraph graph,

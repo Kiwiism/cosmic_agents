@@ -296,7 +296,7 @@ public final class AgentNavigationTargetService {
                                         AgentNavigationGraph.Edge edge) {
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
-            case CLIMB -> selectClimbWaypoint(graph, entry, botPos, edge);
+            case CLIMB -> AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);
             case JUMP -> AgentBotMovementStateRuntime.inAir(entry)
                     ? new Point(edge.endPoint) : selectJumpWaypoint(graph, entry, botPos, edge);
             case DROP -> AgentNavigationWaypointService.selectDropWaypoint(entry, graph, botPos, edge);
@@ -315,23 +315,6 @@ public final class AgentNavigationTargetService {
         }
         int targetX = AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, edge);
         return fromRegion.pointAt(targetX);
-    }
-
-    private static Point selectClimbWaypoint(AgentNavigationGraph graph,
-                                             BotEntry entry,
-                                             Point botPos,
-                                             AgentNavigationGraph.Edge edge) {
-        return AgentNavigationWaypointService.selectClimbWaypoint(
-                graph,
-                entry,
-                botPos,
-                edge,
-                (readinessGraph, readinessEntry, readinessBotPos, readinessEdge) ->
-                        canExecuteClimbExitFromCurrentPosition(
-                                readinessGraph,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
-                                readinessBotPos,
-                                readinessEdge));
     }
 
     private static AgentNavigationGraph resolveActiveGraph(MapleMap map,

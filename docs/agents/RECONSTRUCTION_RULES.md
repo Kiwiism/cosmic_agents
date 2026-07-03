@@ -4033,6 +4033,9 @@ Recent reconstruction notes:
 - Entry-backed jump waypoint selection now also lives in
   `AgentNavigationWaypointService`; the bot navigation shell delegates its
   test-visible jump waypoint helpers to the Agent-owned overloads.
+- Default climb waypoint selection and climb-exit readiness wiring now live in
+  `AgentNavigationWaypointService`; `AgentNavigationTargetService` and the bot
+  navigation compatibility shell call the same Agent-owned overload.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

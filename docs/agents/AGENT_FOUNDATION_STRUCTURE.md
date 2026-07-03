@@ -204,7 +204,7 @@ Capability bins:
   `AgentNavigationGrindTargetService`.
   Jump/drop launch-window and directional-drop runway checks live in
   `AgentNavigationLaunchWindowService`.
-  Pure jump, entry-backed cached jump-launch, climb, straight-drop, and
+  Pure jump, entry-backed cached jump-launch, default climb, straight-drop, and
   directional-drop waypoint selection lives in
   `AgentNavigationWaypointService`.
   Precise waypoint targeting policy lives in

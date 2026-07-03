@@ -10,6 +10,7 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
+import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -187,6 +188,34 @@ public final class AgentNavigationWaypointService {
             return new Point(ropeX, edge.endPoint.y);
         }
         return new Point(edge.startPoint);
+    }
+
+    public static Point selectClimbWaypoint(BotEntry entry,
+                                            Point botPos,
+                                            AgentNavigationGraph.Edge edge) {
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
+                map,
+                AgentBotMovementStateRuntime.movementProfile(entry));
+        return selectClimbWaypoint(graph, entry, botPos, edge);
+    }
+
+    public static Point selectClimbWaypoint(AgentNavigationGraph graph,
+                                            BotEntry entry,
+                                            Point botPos,
+                                            AgentNavigationGraph.Edge edge) {
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        return selectClimbWaypoint(
+                graph,
+                entry,
+                botPos,
+                edge,
+                (readinessGraph, readinessEntry, readinessBotPos, readinessEdge) ->
+                        AgentNavigationRopeEdgeService.canExecuteClimbExitFromCurrentPosition(
+                                readinessGraph,
+                                readinessBotPos,
+                                readinessEdge,
+                                region -> AgentNavigationGraphService.findRopeFromRegion(map, region)));
     }
 
     public interface ClimbExitReadiness {
