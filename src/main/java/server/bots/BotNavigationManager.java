@@ -711,7 +711,7 @@ public final class BotNavigationManager {
                                                          int startRegionId,
                                                          int targetRegionId,
                                                          Point targetPos) {
-        return findPath(graph, bot.getMap(), bot.getPosition(), startRegionId, targetRegionId, targetPos);
+        return AgentNavigationPathService.findPath(graph, bot, startRegionId, targetRegionId, targetPos);
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
@@ -720,7 +720,7 @@ public final class BotNavigationManager {
                                                          int startRegionId,
                                                          int targetRegionId,
                                                          Point targetPos) {
-        return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, null);
+        return AgentNavigationPathService.findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos);
     }
 
     public static List<AgentNavigationGraph.Edge> findPathForTargetScore(AgentNavigationGraph graph,
@@ -729,7 +729,7 @@ public final class BotNavigationManager {
                                                                 int startRegionId,
                                                                 int targetRegionId,
                                                                 Point targetPos) {
-        return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, "target-score");
+        return AgentNavigationPathService.findPathForTargetScore(graph, map, startPos, startRegionId, targetRegionId, targetPos);
     }
 
     /**
@@ -749,8 +749,8 @@ public final class BotNavigationManager {
                                                           int targetRegionId,
                                                           Point targetPos,
                                                           String pathfindCaller) {
-        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                pathfindCaller, useAdmissibleHeuristic, true).path();
+        return AgentNavigationPathService.findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, useAdmissibleHeuristic, true);
     }
 
     /**
@@ -917,12 +917,15 @@ public final class BotNavigationManager {
                                                    int startRegionId,
                                                    int targetRegionId,
                                                    Point targetPos) {
-        SearchOutcome current = runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                "measure", false, false);
-        SearchOutcome optimal = runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
-                "measure", true, false);
-        return new PathOptimality(current.cost(), optimal.cost(), current.usesPortal(),
-                optimal.usesPortal(), current.expandedNodes(), optimal.expandedNodes());
+        AgentNavigationPathService.PathOptimality optimality = AgentNavigationPathService.measureOptimality(
+                graph, map, startPos, startRegionId, targetRegionId, targetPos);
+        return new PathOptimality(
+                optimality.currentCost(),
+                optimality.optimalCost(),
+                optimality.currentUsesPortal(),
+                optimality.optimalUsesPortal(),
+                optimality.currentExpanded(),
+                optimality.optimalExpanded());
     }
 
     private static void logSlowPathfind(AgentNavigationGraph graph,

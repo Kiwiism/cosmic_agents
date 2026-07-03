@@ -86,6 +86,44 @@ class AgentNavigationPathServiceTest {
                         new Point(0, 100), new Point(10, 100), 0, 0, 0, 42, 0, 10)));
     }
 
+    @Test
+    void findPathRunsAgentOwnedSearch() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(
+                        1, List.of(
+                                edge(1, 2, AgentNavigationGraph.EdgeType.WALK, new Point(0, 100), new Point(100, 100), 10),
+                                edge(1, 3, AgentNavigationGraph.EdgeType.WALK, new Point(0, 100), new Point(300, 100), 1_000)),
+                        2, List.of(edge(2, 3, AgentNavigationGraph.EdgeType.WALK, new Point(100, 100), new Point(200, 100), 10))));
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
+                graph, null, new Point(0, 100), 1, 3, new Point(200, 100));
+
+        assertEquals(2, path.size());
+        assertEquals(2, path.get(0).toRegionId);
+        assertEquals(3, path.get(1).toRegionId);
+    }
+
+    @Test
+    void measureOptimalityRunsAgentOwnedSearch() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100)),
+                Map.of(1, List.of(edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                        new Point(0, 100), new Point(100, 100), 10))));
+
+        AgentNavigationPathService.PathOptimality optimality = AgentNavigationPathService.measureOptimality(
+                graph, null, new Point(0, 100), 1, 2, new Point(100, 100));
+
+        assertTrue(optimality.reachable());
+        assertFalse(optimality.suboptimal());
+        assertEquals(0, optimality.costDelta());
+    }
+
     private static AgentNavigationGraph graphWithRegion(AgentNavigationGraph.Region region) {
         return new AgentNavigationGraph(
                 1,
@@ -96,6 +134,28 @@ class AgentNavigationPathServiceTest {
                 Map.of(),
                 Map.of(),
                 Set.of());
+    }
+
+    private static AgentNavigationGraph graphWithRegionsAndEdges(List<AgentNavigationGraph.Region> regions,
+                                                                 Map<Integer, List<AgentNavigationGraph.Edge>> outgoingByRegionId) {
+        Map<Integer, AgentNavigationGraph.Region> regionsById = new java.util.HashMap<>();
+        for (AgentNavigationGraph.Region region : regions) {
+            regionsById.put(region.id, region);
+        }
+        return new AgentNavigationGraph(
+                1,
+                1,
+                AgentMovementProfile.base(),
+                regions,
+                regionsById,
+                Map.of(),
+                outgoingByRegionId,
+                Set.of());
+    }
+
+    private static AgentNavigationGraph.Region groundRegion(int id, int x1, int x2, int y) {
+        return new AgentNavigationGraph.Region(id, List.of(new AgentNavigationGraph.Segment(
+                new Foothold(new Point(x1, y), new Point(x2, y), id))));
     }
 
     private static AgentNavigationGraph.Edge edge(int fromRegionId,

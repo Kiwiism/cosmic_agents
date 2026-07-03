@@ -3964,14 +3964,20 @@ Recent reconstruction notes:
   behavior while removing another direct navigation-manager dependency.
 - Path logger, script move-target cost checks, and navigation debug overlay now
   enter path search through `AgentNavigationPathService` and region
-  classification through `AgentNavigationRegionService`. The path service is a
-  temporary delegation seam until the search body moves.
+  classification through `AgentNavigationRegionService`.
 - Shop approach candidate reachability now uses `AgentNavigationRegionService`
   and `AgentNavigationPathService`, preserving the same candidate filtering
   while removing another direct navigation-manager dependency.
 - Navigation probe path and optimality measurement now enter through
   `AgentNavigationPathService`, including an Agent-owned `PathOptimality`
   record that mirrors the legacy diagnostic values.
+- Production navigation path search entry points now run through
+  `AgentNavigationPathService`. The Agent service owns `findPath`,
+  target-score path search, optimality measurement, slow-path logging,
+  path reconstruction, and the copied search algorithm. `BotNavigationManager`
+  keeps public compatibility delegates; its old package-private `runSearch`
+  body remains temporary test/compatibility clutter until the follow-up cleanup
+  removes it.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior
