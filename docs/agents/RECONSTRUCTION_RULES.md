@@ -3991,6 +3991,9 @@ Recent reconstruction notes:
 - Navigation edge usability policy now lives in `AgentNavigationPathService`.
   The rule is unchanged: walk/jump/drop/climb edges are always usable and portal
   edges require an existing open portal.
+- Committed navigation edge equality and retention policy now live in
+  `AgentNavigationCommittedEdgeService`; `BotNavigationManager` delegates while
+  remaining committed-edge execution code migrates later.
 
 Initial reconstruction order:
 

@@ -172,6 +172,8 @@ Capability bins:
   committed-edge continuation enter through `AgentNavigationTargetService`.
   Path cost, heuristic, no-op walk collapse, precise walk-target policy, and
   edge usability policy live in `AgentNavigationPathService`.
+  Committed-edge comparison and retention policy live in
+  `AgentNavigationCommittedEdgeService`.
 - `supplies`
 - `trade`
 - `shop`
