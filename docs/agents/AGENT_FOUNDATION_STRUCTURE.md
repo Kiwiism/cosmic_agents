@@ -159,6 +159,8 @@ Capability bins:
   Navigation-facing helper reads enter through
   `AgentNavigationPhysicsService`, including the graph-build walk-region
   lookup lifecycle used while navigation edges are generated.
+  Ground-target and mob-avoidance region classification enter through
+  `AgentNavigationRegionService`.
 - `supplies`
 - `trade`
 - `shop`

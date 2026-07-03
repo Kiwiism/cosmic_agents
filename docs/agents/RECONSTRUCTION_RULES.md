@@ -3956,6 +3956,9 @@ Recent reconstruction notes:
   `AgentNavigationPhysicsService`. The physics engine still owns the
   thread-local lookup implementation until the graph/physics coupling is split
   in a later slice.
+- Movement capability ground-target and mob-avoidance region classification
+  now enter through `AgentNavigationRegionService`. The service delegates to
+  the existing navigation manager until the pathfinding internals migrate.
 
 Initial reconstruction order:
 

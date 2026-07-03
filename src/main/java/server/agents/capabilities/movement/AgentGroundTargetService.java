@@ -2,12 +2,12 @@ package server.agents.capabilities.movement;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotNavigationManager;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -33,8 +33,8 @@ public final class AgentGroundTargetService {
             return targetPos;
         }
         Point agentPosition = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
-        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, agentPosition);
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
+        int currentRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, agentPosition);
+        int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, targetPos);
         if (currentRegionId < 0 || currentRegionId != targetRegionId) {
             return targetPos;
         }

@@ -7,12 +7,12 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotNavigationManager;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -93,8 +93,8 @@ public final class AgentMobAvoidanceService {
         }
 
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, bot.getPosition());
-        int mobRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, mob.getPosition());
+        int currentRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, bot.getPosition());
+        int mobRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, mob.getPosition());
         return currentRegionId >= 0 && currentRegionId == mobRegionId;
     }
 
@@ -112,8 +112,8 @@ public final class AgentMobAvoidanceService {
             return landing.foothold().getId() == currentFoothold.getId();
         }
 
-        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        int landingRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, landing.point());
+        int currentRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, botPos);
+        int landingRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, landing.point());
         return currentRegionId >= 0 && currentRegionId == landingRegionId;
     }
 
