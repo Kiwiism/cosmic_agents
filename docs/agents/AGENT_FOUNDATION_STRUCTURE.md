@@ -73,8 +73,10 @@ Capability bins:
   `AgentEquipmentScoringPolicy`; auto-equip duplicate-trigger state lives in
   `AgentAutoEquipThrottle`; owned/incoming reserve entry points route directly
   to `AgentEquipmentReservePolicy`; recommendation immediate/future eligibility
-  rules live in `AgentEquipmentRecommendationPolicy`; unequip command execution
-  lives in `AgentEquipmentUnequipService`.
+  rules live in `AgentEquipmentRecommendationPolicy`; recommendation filtering,
+  result construction, recommended-item collection, and summary formatting live
+  in `AgentEquipmentRecommendationService`; unequip command execution lives in
+  `AgentEquipmentUnequipService`.
 - `supplies`
 - `trade`
 - `shop`

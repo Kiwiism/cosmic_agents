@@ -44,18 +44,18 @@ public final class AgentEquipmentService {
     }
 
     public static List<AgentEquipRecommendation> findRecommendedEquips(Character agent, Character leader) {
-        return BotEquipManager.findRecommendedEquips(agent, leader);
+        return AgentEquipmentRecommendationService.findRecommendedEquips(agent, leader);
     }
 
     public static List<AgentEquipRecommendation> findRecommendedEquipsFromItems(Character agent,
                                                                                 Collection<Equip> items) {
-        return BotEquipManager.findRecommendedEquipsFromItems(agent, items);
+        return AgentEquipmentRecommendationService.findRecommendedEquipsFromItems(agent, items);
     }
 
     public static AgentEquipRecommendation findRecommendationForItem(Character agent,
                                                                      Character leader,
                                                                      Item item) {
-        return BotEquipManager.findRecommendationForItem(agent, leader, item);
+        return AgentEquipmentRecommendationService.findRecommendationForItem(agent, leader, item);
     }
 
     public static boolean shouldReserveOwnedItem(Character agent, Item item) {

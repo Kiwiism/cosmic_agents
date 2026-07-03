@@ -3663,6 +3663,11 @@ Recent reconstruction notes:
   cash-item skipping, free-slot guards, slot ordering, and item move side
   effects are unchanged, while the service boundary no longer enters
   `BotEquipManager` for those commands.
+- Equipment recommendation filtering and result construction now live in
+  `AgentEquipmentRecommendationService`; trade recommendation, single-item
+  offer checks, recommended-item collection, and summary formatting preserve the
+  same filters and reply wording. The service still calls
+  `BotEquipManager.runOptimizerWithExtras` as the temporary DP optimizer seam.
 
 Initial reconstruction order:
 

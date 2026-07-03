@@ -22,6 +22,7 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.Relevant
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.SelfReserveHooks;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
+import server.agents.capabilities.equipment.AgentEquipmentRecommendationService;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
 import server.agents.capabilities.equipment.AgentEquipmentUnequipService;
@@ -512,7 +513,7 @@ public class BotEquipManager {
 
     /** Outcome of {@link #runOptimizerWithExtras}: the picked weapon (may be null) and
      *  non-ring slot picks. Picks omit slots the optimizer chose to leave empty. */
-    record OptimizerResult(Equip weapon, Map<Short, Equip> picks) {}
+    public record OptimizerResult(Equip weapon, Map<Short, Equip> picks) {}
 
     /**
      * Runs the autoEquip DP after merging {@code extras} into the receiver's candidate pool.
@@ -520,11 +521,11 @@ public class BotEquipManager {
      * actually do. The {@code extras} are still subject to scope-appropriate requirement and
      * weapon-compat filters before entering the DP.
      */
-    static OptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras) {
+    public static OptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras) {
         return runOptimizerWithExtras(bot, extras, RecommendationScope.IMMEDIATE);
     }
 
-    private static OptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras,
+    public static OptimizerResult runOptimizerWithExtras(Character bot, Collection<Equip> extras,
                                                           RecommendationScope scope) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
@@ -1135,134 +1136,35 @@ public class BotEquipManager {
     }
 
     public static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver, Character holder) {
-        return findRecommendedEquips(receiver, holder, RecommendationScope.IMMEDIATE);
+        return AgentEquipmentRecommendationService.findRecommendedEquips(receiver, holder);
     }
 
     static List<AgentEquipRecommendation> findFutureRecommendedEquips(Character receiver, Character holder) {
-        return findRecommendedEquips(receiver, holder, RecommendationScope.FUTURE);
+        return AgentEquipmentRecommendationService.findFutureRecommendedEquips(receiver, holder);
     }
 
     public static List<AgentEquipRecommendation> findRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
-        return buildRecommendations(receiver, holderItems, RecommendationScope.IMMEDIATE);
+        return AgentEquipmentRecommendationService.findRecommendedEquipsFromItems(receiver, holderItems);
     }
 
     static List<AgentEquipRecommendation> findFutureRecommendedEquipsFromItems(Character receiver, Collection<Equip> holderItems) {
-        return buildRecommendations(receiver, holderItems, RecommendationScope.FUTURE);
-    }
-
-    private static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver, Character holder,
-                                                                   RecommendationScope scope) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
-
-        // Single source of truth: the autoEquip DP. Add the holder's tradeable items (incl.
-        // rings) to the receiver's pool, run the optimizer, and recommend only the picks that
-        // came from the holder. This guarantees the bot never asks for an item it wouldn't
-        // actually equip.
-        Set<Equip> holderItems = Collections.newSetFromMap(new IdentityHashMap<>());
-        for (Item item : holderEquipInv.list()) {
-            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
-            if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) continue;
-            String textSlot = ii.getEquipmentSlot(equip.getItemId());
-            if (textSlot == null) continue;
-            EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
-            if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
-            if (eslot.getPrimarySlot() == 0) continue;
-            short primarySlot = (short) eslot.getPrimarySlot();
-            if (primarySlot == (short) -11
-                    && !isWeaponCompatible(receiver, ii.getWeaponType(equip.getItemId()))) continue;
-            if (!isRecommendationCandidate(receiver, ii, equip, primarySlot, scope)) continue;
-            holderItems.add(equip);
-        }
-
-        return buildRecommendations(receiver, holderItems, scope);
-    }
-
-    private static List<AgentEquipRecommendation> buildRecommendations(Character receiver, Collection<Equip> holderItems,
-                                                                  RecommendationScope scope) {
-        Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-        List<AgentEquipRecommendation> recommendations = new ArrayList<>();
-        OptimizerResult opt = runOptimizerWithExtras(receiver, holderItems, scope);
-        if (opt.weapon() != null && holderItems.contains(opt.weapon())) {
-            Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
-            recommendations.add(new AgentEquipRecommendation((short) -11, cur, opt.weapon()));
-        }
-        for (Map.Entry<Short, Equip> p : opt.picks().entrySet()) {
-            if (holderItems.contains(p.getValue())) {
-                Equip cur = (Equip) receiverEquippedInv.getItem(p.getKey());
-                recommendations.add(new AgentEquipRecommendation(p.getKey(), cur, p.getValue()));
-            }
-        }
-        return recommendations;
+        return AgentEquipmentRecommendationService.findFutureRecommendedEquipsFromItems(receiver, holderItems);
     }
 
     static List<Item> collectRecommendedItems(Character receiver, Character holder) {
-        return new ArrayList<>(findRecommendedEquips(receiver, holder).stream()
-                .map(AgentEquipRecommendation::candidate)
-                .toList());
+        return AgentEquipmentRecommendationService.collectRecommendedItems(receiver, holder);
     }
 
     public static AgentEquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem) {
-        return findRecommendationForItem(receiver, holder, holderItem, RecommendationScope.IMMEDIATE);
+        return AgentEquipmentRecommendationService.findRecommendationForItem(receiver, holder, holderItem);
     }
 
     static AgentEquipRecommendation findFutureRecommendationForItem(Character receiver, Character holder, Item holderItem) {
-        return findRecommendationForItem(receiver, holder, holderItem, RecommendationScope.FUTURE);
-    }
-
-    private static AgentEquipRecommendation findRecommendationForItem(Character receiver, Character holder, Item holderItem,
-                                                                RecommendationScope scope) {
-        if (!(holderItem instanceof Equip candidate)) return null;
-
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        if (ii.isCash(candidate.getItemId())) return null;
-        if (holderItem.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) return null;
-
-        String textSlot = ii.getEquipmentSlot(candidate.getItemId());
-        if (textSlot == null) return null;
-        EquipSlot slot = EquipSlot.getFromTextSlot(textSlot);
-        if (slot == null || slot == EquipSlot.PET_EQUIP) return null;
-        short primarySlot = (short) slot.getPrimarySlot();
-        if (primarySlot == 0) return null;
-        if (primarySlot == (short) -11
-                && !isWeaponCompatible(receiver, ii.getWeaponType(candidate.getItemId()))) return null;
-        if (!isRecommendationCandidate(receiver, ii, candidate, primarySlot, scope)) return null;
-
-        // Cheap dominance pre-filter for IMMEDIATE scope: if the candidate is Pareto-dominated
-        // by what's already worn in its slot (over the receiver's job-relevant stats), the DP
-        // cannot choose it as a strict upgrade. Skipping the DP setup here turns the
-        // owner-pickup hot path (notifyOwnerGainedEquip) from O(K equips × N bots) full
-        // optimizer runs into a fast in-slot dominance check for the common trash-loot case.
-        // Cross-slot rescues are excluded by construction since relevant stats are job-trimmed.
-        if (scope == RecommendationScope.IMMEDIATE && !isEquipUsefulToBot(receiver, ii, candidate)) {
-            return null;
-        }
-
-        Inventory receiverEquippedInv = receiver.getInventory(InventoryType.EQUIPPED);
-
-        // Run the DP with the candidate added to the receiver's pool — recommend iff the
-        // optimizer actually chose to equip it. This is the same oracle autoEquip uses, so
-        // the bot only requests items it would put on.
-        OptimizerResult opt = runOptimizerWithExtras(receiver, List.of(candidate), scope);
-        if (opt.weapon() == candidate) {
-            Equip cur = (Equip) receiverEquippedInv.getItem((short) -11);
-            return new AgentEquipRecommendation((short) -11, cur, candidate);
-        }
-        for (Map.Entry<Short, Equip> p : opt.picks().entrySet()) {
-            if (p.getValue() == candidate) {
-                Equip cur = (Equip) receiverEquippedInv.getItem(p.getKey());
-                return new AgentEquipRecommendation(p.getKey(), cur, candidate);
-            }
-        }
-        return null;
+        return AgentEquipmentRecommendationService.findFutureRecommendationForItem(receiver, holder, holderItem);
     }
 
     public static boolean shouldReserveOwnedItem(Character bot, Item item) {
-        if (item instanceof Equip equip) {
-            return shouldReserveOwnedItem(bot, ItemInformationProvider.getInstance(), equip);
-        }
-        return findRecommendationForItem(bot, bot, item, RecommendationScope.IMMEDIATE) != null
-                || findRecommendationForItem(bot, bot, item, RecommendationScope.FUTURE) != null;
+        return AgentEquipmentReservePolicy.shouldReserveOwnedItem(bot, item);
     }
 
     public static boolean shouldReserveOwnedItem(Character bot, EquipUsefulnessHooks hooks, Equip item) {
@@ -1320,27 +1222,7 @@ public class BotEquipManager {
     }
 
     static String recommendationSummary(Character receiver, Character holder, int maxItems) {
-        List<AgentEquipRecommendation> recommendations = findRecommendedEquips(receiver, holder);
-        if (recommendations.isEmpty()) {
-            return null;
-        }
-
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        StringBuilder summary = new StringBuilder("better gear for you: ");
-        int count = Math.min(maxItems, recommendations.size());
-        for (int i = 0; i < count; i++) {
-            AgentEquipRecommendation recommendation = recommendations.get(i);
-            if (i > 0) {
-                summary.append(", ");
-            }
-            summary.append(slotLabel(recommendation.targetSlot()))
-                    .append(" -> ")
-                    .append(ii.getName(recommendation.candidate().getItemId()));
-        }
-        if (recommendations.size() > count) {
-            summary.append(" +").append(recommendations.size() - count).append(" more");
-        }
-        return summary.toString();
+        return AgentEquipmentRecommendationService.recommendationSummary(receiver, holder, maxItems);
     }
 
     public static String unequipAll(Character bot) {
