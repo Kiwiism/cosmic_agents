@@ -283,31 +283,11 @@ public final class BotNavigationManager {
                                                                        Point targetPos,
                                                                        AgentNavigationGraph.Edge edge,
                                                                        boolean runAiTick) {
-        if (!runAiTick
-                || edge == null
-                || !AgentBotClimbStateRuntime.climbing(entry)
-                || edge.type != AgentNavigationGraph.EdgeType.CLIMB
-                || edge.launchStepX == 0
-                || startRegionId < 0
-                || targetRegionId < 0
-                || startRegionId == targetRegionId) {
-            return edge;
-        }
-
-        if (canExecuteClimbExitFromCurrentPosition(graph, bot.getMap(), botPos, edge)) {
-            return edge;
-        }
-
-        AgentNavigationGraph.Edge bestEdge = findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
-        if (sameEdge(edge, bestEdge) || bestEdge == null) {
-            return edge;
-        }
-
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
-        return bestEdge;
+        return AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(graph, entry, bot, botPos,
+                startRegionId, targetRegionId, targetPos, edge, runAiTick,
+                (activeGraph, activeBot, activeBotPos, activeEdge) ->
+                        canExecuteClimbExitFromCurrentPosition(activeGraph, activeBot.getMap(), activeBotPos, activeEdge),
+                BotNavigationManager::findNextEdge);
     }
 
     private static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,

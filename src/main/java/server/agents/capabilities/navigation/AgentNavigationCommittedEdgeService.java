@@ -35,6 +35,52 @@ public final class AgentNavigationCommittedEdgeService {
         boolean isRopeEntry(AgentNavigationGraph graph, AgentNavigationGraph.Edge edge);
     }
 
+    @FunctionalInterface
+    public interface ClimbExitReadinessChecker {
+        boolean canExecuteClimbExit(AgentNavigationGraph graph,
+                                    Character bot,
+                                    Point botPos,
+                                    AgentNavigationGraph.Edge edge);
+    }
+
+    public static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,
+                                                                        BotEntry entry,
+                                                                        Character bot,
+                                                                        Point botPos,
+                                                                        int startRegionId,
+                                                                        int targetRegionId,
+                                                                        Point targetPos,
+                                                                        AgentNavigationGraph.Edge edge,
+                                                                        boolean runAiTick,
+                                                                        ClimbExitReadinessChecker climbExitReadinessChecker,
+                                                                        NextEdgeFinder nextEdgeFinder) {
+        if (!runAiTick
+                || edge == null
+                || !AgentBotClimbStateRuntime.climbing(entry)
+                || edge.type != AgentNavigationGraph.EdgeType.CLIMB
+                || edge.launchStepX == 0
+                || startRegionId < 0
+                || targetRegionId < 0
+                || startRegionId == targetRegionId) {
+            return edge;
+        }
+
+        if (climbExitReadinessChecker.canExecuteClimbExit(graph, bot, botPos, edge)) {
+            return edge;
+        }
+
+        AgentNavigationGraph.Edge bestEdge = nextEdgeFinder.findNextEdge(graph, bot, startRegionId, targetRegionId, targetPos);
+        if (sameEdge(edge, bestEdge) || bestEdge == null) {
+            return edge;
+        }
+
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
+        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
+        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
+        return bestEdge;
+    }
+
     public static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
                                                                        BotEntry entry,
                                                                        Character bot,
