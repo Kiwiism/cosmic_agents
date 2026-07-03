@@ -3654,6 +3654,10 @@ Recent reconstruction notes:
   directly through `AgentEquipmentService`; owned-item and incoming-item
   reserve behavior is unchanged, but production service callers no longer
   traverse the temporary `BotEquipManager` optimizer shell for that decision.
+- Equipment recommendation candidate eligibility now lives in
+  `AgentEquipmentRecommendationPolicy`; immediate and future recommendation
+  scopes preserve the same can-wear/stat-only gates while the legacy optimizer
+  remains the temporary DP execution seam.
 
 Initial reconstruction order:
 

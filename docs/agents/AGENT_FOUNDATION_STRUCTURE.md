@@ -72,7 +72,8 @@ Capability bins:
   `AgentEquipmentSlotResolver`; pure scoring helpers live in
   `AgentEquipmentScoringPolicy`; auto-equip duplicate-trigger state lives in
   `AgentAutoEquipThrottle`; owned/incoming reserve entry points route directly
-  to `AgentEquipmentReservePolicy`.
+  to `AgentEquipmentReservePolicy`; recommendation immediate/future eligibility
+  rules live in `AgentEquipmentRecommendationPolicy`.
 - `supplies`
 - `trade`
 - `shop`

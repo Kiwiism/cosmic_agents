@@ -20,6 +20,8 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.EquipUsefulnessHooks;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.RelevantStat;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy.SelfReserveHooks;
+import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy;
+import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
 import server.agents.capabilities.equipment.AgentEquipmentScoringPolicy;
 import server.agents.capabilities.equipment.AgentEquipmentSlotResolver;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
@@ -510,11 +512,6 @@ public class BotEquipManager {
     /** Outcome of {@link #runOptimizerWithExtras}: the picked weapon (may be null) and
      *  non-ring slot picks. Picks omit slots the optimizer chose to leave empty. */
     record OptimizerResult(Equip weapon, Map<Short, Equip> picks) {}
-
-    private enum RecommendationScope {
-        IMMEDIATE,
-        FUTURE
-    }
 
     /**
      * Runs the autoEquip DP after merging {@code extras} into the receiver's candidate pool.
@@ -1100,10 +1097,7 @@ public class BotEquipManager {
 
     private static boolean isRecommendationCandidate(Character bot, ItemInformationProvider ii, Equip equip,
                                                      short primarySlot, RecommendationScope scope) {
-        if (scope == RecommendationScope.IMMEDIATE) {
-            return ii.canWearEquipment(bot, equip, primarySlot) || statOnlyBlocked(bot, ii, equip);
-        }
-        return futureOnlyBlocked(bot, ii, equip);
+        return AgentEquipmentRecommendationPolicy.isRecommendationCandidate(bot, ii, equip, primarySlot, scope);
     }
 
     private static Map<Short, List<Equip>> collectFutureEquipCandidates(
