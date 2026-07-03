@@ -1,18 +1,14 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
-import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
-import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
-import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import client.Character;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.maps.MapleMap;
-import server.maps.Rope;
 
 import java.awt.*;
 import java.util.List;
@@ -42,13 +38,6 @@ public final class BotNavigationManager {
                                                       int startRegionId,
                                                       int targetRegionId) {
         return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
-    }
-
-    static boolean canExecuteDropFromCurrentPosition(AgentNavigationGraph graph,
-                                                     MapleMap map,
-                                                     Point botPos,
-                                                     AgentNavigationGraph.Edge edge) {
-        return AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(graph, botPos, edge);
     }
 
     public static List<AgentNavigationGraph.Edge> findPath(AgentNavigationGraph graph,
@@ -146,36 +135,9 @@ public final class BotNavigationManager {
                 optimality.optimalExpanded());
     }
 
-    static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {
-        return AgentNavigationPathService.collapseLeadingWalkEdges(path);
-    }
-
     static boolean shouldRetainCommittedGroundEdge(AgentNavigationGraph.Edge current,
                                                    AgentNavigationGraph.Edge replacement) {
         return AgentNavigationCommittedEdgeService.shouldRetainCommittedGroundEdge(current, replacement);
-    }
-
-    static boolean canExecuteJumpFromCurrentPosition(AgentNavigationGraph graph,
-                                                     MapleMap map,
-                                                     Point botPos,
-                                                     AgentNavigationGraph.Edge edge) {
-        return AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(graph, botPos, edge);
-    }
-
-    static boolean isWithinJumpLaunchWindow(AgentNavigationGraph graph,
-                                            Point botPos,
-                                            AgentNavigationGraph.Edge edge) {
-        return AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(graph, botPos, edge);
-    }
-
-    static boolean isWithinDropLaunchWindow(AgentNavigationGraph graph,
-                                            Point botPos,
-                                            AgentNavigationGraph.Edge edge) {
-        return AgentNavigationLaunchWindowService.isWithinDropLaunchWindow(graph, botPos, edge);
-    }
-
-    static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
-        return AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
     }
 
     public static int resolveCurrentRegionId(AgentNavigationGraph graph,
@@ -202,10 +164,6 @@ public final class BotNavigationManager {
                                                  MapleMap map,
                                                  Point position) {
         return AgentNavigationRegionService.resolvePointTargetRegionId(graph, map, position);
-    }
-
-    static boolean isTopStepOffExit(Rope rope, Point botPos, AgentNavigationGraph.Edge edge) {
-        return AgentNavigationRopeEdgeService.isTopStepOffExit(rope, botPos, edge);
     }
 
 }

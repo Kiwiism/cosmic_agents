@@ -1,5 +1,6 @@
 package server.bots;
 
+import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -192,7 +193,7 @@ class AgentNavigationGraphServiceTest {
 
     @Test
     void shouldResolveOwnerToUpperPlatformWhenPositionHasSubpixelRounding() {
-        // Regression: pathlog-SLASH-2026-04-02T125933 — owner at (2596,1696), bot at (2573,1935),
+        // Regression: pathlog-SLASH-2026-04-02T125933 Ã¢â‚¬â€ owner at (2596,1696), bot at (2573,1935),
         // both resolved to region 187. findGroundFoothold returned the lower foothold because the
         // sloped upper foothold's interpolated Y rounds to 1px above the stored position, causing
         // findBelow to skip it. Must resolve to different regions.
@@ -351,12 +352,12 @@ class AgentNavigationGraphServiceTest {
                 100, 114, 0, 0, 0, 0, 0, 100
         );
 
-        assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                null, null, new Point(100, 100), dropEdge));
-        assertTrue(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                null, null, new Point(114, 100), dropEdge));
-        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                null, null, new Point(115, 100), dropEdge));
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
+                null, new Point(100, 100), dropEdge));
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
+                null, new Point(114, 100), dropEdge));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
+                null, new Point(115, 100), dropEdge));
     }
 
     @Test
@@ -402,10 +403,10 @@ class AgentNavigationGraphServiceTest {
 
         assertNotNull(dropCase, "Expected at least one ledge drop with a still-walkable early start");
         assertTrue(BotPhysicsEngine.canWalkGroundStep(map, dropCase.earlyStart(), dropCase.edge().launchStepX));
-        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                graph, map, dropCase.edge().startPoint, dropCase.edge()));
-        assertFalse(BotNavigationManager.canExecuteDropFromCurrentPosition(
-                graph, map, dropCase.earlyStart(), dropCase.edge()));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
+                graph, dropCase.edge().startPoint, dropCase.edge()));
+        assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
+                graph, dropCase.earlyStart(), dropCase.edge()));
     }
 
     @Test
@@ -414,8 +415,8 @@ class AgentNavigationGraphServiceTest {
 
         assertNotNull(jumpCase, "Expected at least one jump edge that stays valid from an alternate same-region start point");
         assertNotEquals(jumpCase.edge().startPoint.x, jumpCase.alternativeStart().x);
-        assertTrue(BotNavigationManager.canExecuteJumpFromCurrentPosition(
-                henesysGraph(), henesys(), jumpCase.alternativeStart(), jumpCase.edge()));
+        assertTrue(AgentNavigationEdgeReadinessService.canExecuteJumpFromCurrentPosition(
+                henesysGraph(), jumpCase.alternativeStart(), jumpCase.edge()));
     }
 
     @Test
@@ -626,10 +627,10 @@ class AgentNavigationGraphServiceTest {
 
     @Test
     void shouldNotPathThroughRopeOscillationLoop() {
-        // Regression: pathlog-Leroy-2026-05-07T081138 — bot grounded on a foothold (r=31)
+        // Regression: pathlog-Leroy-2026-05-07T081138 Ã¢â‚¬â€ bot grounded on a foothold (r=31)
         // whose surface sits 2 px above a rope-top got stuck oscillating onto/off the rope
         // because rope-grab CLIMB edges had cost=0. A* tied the direct PORTAL+DROP path with
-        // a useless CLIMB-onto-rope→CLIMB-off-rope+PORTAL+DROP detour and could pick the loop
+        // a useless CLIMB-onto-ropeÃ¢â€ â€™CLIMB-off-rope+PORTAL+DROP detour and could pick the loop
         // variant. With non-zero cost on the snap-grab/top-step CLIMB edges, the direct path
         // is strictly cheaper.
         AgentNavigationGraph graph = kerningGraph();
@@ -668,13 +669,13 @@ class AgentNavigationGraphServiceTest {
 
     @Test
     void shouldDiscoverJumpEdgesAcrossWideIntermediatePlatform() {
-        // Regression: pathlog-Clawer-2026-05-07T062632 — at base profile (100%) the bot at
+        // Regression: pathlog-Clawer-2026-05-07T062632 Ã¢â‚¬â€ at base profile (100%) the bot at
         // (965,0) on r=114 had no direct JUMP edge to r=137 (owner foothold) and no JUMP edge
         // to the intermediate platform r=132 above r=137. A* fell back to a 4-edge climb
         // detour. Both jumps are physically achievable in-client; the missing edges were a
         // graph-generation gap caused by buildFeatureXsByRegionId only projecting endpoints
         // of platforms with width <= 64 down to the region below. r=132 is wider than 64px,
-        // so its right edge at x≈886 was never seeded as a feature anchor on r=114, leaving
+        // so its right edge at xÃ¢â€°Ë†886 was never seeded as a feature anchor on r=114, leaving
         // the narrow launch windows for both jumps with zero sampled anchors.
         AgentNavigationGraph graph = kerningGraph();
         MapleMap map = kerning();

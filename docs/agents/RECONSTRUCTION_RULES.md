@@ -4049,6 +4049,10 @@ Recent reconstruction notes:
 - Jump and climb waypoint tests now target `AgentNavigationWaypointService`
   directly, allowing the temporary `BotNavigationManager` jump/climb waypoint
   delegates to be removed.
+- Path collapse, precise walk-target, jump/drop readiness, launch-window, and
+  rope top-step tests now target their Agent navigation services directly,
+  allowing the matching `BotNavigationManager` compatibility delegates to be
+  removed.
 - Combat grind-target region scoring, path-cost checks, and sibling occupancy
   checks now use `AgentNavigationRegionService` and
   `AgentNavigationPathService`. Target scoring policy and path-cost behavior

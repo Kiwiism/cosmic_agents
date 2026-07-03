@@ -198,7 +198,8 @@ Capability bins:
   Navigation edge execution target state lives in
   `AgentNavigationEdgeExecutionStateService`.
   Edge execution readiness thresholds plus jump/drop and selected-jump
-  execution readiness predicates live in `AgentNavigationEdgeReadinessService`.
+  execution readiness predicates live in `AgentNavigationEdgeReadinessService`;
+  older bot readiness wrappers have been removed from the navigation shell.
   Rope/climb edge entry, exit predicates, and climb-exit execution readiness
   live in `AgentNavigationRopeEdgeService`.
   Grind-mode path target clamping lives in
@@ -226,4 +227,3 @@ The intended flow is:
 `AgentPlan` -> capability -> gateway -> Cosmic server write.
 
 Events describe what happened after actions complete. Listeners may handle dialogue, metrics, plan progress, safety, or UI updates.
-
