@@ -157,7 +157,8 @@ Capability bins:
   `AgentAirbornePhysicsService` and `AgentSwimPhysicsService`. Fallback
   movement jump and rope-reach probes enter through `AgentJumpProbeService`.
   Navigation-facing helper reads enter through
-  `AgentNavigationPhysicsService`.
+  `AgentNavigationPhysicsService`, including the graph-build walk-region
+  lookup lifecycle used while navigation edges are generated.
 - `supplies`
 - `trade`
 - `shop`

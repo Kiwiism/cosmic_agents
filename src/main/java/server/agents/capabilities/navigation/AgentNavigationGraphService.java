@@ -582,7 +582,7 @@ public final class AgentNavigationGraphService {
             JumpLandingCache jumpLandingCache = new JumpLandingCache();
             RopeGrabCache ropeGrabCache = new RopeGrabCache();
 
-            BotPhysicsEngine.setBuildWalkRegionLookup(map, regionsById, regionIdByFootholdId, footholdsById);
+            AgentNavigationPhysicsService.setBuildWalkRegionLookup(map, regionsById, regionIdByFootholdId, footholdsById);
 
             phaseStartedAt = System.nanoTime();
             for (Foothold foothold : walkableFootholds) {
@@ -641,7 +641,7 @@ public final class AgentNavigationGraphService {
                     report.jumpCacheHitCount);
             return graph;
         } finally {
-            BotPhysicsEngine.clearBuildWalkRegionLookup();
+            AgentNavigationPhysicsService.clearBuildWalkRegionLookup();
             ACTIVE_BUILD_PROFILE.remove();
         }
     }

@@ -3952,6 +3952,10 @@ Recent reconstruction notes:
   `AgentNavigationPhysicsService`, including first-climbable rope Y and
   walkable endpoint-step policy. The wrapper preserves the legacy +1 Y offset
   for first climbable rope/ladder positions.
+- Navigation graph build walk-region lookup lifecycle now also routes through
+  `AgentNavigationPhysicsService`. The physics engine still owns the
+  thread-local lookup implementation until the graph/physics coupling is split
+  in a later slice.
 
 Initial reconstruction order:
 

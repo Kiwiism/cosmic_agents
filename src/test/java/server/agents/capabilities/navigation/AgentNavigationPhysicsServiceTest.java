@@ -23,4 +23,10 @@ class AgentNavigationPhysicsServiceTest {
         assertTrue(AgentNavigationPhysicsService.isWalkableEndpointStep(12, 0));
         assertFalse(AgentNavigationPhysicsService.isWalkableEndpointStep(13, 0));
     }
+
+    @Test
+    void buildWalkRegionLookupLifecycleAcceptsNullClear() {
+        AgentNavigationPhysicsService.setBuildWalkRegionLookup(null, null, null, null);
+        AgentNavigationPhysicsService.clearBuildWalkRegionLookup();
+    }
 }
