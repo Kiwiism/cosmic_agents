@@ -163,7 +163,8 @@ Capability bins:
   `AgentNavigationRegionService`; follow-target character region
   classification uses the same seam.
   Path logger, script move-target, and navigation debug overlay path searches
-  enter through `AgentNavigationPathService`.
+  enter through `AgentNavigationPathService`; shop approach reachability uses
+  the same path seam.
 - `supplies`
 - `trade`
 - `shop`

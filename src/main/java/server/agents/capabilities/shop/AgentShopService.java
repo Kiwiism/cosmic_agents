@@ -41,7 +41,8 @@ import server.ShopItem;
 import server.bots.BotEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotNavigationManager;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.life.NPC;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
@@ -705,15 +706,15 @@ public final class AgentShopService {
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(bot.getMap(), profile);
         if (graph != null) {
             Point botPos = bot.getPosition();
-            int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
+            int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             if (startRegionId >= 0) {
                 List<Point> reachable = new ArrayList<>();
                 for (Point candidate : candidates) {
-                    int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+                    int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(
                             graph, entry, bot.getMap(), candidate);
                     if (targetRegionId < 0) continue;
                     if (startRegionId == targetRegionId
-                            || !BotNavigationManager.findPath(graph, bot.getMap(), botPos,
+                            || !AgentNavigationPathService.findPath(graph, bot.getMap(), botPos,
                                     startRegionId, targetRegionId, candidate).isEmpty()) {
                         reachable.add(candidate);
                     }

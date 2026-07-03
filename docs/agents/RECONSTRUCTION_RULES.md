@@ -3966,6 +3966,9 @@ Recent reconstruction notes:
   enter path search through `AgentNavigationPathService` and region
   classification through `AgentNavigationRegionService`. The path service is a
   temporary delegation seam until the search body moves.
+- Shop approach candidate reachability now uses `AgentNavigationRegionService`
+  and `AgentNavigationPathService`, preserving the same candidate filtering
+  while removing another direct navigation-manager dependency.
 
 Initial reconstruction order:
 
