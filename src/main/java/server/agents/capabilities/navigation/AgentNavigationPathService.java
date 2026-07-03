@@ -12,6 +12,8 @@ import java.util.List;
  * Agent-owned seam for navigation path search while the legacy search body migrates.
  */
 public final class AgentNavigationPathService {
+    private static final int NO_MOVEMENT_WALK_TOLERANCE = 4;
+
     private AgentNavigationPathService() {
     }
 
@@ -76,6 +78,49 @@ public final class AgentNavigationPathService {
 
     public static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
         return intraRegionTravelCost(graph, from, targetPos);
+    }
+
+    public static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {
+        AgentNavigationGraph.Edge first = path.get(0);
+        if (first.type != AgentNavigationGraph.EdgeType.WALK) {
+            return first;
+        }
+
+        if (!isNoMovementWalk(first.startPoint, first.endPoint)) {
+            return first;
+        }
+
+        int totalCost = 0;
+        int walkCount = 0;
+        while (walkCount < path.size()) {
+            AgentNavigationGraph.Edge edge = path.get(walkCount);
+            if (edge.type != AgentNavigationGraph.EdgeType.WALK
+                    || !isNoMovementWalk(edge.startPoint, edge.endPoint)) {
+                break;
+            }
+            totalCost += edge.cost;
+            walkCount++;
+        }
+
+        if (walkCount >= path.size()) {
+            return null;
+        }
+
+        AgentNavigationGraph.Edge next = path.get(walkCount);
+        return new AgentNavigationGraph.Edge(first.fromRegionId, next.toRegionId, next.type,
+                next.startPoint, next.endPoint, next.launchMinX, next.launchMaxX, next.launchStepX, next.portalId,
+                next.ropeX, next.ropeTopY, next.ropeBottomY, totalCost + next.cost);
+    }
+
+    public static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
+        return edge != null
+                && edge.type == AgentNavigationGraph.EdgeType.WALK
+                && !isNoMovementWalk(edge.startPoint, edge.endPoint);
+    }
+
+    private static boolean isNoMovementWalk(Point start, Point end) {
+        return Math.abs(end.x - start.x) <= NO_MOVEMENT_WALK_TOLERANCE
+                && Math.abs(end.y - start.y) <= NO_MOVEMENT_WALK_TOLERANCE;
     }
 
     public static PathOptimality measureOptimality(AgentNavigationGraph graph,

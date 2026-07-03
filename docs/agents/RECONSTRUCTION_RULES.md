@@ -3985,6 +3985,9 @@ Recent reconstruction notes:
 - Path intra-region travel cost and heuristic calculations now live in
   `AgentNavigationPathService`; the remaining bot search loop delegates to the
   Agent-owned calculations.
+- Leading no-op walk collapse and precise walk-target policy now live in
+  `AgentNavigationPathService`; `BotNavigationManager` retains compatibility
+  delegates for existing tests and remaining internal calls.
 
 Initial reconstruction order:
 

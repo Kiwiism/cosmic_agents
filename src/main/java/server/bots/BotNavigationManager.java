@@ -1084,35 +1084,7 @@ public final class BotNavigationManager {
     }
 
     static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {
-        AgentNavigationGraph.Edge first = path.get(0);
-        if (first.type != AgentNavigationGraph.EdgeType.WALK) {
-            return first;
-        }
-
-        if (!isNoMovementWalk(first.startPoint, first.endPoint)) {
-            return first;
-        }
-
-        int totalCost = 0;
-        int walkCount = 0;
-        while (walkCount < path.size()) {
-            AgentNavigationGraph.Edge edge = path.get(walkCount);
-            if (edge.type != AgentNavigationGraph.EdgeType.WALK
-                    || !isNoMovementWalk(edge.startPoint, edge.endPoint)) {
-                break;
-            }
-            totalCost += edge.cost;
-            walkCount++;
-        }
-
-        if (walkCount >= path.size()) {
-            return null;
-        }
-
-        AgentNavigationGraph.Edge next = path.get(walkCount);
-        return new AgentNavigationGraph.Edge(first.fromRegionId, next.toRegionId, next.type,
-                next.startPoint, next.endPoint, next.launchMinX, next.launchMaxX, next.launchStepX, next.portalId,
-                next.ropeX, next.ropeTopY, next.ropeBottomY, totalCost + next.cost);
+        return AgentNavigationPathService.collapseLeadingWalkEdges(path);
     }
 
     private static boolean isEdgeUsable(AgentNavigationGraph graph, Character bot, AgentNavigationGraph.Edge edge) {
@@ -1339,14 +1311,7 @@ public final class BotNavigationManager {
     }
 
     static boolean shouldUsePreciseWalkTarget(AgentNavigationGraph.Edge edge) {
-        return edge != null
-                && edge.type == AgentNavigationGraph.EdgeType.WALK
-                && !isNoMovementWalk(edge.startPoint, edge.endPoint);
-    }
-
-    private static boolean isNoMovementWalk(Point start, Point end) {
-        return Math.abs(end.x - start.x) <= NO_MOVEMENT_WALK_TOLERANCE
-                && Math.abs(end.y - start.y) <= NO_MOVEMENT_WALK_TOLERANCE;
+        return AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
     }
 
     private static boolean canGrabRopeAtCurrentPosition(Point botPos, Rope rope) {
