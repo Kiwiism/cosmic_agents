@@ -26,6 +26,9 @@ Recent reconstruction notes:
 - Equipment service job/weapon compatibility now calls
   `AgentWeaponCompatibilityPolicy` directly instead of delegating through the
   legacy bot optimizer.
+- Equipment slot alias resolution moved to
+  `AgentEquipmentSlotResolver`; the legacy bot method now delegates to the
+  Agent resolver to preserve old chat aliases while moving ownership.
 - Inventory/trade tick entry ownership moved fully to
   `server.agents.capabilities.inventory.AgentInventoryTickRuntime`.
   `AgentCommonTickRuntime` and legacy parity tests now call the Agent inventory

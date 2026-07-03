@@ -40,7 +40,7 @@ public final class AgentEquipmentService {
     }
 
     public static short[] slotsFromName(String slotName) {
-        return BotEquipManager.slotsFromName(slotName);
+        return AgentEquipmentSlotResolver.slotsFromName(slotName);
     }
 
     public static List<AgentEquipRecommendation> findRecommendedEquips(Character agent, Character leader) {
