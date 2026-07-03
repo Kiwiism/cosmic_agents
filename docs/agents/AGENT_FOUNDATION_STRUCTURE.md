@@ -165,7 +165,8 @@ Capability bins:
   Path logger, script move-target, and navigation debug overlay path searches
   enter through `AgentNavigationPathService`; shop approach reachability uses
   the same path seam. Navigation probe path/optimality diagnostics also use
-  this path seam.
+  this path seam. Combat grind-target region scoring and target-score path
+  checks use the same Agent navigation services.
 - `supplies`
 - `trade`
 - `shop`

@@ -14,7 +14,8 @@ import server.agents.runtime.AgentPerformanceMonitor;
 import server.bots.BotEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotNavigationManager;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -153,7 +154,7 @@ public final class AgentBotCombatTargetRuntime {
         long targetCost = UNREACHABLE_GRAPH_COST;
         if (targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable) {
             Point targetPos = target.getPosition();
-            int targetRegionId = BotNavigationManager.resolveTargetRegionId(
+            int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(
                     graphContext.graph(), graphContext.entry(), graphContext.map(), targetPos);
             if (targetRegionId >= 0) {
                 targetCost = graphPathCost(
@@ -199,7 +200,7 @@ public final class AgentBotCombatTargetRuntime {
                 botFoothold,
                 targetFoothold,
                 context.available(),
-                () -> BotNavigationManager.resolveTargetRegionId(
+                () -> AgentNavigationRegionService.resolveTargetRegionId(
                         context.graph(), context.entry(), context.map(), target.getPosition()),
                 context.startRegionId());
     }
@@ -231,7 +232,7 @@ public final class AgentBotCombatTargetRuntime {
         return AgentCombatGrindTargetPolicy.scoreTargetRegions(
                 candidates,
                 botPos,
-                candidate -> BotNavigationManager.resolveTargetRegionId(
+                candidate -> AgentNavigationRegionService.resolveTargetRegionId(
                         context.graph(), context.entry(), context.map(), candidate.getPosition()),
                 candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config)
                         - AgentCombatScoringPolicy.legacyAoeClusterBonus(
@@ -261,7 +262,7 @@ public final class AgentBotCombatTargetRuntime {
                     List.of(), UNREACHABLE_GRAPH_COST);
         }
 
-        List<AgentNavigationGraph.Edge> path = BotNavigationManager.findPathForTargetScore(
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPathForTargetScore(
                 graph, map, startPos, startRegionId, targetRegionId, targetPos);
         List<Long> edgeCosts = new ArrayList<>(path.size());
         for (AgentNavigationGraph.Edge edge : path) {
@@ -308,7 +309,7 @@ public final class AgentBotCombatTargetRuntime {
                 continue;
             }
 
-            int occupiedRegionId = BotNavigationManager.resolveCurrentRegionId(
+            int occupiedRegionId = AgentNavigationRegionService.resolveCurrentRegionId(
                     context.graph(), sibling, context.map(), siblingBot.getPosition());
             if (AgentCombatGrindTargetPolicy.shouldCountRegionOccupant(occupiedRegionId, targetRegionId)) {
                 occupiedCount++;
@@ -340,7 +341,7 @@ public final class AgentBotCombatTargetRuntime {
                 return unavailable(entry, bot, botPos);
             }
 
-            int startRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
+            int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             if (startRegionId < 0) {
                 return unavailable(entry, bot, botPos);
             }

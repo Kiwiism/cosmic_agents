@@ -3972,6 +3972,10 @@ Recent reconstruction notes:
 - Navigation probe path and optimality measurement now enter through
   `AgentNavigationPathService`, including an Agent-owned `PathOptimality`
   record that mirrors the legacy diagnostic values.
+- Combat grind-target region scoring, path-cost checks, and sibling occupancy
+  checks now use `AgentNavigationRegionService` and
+  `AgentNavigationPathService`. Target scoring policy and path-cost behavior
+  are unchanged.
 
 Initial reconstruction order:
 
