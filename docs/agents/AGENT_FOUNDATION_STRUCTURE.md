@@ -124,7 +124,8 @@ Capability bins:
   `AgentMovementRecoveryService`. Swim runtime lives in
   `AgentSwimMovementService`; airborne runtime lives in
   `AgentAirborneMovementService`; climb runtime lives in
-  `AgentClimbMovementService`. Remaining ground runtime and cleanup slices
+  `AgentClimbMovementService`; grind target shaping lives in
+  `AgentGroundTargetService`. Remaining ground runtime and cleanup slices
   continue to migrate.
 - `supplies`
 - `trade`

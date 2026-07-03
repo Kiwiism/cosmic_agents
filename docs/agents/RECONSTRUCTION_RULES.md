@@ -3834,6 +3834,10 @@ Recent reconstruction notes:
   routing, climb hold/advance dispatch, movement broadcast, and performance
   timing. `BotMovementManager.tickClimbing` remains a temporary compatibility
   shell while old helper wrappers are cleaned up later.
+- Ground grind target adjustment now lives in `AgentGroundTargetService`; the
+  legacy `BotMovementManager.adjustGrindingTargetPosition` helper delegates to
+  the Agent service. Same-region edge clamping, cross-region no-op behavior,
+  graph warmup fallback, and grind-edge margin are unchanged.
 
 Initial reconstruction order:
 

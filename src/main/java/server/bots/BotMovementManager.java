@@ -14,6 +14,7 @@ import server.agents.capabilities.movement.AgentFallbackMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
+import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
@@ -594,40 +595,7 @@ public class BotMovementManager {
     }
 
     static Point adjustGrindingTargetPosition(BotEntry entry, Foothold currentFh, Point targetPos) {
-        if (!AgentBotModeStateRuntime.grinding(entry)
-                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                || currentFh == null
-                || targetPos == null) {
-            return targetPos;
-        }
-
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
-        if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, profile);
-            return targetPos;
-        }
-        Point botPos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
-        int currentRegionId = BotNavigationManager.resolveCurrentRegionId(graph, entry, map, botPos);
-        int targetRegionId = BotNavigationManager.resolveTargetRegionId(graph, entry, map, targetPos);
-        if (currentRegionId < 0 || currentRegionId != targetRegionId) {
-            return targetPos;
-        }
-
-        AgentNavigationGraph.Region currentRegion = graph.getRegion(currentRegionId);
-        if (currentRegion == null || currentRegion.isRopeRegion) {
-            return targetPos;
-        }
-
-        int safeLeft = currentRegion.minX + cfg.GRIND_EDGE_MARGIN;
-        int safeRight = currentRegion.maxX - cfg.GRIND_EDGE_MARGIN;
-        if (safeLeft >= safeRight) {
-            return targetPos;
-        }
-
-        int clampedX = Math.max(safeLeft, Math.min(safeRight, targetPos.x));
-        return currentRegion.pointAt(clampedX);
+        return AgentGroundTargetService.adjustGrindingTargetPosition(entry, currentFh, targetPos);
     }
 
     private static MoveAction planGroundAction(BotEntry entry, Foothold currentFh, Point botPos, Point targetPos) {
