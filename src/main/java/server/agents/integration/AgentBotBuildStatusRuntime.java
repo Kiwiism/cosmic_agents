@@ -6,7 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 
 import java.util.List;
@@ -89,7 +89,7 @@ public final class AgentBotBuildStatusRuntime {
             public void offerSpawnUpgradeIfAvailable() {
                 Character owner = entry.owner();
                 List<AgentEquipRecommendation> recs =
-                        BotEquipManager.findRecommendedEquips(bot, owner);
+                        AgentEquipmentService.findRecommendedEquips(bot, owner);
                 if (!recs.isEmpty()) {
                     AgentOfferService.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
                 }

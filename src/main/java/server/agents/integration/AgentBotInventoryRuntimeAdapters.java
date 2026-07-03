@@ -25,7 +25,7 @@ import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentBotOfferStateRuntime::pendingLootOfferItem,
                 AgentInventoryItemPolicy::hasItem,
-                BotEquipManager::autoEquip,
+                AgentEquipmentService::autoEquip,
                 AgentOfferService::scheduleLootOfferPrompt,
                 AgentLootCleanupService::cleanupGhostDrop,
                 Character::pickupItem);
@@ -63,7 +63,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 peer -> peer.getClient() instanceof client.BotClient,
                 (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
                 AgentTradeDialogueService::manualTradeGreeting,
-                (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null));
+                (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null));
     }
 
     public static AgentTradeTickRuntimeService.RuntimeCallbacks tradeTickRuntimeCallbacks() {
@@ -73,7 +73,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 BotMovementManager::delayAfterCurrentTick,
                 BotMovementManager::configuredTickMs,
                 AgentBotRuntimeIdentityRuntime::owner,
-                (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
+                (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentTradeRecipientService::resolveTradeRecipient,
                 recipient -> recipient.getClient() instanceof client.BotClient);
     }
@@ -83,7 +83,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
                 AgentManualTradeService::clearState,
                 AgentBotRuntimeIdentityRuntime::owner,
-                (agent, owner) -> BotEquipManager.autoEquip(agent, owner, null),
+                (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentRandom::randMs,
                 AgentTradeDialogueService::thanksReply,
                 AgentTradeDialogueService::freebieReply);
@@ -93,12 +93,12 @@ public final class AgentBotInventoryRuntimeAdapters {
         return AgentTradeTransferAvailabilityRuntimeService.RuntimeCallbacks.of(
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentInventoryNamedItemService::countNamedItems,
-                (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, BotEquipManager::slotsFromName));
+                (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName));
     }
 
     public static AgentInventoryTradeRuntimeService.RuntimeCallbacks tradeRuntimeCallbacks(BotEntry entry, Character agent) {
         return AgentInventoryTradeRuntimeService.RuntimeCallbacks.of(
-                (owner, holder) -> new ArrayList<>(BotEquipManager.findRecommendedEquips(owner, holder).stream()
+                (owner, holder) -> new ArrayList<>(AgentEquipmentService.findRecommendedEquips(owner, holder).stream()
                         .map(AgentEquipRecommendation::candidate)
                         .toList()),
                 AgentAttackExecutionProvider::getEquippedWeaponType,

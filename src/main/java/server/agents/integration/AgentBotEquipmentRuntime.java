@@ -3,7 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
 
@@ -23,12 +23,12 @@ public final class AgentBotEquipmentRuntime {
         return new AgentChatEquipmentFlow.EquipmentCallbacks() {
             @Override
             public boolean unequipSlot(String slotName) {
-                short[] slots = BotEquipManager.slotsFromName(slotName);
+                short[] slots = AgentEquipmentService.slotsFromName(slotName);
                 if (slots.length == 0) {
                     return false;
                 }
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotEquipmentReplyRuntime.replyNow(entry, BotEquipManager.unequipSlot(entry.bot(), slots)));
+                        AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(entry.bot(), slots)));
                 return true;
             }
 
@@ -36,14 +36,14 @@ public final class AgentBotEquipmentRuntime {
             public void unequipAll() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     AgentBotMovementCommandRuntime.stop(entry);
-                    AgentBotEquipmentReplyRuntime.replyNow(entry, BotEquipManager.unequipAll(entry.bot()));
+                    AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(entry.bot()));
                 });
             }
 
             @Override
             public void autoEquipDebug() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
-                    List<String> lines = BotEquipManager.autoEquipDebug(entry.bot());
+                    List<String> lines = AgentEquipmentService.autoEquipDebug(entry.bot());
                     for (String line : lines) {
                         AgentBotEquipmentReplyRuntime.replyNow(entry, line);
                     }
@@ -53,7 +53,7 @@ public final class AgentBotEquipmentRuntime {
             @Override
             public void autoEquip() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
-                    BotEquipManager.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry), true);
+                    AgentEquipmentService.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry), true);
                     AgentBotEquipmentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }

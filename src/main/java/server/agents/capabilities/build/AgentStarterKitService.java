@@ -11,7 +11,7 @@ import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -27,7 +27,7 @@ public final class AgentStarterKitService {
         bot.changeJob(newJob);
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob);
-        BotEquipManager.autoEquip(bot, owner, null);
+        AgentEquipmentService.autoEquip(bot, owner, null);
         AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 

@@ -27,7 +27,7 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +73,7 @@ public final class AgentOfferService {
             return;
         }
 
-        if (BotEquipManager.findRecommendationForItem(bot, owner, item) == null) {
+        if (AgentEquipmentService.findRecommendationForItem(bot, owner, item) == null) {
             return;
         }
 
@@ -90,7 +90,7 @@ public final class AgentOfferService {
             AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerBusyReply());
             return;
         }
-        List<AgentEquipRecommendation> recs = BotEquipManager.findRecommendedEquips(bot, owner);
+        List<AgentEquipRecommendation> recs = AgentEquipmentService.findRecommendedEquips(bot, owner);
         if (recs.isEmpty()) {
             AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerNoUpgradeNeededReply());
             return;
@@ -107,7 +107,7 @@ public final class AgentOfferService {
 
         // Self-equip first so any item that would upgrade the bot stays on the bot
         // rather than being offered to the owner.
-        BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        AgentEquipmentService.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
 
         GearOfferChoice choice = findBestGearOffer(entry, owner, bot);
         if (choice != null) {
@@ -126,7 +126,7 @@ public final class AgentOfferService {
 
         // Self-equip first: priority is self → owner → sibling, so don't hand gear
         // to a sibling if this bot could actually wear it.
-        BotEquipManager.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        AgentEquipmentService.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
 
         List<BotEntry> siblings = AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
         for (BotEntry sibling : siblings) {
@@ -279,7 +279,7 @@ public final class AgentOfferService {
         }
 
         if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP
-                && BotEquipManager.shouldReserveOwnedItem(bot, item)) {
+                && AgentEquipmentService.shouldReserveOwnedItem(bot, item)) {
             clearPendingOffer(entry);
             return;
         }
@@ -431,7 +431,7 @@ public final class AgentOfferService {
             return findWeakestThrowingStarRecipient(owner, bot, item);
         }
 
-        if (BotEquipManager.shouldReserveOwnedItem(bot, item)) {
+        if (AgentEquipmentService.shouldReserveOwnedItem(bot, item)) {
             return null;
         }
 
@@ -450,14 +450,14 @@ public final class AgentOfferService {
         List<Equip> offerable = collectOfferableEquips(donor);
         offerable.removeIf(equip -> !isWeaponOfferCompatible(recipient, equip));
         List<AgentEquipRecommendation> current =
-                BotEquipManager.findRecommendedEquipsFromItems(recipient, offerable);
+                AgentEquipmentService.findRecommendedEquipsFromItems(recipient, offerable);
         if (!current.isEmpty()) {
             return new GearOfferChoice(current.get(0).candidate(), GearOfferNeed.CURRENT);
         }
         if (AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry)) {
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Equip equip : offerable) {
-                if (BotEquipManager.wouldReserveIncomingItem(recipient, ii, equip)) {
+                if (AgentEquipmentService.wouldReserveIncomingItem(recipient, ii, equip)) {
                     return new GearOfferChoice(equip, GearOfferNeed.FUTURE);
                 }
             }
@@ -476,7 +476,7 @@ public final class AgentOfferService {
             if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
                 continue;
             }
-            if (BotEquipManager.shouldReserveOwnedItem(donor, item)) {
+            if (AgentEquipmentService.shouldReserveOwnedItem(donor, item)) {
                 continue;
             }
             offerable.add(equip);
@@ -487,11 +487,11 @@ public final class AgentOfferService {
         if (!isWeaponOfferCompatible(recipient, item)) {
             return null;
         }
-        if (BotEquipManager.findRecommendationForItem(recipient, donor, item) != null) {
+        if (AgentEquipmentService.findRecommendationForItem(recipient, donor, item) != null) {
             return GearOfferNeed.CURRENT;
         }
         if (AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry) && item instanceof Equip equip) {
-            if (BotEquipManager.wouldReserveIncomingItem(recipient, ItemInformationProvider.getInstance(), equip)) {
+            if (AgentEquipmentService.wouldReserveIncomingItem(recipient, ItemInformationProvider.getInstance(), equip)) {
                 return GearOfferNeed.FUTURE;
             }
         }
@@ -510,7 +510,7 @@ public final class AgentOfferService {
     }
 
     public static boolean isWeaponOfferCompatible(Character recipient, WeaponType weaponType) {
-        return BotEquipManager.isWeaponCompatible(recipient, weaponType);
+        return AgentEquipmentService.isWeaponCompatible(recipient, weaponType);
     }
 
     public static boolean isReservedForOtherRecipients(BotEntry entry, Character donor, Item item) {
@@ -562,7 +562,7 @@ public final class AgentOfferService {
         if (!isWeaponOfferCompatible(recipient, equip)) {
             return false;
         }
-        return BotEquipManager.wouldReserveIncomingItem(recipient, ii, equip);
+        return AgentEquipmentService.wouldReserveIncomingItem(recipient, ii, equip);
     }
 
     private static Character findWeakestThrowingStarRecipient(Character owner, Character donor) {

@@ -107,7 +107,7 @@ public final class AgentPerformanceMonitor {
         notes.put("broadcast-move", "BotMovementManager.broadcastMovement (packet build + map broadcast)");
         notes.put("stuck-detect", "tickStuckDetection");
         notes.put("grind-loot-scan", "AgentPassiveLootRuntimeService grind loot target selection");
-        notes.put("auto-equip", "BotEquipManager.autoEquip (Pareto DP) triggered on equip pickup");
+        notes.put("auto-equip", "AgentEquipmentService.autoEquip (Pareto DP) triggered on equip pickup");
         SECTION_NOTES = notes;
     }
 

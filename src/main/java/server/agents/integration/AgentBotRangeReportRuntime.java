@@ -4,7 +4,7 @@ import server.agents.capabilities.equipment.AgentMapDamageProfile;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 /**
  * Temporary Agent-owned range-report data adapter while damage-profile source
@@ -30,6 +30,6 @@ public final class AgentBotRangeReportRuntime {
                 ? null
                 : new AgentCombatDialogueReporter.MobHitProfile(hitProfile.mobLevel(), hitProfile.mobAvoid());
         return AgentCombatDialogueReporter.rangeReport(
-                bot, BotEquipManager.isMageJob(bot.getJob()), agentHitProfile);
+                bot, AgentEquipmentService.isMageJob(bot.getJob()), agentHitProfile);
     }
 }

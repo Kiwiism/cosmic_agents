@@ -9,7 +9,7 @@ import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
 
@@ -63,7 +63,7 @@ public final class AgentFollowTargetRuntime {
     }
 
     private static void autoEquipForFollow(BotEntry entry) {
-        BotEquipManager.autoEquip(
+        AgentEquipmentService.autoEquip(
                 AgentBotRuntimeIdentityRuntime.bot(entry),
                 AgentBotRuntimeIdentityRuntime.owner(entry),
                 AgentBotOfferStateRuntime.pendingLootOfferItem(entry));

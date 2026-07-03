@@ -66,6 +66,9 @@ Capability bins:
   `AgentInventoryTickRuntime`; the old `BotInventoryManager` production file
   has been removed after migrating its behavior to Agent modules.
 - `equipment`
+  Production equipment callers enter through `AgentEquipmentService`; the
+  remaining legacy optimizer implementation is isolated behind that Agent
+  capability boundary for future extraction.
 - `supplies`
 - `trade`
 - `shop`

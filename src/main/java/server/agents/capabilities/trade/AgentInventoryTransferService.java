@@ -27,7 +27,7 @@ import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.bots.BotMovementManager;
 
 import java.util.ArrayList;
@@ -124,7 +124,7 @@ public final class AgentInventoryTransferService {
         return AgentInventoryTradeCollectionService.hasTransferableItems(
                 category,
                 agent,
-                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, BotEquipManager::slotsFromName),
+                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName),
                 () -> collectItems(category, entry, agent));
     }
 
@@ -133,7 +133,7 @@ public final class AgentInventoryTransferService {
                 category,
                 agent,
                 fragment -> AgentInventoryNamedItemService.countNamedItems(agent, fragment),
-                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, BotEquipManager::slotsFromName),
+                fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName),
                 () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, agent)));
     }
 
@@ -181,7 +181,7 @@ public final class AgentInventoryTransferService {
                                 agent,
                                 () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
-                                () -> BotEquipManager.autoEquip(agent, AgentBotRuntimeIdentityRuntime.owner(entry), null))),
+                                () -> AgentEquipmentService.autoEquip(agent, AgentBotRuntimeIdentityRuntime.owner(entry), null))),
                 () -> server.Trade.startTrade(agent),
                 server.Trade::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
@@ -212,7 +212,7 @@ public final class AgentInventoryTransferService {
                                     fragment,
                                     entry,
                                     agent,
-                                    BotEquipManager::slotsFromName,
+                                    AgentEquipmentService::slotsFromName,
                                     () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent));
                     return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
                 },
@@ -256,7 +256,7 @@ public final class AgentInventoryTransferService {
         if (owner == null) {
             return List.of();
         }
-        return new ArrayList<>(BotEquipManager.findRecommendedEquips(owner, agent).stream()
+        return new ArrayList<>(AgentEquipmentService.findRecommendedEquips(owner, agent).stream()
                 .map(AgentEquipRecommendation::candidate)
                 .toList());
     }

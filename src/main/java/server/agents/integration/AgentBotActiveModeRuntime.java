@@ -3,7 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.bots.BotEntry;
-import server.bots.BotEquipManager;
+import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
 
@@ -60,7 +60,7 @@ public final class AgentBotActiveModeRuntime {
     }
 
     private static void autoEquip(BotEntry entry) {
-        BotEquipManager.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        AgentEquipmentService.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
     private static void resetGearSuggestionCooldown(BotEntry entry) {
