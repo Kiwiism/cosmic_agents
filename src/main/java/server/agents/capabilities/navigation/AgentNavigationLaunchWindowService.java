@@ -49,4 +49,15 @@ public final class AgentNavigationLaunchWindowService {
         Point expectedLaunchPoint = fromRegion.pointAt(botPos.x);
         return Math.abs(botPos.y - expectedLaunchPoint.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold();
     }
+
+    public static boolean hasReachedDirectionalDropRunway(Point botPos, AgentNavigationGraph.Edge edge) {
+        if (botPos == null || edge == null || edge.launchStepX == 0) {
+            return false;
+        }
+
+        int direction = Integer.signum(edge.launchStepX);
+        return direction > 0
+                ? botPos.x >= edge.startPoint.x
+                : botPos.x <= edge.startPoint.x;
+    }
 }

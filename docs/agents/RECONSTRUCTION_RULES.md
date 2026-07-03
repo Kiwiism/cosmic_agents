@@ -4006,6 +4006,9 @@ Recent reconstruction notes:
 - Jump/drop navigation launch-window checks now live in
   `AgentNavigationLaunchWindowService`; `BotNavigationManager` delegates while
   preserving the null-graph straight-drop fallback.
+- Directional-drop runway checks now also live in
+  `AgentNavigationLaunchWindowService`; the physics-coupled directional landing
+  match remains in `BotNavigationManager` until the walk-off landing seam moves.
 
 Initial reconstruction order:
 

@@ -180,7 +180,7 @@ Capability bins:
   `AgentNavigationRopeEdgeService`.
   Grind-mode path target clamping lives in
   `AgentNavigationGrindTargetService`.
-  Jump/drop launch-window checks live in
+  Jump/drop launch-window and directional-drop runway checks live in
   `AgentNavigationLaunchWindowService`.
 - `supplies`
 - `trade`

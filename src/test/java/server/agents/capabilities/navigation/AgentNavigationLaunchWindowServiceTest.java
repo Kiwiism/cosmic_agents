@@ -60,6 +60,28 @@ class AgentNavigationLaunchWindowServiceTest {
                 null, new Point(50, 50 + jumpY + 1), straightDrop));
     }
 
+    @Test
+    void directionalDropRunwayUsesLaunchDirectionAndStartPoint() {
+        AgentNavigationGraph.Edge rightDrop = edge(AgentNavigationGraph.EdgeType.DROP,
+                new Point(50, 50), new Point(80, 150), 0, 0, 6);
+        AgentNavigationGraph.Edge leftDrop = edge(AgentNavigationGraph.EdgeType.DROP,
+                new Point(50, 50), new Point(20, 150), 0, 0, -6);
+        AgentNavigationGraph.Edge straightDrop = edge(AgentNavigationGraph.EdgeType.DROP,
+                new Point(50, 50), new Point(50, 150), 0, 0, 0);
+
+        assertTrue(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(50, 50), rightDrop));
+        assertTrue(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(51, 50), rightDrop));
+        assertFalse(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(49, 50), rightDrop));
+
+        assertTrue(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(50, 50), leftDrop));
+        assertTrue(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(49, 50), leftDrop));
+        assertFalse(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(51, 50), leftDrop));
+
+        assertFalse(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(50, 50), straightDrop));
+        assertFalse(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(null, rightDrop));
+        assertFalse(AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(new Point(50, 50), null));
+    }
+
     private static AgentNavigationGraph graphWithGroundRegion(int regionId, int x1, int x2, int y) {
         AgentNavigationGraph.Region ground = new AgentNavigationGraph.Region(regionId, List.of(
                 new AgentNavigationGraph.Segment(new Foothold(new Point(x1, y), new Point(x2, y), regionId))));
