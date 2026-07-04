@@ -6,7 +6,6 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import server.maps.Foothold;
 import server.maps.MapleMap;
-import server.bots.BotPhysicsEngine;
 
 import java.awt.*;
 import java.util.ArrayList;
