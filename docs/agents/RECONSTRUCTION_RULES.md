@@ -4319,6 +4319,9 @@ Current physics correction:
 - Navigation regression tests should call Agent rope/navigation physics seams
   for rope attach and first-climbable-Y behavior once those services own the
   behavior.
+- Navigation graph tests should call Agent jump-probe DTOs/services and Agent
+  ground-collision services directly once probe behavior has moved out of the
+  bot physics shell.
 
 Initial reconstruction order:
 

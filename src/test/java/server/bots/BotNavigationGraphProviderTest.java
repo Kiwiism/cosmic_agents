@@ -10,7 +10,11 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
+import server.agents.capabilities.movement.AgentGroundCollisionService;
+import server.agents.capabilities.movement.AgentJumpLanding;
+import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -155,7 +159,7 @@ class AgentNavigationGraphServiceTest {
         assertFalse(path.getFirst().containsLaunchX(blockedStart.x),
                 "wall-blocked boundary position should be outside the jump launch window");
 
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(
+        AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(
                 henesys(), blockedStart, path.getFirst().launchStepX, henesysGraph().movementProfile);
         assertNotNull(landing);
         assertEquals(blockedStartRegionId,
@@ -406,7 +410,7 @@ class AgentNavigationGraphServiceTest {
         LedgeDropCase dropCase = findLedgeDropCaseWithWalkableEarlyStart(graph, map);
 
         assertNotNull(dropCase, "Expected at least one ledge drop with a still-walkable early start");
-        assertTrue(BotPhysicsEngine.canWalkGroundStep(map, dropCase.earlyStart(), dropCase.edge().launchStepX));
+        assertTrue(AgentGroundCollisionService.canWalkGroundStep(map, dropCase.earlyStart(), dropCase.edge().launchStepX));
         assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
                 graph, dropCase.edge().startPoint, dropCase.edge()));
         assertFalse(AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
@@ -525,7 +529,7 @@ class AgentNavigationGraphServiceTest {
         assertEquals(36, fromRegionId);
         assertEquals(32, targetRegionId);
 
-        BotPhysicsEngine.JumpLanding badLanding = BotPhysicsEngine.simulateJumpLanding(
+        AgentJumpLanding badLanding = AgentJumpProbeService.simulateJumpLanding(
                 map, badLaunch, AgentMovementKinematicsService.walkStep(map), graph.movementProfile);
         assertNotNull(badLanding);
         assertEquals(fromRegionId, graph.regionIdByFootholdId.getOrDefault(badLanding.foothold().getId(), -1),
@@ -556,10 +560,10 @@ class AgentNavigationGraphServiceTest {
         assertEquals(8, fromRegionId);
         assertEquals(7, targetRegionId);
 
-        BotPhysicsEngine.PostLandingJump unstableLanding =
-                BotPhysicsEngine.simulateJumpLandingWithPostLandingTicks(map, badLaunch, stepX, graph.movementProfile, 3);
-        BotPhysicsEngine.PostLandingJump stableLanding =
-                BotPhysicsEngine.simulateJumpLandingWithPostLandingTicks(map, stableLaunch, stepX, graph.movementProfile, 3);
+        AgentPostLandingJump unstableLanding =
+                AgentJumpProbeService.simulateJumpLandingWithPostLandingTicks(map, badLaunch, stepX, graph.movementProfile, 3);
+        AgentPostLandingJump stableLanding =
+                AgentJumpProbeService.simulateJumpLandingWithPostLandingTicks(map, stableLaunch, stepX, graph.movementProfile, 3);
 
         assertNotNull(unstableLanding);
         assertTrue(unstableLanding.lostGround(),
@@ -591,8 +595,8 @@ class AgentNavigationGraphServiceTest {
         assertEquals(14, fromRegionId);
         assertEquals(9, targetRegionId);
 
-        BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(kerningPharmacy(), badLaunch, 0, profile);
+        AgentJumpLanding landing =
+                AgentJumpProbeService.simulateJumpLanding(kerningPharmacy(), badLaunch, 0, profile);
         assertNotNull(landing);
         assertEquals(fromRegionId, graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
                 "blocked underside jump should fall back onto the source platform");
@@ -616,8 +620,8 @@ class AgentNavigationGraphServiceTest {
         assertEquals(55, fromRegionId);
         assertEquals(48, targetRegionId);
 
-        BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(mushroomShrine(), badLaunch, stepX, profile);
+        AgentJumpLanding landing =
+                AgentJumpProbeService.simulateJumpLanding(mushroomShrine(), badLaunch, stepX, profile);
         assertNotNull(landing);
         assertEquals(fromRegionId, graph.regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1),
                 "doughnut underside jump should bounce back to the outer floor");
@@ -896,7 +900,7 @@ class AgentNavigationGraphServiceTest {
             if (graph.findRegionId(map, candidate) != edge.fromRegionId) {
                 continue;
             }
-            if (BotPhysicsEngine.canWalkGroundStep(map, candidate, edge.launchStepX)) {
+            if (AgentGroundCollisionService.canWalkGroundStep(map, candidate, edge.launchStepX)) {
                 return candidate;
             }
         }
@@ -933,7 +937,7 @@ class AgentNavigationGraphServiceTest {
                 continue;
             }
 
-            BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(map, start, edge.launchStepX);
+            AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(map, start, edge.launchStepX);
             if (landing == null) {
                 continue;
             }
@@ -1025,7 +1029,7 @@ class AgentNavigationGraphServiceTest {
                                                     MapleMap map,
                                                     AgentNavigationGraph.Edge edge,
                                                     int expectedRegionId) {
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(
+        AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(
                 map, edge.startPoint, edge.launchStepX, graph.movementProfile);
 
         assertNotNull(landing, "jump edge should reproduce a landing when simulated from its authored anchor");

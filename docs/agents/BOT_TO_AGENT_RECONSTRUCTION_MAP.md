@@ -245,6 +245,10 @@ Recent map updates:
 - Navigation-manager rope hold regression coverage now uses
   `AgentRopeMovementService` and `AgentNavigationPhysicsService` directly for
   rope attachment and first-climbable-Y lookup instead of `BotPhysicsEngine`.
+- Navigation graph regression coverage now uses `AgentJumpProbeService`,
+  `AgentJumpLanding`, `AgentPostLandingJump`, and
+  `AgentGroundCollisionService` directly for jump landing, post-landing, and
+  ground-step probes instead of the `BotPhysicsEngine` compatibility DTO/API.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement
