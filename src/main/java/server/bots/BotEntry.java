@@ -20,6 +20,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.inventory.AgentInventoryCooldownState;
 import server.agents.capabilities.social.AgentScrollReactionState;
+import server.agents.capabilities.supplies.AgentPotionSupplyState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
@@ -1042,27 +1043,24 @@ public class BotEntry {
     }
 
     // Loot and potions
-    int potCheckTimerMs = 0;
-    int mpRecoveryTimerMs = 0;
+    private final AgentPotionSupplyState potionSupplyState = new AgentPotionSupplyState();
     private final AgentInventoryCooldownState inventoryCooldownState = new AgentInventoryCooldownState();
-    boolean potShareRequestedHp = false; // true once an HP pot-share request has been broadcast this episode
-    boolean potShareRequestedMp = false; // reset when pot count recovers above POT_LOW_WARN
     boolean ammoShareRequested = false; // reset when arrow/bolt count recovers above AMMO_LOW_WARN
 
     public int potCheckTimerMs() {
-        return potCheckTimerMs;
+        return potionSupplyState.potCheckTimerMs();
     }
 
     public void setPotCheckTimerMs(int potCheckTimerMs) {
-        this.potCheckTimerMs = potCheckTimerMs;
+        potionSupplyState.setPotCheckTimerMs(potCheckTimerMs);
     }
 
     public int mpRecoveryTimerMs() {
-        return mpRecoveryTimerMs;
+        return potionSupplyState.mpRecoveryTimerMs();
     }
 
     public void setMpRecoveryTimerMs(int mpRecoveryTimerMs) {
-        this.mpRecoveryTimerMs = mpRecoveryTimerMs;
+        potionSupplyState.setMpRecoveryTimerMs(mpRecoveryTimerMs);
     }
 
     public int invFullWarnCooldownMs() {
@@ -1077,20 +1075,24 @@ public class BotEntry {
         return inventoryCooldownState;
     }
 
+    public AgentPotionSupplyState potionSupplyState() {
+        return potionSupplyState;
+    }
+
     public boolean potShareRequestedHp() {
-        return potShareRequestedHp;
+        return potionSupplyState.hpShareRequested();
     }
 
     public void setPotShareRequestedHp(boolean potShareRequestedHp) {
-        this.potShareRequestedHp = potShareRequestedHp;
+        potionSupplyState.setHpShareRequested(potShareRequestedHp);
     }
 
     public boolean potShareRequestedMp() {
-        return potShareRequestedMp;
+        return potionSupplyState.mpShareRequested();
     }
 
     public void setPotShareRequestedMp(boolean potShareRequestedMp) {
-        this.potShareRequestedMp = potShareRequestedMp;
+        potionSupplyState.setMpShareRequested(potShareRequestedMp);
     }
 
     public boolean ammoShareRequested() {

@@ -4365,6 +4365,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while loot inhibit
   and inventory-full warning cooldown reads/writes route through the Agent
   inventory capability.
+- Potion supply storage now lives in `AgentPotionSupplyState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while potion-check timer, MP
+  recovery timer, and HP/MP share-request flag reads/writes route through the
+  Agent supplies capability.
 
 Initial reconstruction order:
 
