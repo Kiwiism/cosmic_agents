@@ -4385,6 +4385,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while portal-use cooldown
   deadline reads/writes and cooldown checks route through the Agent navigation
   capability.
+- Combat cooldown storage now lives in `AgentCombatCooldownState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while attack cooldown,
+  movement-only attack window, touch-damage cooldown, alert pose expiry, and
+  alert reset scheduling route through the Agent combat capability.
 
 Initial reconstruction order:
 

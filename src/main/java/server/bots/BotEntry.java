@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
+import server.agents.capabilities.combat.AgentCombatCooldownState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -474,8 +475,7 @@ public class BotEntry {
     volatile boolean grinding = false;
     Monster grindTarget = null;
     long nextGrindTargetSearchAtMs = 0L;
-    private int attackCooldownMs = 0;
-    private int moveWindowMs = 0;    // movement-only gap after attack animation; attacks blocked, walking allowed
+    private final AgentCombatCooldownState combatCooldownState = new AgentCombatCooldownState();
 
     public Monster grindTarget() {
         return grindTarget;
@@ -502,19 +502,19 @@ public class BotEntry {
     }
 
     public int attackCooldownMs() {
-        return attackCooldownMs;
+        return combatCooldownState.attackCooldownMs();
     }
 
     public void setAttackCooldownMs(int attackCooldownMs) {
-        this.attackCooldownMs = attackCooldownMs;
+        combatCooldownState.setAttackCooldownMs(attackCooldownMs);
     }
 
     public int moveWindowMs() {
-        return moveWindowMs;
+        return combatCooldownState.moveWindowMs();
     }
 
     public void setMoveWindowMs(int moveWindowMs) {
-        this.moveWindowMs = moveWindowMs;
+        combatCooldownState.setMoveWindowMs(moveWindowMs);
     }
 
     // Skill cache
@@ -860,7 +860,6 @@ public class BotEntry {
 
     // Damage taken
     long deadUntil = 0;
-    int mobHitCooldownMs = 0;
 
     public long deadUntilMs() {
         return deadUntil;
@@ -875,11 +874,11 @@ public class BotEntry {
     }
 
     public int mobHitCooldownMs() {
-        return mobHitCooldownMs;
+        return combatCooldownState.mobHitCooldownMs();
     }
 
     public void setMobHitCooldownMs(int mobHitCooldownMs) {
-        this.mobHitCooldownMs = mobHitCooldownMs;
+        combatCooldownState.setMobHitCooldownMs(mobHitCooldownMs);
     }
 
     private final AgentPortalCooldownState portalCooldownState = new AgentPortalCooldownState();
@@ -895,31 +894,24 @@ public class BotEntry {
     public void setPortalUseCooldownUntilMs(long portalUseCooldownUntilMs) {
         portalCooldownState.setUseCooldownUntilMs(portalUseCooldownUntilMs);
     }
-    // Client-side alert-stance emulation: when currentTimeMillis < alertedUntilMs the bot's
-    // broadcast stance gets STAND→ALERT substituted so observers see the alert pose.
-    // Mirrors CharLook::alerted (TimedBool, 5000ms) in maplestory-wasm. Absolute reset on each
-    // trigger (attack/hit/heal/buff), never additive.
-    private long alertedUntilMs = 0L;
-    // Debounce flag for the scheduled stance-reset callback in Agent combat alert runtime.
-    // Without this, when the bot stops moving while alerted (e.g. "stay" command), no new
-    // movement snapshot ever fires — so the wire stance stays ALERT forever. The callback
-    // pushes a fresh STAND broadcast once the timer expires.
-    private boolean alertResetScheduled = false;
+    public AgentCombatCooldownState combatCooldownState() {
+        return combatCooldownState;
+    }
 
     public long alertedUntilMs() {
-        return alertedUntilMs;
+        return combatCooldownState.alertedUntilMs();
     }
 
     public void setAlertedUntilMs(long alertedUntilMs) {
-        this.alertedUntilMs = alertedUntilMs;
+        combatCooldownState.setAlertedUntilMs(alertedUntilMs);
     }
 
     public boolean alertResetScheduled() {
-        return alertResetScheduled;
+        return combatCooldownState.alertResetScheduled();
     }
 
     public void setAlertResetScheduled(boolean alertResetScheduled) {
-        this.alertResetScheduled = alertResetScheduled;
+        combatCooldownState.setAlertResetScheduled(alertResetScheduled);
     }
 
     private final AgentLeaderActivityState leaderActivityState = new AgentLeaderActivityState();
