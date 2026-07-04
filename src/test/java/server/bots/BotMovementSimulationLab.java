@@ -150,7 +150,7 @@ final class BotMovementSimulationLab {
 
     void setNavState(String botName, AgentNavigationGraph.Edge edge, int targetRegionId, boolean preciseTarget) {
         BotEntry entry = requireBot(botName);
-        entry.navEdge = edge;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, preciseTarget);
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, edge == null ? null : edge.startPoint);
@@ -366,7 +366,7 @@ final class BotMovementSimulationLab {
                     new Point(steeringPos),
                     AgentBotNavigationDebugStateRuntime.lastDecision(entry),
                     describePhysics(entry),
-                    describeEdge(entry.navEdge));
+                    describeEdge((AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry)));
         }
 
         String format() {

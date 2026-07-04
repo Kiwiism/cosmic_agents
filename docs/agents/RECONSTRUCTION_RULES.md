@@ -4417,6 +4417,11 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while target
   position, target region id, and precise-target flag reads/writes route
   through the Agent navigation capability.
+- Active navigation edge and cached jump-launch storage now live in
+  `AgentNavigationEdgeState`. `BotEntry` temporarily hosts the Agent-owned
+  state object, while committed edge presence, active edge lookup, and
+  jump-launch edge/X cache reads/writes route through the Agent navigation
+  capability.
 
 Initial reconstruction order:
 

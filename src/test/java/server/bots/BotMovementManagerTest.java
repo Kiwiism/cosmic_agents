@@ -141,11 +141,11 @@ class BotMovementManagerTest {
         entry.physX = 0;
         entry.physY = 0;
         entry.velY = -10f;
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
-        );
+        ));
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(300, 0));
 
@@ -155,11 +155,11 @@ class BotMovementManagerTest {
     @Test
     void shouldNotHoldClimbIdleWhileCommittedClimbEdgeIsActive() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(0, 0), new Point(0, -100),
                 0, 0, 10, -100, 40, 100
-        );
+        ));
 
         assertFalse(AgentClimbMovementService.shouldHoldClimbIdle(entry, 0, 0));
     }
@@ -204,11 +204,11 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(668, 1727, 1980, false);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 68, 54, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(668, 1757), new Point(796, 2025),
                 8, 0, 668, 1727, 1980, 650
-        );
+        ));
 
         AgentClimbMovementService.tickClimbing(entry, new Point(668, 1757), false);
 
@@ -232,11 +232,11 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-437, -1471, 84, false);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -1141), new Point(-477, -1166),
                 -8, 0, -437, -1471, 84, 250
-        );
+        ));
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentClimbMovementService.tickClimbing(entry, new Point(-437, -1141), true);
@@ -304,11 +304,11 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(3398, 126, 332, false);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 53, 25, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(3398, 156), new Point(3443, 124),
                 0, 0, 3398, 126, 332, 400
-        );
+        ));
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentClimbMovementService.tickClimbing(entry, new Point(3398, 124), true);
@@ -376,16 +376,16 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.WALK,
                 new Point(8, 100), new Point(60, 100),
                 0, 0, 0, 0, 0, 100
-        );
+        ));
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(60, 100));
 
-        assertNull(entry.navEdge);
+        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
         assertEquals(new Point(8, 100), bot.getPosition());
     }
 
@@ -448,11 +448,11 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = new Rope(-157, -115, 118, false);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 47, 39, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-157, -25), new Point(-61, 121),
                 8, 0, -157, -115, 118, 650
-        );
+        ));
 
         AgentClimbMovementService.tickClimbing(entry, new Point(-157, -25), false);
 
@@ -966,11 +966,11 @@ class BotMovementManagerTest {
         entry.physY = 100;
         entry.velY = 0f;
         entry.airVelX = -8;
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 100), new Point(50, 50),
                 -8, 0, 0, 0, 0, 300
-        );
+        ));
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(-300, 100));
 
@@ -1015,11 +1015,11 @@ class BotMovementManagerTest {
 
         AgentMovementProfile targetProfile = AgentMovementProfile.fromCharacter(bot);
         assertEquals(new AgentMovementProfile(105, 105), targetProfile);
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(20, 100), new Point(80, 40),
                 8, 0, 0, 0, 0, 300
-        );
+        ));
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(20, 100));
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
@@ -1027,7 +1027,7 @@ class BotMovementManagerTest {
         assertTrue(AgentMovementProfileService.refreshMovementProfile(entry),
                 "profile swap should commit immediately and let nav use closest graph while the exact graph warms");
         assertEquals(targetProfile, entry.movementProfile);
-        assertNull(entry.navEdge);
+        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
         assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
         assertEquals(-1, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
         assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));

@@ -210,7 +210,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.navEdge = collapsedWalk;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, collapsedWalk);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
@@ -230,7 +230,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.navEdge = collapsedWalk;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, collapsedWalk);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
@@ -403,16 +403,16 @@ class BotNavigationManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = AgentMovementProfile.base();
         entry.following = true;
-        entry.navEdge = staleEdge;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleEdge);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, rightTarget, true);
 
         assertFalse(directive.consumedTick());
-        assertEquals(freshEdge.toRegionId, entry.navEdge.toRegionId,
+        assertEquals(freshEdge.toRegionId, ((AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry)).toRegionId,
                 "grounded reuse must discard a stale drop edge once the current best first edge changes");
-        assertEquals(freshEdge.startPoint, entry.navEdge.startPoint);
+        assertEquals(freshEdge.startPoint, ((AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry)).startPoint);
     }
 
     @Test
@@ -454,7 +454,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.navEdge = staleDrop;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleDrop);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, staleDrop.toRegionId);
 
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 1, 3),
@@ -513,7 +513,7 @@ class BotNavigationManagerTest {
         assertEquals(new Point(180, 100), directive.targetPos());
         assertEquals("graph-warmup", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
         assertTrue(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
-        assertNull(entry.navEdge);
+        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
 
         AgentNavigationGraphService.getGraph(map, entry.movementProfile);
     }
@@ -580,17 +580,17 @@ class BotNavigationManagerTest {
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = true;
-        entry.navEdge = new AgentNavigationGraph.Edge(
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
-        );
+        ));
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 14);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
         AgentNavigationGraph.Edge reused = AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 20, 14);
 
-        assertEquals(entry.navEdge, reused);
+        assertEquals(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry), reused);
     }
 
     @Test
@@ -641,7 +641,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(fromRegion.pointAt(outsideLaunchX), lithHarbor);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = AgentMovementProfile.base();
-        entry.navEdge = ropeEntry;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, ropeEntry);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
 
         AgentNavigationTargetService.NavigationDirective directive =
@@ -751,7 +751,7 @@ class BotNavigationManagerTest {
         // No nav edge committed (rope-entry was just executed; reuseCommittedEdge would drop it
         // because the bot is now in the rope region == edge.toRegionId). This is the no-edge
         // window between AI ticks where the bug manifests.
-        entry.navEdge = null;
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, null);
 
         // Run one non-AI physics tick.
         AgentClimbMovementService.tickClimbing(entry, followTargetAbove, false);

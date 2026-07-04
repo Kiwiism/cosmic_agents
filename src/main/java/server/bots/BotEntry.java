@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationDebugState;
+import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
@@ -1558,29 +1559,27 @@ public class BotEntry {
     }
 
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
+    private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
 
     // Cached movement state shared across ticks
-    AgentNavigationGraph.Edge navEdge = null;
-    AgentNavigationGraph.Edge navJumpLaunchEdge = null;
-    int navJumpLaunchX = Integer.MIN_VALUE;
     int observedOwnerStepX = 0;
     int observedOwnerStepY = 0;
 
     public boolean hasActiveNavigationEdge() {
-        return navEdge != null;
+        return navigationEdgeState.hasActiveEdge();
     }
 
     public Object activeNavigationEdge() {
-        return navEdge;
+        return navigationEdgeState.activeEdge();
     }
 
     public void setActiveNavigationEdge(Object edge) {
-        navEdge = edge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
+        navigationEdgeState.setActiveEdge(edge);
     }
 
     public void clearActiveNavigationEdge() {
-        navEdge = null;
+        navigationEdgeState.clearActiveEdge();
     }
 
     public int observedOwnerStepX() {
@@ -1780,6 +1779,10 @@ public class BotEntry {
         return navigationDebugState;
     }
 
+    public AgentNavigationEdgeState navigationEdgeState() {
+        return navigationEdgeState;
+    }
+
     public AgentNavigationTargetState navigationTargetState() {
         return navigationTargetState;
     }
@@ -1845,33 +1848,19 @@ public class BotEntry {
     }
 
     public boolean matchesNavJumpLaunchEdge(Object edge) {
-        return edge instanceof AgentNavigationGraph.Edge navEdge && sameNavEdge(navJumpLaunchEdge, navEdge);
+        return navigationEdgeState.matchesJumpLaunchEdge(edge);
     }
 
     public boolean hasNavJumpLaunchEdge() {
-        return navJumpLaunchEdge != null;
+        return navigationEdgeState.hasJumpLaunchEdge();
     }
 
     public int navJumpLaunchX() {
-        return navJumpLaunchX;
+        return navigationEdgeState.jumpLaunchX();
     }
 
     public void setNavJumpLaunch(Object navJumpLaunchEdge, int navJumpLaunchX) {
-        this.navJumpLaunchEdge = navJumpLaunchEdge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
-        this.navJumpLaunchX = navJumpLaunchX;
-    }
-
-    private static boolean sameNavEdge(AgentNavigationGraph.Edge a, AgentNavigationGraph.Edge b) {
-        if (a == b) return true;
-        if (a == null || b == null) return false;
-        return a.type == b.type
-                && a.fromRegionId == b.fromRegionId
-                && a.toRegionId == b.toRegionId
-                && a.startPoint.equals(b.startPoint)
-                && a.endPoint.equals(b.endPoint)
-                && a.portalId == b.portalId
-                && a.launchMinX == b.launchMinX
-                && a.launchMaxX == b.launchMaxX;
+        navigationEdgeState.setJumpLaunch(navJumpLaunchEdge, navJumpLaunchX);
     }
 
     public long pendingGearPromptAt() {

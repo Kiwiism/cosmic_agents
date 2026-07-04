@@ -133,31 +133,31 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static boolean hasActiveNavigationEdge(BotEntry entry) {
-        return entry.hasActiveNavigationEdge();
+        return entry.navigationEdgeState().hasActiveEdge();
     }
 
     public static Object activeNavigationEdge(BotEntry entry) {
-        return entry.activeNavigationEdge();
+        return entry.navigationEdgeState().activeEdge();
     }
 
     public static void setActiveNavigationEdge(BotEntry entry, Object edge) {
-        entry.setActiveNavigationEdge(edge);
+        entry.navigationEdgeState().setActiveEdge(edge);
     }
 
     public static void clearActiveNavigationEdge(BotEntry entry) {
-        entry.clearActiveNavigationEdge();
+        entry.navigationEdgeState().clearActiveEdge();
     }
 
     public static int navJumpLaunchX(BotEntry entry) {
-        return entry.navJumpLaunchX();
+        return entry.navigationEdgeState().jumpLaunchX();
     }
 
     public static boolean matchesNavJumpLaunchEdge(BotEntry entry, Object edge) {
-        return entry.matchesNavJumpLaunchEdge(edge);
+        return entry.navigationEdgeState().matchesJumpLaunchEdge(edge);
     }
 
     public static void rememberNavJumpLaunch(BotEntry entry, Object edge, int launchX) {
-        entry.setNavJumpLaunch(edge, launchX);
+        entry.navigationEdgeState().setJumpLaunch(edge, launchX);
     }
 
     public static void clearNavJumpLaunch(BotEntry entry) {

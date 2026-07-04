@@ -44,10 +44,10 @@ class AgentNavigationGraphFallbackTest {
                 AgentNavigationTargetService.resolveTarget(entry, new Point(180, 160), true);
 
         assertFalse(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry), "closest cached graph should be used before heuristics");
-        assertFalse(directive.consumedTick() && entry.navEdge == null
+        assertFalse(directive.consumedTick() && AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry) == null
                         && "graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
                 "cached fallback graph should route with a graph edge, not heuristic warmup");
-        assertNotNull(entry.navEdge, "cached fallback graph should provide a real nav edge");
+        assertNotNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry), "cached fallback graph should provide a real nav edge");
         assertFalse("graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
                 "nav should stay on graph-based routing instead of dropping straight into heuristics");
     }

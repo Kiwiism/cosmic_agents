@@ -439,7 +439,7 @@ class AgentNavigationGraphServiceTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.climbing = true;
         entry.climbRope = reuseCase.rope();
-        entry.navEdge = reuseCase.edge();
+        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, reuseCase.edge());
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, graph.findRegionId(map, reuseCase.rawTarget()));
 
         AgentNavigationTargetService.NavigationDirective directive =
@@ -447,7 +447,7 @@ class AgentNavigationGraphServiceTest {
 
         assertFalse(directive.consumedTick());
         assertEquals(reuseCase.rawTarget(), directive.targetPos());
-        assertNull(entry.navEdge);
+        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
     }
 
     @Test
