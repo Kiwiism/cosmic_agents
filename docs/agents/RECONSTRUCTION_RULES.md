@@ -4602,6 +4602,10 @@ Current physics correction:
   `AgentBotMovementStuckStateRuntime`; broadcast suppression and last-ground
   foothold cache route through Agent movement state runtimes over Agent-owned
   state objects.
+- Dead KPQ reset, owner-given item set, and pending gear-prompt compatibility
+  wrappers were removed from `BotEntry`. KPQ stage-5 reset now routes through
+  `AgentBotPqRuntime` directly to `AgentKpqState`; trade and gear-prompt
+  callers already use Agent-owned state adapters.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

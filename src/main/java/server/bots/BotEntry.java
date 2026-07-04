@@ -24,7 +24,6 @@ import server.agents.capabilities.movement.AgentSwimIntentState;
 import server.agents.capabilities.movement.AgentMovementProfileState;
 
 import client.Character;
-import client.inventory.Item;
 import server.life.Monster;
 import server.maps.MapItem;
 import server.maps.Rope;
@@ -76,7 +75,6 @@ import server.agents.runtime.AgentTickState;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 public class BotEntry {
@@ -719,10 +717,6 @@ public class BotEntry {
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     private final AgentKpqState kpqState = new AgentKpqState();
 
-    public void resetKpqStage5Claimed() {
-        kpqState.clearStage5Claimed();
-    }
-
     public AgentKpqState kpqState() {
         return kpqState;
     }
@@ -737,10 +731,6 @@ public class BotEntry {
 
     public AgentOwnerGivenTradeItemState ownerGivenTradeItemState() {
         return ownerGivenTradeItemState;
-    }
-
-    public Set<Item> ownerGivenItems() {
-        return ownerGivenTradeItemState.items();
     }
 
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
@@ -936,10 +926,6 @@ public class BotEntry {
 
     public AgentScrollReactionState scrollReactionState() {
         return scrollReactionState;
-    }
-
-    public void setPendingGearPromptAt(long pendingGearPromptAt) {
-        upgradeOfferState.reserveGearPrompt(pendingGearPromptAt);
     }
 
     public boolean lastTickWasAi() {

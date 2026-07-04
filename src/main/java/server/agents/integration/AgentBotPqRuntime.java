@@ -16,7 +16,7 @@ public final class AgentBotPqRuntime {
     }
 
     public static void resetKpqStage5Claimed(BotEntry entry) {
-        entry.resetKpqStage5Claimed();
+        state(entry).clearStage5Claimed();
     }
 
     public static boolean kpqStage5Claimed(BotEntry entry) {
