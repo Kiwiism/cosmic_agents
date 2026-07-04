@@ -3,7 +3,6 @@ package server.agents.integration;
 import server.agents.commands.AgentQueuedMessage;
 import server.bots.BotEntry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,42 +13,38 @@ public final class AgentBotMessageQueueStateRuntime {
     }
 
     public static Object lock(BotEntry entry) {
-        return entry.messageQueue();
+        return entry.messageQueueState().lock();
     }
 
     public static int size(BotEntry entry) {
-        return entry.messageQueue().size();
+        return entry.messageQueueState().size();
     }
 
     public static void enqueue(BotEntry entry, AgentQueuedMessage message) {
-        entry.messageQueue().add(message);
+        entry.messageQueueState().enqueue(message);
     }
 
     public static AgentQueuedMessage poll(BotEntry entry) {
-        return entry.messageQueue().poll();
+        return entry.messageQueueState().poll();
     }
 
     public static AgentQueuedMessage peek(BotEntry entry) {
-        return entry.messageQueue().peek();
+        return entry.messageQueueState().peek();
     }
 
     public static List<AgentQueuedMessage> snapshot(BotEntry entry) {
-        synchronized (lock(entry)) {
-            return List.copyOf(new ArrayList<>(entry.messageQueue()));
-        }
+        return entry.messageQueueState().snapshot();
     }
 
     public static boolean isSending(BotEntry entry) {
-        return entry.isMessageSending();
+        return entry.messageQueueState().isSending();
     }
 
     public static void setSending(BotEntry entry, boolean sending) {
-        entry.setMessageSending(sending);
+        entry.messageQueueState().setSending(sending);
     }
 
     public static boolean isIdle(BotEntry entry) {
-        synchronized (lock(entry)) {
-            return !isSending(entry) && size(entry) == 0;
-        }
+        return entry.messageQueueState().isIdle();
     }
 }

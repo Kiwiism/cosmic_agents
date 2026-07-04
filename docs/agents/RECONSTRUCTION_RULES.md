@@ -4326,6 +4326,10 @@ Current physics correction:
   regression coverage now lives under `server.agents.capabilities.movement` and
   calls Agent movement/navigation services directly. Production
   `src/main/java/server/bots` now contains only `BotEntry`.
+- Reply queue storage now lives in `AgentMessageQueueState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while the Agent integration
+  adapter delegates queue locking, enqueue/poll/peek, snapshots, sending-state,
+  and idle checks to the Agent command module.
 
 Initial reconstruction order:
 

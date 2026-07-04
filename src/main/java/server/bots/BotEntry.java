@@ -14,6 +14,7 @@ import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.Rope;
+import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
@@ -1325,19 +1326,22 @@ public class BotEntry {
     }
 
     // Message queue
-    final ArrayDeque<AgentQueuedMessage> msgQueue = new ArrayDeque<>();
-    boolean msgSending = false;
+    private final AgentMessageQueueState messageQueueState = new AgentMessageQueueState();
+
+    public AgentMessageQueueState messageQueueState() {
+        return messageQueueState;
+    }
 
     public Deque<AgentQueuedMessage> messageQueue() {
-        return msgQueue;
+        return messageQueueState.queue();
     }
 
     public boolean isMessageSending() {
-        return msgSending;
+        return messageQueueState.isSending();
     }
 
     public void setMessageSending(boolean msgSending) {
-        this.msgSending = msgSending;
+        messageQueueState.setSending(msgSending);
     }
 
     // Generic scripted task queue. Per-map scripts enqueue small primitives
