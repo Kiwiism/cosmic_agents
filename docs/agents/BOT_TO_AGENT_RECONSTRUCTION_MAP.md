@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` message queue wrapper methods were removed after callers moved to
+  `server.agents.integration.AgentBotMessageQueueStateRuntime`. The queue
+  remains owned by `server.agents.commands.AgentMessageQueueState`.
 - `BotEntry` pending chat action wrapper methods were removed after callers
   moved to `server.agents.integration.AgentBotPendingActionStateRuntime`.
   `AgentPendingActionState` remains the Agent-owned mutable state object.

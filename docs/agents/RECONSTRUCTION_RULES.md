@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Message queue compatibility wrappers were removed from `BotEntry`.
+  Chat/reply queue callers already use `AgentBotMessageQueueStateRuntime` over
+  the Agent-owned `AgentMessageQueueState`.
 - Pending chat action compatibility wrappers were removed from `BotEntry`.
   Pending action reads/writes now enter through
   `AgentBotPendingActionStateRuntime` and the Agent-owned

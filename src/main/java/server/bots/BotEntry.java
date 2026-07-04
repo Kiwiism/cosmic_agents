@@ -32,7 +32,6 @@ import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
-import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelState;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
@@ -81,8 +80,6 @@ import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
 
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1248,18 +1245,6 @@ public class BotEntry {
 
     public AgentMessageQueueState messageQueueState() {
         return messageQueueState;
-    }
-
-    public Deque<AgentQueuedMessage> messageQueue() {
-        return messageQueueState.queue();
-    }
-
-    public boolean isMessageSending() {
-        return messageQueueState.isSending();
-    }
-
-    public void setMessageSending(boolean msgSending) {
-        messageQueueState.setSending(msgSending);
     }
 
     public AgentScriptTaskQueueState scriptTaskQueueState() {
