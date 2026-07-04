@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat cooldown compatibility wrappers were removed from `BotEntry`.
+  Combat, movement-lock, damage, and alert callers already use
+  `AgentBotCombatCooldownStateRuntime` over `AgentCombatCooldownState`.
 - Grind wander and grind-loot compatibility wrappers were removed from
   `BotEntry`. Grind fallback and loot targeting callers already use
   `AgentBotGrindWanderStateRuntime` and `AgentBotGrindLootStateRuntime` over

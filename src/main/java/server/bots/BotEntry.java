@@ -506,22 +506,6 @@ public class BotEntry {
         return grindTargetState;
     }
 
-    public int attackCooldownMs() {
-        return combatCooldownState.attackCooldownMs();
-    }
-
-    public void setAttackCooldownMs(int attackCooldownMs) {
-        combatCooldownState.setAttackCooldownMs(attackCooldownMs);
-    }
-
-    public int moveWindowMs() {
-        return combatCooldownState.moveWindowMs();
-    }
-
-    public void setMoveWindowMs(int moveWindowMs) {
-        combatCooldownState.setMoveWindowMs(moveWindowMs);
-    }
-
     private final AgentCombatSkillCacheState combatSkillCacheState = new AgentCombatSkillCacheState();
     private final AgentCombatBuffState combatBuffState = new AgentCombatBuffState();
 
@@ -727,14 +711,6 @@ public class BotEntry {
         return deathState;
     }
 
-    public int mobHitCooldownMs() {
-        return combatCooldownState.mobHitCooldownMs();
-    }
-
-    public void setMobHitCooldownMs(int mobHitCooldownMs) {
-        combatCooldownState.setMobHitCooldownMs(mobHitCooldownMs);
-    }
-
     private final AgentPortalCooldownState portalCooldownState = new AgentPortalCooldownState();
 
     public AgentPortalCooldownState portalCooldownState() {
@@ -743,22 +719,6 @@ public class BotEntry {
 
     public AgentCombatCooldownState combatCooldownState() {
         return combatCooldownState;
-    }
-
-    public long alertedUntilMs() {
-        return combatCooldownState.alertedUntilMs();
-    }
-
-    public void setAlertedUntilMs(long alertedUntilMs) {
-        combatCooldownState.setAlertedUntilMs(alertedUntilMs);
-    }
-
-    public boolean alertResetScheduled() {
-        return combatCooldownState.alertResetScheduled();
-    }
-
-    public void setAlertResetScheduled(boolean alertResetScheduled) {
-        combatCooldownState.setAlertResetScheduled(alertResetScheduled);
     }
 
     private final AgentLeaderActivityState leaderActivityState = new AgentLeaderActivityState();

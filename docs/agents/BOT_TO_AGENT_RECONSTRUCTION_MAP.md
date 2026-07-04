@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
+  local move window, mob-hit cooldown, and alert timing behavior enters through
+  `AgentBotCombatCooldownStateRuntime`.
 - `BotEntry` grind wander and grind-loot wrapper methods were removed. Grind
   fallback and loot targeting behavior enters through Agent runtime adapters
   backed by `AgentGrindWanderState` and `AgentGrindLootState`.
