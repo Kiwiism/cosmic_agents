@@ -606,30 +606,6 @@ public class BotEntry {
         return ammoSupplyState;
     }
 
-    public boolean potShareRequestedHp() {
-        return potionSupplyState.hpShareRequested();
-    }
-
-    public void setPotShareRequestedHp(boolean potShareRequestedHp) {
-        potionSupplyState.setHpShareRequested(potShareRequestedHp);
-    }
-
-    public boolean potShareRequestedMp() {
-        return potionSupplyState.mpShareRequested();
-    }
-
-    public void setPotShareRequestedMp(boolean potShareRequestedMp) {
-        potionSupplyState.setMpShareRequested(potShareRequestedMp);
-    }
-
-    public boolean ammoShareRequested() {
-        return ammoSupplyState.shareRequested();
-    }
-
-    public void setAmmoShareRequested(boolean ammoShareRequested) {
-        ammoSupplyState.setShareRequested(ammoShareRequested);
-    }
-
     // Reply channel — tracks the chat channel the last owner command arrived on.
     // Bot replies are routed to this channel until the next command changes it.
     private final AgentReplyChannelState replyChannelState = new AgentReplyChannelState();
@@ -649,14 +625,6 @@ public class BotEntry {
 
     public AgentPendingLootOfferState pendingLootOfferState() {
         return pendingLootOfferState;
-    }
-
-    public int lootInhibitMs() {
-        return inventoryCooldownState.lootInhibitMs();
-    }
-
-    public void setLootInhibitMs(int lootInhibitMs) {
-        inventoryCooldownState.setLootInhibitMs(lootInhibitMs);
     }
 
     // Bot-initiated trade retry: when a pot-share / ammo-share / loot-offer is blocked
