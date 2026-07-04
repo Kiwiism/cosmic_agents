@@ -162,6 +162,9 @@ Recent map updates:
   Agent-owned `AgentJumpLanding` DTO through `AgentJumpProbeService`. The
   temporary bot physics simulator still supplies the raw landing data until the
   collision/integration body moves.
+- Directional-drop waypoint validation now uses the Agent-owned
+  `AgentWalkOffLanding` DTO through `AgentJumpProbeService`; the underlying
+  walk-off simulation remains temporarily bot-backed.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.

@@ -4242,6 +4242,10 @@ Current physics correction:
   Agent-owned `AgentJumpLanding` DTO through `AgentJumpProbeService`. The
   bot physics simulator remains the temporary backing implementation until the
   remaining collision/integration body is reconstructed.
+- Directional-drop waypoint validation now uses the Agent-owned
+  `AgentWalkOffLanding` DTO through `AgentJumpProbeService`. The simulator
+  still delegates to `BotPhysicsEngine` until walk-off ground/air integration
+  is moved.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

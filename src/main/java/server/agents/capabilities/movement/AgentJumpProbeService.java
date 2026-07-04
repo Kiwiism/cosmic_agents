@@ -37,6 +37,15 @@ public final class AgentJumpProbeService {
         return fromBotLanding(BotPhysicsEngine.simulateDownJumpLanding(map, from));
     }
 
+    public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
+                                                             Point from,
+                                                             int desiredDir,
+                                                             AgentGroundTravelState initialState,
+                                                             AgentMovementProfile profile) {
+        return fromBotWalkOffLanding(
+                BotPhysicsEngine.simulateWalkOffLanding(map, from, desiredDir, initialState, profile));
+    }
+
     public static AgentPostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
                                                                                Point from,
                                                                                int stepX,
@@ -80,5 +89,13 @@ public final class AgentJumpProbeService {
         }
         return new AgentPostLandingJump(fromBotLanding(landing.landing()), landing.finalPoint(),
                 landing.finalFoothold(), landing.lostGround());
+    }
+
+    private static AgentWalkOffLanding fromBotWalkOffLanding(BotPhysicsEngine.WalkOffLanding landing) {
+        if (landing == null) {
+            return null;
+        }
+        return new AgentWalkOffLanding(landing.launchPoint(), landing.launchStepX(),
+                fromBotLanding(landing.landing()), landing.travelTimeMs());
     }
 }

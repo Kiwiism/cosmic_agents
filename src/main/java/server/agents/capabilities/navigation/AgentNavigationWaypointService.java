@@ -2,13 +2,14 @@ package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentJumpProbeService;
+import server.agents.capabilities.movement.AgentWalkOffLanding;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -94,7 +95,7 @@ public final class AgentNavigationWaypointService {
             return new Point(edge.endPoint);
         }
 
-        BotPhysicsEngine.WalkOffLanding liveOutcome = BotPhysicsEngine.simulateWalkOffLanding(
+        AgentWalkOffLanding liveOutcome = AgentJumpProbeService.simulateWalkOffLanding(
                 AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
                 AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry));
@@ -109,7 +110,7 @@ public final class AgentNavigationWaypointService {
 
     private static boolean matchesDirectionalDrop(AgentNavigationGraph.Edge edge,
                                                   AgentNavigationGraph graph,
-                                                  BotPhysicsEngine.WalkOffLanding outcome) {
+                                                  AgentWalkOffLanding outcome) {
         if (outcome == null || outcome.landing() == null) {
             return false;
         }
