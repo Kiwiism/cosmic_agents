@@ -165,27 +165,6 @@ public class BotEntry {
         return climbState;
     }
 
-    public boolean climbing() {
-        return climbState.climbing();
-    }
-
-    // Climb intent — set by movement layer, consumed by physics engine.
-    public Rope climbRope() {
-        return climbState.climbRope();
-    }
-
-    public void setClimbingOnRope(Rope rope) {
-        climbState.setClimbingOnRope(rope);
-    }
-
-    public int climbVerticalDirection() {
-        return climbState.verticalDirection();
-    }
-
-    public void setClimbVerticalDirection(int direction) {
-        climbState.setVerticalDirection(direction);
-    }
-
     // Horizontal movement hysteresis
     public boolean wasMovingX() {
         return movementInputState.wasMovingX();
@@ -223,73 +202,8 @@ public class BotEntry {
         airborneSteeringState.setFixedAirArc(fixedAirArc);
     }
 
-    // Movement intent
-    public boolean climbUpIntent() {
-        return climbState.climbUpIntent();
-    }
-
-    public void setClimbUpIntent(boolean climbUpIntent) {
-        climbState.setClimbUpIntent(climbUpIntent);
-    }
-
-    public Rope blockedRopeGrab() {
-        return climbState.blockedRopeGrab();
-    }
-
-    public void setBlockedRopeGrab(Rope rope) {
-        climbState.setBlockedRopeGrab(rope);
-    }
-
-    public void clearBlockedRopeGrab() {
-        climbState.clearBlockedRopeGrab();
-    }
-
-    public int ropeGrabCooldownMs() {
-        return climbState.ropeGrabCooldownMs();
-    }
-
-    public void setRopeGrabCooldownMs(int ropeGrabCooldownMs) {
-        climbState.setRopeGrabCooldownMs(ropeGrabCooldownMs);
-    }
-
     public AgentDownJumpState downJumpState() {
         return downJumpState;
-    }
-
-    public boolean downJumpPending() {
-        return downJumpState.pending();
-    }
-
-    public long downJumpGracePeriodMs() {
-        return downJumpState.gracePeriodMs();
-    }
-
-    public void setDownJumpPending(boolean downJumpPending) {
-        downJumpState.setPending(downJumpPending);
-    }
-
-    public void setDownJumpGracePeriodMs(long downJumpGracePeriodMs) {
-        downJumpState.setGracePeriodMs(downJumpGracePeriodMs);
-    }
-
-    public boolean ropeEntryPending() {
-        return climbState.ropeEntryPending();
-    }
-
-    public Rope ropeEntryRope() {
-        return climbState.ropeEntryRope();
-    }
-
-    public int ropeEntryY() {
-        return climbState.ropeEntryY();
-    }
-
-    public void queueRopeEntry(Rope rope, int y) {
-        climbState.queueRopeEntry(rope, y);
-    }
-
-    public void clearRopeEntry() {
-        climbState.clearRopeEntry();
     }
 
     // Grind mode

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotClimbStateRuntime;
+
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -340,7 +342,7 @@ class BotManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setClimbingOnRope(new Rope(100, 40, 100, false));
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 40, 100, false));
 
         assertFalse(AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
                 entry,
@@ -364,7 +366,7 @@ class BotManagerTest {
 
         assertEquals(new Point(100, 100), bot.getPosition());
         assertFalse(entry.inAir());
-        assertFalse(entry.climbing());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
     }
 
     @Test

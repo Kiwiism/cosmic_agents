@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotClimbStateRuntime;
+
 import server.agents.integration.AgentBotMovementStateRuntime;
 
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
@@ -156,24 +158,24 @@ class AgentPhysicsEngineTest {
         entry.setInAir(true);
         entry.climbState().setClimbingFlag(true);
         entry.setCrouching(true);
-        entry.setClimbUpIntent(true);
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 7f);
         entry.setAirVelocityX(12);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 99);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 88);
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 123, -456);
         AgentBotMovementStateRuntime.setMoveDirection(entry, -1);
-        entry.setDownJumpPending(true);
-        entry.setDownJumpGracePeriodMs(350);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 350);
 
         AgentMovementPoseService.resetMotion(entry, new Point(10, 20));
 
         assertFalse(entry.inAir());
-        assertFalse(entry.climbing());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertFalse(entry.crouching());
-        assertFalse(entry.climbUpIntent());
-        assertFalse(entry.downJumpPending());
-        assertEquals(0L, entry.downJumpGracePeriodMs());
+        assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
+        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertEquals(10.0, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
         assertEquals(20.0, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
         assertEquals(0, AgentBotMovementStateRuntime.movementVelocityX(entry));
@@ -273,10 +275,10 @@ class AgentPhysicsEngineTest {
     @Test
     void shouldUseLadderAndRopeStancesFromClimbState() {
         BotEntry ladderEntry = new BotEntry(null, null, null);
-        ladderEntry.setClimbingOnRope(new Rope(100, 0, 40, true));
+        AgentBotClimbStateRuntime.setClimbingOnRope(ladderEntry, new Rope(100, 0, 40, true));
 
         BotEntry ropeEntry = new BotEntry(null, null, null);
-        ropeEntry.setClimbingOnRope(new Rope(100, 0, 40, false));
+        AgentBotClimbStateRuntime.setClimbingOnRope(ropeEntry, new Rope(100, 0, 40, false));
 
         assertEquals(CharacterStance.LADDER_STANCE, AgentMovementPoseService.resolveStance(ladderEntry));
         assertEquals(CharacterStance.ROPE_STANCE, AgentMovementPoseService.resolveStance(ropeEntry));
@@ -285,21 +287,21 @@ class AgentPhysicsEngineTest {
     @Test
     void shouldTickDownDownJumpGraceInsidePhysicsEngine() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setDownJumpGracePeriodMs(120);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 120);
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
-        assertEquals(70, entry.downJumpGracePeriodMs());
+        assertEquals(70, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertFalse(AgentAirbornePhysicsService.canLand(entry));
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
-        assertEquals(20, entry.downJumpGracePeriodMs());
+        assertEquals(20, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertFalse(AgentAirbornePhysicsService.canLand(entry));
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
-        assertEquals(0, entry.downJumpGracePeriodMs());
+        assertEquals(0, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertTrue(AgentAirbornePhysicsService.canLand(entry));
     }
 
@@ -322,8 +324,8 @@ class AgentPhysicsEngineTest {
 
         assertFalse(entry.inAir());
         assertFalse(entry.crouching());
-        assertFalse(entry.downJumpPending());
-        assertEquals(0L, entry.downJumpGracePeriodMs());
+        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
         assertEquals(new Point(50, 100), bot.getPosition());
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
     }
@@ -348,11 +350,11 @@ class AgentPhysicsEngineTest {
         Rope rope = new Rope(100, 0, 40, false);
         AgentRopeMovementService.attachToRope(entry, bot, rope, rope.bottomY());
 
-        entry.setClimbVerticalDirection(1);  // intent: climb down
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 1);  // intent: climb down
         AgentRopeMovementService.advanceClimb(entry, bot);
 
         assertTrue(entry.inAir());
-        assertFalse(entry.climbing());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 40), bot.getPosition());
     }
 
@@ -365,19 +367,19 @@ class AgentPhysicsEngineTest {
         Rope rope = new Rope(100, 0, 40, false);
         AgentRopeMovementService.attachToRope(entry, bot, rope, rope.topY());
 
-        assertTrue(entry.climbing());
+        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 1), bot.getPosition());
 
         AgentRopeMovementService.holdClimb(entry, bot);
 
-        assertTrue(entry.climbing());
+        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 1), bot.getPosition());
 
-        entry.setClimbVerticalDirection(-1);
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, -1);
         AgentRopeMovementService.advanceClimb(entry, bot);
 
         assertFalse(entry.inAir());
-        assertFalse(entry.climbing());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 0), bot.getPosition());
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
     }

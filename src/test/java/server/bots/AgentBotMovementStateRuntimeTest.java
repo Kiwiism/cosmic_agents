@@ -192,9 +192,9 @@ class AgentBotMovementStateRuntimeTest {
 
         entry.setInAir(true);
         entry.climbState().setClimbingFlag(true);
-        entry.setDownJumpPending(true);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
         entry.setCrouching(true);
-        entry.setDownJumpGracePeriodMs(100L);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 100L);
         AgentBotMovementStateRuntime.setWasMovingX(entry, true);
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 12, -3);
 

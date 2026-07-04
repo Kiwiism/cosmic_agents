@@ -4626,6 +4626,10 @@ Current physics correction:
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
   swim-jump cooldown route through `AgentBotSwimStateRuntime` and the Agent
   movement capability.
+- Climb, rope-entry, blocked-rope, rope cooldown, and down-jump wrappers have
+  been removed from `BotEntry`. Those reads/writes now route through
+  `AgentBotClimbStateRuntime` and `AgentBotMovementStateRuntime` over the
+  Agent-owned movement state objects.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

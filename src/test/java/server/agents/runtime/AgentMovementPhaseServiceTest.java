@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.integration.AgentBotClimbStateRuntime;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -19,7 +21,7 @@ class AgentMovementPhaseServiceTest {
         BotEntry entry = entry();
         Point target = new Point(10, 20);
         AgentBotMovementStateRuntime.setInAir(entry, true);
-        entry.setClimbingOnRope(new Rope(10, 0, 100, false));
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(10, 0, 100, false));
         List<String> calls = new ArrayList<>();
 
         AgentMovementPhaseService.tickMovementPhase(entry, target, true, hooks(calls, true));

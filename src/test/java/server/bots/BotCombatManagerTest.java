@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotClimbStateRuntime;
+
 import server.agents.integration.AgentBotMovementStateRuntime;
 
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
@@ -1294,8 +1296,8 @@ class BotCombatManagerTest {
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertTrue(entry.inAir());
-        assertFalse(entry.climbing());
-        assertTrue(entry.climbUpIntent());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
+        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(-Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelocityX());
         assertEquals(-3.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
@@ -1320,7 +1322,7 @@ class BotCombatManagerTest {
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertTrue(entry.inAir());
-        assertTrue(entry.climbUpIntent());
+        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
         assertEquals(Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelocityX());
@@ -1339,7 +1341,7 @@ class BotCombatManagerTest {
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertFalse(entry.inAir());
-        assertFalse(entry.climbing());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(0, entry.airVelocityX());
         assertEquals(0.0f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
@@ -1359,7 +1361,7 @@ class BotCombatManagerTest {
         assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
         assertTrue(AgentBotDeathStateRuntime.deadUntilMs(entry) > 0);
         assertFalse(entry.inAir());
-        assertFalse(entry.climbing());
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
     }
 
     @Test
