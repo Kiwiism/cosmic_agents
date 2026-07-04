@@ -12,6 +12,13 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Agent integration chat, status, utility, transfer, supply, report, control,
+  build, equipment, movement diagnostics, pending-action, social/report
+  delivery, movement-command, and session lifecycle adapters now resolve live
+  Agent/leader identity through `AgentBotRuntimeIdentityRuntime` instead of
+  direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
+  calls. `BotEntry` still hosts the Agent-owned identity state temporarily
+  while broader `BotEntry` signature migration continues.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
