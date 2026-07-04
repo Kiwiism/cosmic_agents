@@ -4561,6 +4561,10 @@ Current physics correction:
   `BotEntry`. These now route through `AgentBotPotionStateRuntime`,
   `AgentBotAmmoStateRuntime`, `AgentBotInventoryStateRuntime`, and their
   Agent-owned supply/inventory state objects.
+- Scheduled-task and script-task queue wrappers have been removed from
+  `BotEntry`. Scheduler handles route through `AgentScheduledTaskState` and
+  `AgentBotManagerSchedulerRuntime`; script task queue operations route through
+  `AgentBotScriptTaskStateRuntime` and `AgentScriptTaskQueueState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

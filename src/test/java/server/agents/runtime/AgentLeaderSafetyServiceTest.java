@@ -7,6 +7,7 @@ import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 import server.bots.BotEntry;
 import server.life.Monster;
@@ -85,20 +86,20 @@ class AgentLeaderSafetyServiceTest {
         AgentBotGrindTargetStateRuntime.setTarget(entry, livingMonster());
         AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
         AgentBotBuffStateRuntime.setEnabled(entry, true);
-        entry.addScriptTask(AgentTask.stop());
+        AgentBotScriptTaskStateRuntime.queueTask(entry, AgentTask.stop());
         AtomicInteger order = new AtomicInteger();
 
         AgentLeaderSafetyService.prepareInactiveIdle(
                 entry,
                 () -> {
                     assertEquals(0, order.getAndIncrement());
-                    entry.clearScriptTasks();
+                    AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
                 },
                 () -> assertEquals(1, order.getAndIncrement()),
                 () -> assertEquals(2, order.getAndIncrement()));
 
         assertEquals(3, order.get());
-        assertFalse(entry.hasScriptTasks());
+        assertFalse(AgentBotScriptTaskStateRuntime.hasQueuedTasks(entry));
         assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
         assertNull(AgentBotGrindTargetStateRuntime.target(entry));
         assertFalse(AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry));

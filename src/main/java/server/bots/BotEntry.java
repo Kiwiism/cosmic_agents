@@ -52,7 +52,6 @@ import server.agents.capabilities.trade.AgentOwnerGivenTradeItemState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.monitoring.AgentPathLogger;
-import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.runtime.AgentFormationOffsetState;
@@ -90,14 +89,6 @@ public class BotEntry {
     private final AgentAirshowState airshowState = new AgentAirshowState();
     private final AgentScheduledTaskState scheduledTaskState;
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
-
-    public boolean hasScheduledTask() {
-        return scheduledTaskState.hasScheduledTask();
-    }
-
-    public void cancelScheduledTask() {
-        scheduledTaskState.cancelScheduledTask();
-    }
 
     public AgentScheduledTaskState scheduledTaskState() {
         return scheduledTaskState;
@@ -649,38 +640,6 @@ public class BotEntry {
 
     public AgentScriptTaskQueueState scriptTaskQueueState() {
         return scriptTaskQueueState;
-    }
-
-    public int activityEpoch() {
-        return scriptTaskQueueState.activityEpoch();
-    }
-
-    public int bumpActivityEpoch() {
-        return scriptTaskQueueState.bumpActivityEpoch();
-    }
-
-    public void addScriptTask(AgentTask task) {
-        scriptTaskQueueState.addTask(task);
-    }
-
-    public AgentTask activeScriptTask() {
-        return scriptTaskQueueState.activeTask();
-    }
-
-    public void setActiveScriptTask(AgentTask activeScriptTask) {
-        scriptTaskQueueState.setActiveTask(activeScriptTask);
-    }
-
-    public AgentTask pollScriptTask() {
-        return scriptTaskQueueState.pollTask();
-    }
-
-    public boolean hasScriptTasks() {
-        return scriptTaskQueueState.hasTasks();
-    }
-
-    public void clearScriptTasks() {
-        scriptTaskQueueState.clearTasks();
     }
 
     public Point ownerAfkPosition() {
