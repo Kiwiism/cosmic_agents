@@ -4330,6 +4330,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while the Agent integration
   adapter delegates queue locking, enqueue/poll/peek, snapshots, sending-state,
   and idle checks to the Agent command module.
+- Scroll-reaction storage now lives in `AgentScrollReactionState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while load decay, cooldown,
+  streak, and pruning adapters use Agent social state types instead of a
+  BotEntry inner state class.
 
 Initial reconstruction order:
 

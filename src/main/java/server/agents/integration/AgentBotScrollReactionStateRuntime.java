@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.social.AgentScrollReactionState;
 import server.bots.BotEntry;
 
 public final class AgentBotScrollReactionStateRuntime {
@@ -44,8 +45,8 @@ public final class AgentBotScrollReactionStateRuntime {
 
         pruneStreaks(entry, nowMs, windowMs, pruneIntervalMs);
         long safeWindowMs = Math.max(1, windowMs);
-        BotEntry.ScrollReactionStreakState state = entry.scrollReactionStreaksByScroller()
-                .computeIfAbsent(scrollerId, ignored -> new BotEntry.ScrollReactionStreakState());
+        AgentScrollReactionState.StreakState state = entry.scrollReactionStreaksByScroller()
+                .computeIfAbsent(scrollerId, ignored -> new AgentScrollReactionState.StreakState());
         if (state.lastOutcomeAtMs == 0L
                 || nowMs - state.lastOutcomeAtMs > safeWindowMs
                 || state.lastWasSuccess != success) {

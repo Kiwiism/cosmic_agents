@@ -17,6 +17,7 @@ import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.capabilities.social.AgentScrollReactionState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.monitoring.AgentPathLogger;
@@ -38,12 +39,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class BotEntry {
-    public static final class ScrollReactionStreakState {
-        public int streak = 0;
-        public boolean lastWasSuccess = false;
-        public long lastOutcomeAtMs = 0L;
-    }
-
     final Character bot;
     volatile Character owner;
     volatile boolean following = false;
@@ -1820,11 +1815,7 @@ public class BotEntry {
     }
 
     boolean pendingLootOfferBotRequesting = false; // true = bot asked for owner's item
-    double recentScrollReactionLoad = 0.0;
-    long lastScrollReactionObservedAtMs = 0L;
-    long nextScrollReactionAtMs = 0L;
-    final Map<Integer, ScrollReactionStreakState> scrollReactionStreaksByScroller = new HashMap<>();
-    long nextScrollReactionStreakPruneAtMs = 0L;
+    private final AgentScrollReactionState scrollReactionState = new AgentScrollReactionState();
 
     // Path logging (debug)
     AgentPathLogger pathLogger = null;
@@ -1926,39 +1917,43 @@ public class BotEntry {
     }
 
     public double recentScrollReactionLoad() {
-        return recentScrollReactionLoad;
+        return scrollReactionState.recentLoad();
     }
 
     public void setRecentScrollReactionLoad(double recentScrollReactionLoad) {
-        this.recentScrollReactionLoad = recentScrollReactionLoad;
+        scrollReactionState.setRecentLoad(recentScrollReactionLoad);
     }
 
     public long lastScrollReactionObservedAtMs() {
-        return lastScrollReactionObservedAtMs;
+        return scrollReactionState.lastObservedAtMs();
     }
 
     public void setLastScrollReactionObservedAtMs(long lastScrollReactionObservedAtMs) {
-        this.lastScrollReactionObservedAtMs = lastScrollReactionObservedAtMs;
+        scrollReactionState.setLastObservedAtMs(lastScrollReactionObservedAtMs);
     }
 
     public long nextScrollReactionAtMs() {
-        return nextScrollReactionAtMs;
+        return scrollReactionState.nextReactionAtMs();
     }
 
     public void setNextScrollReactionAtMs(long nextScrollReactionAtMs) {
-        this.nextScrollReactionAtMs = nextScrollReactionAtMs;
+        scrollReactionState.setNextReactionAtMs(nextScrollReactionAtMs);
     }
 
-    public Map<Integer, ScrollReactionStreakState> scrollReactionStreaksByScroller() {
-        return scrollReactionStreaksByScroller;
+    public AgentScrollReactionState scrollReactionState() {
+        return scrollReactionState;
+    }
+
+    public Map<Integer, AgentScrollReactionState.StreakState> scrollReactionStreaksByScroller() {
+        return scrollReactionState.streaksByScroller();
     }
 
     public long nextScrollReactionStreakPruneAtMs() {
-        return nextScrollReactionStreakPruneAtMs;
+        return scrollReactionState.nextStreakPruneAtMs();
     }
 
     public void setNextScrollReactionStreakPruneAtMs(long nextScrollReactionStreakPruneAtMs) {
-        this.nextScrollReactionStreakPruneAtMs = nextScrollReactionStreakPruneAtMs;
+        scrollReactionState.setNextStreakPruneAtMs(nextScrollReactionStreakPruneAtMs);
     }
 
     public void setPendingGearPromptAt(long pendingGearPromptAt) {
