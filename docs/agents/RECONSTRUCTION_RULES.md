@@ -180,6 +180,10 @@ Recent reconstruction notes:
   `AgentMovementPoseService` and `AgentMovementSnapshotService` instead of
   calling `BotPhysicsEngine` directly. The services still delegate to the
   legacy physics body until the internals are migrated.
+- Physics kinematics and movement-report test callers now enter through
+  `AgentMovementKinematicsService` instead of calling `BotPhysicsEngine`
+  directly for walk step, climb step, jump force, jump height, and horizontal
+  reach calculations.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

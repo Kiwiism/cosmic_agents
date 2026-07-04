@@ -10,6 +10,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -317,7 +318,7 @@ class AgentNavigationGraphServiceTest {
         assertNotNull(ropeTransfer);
         assertEquals(1, ropeTransfer.fromRegionId);
         assertEquals(2, ropeTransfer.toRegionId);
-        assertEquals(BotPhysicsEngine.walkStep(map), ropeTransfer.launchStepX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map), ropeTransfer.launchStepX);
         assertEquals(targetRope.x(), ropeTransfer.endPoint.x);
         assertTrue(ropeTransfer.endPoint.y >= targetRope.topY() && ropeTransfer.endPoint.y <= targetRope.bottomY());
     }
@@ -525,7 +526,7 @@ class AgentNavigationGraphServiceTest {
         assertEquals(32, targetRegionId);
 
         BotPhysicsEngine.JumpLanding badLanding = BotPhysicsEngine.simulateJumpLanding(
-                map, badLaunch, BotPhysicsEngine.walkStep(map), graph.movementProfile);
+                map, badLaunch, AgentMovementKinematicsService.walkStep(map), graph.movementProfile);
         assertNotNull(badLanding);
         assertEquals(fromRegionId, graph.regionIdByFootholdId.getOrDefault(badLanding.foothold().getId(), -1),
                 "logged bad launch should bounce back to the original region");
@@ -546,7 +547,7 @@ class AgentNavigationGraphServiceTest {
     void shouldTrimJumpWindowThatFallsOffLandingPlatformWithMomentum() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(100000202);
         AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
-        int stepX = BotPhysicsEngine.walkStep(map, graph.movementProfile);
+        int stepX = AgentMovementKinematicsService.walkStep(map, graph.movementProfile);
         Point badLaunch = new Point(-1881, -1341);
         Point stableLaunch = new Point(-1898, -1341);
         int fromRegionId = graph.findRegionId(map, badLaunch);
@@ -610,7 +611,7 @@ class AgentNavigationGraphServiceTest {
         int fromRegionId = graph.findRegionId(mushroomShrine(), new Point(3146, 95));
         int targetRegionId = graph.regionIdByFootholdId.getOrDefault(264, -1);
         Point badLaunch = new Point(3145, 95);
-        int stepX = BotPhysicsEngine.walkStep(mushroomShrine(), profile);
+        int stepX = AgentMovementKinematicsService.walkStep(mushroomShrine(), profile);
 
         assertEquals(55, fromRegionId);
         assertEquals(48, targetRegionId);

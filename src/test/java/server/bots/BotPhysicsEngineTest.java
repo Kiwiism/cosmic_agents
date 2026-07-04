@@ -5,6 +5,8 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementSnapshotService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentMovementProfile;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -96,8 +98,8 @@ class BotPhysicsEngineTest {
         Rope rope = new Rope(100, 40, 160, false);
         map.addRope(rope);
 
-        Point nearPoint = new Point(rope.x() - BotPhysicsEngine.walkStep(map), rope.bottomY());
-        Point farPoint = new Point(rope.x() - BotPhysicsEngine.maxJumpHorizontalTravel(map) - 50, rope.bottomY());
+        Point nearPoint = new Point(rope.x() - AgentMovementKinematicsService.walkStep(map), rope.bottomY());
+        Point farPoint = new Point(rope.x() - AgentMovementKinematicsService.maxJumpHorizontalTravel(map, AgentMovementProfile.base()) - 50, rope.bottomY());
 
         assertTrue(BotPhysicsEngine.canReachRopeFromGround(map, nearPoint, rope));
         assertFalse(BotPhysicsEngine.canReachRopeFromGround(map, farPoint, rope));
@@ -109,11 +111,11 @@ class BotPhysicsEngineTest {
         Rope sourceRope = new Rope(0, 100, 200, false);
         map.addRope(sourceRope);
         Point jumpStart = new Point(sourceRope.x(), 160);
-        int stepX = BotPhysicsEngine.walkStep(map);
+        int stepX = AgentMovementKinematicsService.walkStep(map);
 
         Rope targetRope = null;
         Point ropeGrab = null;
-        for (int targetX = stepX; targetX <= BotPhysicsEngine.maxRopeJumpHorizontalTravel(map); targetX += stepX) {
+        for (int targetX = stepX; targetX <= AgentMovementKinematicsService.maxRopeJumpHorizontalTravel(map, AgentMovementProfile.base()); targetX += stepX) {
             Rope candidate = new Rope(targetX, 120, 220, false);
             Point candidateGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, jumpStart, stepX, candidate);
             if (candidateGrab != null) {
@@ -478,7 +480,7 @@ class BotPhysicsEngineTest {
     @Test
     void shouldKeepAirborneBotInsideMapSideBoundary() {
         Point start = new Point(376, 182);
-        int stepX = BotPhysicsEngine.walkStep(elliniaWeaponStore());
+        int stepX = AgentMovementKinematicsService.walkStep(elliniaWeaponStore());
 
         BotPhysicsEngine.JumpLanding landing =
                 BotPhysicsEngine.simulateJumpLanding(elliniaWeaponStore(), start, stepX);

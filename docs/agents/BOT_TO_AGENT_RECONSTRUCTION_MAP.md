@@ -152,6 +152,9 @@ Recent map updates:
   enter through `AgentMovementPoseService` and
   `AgentMovementSnapshotService`; the legacy physics body remains the
   implementation seam for later migration.
+- `BotPhysicsEngine` kinematics/report test callers now enter through
+  `AgentMovementKinematicsService`; the legacy physics body remains the
+  implementation seam until the calculation internals are moved.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

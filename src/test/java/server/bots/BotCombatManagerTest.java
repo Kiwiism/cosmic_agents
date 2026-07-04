@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -1477,14 +1478,14 @@ class BotCombatManagerTest {
     void shouldAllowDiagonalJumpAttackForCloseRangeTargetsSlightlyAbove() {
         assertTrue(AgentCombatRangePolicy.isTargetJumpable(
                 AgentMovementProfile.base(), true, new Point(100, 200), new Point(230, 135),
-                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
+                AgentMovementKinematicsService.calculateMaxJumpHeight(AgentMovementProfile.base())));
     }
 
     @Test
     void shouldRejectJumpAttackForNonCloseRangeRoutes() {
         assertFalse(AgentCombatRangePolicy.isTargetJumpable(
                 AgentMovementProfile.base(), false, new Point(100, 200), new Point(170, 135),
-                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
+                AgentMovementKinematicsService.calculateMaxJumpHeight(AgentMovementProfile.base())));
     }
 
     @Test
@@ -1565,10 +1566,10 @@ class BotCombatManagerTest {
     void shouldRejectJumpAttackWhenTargetIsTooHighOrTooFar() {
         assertFalse(AgentCombatRangePolicy.isTargetJumpable(
                 AgentMovementProfile.base(), true, new Point(100, 200), new Point(241, 135),
-                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
+                AgentMovementKinematicsService.calculateMaxJumpHeight(AgentMovementProfile.base())));
         assertFalse(AgentCombatRangePolicy.isTargetJumpable(
                 AgentMovementProfile.base(), true, new Point(100, 200), new Point(170, 60),
-                BotPhysicsEngine.calculateMaxJumpHeight(AgentMovementProfile.base())));
+                AgentMovementKinematicsService.calculateMaxJumpHeight(AgentMovementProfile.base())));
     }
 
     @Test

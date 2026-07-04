@@ -7,6 +7,7 @@ import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfileService;
@@ -271,12 +272,12 @@ class BotMovementManagerTest {
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Bot within one climbStep of the anchor — natural step would overshoot bottomY.
-        int dyWithin = BotPhysicsEngine.climbStepPerTick() - 2;
+        int dyWithin = AgentMovementKinematicsService.climbStepPerTick() - 2;
         assertTrue(AgentClimbMovementService.shouldSnapToClimbTarget(
                 entry, new Point(2352, rope.bottomY()), dyWithin));
         // dy >= climbStep: the natural step lands at-or-inside the (point) window. Old
         // behavior — no snap, let the integrator advance.
-        int dyAtOrPastStep = BotPhysicsEngine.climbStepPerTick();
+        int dyAtOrPastStep = AgentMovementKinematicsService.climbStepPerTick();
         assertFalse(AgentClimbMovementService.shouldSnapToClimbTarget(
                 entry, new Point(2352, rope.bottomY()), dyAtOrPastStep));
     }
@@ -403,7 +404,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 
         assertTrue(entry.inAir, "grounded follow movement should jump over a mob blocking the walk lane");
-        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelX);
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(250, 100));
 
@@ -536,7 +537,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(110, 100));
 
         assertTrue(entry.inAir, "graph warmup fallback should jump small same-level gaps instead of freezing");
-        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelX);
     }
 
     @Test
@@ -560,7 +561,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(90, 60));
 
         assertTrue(entry.inAir, "fallback should jump when a wall blocks walking but a platform is reachable");
-        assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelX);
     }
 
     @Test
@@ -598,7 +599,7 @@ class BotMovementManagerTest {
         assertEquals(0, stoppedStep,
                 "follow should stop anywhere inside STOP_DIST instead of micro-throttling to an exact point");
 
-        int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        int walkStep = AgentMovementKinematicsService.walkStep(map, entry.movementProfile);
         int followStep = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(90, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
@@ -620,7 +621,7 @@ class BotMovementManagerTest {
         entry.movementProfile = new AgentMovementProfile(140, 100);
         entry.observedOwnerStepX = 4;
 
-        int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
+        int walkStep = AgentMovementKinematicsService.walkStep(map, entry.movementProfile);
         int step = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(60, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
