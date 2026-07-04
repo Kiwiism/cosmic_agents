@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.partyquest.kpq.AgentKpqState;
 import server.bots.BotEntry;
 
 /**
@@ -19,50 +20,51 @@ public final class AgentBotPqRuntime {
     }
 
     public static boolean kpqStage5Claimed(BotEntry entry) {
-        return entry.kpq.stage5Claimed;
+        return state(entry).stage5Claimed();
     }
 
     public static void markKpqStage5Claimed(BotEntry entry) {
-        entry.kpq.stage5Claimed = true;
+        state(entry).markStage5Claimed();
     }
 
     public static int kpqCouponTarget(BotEntry entry) {
-        return entry.kpq.couponTarget;
+        return state(entry).couponTarget();
     }
 
     public static int kpqStageState(BotEntry entry) {
-        return entry.kpq.state;
+        return state(entry).state();
     }
 
     public static void setKpqStageState(BotEntry entry, int state) {
-        entry.kpq.state = state;
+        state(entry).setState(state);
     }
 
     public static boolean kpqStageStateIs(BotEntry entry, int state) {
-        return entry.kpq.state == state;
+        return state(entry).stateIs(state);
     }
 
     public static boolean kpqStageStateAtLeast(BotEntry entry, int state) {
-        return entry.kpq.state >= state;
+        return state(entry).stateAtLeast(state);
     }
 
     public static void setKpqCouponTarget(BotEntry entry, int target) {
-        entry.kpq.couponTarget = target;
+        state(entry).setCouponTarget(target);
     }
 
     public static int kpqLastReportedCoupons(BotEntry entry) {
-        return entry.kpq.lastReportedCoupons;
+        return state(entry).lastReportedCoupons();
     }
 
     public static void setKpqLastReportedCoupons(BotEntry entry, int coupons) {
-        entry.kpq.lastReportedCoupons = coupons;
+        state(entry).setLastReportedCoupons(coupons);
     }
 
     public static void resetKpqStage1(BotEntry entry, int idleState) {
-        entry.kpq.state = idleState;
-        entry.kpq.couponTarget = -1;
-        entry.kpq.waitUntilMs = 0;
-        entry.kpq.lastReportedCoupons = 0;
+        state(entry).resetStage1(idleState);
         AgentBotScriptTaskStateRuntime.resetScript(entry, null);
+    }
+
+    private static AgentKpqState state(BotEntry entry) {
+        return entry.kpqState();
     }
 }

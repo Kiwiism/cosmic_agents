@@ -37,7 +37,7 @@ class AgentBotPqRuntimeTest {
     @Test
     void resetsKpqStage5ClaimedState() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.kpq.stage5Claimed = true;
+        AgentBotPqRuntime.markKpqStage5Claimed(entry);
 
         assertTrue(AgentBotPqRuntime.kpqStage5Claimed(entry));
 
@@ -53,7 +53,7 @@ class AgentBotPqRuntimeTest {
     @Test
     void readsKpqCouponTargetThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.kpq.couponTarget = 25;
+        AgentBotPqRuntime.setKpqCouponTarget(entry, 25);
 
         assertEquals(25, AgentBotPqRuntime.kpqCouponTarget(entry));
     }
@@ -61,7 +61,7 @@ class AgentBotPqRuntimeTest {
     @Test
     void readsKpqStageStateThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.kpq.state = 2;
+        AgentBotPqRuntime.setKpqStageState(entry, 2);
 
         assertEquals(2, AgentBotPqRuntime.kpqStageState(entry));
     }

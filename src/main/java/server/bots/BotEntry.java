@@ -45,6 +45,7 @@ import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetState;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.capabilities.partyquest.kpq.AgentKpqState;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.capabilities.trade.AgentPendingTradeSequenceState;
 import server.agents.capabilities.trade.AgentManualTradeState;
@@ -1470,10 +1471,14 @@ public class BotEntry {
     }
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
-    public server.agents.capabilities.partyquest.kpq.AgentKpqState kpq = new server.agents.capabilities.partyquest.kpq.AgentKpqState();
+    private final AgentKpqState kpqState = new AgentKpqState();
 
     public void resetKpqStage5Claimed() {
-        kpq.stage5Claimed = false;
+        kpqState.clearStage5Claimed();
+    }
+
+    public AgentKpqState kpqState() {
+        return kpqState;
     }
 
     public AgentScriptRuntimeState script = new AgentScriptRuntimeState();

@@ -69,6 +69,7 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.StatEffect;
 import server.TimerManager;
@@ -923,7 +924,7 @@ class BotManagerTest {
         MapleMap map = spy(createEmptyTestMap(910000040));
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.kpq.state = 4; // KPQ stage 1 SECOND_WALK: coupons should no longer be looted.
+        AgentBotPqRuntime.setKpqStageState(entry, 4); // KPQ stage 1 SECOND_WALK: coupons should no longer be looted.
         MapItem coupon = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 1, 100), 4001007, 0, 0);
         int couponObjectId = coupon.getObjectId();
         doReturn(List.of(coupon)).when(map).getDroppedItems();

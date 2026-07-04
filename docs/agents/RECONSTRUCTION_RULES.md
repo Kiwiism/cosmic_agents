@@ -4536,6 +4536,10 @@ Current physics correction:
 - Reply-channel state now lives in `AgentReplyChannelState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while map/party/whisper reply
   routing and null-to-map normalization route through the Agent command state.
+- KPQ runtime state now lives behind `AgentKpqState` methods. `BotEntry`
+  temporarily hosts the Agent-owned state object, while stage, coupon target,
+  wait timer, reported coupon count, and stage-5 claim state route through the
+  Agent party-quest runtime adapter.
 
 Initial reconstruction order:
 
