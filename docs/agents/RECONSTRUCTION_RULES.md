@@ -4755,6 +4755,11 @@ Current physics correction:
   identity through `AgentBotRuntimeIdentityRuntime` for job/level checks and
   face-expression side effects. Dialogue classification and welcome-back
   behavior remain unchanged.
+- Movement chat callbacks now resolve Agent and leader identity through
+  `AgentBotRuntimeIdentityRuntime` before farm/patrol/move-here targets,
+  follow/grind supply checks, fidget expressions, and greeting status checks.
+  Existing delays, commands, replies, and position-copy behavior remain
+  unchanged.
 
 Initial reconstruction order:
 

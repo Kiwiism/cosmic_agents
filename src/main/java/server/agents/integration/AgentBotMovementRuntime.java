@@ -1,11 +1,11 @@
 package server.agents.integration;
 
+import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.bots.BotEntry;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.agents.capabilities.dialogue.AgentEmote;
 
 import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +22,8 @@ public final class AgentBotMovementRuntime {
         return new AgentChatMovementFlow.MovementCallbacks() {
             @Override
             public boolean farmHere() {
-                Point dest = entry.owner() != null ? new Point(entry.owner().getPosition()) : null;
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                Point dest = owner != null ? new Point(owner.getPosition()) : null;
                 if (dest == null) {
                     return false;
                 }
@@ -36,7 +37,8 @@ public final class AgentBotMovementRuntime {
 
             @Override
             public boolean patrol() {
-                Point ownerPos = entry.owner() != null ? new Point(entry.owner().getPosition()) : null;
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                Point ownerPos = owner != null ? new Point(owner.getPosition()) : null;
                 if (ownerPos == null) {
                     return false;
                 }
@@ -50,7 +52,8 @@ public final class AgentBotMovementRuntime {
 
             @Override
             public boolean moveHere() {
-                Point dest = entry.owner() != null ? new Point(entry.owner().getPosition()) : null;
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                Point dest = owner != null ? new Point(owner.getPosition()) : null;
                 if (dest == null) {
                     return false;
                 }
@@ -66,7 +69,7 @@ public final class AgentBotMovementRuntime {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentBotMovementReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
-                    AgentPotionService.checkPotShareOnModeStart(entry, entry.bot());
+                    AgentPotionService.checkPotShareOnModeStart(entry, bot(entry));
                     AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 750,
                             () -> AgentBotMovementCommandRuntime.followOwner(entry));
                 });
@@ -76,10 +79,10 @@ public final class AgentBotMovementRuntime {
             public void grind() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry);
-                    AgentBotMovementReplyRuntime.replyNow(entry, AgentPotionService.grindStartMessage(entry.bot()));
+                    AgentBotMovementReplyRuntime.replyNow(entry, AgentPotionService.grindStartMessage(bot(entry)));
                     AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 750, () -> {
                         AgentBotMovementCommandRuntime.grind(entry);
-                        AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());
+                        AgentBotMovementStatusRuntime.checkMovementStatus(entry, bot(entry));
                     });
                 });
             }
@@ -97,7 +100,7 @@ public final class AgentBotMovementRuntime {
             @Override
             public void fidget() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(250, 500, () -> {
-                    entry.bot().changeFaceExpression(AgentBotMovementStatusRuntime.randomFidgetExpression());
+                    bot(entry).changeFaceExpression(AgentBotMovementStatusRuntime.randomFidgetExpression());
                     AgentBotFidgetSideEffects.maybeStartSocialFidget(entry);
                 });
             }
@@ -105,12 +108,16 @@ public final class AgentBotMovementRuntime {
             @Override
             public void greeting() {
                 AgentBotMovementSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    entry.bot().changeFaceExpression(AgentEmote.HAPPY.getValue());
+                    bot(entry).changeFaceExpression(AgentEmote.HAPPY.getValue());
                     AgentBotFidgetSideEffects.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                     AgentBotMovementReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
-                    AgentBotMovementStatusRuntime.checkMovementStatus(entry, entry.bot());
+                    AgentBotMovementStatusRuntime.checkMovementStatus(entry, bot(entry));
                 });
             }
         };
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }
