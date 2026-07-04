@@ -133,7 +133,8 @@ Recent map updates:
   `BotMovementManager.buildFhIndex`.
 - Walk-step kinematics moved to `AgentMovementKinematicsService`; Agent
   navigation graph/probe and movement report runtime callers no longer depend
-  on `BotMovementManager.walkStep`.
+  on `BotMovementManager.walkStep`, and the old bot compatibility delegates
+  have been removed.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

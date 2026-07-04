@@ -148,8 +148,9 @@ Recent reconstruction notes:
 - Walk-step kinematics entry ownership moved to
   `server.agents.capabilities.movement.AgentMovementKinematicsService`. Agent
   navigation graph/probe and movement report runtime callers now enter through
-  the Agent kinematics service; `BotMovementManager.walkStep` remains a
-  compatibility delegate while deeper physics simulation still migrates.
+  the Agent kinematics service; the old `BotMovementManager.walkStep`
+  compatibility delegates have been removed. Deeper physics simulation still
+  migrates in later slices.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

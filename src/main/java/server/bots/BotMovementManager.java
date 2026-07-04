@@ -93,14 +93,6 @@ public class BotMovementManager {
         return AgentMovementTimers.delayAfterCurrentTick(durationMs);
     }
 
-    static int walkStep(MapleMap map) {
-        return AgentMovementKinematicsService.walkStep(map);
-    }
-
-    public static int walkStep(MapleMap map, AgentMovementProfile profile) {
-        return AgentMovementKinematicsService.walkStep(map, profile);
-    }
-
     static int velocityFromDeltaX(double deltaX) {
         return AgentGroundPhysicsService.velocityFromDeltaX(deltaX);
     }

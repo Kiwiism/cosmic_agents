@@ -5,6 +5,7 @@ import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.trade.AgentOfferService;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 
 import server.agents.integration.AgentBotReplyRuntime;
@@ -288,7 +289,7 @@ class AgentChatRuntimeParityTest {
                 "speed 120% jump 110%",
                 String.format(Locale.ROOT, "walk %.1f px/s, %d px/tick, climb %d, hforce %.1f",
                         profile.walkVelocityPxs(),
-                        BotMovementManager.walkStep(map, profile),
+                        AgentMovementKinematicsService.walkStep(map, profile),
                         BotPhysicsEngine.climbStepPerTick(),
                         profile.hForcePxs()),
                 String.format(Locale.ROOT, "jump %.1f, rope %.1f, max %.1f px, reach %d/%d px",
