@@ -718,66 +718,6 @@ public class BotEntry {
         return shopState;
     }
 
-    public boolean shopVisitPending() {
-        return shopState.visitPending();
-    }
-
-    public boolean shopSequenceActive() {
-        return shopState.sequenceActive();
-    }
-
-    public Point shopNpcPos() {
-        return shopState.npcPosition();
-    }
-
-    public Point shopTargetPos() {
-        return shopState.targetPosition();
-    }
-
-    public Point activeShopTargetPos() {
-        return shopState.activeTargetPosition();
-    }
-
-    public int shopApproachDelayMs() {
-        return shopState.approachDelayMs();
-    }
-
-    public void setShopApproachDelayMs(int delayMs) {
-        shopState.setApproachDelayMs(delayMs);
-    }
-
-    public long shopVisitStartedAtMs() {
-        return shopState.visitStartedAtMs();
-    }
-
-    public long shopSequenceStartedAtMs() {
-        return shopState.sequenceStartedAtMs();
-    }
-
-    public boolean shopSellTrashPending() {
-        return shopState.sellTrashPending();
-    }
-
-    public void setShopSellTrashPending(boolean pending) {
-        shopState.setSellTrashPending(pending);
-    }
-
-    public void startShopVisit(Point npcPosition, Point targetPosition, int approachDelayMs, long startedAtMs) {
-        shopState.startVisit(npcPosition, targetPosition, approachDelayMs, startedAtMs);
-    }
-
-    public void markShopSequenceActive(long startedAtMs) {
-        shopState.markSequenceActive(startedAtMs);
-    }
-
-    public boolean stuckNearShopNpc(Point botPosition, long nowMs, long fallbackMs, int moveTolerancePx,
-                                    int arriveDistance) {
-        return shopState.stuckNearNpc(botPosition, nowMs, fallbackMs, moveTolerancePx, arriveDistance);
-    }
-
-    public void clearShopState() {
-        shopState.clear();
-    }
     // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
     // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
     private final AgentScriptTaskQueueState scriptTaskQueueState = new AgentScriptTaskQueueState();

@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Shop transition compatibility wrappers were removed from `BotEntry`.
+  Shop visit/sequence callers already enter through
+  `AgentBotShopStateRuntime`, backed by the Agent-owned `AgentShopState`.
 - Pending loot-offer and bot trade-retry compatibility wrappers were removed
   from `BotEntry`. Offer/trade callers now use
   `AgentBotOfferStateRuntime` and `AgentBotPendingTradeStateRuntime` over the
