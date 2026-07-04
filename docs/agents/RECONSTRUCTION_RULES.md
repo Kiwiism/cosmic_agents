@@ -4434,6 +4434,9 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while last tick
   type/time, heartbeat time, and next follow-idle movement check time route
   through Agent runtime state.
+- Tick failure window metadata now lives in `AgentTickFailureState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while failure
+  count and failure-window start time route through Agent runtime state.
 
 Initial reconstruction order:
 

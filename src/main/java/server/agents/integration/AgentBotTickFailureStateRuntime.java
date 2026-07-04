@@ -10,18 +10,18 @@ public final class AgentBotTickFailureStateRuntime {
     }
 
     public static int failureCount(BotEntry entry) {
-        return entry.tickFailureCount();
+        return entry.tickFailureState().failureCount();
     }
 
     public static long windowStartedAtMs(BotEntry entry) {
-        return entry.tickFailureWindowStartedAtMs();
+        return entry.tickFailureState().windowStartedAtMs();
     }
 
     public static int recordFailure(BotEntry entry, long nowMs, long windowMs) {
         if (nowMs - windowStartedAtMs(entry) > windowMs) {
-            entry.resetTickFailureWindow(nowMs);
+            entry.tickFailureState().resetWindow(nowMs);
         }
-        return entry.incrementTickFailureCount();
+        return entry.tickFailureState().incrementFailureCount();
     }
 
     public static boolean hasFailures(BotEntry entry) {
@@ -29,6 +29,6 @@ public final class AgentBotTickFailureStateRuntime {
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearTickFailures();
+        entry.tickFailureState().clear();
     }
 }

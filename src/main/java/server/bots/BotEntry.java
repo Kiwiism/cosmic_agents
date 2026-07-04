@@ -47,6 +47,7 @@ import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 import server.agents.runtime.AgentOwnerMotionState;
+import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
 
 import java.awt.*;
@@ -1565,6 +1566,7 @@ public class BotEntry {
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
     private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
+    private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
     private final AgentTickState tickState = new AgentTickState();
 
     // Cached movement state shared across ticks
@@ -1797,6 +1799,10 @@ public class BotEntry {
         return tickState;
     }
 
+    public AgentTickFailureState tickFailureState() {
+        return tickFailureState;
+    }
+
     public AgentPathLogger pathLogger() {
         return navigationDebugState.pathLogger();
     }
@@ -1957,30 +1963,24 @@ public class BotEntry {
         tickState.setNextFollowIdleMovementCheckAtMs(nextFollowIdleMovementCheckAtMs);
     }
 
-    int tickFailureCount = 0;
-    long tickFailureWindowStartedAtMs = 0L;
-
     public int tickFailureCount() {
-        return tickFailureCount;
+        return tickFailureState.failureCount();
     }
 
     public long tickFailureWindowStartedAtMs() {
-        return tickFailureWindowStartedAtMs;
+        return tickFailureState.windowStartedAtMs();
     }
 
     public void resetTickFailureWindow(long startedAtMs) {
-        tickFailureWindowStartedAtMs = startedAtMs;
-        tickFailureCount = 0;
+        tickFailureState.resetWindow(startedAtMs);
     }
 
     public int incrementTickFailureCount() {
-        tickFailureCount++;
-        return tickFailureCount;
+        return tickFailureState.incrementFailureCount();
     }
 
     public void clearTickFailures() {
-        tickFailureCount = 0;
-        tickFailureWindowStartedAtMs = 0L;
+        tickFailureState.clear();
     }
 
     // Stuck detection & unstuck
