@@ -4399,6 +4399,11 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while visit/sequence flags,
   NPC and target positions, approach delay, sell-trash flag, timeout windows,
   and stuck-near-NPC fallback tracking route through the Agent shop capability.
+- Buff automation/debug storage now lives in `AgentBuffState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while consumable-buff
+  enablement, cheap/max mode, scan/action timing, consumable action summary,
+  and skill-buff debug action summary route through the Agent combat
+  capability.
 
 Initial reconstruction order:
 

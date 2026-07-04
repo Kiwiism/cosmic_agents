@@ -10,19 +10,18 @@ public final class AgentBotSkillBuffDebugStateRuntime {
     }
 
     public static long lastActionAtMs(BotEntry entry) {
-        return entry.lastSkillBuffActionAtMs();
+        return entry.buffState().lastSkillActionAtMs();
     }
 
     public static String lastActionSummary(BotEntry entry) {
-        return entry.lastSkillBuffActionSummary();
+        return entry.buffState().lastSkillActionSummary();
     }
 
     public static long lastActionAgeMs(BotEntry entry, long nowMs) {
-        long lastActionAtMs = lastActionAtMs(entry);
-        return lastActionAtMs > 0 ? Math.max(0L, nowMs - lastActionAtMs) : -1L;
+        return entry.buffState().lastSkillActionAgeMs(nowMs);
     }
 
     public static void rememberAction(BotEntry entry, long atMs, String summary) {
-        entry.rememberSkillBuffAction(atMs, summary);
+        entry.buffState().rememberSkillAction(atMs, summary);
     }
 }

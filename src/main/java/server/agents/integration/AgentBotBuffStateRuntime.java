@@ -10,11 +10,11 @@ public final class AgentBotBuffStateRuntime {
     }
 
     public static boolean enabled(BotEntry entry) {
-        return entry.buffConsumablesEnabled();
+        return entry.buffState().consumablesEnabled();
     }
 
     public static void setEnabled(BotEntry entry, boolean enabled) {
-        entry.setBuffConsumablesEnabled(enabled);
+        entry.buffState().setConsumablesEnabled(enabled);
     }
 
     public static void disable(BotEntry entry) {
@@ -22,34 +22,34 @@ public final class AgentBotBuffStateRuntime {
     }
 
     public static boolean cheapMode(BotEntry entry) {
-        return entry.buffCheapMode();
+        return entry.buffState().cheapMode();
     }
 
     public static void setCheapMode(BotEntry entry, boolean cheapMode) {
-        entry.setBuffCheapMode(cheapMode);
+        entry.buffState().setCheapMode(cheapMode);
     }
 
     public static void resetScan(BotEntry entry) {
-        entry.resetLastBuffScan();
+        entry.buffState().resetLastConsumableScan();
     }
 
     public static boolean scanDue(BotEntry entry, long nowMs, long intervalMs) {
-        return nowMs - entry.lastBuffScanMs() >= intervalMs;
+        return entry.buffState().consumableScanDue(nowMs, intervalMs);
     }
 
     public static void markScanned(BotEntry entry, long nowMs) {
-        entry.setLastBuffScanMs(nowMs);
+        entry.buffState().setLastConsumableScanMs(nowMs);
     }
 
     public static long lastActionAtMs(BotEntry entry) {
-        return entry.lastBuffActionAtMs();
+        return entry.buffState().lastConsumableActionAtMs();
     }
 
     public static String lastActionSummary(BotEntry entry) {
-        return entry.lastBuffActionSummary();
+        return entry.buffState().lastConsumableActionSummary();
     }
 
     public static void noteDecision(BotEntry entry, long nowMs, String summary) {
-        entry.setLastBuffAction(nowMs, summary);
+        entry.buffState().rememberConsumableAction(nowMs, summary);
     }
 }

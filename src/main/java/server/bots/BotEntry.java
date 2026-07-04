@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
+import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentMobTouchState;
 
@@ -1466,53 +1467,51 @@ public class BotEntry {
     int patrolMapId = -1;
     Point patrolWanderTarget = null;
 
-    // Buff consumables (toggleable; cheap = weakest buff of each type, max = strongest)
-    boolean buffConsumablesEnabled = false;
-    boolean buffCheapMode          = true;
+    private final AgentBuffState buffState = new AgentBuffState();
     boolean proactiveUpgradeOffers = true;
-    long    lastBuffScanMs         = 0;
-    long    lastBuffActionAtMs     = 0L;
-    String  lastBuffActionSummary  = "no buff scans yet";
+
+    public AgentBuffState buffState() {
+        return buffState;
+    }
 
     public long lastBuffScanMs() {
-        return lastBuffScanMs;
+        return buffState.lastConsumableScanMs();
     }
 
     public void setLastBuffScanMs(long lastBuffScanMs) {
-        this.lastBuffScanMs = lastBuffScanMs;
+        buffState.setLastConsumableScanMs(lastBuffScanMs);
     }
 
     public long lastBuffActionAtMs() {
-        return lastBuffActionAtMs;
+        return buffState.lastConsumableActionAtMs();
     }
 
     public String lastBuffActionSummary() {
-        return lastBuffActionSummary;
+        return buffState.lastConsumableActionSummary();
     }
 
     public void setLastBuffAction(long atMs, String summary) {
-        this.lastBuffActionAtMs = atMs;
-        this.lastBuffActionSummary = summary;
+        buffState.rememberConsumableAction(atMs, summary);
     }
 
     public boolean buffConsumablesEnabled() {
-        return buffConsumablesEnabled;
+        return buffState.consumablesEnabled();
     }
 
     public void setBuffConsumablesEnabled(boolean buffConsumablesEnabled) {
-        this.buffConsumablesEnabled = buffConsumablesEnabled;
+        buffState.setConsumablesEnabled(buffConsumablesEnabled);
     }
 
     public boolean buffCheapMode() {
-        return buffCheapMode;
+        return buffState.cheapMode();
     }
 
     public void setBuffCheapMode(boolean buffCheapMode) {
-        this.buffCheapMode = buffCheapMode;
+        buffState.setCheapMode(buffCheapMode);
     }
 
     public void resetLastBuffScan() {
-        lastBuffScanMs = 0;
+        buffState.resetLastConsumableScan();
     }
 
     public void setProactiveUpgradeOffers(boolean proactiveUpgradeOffers) {
@@ -1523,21 +1522,16 @@ public class BotEntry {
         return proactiveUpgradeOffers;
     }
 
-    // Skill buff tracking (always enabled; tracks last decision for debug)
-    private long lastSkillBuffActionAtMs = 0L;
-    private String lastSkillBuffActionSummary = "no skill buff checks yet";
-
     public long lastSkillBuffActionAtMs() {
-        return lastSkillBuffActionAtMs;
+        return buffState.lastSkillActionAtMs();
     }
 
     public String lastSkillBuffActionSummary() {
-        return lastSkillBuffActionSummary;
+        return buffState.lastSkillActionSummary();
     }
 
     public void rememberSkillBuffAction(long atMs, String summary) {
-        lastSkillBuffActionAtMs = atMs;
-        lastSkillBuffActionSummary = summary;
+        buffState.rememberSkillAction(atMs, summary);
     }
 
     // Party-quest state (one slot per PQ type; null = not in that PQ)
