@@ -12,6 +12,7 @@ import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundMotion;
 import server.agents.capabilities.movement.AgentGroundPhysicsService;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentJumpLanding;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMotionTimerService;
@@ -21,6 +22,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementSnapshotService;
+import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
 import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -1129,7 +1131,7 @@ public final class BotPhysicsEngine {
     }
 
     public static Point simulateRopeJumpGrab(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
-        return simulateRopeGrab(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
+        return AgentJumpProbeService.simulateRopeJumpGrab(map, from, stepX, targetRope, profile);
     }
 
     static Point simulateGroundJumpRopeGrab(MapleMap map, Point from, int stepX, Rope targetRope) {
@@ -1137,11 +1139,11 @@ public final class BotPhysicsEngine {
     }
 
     public static Point simulateGroundJumpRopeGrab(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
-        return simulateRopeGrab(map, from, -jumpForcePerTick(profile), stepX, targetRope, 0L);
+        return AgentJumpProbeService.simulateGroundJumpRopeGrab(map, from, stepX, targetRope, profile);
     }
 
     public static Point simulateDownJumpRopeGrab(MapleMap map, Point from, Rope targetRope) {
-        return simulateRopeGrab(map, from, -downJumpForcePerTick(), 0, targetRope, cfg.DOWN_JUMP_GRACE_MS);
+        return AgentJumpProbeService.simulateDownJumpRopeGrab(map, from, targetRope);
     }
 
     static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
@@ -1161,7 +1163,7 @@ public final class BotPhysicsEngine {
     }
 
     public static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return simulateLanding(map, from, -jumpForcePerTick(profile), stepX, 0L);
+        return fromAgentLanding(AgentJumpProbeService.simulateJumpLanding(map, from, stepX, profile));
     }
 
     public static PostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
@@ -1169,22 +1171,16 @@ public final class BotPhysicsEngine {
                                                                    int stepX,
                                                                    AgentMovementProfile profile,
                                                                    int postLandingTicks) {
-        JumpLanding landing = simulateJumpLanding(map, from, stepX, profile);
-        if (landing == null) {
-            return null;
-        }
-        return simulatePostLandingGroundTicks(map, landing, Integer.compare(stepX, 0), profile, postLandingTicks);
+        return fromAgentPostLanding(AgentJumpProbeService.simulateJumpLandingWithPostLandingTicks(
+                map, from, stepX, profile, postLandingTicks));
     }
 
     public static JumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
-        if (!canStartDownJump(map, from)) {
-            return null;
-        }
-        return simulateLanding(map, from, -downJumpForcePerTick(), 0, cfg.DOWN_JUMP_GRACE_MS);
+        return fromAgentLanding(AgentJumpProbeService.simulateDownJumpLanding(map, from));
     }
 
     public static JumpLanding simulateFallLanding(MapleMap map, Point from, int stepX) {
-        return simulateLanding(map, from, 0f, stepX, 0L);
+        return fromAgentLanding(AgentJumpProbeService.simulateFallLanding(map, from, stepX));
     }
 
     static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
@@ -1192,7 +1188,7 @@ public final class BotPhysicsEngine {
     }
 
     public static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return simulateLanding(map, from, -ropeJumpForcePerTick(profile), stepX, 0L);
+        return fromAgentLanding(AgentJumpProbeService.simulateRopeJumpLanding(map, from, stepX, profile));
     }
 
     static int estimateJumpLandingTimeMs(MapleMap map, Point from, int stepX) {
@@ -1200,15 +1196,17 @@ public final class BotPhysicsEngine {
     }
 
     static int estimateJumpLandingTimeMs(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return estimateLandingTimeMs(map, from, -jumpForcePerTick(profile), stepX, 0L);
+        JumpLanding landing = simulateJumpLanding(map, from, stepX, profile);
+        return landing != null ? landing.timeMs() : Integer.MAX_VALUE;
     }
 
     static int estimateDownJumpLandingTimeMs(MapleMap map, Point from) {
-        return estimateLandingTimeMs(map, from, -downJumpForcePerTick(), 0, cfg.DOWN_JUMP_GRACE_MS);
+        JumpLanding landing = simulateDownJumpLanding(map, from);
+        return landing != null ? landing.timeMs() : Integer.MAX_VALUE;
     }
 
     public static int estimateFallLandingTimeMs(MapleMap map, Point from, int stepX) {
-        return estimateLandingTimeMs(map, from, 0f, stepX, 0L);
+        return AgentJumpProbeService.estimateFallLandingTimeMs(map, from, stepX);
     }
 
     static int estimateRopeJumpLandingTimeMs(MapleMap map, Point from, int stepX) {
@@ -1216,7 +1214,7 @@ public final class BotPhysicsEngine {
     }
 
     public static int estimateRopeJumpLandingTimeMs(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return estimateLandingTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, 0L);
+        return AgentJumpProbeService.estimateRopeJumpLandingTimeMs(map, from, stepX, profile);
     }
 
     static int estimateGroundJumpRopeGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope) {
@@ -1224,11 +1222,11 @@ public final class BotPhysicsEngine {
     }
 
     public static int estimateGroundJumpRopeGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
-        return estimateRopeGrabTimeMs(map, from, -jumpForcePerTick(profile), stepX, targetRope, 0L);
+        return AgentJumpProbeService.estimateGroundJumpRopeGrabTimeMs(map, from, stepX, targetRope, profile);
     }
 
     public static int estimateDownJumpRopeGrabTimeMs(MapleMap map, Point from, Rope targetRope) {
-        return estimateRopeGrabTimeMs(map, from, -downJumpForcePerTick(), 0, targetRope, cfg.DOWN_JUMP_GRACE_MS);
+        return AgentJumpProbeService.estimateDownJumpRopeGrabTimeMs(map, from, targetRope);
     }
 
     static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope) {
@@ -1236,7 +1234,24 @@ public final class BotPhysicsEngine {
     }
 
     public static int estimateRopeJumpGrabTimeMs(MapleMap map, Point from, int stepX, Rope targetRope, AgentMovementProfile profile) {
-        return estimateRopeGrabTimeMs(map, from, -ropeJumpForcePerTick(profile), stepX, targetRope, 0L);
+        return AgentJumpProbeService.estimateRopeJumpGrabTimeMs(map, from, stepX, targetRope, profile);
+    }
+
+    private static JumpLanding fromAgentLanding(AgentJumpLanding landing) {
+        if (landing == null) {
+            return null;
+        }
+        return new JumpLanding(landing.point(), landing.foothold(),
+                landing.incomingDeltaX(), landing.incomingDeltaY(),
+                landing.timeMs() / cfg.TICK_MS);
+    }
+
+    private static PostLandingJump fromAgentPostLanding(AgentPostLandingJump landing) {
+        if (landing == null) {
+            return null;
+        }
+        return new PostLandingJump(fromAgentLanding(landing.landing()), landing.finalPoint(),
+                landing.finalFoothold(), landing.lostGround());
     }
 
     private static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos) {

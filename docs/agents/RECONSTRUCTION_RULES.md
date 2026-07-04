@@ -202,6 +202,10 @@ Recent reconstruction notes:
   launch, force/friction stepping, blocked-step handling, walk-off fall launch,
   and packet velocity updates preserve the legacy algorithm while
   `BotPhysicsEngine` keeps only compatibility delegates for those methods.
+- Jump probe simulation now lives in `AgentJumpProbeService`. Jump, rope-jump,
+  fall, down-jump, walk-off, rope-grab, and post-landing probes preserve the
+  same physics/collision rules while `BotPhysicsEngine` converts Agent DTOs
+  back into temporary legacy DTOs for callers not yet migrated.
 - Down-jump launch state now lives in
   `AgentQueuedMovementActionService`, with shared airborne setup in
   `AgentAirborneLaunchService`. `BotPhysicsEngine.beginDownJump` remains only

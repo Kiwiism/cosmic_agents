@@ -200,6 +200,11 @@ Recent map updates:
   force/friction stepping, blocked-step handling, walk-off fall launch, and
   packet-visible ground movement velocity. `BotPhysicsEngine.syncAndDetectGround`
   and `applyGroundMotion` are compatibility delegates.
+- Jump/rope/fall probe simulation ownership moved to `AgentJumpProbeService`.
+  Agent movement now owns jump landing, rope-jump landing, fall landing,
+  down-jump landing, walk-off landing, rope-grab simulation, and probe time
+  estimates. `BotPhysicsEngine` keeps compatibility DTO adapters for legacy
+  callers and tests.
 - Down-jump launch ownership moved to `AgentQueuedMovementActionService`.
   `BotPhysicsEngine.beginDownJump` is now a compatibility delegate while the
   Agent service applies the same down-jump kick and grace-period values from

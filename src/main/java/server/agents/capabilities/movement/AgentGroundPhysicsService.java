@@ -81,12 +81,12 @@ public final class AgentGroundPhysicsService {
         }
     }
 
-    private static GroundStepResult simulateGroundMotion(MapleMap map,
-                                                         Point currentPosition,
-                                                         Foothold foothold,
-                                                         int desiredDirection,
-                                                         AgentGroundTravelState state,
-                                                         AgentMovementProfile profile) {
+    static GroundStepResult simulateGroundMotion(MapleMap map,
+                                                 Point currentPosition,
+                                                 Foothold foothold,
+                                                 int desiredDirection,
+                                                 AgentGroundTravelState state,
+                                                 AgentMovementProfile profile) {
         if (map == null || currentPosition == null || foothold == null || state == null) {
             return new GroundStepResult(currentPosition, foothold, state, 0, 0, true);
         }
@@ -113,7 +113,7 @@ public final class AgentGroundPhysicsService {
                 stepX, velocityFromDeltaX(displaced.physX() - currentPosition.x), false);
     }
 
-    private static AgentGroundTravelState initialGroundTravelState(Point position) {
+    static AgentGroundTravelState initialGroundTravelState(Point position) {
         return new AgentGroundTravelState(position.x, 0.0, 0.0);
     }
 
@@ -192,12 +192,12 @@ public final class AgentGroundPhysicsService {
         AgentAirborneLaunchService.launchAirborne(entry, position, 0f, airVelocityX, false);
     }
 
-    private record GroundStepResult(Point point,
-                                    Foothold foothold,
-                                    AgentGroundTravelState state,
-                                    int stepX,
-                                    int velocityX,
-                                    boolean lostGround) {
+    record GroundStepResult(Point point,
+                            Foothold foothold,
+                            AgentGroundTravelState state,
+                            int stepX,
+                            int velocityX,
+                            boolean lostGround) {
     }
 
     private record GroundStepCounter(int steps, double carryMs) {
