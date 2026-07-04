@@ -4,11 +4,6 @@ import client.Character;
 import constants.game.ExpTable;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -24,10 +19,15 @@ import java.util.LinkedHashMap;
 public final class AgentSituationBuilder {
     private AgentSituationBuilder() {}
 
-    public static String build(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (entry == null || bot == null) return "";
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+    public static String build(Character agent,
+                               MapleMap map,
+                               boolean grinding,
+                               boolean following,
+                               boolean farmAnchorInCurrentMap,
+                               String lastOwnerCommand,
+                               long lastOwnerCommandAtMs,
+                               long nowMs) {
+        if (agent == null) return "";
         StringBuilder sb = new StringBuilder(256);
         sb.append("[Where you are now]\n");
 
@@ -43,10 +43,10 @@ public final class AgentSituationBuilder {
             }
         }
 
-        sb.append("Status: ").append(describeActivity(entry)).append('\n');
+        sb.append("Status: ").append(describeActivity(grinding, following, farmAnchorInCurrentMap)).append('\n');
 
-        int lvl = bot.getLevel();
-        int pct = expPercent(bot, lvl);
+        int lvl = agent.getLevel();
+        int pct = expPercent(agent, lvl);
         sb.append("Level ").append(lvl);
         if (pct >= 0) sb.append(", ").append(pct).append("% to next");
         sb.append('\n');
@@ -54,28 +54,25 @@ public final class AgentSituationBuilder {
         String mobs = describeMobs(map);
         if (!mobs.isEmpty()) sb.append("Mobs around: ").append(mobs).append('\n');
 
-        String party = describeParty(bot);
+        String party = describeParty(agent);
         if (!party.isEmpty()) sb.append("Party: ").append(party).append('\n');
 
-        String lastOwnerCommand = AgentBotActivityStateRuntime.lastOwnerCommand(entry);
         if (lastOwnerCommand != null && !lastOwnerCommand.isBlank()) {
             sb.append("Last command from owner: \"").append(lastOwnerCommand).append('"')
-                    .append(" (").append(ago(System.currentTimeMillis()
-                            - AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry)))
+                    .append(" (").append(ago(nowMs - lastOwnerCommandAtMs))
                     .append(" ago)\n");
         }
         return sb.toString();
     }
 
-    private static String describeActivity(BotEntry entry) {
-        if (AgentBotModeStateRuntime.grinding(entry)) {
-            MapleMap m = AgentBotRuntimeIdentityRuntime.botMap(entry);
-            if (m != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, m.getId())) {
+    private static String describeActivity(boolean grinding, boolean following, boolean farmAnchorInCurrentMap) {
+        if (grinding) {
+            if (farmAnchorInCurrentMap) {
                 return "grinding (camping this spot)";
             }
             return "grinding";
         }
-        if (AgentBotModeStateRuntime.following(entry)) return "following owner";
+        if (following) return "following owner";
         return "standing around, no orders";
     }
 

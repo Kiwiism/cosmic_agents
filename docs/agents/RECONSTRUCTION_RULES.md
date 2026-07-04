@@ -4788,6 +4788,11 @@ Current physics correction:
   and situation text instead of `BotEntry`. The prompt wording, recent-memory
   rendering, and situation snapshot remain unchanged; `AgentLlmReplyService`
   still adapts from the temporary runtime shell.
+- LLM situation formatting now accepts resolved Agent/map/activity values
+  instead of `BotEntry`. `AgentLlmReplyService` still reads mode, farm-anchor,
+  and last-command state through temporary runtime adapters, preserving the
+  existing "grinding", "following owner", map, party, mob, level, and last
+  command text.
 
 Initial reconstruction order:
 

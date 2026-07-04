@@ -71,6 +71,28 @@ class AgentLlmReplyServiceTest {
         assertEquals(AgentSenderRelation.OWNER, AgentSenderRelation.resolve(bot, owner, sender));
     }
 
+    @Test
+    void AgentSituationBuilderUsesResolvedSnapshotValues() {
+        Character bot = mock(Character.class);
+        when(bot.getLevel()).thenReturn(30);
+        when(bot.getExp()).thenReturn(0);
+        when(bot.getParty()).thenReturn(null);
+
+        String situation = AgentSituationBuilder.build(
+                bot,
+                null,
+                true,
+                false,
+                true,
+                "pots",
+                1_000L,
+                13_000L);
+
+        assertTrue(situation.contains("Status: grinding (camping this spot)"));
+        assertTrue(situation.contains("Level 30"));
+        assertTrue(situation.contains("Last command from owner: \"pots\" (12s ago)"));
+    }
+
     private static BotEntry newBotEntry() throws Exception {
         return newBotEntry(mock(Character.class), mock(Character.class));
     }

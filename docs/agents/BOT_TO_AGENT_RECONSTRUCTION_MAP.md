@@ -32,6 +32,9 @@ Recent map updates:
 - `AgentPromptBuilder` no longer imports `BotEntry`; prompt text is built from
   resolved Agent identity/name and situation text supplied by
   `AgentLlmReplyService`.
+- `AgentSituationBuilder` no longer imports `BotEntry`; situation text is built
+  from resolved Agent/map/activity snapshot values supplied by
+  `AgentLlmReplyService`.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

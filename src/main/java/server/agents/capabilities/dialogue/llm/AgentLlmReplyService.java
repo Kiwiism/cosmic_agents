@@ -6,10 +6,14 @@ import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotLlmRuntime;
+import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.agents.commands.AgentReplyChannel;
+import server.maps.MapleMap;
 
 import java.util.List;
 import java.util.Locale;
@@ -114,12 +118,22 @@ public final class AgentLlmReplyService {
                 ? AgentMemoryStore.loadUncompacted(botName)
                 : loadRecentMemory(botId, System.currentTimeMillis());
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        long now = System.currentTimeMillis();
         String system = AgentPromptBuilder.buildSystem(agent, relation, senderName);
         String prompt = AgentPromptBuilder.buildPrompt(
                 AgentBotRuntimeIdentityRuntime.hasBot(entry)
                         ? AgentBotRuntimeIdentityRuntime.botName(entry)
                         : "bot",
-                AgentSituationBuilder.build(entry),
+                AgentSituationBuilder.build(
+                        agent,
+                        map,
+                        AgentBotModeStateRuntime.grinding(entry),
+                        AgentBotModeStateRuntime.following(entry),
+                        map != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, map.getId()),
+                        AgentBotActivityStateRuntime.lastOwnerCommand(entry),
+                        AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry),
+                        now),
                 senderName,
                 message,
                 summary,
