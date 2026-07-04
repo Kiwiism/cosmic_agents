@@ -194,6 +194,10 @@ Recent map updates:
   `BotPhysicsEngine.beginDownJump` is now a compatibility delegate while the
   Agent service applies the same down-jump kick and grace-period values from
   `AgentMovementPhysicsConfig`.
+- Ground jump, climb-up jump, jump-off-rope, and rope-transfer jump launch
+  ownership moved to `AgentRopeMovementService`. The swim-map ground-jump
+  special case preserves its legacy swim impulse, cooldown, and packet velocity
+  behavior; the `BotPhysicsEngine` entry points are compatibility delegates.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement

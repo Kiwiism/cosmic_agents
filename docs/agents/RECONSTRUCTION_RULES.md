@@ -198,6 +198,10 @@ Recent reconstruction notes:
   as a temporary compatibility delegate; the Agent path preserves the same
   down-jump velocity and grace-period constants through
   `AgentMovementPhysicsConfig`.
+- Ground jump, climb-up jump, jump-off-rope, and rope-transfer launch state now
+  live in `AgentRopeMovementService`. The swim-map ground-jump branch stays
+  behavior-identical, including the zeroed air X velocity, swim impulse, swim
+  cooldown, and unconverted packet movement velocity.
 - Movement timer countdown implementation moved into `AgentMotionTimerService`.
   `BotPhysicsEngine.tickMotionTimers` remains a temporary delegate while
   physics callers migrate.

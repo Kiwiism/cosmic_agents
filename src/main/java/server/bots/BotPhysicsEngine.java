@@ -569,57 +569,19 @@ public final class BotPhysicsEngine {
     }
 
     public static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        // In swim maps, physics owns horizontal motion — drop any committed
-        // airVelX/fixedAirArc the caller passed so swim integrator can steer.
-        // Movement layer expresses *intent only* in water.
-        if (bot.getMap() != null && bot.getMap().isSwim()) {
-            airVelX = 0;
-            // Ground jump in water uses the regular jump impulse, but once the
-            // character leaves the foothold the value is in swim px/s units.
-            // Do not route this through launchAirborne's packet velocity
-            // conversion: that path expects px/tick and emits a huge one-tick
-            // velocity when given swim px/s.
-            Point position = bot.getPosition();
-            AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-            AgentBotMovementStateRuntime.setInAir(entry, true);
-            AgentBotSwimStateRuntime.setSwimming(entry, true);
-            AgentBotMovementStateRuntime.setCrouching(entry, false);
-            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-            AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
-                    -profileOrBase(AgentBotMovementStateRuntime.movementProfile(entry)).jumpSpeedPxs());
-            stopGroundMotion(entry);
-            AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
-            AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-            AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-            AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, false);
-            // The first impulse off a foothold is the small ground jump. A
-            // mid-water swim burst may follow later, but not on the next swim
-            // tick just because the steering target is still above the bot.
-            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry,
-                    System.currentTimeMillis() + cfg.SWIM_JUMP_COOLDOWN_MS);
-            setMovementVelocity(entry, 0, Math.round(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
-            syncCharacterState(entry);
-            return;
-        }
-        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
+        AgentRopeMovementService.beginGroundJump(entry, bot, airVelX);
     }
 
     public static void beginClimbUpJump(BotEntry entry, Character bot, int airVelX) {
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        launchAirborne(entry, bot, bot.getPosition(), -jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
+        AgentRopeMovementService.beginClimbUpJump(entry, bot, airVelX);
     }
 
     public static void beginJumpOffRope(BotEntry entry, Character bot, int airVelX) {
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, false);
+        AgentRopeMovementService.beginJumpOffRope(entry, bot, airVelX);
     }
 
     public static void beginRopeTransferJump(BotEntry entry, Character bot, Rope sourceRope, int airVelX) {
-        AgentBotClimbStateRuntime.setBlockedRopeGrab(entry, sourceRope);
-        launchAirborne(entry, bot, bot.getPosition(), -ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)), airVelX, true);
+        AgentRopeMovementService.beginRopeTransferJump(entry, bot, sourceRope, airVelX);
     }
 
     public static void beginDownJump(BotEntry entry, Character bot) {
