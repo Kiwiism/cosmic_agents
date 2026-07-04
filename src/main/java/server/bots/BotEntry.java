@@ -17,6 +17,7 @@ import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.social.AgentScrollReactionState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
@@ -1124,15 +1125,19 @@ public class BotEntry {
     // Bot replies are routed to this channel until the next command changes it.
     volatile AgentReplyChannel replyChannel = AgentReplyChannel.MAP;
 
+    private final AgentPendingActionState pendingActionState = new AgentPendingActionState();
+
+    public AgentPendingActionState pendingActionState() {
+        return pendingActionState;
+    }
+
     // Pending two-step action
-    private String pendingAction = null;
-    public String pendingAction() { return pendingAction; }
-    public void setPendingAction(String pendingAction) { this.pendingAction = pendingAction; }
-    public void clearPendingAction() { this.pendingAction = null; }
-    private String pendingDropCategory = null;
-    public String pendingDropCategory() { return pendingDropCategory; }
-    public void setPendingDropCategory(String pendingDropCategory) { this.pendingDropCategory = pendingDropCategory; }
-    public void clearPendingDropCategory() { this.pendingDropCategory = null; }
+    public String pendingAction() { return pendingActionState.pendingAction(); }
+    public void setPendingAction(String pendingAction) { pendingActionState.setPendingAction(pendingAction); }
+    public void clearPendingAction() { pendingActionState.clearPendingAction(); }
+    public String pendingDropCategory() { return pendingActionState.pendingDropCategory(); }
+    public void setPendingDropCategory(String pendingDropCategory) { pendingActionState.setPendingDropCategory(pendingDropCategory); }
+    public void clearPendingDropCategory() { pendingActionState.clearPendingDropCategory(); }
     Item pendingLootOfferItem = null;
     public Item pendingLootOfferItem() { return pendingLootOfferItem; }
     int pendingLootOfferRecipientId = 0;

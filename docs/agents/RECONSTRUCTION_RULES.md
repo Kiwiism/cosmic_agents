@@ -4353,6 +4353,10 @@ Current physics correction:
 - Formation offset storage now lives in `AgentFormationOffsetState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while per-Agent follow offset
   reads/writes route through the Agent runtime state.
+- Pending chat action storage now lives in `AgentPendingActionState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while pending
+  action and pending drop-category reads/writes route through the Agent
+  dialogue capability.
 
 Initial reconstruction order:
 
