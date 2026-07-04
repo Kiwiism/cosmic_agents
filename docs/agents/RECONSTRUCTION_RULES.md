@@ -4453,6 +4453,9 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while pending
   category, items, recipient, meso, timers, flags, share budget, and restore
   slot mapping route through the Agent trade capability.
+- Owner-given trade item tracking now lives in `AgentOwnerGivenTradeItemState`.
+  `BotEntry` temporarily hosts the Agent-owned identity set while trade
+  completion and trade reset route through the Agent trade capability.
 
 Initial reconstruction order:
 

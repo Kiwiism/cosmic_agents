@@ -37,6 +37,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.capabilities.trade.AgentPendingTradeSequenceState;
 import server.agents.capabilities.trade.AgentManualTradeState;
+import server.agents.capabilities.trade.AgentOwnerGivenTradeItemState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.monitoring.AgentPathLogger;
@@ -57,10 +58,8 @@ import server.agents.runtime.AgentTickState;
 import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1548,12 +1547,14 @@ public class BotEntry {
 
     public AgentScriptRuntimeState script = new AgentScriptRuntimeState();
 
-    // Equips received from the owner during the current trade session.
-    // Cleared when that trade session finishes or is cancelled.
-    Set<Item> ownerGivenItems = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final AgentOwnerGivenTradeItemState ownerGivenTradeItemState = new AgentOwnerGivenTradeItemState();
+
+    public AgentOwnerGivenTradeItemState ownerGivenTradeItemState() {
+        return ownerGivenTradeItemState;
+    }
 
     public Set<Item> ownerGivenItems() {
-        return ownerGivenItems;
+        return ownerGivenTradeItemState.items();
     }
 
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
