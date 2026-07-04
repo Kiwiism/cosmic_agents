@@ -1481,7 +1481,11 @@ public class BotEntry {
         return kpqState;
     }
 
-    public AgentScriptRuntimeState script = new AgentScriptRuntimeState();
+    private final AgentScriptRuntimeState scriptRuntimeState = new AgentScriptRuntimeState();
+
+    public AgentScriptRuntimeState scriptRuntimeState() {
+        return scriptRuntimeState;
+    }
 
     private final AgentOwnerGivenTradeItemState ownerGivenTradeItemState = new AgentOwnerGivenTradeItemState();
 

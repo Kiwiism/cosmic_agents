@@ -4540,6 +4540,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while stage, coupon target,
   wait timer, reported coupon count, and stage-5 claim state route through the
   Agent party-quest runtime adapter.
+- Script runtime progress state now lives behind `AgentScriptRuntimeState`
+  methods. `BotEntry` temporarily hosts the Agent-owned state object, while
+  script id, step index, entered flag, wait timer, and integer scratch values
+  route through the Agent script/task runtime adapter.
 
 Initial reconstruction order:
 

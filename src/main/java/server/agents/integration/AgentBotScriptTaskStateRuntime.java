@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import server.bots.BotEntry;
 import server.agents.plans.AgentTask;
+import server.agents.plans.AgentScriptRuntimeState;
 
 import java.awt.Point;
 
@@ -74,7 +75,7 @@ public final class AgentBotScriptTaskStateRuntime {
     }
 
     public static String scriptId(BotEntry entry) {
-        return entry.script.scriptId;
+        return scriptState(entry).scriptId();
     }
 
     public static boolean hasScriptId(BotEntry entry) {
@@ -82,39 +83,42 @@ public final class AgentBotScriptTaskStateRuntime {
     }
 
     public static void resetScript(BotEntry entry, String scriptId) {
-        entry.script.reset(scriptId);
+        scriptState(entry).reset(scriptId);
     }
 
     public static int scriptStepIndex(BotEntry entry) {
-        return entry.script.stepIndex;
+        return scriptState(entry).stepIndex();
     }
 
     public static boolean scriptStepEntered(BotEntry entry) {
-        return entry.script.stepEntered;
+        return scriptState(entry).stepEntered();
     }
 
     public static void markScriptStepEntered(BotEntry entry) {
-        entry.script.stepEntered = true;
+        scriptState(entry).markStepEntered();
     }
 
     public static void advanceScriptStep(BotEntry entry) {
-        entry.script.stepIndex++;
-        entry.script.stepEntered = false;
+        scriptState(entry).advanceStep();
     }
 
     public static int scriptInt(BotEntry entry, String key) {
-        return entry.script.ints.getOrDefault(key, 0);
+        return scriptState(entry).intValue(key);
     }
 
     public static void setScriptInt(BotEntry entry, String key, int value) {
-        entry.script.ints.put(key, value);
+        scriptState(entry).setIntValue(key, value);
     }
 
     public static void waitScriptUntil(BotEntry entry, long untilMs) {
-        entry.script.waitUntilMs = untilMs;
+        scriptState(entry).waitUntil(untilMs);
     }
 
     public static boolean scriptWaitDone(BotEntry entry, long nowMs) {
-        return nowMs >= entry.script.waitUntilMs;
+        return scriptState(entry).waitDone(nowMs);
+    }
+
+    private static AgentScriptRuntimeState scriptState(BotEntry entry) {
+        return entry.scriptRuntimeState();
     }
 }
