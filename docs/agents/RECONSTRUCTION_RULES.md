@@ -4477,6 +4477,9 @@ Current physics correction:
   `AgentGrindWanderState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while free-grind fallback direction reads/writes route through Agent
   runtime state.
+- Ranged retreat hold storage now lives in `AgentRetreatHoldState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while anti-oscillation retreat
+  position and expiry reads/writes route through Agent runtime state.
 
 Initial reconstruction order:
 

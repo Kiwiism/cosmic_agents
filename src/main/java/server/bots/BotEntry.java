@@ -58,6 +58,7 @@ import server.agents.runtime.AgentMovementPhysicsCacheState;
 import server.agents.runtime.AgentMovementStuckState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentPatrolState;
+import server.agents.runtime.AgentRetreatHoldState;
 import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
 
@@ -687,8 +688,7 @@ public class BotEntry {
         ammoSupplyState.setWarnSent(ammoWarnSent);
     }
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
-    private long retreatHoldUntilMs = 0L; // hysteresis: lock the local retreat goal for a short window
-    private Point retreatHoldPos = null;  // the locked retreat target — reused while hold is active
+    private final AgentRetreatHoldState retreatHoldState = new AgentRetreatHoldState();
     private int breakoutDirection = 0;    // -1/+1 committed escape side while surrounded, 0 = not breaking out
     private long breakoutUntilMs = 0L;    // hard safety timeout for the surround-breakout commitment
     private Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
@@ -707,26 +707,20 @@ public class BotEntry {
         degenAttackDone = false;
     }
 
-    public Point retreatHoldPos() {
-        return retreatHoldPos == null ? null : new Point(retreatHoldPos);
-    }
+    public AgentRetreatHoldState retreatHoldState() { return retreatHoldState; }
 
-    public long retreatHoldUntilMs() {
-        return retreatHoldUntilMs;
-    }
+    public Point retreatHoldPos() { return retreatHoldState.position(); }
 
-    public boolean hasRetreatHold() {
-        return retreatHoldPos != null;
-    }
+    public long retreatHoldUntilMs() { return retreatHoldState.untilMs(); }
+
+    public boolean hasRetreatHold() { return retreatHoldState.hasHold(); }
 
     public void setRetreatHold(Point position, long untilMs) {
-        retreatHoldPos = position == null ? null : new Point(position);
-        retreatHoldUntilMs = position == null ? 0L : untilMs;
+        retreatHoldState.set(position, untilMs);
     }
 
     public void clearRetreatHold() {
-        retreatHoldUntilMs = 0L;
-        retreatHoldPos = null;
+        retreatHoldState.clear();
     }
 
     public int breakoutDirection() {
