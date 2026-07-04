@@ -4495,6 +4495,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while job/level
   signature matching, attack/AoE/heal skill ids, buff ids, and summon-skill
   buckets route through the Agent combat capability.
+- Combat buff/support automation state now lives in `AgentCombatBuffState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while skill-buff
+  toggles, support-heal toggles, rebuff cooldowns, and support-buff cooldowns
+  route through the Agent combat capability.
 
 Initial reconstruction order:
 

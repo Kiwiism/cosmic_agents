@@ -10,42 +10,42 @@ public final class AgentBotCombatBuffStateRuntime {
     }
 
     public static boolean skillBuffsEnabled(BotEntry entry) {
-        return entry.skillBuffsEnabled();
+        return entry.combatBuffState().skillBuffsEnabled();
     }
 
     public static void setSkillBuffsEnabled(BotEntry entry, boolean enabled) {
-        entry.setSkillBuffsEnabled(enabled);
+        entry.combatBuffState().setSkillBuffsEnabled(enabled);
     }
 
     public static boolean supportHealsEnabled(BotEntry entry) {
-        return entry.supportHealsEnabled();
+        return entry.combatBuffState().supportHealsEnabled();
     }
 
     public static void setSupportHealsEnabled(BotEntry entry, boolean enabled) {
-        entry.setSupportHealsEnabled(enabled);
+        entry.combatBuffState().setSupportHealsEnabled(enabled);
     }
 
     public static long nextBuffAt(BotEntry entry, int skillId) {
-        return entry.nextBuffAt(skillId);
+        return entry.combatBuffState().nextBuffAt(skillId);
     }
 
     public static void ensureNextBuffAt(BotEntry entry, int skillId, long nextAt) {
-        entry.ensureNextBuffAt(skillId, nextAt);
+        entry.combatBuffState().ensureNextBuffAt(skillId, nextAt);
     }
 
     public static void setNextBuffAt(BotEntry entry, int skillId, long nextAt) {
-        entry.setNextBuffAt(skillId, nextAt);
+        entry.combatBuffState().setNextBuffAt(skillId, nextAt);
     }
 
     public static long nextSupportBuffAt(BotEntry entry, int skillId) {
-        return entry.nextSupportBuffAt(skillId);
+        return entry.combatBuffState().nextSupportBuffAt(skillId);
     }
 
     public static boolean supportBuffOnCooldown(BotEntry entry, int skillId, long nowMs) {
-        return nowMs < nextSupportBuffAt(entry, skillId);
+        return entry.combatBuffState().supportBuffOnCooldown(skillId, nowMs);
     }
 
     public static void setNextSupportBuffAt(BotEntry entry, int skillId, long nextAt) {
-        entry.setNextSupportBuffAt(skillId, nextAt);
+        entry.combatBuffState().setNextSupportBuffAt(skillId, nextAt);
     }
 }

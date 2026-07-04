@@ -8,6 +8,7 @@ import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
+import server.agents.capabilities.combat.AgentCombatBuffState;
 import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatSkillCacheState;
@@ -69,7 +70,6 @@ import server.agents.runtime.AgentTickState;
 import java.awt.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -545,46 +545,46 @@ public class BotEntry {
     }
 
     private final AgentCombatSkillCacheState combatSkillCacheState = new AgentCombatSkillCacheState();
-    private final Map<Integer, Long> nextBuffAt = new HashMap<>();
-    private final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
-    long nextSupportHealAt = 0L;
-    private boolean supportHealsEnabled = true;
-    private boolean skillBuffsEnabled = true;
+    private final AgentCombatBuffState combatBuffState = new AgentCombatBuffState();
 
     public boolean supportHealsEnabled() {
-        return supportHealsEnabled;
+        return combatBuffState.supportHealsEnabled();
     }
 
     public void setSupportHealsEnabled(boolean supportHealsEnabled) {
-        this.supportHealsEnabled = supportHealsEnabled;
+        combatBuffState.setSupportHealsEnabled(supportHealsEnabled);
     }
 
     public boolean skillBuffsEnabled() {
-        return skillBuffsEnabled;
+        return combatBuffState.skillBuffsEnabled();
     }
 
     public void setSkillBuffsEnabled(boolean skillBuffsEnabled) {
-        this.skillBuffsEnabled = skillBuffsEnabled;
+        combatBuffState.setSkillBuffsEnabled(skillBuffsEnabled);
     }
 
     public long nextBuffAt(int skillId) {
-        return nextBuffAt.getOrDefault(skillId, 0L);
+        return combatBuffState.nextBuffAt(skillId);
     }
 
     public void ensureNextBuffAt(int skillId, long nextAt) {
-        nextBuffAt.putIfAbsent(skillId, nextAt);
+        combatBuffState.ensureNextBuffAt(skillId, nextAt);
     }
 
     public void setNextBuffAt(int skillId, long nextAt) {
-        nextBuffAt.put(skillId, nextAt);
+        combatBuffState.setNextBuffAt(skillId, nextAt);
     }
 
     public long nextSupportBuffAt(int skillId) {
-        return nextSupportBuffAt.getOrDefault(skillId, 0L);
+        return combatBuffState.nextSupportBuffAt(skillId);
     }
 
     public void setNextSupportBuffAt(int skillId, long nextAt) {
-        nextSupportBuffAt.put(skillId, nextAt);
+        combatBuffState.setNextSupportBuffAt(skillId, nextAt);
+    }
+
+    public AgentCombatBuffState combatBuffState() {
+        return combatBuffState;
     }
 
     public boolean skillCacheMatches(int jobId, int level, int signature) {
