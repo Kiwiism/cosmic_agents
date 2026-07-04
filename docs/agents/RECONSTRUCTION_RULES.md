@@ -4637,6 +4637,10 @@ Current physics correction:
 - Fidget state wrappers have been removed from `BotEntry`. Fidget mode,
   trigger, timing, movement directions, visual timing, idle roll scheduling, and
   active-state mutation now route through `AgentBotFidgetStateRuntime`.
+- Grind target and grind retarget-search wrappers have been removed from
+  `BotEntry`. Active target state now routes through
+  `AgentBotGrindTargetStateRuntime`, and search cadence routes through
+  `AgentBotGrindSearchStateRuntime`.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

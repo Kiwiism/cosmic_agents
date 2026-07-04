@@ -24,7 +24,6 @@ import server.agents.capabilities.movement.AgentSwimIntentState;
 import server.agents.capabilities.movement.AgentMovementProfileState;
 
 import client.Character;
-import server.life.Monster;
 import server.maps.MapItem;
 import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentReplyChannelState;
@@ -173,30 +172,6 @@ public class BotEntry {
     // Grind mode
     private final AgentCombatCooldownState combatCooldownState = new AgentCombatCooldownState();
     private final AgentGrindTargetState grindTargetState = new AgentGrindTargetState();
-
-    public Monster grindTarget() {
-        return grindTargetState.target();
-    }
-
-    public void setGrindTarget(Monster grindTarget) {
-        grindTargetState.setTarget(grindTarget);
-    }
-
-    public void clearGrindTarget() {
-        grindTargetState.clearTarget();
-    }
-
-    public long nextGrindTargetSearchAtMs() {
-        return grindTargetState.nextSearchAtMs();
-    }
-
-    public void setNextGrindTargetSearchAtMs(long nextGrindTargetSearchAtMs) {
-        grindTargetState.setNextSearchAtMs(nextGrindTargetSearchAtMs);
-    }
-
-    public void clearNextGrindTargetSearchAtMs() {
-        grindTargetState.clearNextSearchAtMs();
-    }
 
     public AgentGrindTargetState grindTargetState() {
         return grindTargetState;
