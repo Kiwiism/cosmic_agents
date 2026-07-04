@@ -48,6 +48,7 @@ import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentFarmAnchorState;
+import server.agents.runtime.AgentBreakoutState;
 import server.agents.runtime.AgentGrindTargetState;
 import server.agents.runtime.AgentGrindWanderState;
 import server.agents.runtime.AgentLeaderActivityState;
@@ -689,8 +690,7 @@ public class BotEntry {
     }
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
     private final AgentRetreatHoldState retreatHoldState = new AgentRetreatHoldState();
-    private int breakoutDirection = 0;    // -1/+1 committed escape side while surrounded, 0 = not breaking out
-    private long breakoutUntilMs = 0L;    // hard safety timeout for the surround-breakout commitment
+    private final AgentBreakoutState breakoutState = new AgentBreakoutState();
     private Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
     private long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
     private final AgentGrindWanderState grindWanderState = new AgentGrindWanderState();
@@ -723,26 +723,20 @@ public class BotEntry {
         retreatHoldState.clear();
     }
 
-    public int breakoutDirection() {
-        return breakoutDirection;
-    }
+    public AgentBreakoutState breakoutState() { return breakoutState; }
 
-    public long breakoutUntilMs() {
-        return breakoutUntilMs;
-    }
+    public int breakoutDirection() { return breakoutState.direction(); }
 
-    public boolean hasBreakoutCommitment() {
-        return breakoutDirection != 0;
-    }
+    public long breakoutUntilMs() { return breakoutState.untilMs(); }
+
+    public boolean hasBreakoutCommitment() { return breakoutState.hasCommitment(); }
 
     public void setBreakoutCommitment(int direction, long untilMs) {
-        breakoutDirection = direction;
-        breakoutUntilMs = untilMs;
+        breakoutState.setCommitment(direction, untilMs);
     }
 
     public void clearBreakoutCommitment() {
-        breakoutDirection = 0;
-        breakoutUntilMs = 0L;
+        breakoutState.clear();
     }
 
     public Point aoeRepositionAnchor() {

@@ -4480,6 +4480,9 @@ Current physics correction:
 - Ranged retreat hold storage now lives in `AgentRetreatHoldState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while anti-oscillation retreat
   position and expiry reads/writes route through Agent runtime state.
+- Surround-breakout commitment storage now lives in `AgentBreakoutState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while escape
+  direction and hard timeout reads/writes route through Agent runtime state.
 
 Initial reconstruction order:
 

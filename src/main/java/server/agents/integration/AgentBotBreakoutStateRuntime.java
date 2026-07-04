@@ -10,26 +10,26 @@ public final class AgentBotBreakoutStateRuntime {
     }
 
     public static boolean hasBreakoutCommitment(BotEntry entry) {
-        return entry.hasBreakoutCommitment();
+        return entry.breakoutState().hasCommitment();
     }
 
     public static int direction(BotEntry entry) {
-        return entry.breakoutDirection();
+        return entry.breakoutState().direction();
     }
 
     public static long untilMs(BotEntry entry) {
-        return entry.breakoutUntilMs();
+        return entry.breakoutState().untilMs();
     }
 
     public static void setBreakoutCommitment(BotEntry entry, int direction, long untilMs) {
-        entry.setBreakoutCommitment(direction, untilMs);
+        entry.breakoutState().setCommitment(direction, untilMs);
     }
 
     public static boolean isExpired(BotEntry entry, long nowMs) {
-        return nowMs >= untilMs(entry);
+        return entry.breakoutState().expired(nowMs);
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearBreakoutCommitment();
+        entry.breakoutState().clear();
     }
 }
