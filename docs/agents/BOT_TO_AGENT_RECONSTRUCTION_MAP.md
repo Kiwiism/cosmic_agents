@@ -135,6 +135,8 @@ Recent map updates:
   navigation graph/probe and movement report runtime callers no longer depend
   on `BotMovementManager.walkStep`, and the old bot compatibility delegates
   have been removed.
+- Dead `BotMovementManager` movement-timer and jump-probe compatibility
+  wrappers were removed after their callers moved to Agent-owned services.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

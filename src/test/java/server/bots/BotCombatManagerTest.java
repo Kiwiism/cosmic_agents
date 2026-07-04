@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -1385,7 +1386,7 @@ class BotCombatManagerTest {
             combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(BotEntry.class), any(Character.class),
                     any(Monster.class), anyInt())).thenReturn(true);
             runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.tickMobDamage(
-                    entry, bot, AgentCombatConfig.cfg, BotMovementManager::tickDown));
+                    entry, bot, AgentCombatConfig.cfg, AgentMovementTimers::tickDown));
         }
 
         assertEquals(20_000, bot.getHp());
@@ -1405,7 +1406,7 @@ class BotCombatManagerTest {
             combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(BotEntry.class), any(Character.class),
                     any(Monster.class), anyInt())).thenReturn(true);
             runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.tickMobDamage(
-                    entry, bot, AgentCombatConfig.cfg, BotMovementManager::tickDown));
+                    entry, bot, AgentCombatConfig.cfg, AgentMovementTimers::tickDown));
         }
 
         assertTrue(bot.getHp() < 20_000, "hostile contact should reduce bot HP");

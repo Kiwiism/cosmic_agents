@@ -14,14 +14,12 @@ import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentGroundPhysicsService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentJumpActionService;
-import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.movement.AgentSwimMovementService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -45,24 +43,6 @@ import java.util.Map;
 
 public class BotMovementManager {
 
-    public static final class JumpLanding {
-        private final Point point;
-        private final Foothold foothold;
-
-        JumpLanding(Point point, Foothold foothold) {
-            this.point = point;
-            this.foothold = foothold;
-        }
-
-        public Point point() {
-            return point;
-        }
-
-        public Foothold foothold() {
-            return foothold;
-        }
-    }
-
     static class Config extends BotPhysicsEngine.Config {
         public int STOP_DIST = 30;
         public int FOLLOW_DIST = 80;
@@ -85,44 +65,12 @@ public class BotMovementManager {
         return config;
     }
 
-    public static int tickDown(int remainingMs) {
-        return AgentMovementTimers.tickDown(remainingMs);
-    }
-
-    public static int delayAfterCurrentTick(int durationMs) {
-        return AgentMovementTimers.delayAfterCurrentTick(durationMs);
-    }
-
     static int velocityFromDeltaX(double deltaX) {
         return AgentGroundPhysicsService.velocityFromDeltaX(deltaX);
     }
 
     static void stopGroundMotion(BotEntry entry) {
         AgentGroundPhysicsService.stopGroundMotion(entry);
-    }
-
-    static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {
-        return wrapLanding(AgentJumpProbeService.simulateJumpLanding(map, from, stepX));
-    }
-
-    public static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return wrapLanding(AgentJumpProbeService.simulateJumpLanding(map, from, stepX, profile));
-    }
-
-    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX) {
-        return wrapLanding(AgentJumpProbeService.simulateRopeJumpLanding(map, from, stepX, AgentMovementProfile.base()));
-    }
-
-    static JumpLanding simulateRopeJumpLanding(MapleMap map, Point from, int stepX, AgentMovementProfile profile) {
-        return wrapLanding(AgentJumpProbeService.simulateRopeJumpLanding(map, from, stepX, profile));
-    }
-
-    static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
-        return AgentJumpProbeService.canReachRopeFromGround(map, from, rope);
-    }
-
-    public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
-        return AgentJumpProbeService.canReachRopeFromGround(map, from, rope, profile);
     }
 
     public static boolean refreshMovementProfile(BotEntry entry) {
@@ -258,10 +206,4 @@ public class BotMovementManager {
         return AgentFootholdIndexService.buildFhIndex(map);
     }
 
-    private static JumpLanding wrapLanding(BotPhysicsEngine.JumpLanding landing) {
-        if (landing == null) {
-            return null;
-        }
-        return new JumpLanding(landing.point(), landing.foothold());
-    }
 }

@@ -151,6 +151,10 @@ Recent reconstruction notes:
   the Agent kinematics service; the old `BotMovementManager.walkStep`
   compatibility delegates have been removed. Deeper physics simulation still
   migrates in later slices.
+- Dead `BotMovementManager` compatibility wrappers for movement timers and
+  jump-probe landing/reach helpers were removed after scans showed no
+  remaining source or test callers. Agent-owned timer and jump-probe services
+  keep the behavior surface for active code.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test
