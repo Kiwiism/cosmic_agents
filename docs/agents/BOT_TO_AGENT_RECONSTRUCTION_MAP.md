@@ -163,6 +163,9 @@ Recent map updates:
   collision remain later slices.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
+- `BotPhysicsEngine` stance resolution, stance sync, and packet movement
+  snapshot construction moved to `AgentMovementPoseService` and
+  `AgentMovementSnapshotService`; bot methods remain temporary delegates.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

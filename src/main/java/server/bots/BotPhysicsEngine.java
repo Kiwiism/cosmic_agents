@@ -8,14 +8,16 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMotionTimerService;
+import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementSnapshotService;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -1334,73 +1336,16 @@ public final class BotPhysicsEngine {
     }
 
     public static MovementSnapshot movementSnapshot(BotEntry entry) {
-        int stance = resolveStance(entry);
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (bot != null && bot.getStance() != stance) {
-            bot.setStance(stance);
-        }
-        // Broadcast-only alert substitution. The server-side Character.stance above keeps the
-        // logical stance (STAND/WALK/etc.); only the wire byte gets ALERT when the alert timer
-        // is active. Mirrors maplestory-wasm CharLook.cpp substituting Stance::ALERT for STAND1/2
-        // while TimedBool alerted is set_for(5000).
-        return new MovementSnapshot(
-                AgentBotMovementStateRuntime.movementVelocityX(entry),
-                AgentBotMovementStateRuntime.movementVelocityY(entry),
-                broadcastStance(entry, stance));
-    }
-
-    private static int broadcastStance(BotEntry entry, int baseStance) {
-        if (System.currentTimeMillis() >= AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
-            return baseStance;
-        }
-        if (baseStance == CharacterStance.STAND_RIGHT_STANCE) {
-            return CharacterStance.ALERT_RIGHT_STANCE;
-        }
-        if (baseStance == CharacterStance.STAND_LEFT_STANCE) {
-            return CharacterStance.ALERT_LEFT_STANCE;
-        }
-        return baseStance;
+        AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
+        return new MovementSnapshot(snapshot.velX(), snapshot.velY(), snapshot.stance());
     }
 
     public static int resolveStance(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (bot != null && bot.getHp() <= 0) {
-            return resolveDeadStance(entry);
-        }
-        if (AgentBotClimbStateRuntime.climbing(entry)) {
-            Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
-            return rope != null && rope.isLadder()
-                    ? CharacterStance.LADDER_STANCE
-                    : CharacterStance.ROPE_STANCE;
-        }
-        if (AgentBotSwimStateRuntime.swimming(entry)) {
-            return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
-                    ? CharacterStance.SWIM_RIGHT_STANCE
-                    : CharacterStance.SWIM_LEFT_STANCE;
-        }
-        if (AgentBotMovementStateRuntime.crouching(entry)) {
-            return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
-                    ? CharacterStance.PRONE_RIGHT_STANCE
-                    : CharacterStance.PRONE_LEFT_STANCE;
-        }
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
-                    ? CharacterStance.JUMP_RIGHT_STANCE
-                    : CharacterStance.JUMP_LEFT_STANCE;
-        }
-        if (AgentBotMovementStateRuntime.moveDirection(entry) > 0) {
-            return CharacterStance.WALK_RIGHT_STANCE;
-        }
-        if (AgentBotMovementStateRuntime.moveDirection(entry) < 0) {
-            return CharacterStance.WALK_LEFT_STANCE;
-        }
-        return resolveIdleGroundStance(entry);
+        return AgentMovementPoseService.resolveStance(entry);
     }
 
     public static int resolveIdleGroundStance(BotEntry entry) {
-        return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
-                ? CharacterStance.STAND_RIGHT_STANCE
-                : CharacterStance.STAND_LEFT_STANCE;
+        return AgentMovementPoseService.resolveIdleGroundStance(entry);
     }
 
     static int resolveDeadStance(BotEntry entry) {
@@ -1410,15 +1355,11 @@ public final class BotPhysicsEngine {
     }
 
     public static boolean isStandingStance(int stance) {
-        return CharacterStance.isStanding(stance);
+        return AgentMovementPoseService.isStandingStance(stance);
     }
 
     public static void syncCharacterState(BotEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (bot == null) {
-            return;
-        }
-        bot.setStance(resolveStance(entry));
+        AgentMovementPoseService.syncCharacterState(entry);
     }
 
     static float calculateMaxJumpHeight() {

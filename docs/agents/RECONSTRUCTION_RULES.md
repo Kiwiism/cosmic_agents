@@ -195,6 +195,10 @@ Recent reconstruction notes:
 - Movement timer countdown implementation moved into `AgentMotionTimerService`.
   `BotPhysicsEngine.tickMotionTimers` remains a temporary delegate while
   physics callers migrate.
+- Stance resolution, stance sync, and packet movement snapshot construction
+  moved into `AgentMovementPoseService` and `AgentMovementSnapshotService`.
+  `BotPhysicsEngine` keeps temporary delegates for older physics callers while
+  the remaining physics body is migrated.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test
