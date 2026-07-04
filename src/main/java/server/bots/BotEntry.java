@@ -49,6 +49,7 @@ import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentFarmAnchorState;
 import server.agents.runtime.AgentGrindTargetState;
+import server.agents.runtime.AgentGrindWanderState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 import server.agents.runtime.AgentMoveTargetState;
@@ -692,7 +693,7 @@ public class BotEntry {
     private long breakoutUntilMs = 0L;    // hard safety timeout for the surround-breakout commitment
     private Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
     private long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
-    int wanderDirection = 0;      // -1 left, +1 right, 0 = unset (picked when grind has no target)
+    private final AgentGrindWanderState grindWanderState = new AgentGrindWanderState();
 
     public boolean degenAttackDone() {
         return degenAttackDone;
@@ -977,12 +978,13 @@ public class BotEntry {
     public void clearPatrolWanderTarget() {
         patrolState.clearWanderTarget();
     }
-    public int wanderDirection() { return wanderDirection; }
+    public AgentGrindWanderState grindWanderState() { return grindWanderState; }
+    public int wanderDirection() { return grindWanderState.direction(); }
     public void setWanderDirection(int wanderDirection) {
-        this.wanderDirection = Integer.compare(wanderDirection, 0);
+        grindWanderState.setDirection(wanderDirection);
     }
     public void clearWanderDirection() {
-        this.wanderDirection = 0;
+        grindWanderState.clear();
     }
     private final AgentGrindLootState grindLootState = new AgentGrindLootState();
 

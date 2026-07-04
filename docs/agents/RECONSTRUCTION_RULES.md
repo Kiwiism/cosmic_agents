@@ -4473,6 +4473,10 @@ Current physics correction:
 - Standalone move-target storage now lives in `AgentMoveTargetState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while explicit
   move-here/script/fidget movement targets route through Agent runtime state.
+- Grind no-target wander direction storage now lives in
+  `AgentGrindWanderState`. `BotEntry` temporarily hosts the Agent-owned state
+  object, while free-grind fallback direction reads/writes route through Agent
+  runtime state.
 
 Initial reconstruction order:
 

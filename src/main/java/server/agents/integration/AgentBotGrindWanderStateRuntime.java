@@ -12,15 +12,15 @@ public final class AgentBotGrindWanderStateRuntime {
     }
 
     public static int wanderDirection(BotEntry entry) {
-        return entry.wanderDirection();
+        return entry.grindWanderState().direction();
     }
 
     public static void setWanderDirection(BotEntry entry, int direction) {
-        entry.setWanderDirection(direction);
+        entry.grindWanderState().setDirection(direction);
     }
 
     public static void clearWanderDirection(BotEntry entry) {
-        entry.clearWanderDirection();
+        entry.grindWanderState().clear();
     }
 
     public static int ensureWanderDirection(BotEntry entry) {
