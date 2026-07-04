@@ -4710,6 +4710,9 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before scheduling meso transfer, inventory
   transfer scans, and named-item queries. Legacy async timing, request ordering,
   and reply decisions are unchanged.
+- Supply chat requests now resolve the current leader through
+  `AgentBotRuntimeIdentityRuntime` before potion counting and ammo weapon checks.
+  Potion share, ammo share, and reply routing behavior is unchanged.
 
 Initial reconstruction order:
 

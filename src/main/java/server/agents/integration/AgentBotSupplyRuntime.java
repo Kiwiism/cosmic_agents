@@ -47,10 +47,11 @@ public final class AgentBotSupplyRuntime {
     }
 
     public static void handleNeedAnyPotionCommand(BotEntry entry) {
-        if (entry.owner() == null) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        if (owner == null) {
             return;
         }
-        int[] pots = AgentPotionService.countPotions(entry.owner());
+        int[] pots = AgentPotionService.countPotions(owner);
         handleNeedPotionCommand(entry, pots[0] <= pots[1]);
     }
 
@@ -65,7 +66,7 @@ public final class AgentBotSupplyRuntime {
     }
 
     public static void handleNeedAmmoCommand(BotEntry entry) {
-        Character owner = entry.owner();
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
