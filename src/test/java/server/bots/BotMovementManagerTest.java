@@ -8,6 +8,7 @@ import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
 
@@ -637,7 +638,7 @@ class BotMovementManagerTest {
         entry.moveDir = 0;
         entry.facingDir = 1;
 
-        assertTrue(BotPhysicsEngine.isStandingStance(BotPhysicsEngine.resolveStance(entry)),
+        assertTrue(AgentMovementPoseService.isStandingResolvedStance(entry),
                 "residual ground velocity should not force a walking stance when no move key is held");
     }
 
@@ -757,7 +758,7 @@ class BotMovementManagerTest {
         int firstJumpVelX = entry.airVelX;
         assertTrue(firstJumpVelX != 0, "diagonal jump fidget should launch with horizontal momentum");
 
-        BotPhysicsEngine.idleOnGround(entry, bot);
+        AgentMovementPoseService.idleOnGround(entry, bot);
         entry.nextFidgetJumpAtMs = 0L;
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
@@ -803,7 +804,7 @@ class BotMovementManagerTest {
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
         assertTrue(entry.inAir);
 
-        BotPhysicsEngine.idleOnGround(entry, bot);
+        AgentMovementPoseService.idleOnGround(entry, bot);
         entry.nextFidgetActionAtMs = Long.MAX_VALUE;
         entry.nextFidgetJumpAtMs = 0L;
 

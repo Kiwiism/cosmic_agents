@@ -2,6 +2,9 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementSnapshotService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -145,7 +148,7 @@ class BotPhysicsEngineTest {
         entry.downJumpPending = true;
         entry.downJumpGracePeriodMS = 350;
 
-        BotPhysicsEngine.resetMotion(entry, new Point(10, 20));
+        AgentMovementPoseService.resetMotion(entry, new Point(10, 20));
 
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
@@ -158,7 +161,7 @@ class BotPhysicsEngineTest {
         assertEquals(0, entry.movementVelX);
         assertEquals(0, entry.movementVelY);
         assertEquals(0, entry.moveDir);
-        assertEquals(CharacterStance.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
     }
 
     @Test
@@ -169,11 +172,11 @@ class BotPhysicsEngineTest {
         entry.facingDir = -1;
         entry.movementVelX = -125;
 
-        BotPhysicsEngine.idleOnGround(entry, bot);
+        AgentMovementPoseService.idleOnGround(entry, bot);
 
         assertEquals(0, entry.moveDir);
         assertEquals(0, entry.movementVelX);
-        assertEquals(CharacterStance.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
         assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
     }
 
@@ -185,7 +188,7 @@ class BotPhysicsEngineTest {
         entry.movementVelX = -180;
         entry.movementVelY = -240;
 
-        BotPhysicsEngine.MovementSnapshot snapshot = BotPhysicsEngine.movementSnapshot(entry);
+        AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
 
         assertEquals(-180, snapshot.velX());
         assertEquals(-240, snapshot.velY());
@@ -197,10 +200,10 @@ class BotPhysicsEngineTest {
         BotEntry entry = new BotEntry(null, null, null);
 
         entry.facingDir = 1;
-        assertEquals(CharacterStance.STAND_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
 
         entry.facingDir = -1;
-        assertEquals(CharacterStance.STAND_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
     }
 
     @Test
@@ -209,10 +212,10 @@ class BotPhysicsEngineTest {
         entry.crouching = true;
 
         entry.facingDir = 1;
-        assertEquals(CharacterStance.PRONE_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.PRONE_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
 
         entry.facingDir = -1;
-        assertEquals(CharacterStance.PRONE_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
     }
 
     @Test
@@ -221,10 +224,10 @@ class BotPhysicsEngineTest {
         BotEntry entry = new BotEntry(bot, null, null);
 
         entry.facingDir = 1;
-        assertEquals(CharacterStance.DEAD_RIGHT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.DEAD_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
 
         entry.facingDir = -1;
-        assertEquals(CharacterStance.DEAD_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.DEAD_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
     }
 
     @Test
@@ -247,7 +250,7 @@ class BotPhysicsEngineTest {
 
         assertTrue(entry.airSteerVelX < 0.0, "left steer intent should produce negative airSteerVelX");
         assertEquals(-1, entry.facingDir, "facing should follow steer direction, not momentum");
-        assertEquals(CharacterStance.JUMP_LEFT_STANCE, BotPhysicsEngine.resolveStance(entry));
+        assertEquals(CharacterStance.JUMP_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
     }
 
     @Test
@@ -260,8 +263,8 @@ class BotPhysicsEngineTest {
         ropeEntry.climbing = true;
         ropeEntry.climbRope = new Rope(100, 0, 40, false);
 
-        assertEquals(CharacterStance.LADDER_STANCE, BotPhysicsEngine.resolveStance(ladderEntry));
-        assertEquals(CharacterStance.ROPE_STANCE, BotPhysicsEngine.resolveStance(ropeEntry));
+        assertEquals(CharacterStance.LADDER_STANCE, AgentMovementPoseService.resolveStance(ladderEntry));
+        assertEquals(CharacterStance.ROPE_STANCE, AgentMovementPoseService.resolveStance(ropeEntry));
     }
 
     @Test
@@ -297,7 +300,7 @@ class BotPhysicsEngineTest {
 
         Character bot = mockBot(new Point(50, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         BotPhysicsEngine.queueDownJump(entry, bot);
 
         BotPhysicsEngine.beginDownJump(entry, bot);
@@ -376,7 +379,7 @@ class BotPhysicsEngineTest {
         Foothold foothold = mock(Foothold.class);
         when(foothold.slope()).thenReturn(0.0);
 
-        BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         entry.moveDir = 0;  // intent: idle
         BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, foothold);
 
@@ -431,7 +434,7 @@ class BotPhysicsEngineTest {
 
         Character bot = mockBot(start, kpqS1());
         BotEntry entry = new BotEntry(bot, null, null);
-        BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         entry.moveDir = 1;  // intent: walk right
 
         Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1(), bot.getPosition());
@@ -625,7 +628,7 @@ class BotPhysicsEngineTest {
         // Bot at (4, 10) on platform; physX advanced to 14 (past the ledge at X=10).
         Character bot = mockBot(new Point(4, 10), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         entry.physX = 14;
         entry.hspeed = 0;
         entry.moveDir = 1;  // intent: walk right

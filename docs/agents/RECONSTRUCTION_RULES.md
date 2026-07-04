@@ -176,6 +176,10 @@ Recent reconstruction notes:
   the final config identity test moved to Agent movement physics config parity
   checks. Production `server.bots` now contains only `BotEntry` and
   `BotPhysicsEngine`.
+- Physics pose and movement-snapshot test callers now enter through
+  `AgentMovementPoseService` and `AgentMovementSnapshotService` instead of
+  calling `BotPhysicsEngine` directly. The services still delegate to the
+  legacy physics body until the internals are migrated.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

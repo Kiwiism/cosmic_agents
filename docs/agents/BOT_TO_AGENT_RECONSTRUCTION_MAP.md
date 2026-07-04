@@ -148,6 +148,10 @@ Recent map updates:
   config-binding shell for `BotPhysicsEngine`.
 - `BotMovementManager` has been deleted. The final config-shell assertion now
   verifies `BotPhysicsEngine` against `AgentMovementPhysicsConfig` values.
+- `BotPhysicsEngine` pose and packet snapshot callers in tests/harnesses now
+  enter through `AgentMovementPoseService` and
+  `AgentMovementSnapshotService`; the legacy physics body remains the
+  implementation seam for later migration.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

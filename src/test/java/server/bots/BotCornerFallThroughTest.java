@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -84,7 +85,7 @@ class BotCornerFallThroughTest {
         Point start = new Point(startX, CORNER.y);
         Character bot = mockBot(start, map);
         BotEntry entry = new BotEntry(bot, null, null);
-        BotPhysicsEngine.resetMotion(entry, bot.getPosition());
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         entry.facingDir = airVelX < 0 ? -1 : 1;
         if (airVelX == 0 && velY == 0f) {
             // plain fall off the tip

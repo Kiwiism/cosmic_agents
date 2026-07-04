@@ -5,6 +5,7 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -114,7 +115,7 @@ final class BotMovementSimulationLab {
         actor.setPosition(new Point(position));
         BotEntry entry = bots.get(actorName);
         if (entry != null) {
-            BotPhysicsEngine.teleportTo(entry, actor, position);
+            AgentMovementPoseService.teleportTo(entry, actor, position);
             AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
         }
     }
