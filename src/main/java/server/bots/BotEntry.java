@@ -727,18 +727,6 @@ public class BotEntry {
         return deathState;
     }
 
-    public long deadUntilMs() {
-        return deathState.deadUntilMs();
-    }
-
-    public void setDeadUntilMs(long deadUntilMs) {
-        deathState.setDeadUntilMs(deadUntilMs);
-    }
-
-    public void clearDeadUntilMs() {
-        deathState.clear();
-    }
-
     public int mobHitCooldownMs() {
         return combatCooldownState.mobHitCooldownMs();
     }
@@ -753,13 +741,6 @@ public class BotEntry {
         return portalCooldownState;
     }
 
-    public long portalUseCooldownUntilMs() {
-        return portalCooldownState.useCooldownUntilMs();
-    }
-
-    public void setPortalUseCooldownUntilMs(long portalUseCooldownUntilMs) {
-        portalCooldownState.setUseCooldownUntilMs(portalUseCooldownUntilMs);
-    }
     public AgentCombatCooldownState combatCooldownState() {
         return combatCooldownState;
     }

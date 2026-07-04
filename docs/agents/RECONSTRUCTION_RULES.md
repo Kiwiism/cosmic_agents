@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Death window and portal cooldown compatibility wrappers were removed from
+  `BotEntry`. Runtime callers already use `AgentBotDeathStateRuntime` and
+  `AgentBotNavigationDebugStateRuntime` over Agent-owned state.
 - Shop transition compatibility wrappers were removed from `BotEntry`.
   Shop visit/sequence callers already enter through
   `AgentBotShopStateRuntime`, backed by the Agent-owned `AgentShopState`.

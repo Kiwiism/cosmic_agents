@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` death-window and portal-cooldown wrappers were removed. Death and
+  navigation callers use Agent runtime adapters backed by `AgentDeathState` and
+  `AgentPortalCooldownState`.
 - `BotEntry` shop transition wrapper methods were removed after callers moved
   to `server.agents.integration.AgentBotShopStateRuntime`. The temporary shell
   only hosts the Agent-owned `AgentShopState`.
