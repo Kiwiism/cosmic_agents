@@ -4634,6 +4634,9 @@ Current physics correction:
   horizontal movement hysteresis wrappers have been removed from `BotEntry`.
   Those reads/writes now route through `AgentBotMovementPhysicsStateRuntime`
   and `AgentBotMovementStateRuntime`.
+- Fidget state wrappers have been removed from `BotEntry`. Fidget mode,
+  trigger, timing, movement directions, visual timing, idle roll scheduling, and
+  active-state mutation now route through `AgentBotFidgetStateRuntime`.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

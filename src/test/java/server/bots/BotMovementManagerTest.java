@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotFidgetStateRuntime;
+
 import server.agents.integration.AgentBotClimbStateRuntime;
 
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
@@ -793,7 +795,7 @@ class BotMovementManagerTest {
 
         bot.setPosition(new Point(100, 0));
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(AgentFidgetMode.JUMP, entry.fidgetMode(),
+        assertEquals(AgentFidgetMode.JUMP, AgentBotFidgetStateRuntime.mode(entry),
                 "jump fidgets should not clear themselves while airborne above the ground target");
     }
 
@@ -853,8 +855,8 @@ class BotMovementManagerTest {
         assertTrue(AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry) != 0.0,
                 "spam-air-steer jump fidgets should press random side input on their own delay");
         long after = System.currentTimeMillis();
-        assertTrue(entry.nextFidgetActionAtMs() >= before + 100
-                        && entry.nextFidgetActionAtMs() <= after + 150,
+        assertTrue(AgentBotFidgetStateRuntime.nextActionAtMs(entry) >= before + 100
+                        && AgentBotFidgetStateRuntime.nextActionAtMs(entry) <= after + 150,
                 "air-steer spam should use a tick-aligned 0/50ms jitter");
     }
 
@@ -870,17 +872,17 @@ class BotMovementManagerTest {
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
-        assertTrue(entry.fidgetActionBaseDelayMs() >= 100 && entry.fidgetActionBaseDelayMs() <= 250);
-        assertEquals(0, entry.fidgetActionBaseDelayMs() % AgentMovementPhysicsConfig.configuredMovementTickMs());
+        assertTrue(AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) >= 100 && AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) <= 250);
+        assertEquals(0, AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) % AgentMovementPhysicsConfig.configuredMovementTickMs());
 
         long before = System.currentTimeMillis();
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(AgentFidgetMode.SPAM_SIDEWAYS, entry.fidgetMode());
-        assertTrue(entry.fidgetMoveDir() != 0, "sideway spam should keep an active sideways fidget direction");
+        assertEquals(AgentFidgetMode.SPAM_SIDEWAYS, AgentBotFidgetStateRuntime.mode(entry));
+        assertTrue(AgentBotFidgetStateRuntime.moveDir(entry) != 0, "sideway spam should keep an active sideways fidget direction");
         assertTrue(bot.getPosition().x != 100, "sideway spam should cause sideways motion during the tick");
         long after = System.currentTimeMillis();
-        assertTrue(entry.nextFidgetActionAtMs() >= before + entry.fidgetActionBaseDelayMs()
-                        && entry.nextFidgetActionAtMs() <= after + entry.fidgetActionBaseDelayMs() + 50,
+        assertTrue(AgentBotFidgetStateRuntime.nextActionAtMs(entry) >= before + AgentBotFidgetStateRuntime.actionBaseDelayMs(entry)
+                        && AgentBotFidgetStateRuntime.nextActionAtMs(entry) <= after + AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) + 50,
                 "sideway spam should use tick-aligned 0/50ms jitter around its per-fidget base interval");
         assertTrue(AgentBotModeStateRuntime.following(entry), "sideway spam should not convert follow mode into a manual move command");
     }
@@ -898,7 +900,7 @@ class BotMovementManagerTest {
         entry.fidgetState().setUntilMs(now - 1);
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode());
+        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
         assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry),
                 "speed-mismatch follow fidgets should resume following immediately");
         assertFalse(AgentBotMoveTargetStateRuntime.isPrecise(entry));

@@ -15,6 +15,6 @@ public final class AgentBotFidgetRuntime {
     }
 
     public static boolean hasActiveFidgetMode(BotEntry entry) {
-        return entry.hasActiveFidgetMode();
+        return AgentBotFidgetStateRuntime.active(entry);
     }
 }

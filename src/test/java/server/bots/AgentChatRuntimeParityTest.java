@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotFidgetStateRuntime;
+
 
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
@@ -192,13 +194,13 @@ class AgentChatRuntimeParityTest {
         AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
-        assertFalse(entry.fidgetMode() == AgentFidgetMode.NONE);
-        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger());
+        assertFalse(AgentBotFidgetStateRuntime.mode(entry) == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, AgentBotFidgetStateRuntime.trigger(entry));
 
         AgentFidgetService.clear(entry);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 99));
-        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode());
+        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
     }
 
     @Test
@@ -214,8 +216,8 @@ class AgentChatRuntimeParityTest {
         }
 
         assertTrue(AgentFidgetService.maybeStartSocialFidget(entry));
-        assertFalse(entry.fidgetMode() == AgentFidgetMode.NONE);
-        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger());
+        assertFalse(AgentBotFidgetStateRuntime.mode(entry) == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, AgentBotFidgetStateRuntime.trigger(entry));
     }
 
     @Test
@@ -243,7 +245,7 @@ class AgentChatRuntimeParityTest {
         AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
-        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode());
+        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
     }
 
     @Test

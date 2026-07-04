@@ -26,7 +26,6 @@ import server.agents.capabilities.movement.AgentMovementProfileState;
 import client.Character;
 import server.life.Monster;
 import server.maps.MapItem;
-import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentReplyChannelState;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
@@ -37,9 +36,7 @@ import server.agents.capabilities.shop.AgentShopState;
 import server.agents.capabilities.supplies.AgentAmmoSupplyState;
 import server.agents.capabilities.supplies.AgentPotionSupplyState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
-import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetState;
-import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.partyquest.kpq.AgentKpqState;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.capabilities.trade.AgentPendingTradeSequenceState;
@@ -411,125 +408,6 @@ public class BotEntry {
 
     public AgentFidgetState fidgetState() {
         return fidgetState;
-    }
-
-    public AgentFidgetMode fidgetMode() {
-        return fidgetState.mode();
-    }
-
-    public boolean hasActiveFidgetMode() {
-        return fidgetState.active();
-    }
-
-    public AgentFidgetTrigger fidgetTrigger() {
-        return fidgetState.trigger();
-    }
-
-    public long fidgetUntilMs() {
-        return fidgetState.untilMs();
-    }
-
-    public long nextFidgetActionAtMs() {
-        return fidgetState.nextActionAtMs();
-    }
-
-    public int fidgetAirSteerDir() {
-        return fidgetState.airSteerDir();
-    }
-
-    public int fidgetJumpDir() {
-        return fidgetState.jumpDir();
-    }
-
-    public int fidgetMoveDir() {
-        return fidgetState.moveDir();
-    }
-
-    public boolean fidgetSpamAirSteer() {
-        return fidgetState.spamAirSteer();
-    }
-
-    public int fidgetActionBaseDelayMs() {
-        return fidgetState.actionBaseDelayMs();
-    }
-
-    public long nextFidgetJumpAtMs() {
-        return fidgetState.nextJumpAtMs();
-    }
-
-    public Point fidgetOriginPos() {
-        return fidgetState.originPos();
-    }
-
-    public long nextFidgetVisualAtMs() {
-        return fidgetState.nextVisualAtMs();
-    }
-
-    public long nextFidgetAtMs() {
-        return fidgetState.nextFidgetAtMs();
-    }
-
-    public long nextIdleFidgetRollAtMs() {
-        return fidgetState.nextIdleRollAtMs();
-    }
-
-    public void clearFidgetState() {
-        fidgetState.clearActiveState();
-    }
-
-    public void startFidgetState(AgentFidgetMode mode,
-                                 AgentFidgetTrigger trigger,
-                                 long untilMs,
-                                 long nowMs,
-                                 int airSteerDir,
-                                 boolean spamAirSteer,
-                                 int actionBaseDelayMs,
-                                 Point originPos,
-                                 long nextVisualAtMs,
-                                 long nextFidgetAtMs) {
-        fidgetState.start(
-                mode,
-                trigger,
-                untilMs,
-                nowMs,
-                airSteerDir,
-                spamAirSteer,
-                actionBaseDelayMs,
-                originPos,
-                nextVisualAtMs,
-                nextFidgetAtMs);
-    }
-
-    public void setNextIdleFidgetRollAtMs(long nextIdleFidgetRollAtMs) {
-        fidgetState.setNextIdleRollAtMs(nextIdleFidgetRollAtMs);
-    }
-
-    public void setNextFidgetAtMs(long nextFidgetAtMs) {
-        fidgetState.setNextFidgetAtMs(nextFidgetAtMs);
-    }
-
-    public void setFidgetAirSteerDir(int fidgetAirSteerDir) {
-        fidgetState.setAirSteerDir(fidgetAirSteerDir);
-    }
-
-    public void setNextFidgetActionAtMs(long nextFidgetActionAtMs) {
-        fidgetState.setNextActionAtMs(nextFidgetActionAtMs);
-    }
-
-    public void setFidgetJumpDir(int fidgetJumpDir) {
-        fidgetState.setJumpDir(fidgetJumpDir);
-    }
-
-    public void setNextFidgetJumpAtMs(long nextFidgetJumpAtMs) {
-        fidgetState.setNextJumpAtMs(nextFidgetJumpAtMs);
-    }
-
-    public void setFidgetMoveDir(int fidgetMoveDir) {
-        fidgetState.setMoveDir(fidgetMoveDir);
-    }
-
-    public void setNextFidgetVisualAtMs(long nextFidgetVisualAtMs) {
-        fidgetState.setNextVisualAtMs(nextFidgetVisualAtMs);
     }
 
     private final AgentScrollReactionState scrollReactionState = new AgentScrollReactionState();
