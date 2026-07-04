@@ -53,7 +53,8 @@ public final class AgentBotPendingActionRuntime {
             @Override
             public void executeItemChoice(String category, boolean trade) {
                 AgentBotPendingActionSchedulerRuntime.afterRandomDelay(400, 600,
-                        () -> AgentInventoryTransferService.executeChoice(category, trade, entry, entry.bot()));
+                        () -> AgentInventoryTransferService.executeChoice(
+                                category, trade, entry, AgentBotRuntimeIdentityRuntime.bot(entry)));
             }
 
             @Override
@@ -66,7 +67,8 @@ public final class AgentBotPendingActionRuntime {
 
             @Override
             public void handleSkillTreeChoice(String message) {
-                AgentBotPendingActionRuntime.handleSkillTreeChoice(entry, entry.bot(), message);
+                AgentBotPendingActionRuntime.handleSkillTreeChoice(
+                        entry, AgentBotRuntimeIdentityRuntime.bot(entry), message);
             }
 
             @Override

@@ -4743,6 +4743,10 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before creating movement snapshots and
   path-log sessions. Snapshot content, defensive point copies, and navigation
   debug state behavior remain unchanged.
+- Pending chat-action callbacks now resolve the live Agent through
+  `AgentBotRuntimeIdentityRuntime` before item-choice execution and skill-tree
+  follow-up handling. Pending-action state changes, delays, and replies remain
+  unchanged.
 
 Initial reconstruction order:
 
