@@ -172,6 +172,10 @@ Recent reconstruction notes:
   `AgentGroundMovementRuntimeService`, and `AgentMovementRecoveryService`
   directly; `BotMovementManager` remains only as a temporary physics-config
   binding shell until `BotPhysicsEngine` config ownership is migrated.
+- The temporary `BotMovementManager` physics-config shell was deleted after
+  the final config identity test moved to Agent movement physics config parity
+  checks. Production `server.bots` now contains only `BotEntry` and
+  `BotPhysicsEngine`.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -24,7 +25,6 @@ import java.util.function.Supplier;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -72,8 +72,11 @@ class BotPhysicsEngineTest {
     }
 
     @Test
-    void shouldSharePhysicsConfigBetweenMovementManagerAndEngine() {
-        assertSame(BotMovementManager.cfg, BotPhysicsEngine.cfg);
+    void shouldPreserveAgentMovementPhysicsConfigValues() {
+        assertEquals(AgentMovementPhysicsConfig.configuredMovementTickMs(), BotPhysicsEngine.cfg.TICK_MS);
+        assertEquals(AgentMovementPhysicsConfig.configuredMaxSnapDrop(), BotPhysicsEngine.cfg.MAX_SNAP_DROP);
+        assertEquals(AgentMovementPhysicsConfig.configuredMaxSlopeUp(), BotPhysicsEngine.cfg.MAX_SLOPE_UP);
+        assertEquals(AgentMovementPhysicsConfig.configuredRopeGrabX(), BotPhysicsEngine.cfg.ROPE_GRAB_X);
     }
 
     @Test
