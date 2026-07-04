@@ -113,8 +113,17 @@ public final class AgentLlmReplyService {
         List<AgentMemoryStore.Turn> recent = AgentLlmConfig.memoryEnabled
                 ? AgentMemoryStore.loadUncompacted(botName)
                 : loadRecentMemory(botId, System.currentTimeMillis());
-        String system = AgentPromptBuilder.buildSystem(entry, relation, senderName);
-        String prompt = AgentPromptBuilder.buildPrompt(entry, senderName, message, summary, recent);
+        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        String system = AgentPromptBuilder.buildSystem(agent, relation, senderName);
+        String prompt = AgentPromptBuilder.buildPrompt(
+                AgentBotRuntimeIdentityRuntime.hasBot(entry)
+                        ? AgentBotRuntimeIdentityRuntime.botName(entry)
+                        : "bot",
+                AgentSituationBuilder.build(entry),
+                senderName,
+                message,
+                summary,
+                recent);
 
         long t0 = System.currentTimeMillis();
         if (AgentLlmConfig.debugLog) {

@@ -52,10 +52,8 @@ class AgentLlmReplyServiceTest {
         when(bot.getName()).thenReturn("agent123");
         when(bot.getJob()).thenReturn(Job.THIEF);
         when(bot.getLevel()).thenReturn(30);
-        BotEntry entry = newBotEntry(bot, null);
-
-        String system = AgentPromptBuilder.buildSystem(entry, AgentSenderRelation.STRANGER, "Alice");
-        String prompt = AgentPromptBuilder.buildPrompt(entry, "Alice", "hi", "", List.of());
+        String system = AgentPromptBuilder.buildSystem(bot, AgentSenderRelation.STRANGER, "Alice");
+        String prompt = AgentPromptBuilder.buildPrompt("agent123", "", "Alice", "hi", "", List.of());
 
         assertTrue(system.contains("Your IGN is agent123."));
         assertTrue(system.contains("level 30 thief"));

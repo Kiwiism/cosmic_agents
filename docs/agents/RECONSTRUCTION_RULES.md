@@ -4784,6 +4784,10 @@ Current physics correction:
   leader, and sender characters instead of `BotEntry`. `AgentLlmReplyService`
   remains the adapter that reads those identities from the temporary runtime
   shell, preserving owner/party/stranger behavior.
+- LLM prompt formatting now accepts resolved Agent identity, bot display name,
+  and situation text instead of `BotEntry`. The prompt wording, recent-memory
+  rendering, and situation snapshot remain unchanged; `AgentLlmReplyService`
+  still adapts from the temporary runtime shell.
 
 Initial reconstruction order:
 
