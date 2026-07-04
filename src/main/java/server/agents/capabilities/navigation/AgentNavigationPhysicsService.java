@@ -1,7 +1,6 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -52,11 +51,12 @@ public final class AgentNavigationPhysicsService {
                                                 Map<Integer, AgentNavigationGraph.Region> regionsById,
                                                 Map<Integer, Integer> regionIdByFootholdId,
                                                 Map<Integer, Foothold> footholdsById) {
-        BotPhysicsEngine.setBuildWalkRegionLookup(map, regionsById, regionIdByFootholdId, footholdsById);
+        AgentNavigationWalkRegionLookupService.setBuildWalkRegionLookup(
+                map, regionsById, regionIdByFootholdId, footholdsById);
     }
 
     public static void clearBuildWalkRegionLookup() {
-        BotPhysicsEngine.clearBuildWalkRegionLookup();
+        AgentNavigationWalkRegionLookupService.clearBuildWalkRegionLookup();
     }
 
     private record EndpointConnection(Point from, Point to) {

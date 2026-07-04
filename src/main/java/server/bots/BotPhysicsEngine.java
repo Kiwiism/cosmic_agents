@@ -4,6 +4,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
+import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupService;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentAirbornePhysicsService;
@@ -36,9 +37,7 @@ import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class BotPhysicsEngine {
     private static final double CLIENT_GROUND_STEP_MS = 8.0;
@@ -132,12 +131,6 @@ public final class BotPhysicsEngine {
     private record GroundStepPreview(int baseY, Point point, Foothold foothold, boolean lostGround, boolean blocked) {
     }
 
-    private record WalkRegionLookup(int mapId,
-                                    Map<Integer, AgentNavigationGraph.Region> regionsById,
-                                    Map<Integer, Integer> regionIdByFootholdId,
-                                    Map<Integer, Foothold> footholdsById) {
-    }
-
     public record MovementSnapshot(int velX, int velY, int stance) {
     }
 
@@ -220,9 +213,6 @@ public final class BotPhysicsEngine {
     }
 
     static Config cfg = new Config();
-    private static final ThreadLocal<WalkRegionLookup> ACTIVE_BUILD_WALK_REGION_LOOKUP = new ThreadLocal<>();
-    private static final Map<Integer, Map<Integer, Foothold>> FOOTHOLDS_BY_ID_BY_MAP_ID = new ConcurrentHashMap<>();
-
     private BotPhysicsEngine() {
     }
 
@@ -409,7 +399,7 @@ public final class BotPhysicsEngine {
         if (map == null || foothold == null) {
             return false;
         }
-        WalkRegionLookup lookup = resolveWalkRegionLookup(map);
+        AgentNavigationWalkRegionLookupService.WalkRegionLookup lookup = resolveWalkRegionLookup(map);
         if (lookup == null) {
             return false;
         }
@@ -421,7 +411,7 @@ public final class BotPhysicsEngine {
             return null;
         }
 
-        WalkRegionLookup lookup = resolveWalkRegionLookup(map);
+        AgentNavigationWalkRegionLookupService.WalkRegionLookup lookup = resolveWalkRegionLookup(map);
         if (lookup == null) {
             return null;
         }
@@ -481,46 +471,19 @@ public final class BotPhysicsEngine {
                                          Map<Integer, Integer> regionIdByFootholdId,
                                          Map<Integer, Foothold> footholdsById) {
         if (map == null || regionsById == null || regionIdByFootholdId == null || footholdsById == null) {
-            ACTIVE_BUILD_WALK_REGION_LOOKUP.remove();
+            AgentNavigationWalkRegionLookupService.clearBuildWalkRegionLookup();
             return;
         }
-        ACTIVE_BUILD_WALK_REGION_LOOKUP.set(new WalkRegionLookup(map.getId(), regionsById, regionIdByFootholdId, footholdsById));
+        AgentNavigationWalkRegionLookupService.setBuildWalkRegionLookup(
+                map, regionsById, regionIdByFootholdId, footholdsById);
     }
 
     public static void clearBuildWalkRegionLookup() {
-        ACTIVE_BUILD_WALK_REGION_LOOKUP.remove();
+        AgentNavigationWalkRegionLookupService.clearBuildWalkRegionLookup();
     }
 
-    private static WalkRegionLookup resolveWalkRegionLookup(MapleMap map) {
-        if (map == null) {
-            return null;
-        }
-
-        WalkRegionLookup activeLookup = ACTIVE_BUILD_WALK_REGION_LOOKUP.get();
-        if (activeLookup != null && activeLookup.mapId() == map.getId()) {
-            return activeLookup;
-        }
-
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
-        if (graph == null) {
-            return null;
-        }
-
-        return new WalkRegionLookup(map.getId(), graph.regionsById, graph.regionIdByFootholdId, footholdsById(map));
-    }
-
-    private static Map<Integer, Foothold> footholdsById(MapleMap map) {
-        if (map == null || map.getFootholds() == null) {
-            return Map.of();
-        }
-
-        return FOOTHOLDS_BY_ID_BY_MAP_ID.computeIfAbsent(map.getId(), ignored -> {
-            Map<Integer, Foothold> footholdsById = new HashMap<>();
-            for (Foothold foothold : map.getFootholds().getAllFootholds()) {
-                footholdsById.put(foothold.getId(), foothold);
-            }
-            return footholdsById;
-        });
+    private static AgentNavigationWalkRegionLookupService.WalkRegionLookup resolveWalkRegionLookup(MapleMap map) {
+        return AgentNavigationWalkRegionLookupService.resolveWalkRegionLookup(map);
     }
 
     private static GroundStepPreview previewGroundStep(MapleMap map, Point currentPos, Foothold foothold, int nextX) {

@@ -169,6 +169,10 @@ Recent map updates:
   rope grabs, down-jump rope grabs, rope-jump grabs, rope-jump landing costs,
   and runway wall checks now enter through Agent movement seams. The graph
   builder no longer imports `BotPhysicsEngine` directly.
+- Navigation build walk-region lookup storage and foothold-id caching now live
+  in `AgentNavigationWalkRegionLookupService`. The remaining bot physics
+  ground-step preview code resolves through the Agent service while that
+  preview body is migrated later.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.

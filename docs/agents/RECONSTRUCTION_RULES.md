@@ -4250,6 +4250,9 @@ Current physics correction:
   and `AgentGroundCollisionService` for fall/rope-grab estimates, rope-grab
   simulations, and runway wall checks. `AgentNavigationGraphService` no longer
   imports `BotPhysicsEngine` directly.
+- Navigation build walk-region lookup storage now lives in
+  `AgentNavigationWalkRegionLookupService`; `BotPhysicsEngine` only resolves
+  through that Agent-owned service while its ground-step preview body remains.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.
