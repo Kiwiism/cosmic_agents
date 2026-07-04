@@ -4780,6 +4780,10 @@ Current physics correction:
   adapter. Bot-client detection, same-leader lookup, whisper reply-channel
   marking, and Agent chat dispatch remain unchanged while the capability no
   longer imports `BotEntry`.
+- LLM sender-relation classification now accepts already-resolved Agent,
+  leader, and sender characters instead of `BotEntry`. `AgentLlmReplyService`
+  remains the adapter that reads those identities from the temporary runtime
+  shell, preserving owner/party/stranger behavior.
 
 Initial reconstruction order:
 

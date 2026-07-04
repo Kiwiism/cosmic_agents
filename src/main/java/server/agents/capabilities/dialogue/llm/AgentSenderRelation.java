@@ -3,22 +3,18 @@ package server.agents.capabilities.dialogue.llm;
 import client.Character;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 public enum AgentSenderRelation {
     OWNER, PARTY, STRANGER;
 
-    public static AgentSenderRelation resolve(BotEntry entry, Character sender) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        if (entry == null || bot == null || sender == null) {
+    public static AgentSenderRelation resolve(Character agent, Character leader, Character sender) {
+        if (agent == null || sender == null) {
             return STRANGER;
         }
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        if (owner != null && owner.getId() == sender.getId()) {
+        if (leader != null && leader.getId() == sender.getId()) {
             return OWNER;
         }
-        Party party = bot.getParty();
+        Party party = agent.getParty();
         if (party != null) {
             for (PartyCharacter member : party.getMembers()) {
                 if (member.getId() == sender.getId()) {

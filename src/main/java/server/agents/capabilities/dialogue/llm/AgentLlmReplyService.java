@@ -65,7 +65,10 @@ public final class AgentLlmReplyService {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) return;
         if (message == null || message.isBlank()) return;
 
-        AgentSenderRelation relation = AgentSenderRelation.resolve(entry, sender);
+        AgentSenderRelation relation = AgentSenderRelation.resolve(
+                AgentBotRuntimeIdentityRuntime.bot(entry),
+                AgentBotRuntimeIdentityRuntime.owner(entry),
+                sender);
         // Strangers' whispers are dropped pre-LLM (whisper hook isn't wired in
         // Phase 1 anyway, but defend in depth).
         if (relation == AgentSenderRelation.STRANGER

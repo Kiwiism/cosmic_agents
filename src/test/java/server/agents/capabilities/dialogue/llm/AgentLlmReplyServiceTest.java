@@ -69,9 +69,8 @@ class AgentLlmReplyServiceTest {
         Character sender = mock(Character.class);
         when(owner.getId()).thenReturn(10);
         when(sender.getId()).thenReturn(10);
-        BotEntry entry = newBotEntry(bot, owner);
 
-        assertEquals(AgentSenderRelation.OWNER, AgentSenderRelation.resolve(entry, sender));
+        assertEquals(AgentSenderRelation.OWNER, AgentSenderRelation.resolve(bot, owner, sender));
     }
 
     private static BotEntry newBotEntry() throws Exception {

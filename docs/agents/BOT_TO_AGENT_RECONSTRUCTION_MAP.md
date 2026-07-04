@@ -26,6 +26,9 @@ Recent map updates:
   `AgentWhisperCommandRuntime` keeps the temporary `BotEntry` registry lookup
   and `AgentBotChatOrchestratorContext` construction at the runtime adapter
   edge.
+- `AgentSenderRelation` no longer imports `BotEntry`; it classifies
+  owner/party/stranger from resolved Agent, leader, and sender characters while
+  `AgentLlmReplyService` keeps the temporary identity adapter call.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
