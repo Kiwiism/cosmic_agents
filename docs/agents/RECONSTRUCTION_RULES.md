@@ -4736,6 +4736,9 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before unequip, debug, and auto-equip side
   effects. Scheduling, movement-stop behavior, replies, and pending-offer input
   remain unchanged.
+- Control chat callbacks now resolve the live Agent through
+  `AgentBotRuntimeIdentityRuntime` before buff summaries and AP/SP respec
+  commands. Toggle state writes, delays, and replies remain unchanged.
 
 Initial reconstruction order:
 

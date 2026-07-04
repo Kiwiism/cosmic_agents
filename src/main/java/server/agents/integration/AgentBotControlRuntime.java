@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
@@ -68,7 +69,9 @@ public final class AgentBotControlRuntime {
             public void reportBuffList() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     String summary = AgentBuffService.getChatSummary(
-                            AgentBotBuffStateRuntime.enabled(entry), AgentBotBuffStateRuntime.cheapMode(entry), entry.bot());
+                            AgentBotBuffStateRuntime.enabled(entry),
+                            AgentBotBuffStateRuntime.cheapMode(entry),
+                            bot(entry));
                     AgentBotControlReplyRuntime.replyNow(entry, summary);
                 });
             }
@@ -92,14 +95,18 @@ public final class AgentBotControlRuntime {
             @Override
             public void respecAp() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotControlReplyRuntime.replyNow(entry, AgentBuildService.respecAp(entry, entry.bot())));
+                        AgentBotControlReplyRuntime.replyNow(entry, AgentBuildService.respecAp(entry, bot(entry))));
             }
 
             @Override
             public void respecSp() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotControlReplyRuntime.replyNow(entry, AgentBuildService.respecSp(entry, entry.bot())));
+                        AgentBotControlReplyRuntime.replyNow(entry, AgentBuildService.respecSp(entry, bot(entry))));
             }
         };
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }
