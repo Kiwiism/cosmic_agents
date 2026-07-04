@@ -22,6 +22,7 @@ import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotMapStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
@@ -103,14 +104,12 @@ final class BotMovementSimulationLab {
 
     void setMoveTarget(String botName, Point target, boolean precise) {
         BotEntry entry = requireBot(botName);
-        entry.moveTarget = new Point(target);
-        entry.moveTargetPrecise = precise;
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, target, precise);
     }
 
     void clearMoveTarget(String botName) {
         BotEntry entry = requireBot(botName);
-        entry.moveTarget = null;
-        entry.moveTargetPrecise = false;
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
     void teleport(String actorName, Point position) {

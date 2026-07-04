@@ -9,6 +9,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.runtime.AgentFormationService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -35,7 +36,7 @@ class BotMovementSimulationLabTest {
 
         Point finalPos = lab.position("SLASH");
         assertTrue(Math.abs(finalPos.x - 320) <= 8, "bot should arrive at precise move target");
-        assertNull(entry.moveTarget, "move target should clear after arrival");
+        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry), "move target should clear after arrival");
     }
 
     @Test

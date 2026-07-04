@@ -12,19 +12,19 @@ public final class AgentBotMoveTargetStateRuntime {
     }
 
     public static Point moveTarget(BotEntry entry) {
-        return entry.moveTarget();
+        return entry.moveTargetState().target();
     }
 
     public static boolean hasMoveTarget(BotEntry entry) {
-        return entry.hasMoveTarget();
+        return entry.moveTargetState().hasTarget();
     }
 
     public static boolean isPrecise(BotEntry entry) {
-        return entry.isMoveTargetPrecise();
+        return entry.moveTargetState().precise();
     }
 
     public static void setMoveTarget(BotEntry entry, Point target, boolean precise) {
-        entry.setMoveTarget(target, precise);
+        entry.moveTargetState().setTarget(target, precise);
     }
 
     public static void setPreciseMoveTarget(BotEntry entry, Point target) {
@@ -32,11 +32,11 @@ public final class AgentBotMoveTargetStateRuntime {
     }
 
     public static void clearMoveTarget(BotEntry entry) {
-        entry.clearMoveTarget();
+        entry.moveTargetState().clear();
     }
 
     public static boolean moveTargetEquals(BotEntry entry, Point point) {
-        return entry.moveTargetEquals(point);
+        return entry.moveTargetState().targetEquals(point);
     }
 
     public static boolean hasReachedMoveTarget(BotEntry entry, Point currentPosition, int normalArrivalDistance) {

@@ -4470,6 +4470,9 @@ Current physics correction:
   `AgentGrindLootState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while loot targeting and retry gating route through the Agent
   looting capability.
+- Standalone move-target storage now lives in `AgentMoveTargetState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while explicit
+  move-here/script/fidget movement targets route through Agent runtime state.
 
 Initial reconstruction order:
 

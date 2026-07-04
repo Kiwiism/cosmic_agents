@@ -51,6 +51,7 @@ import server.agents.runtime.AgentFarmAnchorState;
 import server.agents.runtime.AgentGrindTargetState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
+import server.agents.runtime.AgentMoveTargetState;
 import server.agents.runtime.AgentMovementBroadcastState;
 import server.agents.runtime.AgentMovementPhysicsCacheState;
 import server.agents.runtime.AgentMovementStuckState;
@@ -934,19 +935,20 @@ public class BotEntry {
     public String spVariant() { return buildState.spVariant(); }
     public boolean spVariantPromptSent() { return buildState.spVariantPromptSent(); }
     public void markSpVariantPromptSent() { buildState.markSpVariantPromptSent(); }
-    public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }
-    public boolean isMoveTargetPrecise() { return moveTargetPrecise; }
-    public boolean hasMoveTarget() { return moveTarget != null; }
+    private final AgentMoveTargetState moveTargetState = new AgentMoveTargetState();
+
+    public AgentMoveTargetState moveTargetState() { return moveTargetState; }
+    public java.awt.Point moveTarget() { return moveTargetState.target(); }
+    public boolean isMoveTargetPrecise() { return moveTargetState.precise(); }
+    public boolean hasMoveTarget() { return moveTargetState.hasTarget(); }
     public void setMoveTarget(java.awt.Point moveTarget, boolean precise) {
-        this.moveTarget = moveTarget == null ? null : new java.awt.Point(moveTarget);
-        this.moveTargetPrecise = moveTarget != null && precise;
+        moveTargetState.setTarget(moveTarget, precise);
     }
     public void clearMoveTarget() {
-        this.moveTarget = null;
-        this.moveTargetPrecise = false;
+        moveTargetState.clear();
     }
     public boolean moveTargetEquals(java.awt.Point point) {
-        return moveTarget != null && moveTarget.equals(point);
+        return moveTargetState.targetEquals(point);
     }
     public java.awt.Point farmAnchor() { return farmAnchorState.anchor(); }
     public int farmAnchorMapId() { return farmAnchorState.mapId(); }
@@ -1455,8 +1457,7 @@ public class BotEntry {
     }
 
     // "Move here" target — bot navigates to this fixed point, then idles until cleared
-    Point moveTarget = null;
-    boolean moveTargetPrecise = false; // true when triggered by "move here" — uses tight stop dist
+    // Explicit move-target storage now lives in AgentMoveTargetState.
     // "Farm here" anchor — bot returns to this fixed point and only takes local attacks.
     // "Patrol" region — bot wanders within this nav region and attacks opportunistically.
 

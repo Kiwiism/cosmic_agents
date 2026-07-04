@@ -651,7 +651,7 @@ class BotManagerTest {
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, mock(MapItem.class));
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotModeStateRuntime.setGrinding(entry, true);
-        entry.moveTarget = new Point(100, 100);
+        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
         Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
@@ -668,7 +668,7 @@ class BotManagerTest {
             assertTrue(bots.containsKey(owner.getId()));
             assertFalse(AgentBotModeStateRuntime.following(entry));
             assertFalse(AgentBotModeStateRuntime.grinding(entry));
-            assertNull(entry.moveTarget);
+            assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
 
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertFalse(bots.containsKey(owner.getId()));

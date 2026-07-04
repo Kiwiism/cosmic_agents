@@ -25,6 +25,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -896,8 +897,9 @@ class BotMovementManagerTest {
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
         assertEquals(AgentFidgetMode.NONE, entry.fidgetMode);
-        assertNull(entry.moveTarget, "speed-mismatch follow fidgets should resume following immediately");
-        assertFalse(entry.moveTargetPrecise);
+        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry),
+                "speed-mismatch follow fidgets should resume following immediately");
+        assertFalse(AgentBotMoveTargetStateRuntime.isPrecise(entry));
     }
 
     @Test
@@ -913,21 +915,20 @@ class BotMovementManagerTest {
         entry.fidgetUntilMs = now - 1;
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(new Point(100, 100), entry.moveTarget,
+        assertEquals(new Point(100, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry),
                 "social fidget cleanup should reuse the precise move-target path from the here command");
-        assertTrue(entry.moveTargetPrecise);
+        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
 
-        entry.moveTarget = null;
-        entry.moveTargetPrecise = false;
+        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         bot.setPosition(new Point(130, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000, AgentFidgetTrigger.IDLE);
         bot.setPosition(new Point(160, 100));
         entry.fidgetUntilMs = now - 1;
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(new Point(130, 100), entry.moveTarget,
+        assertEquals(new Point(130, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry),
                 "idle fidget cleanup should return to its own recorded origin");
-        assertTrue(entry.moveTargetPrecise);
+        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
     }
 
     @Test
