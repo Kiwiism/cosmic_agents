@@ -13,41 +13,38 @@ public final class AgentBotOwnerMotionStateRuntime {
     }
 
     public static Point lastOwnerPosition(BotEntry entry) {
-        return entry.lastOwnerPosition();
+        return entry.ownerMotionState().lastOwnerPosition();
     }
 
     public static void rememberOwnerPosition(BotEntry entry, Point ownerPosition) {
-        entry.setLastOwnerPosition(ownerPosition);
+        entry.ownerMotionState().setLastOwnerPosition(ownerPosition);
     }
 
     public static int observedOwnerStepX(BotEntry entry) {
-        return entry.observedOwnerStepX();
+        return entry.ownerMotionState().observedOwnerStepX();
     }
 
     public static int observedOwnerStepY(BotEntry entry) {
-        return entry.observedOwnerStepY();
+        return entry.ownerMotionState().observedOwnerStepY();
     }
 
     public static boolean observedOwnerMoved(BotEntry entry) {
-        return entry.observedOwnerStepX() != 0 || entry.observedOwnerStepY() != 0;
+        return entry.ownerMotionState().observedOwnerMoved();
     }
 
     public static int maxObservedOwnerStep(BotEntry entry) {
-        return Math.max(Math.abs(entry.observedOwnerStepX()), Math.abs(entry.observedOwnerStepY()));
+        return entry.ownerMotionState().maxObservedOwnerStep();
     }
 
     public static boolean ownerMostlyIdle(BotEntry entry) {
-        return Math.abs(entry.observedOwnerStepX()) <= 1 && Math.abs(entry.observedOwnerStepY()) <= 1;
+        return entry.ownerMotionState().ownerMostlyIdle();
     }
 
     public static void clearObservedOwnerStep(BotEntry entry) {
-        entry.setObservedOwnerStep(0, 0);
+        entry.ownerMotionState().clearObservedOwnerStep();
     }
 
     public static void updateObservedOwnerStep(BotEntry entry, Point ownerPosition) {
-        Point lastOwnerPosition = entry.lastOwnerPosition();
-        int stepX = lastOwnerPosition == null ? 0 : ownerPosition.x - lastOwnerPosition.x;
-        int stepY = lastOwnerPosition == null ? 0 : ownerPosition.y - lastOwnerPosition.y;
-        entry.setObservedOwnerStep(stepX, stepY);
+        entry.ownerMotionState().updateObservedOwnerStep(ownerPosition);
     }
 }

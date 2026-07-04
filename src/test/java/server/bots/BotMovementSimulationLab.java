@@ -24,6 +24,8 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
@@ -166,9 +168,8 @@ final class BotMovementSimulationLab {
                 boolean runAiTick = consumeAiTick(entry);
                 AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
                 Point ownerPos = targetSnapshot.rawOwnerPosition();
-                entry.lastTickWasAi = runAiTick;
-                entry.lastTickAtMs = elapsedMs;
-                entry.lastOwnerPos = new Point(ownerPos);
+                AgentBotTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
+                AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
                 pending.add(new PendingStep(botEntry.getKey(), entry, runAiTick, targetSnapshot));
             }
 
@@ -190,12 +191,11 @@ final class BotMovementSimulationLab {
     void stepRaw(String botName, Point targetPos, boolean runAiTick) {
         BotEntry entry = requireBot(botName);
         elapsedMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
-        entry.lastTickWasAi = runAiTick;
-        entry.lastTickAtMs = elapsedMs;
+        AgentBotTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPosition();
-        entry.lastOwnerPos = new Point(ownerPos);
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, new Point(targetPos), runAiTick);
         trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry,
                 AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry)));

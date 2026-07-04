@@ -46,6 +46,7 @@ import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
+import server.agents.runtime.AgentOwnerMotionState;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -1562,10 +1563,9 @@ public class BotEntry {
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
 
     // Cached movement state shared across ticks
-    int observedOwnerStepX = 0;
-    int observedOwnerStepY = 0;
 
     public boolean hasActiveNavigationEdge() {
         return navigationEdgeState.hasActiveEdge();
@@ -1584,16 +1584,15 @@ public class BotEntry {
     }
 
     public int observedOwnerStepX() {
-        return observedOwnerStepX;
+        return ownerMotionState.observedOwnerStepX();
     }
 
     public int observedOwnerStepY() {
-        return observedOwnerStepY;
+        return ownerMotionState.observedOwnerStepY();
     }
 
     public void setObservedOwnerStep(int stepX, int stepY) {
-        this.observedOwnerStepX = stepX;
-        this.observedOwnerStepY = stepY;
+        ownerMotionState.setObservedOwnerStep(stepX, stepY);
     }
     AgentFidgetMode fidgetMode = AgentFidgetMode.NONE;
     AgentFidgetTrigger fidgetTrigger = AgentFidgetTrigger.NONE;
@@ -1788,6 +1787,10 @@ public class BotEntry {
         return navigationTargetState;
     }
 
+    public AgentOwnerMotionState ownerMotionState() {
+        return ownerMotionState;
+    }
+
     public AgentPathLogger pathLogger() {
         return navigationDebugState.pathLogger();
     }
@@ -1913,18 +1916,17 @@ public class BotEntry {
     }
 
     // Last known leader position (set each tick by Agent runtime, read by pathLogger)
-    Point lastOwnerPos = null;
     boolean lastTickWasAi = false;
     long lastTickAtMs = 0L;
     long lastHeartbeatAtMs = 0L;
     long nextFollowIdleMovementCheckAtMs = 0L;
 
     public Point lastOwnerPosition() {
-        return lastOwnerPos == null ? null : new Point(lastOwnerPos);
+        return ownerMotionState.lastOwnerPosition();
     }
 
     public void setLastOwnerPosition(Point lastOwnerPos) {
-        this.lastOwnerPos = lastOwnerPos == null ? null : new Point(lastOwnerPos);
+        ownerMotionState.setLastOwnerPosition(lastOwnerPos);
     }
 
     public boolean lastTickWasAi() {

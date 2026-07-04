@@ -25,6 +25,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -593,7 +594,9 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.observedOwnerStepX = 4;
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(0, 0));
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
 
         int stoppedStep = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(20, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
@@ -620,7 +623,8 @@ class BotMovementManagerTest {
         entry.following = true;
         entry.wasMovingX = true;
         entry.movementProfile = new AgentMovementProfile(140, 100);
-        entry.observedOwnerStepX = 4;
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
 
         int walkStep = AgentMovementKinematicsService.walkStep(map, entry.movementProfile);
         int step = AgentGroundMovementService.resolveGroundStepX(
@@ -651,13 +655,13 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
         entry.movementProfile = new AgentMovementProfile(140, 100);
-        entry.observedOwnerStepX = 0;
-        entry.observedOwnerStepY = 0;
+        AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
 
         assertFalse(AgentFidgetService.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
                 "idle owners should use the long idle-fidget roll, not the active follow speed-mismatch fidget");
 
-        entry.observedOwnerStepX = 4;
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
 
         assertTrue(AgentFidgetService.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
                 "slow-but-moving owners remain eligible for speed-mismatch follow fidgets");

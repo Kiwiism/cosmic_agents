@@ -28,6 +28,7 @@ import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
@@ -692,7 +693,8 @@ class BotManagerTest {
         assertFalse(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_000L),
                 "idle fast path should allow a periodic full movement/nav check");
 
-        entry.observedOwnerStepX = 1;
+        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(1, 0));
         assertFalse(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_100L),
                 "owner movement should force normal movement resolution");
     }

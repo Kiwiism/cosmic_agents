@@ -31,6 +31,8 @@ import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotTickStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -187,8 +189,7 @@ public class BotFollowTickPerfHarness {
             long startedAt = AgentPerformanceMonitor.start();
             try {
                 boolean runAiTick = consumeAiTick(entry);
-                entry.lastTickWasAi = runAiTick;
-                entry.lastTickAtMs = System.currentTimeMillis();
+                AgentBotTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
                 try {
                     AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, AgentScriptTaskRuntime::tick);
                 } catch (Throwable t) {
@@ -198,7 +199,7 @@ public class BotFollowTickPerfHarness {
                 try {
                     AgentMovementTargetSnapshot snap = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
                     Point ownerPos = snap.rawOwnerPosition();
-                    entry.lastOwnerPos = new Point(ownerPos);
+                    AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
                     AgentMovementOnlyStepRuntime.stepMovementOnly(entry, snap.primaryTargetPosition(), runAiTick);
                 } catch (Throwable t) {
                     // ignore

@@ -4426,6 +4426,10 @@ Current physics correction:
   `AgentManualTradeState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while pending trade reference, accept-delay timer, and timeout timer
   reads/writes route through the Agent trade capability.
+- Leader/owner motion observation storage now lives in `AgentOwnerMotionState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while last
+  observed owner position and per-tick owner step deltas route through Agent
+  runtime state.
 
 Initial reconstruction order:
 
