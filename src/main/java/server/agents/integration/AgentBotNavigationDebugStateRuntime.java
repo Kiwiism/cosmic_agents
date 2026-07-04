@@ -117,15 +117,15 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static boolean portalUseOnCooldown(BotEntry entry, long nowMs) {
-        return nowMs < entry.portalUseCooldownUntilMs();
+        return entry.portalCooldownState().onCooldown(nowMs);
     }
 
     public static long portalUseCooldownUntilMs(BotEntry entry) {
-        return entry.portalUseCooldownUntilMs();
+        return entry.portalCooldownState().useCooldownUntilMs();
     }
 
     public static void setPortalUseCooldownUntilMs(BotEntry entry, long cooldownUntilMs) {
-        entry.setPortalUseCooldownUntilMs(cooldownUntilMs);
+        entry.portalCooldownState().setUseCooldownUntilMs(cooldownUntilMs);
     }
 
     public static boolean hasNavJumpLaunchEdge(BotEntry entry) {

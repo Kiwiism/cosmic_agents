@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
@@ -881,16 +882,18 @@ public class BotEntry {
         this.mobHitCooldownMs = mobHitCooldownMs;
     }
 
-    // Absolute time until which this bot may not take another portal (set on portal use).
-    // Portal-only gate: does not block movement, attacks, or any other action.
-    long portalUseCooldownUntilMs = 0L;
+    private final AgentPortalCooldownState portalCooldownState = new AgentPortalCooldownState();
+
+    public AgentPortalCooldownState portalCooldownState() {
+        return portalCooldownState;
+    }
 
     public long portalUseCooldownUntilMs() {
-        return portalUseCooldownUntilMs;
+        return portalCooldownState.useCooldownUntilMs();
     }
 
     public void setPortalUseCooldownUntilMs(long portalUseCooldownUntilMs) {
-        this.portalUseCooldownUntilMs = portalUseCooldownUntilMs;
+        portalCooldownState.setUseCooldownUntilMs(portalUseCooldownUntilMs);
     }
     // Client-side alert-stance emulation: when currentTimeMillis < alertedUntilMs the bot's
     // broadcast stance gets STAND→ALERT substituted so observers see the alert pose.

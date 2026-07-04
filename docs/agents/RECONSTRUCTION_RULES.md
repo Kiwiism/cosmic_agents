@@ -4381,6 +4381,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while bot-initiated trade
   retry callback and retry-delay reads/writes route through the Agent trade
   capability.
+- Portal cooldown storage now lives in `AgentPortalCooldownState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while portal-use cooldown
+  deadline reads/writes and cooldown checks route through the Agent navigation
+  capability.
 
 Initial reconstruction order:
 
