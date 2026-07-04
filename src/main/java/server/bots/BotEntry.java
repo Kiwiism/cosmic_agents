@@ -17,6 +17,7 @@ import server.agents.capabilities.combat.AgentMobTouchState;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 import server.agents.capabilities.movement.AgentAirborneSteeringState;
+import server.agents.capabilities.movement.AgentClimbState;
 import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentMovementInputState;
 import server.agents.capabilities.movement.AgentSwimIntentState;
@@ -152,6 +153,7 @@ public class BotEntry {
     private final AgentDownJumpState downJumpState = new AgentDownJumpState();
     private final AgentMovementInputState movementInputState = new AgentMovementInputState();
     private final AgentSwimIntentState swimIntentState = new AgentSwimIntentState();
+    private final AgentClimbState climbState = new AgentClimbState();
 
     public boolean inAir() {
         return inAir;
@@ -252,7 +254,7 @@ public class BotEntry {
         movementInputState.setVelocity(velocityX, velocityY);
         setFacingDirection(facingDirection);
         this.inAir = inAir;
-        this.climbing = climbing;
+        climbState.setClimbingFlag(climbing);
     }
 
     public int movementVelX() {
@@ -342,32 +344,29 @@ public class BotEntry {
     }
 
     // Rope climbing
-    boolean climbing = false;
-    Rope climbRope = null;
-    Rope blockedRopeGrab = null;
+    public AgentClimbState climbState() {
+        return climbState;
+    }
 
     public boolean climbing() {
-        return climbing;
+        return climbState.climbing();
     }
 
     // Climb intent — set by movement layer, consumed by physics engine.
     public Rope climbRope() {
-        return climbRope;
+        return climbState.climbRope();
     }
 
     public void setClimbingOnRope(Rope rope) {
-        climbing = rope != null;
-        climbRope = rope;
+        climbState.setClimbingOnRope(rope);
     }
 
-    int climbVerticalDir = 0;            // -1 up, 0 idle, +1 down
-
     public int climbVerticalDirection() {
-        return climbVerticalDir;
+        return climbState.verticalDirection();
     }
 
     public void setClimbVerticalDirection(int direction) {
-        climbVerticalDir = Integer.compare(direction, 0);
+        climbState.setVerticalDirection(direction);
     }
 
     // Horizontal movement hysteresis
@@ -408,36 +407,32 @@ public class BotEntry {
     }
 
     // Movement intent
-    boolean climbUpIntent = false;
-
     public boolean climbUpIntent() {
-        return climbUpIntent;
+        return climbState.climbUpIntent();
     }
 
     public void setClimbUpIntent(boolean climbUpIntent) {
-        this.climbUpIntent = climbUpIntent;
+        climbState.setClimbUpIntent(climbUpIntent);
     }
 
     public Rope blockedRopeGrab() {
-        return blockedRopeGrab;
+        return climbState.blockedRopeGrab();
     }
 
     public void setBlockedRopeGrab(Rope rope) {
-        blockedRopeGrab = rope;
+        climbState.setBlockedRopeGrab(rope);
     }
 
     public void clearBlockedRopeGrab() {
-        blockedRopeGrab = null;
+        climbState.clearBlockedRopeGrab();
     }
 
-    int ropeGrabCooldownMs = 0;
-
     public int ropeGrabCooldownMs() {
-        return ropeGrabCooldownMs;
+        return climbState.ropeGrabCooldownMs();
     }
 
     public void setRopeGrabCooldownMs(int ropeGrabCooldownMs) {
-        this.ropeGrabCooldownMs = ropeGrabCooldownMs;
+        climbState.setRopeGrabCooldownMs(ropeGrabCooldownMs);
     }
 
     public AgentDownJumpState downJumpState() {
@@ -460,33 +455,24 @@ public class BotEntry {
         downJumpState.setGracePeriodMs(downJumpGracePeriodMs);
     }
 
-    boolean ropeEntryPending = false;
-
     public boolean ropeEntryPending() {
-        return ropeEntryPending;
+        return climbState.ropeEntryPending();
     }
 
-    Rope ropeEntryRope = null;
-    int ropeEntryY = 0;
-
     public Rope ropeEntryRope() {
-        return ropeEntryRope;
+        return climbState.ropeEntryRope();
     }
 
     public int ropeEntryY() {
-        return ropeEntryY;
+        return climbState.ropeEntryY();
     }
 
     public void queueRopeEntry(Rope rope, int y) {
-        ropeEntryPending = true;
-        ropeEntryRope = rope;
-        ropeEntryY = y;
+        climbState.queueRopeEntry(rope, y);
     }
 
     public void clearRopeEntry() {
-        ropeEntryPending = false;
-        ropeEntryRope = null;
-        ropeEntryY = 0;
+        climbState.clearRopeEntry();
     }
 
     // Grind mode

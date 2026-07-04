@@ -114,11 +114,11 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static boolean climbing(BotEntry entry) {
-        return entry.climbing();
+        return entry.climbState().climbing();
     }
 
     public static boolean notClimbing(BotEntry entry) {
-        return !entry.climbing();
+        return !entry.climbState().climbing();
     }
 
     public static boolean downJumpPending(BotEntry entry) {

@@ -523,8 +523,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(kerning());
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(-1251, -137, 2, true);
+        entry.setClimbingOnRope(new Rope(-1251, -137, 2, true));
 
         AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
                 189, 157, AgentNavigationGraph.EdgeType.CLIMB,
@@ -543,8 +542,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(kerning());
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(-1251, -137, 2, true);
+        entry.setClimbingOnRope(new Rope(-1251, -137, 2, true));
 
         AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
                 189, 157, AgentNavigationGraph.EdgeType.CLIMB,
@@ -561,8 +559,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(kerning());
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(707, -769, -455, false);
+        entry.setClimbingOnRope(new Rope(707, -769, -455, false));
 
         AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
                 104, 101, AgentNavigationGraph.EdgeType.CLIMB,
@@ -671,15 +668,14 @@ class BotNavigationManagerTest {
         Character bot = mockBot(botPos, lithHarbor);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = AgentMovementProfile.base();
-        entry.climbing = true;
-        entry.climbRope = new Rope(1265, 289, 597, false);
+        entry.setClimbingOnRope(new Rope(1265, 289, 597, false));
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, target, true);
 
         assertTrue(directive.consumedTick());
         assertTrue(entry.inAir);
-        assertFalse(entry.climbing);
+        assertFalse(entry.climbing());
         assertEquals(new Point(1265, 290), bot.getPosition());
     }
 
@@ -739,11 +735,11 @@ class BotNavigationManagerTest {
         entry.movementProfile = AgentMovementProfile.base();
 
         // Simulate the state right after AI tick attached the bot to the rope at firstClimbableY.
-        entry.climbVerticalDir = -1;
+        entry.setClimbVerticalDirection(-1);
         AgentRopeMovementService.attachToRope(entry, bot, rope, AgentNavigationPhysicsService.firstClimbableY(rope));
-        assertTrue(entry.climbing);
+        assertTrue(entry.climbing());
         assertEquals(AgentNavigationPhysicsService.firstClimbableY(rope), bot.getPosition().y);
-        assertEquals(0, entry.climbVerticalDir, "fresh attach must not carry stale climb intent");
+        assertEquals(0, entry.climbVerticalDirection(), "fresh attach must not carry stale climb intent");
 
         // Follow target far above the bot ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â without the fix, dy<0 forces climb-up which dismounts.
         Point followTargetAbove = new Point(50, -54);
@@ -756,9 +752,9 @@ class BotNavigationManagerTest {
         // Run one non-AI physics tick.
         AgentClimbMovementService.tickClimbing(entry, followTargetAbove, false);
 
-        assertTrue(entry.climbing,
+        assertTrue(entry.climbing(),
                 "Non-AI tick must not dismount: AI is the only place climb direction is decided.");
-        assertEquals(rope, entry.climbRope);
+        assertEquals(rope, entry.climbRope());
         assertEquals(new Point(100, AgentNavigationPhysicsService.firstClimbableY(rope)), bot.getPosition(),
                 "Bot must hold position on the rope without AI-decided intent.");
     }
@@ -776,15 +772,15 @@ class BotNavigationManagerTest {
                 AgentNavigationTargetService.resolveTarget(entry, new Point(100, 150), true);
 
         assertTrue(directive.consumedTick());
-        assertTrue(entry.ropeEntryPending);
-        assertFalse(entry.climbing);
+        assertTrue(entry.ropeEntryPending());
+        assertFalse(entry.climbing());
         assertFalse(entry.downJumpPending());
         assertFalse(entry.crouching());
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 150));
 
-        assertFalse(entry.ropeEntryPending);
-        assertTrue(entry.climbing);
+        assertFalse(entry.ropeEntryPending());
+        assertTrue(entry.climbing());
         assertEquals(new Point(100, 101), bot.getPosition());
     }
 

@@ -150,9 +150,9 @@ class AgentPhysicsEngineTest {
     void shouldClearMovementStateOnReset() {
         BotEntry entry = new BotEntry(null, null, null);
         entry.inAir = true;
-        entry.climbing = true;
+        entry.climbState().setClimbingFlag(true);
         entry.setCrouching(true);
-        entry.climbUpIntent = true;
+        entry.setClimbUpIntent(true);
         entry.velY = 7f;
         entry.setAirVelocityX(12);
         entry.physX = 99;
@@ -165,9 +165,9 @@ class AgentPhysicsEngineTest {
         AgentMovementPoseService.resetMotion(entry, new Point(10, 20));
 
         assertFalse(entry.inAir);
-        assertFalse(entry.climbing);
+        assertFalse(entry.climbing());
         assertFalse(entry.crouching());
-        assertFalse(entry.climbUpIntent);
+        assertFalse(entry.climbUpIntent());
         assertFalse(entry.downJumpPending());
         assertEquals(0L, entry.downJumpGracePeriodMs());
         assertEquals(10.0, entry.physX);
@@ -269,12 +269,10 @@ class AgentPhysicsEngineTest {
     @Test
     void shouldUseLadderAndRopeStancesFromClimbState() {
         BotEntry ladderEntry = new BotEntry(null, null, null);
-        ladderEntry.climbing = true;
-        ladderEntry.climbRope = new Rope(100, 0, 40, true);
+        ladderEntry.setClimbingOnRope(new Rope(100, 0, 40, true));
 
         BotEntry ropeEntry = new BotEntry(null, null, null);
-        ropeEntry.climbing = true;
-        ropeEntry.climbRope = new Rope(100, 0, 40, false);
+        ropeEntry.setClimbingOnRope(new Rope(100, 0, 40, false));
 
         assertEquals(CharacterStance.LADDER_STANCE, AgentMovementPoseService.resolveStance(ladderEntry));
         assertEquals(CharacterStance.ROPE_STANCE, AgentMovementPoseService.resolveStance(ropeEntry));
@@ -346,11 +344,11 @@ class AgentPhysicsEngineTest {
         Rope rope = new Rope(100, 0, 40, false);
         AgentRopeMovementService.attachToRope(entry, bot, rope, rope.bottomY());
 
-        entry.climbVerticalDir = 1;  // intent: climb down
+        entry.setClimbVerticalDirection(1);  // intent: climb down
         AgentRopeMovementService.advanceClimb(entry, bot);
 
         assertTrue(entry.inAir);
-        assertFalse(entry.climbing);
+        assertFalse(entry.climbing());
         assertEquals(new Point(100, 40), bot.getPosition());
     }
 
@@ -363,19 +361,19 @@ class AgentPhysicsEngineTest {
         Rope rope = new Rope(100, 0, 40, false);
         AgentRopeMovementService.attachToRope(entry, bot, rope, rope.topY());
 
-        assertTrue(entry.climbing);
+        assertTrue(entry.climbing());
         assertEquals(new Point(100, 1), bot.getPosition());
 
         AgentRopeMovementService.holdClimb(entry, bot);
 
-        assertTrue(entry.climbing);
+        assertTrue(entry.climbing());
         assertEquals(new Point(100, 1), bot.getPosition());
 
-        entry.climbVerticalDir = -1;
+        entry.setClimbVerticalDirection(-1);
         AgentRopeMovementService.advanceClimb(entry, bot);
 
         assertFalse(entry.inAir);
-        assertFalse(entry.climbing);
+        assertFalse(entry.climbing());
         assertEquals(new Point(100, 0), bot.getPosition());
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
     }

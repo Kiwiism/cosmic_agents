@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentClimbState;
 import server.bots.BotEntry;
 import server.maps.Rope;
 
@@ -11,78 +12,82 @@ public final class AgentBotClimbStateRuntime {
     }
 
     public static boolean climbing(BotEntry entry) {
-        return entry.climbing();
+        return state(entry).climbing();
     }
 
     public static Rope climbRope(BotEntry entry) {
-        return entry.climbRope();
+        return state(entry).climbRope();
     }
 
     public static boolean hasClimbRope(BotEntry entry) {
-        return entry.climbRope() != null;
+        return state(entry).hasClimbRope();
     }
 
     public static void setClimbingOnRope(BotEntry entry, Rope rope) {
-        entry.setClimbingOnRope(rope);
+        state(entry).setClimbingOnRope(rope);
     }
 
     public static int climbVerticalDirection(BotEntry entry) {
-        return entry.climbVerticalDirection();
+        return state(entry).verticalDirection();
     }
 
     public static boolean hasClimbVerticalDirection(BotEntry entry) {
-        return entry.climbVerticalDirection() != 0;
+        return state(entry).hasVerticalDirection();
     }
 
     public static void setClimbVerticalDirection(BotEntry entry, int direction) {
-        entry.setClimbVerticalDirection(direction);
+        state(entry).setVerticalDirection(direction);
     }
 
     public static boolean climbUpIntent(BotEntry entry) {
-        return entry.climbUpIntent();
+        return state(entry).climbUpIntent();
     }
 
     public static void setClimbUpIntent(BotEntry entry, boolean climbUpIntent) {
-        entry.setClimbUpIntent(climbUpIntent);
+        state(entry).setClimbUpIntent(climbUpIntent);
     }
 
     public static Rope blockedRopeGrab(BotEntry entry) {
-        return entry.blockedRopeGrab();
+        return state(entry).blockedRopeGrab();
     }
 
     public static void setBlockedRopeGrab(BotEntry entry, Rope rope) {
-        entry.setBlockedRopeGrab(rope);
+        state(entry).setBlockedRopeGrab(rope);
     }
 
     public static void clearBlockedRopeGrab(BotEntry entry) {
-        entry.clearBlockedRopeGrab();
+        state(entry).clearBlockedRopeGrab();
     }
 
     public static int ropeGrabCooldownMs(BotEntry entry) {
-        return entry.ropeGrabCooldownMs();
+        return state(entry).ropeGrabCooldownMs();
     }
 
     public static void setRopeGrabCooldownMs(BotEntry entry, int cooldownMs) {
-        entry.setRopeGrabCooldownMs(cooldownMs);
+        state(entry).setRopeGrabCooldownMs(cooldownMs);
     }
 
     public static boolean ropeEntryPending(BotEntry entry) {
-        return entry.ropeEntryPending();
+        return state(entry).ropeEntryPending();
     }
 
     public static Rope ropeEntryRope(BotEntry entry) {
-        return entry.ropeEntryRope();
+        return state(entry).ropeEntryRope();
     }
 
     public static int ropeEntryY(BotEntry entry) {
-        return entry.ropeEntryY();
+        return state(entry).ropeEntryY();
     }
 
     public static void queueRopeEntry(BotEntry entry, Rope rope, int y) {
-        entry.queueRopeEntry(rope, y);
+        state(entry).queueRopeEntry(rope, y);
     }
 
     public static void clearRopeEntry(BotEntry entry) {
-        entry.clearRopeEntry();
+        state(entry).clearRopeEntry();
+    }
+
+    private static AgentClimbState state(BotEntry entry) {
+        return entry.climbState();
     }
 }

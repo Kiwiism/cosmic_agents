@@ -337,8 +337,7 @@ class BotManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(100, 40, 100, false);
+        entry.setClimbingOnRope(new Rope(100, 40, 100, false));
 
         assertFalse(AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
                 entry,
@@ -362,7 +361,7 @@ class BotManagerTest {
 
         assertEquals(new Point(100, 100), bot.getPosition());
         assertFalse(entry.inAir);
-        assertFalse(entry.climbing);
+        assertFalse(entry.climbing());
     }
 
     @Test

@@ -437,8 +437,7 @@ class AgentNavigationGraphServiceTest {
 
         Character bot = mockBot(reuseCase.botPosition(), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = reuseCase.rope();
+        entry.setClimbingOnRope(reuseCase.rope());
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, reuseCase.edge());
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, graph.findRegionId(map, reuseCase.rawTarget()));
 
@@ -460,8 +459,7 @@ class AgentNavigationGraphServiceTest {
         assertNotEquals(reuseCase.edge().toRegionId, graph.findRegionId(map, reuseCase.botPosition()));
 
         BotEntry entry = new BotEntry(mockBot(reuseCase.botPosition(), map), null, null);
-        entry.climbing = true;
-        entry.climbRope = reuseCase.rope();
+        entry.setClimbingOnRope(reuseCase.rope());
 
         assertEquals(reuseCase.edge().toRegionId,
                 AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, reuseCase.botPosition()));

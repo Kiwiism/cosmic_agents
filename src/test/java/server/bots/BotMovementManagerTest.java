@@ -204,8 +204,7 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(668, 1727, 1980, false);
+        entry.setClimbingOnRope(new Rope(668, 1727, 1980, false));
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 68, 54, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(668, 1757), new Point(796, 2025),
@@ -232,8 +231,7 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(-437, -1471, 84, false);
+        entry.setClimbingOnRope(new Rope(-437, -1471, 84, false));
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -1141), new Point(-477, -1166),
@@ -250,8 +248,7 @@ class BotMovementManagerTest {
     @Test
     void shouldNotSnapPreciseClimbTargetOutsideRopeSpan() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(3398, 126, 332, false);
+        entry.setClimbingOnRope(new Rope(3398, 126, 332, false));
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Above the rope (y <= topY) and strictly below it (y > bottomY) must reject snap.
@@ -270,8 +267,7 @@ class BotMovementManagerTest {
         // mechanism — it just refused to fire at bottomY because of an over-strict bounds check.
         Rope rope = new Rope(2352, 662, 863, false);
         BotEntry entry = new BotEntry(null, null, null);
-        entry.climbing = true;
-        entry.climbRope = rope;
+        entry.setClimbingOnRope(rope);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Bot within one climbStep of the anchor — natural step would overshoot bottomY.
@@ -304,8 +300,7 @@ class BotMovementManagerTest {
         });
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(3398, 126, 332, false);
+        entry.setClimbingOnRope(new Rope(3398, 126, 332, false));
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 53, 25, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(3398, 156), new Point(3443, 124),
@@ -316,7 +311,7 @@ class BotMovementManagerTest {
         AgentClimbMovementService.tickClimbing(entry, new Point(3398, 124), true);
 
         assertEquals(new Point(3398, 124), bot.getPosition());
-        assertFalse(entry.climbing);
+        assertFalse(entry.climbing());
         assertFalse(entry.inAir);
     }
 
@@ -448,8 +443,7 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(-157, -115, 118, false);
+        entry.setClimbingOnRope(new Rope(-157, -115, 118, false));
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 47, 39, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-157, -25), new Point(-61, 121),
@@ -581,7 +575,7 @@ class BotMovementManagerTest {
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 40));
 
-        assertTrue(entry.climbing, "graph warmup fallback should use a nearby rope for vertical travel");
+        assertTrue(entry.climbing(), "graph warmup fallback should use a nearby rope for vertical travel");
         assertEquals(new Point(100, 120), bot.getPosition());
     }
 
@@ -992,15 +986,14 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.climbing = true;
-        entry.climbRope = new Rope(668, 1727, 1980, false);
+        entry.setClimbingOnRope(new Rope(668, 1727, 1980, false));
 
         AgentClimbMovementService.jumpToRope(entry, bot, 8);
 
         assertTrue(entry.inAir);
-        assertTrue(entry.climbUpIntent);
-        assertEquals(0, entry.ropeGrabCooldownMs);
-        assertEquals(668, entry.blockedRopeGrab.x());
+        assertTrue(entry.climbUpIntent());
+        assertEquals(0, entry.ropeGrabCooldownMs());
+        assertEquals(668, entry.blockedRopeGrab().x());
     }
 
     @Test

@@ -4516,6 +4516,10 @@ Current physics correction:
   direction, packet movement velocity, facing direction, crouch/prone state,
   and horizontal movement hysteresis route through the Agent movement
   capability.
+- Climb/rope state now lives in `AgentClimbState`. `BotEntry` temporarily
+  hosts the Agent-owned state object, while rope attachment, climb direction,
+  climb-up intent, blocked rope grabs, rope-grab cooldowns, and queued rope
+  entries route through the Agent movement capability.
 
 Initial reconstruction order:
 
