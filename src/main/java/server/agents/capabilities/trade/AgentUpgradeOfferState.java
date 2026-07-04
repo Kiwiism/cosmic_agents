@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AgentUpgradeOfferState {
     private boolean proactiveUpgradeOffers = true;
     private long nextGearSuggestionAt = 0L;
+    private long pendingGearPromptAt = 0L;
     private boolean spawnUpgradeCheckDone = false;
     private final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
 
@@ -27,6 +28,26 @@ public final class AgentUpgradeOfferState {
 
     public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
         this.nextGearSuggestionAt = nextGearSuggestionAt;
+    }
+
+    public long pendingGearPromptAt() {
+        return pendingGearPromptAt;
+    }
+
+    public void reserveGearPrompt(long scheduledAt) {
+        this.pendingGearPromptAt = scheduledAt;
+    }
+
+    public void clearGearPrompt() {
+        this.pendingGearPromptAt = 0L;
+    }
+
+    public boolean hasPendingGearPromptAfter(long nowMs) {
+        return pendingGearPromptAt > nowMs;
+    }
+
+    public boolean isReservedGearPrompt(long scheduledAt) {
+        return pendingGearPromptAt == scheduledAt;
     }
 
     public boolean spawnUpgradeCheckDone() {

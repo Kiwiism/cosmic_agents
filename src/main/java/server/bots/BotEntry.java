@@ -1781,7 +1781,6 @@ public class BotEntry {
     // Path logging (debug)
     AgentPathLogger pathLogger = null;
     String lastNavDecision = "-";
-    private long pendingGearPromptAt = 0L;
 
     public AgentPathLogger pathLogger() {
         return pathLogger;
@@ -1874,7 +1873,7 @@ public class BotEntry {
     }
 
     public long pendingGearPromptAt() {
-        return pendingGearPromptAt;
+        return upgradeOfferState.pendingGearPromptAt();
     }
 
     public double recentScrollReactionLoad() {
@@ -1918,7 +1917,7 @@ public class BotEntry {
     }
 
     public void setPendingGearPromptAt(long pendingGearPromptAt) {
-        this.pendingGearPromptAt = pendingGearPromptAt;
+        upgradeOfferState.reserveGearPrompt(pendingGearPromptAt);
     }
 
     // Last known leader position (set each tick by Agent runtime, read by pathLogger)

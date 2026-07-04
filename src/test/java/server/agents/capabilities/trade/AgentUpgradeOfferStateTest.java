@@ -13,6 +13,7 @@ class AgentUpgradeOfferStateTest {
 
         assertTrue(state.proactiveUpgradeOffers());
         assertEquals(0L, state.nextGearSuggestionAt());
+        assertEquals(0L, state.pendingGearPromptAt());
         assertFalse(state.spawnUpgradeCheckDone());
         assertFalse(state.hasRequestedUpgradeItem(1002000));
     }
@@ -35,6 +36,24 @@ class AgentUpgradeOfferStateTest {
         state.setNextGearSuggestionAt(12_000L);
 
         assertEquals(12_000L, state.nextGearSuggestionAt());
+    }
+
+    @Test
+    void reservesAndClearsPendingGearPromptTimestamp() {
+        AgentUpgradeOfferState state = new AgentUpgradeOfferState();
+
+        state.reserveGearPrompt(2_000L);
+
+        assertEquals(2_000L, state.pendingGearPromptAt());
+        assertTrue(state.hasPendingGearPromptAfter(1_999L));
+        assertFalse(state.hasPendingGearPromptAfter(2_000L));
+        assertTrue(state.isReservedGearPrompt(2_000L));
+        assertFalse(state.isReservedGearPrompt(2_001L));
+
+        state.clearGearPrompt();
+
+        assertEquals(0L, state.pendingGearPromptAt());
+        assertFalse(state.hasPendingGearPromptAfter(0L));
     }
 
     @Test

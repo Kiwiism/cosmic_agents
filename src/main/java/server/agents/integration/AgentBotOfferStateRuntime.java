@@ -12,23 +12,23 @@ public final class AgentBotOfferStateRuntime {
     }
 
     public static boolean hasPendingGearPromptAfter(BotEntry entry, long nowMs) {
-        return entry.pendingGearPromptAt() > nowMs;
+        return entry.upgradeOfferState().hasPendingGearPromptAfter(nowMs);
     }
 
     public static long pendingGearPromptAt(BotEntry entry) {
-        return entry.pendingGearPromptAt();
+        return entry.upgradeOfferState().pendingGearPromptAt();
     }
 
     public static void reserveGearPrompt(BotEntry entry, long scheduledAt) {
-        entry.setPendingGearPromptAt(scheduledAt);
+        entry.upgradeOfferState().reserveGearPrompt(scheduledAt);
     }
 
     public static boolean isReservedGearPrompt(BotEntry entry, long scheduledAt) {
-        return entry.pendingGearPromptAt() == scheduledAt;
+        return entry.upgradeOfferState().isReservedGearPrompt(scheduledAt);
     }
 
     public static void clearGearPrompt(BotEntry entry) {
-        entry.setPendingGearPromptAt(0L);
+        entry.upgradeOfferState().clearGearPrompt();
     }
 
     public static Item pendingLootOfferItem(BotEntry entry) {
