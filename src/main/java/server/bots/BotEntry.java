@@ -35,6 +35,7 @@ import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
+import server.agents.capabilities.trade.AgentManualTradeState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.monitoring.AgentPathLogger;
@@ -2029,32 +2030,34 @@ public class BotEntry {
     }
 
     // Manual trade: countdown before bot accepts an incoming trade invite (both owner and peer-bot)
-    int manualTradeAcceptDelayMs = 0;
-    Trade manualTradeRef = null;
-    int manualTradeTimeoutMs = 0;
+    private final AgentManualTradeState manualTradeState = new AgentManualTradeState();
+
+    public AgentManualTradeState manualTradeState() {
+        return manualTradeState;
+    }
 
     public int manualTradeAcceptDelayMs() {
-        return manualTradeAcceptDelayMs;
+        return manualTradeState.acceptDelayMs();
     }
 
     public void setManualTradeAcceptDelayMs(int manualTradeAcceptDelayMs) {
-        this.manualTradeAcceptDelayMs = manualTradeAcceptDelayMs;
+        manualTradeState.setAcceptDelayMs(manualTradeAcceptDelayMs);
     }
 
     public Trade manualTradeRef() {
-        return manualTradeRef;
+        return manualTradeState.tradeRef();
     }
 
     public void setManualTradeRef(Trade manualTradeRef) {
-        this.manualTradeRef = manualTradeRef;
+        manualTradeState.setTradeRef(manualTradeRef);
     }
 
     public int manualTradeTimeoutMs() {
-        return manualTradeTimeoutMs;
+        return manualTradeState.timeoutMs();
     }
 
     public void setManualTradeTimeoutMs(int manualTradeTimeoutMs) {
-        this.manualTradeTimeoutMs = manualTradeTimeoutMs;
+        manualTradeState.setTimeoutMs(manualTradeTimeoutMs);
     }
 
     // Movement packet cache so repeated no-op packets are suppressed

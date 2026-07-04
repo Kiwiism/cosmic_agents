@@ -4422,6 +4422,10 @@ Current physics correction:
   state object, while committed edge presence, active edge lookup, and
   jump-launch edge/X cache reads/writes route through the Agent navigation
   capability.
+- Manual trade invite timing/reference storage now lives in
+  `AgentManualTradeState`. `BotEntry` temporarily hosts the Agent-owned state
+  object, while pending trade reference, accept-delay timer, and timeout timer
+  reads/writes route through the Agent trade capability.
 
 Initial reconstruction order:
 
