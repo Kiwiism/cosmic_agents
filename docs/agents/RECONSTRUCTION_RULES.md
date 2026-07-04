@@ -4441,6 +4441,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while stuck
   duration, unstuck cooldown, and stuck-check coordinates route through Agent
   runtime state.
+- Movement broadcast suppression cache state now lives in
+  `AgentMovementBroadcastState`. `BotEntry` temporarily hosts the Agent-owned
+  state object, while last broadcast position, velocity, stance, and foothold
+  route through Agent runtime state.
 
 Initial reconstruction order:
 

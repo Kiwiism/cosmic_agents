@@ -10,7 +10,7 @@ public final class AgentBotMovementBroadcastStateRuntime {
     }
 
     public static void invalidate(BotEntry entry) {
-        entry.setMovementBroadcastValid(false);
+        entry.movementBroadcastState().setValid(false);
     }
 
     public static boolean matches(BotEntry entry,
@@ -20,13 +20,7 @@ public final class AgentBotMovementBroadcastStateRuntime {
                                   int velocityY,
                                   int stance,
                                   int footholdId) {
-        return entry.movementBroadcastValid()
-                && entry.lastBroadcastX() == x
-                && entry.lastBroadcastY() == y
-                && entry.lastBroadcastVelX() == velocityX
-                && entry.lastBroadcastVelY() == velocityY
-                && entry.lastBroadcastStance() == stance
-                && entry.lastBroadcastFh() == footholdId;
+        return entry.movementBroadcastState().matches(x, y, velocityX, velocityY, stance, footholdId);
     }
 
     public static void record(BotEntry entry,
@@ -36,12 +30,6 @@ public final class AgentBotMovementBroadcastStateRuntime {
                               int velocityY,
                               int stance,
                               int footholdId) {
-        entry.setMovementBroadcastValid(true);
-        entry.setLastBroadcastX(x);
-        entry.setLastBroadcastY(y);
-        entry.setLastBroadcastVelX(velocityX);
-        entry.setLastBroadcastVelY(velocityY);
-        entry.setLastBroadcastStance(stance);
-        entry.setLastBroadcastFh(footholdId);
+        entry.movementBroadcastState().record(x, y, velocityX, velocityY, stance, footholdId);
     }
 }

@@ -46,6 +46,7 @@ import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
+import server.agents.runtime.AgentMovementBroadcastState;
 import server.agents.runtime.AgentMovementStuckState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentTickFailureState;
@@ -1566,6 +1567,7 @@ public class BotEntry {
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentMovementBroadcastState movementBroadcastState = new AgentMovementBroadcastState();
     private final AgentMovementStuckState movementStuckState = new AgentMovementStuckState();
     private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
     private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
@@ -1795,6 +1797,10 @@ public class BotEntry {
 
     public AgentOwnerMotionState ownerMotionState() {
         return ownerMotionState;
+    }
+
+    public AgentMovementBroadcastState movementBroadcastState() {
+        return movementBroadcastState;
     }
 
     public AgentMovementStuckState movementStuckState() {
@@ -2061,13 +2067,6 @@ public class BotEntry {
     }
 
     // Movement packet cache so repeated no-op packets are suppressed
-    boolean movementBroadcastValid = false;
-    int lastBroadcastX = 0;
-    int lastBroadcastY = 0;
-    int lastBroadcastVelX = 0;
-    int lastBroadcastVelY = 0;
-    int lastBroadcastStance = 0;
-    int lastBroadcastFh = 0;
     int lastGroundFhId = 0;
 
     public int lastGroundFhId() {
@@ -2079,59 +2078,59 @@ public class BotEntry {
     }
 
     public boolean movementBroadcastValid() {
-        return movementBroadcastValid;
+        return movementBroadcastState.valid();
     }
 
     public void setMovementBroadcastValid(boolean movementBroadcastValid) {
-        this.movementBroadcastValid = movementBroadcastValid;
+        movementBroadcastState.setValid(movementBroadcastValid);
     }
 
     public int lastBroadcastX() {
-        return lastBroadcastX;
+        return movementBroadcastState.x();
     }
 
     public void setLastBroadcastX(int lastBroadcastX) {
-        this.lastBroadcastX = lastBroadcastX;
+        movementBroadcastState.setX(lastBroadcastX);
     }
 
     public int lastBroadcastY() {
-        return lastBroadcastY;
+        return movementBroadcastState.y();
     }
 
     public void setLastBroadcastY(int lastBroadcastY) {
-        this.lastBroadcastY = lastBroadcastY;
+        movementBroadcastState.setY(lastBroadcastY);
     }
 
     public int lastBroadcastVelX() {
-        return lastBroadcastVelX;
+        return movementBroadcastState.velocityX();
     }
 
     public void setLastBroadcastVelX(int lastBroadcastVelX) {
-        this.lastBroadcastVelX = lastBroadcastVelX;
+        movementBroadcastState.setVelocityX(lastBroadcastVelX);
     }
 
     public int lastBroadcastVelY() {
-        return lastBroadcastVelY;
+        return movementBroadcastState.velocityY();
     }
 
     public void setLastBroadcastVelY(int lastBroadcastVelY) {
-        this.lastBroadcastVelY = lastBroadcastVelY;
+        movementBroadcastState.setVelocityY(lastBroadcastVelY);
     }
 
     public int lastBroadcastStance() {
-        return lastBroadcastStance;
+        return movementBroadcastState.stance();
     }
 
     public void setLastBroadcastStance(int lastBroadcastStance) {
-        this.lastBroadcastStance = lastBroadcastStance;
+        movementBroadcastState.setStance(lastBroadcastStance);
     }
 
     public int lastBroadcastFh() {
-        return lastBroadcastFh;
+        return movementBroadcastState.footholdId();
     }
 
     public void setLastBroadcastFh(int lastBroadcastFh) {
-        this.lastBroadcastFh = lastBroadcastFh;
+        movementBroadcastState.setFootholdId(lastBroadcastFh);
     }
 
     public BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
