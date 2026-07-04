@@ -24,6 +24,7 @@ import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
+import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 
 import java.awt.*;
@@ -909,11 +910,11 @@ public class BotEntry {
         this.alertResetScheduled = alertResetScheduled;
     }
 
-    // Most recent command the owner issued that handleChat actually matched.
-    // Used by AgentSituationBuilder to give the LLM context like "owner told you to
-    // farm here 3 min ago" so 'what are you doing' answers stay coherent.
-    private volatile String lastOwnerCommand = null;
-    private volatile long lastOwnerCommandAtMs = 0L;
+    private final AgentLeaderActivityState leaderActivityState = new AgentLeaderActivityState();
+
+    public AgentLeaderActivityState leaderActivityState() {
+        return leaderActivityState;
+    }
 
     public boolean isGrinding() { return grinding; }
     public boolean isFollowing() { return following; }
@@ -924,11 +925,10 @@ public class BotEntry {
     public Character bot() { return bot; }
     public Character owner() { return owner; }
     public void setOwner(Character owner) { this.owner = owner; }
-    public String lastOwnerCommand() { return lastOwnerCommand; }
-    public long lastOwnerCommandAtMs() { return lastOwnerCommandAtMs; }
+    public String lastOwnerCommand() { return leaderActivityState.lastCommand(); }
+    public long lastOwnerCommandAtMs() { return leaderActivityState.lastCommandAtMs(); }
     public void recordLastOwnerCommand(String command, long commandAtMs) {
-        this.lastOwnerCommand = command;
-        this.lastOwnerCommandAtMs = commandAtMs;
+        leaderActivityState.recordLastCommand(command, commandAtMs);
     }
     public AgentBuildService.ApBuild apBuild() { return apBuild; }
     public void setApBuild(AgentBuildService.ApBuild apBuild) {
@@ -1377,64 +1377,52 @@ public class BotEntry {
         scriptTaskQueueState.clearTasks();
     }
 
-    // AFK detection
-    private Point ownerAfkPos = null;
-    private long ownerAfkSinceMs = 0;
-    private boolean ownerWasAfk = false;
-
     public Point ownerAfkPosition() {
-        return ownerAfkPos;
+        return leaderActivityState.afkPosition();
     }
 
     public void setOwnerAfkPosition(Point ownerAfkPos) {
-        this.ownerAfkPos = ownerAfkPos;
+        leaderActivityState.setAfkPosition(ownerAfkPos);
     }
 
     public long ownerAfkSinceMs() {
-        return ownerAfkSinceMs;
+        return leaderActivityState.afkSinceMs();
     }
 
     public void setOwnerAfkSinceMs(long ownerAfkSinceMs) {
-        this.ownerAfkSinceMs = ownerAfkSinceMs;
+        leaderActivityState.setAfkSinceMs(ownerAfkSinceMs);
     }
 
     public boolean ownerWasAfk() {
-        return ownerWasAfk;
+        return leaderActivityState.wasAfk();
     }
 
     public void setOwnerWasAfk(boolean ownerWasAfk) {
-        this.ownerWasAfk = ownerWasAfk;
+        leaderActivityState.setWasAfk(ownerWasAfk);
     }
 
-    // Owner-offline-or-dead detection: after a sustained period (5 min) the bot
-    // scrolls/warps to the nearest town and idles, instead of grinding pots dry
-    // or death-looping with no anchor.
-    private long ownerOfflineOrDeadSinceMs = 0;
-    private boolean ownerReturnedToTown = false;
-    private boolean ownerAwaySafeMode = false;
-
     public long ownerOfflineOrDeadSinceMs() {
-        return ownerOfflineOrDeadSinceMs;
+        return leaderActivityState.offlineOrDeadSinceMs();
     }
 
     public void setOwnerOfflineOrDeadSinceMs(long ownerOfflineOrDeadSinceMs) {
-        this.ownerOfflineOrDeadSinceMs = ownerOfflineOrDeadSinceMs;
+        leaderActivityState.setOfflineOrDeadSinceMs(ownerOfflineOrDeadSinceMs);
     }
 
     public boolean ownerReturnedToTown() {
-        return ownerReturnedToTown;
+        return leaderActivityState.returnedToTown();
     }
 
     public void setOwnerReturnedToTown(boolean ownerReturnedToTown) {
-        this.ownerReturnedToTown = ownerReturnedToTown;
+        leaderActivityState.setReturnedToTown(ownerReturnedToTown);
     }
 
     public boolean ownerAwaySafeMode() {
-        return ownerAwaySafeMode;
+        return leaderActivityState.awaySafeMode();
     }
 
     public void setOwnerAwaySafeMode(boolean ownerAwaySafeMode) {
-        this.ownerAwaySafeMode = ownerAwaySafeMode;
+        leaderActivityState.setAwaySafeMode(ownerAwaySafeMode);
     }
 
     // Foothold index, rebuilt on map change

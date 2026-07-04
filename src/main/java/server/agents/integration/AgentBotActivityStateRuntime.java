@@ -12,47 +12,47 @@ public final class AgentBotActivityStateRuntime {
     }
 
     public static Point ownerAfkPosition(BotEntry entry) {
-        return entry.ownerAfkPosition();
+        return entry.leaderActivityState().afkPosition();
     }
 
     public static void setOwnerAfkPosition(BotEntry entry, Point position) {
-        entry.setOwnerAfkPosition(position);
+        entry.leaderActivityState().setAfkPosition(position);
     }
 
     public static long ownerAfkSinceMs(BotEntry entry) {
-        return entry.ownerAfkSinceMs();
+        return entry.leaderActivityState().afkSinceMs();
     }
 
     public static void setOwnerAfkSinceMs(BotEntry entry, long sinceMs) {
-        entry.setOwnerAfkSinceMs(sinceMs);
+        entry.leaderActivityState().setAfkSinceMs(sinceMs);
     }
 
     public static boolean ownerWasAfk(BotEntry entry) {
-        return entry.ownerWasAfk();
+        return entry.leaderActivityState().wasAfk();
     }
 
     public static void setOwnerWasAfk(BotEntry entry, boolean wasAfk) {
-        entry.setOwnerWasAfk(wasAfk);
+        entry.leaderActivityState().setWasAfk(wasAfk);
     }
 
     public static String lastOwnerCommand(BotEntry entry) {
-        return entry.lastOwnerCommand();
+        return entry.leaderActivityState().lastCommand();
     }
 
     public static long lastOwnerCommandAtMs(BotEntry entry) {
-        return entry.lastOwnerCommandAtMs();
+        return entry.leaderActivityState().lastCommandAtMs();
     }
 
     public static void recordLastOwnerCommand(BotEntry entry, String command, long commandAtMs) {
-        entry.recordLastOwnerCommand(command, commandAtMs);
+        entry.leaderActivityState().recordLastCommand(command, commandAtMs);
     }
 
     public static long ownerOfflineOrDeadSinceMs(BotEntry entry) {
-        return entry.ownerOfflineOrDeadSinceMs();
+        return entry.leaderActivityState().offlineOrDeadSinceMs();
     }
 
     public static void setOwnerOfflineOrDeadSinceMs(BotEntry entry, long sinceMs) {
-        entry.setOwnerOfflineOrDeadSinceMs(sinceMs);
+        entry.leaderActivityState().setOfflineOrDeadSinceMs(sinceMs);
     }
 
     public static boolean ownerInactiveTimerStarted(BotEntry entry) {
@@ -60,27 +60,27 @@ public final class AgentBotActivityStateRuntime {
     }
 
     public static void startOwnerInactiveTimer(BotEntry entry, long nowMs) {
-        entry.setOwnerOfflineOrDeadSinceMs(nowMs);
+        setOwnerOfflineOrDeadSinceMs(entry, nowMs);
     }
 
     public static void clearOwnerInactiveTimer(BotEntry entry) {
-        entry.setOwnerOfflineOrDeadSinceMs(0L);
+        setOwnerOfflineOrDeadSinceMs(entry, 0L);
     }
 
     public static boolean ownerReturnedToTown(BotEntry entry) {
-        return entry.ownerReturnedToTown();
+        return entry.leaderActivityState().returnedToTown();
     }
 
     public static void setOwnerReturnedToTown(BotEntry entry, boolean returnedToTown) {
-        entry.setOwnerReturnedToTown(returnedToTown);
+        entry.leaderActivityState().setReturnedToTown(returnedToTown);
     }
 
     public static boolean ownerAwaySafeMode(BotEntry entry) {
-        return entry.ownerAwaySafeMode();
+        return entry.leaderActivityState().awaySafeMode();
     }
 
     public static void setOwnerAwaySafeMode(BotEntry entry, boolean safeMode) {
-        entry.setOwnerAwaySafeMode(safeMode);
+        entry.leaderActivityState().setAwaySafeMode(safeMode);
     }
 
     public static void clearOwnerInactiveState(BotEntry entry) {

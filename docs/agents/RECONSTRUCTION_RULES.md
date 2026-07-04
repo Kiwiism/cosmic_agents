@@ -4342,6 +4342,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while current-map id,
   foothold-index snapshots, null-index handling, and read-only index exposure
   route through the Agent runtime state.
+- Leader activity storage now lives in `AgentLeaderActivityState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while AFK position/timing,
+  offline-or-dead recovery timing, returned-to-town safe mode, and last matched
+  leader command metadata route through the Agent runtime state.
 
 Initial reconstruction order:
 
