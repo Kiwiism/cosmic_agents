@@ -4224,6 +4224,9 @@ Current physics correction:
 - First-climbable rope Y and walkable endpoint-step navigation policy now live
   in `AgentNavigationPhysicsService`; bot physics delegates remain for
   compatibility.
+- Attach-to-rope state application now lives in `AgentRopeMovementService`.
+  Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
+  fall handling migrate.
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.

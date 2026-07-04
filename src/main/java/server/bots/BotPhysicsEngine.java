@@ -17,6 +17,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementSnapshotService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
+import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import client.Character;
@@ -798,9 +799,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void attachToRope(BotEntry entry, Character bot, Rope rope, int y) {
-        int ropeY = Math.clamp(y, firstClimbableY(rope), rope.bottomY());
-        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 0);
-        setClimbPosition(entry, bot, rope, ropeY);
+        AgentRopeMovementService.attachToRope(entry, bot, rope, y);
     }
 
     /**
