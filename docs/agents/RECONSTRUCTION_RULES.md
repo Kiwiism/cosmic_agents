@@ -4597,6 +4597,11 @@ Current physics correction:
   waypoint target, precise-target flag, active edge, and jump-launch cache now
   route through `AgentBotNavigationDebugStateRuntime` over Agent-owned
   navigation state objects.
+- Movement stuck, last-ground foothold, and movement-broadcast cache wrappers
+  have been removed from `BotEntry`. Stuck/unstuck progress routes through
+  `AgentBotMovementStuckStateRuntime`; broadcast suppression and last-ground
+  foothold cache route through Agent movement state runtimes over Agent-owned
+  state objects.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

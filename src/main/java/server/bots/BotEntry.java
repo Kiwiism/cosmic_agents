@@ -1008,115 +1008,11 @@ public class BotEntry {
         tickFailureState.clear();
     }
 
-    public int stuckMs() {
-        return movementStuckState.stuckMs();
-    }
-
-    public void setStuckMs(int stuckMs) {
-        movementStuckState.setStuckMs(stuckMs);
-    }
-
-    public void addStuckMs(int deltaMs) {
-        movementStuckState.addStuckMs(deltaMs);
-    }
-
-    public int unstuckCooldownMs() {
-        return movementStuckState.unstuckCooldownMs();
-    }
-
-    public void setUnstuckCooldownMs(int unstuckCooldownMs) {
-        movementStuckState.setUnstuckCooldownMs(unstuckCooldownMs);
-    }
-
-    public int stuckCheckX() {
-        return movementStuckState.stuckCheckX();
-    }
-
-    public int stuckCheckY() {
-        return movementStuckState.stuckCheckY();
-    }
-
-    public boolean hasStuckCheckPosition() {
-        return movementStuckState.hasStuckCheckPosition();
-    }
-
-    public void setStuckCheckPosition(Point position) {
-        movementStuckState.setStuckCheckPosition(position);
-    }
-
-    public void clearStuckCheckPosition() {
-        movementStuckState.clearStuckCheckPosition();
-    }
-
     // Manual trade: countdown before bot accepts an incoming trade invite (both owner and peer-bot)
     private final AgentManualTradeState manualTradeState = new AgentManualTradeState();
 
     public AgentManualTradeState manualTradeState() {
         return manualTradeState;
-    }
-
-    public int lastGroundFhId() {
-        return movementPhysicsCacheState.lastGroundFootholdId();
-    }
-
-    public void setLastGroundFhId(int lastGroundFhId) {
-        movementPhysicsCacheState.setLastGroundFootholdId(lastGroundFhId);
-    }
-
-    public boolean movementBroadcastValid() {
-        return movementBroadcastState.valid();
-    }
-
-    public void setMovementBroadcastValid(boolean movementBroadcastValid) {
-        movementBroadcastState.setValid(movementBroadcastValid);
-    }
-
-    public int lastBroadcastX() {
-        return movementBroadcastState.x();
-    }
-
-    public void setLastBroadcastX(int lastBroadcastX) {
-        movementBroadcastState.setX(lastBroadcastX);
-    }
-
-    public int lastBroadcastY() {
-        return movementBroadcastState.y();
-    }
-
-    public void setLastBroadcastY(int lastBroadcastY) {
-        movementBroadcastState.setY(lastBroadcastY);
-    }
-
-    public int lastBroadcastVelX() {
-        return movementBroadcastState.velocityX();
-    }
-
-    public void setLastBroadcastVelX(int lastBroadcastVelX) {
-        movementBroadcastState.setVelocityX(lastBroadcastVelX);
-    }
-
-    public int lastBroadcastVelY() {
-        return movementBroadcastState.velocityY();
-    }
-
-    public void setLastBroadcastVelY(int lastBroadcastVelY) {
-        movementBroadcastState.setVelocityY(lastBroadcastVelY);
-    }
-
-    public int lastBroadcastStance() {
-        return movementBroadcastState.stance();
-    }
-
-    public void setLastBroadcastStance(int lastBroadcastStance) {
-        movementBroadcastState.setStance(lastBroadcastStance);
-    }
-
-    public int lastBroadcastFh() {
-        return movementBroadcastState.footholdId();
-    }
-
-    public void setLastBroadcastFh(int lastBroadcastFh) {
-        movementBroadcastState.setFootholdId(lastBroadcastFh);
     }
 
     public BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
