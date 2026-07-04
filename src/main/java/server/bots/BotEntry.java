@@ -755,24 +755,6 @@ public class BotEntry {
     private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
     private final AgentTickState tickState = new AgentTickState();
 
-    // Cached movement state shared across ticks
-
-    public boolean hasActiveNavigationEdge() {
-        return navigationEdgeState.hasActiveEdge();
-    }
-
-    public Object activeNavigationEdge() {
-        return navigationEdgeState.activeEdge();
-    }
-
-    public void setActiveNavigationEdge(Object edge) {
-        navigationEdgeState.setActiveEdge(edge);
-    }
-
-    public void clearActiveNavigationEdge() {
-        navigationEdgeState.clearActiveEdge();
-    }
-
     private final AgentFidgetState fidgetState = new AgentFidgetState();
 
     public AgentFidgetState fidgetState() {
