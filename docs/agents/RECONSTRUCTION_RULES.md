@@ -4610,6 +4610,10 @@ Current physics correction:
   Skip-delay and AI accumulator setup now routes through
   `AgentBotTickCadenceStateRuntime`; AFK, inactive, returned-to-town, and last
   leader-command state route through `AgentBotActivityStateRuntime`.
+- Tick metadata and tick-failure wrappers have been removed from `BotEntry`.
+  Last-tick, heartbeat, follow-idle, failure-count, and failure-window state
+  now route through `AgentBotTickStateRuntime` and
+  `AgentBotTickFailureStateRuntime`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

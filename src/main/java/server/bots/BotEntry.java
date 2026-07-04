@@ -859,54 +859,6 @@ public class BotEntry {
         return scrollReactionState;
     }
 
-    public boolean lastTickWasAi() {
-        return tickState.lastTickWasAi();
-    }
-
-    public long lastTickAtMs() {
-        return tickState.lastTickAtMs();
-    }
-
-    public void recordTick(boolean aiTick, long tickAtMs) {
-        tickState.recordTick(aiTick, tickAtMs);
-    }
-
-    public long lastHeartbeatAtMs() {
-        return tickState.lastHeartbeatAtMs();
-    }
-
-    public void setLastHeartbeatAtMs(long lastHeartbeatAtMs) {
-        tickState.setLastHeartbeatAtMs(lastHeartbeatAtMs);
-    }
-
-    public long nextFollowIdleMovementCheckAtMs() {
-        return tickState.nextFollowIdleMovementCheckAtMs();
-    }
-
-    public void setNextFollowIdleMovementCheckAtMs(long nextFollowIdleMovementCheckAtMs) {
-        tickState.setNextFollowIdleMovementCheckAtMs(nextFollowIdleMovementCheckAtMs);
-    }
-
-    public int tickFailureCount() {
-        return tickFailureState.failureCount();
-    }
-
-    public long tickFailureWindowStartedAtMs() {
-        return tickFailureState.windowStartedAtMs();
-    }
-
-    public void resetTickFailureWindow(long startedAtMs) {
-        tickFailureState.resetWindow(startedAtMs);
-    }
-
-    public int incrementTickFailureCount() {
-        return tickFailureState.incrementFailureCount();
-    }
-
-    public void clearTickFailures() {
-        tickFailureState.clear();
-    }
-
     // Manual trade: countdown before bot accepts an incoming trade invite (both owner and peer-bot)
     private final AgentManualTradeState manualTradeState = new AgentManualTradeState();
 
