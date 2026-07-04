@@ -718,58 +718,6 @@ public class BotEntry {
         return upgradeOfferState;
     }
 
-    public long lastBuffScanMs() {
-        return buffState.lastConsumableScanMs();
-    }
-
-    public void setLastBuffScanMs(long lastBuffScanMs) {
-        buffState.setLastConsumableScanMs(lastBuffScanMs);
-    }
-
-    public long lastBuffActionAtMs() {
-        return buffState.lastConsumableActionAtMs();
-    }
-
-    public String lastBuffActionSummary() {
-        return buffState.lastConsumableActionSummary();
-    }
-
-    public void setLastBuffAction(long atMs, String summary) {
-        buffState.rememberConsumableAction(atMs, summary);
-    }
-
-    public boolean buffConsumablesEnabled() {
-        return buffState.consumablesEnabled();
-    }
-
-    public void setBuffConsumablesEnabled(boolean buffConsumablesEnabled) {
-        buffState.setConsumablesEnabled(buffConsumablesEnabled);
-    }
-
-    public boolean buffCheapMode() {
-        return buffState.cheapMode();
-    }
-
-    public void setBuffCheapMode(boolean buffCheapMode) {
-        buffState.setCheapMode(buffCheapMode);
-    }
-
-    public void resetLastBuffScan() {
-        buffState.resetLastConsumableScan();
-    }
-
-    public long lastSkillBuffActionAtMs() {
-        return buffState.lastSkillActionAtMs();
-    }
-
-    public String lastSkillBuffActionSummary() {
-        return buffState.lastSkillActionSummary();
-    }
-
-    public void rememberSkillBuffAction(long atMs, String summary) {
-        buffState.rememberSkillAction(atMs, summary);
-    }
-
     // Party-quest state (one slot per PQ type; null = not in that PQ)
     private final AgentKpqState kpqState = new AgentKpqState();
 

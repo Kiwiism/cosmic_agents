@@ -4581,6 +4581,10 @@ Current physics correction:
   `BotEntry`. Proactive-offer toggles, requested upgrade item tracking,
   spawn-upgrade checks, next suggestion cooldowns, and pending gear prompts now
   route through `AgentBotOfferStateRuntime` and `AgentUpgradeOfferState`.
+- Consumable-buff and skill-buff debug wrappers have been removed from
+  `BotEntry`. Buff enablement, cheap mode, scan timestamps, action summaries,
+  and skill-buff debug summaries now route through `AgentBotBuffStateRuntime`
+  and Agent-owned buff state adapters.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
