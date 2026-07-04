@@ -4206,6 +4206,13 @@ Current navigation correction:
   introduced each Agent seam; they no longer describe the current navigation
   shell state.
 
+Current physics correction:
+
+- Movement reset, teleport, and death-pose state clearing now live in
+  `AgentMovementPoseService`. `BotPhysicsEngine` retains only temporary
+  compatibility delegates for those entry points while the remaining collision,
+  ground, air, rope, swim, and packet-visible physics runtime migrates.
+
 Initial reconstruction order:
 
 1. Runtime shell and registry.

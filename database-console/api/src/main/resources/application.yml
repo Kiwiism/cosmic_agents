@@ -1,0 +1,27 @@
+server:
+  port: 8081
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: strict
+
+spring:
+  datasource:
+    url: ${DATABASE_CONSOLE_DB_URL:jdbc:mysql://localhost:3306/cosmic_database_console?createDatabaseIfNotExist=true}
+    username: ${DATABASE_CONSOLE_DB_USER:root}
+    password: ${DATABASE_CONSOLE_DB_PASSWORD:}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+cosmic:
+  game-database:
+    url: ${GAME_DB_URL:jdbc:mysql://localhost:3306/cosmic}
+    username: ${GAME_DB_USER:root}
+    password: ${GAME_DB_PASSWORD:}
+  bridge:
+    url: ${COSMIC_BRIDGE_URL:http://127.0.0.1:8787}
+    token: ${COSMIC_BRIDGE_TOKEN:development-only-change-me}
+  wz-path: ${COSMIC_WZ_PATH:../../wz}
+  project-path: ${COSMIC_PROJECT_PATH:../..}
+  allowed-origin: ${DATABASE_CONSOLE_ALLOWED_ORIGIN:http://localhost:3000}

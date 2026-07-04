@@ -626,19 +626,15 @@ public final class BotPhysicsEngine {
     }
 
     public static void resetMotion(BotEntry entry, Point position) {
-        clearMovementState(entry, position);
-        syncCharacterState(entry);
+        AgentMovementPoseService.resetMotion(entry, position);
     }
 
     public static void teleportTo(BotEntry entry, Character bot, Point position) {
-        bot.setPosition(position);
-        clearMovementState(entry, position);
-        syncCharacterState(entry);
+        AgentMovementPoseService.teleportTo(entry, bot, position);
     }
 
     public static void markDead(BotEntry entry, Character bot) {
-        clearMovementState(entry, bot.getPosition());
-        syncCharacterState(entry);
+        AgentMovementPoseService.markDead(entry, bot);
     }
 
     public static void idleOnGround(BotEntry entry, Character bot) {
@@ -1624,28 +1620,6 @@ public final class BotPhysicsEngine {
 
     private static void clearRopeEntryIntent(BotEntry entry) {
         AgentBotClimbStateRuntime.clearRopeEntry(entry);
-    }
-
-    private static void clearMovementState(BotEntry entry, Point position) {
-        AgentBotMovementStateRuntime.setInAir(entry, false);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementStateRuntime.setWasMovingX(entry, false);
-        AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        AgentBotClimbStateRuntime.setRopeGrabCooldownMs(entry, 0);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
-        clearRopeEntryIntent(entry);
-        setMovementVelocity(entry, 0, 0);
     }
 
     private static void setMovementVelocity(BotEntry entry, int velX, int velY) {

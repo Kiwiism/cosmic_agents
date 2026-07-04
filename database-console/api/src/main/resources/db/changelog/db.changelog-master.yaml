@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-console-core.sql
+  - include:
+      file: db/changelog/002-catalog.sql
+  - include:
+      file: db/changelog/003-catalog-details.sql
+  - include:
+      file: db/changelog/004-map-catalog.sql
+  - include:
+      file: db/changelog/005-map-portals.sql
+  - include:
+      file: db/changelog/006-database-console-naming.sql

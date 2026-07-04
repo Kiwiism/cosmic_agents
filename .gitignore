@@ -6,6 +6,12 @@ wz/*
 /wz/*
 /wz
 /target
+database-console/api/target/
+database-console/web/.next/
+database-console/web/node_modules/
+database-console/.runtime/
+database-console/.m2/
+database-console/*.log
 
 # build files
 /build/

@@ -3,6 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
@@ -20,15 +21,19 @@ public final class AgentMovementPoseService {
     }
 
     public static void resetMotion(BotEntry entry, Point position) {
-        BotPhysicsEngine.resetMotion(entry, position);
+        clearMovementState(entry, position);
+        syncCharacterState(entry);
     }
 
     public static void teleportTo(BotEntry entry, Character agent, Point position) {
-        BotPhysicsEngine.teleportTo(entry, agent, position);
+        agent.setPosition(position);
+        clearMovementState(entry, position);
+        syncCharacterState(entry);
     }
 
     public static void markDead(BotEntry entry, Character agent) {
-        BotPhysicsEngine.markDead(entry, agent);
+        clearMovementState(entry, agent.getPosition());
+        syncCharacterState(entry);
     }
 
     public static void idleOnGround(BotEntry entry, Character agent) {
@@ -100,5 +105,27 @@ public final class AgentMovementPoseService {
             return;
         }
         agent.setStance(resolveStance(entry));
+    }
+
+    private static void clearMovementState(BotEntry entry, Point position) {
+        AgentBotMovementStateRuntime.setInAir(entry, false);
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentBotMovementStateRuntime.setWasMovingX(entry, false);
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+        AgentBotClimbStateRuntime.setRopeGrabCooldownMs(entry, 0);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+        AgentBotClimbStateRuntime.clearRopeEntry(entry);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0, 0);
     }
 }
