@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -446,11 +447,7 @@ public final class BotPhysicsEngine {
     }
 
     public static boolean isGroundFarBelow(MapleMap map, Point position) {
-        if (map == null || position == null) {
-            return true;
-        }
-        Point ground = findGroundPoint(map, position);
-        return ground == null || ground.y > position.y + cfg.MAX_SNAP_DROP;
+        return AgentGroundCollisionService.isGroundFarBelow(map, position);
     }
 
     private static boolean hasWalkRegion(MapleMap map, Foothold foothold) {
@@ -1495,8 +1492,7 @@ public final class BotPhysicsEngine {
     }
 
     public static boolean canStartDownJump(MapleMap map, Point from) {
-        Foothold foothold = findGroundFoothold(map, from);
-        return foothold != null && !foothold.isForbidFallDown();
+        return AgentGroundCollisionService.canStartDownJump(map, from);
     }
 
     static JumpLanding simulateJumpLanding(MapleMap map, Point from, int stepX) {

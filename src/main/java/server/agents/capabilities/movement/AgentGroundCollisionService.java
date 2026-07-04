@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import server.bots.BotPhysicsEngine;
+import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -21,10 +22,15 @@ public final class AgentGroundCollisionService {
     }
 
     public static boolean canStartDownJump(MapleMap map, Point position) {
-        return BotPhysicsEngine.canStartDownJump(map, position);
+        Foothold foothold = AgentGroundingService.findGroundFoothold(map, position);
+        return foothold != null && !foothold.isForbidFallDown();
     }
 
     public static boolean isGroundFarBelow(MapleMap map, Point position) {
-        return BotPhysicsEngine.isGroundFarBelow(map, position);
+        if (map == null || position == null) {
+            return true;
+        }
+        Point ground = AgentGroundingService.findGroundPoint(map, position);
+        return ground == null || ground.y > position.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 }

@@ -188,6 +188,10 @@ Recent reconstruction notes:
   `findGroundPoint` moved into `AgentGroundingService`. `BotPhysicsEngine`
   keeps temporary compatibility delegates so deeper physics internals can move
   one group at a time without changing behavior.
+- Simple grounded collision checks for down-jump eligibility and far-ground
+  detection moved into `AgentGroundCollisionService`. `BotPhysicsEngine`
+  keeps temporary delegates while larger ground-step preview and wall-collision
+  internals remain in the physics body.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

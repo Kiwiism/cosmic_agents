@@ -158,6 +158,9 @@ Recent map updates:
 - `BotPhysicsEngine` ground lookup implementation for `findGroundFoothold`
   and `findGroundPoint` moved to `AgentGroundingService`; bot methods remain
   temporary delegates for internal physics callers.
+- `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
+  moved to `AgentGroundCollisionService`; ground-step preview and wall
+  collision remain later slices.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
