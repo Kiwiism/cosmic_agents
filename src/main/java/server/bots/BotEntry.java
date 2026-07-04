@@ -35,6 +35,7 @@ import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
+import server.agents.capabilities.trade.AgentPendingTradeSequenceState;
 import server.agents.capabilities.trade.AgentManualTradeState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
@@ -1182,128 +1183,118 @@ public class BotEntry {
         tradeRetryState.setDelayMs(pendingBotTradeRetryMs);
     }
 
-    // Trade queue
-    String pendingTradeCategory = null;
-    List<Item> pendingTradeItems = null;
-    int pendingTradeRecipientId = 0;
-    int pendingTradeMeso = 0;
-    int pendingTradeIdx = 0;
-    int pendingTradeTimerMs = 0;
-    boolean pendingTradeMesoAdded = false;
-    boolean pendingTradeAllAdded = false;
-    boolean pendingTradeBotDone = false;
-    boolean pendingTradeSingleBatch = false;
-    boolean pendingTradeInviteAnnounced = false;
-    String  pendingTradeCategoryMsg = null;
-    int     pendingPotShareBudget = 0; // max total qty to donate; 0 = no cap (normal trades)
-    Map<Item, Short> pendingTradeRestoreSlots = new IdentityHashMap<>();
+    private final AgentPendingTradeSequenceState pendingTradeSequenceState = new AgentPendingTradeSequenceState();
+
+    public AgentPendingTradeSequenceState pendingTradeSequenceState() {
+        return pendingTradeSequenceState;
+    }
 
     public String pendingTradeCategory() {
-        return pendingTradeCategory;
+        return pendingTradeSequenceState.category();
     }
 
     public void setPendingTradeCategory(String pendingTradeCategory) {
-        this.pendingTradeCategory = pendingTradeCategory;
+        pendingTradeSequenceState.setCategory(pendingTradeCategory);
     }
 
     public List<Item> pendingTradeItems() {
-        return pendingTradeItems;
+        return pendingTradeSequenceState.items();
     }
 
     public void setPendingTradeItems(List<Item> pendingTradeItems) {
-        this.pendingTradeItems = pendingTradeItems;
+        pendingTradeSequenceState.setItems(pendingTradeItems);
     }
 
     public int pendingPotShareBudget() {
-        return pendingPotShareBudget;
+        return pendingTradeSequenceState.shareBudget();
     }
 
     public void setPendingPotShareBudget(int pendingPotShareBudget) {
-        this.pendingPotShareBudget = pendingPotShareBudget;
+        pendingTradeSequenceState.setShareBudget(pendingPotShareBudget);
     }
 
     public String pendingTradeCategoryMsg() {
-        return pendingTradeCategoryMsg;
+        return pendingTradeSequenceState.categoryMessage();
     }
 
     public void setPendingTradeCategoryMsg(String pendingTradeCategoryMsg) {
-        this.pendingTradeCategoryMsg = pendingTradeCategoryMsg;
+        pendingTradeSequenceState.setCategoryMessage(pendingTradeCategoryMsg);
     }
 
     public int pendingTradeRecipientId() {
-        return pendingTradeRecipientId;
+        return pendingTradeSequenceState.recipientId();
     }
 
     public void setPendingTradeRecipientId(int pendingTradeRecipientId) {
-        this.pendingTradeRecipientId = pendingTradeRecipientId;
+        pendingTradeSequenceState.setRecipientId(pendingTradeRecipientId);
     }
 
     public boolean pendingTradeInviteAnnounced() {
-        return pendingTradeInviteAnnounced;
+        return pendingTradeSequenceState.inviteAnnounced();
     }
 
     public void setPendingTradeInviteAnnounced(boolean pendingTradeInviteAnnounced) {
-        this.pendingTradeInviteAnnounced = pendingTradeInviteAnnounced;
+        pendingTradeSequenceState.setInviteAnnounced(pendingTradeInviteAnnounced);
     }
 
     public int pendingTradeTimerMs() {
-        return pendingTradeTimerMs;
+        return pendingTradeSequenceState.timerMs();
     }
 
     public void setPendingTradeTimerMs(int pendingTradeTimerMs) {
-        this.pendingTradeTimerMs = pendingTradeTimerMs;
+        pendingTradeSequenceState.setTimerMs(pendingTradeTimerMs);
     }
 
     public boolean pendingTradeSingleBatch() {
-        return pendingTradeSingleBatch;
+        return pendingTradeSequenceState.singleBatch();
     }
 
     public void setPendingTradeSingleBatch(boolean pendingTradeSingleBatch) {
-        this.pendingTradeSingleBatch = pendingTradeSingleBatch;
+        pendingTradeSequenceState.setSingleBatch(pendingTradeSingleBatch);
     }
 
     public int pendingTradeMeso() {
-        return pendingTradeMeso;
+        return pendingTradeSequenceState.meso();
     }
 
     public void setPendingTradeMeso(int pendingTradeMeso) {
-        this.pendingTradeMeso = pendingTradeMeso;
+        pendingTradeSequenceState.setMeso(pendingTradeMeso);
     }
 
     public boolean pendingTradeMesoAdded() {
-        return pendingTradeMesoAdded;
+        return pendingTradeSequenceState.mesoAdded();
     }
 
     public void setPendingTradeMesoAdded(boolean pendingTradeMesoAdded) {
-        this.pendingTradeMesoAdded = pendingTradeMesoAdded;
+        pendingTradeSequenceState.setMesoAdded(pendingTradeMesoAdded);
     }
 
     public boolean pendingTradeAllAdded() {
-        return pendingTradeAllAdded;
+        return pendingTradeSequenceState.allItemsAdded();
     }
 
     public void setPendingTradeAllAdded(boolean pendingTradeAllAdded) {
-        this.pendingTradeAllAdded = pendingTradeAllAdded;
+        pendingTradeSequenceState.setAllItemsAdded(pendingTradeAllAdded);
     }
 
     public boolean pendingTradeBotDone() {
-        return pendingTradeBotDone;
+        return pendingTradeSequenceState.agentDone();
     }
 
     public void setPendingTradeBotDone(boolean pendingTradeBotDone) {
-        this.pendingTradeBotDone = pendingTradeBotDone;
+        pendingTradeSequenceState.setAgentDone(pendingTradeBotDone);
     }
 
     public int pendingTradeIdx() {
-        return pendingTradeIdx;
+        return pendingTradeSequenceState.itemIndex();
     }
 
     public void setPendingTradeIdx(int pendingTradeIdx) {
-        this.pendingTradeIdx = pendingTradeIdx;
+        pendingTradeSequenceState.setItemIndex(pendingTradeIdx);
     }
 
     public Map<Item, Short> pendingTradeRestoreSlots() {
-        return pendingTradeRestoreSlots;
+        return pendingTradeSequenceState.restoreSlots();
     }
 
     // Message queue

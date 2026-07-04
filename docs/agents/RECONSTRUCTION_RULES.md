@@ -4449,6 +4449,10 @@ Current physics correction:
   `AgentMovementPhysicsCacheState`. `BotEntry` temporarily hosts the
   Agent-owned state object, while grounded movement and airshow trail readers
   route through Agent runtime state.
+- Pending trade sequence state now lives in `AgentPendingTradeSequenceState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while pending
+  category, items, recipient, meso, timers, flags, share budget, and restore
+  slot mapping route through the Agent trade capability.
 
 Initial reconstruction order:
 

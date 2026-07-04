@@ -15,7 +15,7 @@ public final class AgentBotPendingTradeStateRuntime {
     }
 
     public static boolean hasActiveSequence(BotEntry entry) {
-        return entry.pendingTradeCategory() != null;
+        return entry.pendingTradeSequenceState().category() != null;
     }
 
     public static boolean isIdle(BotEntry entry) {
@@ -23,19 +23,19 @@ public final class AgentBotPendingTradeStateRuntime {
     }
 
     public static String category(BotEntry entry) {
-        return entry.pendingTradeCategory();
+        return entry.pendingTradeSequenceState().category();
     }
 
     public static void setCategory(BotEntry entry, String category) {
-        entry.setPendingTradeCategory(category);
+        entry.pendingTradeSequenceState().setCategory(category);
     }
 
     public static void clearCategory(BotEntry entry) {
-        entry.setPendingTradeCategory(null);
+        entry.pendingTradeSequenceState().setCategory(null);
     }
 
     public static boolean isCategory(BotEntry entry, String category) {
-        return category.equals(entry.pendingTradeCategory());
+        return category.equals(entry.pendingTradeSequenceState().category());
     }
 
     public static boolean isSupplyShareCategory(BotEntry entry) {
@@ -63,15 +63,15 @@ public final class AgentBotPendingTradeStateRuntime {
     }
 
     public static int shareBudget(BotEntry entry) {
-        return entry.pendingPotShareBudget();
+        return entry.pendingTradeSequenceState().shareBudget();
     }
 
     public static void setShareBudget(BotEntry entry, int maxQuantity) {
-        entry.setPendingPotShareBudget(maxQuantity);
+        entry.pendingTradeSequenceState().setShareBudget(maxQuantity);
     }
 
     public static void clearShareBudget(BotEntry entry) {
-        entry.setPendingPotShareBudget(0);
+        entry.pendingTradeSequenceState().setShareBudget(0);
     }
 
     public static short capShareQuantity(BotEntry entry, short availableQuantity) {
@@ -80,20 +80,20 @@ public final class AgentBotPendingTradeStateRuntime {
             return availableQuantity;
         }
         short tradeQuantity = (short) Math.min(availableQuantity, budget);
-        entry.setPendingPotShareBudget(budget - tradeQuantity);
+        entry.pendingTradeSequenceState().setShareBudget(budget - tradeQuantity);
         return tradeQuantity;
     }
 
     public static String categoryMessage(BotEntry entry) {
-        return entry.pendingTradeCategoryMsg();
+        return entry.pendingTradeSequenceState().categoryMessage();
     }
 
     public static void setCategoryMessage(BotEntry entry, String message) {
-        entry.setPendingTradeCategoryMsg(message);
+        entry.pendingTradeSequenceState().setCategoryMessage(message);
     }
 
     public static void clearCategoryMessage(BotEntry entry) {
-        entry.setPendingTradeCategoryMsg(null);
+        entry.pendingTradeSequenceState().setCategoryMessage(null);
     }
 
     public static String takeCategoryMessage(BotEntry entry) {
@@ -103,75 +103,75 @@ public final class AgentBotPendingTradeStateRuntime {
     }
 
     public static int recipientId(BotEntry entry) {
-        return entry.pendingTradeRecipientId();
+        return entry.pendingTradeSequenceState().recipientId();
     }
 
     public static void setRecipientId(BotEntry entry, int recipientId) {
-        entry.setPendingTradeRecipientId(recipientId);
+        entry.pendingTradeSequenceState().setRecipientId(recipientId);
     }
 
     public static void clearRecipientId(BotEntry entry) {
-        entry.setPendingTradeRecipientId(0);
+        entry.pendingTradeSequenceState().setRecipientId(0);
     }
 
     public static boolean inviteAnnounced(BotEntry entry) {
-        return entry.pendingTradeInviteAnnounced();
+        return entry.pendingTradeSequenceState().inviteAnnounced();
     }
 
     public static void markInviteAnnounced(BotEntry entry) {
-        entry.setPendingTradeInviteAnnounced(true);
+        entry.pendingTradeSequenceState().setInviteAnnounced(true);
     }
 
     public static void clearInviteAnnounced(BotEntry entry) {
-        entry.setPendingTradeInviteAnnounced(false);
+        entry.pendingTradeSequenceState().setInviteAnnounced(false);
     }
 
     public static int timerMs(BotEntry entry) {
-        return entry.pendingTradeTimerMs();
+        return entry.pendingTradeSequenceState().timerMs();
     }
 
     public static void setTimerMs(BotEntry entry, int timerMs) {
-        entry.setPendingTradeTimerMs(timerMs);
+        entry.pendingTradeSequenceState().setTimerMs(timerMs);
     }
 
     public static void addTimerMs(BotEntry entry, int deltaMs) {
-        entry.setPendingTradeTimerMs(entry.pendingTradeTimerMs() + deltaMs);
+        entry.pendingTradeSequenceState().setTimerMs(entry.pendingTradeSequenceState().timerMs() + deltaMs);
     }
 
     public static void tickTimerDown(BotEntry entry, java.util.function.IntUnaryOperator tickDown) {
-        entry.setPendingTradeTimerMs(tickDown.applyAsInt(entry.pendingTradeTimerMs()));
+        entry.pendingTradeSequenceState().setTimerMs(tickDown.applyAsInt(entry.pendingTradeSequenceState().timerMs()));
     }
 
     public static void clearTimer(BotEntry entry) {
-        entry.setPendingTradeTimerMs(0);
+        entry.pendingTradeSequenceState().setTimerMs(0);
     }
 
     public static boolean singleBatch(BotEntry entry) {
-        return entry.pendingTradeSingleBatch();
+        return entry.pendingTradeSequenceState().singleBatch();
     }
 
     public static void setSingleBatch(BotEntry entry, boolean singleBatch) {
-        entry.setPendingTradeSingleBatch(singleBatch);
+        entry.pendingTradeSequenceState().setSingleBatch(singleBatch);
     }
 
     public static void clearSingleBatch(BotEntry entry) {
-        entry.setPendingTradeSingleBatch(false);
+        entry.pendingTradeSequenceState().setSingleBatch(false);
     }
 
     public static int meso(BotEntry entry) {
-        return entry.pendingTradeMeso();
+        return entry.pendingTradeSequenceState().meso();
     }
 
     public static void setMeso(BotEntry entry, int meso) {
-        entry.setPendingTradeMeso(meso);
+        entry.pendingTradeSequenceState().setMeso(meso);
     }
 
     public static void clearMeso(BotEntry entry) {
-        entry.setPendingTradeMeso(0);
+        entry.pendingTradeSequenceState().setMeso(0);
     }
 
     public static boolean mesoAdded(BotEntry entry) {
-        return entry.pendingTradeMesoAdded();
+        return entry.pendingTradeSequenceState().mesoAdded();
     }
 
     public static boolean hasMesoToAdd(BotEntry entry) {
@@ -179,86 +179,86 @@ public final class AgentBotPendingTradeStateRuntime {
     }
 
     public static void markMesoAdded(BotEntry entry) {
-        entry.setPendingTradeMesoAdded(true);
+        entry.pendingTradeSequenceState().setMesoAdded(true);
     }
 
     public static void clearMesoAdded(BotEntry entry) {
-        entry.setPendingTradeMesoAdded(false);
+        entry.pendingTradeSequenceState().setMesoAdded(false);
     }
 
     public static boolean allItemsAdded(BotEntry entry) {
-        return entry.pendingTradeAllAdded();
+        return entry.pendingTradeSequenceState().allItemsAdded();
     }
 
     public static void markAllItemsAdded(BotEntry entry) {
-        entry.setPendingTradeAllAdded(true);
+        entry.pendingTradeSequenceState().setAllItemsAdded(true);
     }
 
     public static void clearAllItemsAdded(BotEntry entry) {
-        entry.setPendingTradeAllAdded(false);
+        entry.pendingTradeSequenceState().setAllItemsAdded(false);
     }
 
     public static boolean botDone(BotEntry entry) {
-        return entry.pendingTradeBotDone();
+        return entry.pendingTradeSequenceState().agentDone();
     }
 
     public static void markBotDone(BotEntry entry) {
-        entry.setPendingTradeBotDone(true);
+        entry.pendingTradeSequenceState().setAgentDone(true);
     }
 
     public static void clearBotDone(BotEntry entry) {
-        entry.setPendingTradeBotDone(false);
+        entry.pendingTradeSequenceState().setAgentDone(false);
     }
 
     public static int itemIndex(BotEntry entry) {
-        return entry.pendingTradeIdx();
+        return entry.pendingTradeSequenceState().itemIndex();
     }
 
     public static void incrementItemIndex(BotEntry entry) {
-        entry.setPendingTradeIdx(entry.pendingTradeIdx() + 1);
+        entry.pendingTradeSequenceState().incrementItemIndex();
     }
 
     public static void clearItemIndex(BotEntry entry) {
-        entry.setPendingTradeIdx(0);
+        entry.pendingTradeSequenceState().setItemIndex(0);
     }
 
     public static List<Item> items(BotEntry entry) {
-        return entry.pendingTradeItems();
+        return entry.pendingTradeSequenceState().items();
     }
 
     public static void setItems(BotEntry entry, List<Item> items) {
-        entry.setPendingTradeItems(items);
+        entry.pendingTradeSequenceState().setItems(items);
     }
 
     public static boolean isBetweenBatches(BotEntry entry) {
-        return entry.pendingTradeItems() == null;
+        return entry.pendingTradeSequenceState().items() == null;
     }
 
     public static void clearItems(BotEntry entry) {
-        entry.setPendingTradeItems(null);
+        entry.pendingTradeSequenceState().setItems(null);
     }
 
     public static boolean hasRestoreSlots(BotEntry entry) {
-        return !entry.pendingTradeRestoreSlots().isEmpty();
+        return !entry.pendingTradeSequenceState().restoreSlots().isEmpty();
     }
 
     public static void rememberRestoreSlot(BotEntry entry, Item item, short slot) {
-        entry.pendingTradeRestoreSlots().put(item, slot);
+        entry.pendingTradeSequenceState().restoreSlots().put(item, slot);
     }
 
     public static void transferRestoreSlot(BotEntry entry, Item fromItem, Item toItem) {
-        Short restoreSlot = entry.pendingTradeRestoreSlots().remove(fromItem);
+        Short restoreSlot = entry.pendingTradeSequenceState().restoreSlots().remove(fromItem);
         if (restoreSlot != null) {
-            entry.pendingTradeRestoreSlots().put(toItem, restoreSlot);
+            entry.pendingTradeSequenceState().restoreSlots().put(toItem, restoreSlot);
         }
     }
 
     public static List<Map.Entry<Item, Short>> restoreSlotEntries(BotEntry entry) {
-        return new ArrayList<>(entry.pendingTradeRestoreSlots().entrySet());
+        return new ArrayList<>(entry.pendingTradeSequenceState().restoreSlots().entrySet());
     }
 
     public static void clearRestoreSlots(BotEntry entry) {
-        entry.pendingTradeRestoreSlots().clear();
+        entry.pendingTradeSequenceState().restoreSlots().clear();
     }
 
     public static boolean hasOwnerGivenItems(BotEntry entry) {
