@@ -29,17 +29,17 @@ public final class AgentBotActiveModeRuntime {
 
             @Override
             public void maybeSuggestGearToSiblings() {
-                AgentBotActiveModeRuntime.maybeSuggestGearToSiblings(entry, entry.bot());
+                AgentBotActiveModeRuntime.maybeSuggestGearToSiblings(entry, bot(entry));
             }
 
             @Override
             public void setupAutopot() {
-                AgentPotionService.setupAutopotForBot(entry.bot());
+                AgentPotionService.setupAutopotForBot(bot(entry));
             }
 
             @Override
             public void checkPotShareOnModeStart() {
-                AgentPotionService.checkPotShareOnModeStart(entry, entry.bot());
+                AgentPotionService.checkPotShareOnModeStart(entry, bot(entry));
             }
         };
     }
@@ -47,23 +47,31 @@ public final class AgentBotActiveModeRuntime {
     public static void autoEquipAndSuggestGearToSiblings(BotEntry entry) {
         autoEquip(entry);
         resetGearSuggestionCooldown(entry);
-        maybeSuggestGearToSiblings(entry, entry.bot());
+        maybeSuggestGearToSiblings(entry, bot(entry));
     }
 
     public static void maybeSuggestGearToSiblings(BotEntry entry, Character bot) {
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentBotStatusRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
-                        entry.owner() != null,
+                        owner != null,
                         () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
                 System.currentTimeMillis());
     }
 
     private static void autoEquip(BotEntry entry) {
-        AgentEquipmentService.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        AgentEquipmentService.autoEquip(
+                bot(entry),
+                AgentBotRuntimeIdentityRuntime.owner(entry),
+                AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
     private static void resetGearSuggestionCooldown(BotEntry entry) {
         AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, 0);
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

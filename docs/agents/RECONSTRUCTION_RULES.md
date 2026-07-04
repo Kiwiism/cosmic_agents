@@ -4724,6 +4724,10 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before AP build resolution, AP prompt
   creation, and SP auto-assignment. Existing AP/SP/job advancement behavior and
   replies remain unchanged.
+- Active-mode preparation now resolves Agent and leader identity through
+  `AgentBotRuntimeIdentityRuntime` before auto-equip, autopot setup, pot-share
+  checks, and sibling gear suggestions. The legacy mode-entry side effects and
+  cooldown behavior remain unchanged.
 
 Initial reconstruction order:
 
