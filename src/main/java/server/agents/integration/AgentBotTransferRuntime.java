@@ -48,8 +48,9 @@ public final class AgentBotTransferRuntime {
         }
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && AgentInventoryTradePolicy.isMesoCategory(category)) {
+            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
             AgentBotTransferSchedulerRuntime.afterRandomDelay(500, 700,
-                    () -> AgentInventoryTransferService.startTradeTransfer(category, entry, entry.bot()));
+                    () -> AgentInventoryTransferService.startTradeTransfer(category, entry, bot));
             return;
         }
 
@@ -59,7 +60,7 @@ public final class AgentBotTransferRuntime {
     private static void scheduleTransferCommandEvaluation(BotEntry entry,
                                                           AgentChatTransferFlow.TransferCommand transferCommand,
                                                           String category) {
-        Character bot = entry.bot();
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return;
         }
@@ -125,7 +126,7 @@ public final class AgentBotTransferRuntime {
 
     private static void handleItemQuery(BotEntry entry, String itemName) {
         String category = AgentTradeDialogueClassifier.namedItemCategory(itemName);
-        Character bot = entry.bot();
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return;
         }

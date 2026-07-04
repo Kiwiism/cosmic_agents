@@ -4706,6 +4706,10 @@ Current physics correction:
   maker side effects. This keeps legacy scheduling and reply behavior intact
   while removing another direct `BotEntry` identity dependency from Agent
   utility dialogue.
+- Transfer chat command evaluation now resolves the live Agent character through
+  `AgentBotRuntimeIdentityRuntime` before scheduling meso transfer, inventory
+  transfer scans, and named-item queries. Legacy async timing, request ordering,
+  and reply decisions are unchanged.
 
 Initial reconstruction order:
 
