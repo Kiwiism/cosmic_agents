@@ -53,6 +53,7 @@ import server.agents.runtime.AgentMovementBroadcastState;
 import server.agents.runtime.AgentMovementPhysicsCacheState;
 import server.agents.runtime.AgentMovementStuckState;
 import server.agents.runtime.AgentOwnerMotionState;
+import server.agents.runtime.AgentPatrolState;
 import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
 
@@ -951,27 +952,23 @@ public class BotEntry {
     public void clearFarmAnchor() {
         farmAnchorState.clear();
     }
-    public int patrolRegionId() { return patrolRegionId; }
-    public int patrolMapId() { return patrolMapId; }
+    public int patrolRegionId() { return patrolState.regionId(); }
+    public int patrolMapId() { return patrolState.mapId(); }
     public java.awt.Point patrolWanderTarget() {
-        return patrolWanderTarget == null ? null : new java.awt.Point(patrolWanderTarget);
+        return patrolState.wanderTarget();
     }
-    public boolean hasPatrolRegion() { return patrolRegionId >= 0; }
+    public boolean hasPatrolRegion() { return patrolState.hasRegion(); }
     public void setPatrolRegion(int regionId, int mapId) {
-        this.patrolRegionId = regionId;
-        this.patrolMapId = regionId < 0 ? -1 : mapId;
-        this.patrolWanderTarget = null;
+        patrolState.setRegion(regionId, mapId);
     }
     public void clearPatrol() {
-        this.patrolRegionId = -1;
-        this.patrolMapId = -1;
-        this.patrolWanderTarget = null;
+        patrolState.clear();
     }
     public void setPatrolWanderTarget(java.awt.Point patrolWanderTarget) {
-        this.patrolWanderTarget = patrolWanderTarget == null ? null : new java.awt.Point(patrolWanderTarget);
+        patrolState.setWanderTarget(patrolWanderTarget);
     }
     public void clearPatrolWanderTarget() {
-        this.patrolWanderTarget = null;
+        patrolState.clearWanderTarget();
     }
     public int wanderDirection() { return wanderDirection; }
     public void setWanderDirection(int wanderDirection) {
@@ -1460,9 +1457,6 @@ public class BotEntry {
     int ignoredGrindLootObjectId = 0;
     long ignoredGrindLootUntilMs = 0L;
     // "Patrol" region — bot wanders within this nav region and attacks opportunistically.
-    int patrolRegionId = -1;    // AgentNavigationGraph.Region id; -1 = inactive
-    int patrolMapId = -1;
-    Point patrolWanderTarget = null;
 
     private final AgentBuffState buffState = new AgentBuffState();
     private final AgentUpgradeOfferState upgradeOfferState = new AgentUpgradeOfferState();
@@ -1562,6 +1556,7 @@ public class BotEntry {
     private final AgentMovementPhysicsCacheState movementPhysicsCacheState = new AgentMovementPhysicsCacheState();
     private final AgentMovementStuckState movementStuckState = new AgentMovementStuckState();
     private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
+    private final AgentPatrolState patrolState = new AgentPatrolState();
     private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
     private final AgentTickState tickState = new AgentTickState();
 
@@ -1793,6 +1788,10 @@ public class BotEntry {
 
     public AgentOwnerMotionState ownerMotionState() {
         return ownerMotionState;
+    }
+
+    public AgentPatrolState patrolState() {
+        return patrolState;
     }
 
     public AgentMovementBroadcastState movementBroadcastState() {

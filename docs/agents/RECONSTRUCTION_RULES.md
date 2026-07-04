@@ -4459,6 +4459,9 @@ Current physics correction:
 - Farm/sentry anchor state now lives in `AgentFarmAnchorState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while farm-anchor position
   and map id route through Agent runtime state.
+- Patrol region/wander state now lives in `AgentPatrolState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while patrol region, map id,
+  and wander target route through Agent runtime state.
 
 Initial reconstruction order:
 
