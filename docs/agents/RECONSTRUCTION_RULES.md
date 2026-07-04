@@ -4437,6 +4437,10 @@ Current physics correction:
 - Tick failure window metadata now lives in `AgentTickFailureState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while failure
   count and failure-window start time route through Agent runtime state.
+- Stuck/unstuck movement metadata now lives in `AgentMovementStuckState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while stuck
+  duration, unstuck cooldown, and stuck-check coordinates route through Agent
+  runtime state.
 
 Initial reconstruction order:
 

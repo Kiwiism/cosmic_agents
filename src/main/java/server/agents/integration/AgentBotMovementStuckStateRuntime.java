@@ -14,31 +14,31 @@ public final class AgentBotMovementStuckStateRuntime {
     }
 
     public static int stuckMs(BotEntry entry) {
-        return entry.stuckMs();
+        return entry.movementStuckState().stuckMs();
     }
 
     public static void resetStuckMs(BotEntry entry) {
-        entry.setStuckMs(0);
+        entry.movementStuckState().setStuckMs(0);
     }
 
     public static void addStuckMs(BotEntry entry, int deltaMs) {
-        entry.addStuckMs(deltaMs);
+        entry.movementStuckState().addStuckMs(deltaMs);
     }
 
     public static int unstuckCooldownMs(BotEntry entry) {
-        return entry.unstuckCooldownMs();
+        return entry.movementStuckState().unstuckCooldownMs();
     }
 
     public static boolean hasUnstuckCooldown(BotEntry entry) {
-        return entry.unstuckCooldownMs() > 0;
+        return entry.movementStuckState().unstuckCooldownMs() > 0;
     }
 
     public static void setUnstuckCooldownMs(BotEntry entry, int cooldownMs) {
-        entry.setUnstuckCooldownMs(cooldownMs);
+        entry.movementStuckState().setUnstuckCooldownMs(cooldownMs);
     }
 
     public static void clearStuckCheck(BotEntry entry) {
-        entry.clearStuckCheckPosition();
+        entry.movementStuckState().clearStuckCheckPosition();
     }
 
     public static void resetStuckProgress(BotEntry entry) {
@@ -47,19 +47,19 @@ public final class AgentBotMovementStuckStateRuntime {
     }
 
     public static boolean hasStuckCheckPosition(BotEntry entry) {
-        return entry.hasStuckCheckPosition();
+        return entry.movementStuckState().hasStuckCheckPosition();
     }
 
     public static void rememberStuckCheckPosition(BotEntry entry, Point position) {
-        entry.setStuckCheckPosition(position);
+        entry.movementStuckState().setStuckCheckPosition(position);
     }
 
     public static boolean movedSinceStuckCheck(BotEntry entry, Point position, int thresholdPx) {
-        return Math.abs(position.x - entry.stuckCheckX()) > thresholdPx
-                || Math.abs(position.y - entry.stuckCheckY()) > thresholdPx;
+        return Math.abs(position.x - entry.movementStuckState().stuckCheckX()) > thresholdPx
+                || Math.abs(position.y - entry.movementStuckState().stuckCheckY()) > thresholdPx;
     }
 
     public static boolean stuckForAtLeast(BotEntry entry, int thresholdMs) {
-        return entry.stuckMs() >= thresholdMs;
+        return entry.movementStuckState().stuckMs() >= thresholdMs;
     }
 }

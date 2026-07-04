@@ -46,6 +46,7 @@ import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
+import server.agents.runtime.AgentMovementStuckState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
@@ -1565,6 +1566,7 @@ public class BotEntry {
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentMovementStuckState movementStuckState = new AgentMovementStuckState();
     private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
     private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
     private final AgentTickState tickState = new AgentTickState();
@@ -1795,6 +1797,10 @@ public class BotEntry {
         return ownerMotionState;
     }
 
+    public AgentMovementStuckState movementStuckState() {
+        return movementStuckState;
+    }
+
     public AgentTickState tickState() {
         return tickState;
     }
@@ -1983,51 +1989,44 @@ public class BotEntry {
         tickFailureState.clear();
     }
 
-    // Stuck detection & unstuck
-    int stuckMs = 0;
-    int unstuckCooldownMs = 0;
-    int stuckCheckX = Integer.MIN_VALUE;
-    int stuckCheckY = Integer.MIN_VALUE;
-
     public int stuckMs() {
-        return stuckMs;
+        return movementStuckState.stuckMs();
     }
 
     public void setStuckMs(int stuckMs) {
-        this.stuckMs = stuckMs;
+        movementStuckState.setStuckMs(stuckMs);
     }
 
     public void addStuckMs(int deltaMs) {
-        this.stuckMs += deltaMs;
+        movementStuckState.addStuckMs(deltaMs);
     }
 
     public int unstuckCooldownMs() {
-        return unstuckCooldownMs;
+        return movementStuckState.unstuckCooldownMs();
     }
 
     public void setUnstuckCooldownMs(int unstuckCooldownMs) {
-        this.unstuckCooldownMs = unstuckCooldownMs;
+        movementStuckState.setUnstuckCooldownMs(unstuckCooldownMs);
     }
 
     public int stuckCheckX() {
-        return stuckCheckX;
+        return movementStuckState.stuckCheckX();
     }
 
     public int stuckCheckY() {
-        return stuckCheckY;
+        return movementStuckState.stuckCheckY();
     }
 
     public boolean hasStuckCheckPosition() {
-        return stuckCheckX != Integer.MIN_VALUE;
+        return movementStuckState.hasStuckCheckPosition();
     }
 
     public void setStuckCheckPosition(Point position) {
-        this.stuckCheckX = position.x;
-        this.stuckCheckY = position.y;
+        movementStuckState.setStuckCheckPosition(position);
     }
 
     public void clearStuckCheckPosition() {
-        this.stuckCheckX = Integer.MIN_VALUE;
+        movementStuckState.clearStuckCheckPosition();
     }
 
     // Manual trade: countdown before bot accepts an incoming trade invite (both owner and peer-bot)
