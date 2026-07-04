@@ -22,6 +22,7 @@ import server.agents.capabilities.social.AgentScrollReactionState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
+import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
@@ -1138,28 +1139,28 @@ public class BotEntry {
     public String pendingDropCategory() { return pendingActionState.pendingDropCategory(); }
     public void setPendingDropCategory(String pendingDropCategory) { pendingActionState.setPendingDropCategory(pendingDropCategory); }
     public void clearPendingDropCategory() { pendingActionState.clearPendingDropCategory(); }
-    Item pendingLootOfferItem = null;
-    public Item pendingLootOfferItem() { return pendingLootOfferItem; }
-    int pendingLootOfferRecipientId = 0;
-    long pendingLootOfferExpiresAt = 0L;
+    private final AgentPendingLootOfferState pendingLootOfferState = new AgentPendingLootOfferState();
+
+    public AgentPendingLootOfferState pendingLootOfferState() {
+        return pendingLootOfferState;
+    }
+
+    public Item pendingLootOfferItem() { return pendingLootOfferState.item(); }
 
     public int pendingLootOfferRecipientId() {
-        return pendingLootOfferRecipientId;
+        return pendingLootOfferState.recipientId();
     }
 
     public long pendingLootOfferExpiresAt() {
-        return pendingLootOfferExpiresAt;
+        return pendingLootOfferState.expiresAt();
     }
 
     public boolean pendingLootOfferBotRequesting() {
-        return pendingLootOfferBotRequesting;
+        return pendingLootOfferState.botRequesting();
     }
 
     public void setPendingLootOffer(Item item, int recipientId, long expiresAt, boolean botRequesting) {
-        pendingLootOfferItem = item;
-        pendingLootOfferRecipientId = recipientId;
-        pendingLootOfferExpiresAt = expiresAt;
-        pendingLootOfferBotRequesting = botRequesting;
+        pendingLootOfferState.set(item, recipientId, expiresAt, botRequesting);
     }
 
     public void clearPendingLootOffer() {
@@ -1167,13 +1168,11 @@ public class BotEntry {
     }
 
     public void clearPendingLootOfferForAcceptedTransfer() {
-        pendingLootOfferRecipientId = 0;
-        pendingLootOfferExpiresAt = 0L;
-        pendingLootOfferBotRequesting = false;
+        pendingLootOfferState.clearAcceptedTransfer();
     }
 
     public void clearPendingLootOfferItem() {
-        pendingLootOfferItem = null;
+        pendingLootOfferState.clearItem();
     }
 
     int lootInhibitMs = 0;
@@ -1818,7 +1817,6 @@ public class BotEntry {
         requestedUpgradeItemIds.add(itemId);
     }
 
-    boolean pendingLootOfferBotRequesting = false; // true = bot asked for owner's item
     private final AgentScrollReactionState scrollReactionState = new AgentScrollReactionState();
 
     // Path logging (debug)

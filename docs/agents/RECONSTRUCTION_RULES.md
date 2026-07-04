@@ -4357,6 +4357,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while pending
   action and pending drop-category reads/writes route through the Agent
   dialogue capability.
+- Pending loot-offer storage now lives in `AgentPendingLootOfferState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while offered
+  item, recipient id, expiry timestamp, and bot-requesting flag reads/writes
+  route through the Agent trade capability.
 
 Initial reconstruction order:
 

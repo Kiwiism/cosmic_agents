@@ -5,9 +5,7 @@ import client.inventory.Item;
 import server.bots.BotEntry;
 
 /**
- * Agent-owned offer state adapter. Gear-prompt reservation state is still
- * backed by BotEntry during reconstruction, but callers should depend on this
- * narrow state boundary.
+ * Agent-owned offer state adapter.
  */
 public final class AgentBotOfferStateRuntime {
     private AgentBotOfferStateRuntime() {
@@ -34,19 +32,19 @@ public final class AgentBotOfferStateRuntime {
     }
 
     public static Item pendingLootOfferItem(BotEntry entry) {
-        return entry.pendingLootOfferItem();
+        return entry.pendingLootOfferState().item();
     }
 
     public static int pendingLootOfferRecipientId(BotEntry entry) {
-        return entry.pendingLootOfferRecipientId();
+        return entry.pendingLootOfferState().recipientId();
     }
 
     public static long pendingLootOfferExpiresAt(BotEntry entry) {
-        return entry.pendingLootOfferExpiresAt();
+        return entry.pendingLootOfferState().expiresAt();
     }
 
     public static boolean pendingLootOfferBotRequesting(BotEntry entry) {
-        return entry.pendingLootOfferBotRequesting();
+        return entry.pendingLootOfferState().botRequesting();
     }
 
     public static boolean hasOfferReservation(BotEntry entry) {
@@ -75,19 +73,19 @@ public final class AgentBotOfferStateRuntime {
                                            int recipientId,
                                            long expiresAt,
                                            boolean botRequesting) {
-        entry.setPendingLootOffer(item, recipientId, expiresAt, botRequesting);
+        entry.pendingLootOfferState().set(item, recipientId, expiresAt, botRequesting);
     }
 
     public static void clearPendingOfferForAcceptedTransfer(BotEntry entry) {
-        entry.clearPendingLootOfferForAcceptedTransfer();
+        entry.pendingLootOfferState().clearAcceptedTransfer();
     }
 
     public static void clearPendingOfferItem(BotEntry entry) {
-        entry.clearPendingLootOfferItem();
+        entry.pendingLootOfferState().clearItem();
     }
 
     public static void clearPendingOffer(BotEntry entry) {
-        entry.clearPendingLootOffer();
+        entry.pendingLootOfferState().clear();
     }
 
     public static boolean hasRequestedUpgradeItem(BotEntry entry, int itemId) {
