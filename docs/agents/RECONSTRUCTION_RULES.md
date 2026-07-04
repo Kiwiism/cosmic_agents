@@ -4574,6 +4574,9 @@ Current physics correction:
 - Map tracking and formation offset wrappers have been removed from `BotEntry`.
   Last-map/foothold tracking routes through `AgentBotMapStateRuntime`; follow
   spacing routes through `AgentBotFormationStateRuntime`.
+- Leader motion observation wrappers have been removed from `BotEntry`. Last
+  leader position and observed step deltas now route through
+  `AgentBotOwnerMotionStateRuntime` and `AgentOwnerMotionState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

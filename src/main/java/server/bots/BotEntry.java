@@ -835,17 +835,6 @@ public class BotEntry {
         navigationEdgeState.clearActiveEdge();
     }
 
-    public int observedOwnerStepX() {
-        return ownerMotionState.observedOwnerStepX();
-    }
-
-    public int observedOwnerStepY() {
-        return ownerMotionState.observedOwnerStepY();
-    }
-
-    public void setObservedOwnerStep(int stepX, int stepY) {
-        ownerMotionState.setObservedOwnerStep(stepX, stepY);
-    }
     private final AgentFidgetState fidgetState = new AgentFidgetState();
 
     public AgentFidgetState fidgetState() {
@@ -1171,14 +1160,6 @@ public class BotEntry {
 
     public void setPendingGearPromptAt(long pendingGearPromptAt) {
         upgradeOfferState.reserveGearPrompt(pendingGearPromptAt);
-    }
-
-    public Point lastOwnerPosition() {
-        return ownerMotionState.lastOwnerPosition();
-    }
-
-    public void setLastOwnerPosition(Point lastOwnerPos) {
-        ownerMotionState.setLastOwnerPosition(lastOwnerPos);
     }
 
     public boolean lastTickWasAi() {
