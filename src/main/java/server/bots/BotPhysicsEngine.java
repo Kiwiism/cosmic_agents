@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
@@ -1544,7 +1545,7 @@ public final class BotPhysicsEngine {
     }
 
     public static int firstClimbableY(Rope rope) {
-        return Math.min(rope.bottomY(), rope.topY() + 1);
+        return AgentNavigationPhysicsService.firstClimbableY(rope);
     }
 
     private static void setClimbPosition(BotEntry entry, Character bot, Rope rope, int y) {
@@ -1629,9 +1630,7 @@ public final class BotPhysicsEngine {
     // True if a step between two endpoint positions is physically walkable (same criteria as
     // graph walk-edge generation, so physics and graph agree on which transitions are valid).
     public static boolean isWalkableEndpointStep(int dx, int dy) {
-        return dx <= WALK_GAP_PX
-                && dy <= cfg.MAX_SNAP_DROP
-                && dy >= -cfg.MAX_SLOPE_UP;
+        return AgentNavigationPhysicsService.isWalkableEndpointStep(dx, dy);
     }
 
     private static double mapGroundSpeedScale(MapleMap map) {

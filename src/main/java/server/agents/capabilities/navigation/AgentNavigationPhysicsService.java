@@ -1,5 +1,6 @@
 package server.agents.capabilities.navigation;
 
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -11,15 +12,19 @@ import java.util.Map;
  * Agent-owned seam for navigation-facing physics helpers while internals migrate.
  */
 public final class AgentNavigationPhysicsService {
+    private static final int WALK_GAP_PX = 12;
+
     private AgentNavigationPhysicsService() {
     }
 
     public static int firstClimbableY(Rope rope) {
-        return BotPhysicsEngine.firstClimbableY(rope);
+        return Math.min(rope.bottomY(), rope.topY() + 1);
     }
 
     public static boolean isWalkableEndpointStep(int dx, int dy) {
-        return BotPhysicsEngine.isWalkableEndpointStep(dx, dy);
+        return dx <= WALK_GAP_PX
+                && dy <= AgentMovementPhysicsConfig.configuredMaxSnapDrop()
+                && dy >= -AgentMovementPhysicsConfig.configuredMaxSlopeUp();
     }
 
     public static void setBuildWalkRegionLookup(MapleMap map,

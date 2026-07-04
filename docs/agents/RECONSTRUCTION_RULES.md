@@ -4221,6 +4221,9 @@ Current physics correction:
 - Air-knockback state application now lives in `AgentKnockbackMovementService`.
   Knockback launch still enters `BotPhysicsEngine` until the shared airborne
   launch primitive migrates.
+- First-climbable rope Y and walkable endpoint-step navigation policy now live
+  in `AgentNavigationPhysicsService`; bot physics delegates remain for
+  compatibility.
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.
