@@ -655,12 +655,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void beginKnockback(BotEntry entry, Character bot, Point position, float initialVelY, int airVelX) {
-        int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
-        bot.setPosition(position);
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        launchAirborne(entry, bot, position, initialVelY, airVelX, true);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, preservedFacingDir);
-        syncCharacterState(entry);
+        AgentKnockbackMovementService.beginKnockback(entry, bot, position, initialVelY, airVelX);
     }
 
     public static void applyAirKnockback(BotEntry entry, Character bot, int airVelX) {

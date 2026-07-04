@@ -4258,6 +4258,8 @@ Current physics correction:
   no longer imports `BotPhysicsEngine` directly.
 - Fidget movement remains Agent-owned for jump, pose, collision, ground-motion,
   and broadcast work, and no longer carries a stale `BotPhysicsEngine` import.
+- Combat knockback launch now lives in `AgentKnockbackMovementService`.
+  `BotPhysicsEngine.beginKnockback` remains only as a compatibility delegate.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

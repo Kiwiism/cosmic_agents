@@ -180,6 +180,9 @@ Recent map updates:
 - Fidget movement no longer imports `BotPhysicsEngine`; it already routes
   jump, pose, ground-collision, ground-motion, and broadcast work through
   Agent movement services.
+- Combat knockback launch state mutation now lives in
+  `AgentKnockbackMovementService`; `BotPhysicsEngine.beginKnockback` is a
+  compatibility delegate.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.
