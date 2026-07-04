@@ -4413,6 +4413,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while path logger,
   last navigation decision, last edge block reason, and graph-warmup fallback
   reads/writes route through the Agent navigation capability.
+- Navigation target waypoint storage now lives in `AgentNavigationTargetState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while target
+  position, target region id, and precise-target flag reads/writes route
+  through the Agent navigation capability.
 
 Initial reconstruction order:
 

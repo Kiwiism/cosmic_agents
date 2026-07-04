@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationDebugState;
+import server.agents.capabilities.navigation.AgentNavigationTargetState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
 import server.agents.capabilities.build.AgentBuildService;
@@ -1557,14 +1558,12 @@ public class BotEntry {
     }
 
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
+    private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
 
     // Cached movement state shared across ticks
-    Point navTargetPos = null;
     AgentNavigationGraph.Edge navEdge = null;
     AgentNavigationGraph.Edge navJumpLaunchEdge = null;
     int navJumpLaunchX = Integer.MIN_VALUE;
-    int navTargetRegionId = -1;
-    boolean navPreciseTarget = false;
     int observedOwnerStepX = 0;
     int observedOwnerStepY = 0;
 
@@ -1781,6 +1780,10 @@ public class BotEntry {
         return navigationDebugState;
     }
 
+    public AgentNavigationTargetState navigationTargetState() {
+        return navigationTargetState;
+    }
+
     public AgentPathLogger pathLogger() {
         return navigationDebugState.pathLogger();
     }
@@ -1818,27 +1821,27 @@ public class BotEntry {
     }
 
     public Point navTargetPos() {
-        return navTargetPos == null ? null : new Point(navTargetPos);
+        return navigationTargetState.position();
     }
 
     public void setNavTargetPos(Point navTargetPos) {
-        this.navTargetPos = navTargetPos == null ? null : new Point(navTargetPos);
+        navigationTargetState.setPosition(navTargetPos);
     }
 
     public int navTargetRegionId() {
-        return navTargetRegionId;
+        return navigationTargetState.regionId();
     }
 
     public void setNavTargetRegionId(int navTargetRegionId) {
-        this.navTargetRegionId = navTargetRegionId;
+        navigationTargetState.setRegionId(navTargetRegionId);
     }
 
     public boolean navPreciseTarget() {
-        return navPreciseTarget;
+        return navigationTargetState.precise();
     }
 
     public void setNavPreciseTarget(boolean navPreciseTarget) {
-        this.navPreciseTarget = navPreciseTarget;
+        navigationTargetState.setPrecise(navPreciseTarget);
     }
 
     public boolean matchesNavJumpLaunchEdge(Object edge) {

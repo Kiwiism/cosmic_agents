@@ -74,15 +74,15 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static Point navTargetPosition(BotEntry entry) {
-        return entry.navTargetPos();
+        return entry.navigationTargetState().position();
     }
 
     public static boolean hasNavTargetPosition(BotEntry entry) {
-        return entry.navTargetPos() != null;
+        return entry.navigationTargetState().hasPosition();
     }
 
     public static void setNavTargetPosition(BotEntry entry, Point position) {
-        entry.setNavTargetPos(position);
+        entry.navigationTargetState().setPosition(position);
     }
 
     public static void clearNavTargetPosition(BotEntry entry) {
@@ -90,19 +90,19 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static int navTargetRegionId(BotEntry entry) {
-        return entry.navTargetRegionId();
+        return entry.navigationTargetState().regionId();
     }
 
     public static void setNavTargetRegionId(BotEntry entry, int regionId) {
-        entry.setNavTargetRegionId(regionId);
+        entry.navigationTargetState().setRegionId(regionId);
     }
 
     public static boolean navPreciseTarget(BotEntry entry) {
-        return entry.navPreciseTarget();
+        return entry.navigationTargetState().precise();
     }
 
     public static void setNavPreciseTarget(BotEntry entry, boolean precise) {
-        entry.setNavPreciseTarget(precise);
+        entry.navigationTargetState().setPrecise(precise);
     }
 
     public static void clearNavTarget(BotEntry entry) {
