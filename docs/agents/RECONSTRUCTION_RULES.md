@@ -4717,6 +4717,9 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before invoking the existing report and
   request-upgrade side effects. Help, gear, skill, stat, inventory, meso, exp,
   scroll, potion, and debug reporting remain behavior-identical.
+- Control-triggered buff debug reports now resolve the live Agent through
+  `AgentBotRuntimeIdentityRuntime` before forwarding to the existing chat report
+  adapter. Report content and delivery behavior are unchanged.
 
 Initial reconstruction order:
 
