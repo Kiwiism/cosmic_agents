@@ -11,62 +11,62 @@ public final class AgentBotBuildStateRuntime {
     }
 
     public static AgentBuildService.ApBuild apBuild(BotEntry entry) {
-        return entry.apBuild();
+        return entry.buildState().apBuild();
     }
 
     public static boolean hasApBuild(BotEntry entry) {
-        return entry.apBuild() != null;
+        return entry.buildState().hasApBuild();
     }
 
     public static void setApBuild(BotEntry entry, AgentBuildService.ApBuild build) {
-        entry.setApBuild(build);
+        entry.buildState().setApBuild(build);
     }
 
     public static void clearApBuildPromptState(BotEntry entry) {
-        entry.clearApBuildPromptState();
+        entry.buildState().clearApBuildPromptState();
     }
 
     public static boolean apPromptSent(BotEntry entry) {
-        return entry.apPromptSent();
+        return entry.buildState().apPromptSent();
     }
 
     public static void markApPromptSent(BotEntry entry) {
-        entry.markApPromptSent();
+        entry.buildState().markApPromptSent();
     }
 
     public static String spVariant(BotEntry entry) {
-        return entry.spVariant();
+        return entry.buildState().spVariant();
     }
 
     public static boolean hasSpVariant(BotEntry entry) {
-        return entry.spVariant() != null;
+        return entry.buildState().hasSpVariant();
     }
 
     public static void setSpVariant(BotEntry entry, String spVariant) {
-        entry.setSpVariant(spVariant);
+        entry.buildState().setSpVariant(spVariant);
     }
 
     public static boolean spVariantPromptSent(BotEntry entry) {
-        return entry.spVariantPromptSent();
+        return entry.buildState().spVariantPromptSent();
     }
 
     public static void markSpVariantPromptSent(BotEntry entry) {
-        entry.markSpVariantPromptSent();
+        entry.buildState().markSpVariantPromptSent();
     }
 
     public static int lastKnownLevel(BotEntry entry) {
-        return entry.lastKnownLevel();
+        return entry.buildState().lastKnownLevel();
     }
 
     public static void setLastKnownLevel(BotEntry entry, int level) {
-        entry.setLastKnownLevel(level);
+        entry.buildState().setLastKnownLevel(level);
     }
 
     public static int jobPromptSent(BotEntry entry) {
-        return entry.jobPromptSent();
+        return entry.buildState().jobPromptSent();
     }
 
     public static void setJobPromptSent(BotEntry entry, int level) {
-        entry.setJobPromptSent(level);
+        entry.buildState().setJobPromptSent(level);
     }
 }

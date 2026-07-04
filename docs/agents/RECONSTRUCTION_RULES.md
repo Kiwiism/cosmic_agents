@@ -4373,6 +4373,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while ammo share-request,
   no-ammo, and ammo-warning flag reads/writes route through the Agent supplies
   capability.
+- Build prompt/progression storage now lives in `AgentBuildState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while AP build selection, AP
+  prompt flag, SP variant/prompt flag, job-prompt milestone, and
+  last-known-level reads/writes route through the Agent build capability.
 
 Initial reconstruction order:
 

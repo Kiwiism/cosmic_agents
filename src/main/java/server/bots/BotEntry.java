@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.build.AgentBuildService;
+import server.agents.capabilities.build.AgentBuildState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -918,6 +919,7 @@ public class BotEntry {
     }
 
     private final AgentLeaderActivityState leaderActivityState = new AgentLeaderActivityState();
+    private final AgentBuildState buildState = new AgentBuildState();
 
     public AgentLeaderActivityState leaderActivityState() {
         return leaderActivityState;
@@ -937,21 +939,20 @@ public class BotEntry {
     public void recordLastOwnerCommand(String command, long commandAtMs) {
         leaderActivityState.recordLastCommand(command, commandAtMs);
     }
-    public AgentBuildService.ApBuild apBuild() { return apBuild; }
-    public void setApBuild(AgentBuildService.ApBuild apBuild) {
-        this.apBuild = apBuild;
-        this.apPromptSent = false;
+    public AgentBuildState buildState() {
+        return buildState;
     }
+    public AgentBuildService.ApBuild apBuild() { return buildState.apBuild(); }
+    public void setApBuild(AgentBuildService.ApBuild apBuild) { buildState.setApBuild(apBuild); }
     public void clearApBuildPromptState() {
-        apBuild = null;
-        apPromptSent = false;
+        buildState.clearApBuildPromptState();
     }
-    public void markApPromptSent() { this.apPromptSent = true; }
-    public void setSpVariant(String spVariant) { this.spVariant = spVariant; }
-    public boolean apPromptSent() { return apPromptSent; }
-    public String spVariant() { return spVariant; }
-    public boolean spVariantPromptSent() { return spVariantPromptSent; }
-    public void markSpVariantPromptSent() { this.spVariantPromptSent = true; }
+    public void markApPromptSent() { buildState.markApPromptSent(); }
+    public void setSpVariant(String spVariant) { buildState.setSpVariant(spVariant); }
+    public boolean apPromptSent() { return buildState.apPromptSent(); }
+    public String spVariant() { return buildState.spVariant(); }
+    public boolean spVariantPromptSent() { return buildState.spVariantPromptSent(); }
+    public void markSpVariantPromptSent() { buildState.markSpVariantPromptSent(); }
     public java.awt.Point moveTarget() { return moveTarget == null ? null : new java.awt.Point(moveTarget); }
     public boolean isMoveTargetPrecise() { return moveTargetPrecise; }
     public boolean hasMoveTarget() { return moveTarget != null; }
@@ -1104,31 +1105,21 @@ public class BotEntry {
         ammoSupplyState.setShareRequested(ammoShareRequested);
     }
 
-    // Job advancement prompts
-    private int jobPromptSent = 0;
-    private int lastKnownLevel = -1;
-
     public int jobPromptSent() {
-        return jobPromptSent;
+        return buildState.jobPromptSent();
     }
 
     public void setJobPromptSent(int jobPromptSent) {
-        this.jobPromptSent = jobPromptSent;
+        buildState.setJobPromptSent(jobPromptSent);
     }
 
     public int lastKnownLevel() {
-        return lastKnownLevel;
+        return buildState.lastKnownLevel();
     }
 
     public void setLastKnownLevel(int lastKnownLevel) {
-        this.lastKnownLevel = lastKnownLevel;
+        buildState.setLastKnownLevel(lastKnownLevel);
     }
-
-    // AP/SP builds
-    private AgentBuildService.ApBuild apBuild = null;
-    private boolean apPromptSent = false;
-    private String spVariant = null;
-    private boolean spVariantPromptSent = false;
 
     // Reply channel — tracks the chat channel the last owner command arrived on.
     // Bot replies are routed to this channel until the next command changes it.
