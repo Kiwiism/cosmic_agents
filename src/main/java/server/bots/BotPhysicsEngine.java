@@ -370,25 +370,15 @@ public final class BotPhysicsEngine {
     }
 
     public static boolean canWalkGroundStep(MapleMap map, Point currentPos, int stepX) {
-        if (map == null || currentPos == null) {
-            return false;
-        }
-        Foothold foothold = findGroundFoothold(map, currentPos);
-        GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, currentPos.x + stepX);
-        return preview != null && !preview.lostGround() && !preview.blocked();
+        return AgentGroundCollisionService.canWalkGroundStep(map, currentPos, stepX);
     }
 
     public static boolean isGroundStepBlockedByWall(MapleMap map, Point currentPos, int stepX) {
-        if (map == null || currentPos == null || stepX == 0) {
-            return false;
-        }
-        Foothold foothold = findGroundFoothold(map, currentPos);
-        GroundStepPreview preview = previewGroundStep(map, currentPos, foothold, currentPos.x + stepX);
-        return preview != null && preview.blocked();
+        return AgentGroundCollisionService.isGroundStepBlockedByWall(map, currentPos, stepX);
     }
 
     public static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
-        return findGroundWallCollision(map, from, to).type() == AirCollisionType.WALL;
+        return AgentGroundCollisionService.isGroundRunwayBlockedByWall(map, from, to);
     }
 
     public static boolean isGroundFarBelow(MapleMap map, Point position) {

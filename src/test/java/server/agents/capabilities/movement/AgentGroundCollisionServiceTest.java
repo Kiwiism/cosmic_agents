@@ -1,6 +1,9 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
+import server.maps.Foothold;
+import server.maps.FootholdTree;
+import server.maps.MapleMap;
 
 import java.awt.Point;
 
@@ -16,5 +19,75 @@ class AgentGroundCollisionServiceTest {
         assertFalse(AgentGroundCollisionService.isGroundStepBlockedByWall(null, point, 8));
         assertFalse(AgentGroundCollisionService.canStartDownJump(null, point));
         assertTrue(AgentGroundCollisionService.isGroundFarBelow(null, point));
+    }
+
+    @Test
+    void blocksGroundStepThroughCollidableWall() {
+        MapleMap map = createEmptyTestMap(910000049);
+        FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 60), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 60), new Point(120, 60), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        assertFalse(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12));
+        assertTrue(AgentGroundCollisionService.isGroundStepBlockedByWall(map, new Point(44, 100), 12));
+    }
+
+    @Test
+    void allowsShortCollidableWallEndpointWithinSlopeLimit() {
+        MapleMap map = createEmptyTestMap(910000054);
+        FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(120, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        assertTrue(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12));
+        assertFalse(AgentGroundCollisionService.isGroundStepBlockedByWall(map, new Point(44, 100), 12));
+    }
+
+    @Test
+    void treatsWallTopLevelWithGroundAsLedgeEdge() {
+        MapleMap map = createEmptyTestMap(910000055);
+        FootholdTree footholds = map.getFootholds();
+        Foothold upper = new Foothold(new Point(0, 80), new Point(50, 80), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 140), 2);
+        Foothold lower = new Foothold(new Point(50, 140), new Point(120, 140), 3);
+        wall.setPrev(upper.getId());
+        wall.setNext(lower.getId());
+        footholds.insert(upper);
+        footholds.insert(wall);
+        footholds.insert(lower);
+
+        assertFalse(AgentGroundCollisionService.isGroundStepBlockedByWall(map, new Point(44, 80), 12));
+    }
+
+    @Test
+    void runwayWallCheckPreservesGroundWallCollisionRules() {
+        MapleMap map = createEmptyTestMap(910000057);
+        FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 100), new Point(50, 60), 2);
+        wall.setPrev(lower.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+
+        assertTrue(AgentGroundCollisionService.isGroundRunwayBlockedByWall(
+                map, new Point(44, 100), new Point(56, 100)));
+    }
+
+    private static MapleMap createEmptyTestMap(int mapId) {
+        MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
+        map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
+        return map;
     }
 }

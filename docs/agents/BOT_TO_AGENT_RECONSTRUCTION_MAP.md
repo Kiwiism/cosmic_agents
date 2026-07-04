@@ -190,6 +190,11 @@ Recent map updates:
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.
+- Ground-step collision queries, wall-blocked step detection, and ground-runway
+  wall checks moved to `AgentGroundCollisionService`. The Agent service now owns
+  the public ground collision query behavior used by navigation and movement;
+  `BotPhysicsEngine` keeps compatibility delegates and its private integrator
+  preview until the full ground physics body migrates.
 - Down-jump launch ownership moved to `AgentQueuedMovementActionService`.
   `BotPhysicsEngine.beginDownJump` is now a compatibility delegate while the
   Agent service applies the same down-jump kick and grace-period values from

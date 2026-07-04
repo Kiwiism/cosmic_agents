@@ -192,6 +192,11 @@ Recent reconstruction notes:
   detection moved into `AgentGroundCollisionService`. `BotPhysicsEngine`
   keeps temporary delegates while larger ground-step preview and wall-collision
   internals remain in the physics body.
+- Public ground-step collision queries now live in
+  `AgentGroundCollisionService`, including wall-blocked step detection,
+  walk-region snapping, map-side boundary checks, and collidable-wall fallback
+  lookup. `BotPhysicsEngine` delegates those public query methods while its
+  private ground integrator preview remains temporarily bot-owned.
 - Down-jump launch state now lives in
   `AgentQueuedMovementActionService`, with shared airborne setup in
   `AgentAirborneLaunchService`. `BotPhysicsEngine.beginDownJump` remains only
