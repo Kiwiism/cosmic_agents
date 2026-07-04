@@ -4554,6 +4554,9 @@ Current physics correction:
   build selection, AP/SP prompt flags, SP variant, job prompt level, and last
   known level now route through `AgentBotBuildStateRuntime` and
   `AgentBuildState`.
+- Follow/grind mode wrappers have been removed from `BotEntry`. Following,
+  grinding, and follow-target id reads/writes now route through
+  `AgentBotModeStateRuntime` and the Agent-owned `AgentModeState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

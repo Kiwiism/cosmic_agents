@@ -565,12 +565,6 @@ public class BotEntry {
     }
 
     public AgentModeState modeState() { return modeState; }
-    public boolean isGrinding() { return modeState.grinding(); }
-    public boolean isFollowing() { return modeState.following(); }
-    public int followTargetId() { return modeState.followTargetId(); }
-    public void setGrinding(boolean grinding) { modeState.setGrinding(grinding); }
-    public void setFollowing(boolean following) { modeState.setFollowing(following); }
-    public void setFollowTargetId(int followTargetId) { modeState.setFollowTargetId(followTargetId); }
     public Character bot() { return identityState.agent(); }
     public Character owner() { return identityState.leader(); }
     public void setOwner(Character owner) { identityState.setLeader(owner); }
