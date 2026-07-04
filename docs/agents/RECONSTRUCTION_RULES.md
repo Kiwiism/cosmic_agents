@@ -4456,6 +4456,9 @@ Current physics correction:
 - Owner-given trade item tracking now lives in `AgentOwnerGivenTradeItemState`.
   `BotEntry` temporarily hosts the Agent-owned identity set while trade
   completion and trade reset route through the Agent trade capability.
+- Farm/sentry anchor state now lives in `AgentFarmAnchorState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while farm-anchor position
+  and map id route through Agent runtime state.
 
 Initial reconstruction order:
 

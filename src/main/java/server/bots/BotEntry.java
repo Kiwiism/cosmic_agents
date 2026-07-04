@@ -46,6 +46,7 @@ import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
+import server.agents.runtime.AgentFarmAnchorState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 import server.agents.runtime.AgentMovementBroadcastState;
@@ -941,16 +942,14 @@ public class BotEntry {
     public boolean moveTargetEquals(java.awt.Point point) {
         return moveTarget != null && moveTarget.equals(point);
     }
-    public java.awt.Point farmAnchor() { return farmAnchor == null ? null : new java.awt.Point(farmAnchor); }
-    public int farmAnchorMapId() { return farmAnchorMapId; }
-    public boolean hasFarmAnchor() { return farmAnchor != null; }
+    public java.awt.Point farmAnchor() { return farmAnchorState.anchor(); }
+    public int farmAnchorMapId() { return farmAnchorState.mapId(); }
+    public boolean hasFarmAnchor() { return farmAnchorState.hasAnchor(); }
     public void setFarmAnchor(java.awt.Point farmAnchor, int mapId) {
-        this.farmAnchor = farmAnchor == null ? null : new java.awt.Point(farmAnchor);
-        this.farmAnchorMapId = farmAnchor == null ? -1 : mapId;
+        farmAnchorState.setAnchor(farmAnchor, mapId);
     }
     public void clearFarmAnchor() {
-        this.farmAnchor = null;
-        this.farmAnchorMapId = -1;
+        farmAnchorState.clear();
     }
     public int patrolRegionId() { return patrolRegionId; }
     public int patrolMapId() { return patrolMapId; }
@@ -1456,8 +1455,6 @@ public class BotEntry {
     Point moveTarget = null;
     boolean moveTargetPrecise = false; // true when triggered by "move here" — uses tight stop dist
     // "Farm here" anchor — bot returns to this fixed point and only takes local attacks.
-    Point farmAnchor = null;
-    int farmAnchorMapId = -1;
     // Grind loot — nearest convenient drop, searched each AI tick, cleared when picked up.
     MapItem grindLootTarget = null;
     int ignoredGrindLootObjectId = 0;
@@ -1560,6 +1557,7 @@ public class BotEntry {
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
+    private final AgentFarmAnchorState farmAnchorState = new AgentFarmAnchorState();
     private final AgentMovementBroadcastState movementBroadcastState = new AgentMovementBroadcastState();
     private final AgentMovementPhysicsCacheState movementPhysicsCacheState = new AgentMovementPhysicsCacheState();
     private final AgentMovementStuckState movementStuckState = new AgentMovementStuckState();
@@ -1787,6 +1785,10 @@ public class BotEntry {
 
     public AgentNavigationTargetState navigationTargetState() {
         return navigationTargetState;
+    }
+
+    public AgentFarmAnchorState farmAnchorState() {
+        return farmAnchorState;
     }
 
     public AgentOwnerMotionState ownerMotionState() {

@@ -12,15 +12,15 @@ public final class AgentBotFarmAnchorStateRuntime {
     }
 
     public static Point farmAnchor(BotEntry entry) {
-        return entry.farmAnchor();
+        return entry.farmAnchorState().anchor();
     }
 
     public static int farmAnchorMapId(BotEntry entry) {
-        return entry.farmAnchorMapId();
+        return entry.farmAnchorState().mapId();
     }
 
     public static boolean hasFarmAnchor(BotEntry entry) {
-        return entry.hasFarmAnchor();
+        return entry.farmAnchorState().hasAnchor();
     }
 
     public static boolean isFarmAnchorInMap(BotEntry entry, int mapId) {
@@ -32,11 +32,11 @@ public final class AgentBotFarmAnchorStateRuntime {
     }
 
     public static void setFarmAnchor(BotEntry entry, Point anchor, int mapId) {
-        entry.setFarmAnchor(anchor, mapId);
+        entry.farmAnchorState().setAnchor(anchor, mapId);
     }
 
     public static void clearFarmAnchor(BotEntry entry) {
-        entry.clearFarmAnchor();
+        entry.farmAnchorState().clear();
     }
 
     public static boolean clearFarmAnchorIfMapChanged(BotEntry entry, int mapId) {
