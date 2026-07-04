@@ -19,8 +19,8 @@ public final class AgentBotUtilityRuntime {
         return new AgentChatUtilityFlow.UtilityCallbacks() {
             @Override
             public void tradeInvite() {
-                Character bot = entry.bot();
-                Character owner = entry.owner();
+                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && AgentBotPendingTradeStateRuntime.isIdle(entry)) {
                     AgentBotUtilitySchedulerRuntime.afterRandomDelay(600, 1000, () -> {
@@ -35,8 +35,9 @@ public final class AgentBotUtilityRuntime {
 
             @Override
             public void sellTrash() {
+                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
                 AgentBotUtilitySchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> AgentShopService.requestSellTrashVisit(entry, entry.bot()));
+                        () -> AgentShopService.requestSellTrashVisit(entry, bot));
             }
 
             @Override

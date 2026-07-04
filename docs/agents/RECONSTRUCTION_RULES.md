@@ -4701,6 +4701,11 @@ Current physics correction:
   direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
   calls. The temporary shell methods remain only until all legacy-shaped callers
   are migrated.
+- Utility chat callbacks now resolve bot/leader identity through
+  `AgentBotRuntimeIdentityRuntime` before invoking the same trade, shop, and
+  maker side effects. This keeps legacy scheduling and reply behavior intact
+  while removing another direct `BotEntry` identity dependency from Agent
+  utility dialogue.
 
 Initial reconstruction order:
 
