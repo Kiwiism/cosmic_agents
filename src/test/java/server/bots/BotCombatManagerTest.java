@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
 
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -1294,7 +1296,7 @@ class BotCombatManagerTest {
         assertTrue(entry.climbUpIntent());
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(-Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelocityX());
-        assertEquals(-3.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f, entry.verticalVelocity(), 1.0e-4f);
+        assertEquals(-3.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
         assertEquals(1, entry.facingDirection());
         assertEquals(CharacterStance.JUMP_RIGHT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 0);
@@ -1307,9 +1309,9 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(60, 200), 9300001);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(true);
-        entry.setPhysicsX(100);
-        entry.setPhysicsY(200);
-        entry.setVerticalVelocity(12.5f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 200);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 12.5f);
         entry.setAirVelocityX(-4);
         entry.setFacingDirection(-1);
 
@@ -1318,7 +1320,7 @@ class BotCombatManagerTest {
         assertTrue(entry.inAir());
         assertTrue(entry.climbUpIntent());
         assertEquals(new Point(100, 200), bot.getPosition());
-        assertEquals(12.5f, entry.verticalVelocity(), 1.0e-4f);
+        assertEquals(12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
         assertEquals(Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelocityX());
         assertEquals(-1, entry.facingDirection());
         assertEquals(CharacterStance.JUMP_LEFT_STANCE, bot.getStance());
@@ -1338,7 +1340,7 @@ class BotCombatManagerTest {
         assertFalse(entry.climbing());
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(0, entry.airVelocityX());
-        assertEquals(0.0f, entry.verticalVelocity(), 1.0e-4f);
+        assertEquals(0.0f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
         assertDamageDirection(map, bot, 1, 0);
     }
 

@@ -38,7 +38,7 @@ class AgentBotMovementPhysicsStateRuntimeTest {
     @Test
     void airborneVelocityReadsThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setVerticalVelocity(-12.5f);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -12.5f);
         entry.setAirVelocityX(7);
 
         assertEquals(-12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
@@ -71,9 +71,9 @@ class AgentBotMovementPhysicsStateRuntimeTest {
     @Test
     void groundTravelStateCopiesCurrentPhysicsValuesThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setPhysicsX(12.5);
-        entry.setHorizontalSpeed(3.25);
-        entry.setGroundPhysicsCarryMs(8.0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 12.5);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 3.25);
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 8.0);
 
         AgentGroundTravelState state = AgentBotMovementPhysicsStateRuntime.groundTravelState(entry);
 

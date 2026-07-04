@@ -4614,6 +4614,10 @@ Current physics correction:
   Last-tick, heartbeat, follow-idle, failure-count, and failure-window state
   now route through `AgentBotTickStateRuntime` and
   `AgentBotTickFailureStateRuntime`.
+- Movement scalar physics wrappers have been removed from `BotEntry`. Vertical
+  velocity, fall peak, horizontal speed, physics position, ground carry, and
+  jump cooldown reads/writes now route through
+  `AgentBotMovementPhysicsStateRuntime` over `AgentMovementPhysicsState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

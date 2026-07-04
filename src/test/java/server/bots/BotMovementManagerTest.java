@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
 
 
 import server.agents.integration.AgentBotMovementStateRuntime;
@@ -144,9 +146,9 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(true);
         entry.setAirVelocityX(-8);
-        entry.setPhysicsX(0);
-        entry.setPhysicsY(0);
-        entry.setVerticalVelocity(-10f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -10f);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
@@ -480,9 +482,9 @@ class BotMovementManagerTest {
 
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(true);
-        entry.setPhysicsX(0);
-        entry.setPhysicsY(100);
-        entry.setVerticalVelocity(0f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         entry.setAirVelocityX(8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
@@ -512,9 +514,9 @@ class BotMovementManagerTest {
 
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(true);
-        entry.setPhysicsX(0);
-        entry.setPhysicsY(0);
-        entry.setVerticalVelocity(0f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         entry.setAirVelocityX(-8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
@@ -965,9 +967,9 @@ class BotMovementManagerTest {
 
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(true);
-        entry.setPhysicsX(100);
-        entry.setPhysicsY(100);
-        entry.setVerticalVelocity(0f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         entry.setAirVelocityX(-8);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,

@@ -107,14 +107,6 @@ public class BotEntry {
     // Physics
     private final AgentMovementPhysicsState movementPhysicsState = new AgentMovementPhysicsState();
 
-    public float verticalVelocity() {
-        return movementPhysicsState.verticalVelocity();
-    }
-
-    public void setVerticalVelocity(float verticalVelocity) {
-        movementPhysicsState.setVerticalVelocity(verticalVelocity);
-    }
-
     private final AgentAirborneSteeringState airborneSteeringState = new AgentAirborneSteeringState();
     private final AgentDownJumpState downJumpState = new AgentDownJumpState();
     private final AgentMovementInputState movementInputState = new AgentMovementInputState();
@@ -129,74 +121,8 @@ public class BotEntry {
         movementPhysicsState.setInAir(inAir);
     }
 
-    public double fallPeakPhysicsY() {
-        return movementPhysicsState.fallPeakPhysicsY();
-    }
-
-    public void setFallPeakPhysicsY(double fallPeakPhysicsY) {
-        movementPhysicsState.setFallPeakPhysicsY(fallPeakPhysicsY);
-    }
-
-    public void resetFallPeakPhysicsY() {
-        movementPhysicsState.resetFallPeakPhysicsY();
-    }
-
     public AgentGroundTravelState groundTravelState() {
         return movementPhysicsState.groundTravelState();
-    }
-
-    public double horizontalSpeed() {
-        return movementPhysicsState.horizontalSpeed();
-    }
-
-    public void setHorizontalSpeed(double horizontalSpeed) {
-        movementPhysicsState.setHorizontalSpeed(horizontalSpeed);
-    }
-
-    public double physicsX() {
-        return movementPhysicsState.physicsX();
-    }
-
-    public double physicsY() {
-        return movementPhysicsState.physicsY();
-    }
-
-    public void setPhysicsX(double physicsX) {
-        movementPhysicsState.setPhysicsX(physicsX);
-    }
-
-    public void setPhysicsY(double physicsY) {
-        movementPhysicsState.setPhysicsY(physicsY);
-    }
-
-    public void setPhysicsPosition(double physicsX, double physicsY) {
-        movementPhysicsState.setPhysicsPosition(physicsX, physicsY);
-    }
-
-    public void addPhysicsPosition(double deltaX, double deltaY) {
-        movementPhysicsState.addPhysicsPosition(deltaX, deltaY);
-    }
-
-    public void setPhysicsPosition(Point position) {
-        if (position != null) {
-            setPhysicsPosition(position.x, position.y);
-        }
-    }
-
-    public double groundPhysicsCarryMs() {
-        return movementPhysicsState.groundCarryMs();
-    }
-
-    public void setGroundPhysicsCarryMs(double groundPhysicsCarryMs) {
-        movementPhysicsState.setGroundCarryMs(groundPhysicsCarryMs);
-    }
-
-    public int jumpCooldownMs() {
-        return movementPhysicsState.jumpCooldownMs();
-    }
-
-    public void setJumpCooldownMs(int jumpCooldownMs) {
-        movementPhysicsState.setJumpCooldownMs(jumpCooldownMs);
     }
 
     public AgentMovementPhysicsState movementPhysicsState() {

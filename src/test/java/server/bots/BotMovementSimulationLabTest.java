@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
 
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -70,9 +72,9 @@ class BotMovementSimulationLabTest {
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         BotEntry entry = lab.spawnBot("BUMP", 12, map, new Point(0, 100));
         entry.setInAir(true);
-        entry.setPhysicsX(0);
-        entry.setPhysicsY(100);
-        entry.setVerticalVelocity(0f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         entry.setAirVelocityX(8);
 
         lab.stepRaw("BUMP", new Point(20, 110), false);
@@ -93,9 +95,9 @@ class BotMovementSimulationLabTest {
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         BotEntry entry = lab.spawnBot("DROP", 13, map, new Point(0, 0));
         entry.setInAir(true);
-        entry.setPhysicsX(0);
-        entry.setPhysicsY(0);
-        entry.setVerticalVelocity(0f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         entry.setAirVelocityX(-8);
 
         lab.stepRaw("DROP", new Point(-50, 80), false);

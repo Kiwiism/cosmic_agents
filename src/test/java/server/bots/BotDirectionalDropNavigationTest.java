@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
 
@@ -29,8 +31,8 @@ class BotDirectionalDropNavigationTest {
         // feed endPoint until physics performs the walk-off.
         Character bot = mockBot(new Point(fixture.edge.startPoint.x + 2, fixture.edge.startPoint.y), fixture.map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setPhysicsX(bot.getPosition().x);
-        entry.setPhysicsY(bot.getPosition().y);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
 
         Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 
@@ -43,8 +45,8 @@ class BotDirectionalDropNavigationTest {
         DropTestFixture fixture = createDirectionalDropFixture(910000041);
         Character bot = mockBot(new Point(fixture.edge.startPoint), fixture.map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setPhysicsX(bot.getPosition().x);
-        entry.setPhysicsY(bot.getPosition().y);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
 
         Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 
@@ -57,8 +59,8 @@ class BotDirectionalDropNavigationTest {
         DropTestFixture fixture = createDirectionalDropFixture(910000042, false);
         Character bot = mockBot(new Point(fixture.edge.startPoint.x - 5, fixture.edge.startPoint.y), fixture.map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setPhysicsX(bot.getPosition().x);
-        entry.setPhysicsY(bot.getPosition().y);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
 
         Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
 

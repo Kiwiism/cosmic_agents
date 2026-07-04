@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
@@ -572,9 +574,9 @@ class BotManagerTest {
         Character bot = mockMovingBot(new Point(20, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
         entry.setInAir(true);
-        entry.setPhysicsX(-999);
-        entry.setPhysicsY(-999);
-        entry.setVerticalVelocity(20f);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, -999);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, -999);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 20f);
         entry.setAirVelocityX(6);
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
@@ -582,8 +584,8 @@ class BotManagerTest {
 
         assertEquals(new Point(80, 100), bot.getPosition());
         assertFalse(entry.inAir());
-        assertEquals(80.0, entry.physicsX());
-        assertEquals(100.0, entry.physicsY());
+        assertEquals(80.0, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(100.0, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
         assertEquals(0, entry.airVelocityX());
         assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
         assertEquals(map.getId(), AgentBotMapStateRuntime.lastMapId(entry));
