@@ -4530,6 +4530,9 @@ Current physics correction:
   action/jump/visual timers, idle-roll scheduling, movement directions, spam
   air-steer flag, action delay, and origin position route through the Agent
   fidget capability.
+- Tick cadence state now lives in `AgentTickState`. `BotEntry` temporarily
+  hosts the Agent-owned state object, while initial skip delay and AI tick
+  accumulator state route through the Agent runtime tick capability.
 
 Initial reconstruction order:
 

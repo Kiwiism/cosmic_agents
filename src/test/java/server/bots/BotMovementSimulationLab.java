@@ -79,7 +79,7 @@ final class BotMovementSimulationLab {
     BotEntry spawnBot(String name, int id, MapleMap map, Point startPosition) {
         Character bot = spawnActor(name, id, map, startPosition);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.skipDelayMs = 0;
+        entry.setSkipDelayMs(0);
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
         entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
         bots.put(name, entry);
@@ -132,7 +132,7 @@ final class BotMovementSimulationLab {
     }
 
     void setAiAccumulator(String botName, int accumulatorMs) {
-        requireBot(botName).aiTickAccumulatorMs = accumulatorMs;
+        requireBot(botName).setAiTickAccumulatorMs(accumulatorMs);
     }
 
     void primeMapState(String botName) {
@@ -268,12 +268,12 @@ final class BotMovementSimulationLab {
     }
 
     private static boolean consumeAiTick(BotEntry entry) {
-        entry.aiTickAccumulatorMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
-        if (entry.aiTickAccumulatorMs < AgentRuntimeConfig.cfg.AI_TICK_MS) {
+        entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() + AgentMovementPhysicsConfig.configuredMovementTickMs());
+        if (entry.aiTickAccumulatorMs() < AgentRuntimeConfig.cfg.AI_TICK_MS) {
             return false;
         }
 
-        entry.aiTickAccumulatorMs -= AgentRuntimeConfig.cfg.AI_TICK_MS;
+        entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() - AgentRuntimeConfig.cfg.AI_TICK_MS);
         return true;
     }
 

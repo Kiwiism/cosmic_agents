@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.runtime.AgentTickState;
 import server.bots.BotEntry;
 
 /**
@@ -10,16 +11,15 @@ public final class AgentBotTickCadenceStateRuntime {
     }
 
     public static int skipDelayMs(BotEntry entry) {
-        return entry.skipDelayMs();
+        return state(entry).skipDelayMs();
     }
 
     public static int aiTickAccumulatorMs(BotEntry entry) {
-        return entry.aiTickAccumulatorMs();
+        return state(entry).aiTickAccumulatorMs();
     }
 
     public static void reset(BotEntry entry) {
-        entry.setSkipDelayMs(0);
-        entry.setAiTickAccumulatorMs(0);
+        state(entry).resetCadence();
     }
 
     public static boolean consumeSkipDelay(BotEntry entry, int tickMs) {
@@ -27,17 +27,21 @@ public final class AgentBotTickCadenceStateRuntime {
         if (skipDelayMs <= 0) {
             return false;
         }
-        entry.setSkipDelayMs(Math.max(0, skipDelayMs - tickMs));
+        state(entry).setSkipDelayMs(Math.max(0, skipDelayMs - tickMs));
         return true;
     }
 
     public static boolean consumeAiTick(BotEntry entry, int tickMs, int aiTickMs) {
         int accumulator = aiTickAccumulatorMs(entry) + tickMs;
         if (accumulator < aiTickMs) {
-            entry.setAiTickAccumulatorMs(accumulator);
+            state(entry).setAiTickAccumulatorMs(accumulator);
             return false;
         }
-        entry.setAiTickAccumulatorMs(accumulator - aiTickMs);
+        state(entry).setAiTickAccumulatorMs(accumulator - aiTickMs);
         return true;
+    }
+
+    private static AgentTickState state(BotEntry entry) {
+        return entry.tickState();
     }
 }

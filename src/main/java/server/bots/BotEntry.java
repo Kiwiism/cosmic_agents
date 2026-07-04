@@ -81,7 +81,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class BotEntry {
     final Character bot;
@@ -1373,23 +1372,20 @@ public class BotEntry {
         return formationOffsetState;
     }
 
-    int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);
-    int aiTickAccumulatorMs = 0;
-
     public int skipDelayMs() {
-        return skipDelayMs;
+        return tickState.skipDelayMs();
     }
 
     public void setSkipDelayMs(int skipDelayMs) {
-        this.skipDelayMs = skipDelayMs;
+        tickState.setSkipDelayMs(skipDelayMs);
     }
 
     public int aiTickAccumulatorMs() {
-        return aiTickAccumulatorMs;
+        return tickState.aiTickAccumulatorMs();
     }
 
     public void setAiTickAccumulatorMs(int aiTickAccumulatorMs) {
-        this.aiTickAccumulatorMs = aiTickAccumulatorMs;
+        tickState.setAiTickAccumulatorMs(aiTickAccumulatorMs);
     }
 
     // "Move here" target — bot navigates to this fixed point, then idles until cleared

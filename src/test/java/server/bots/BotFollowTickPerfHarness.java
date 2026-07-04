@@ -210,11 +210,11 @@ public class BotFollowTickPerfHarness {
         }
 
         private static boolean consumeAiTick(BotEntry entry) {
-            entry.aiTickAccumulatorMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
-            if (entry.aiTickAccumulatorMs < AgentRuntimeConfig.cfg.AI_TICK_MS) {
+            entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() + AgentMovementPhysicsConfig.configuredMovementTickMs());
+            if (entry.aiTickAccumulatorMs() < AgentRuntimeConfig.cfg.AI_TICK_MS) {
                 return false;
             }
-            entry.aiTickAccumulatorMs -= AgentRuntimeConfig.cfg.AI_TICK_MS;
+            entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() - AgentRuntimeConfig.cfg.AI_TICK_MS);
             return true;
         }
     }

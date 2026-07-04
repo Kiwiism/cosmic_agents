@@ -15,6 +15,8 @@ class AgentTickStateTest {
         assertEquals(0L, state.lastTickAtMs());
         assertEquals(0L, state.lastHeartbeatAtMs());
         assertEquals(0L, state.nextFollowIdleMovementCheckAtMs());
+        assertTrue(state.skipDelayMs() >= 0 && state.skipDelayMs() <= 500);
+        assertEquals(0, state.aiTickAccumulatorMs());
         assertTrue(state.heartbeatDue(600_000L, 600_000L));
     }
 
@@ -32,5 +34,21 @@ class AgentTickStateTest {
         assertFalse(state.heartbeatDue(600_001L, 600_000L));
         assertTrue(state.heartbeatDue(1_200_000L, 600_000L));
         assertEquals(2_000L, state.nextFollowIdleMovementCheckAtMs());
+    }
+
+    @Test
+    void storesAndResetsCadenceState() {
+        AgentTickState state = new AgentTickState();
+
+        state.setSkipDelayMs(250);
+        state.setAiTickAccumulatorMs(75);
+
+        assertEquals(250, state.skipDelayMs());
+        assertEquals(75, state.aiTickAccumulatorMs());
+
+        state.resetCadence();
+
+        assertEquals(0, state.skipDelayMs());
+        assertEquals(0, state.aiTickAccumulatorMs());
     }
 }
