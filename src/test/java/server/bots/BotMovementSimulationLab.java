@@ -96,7 +96,7 @@ final class BotMovementSimulationLab {
         BotEntry entry = requireBot(botName);
         entry.following = false;
         entry.owner = null;
-        entry.followOffsetX = 0;
+        entry.setFollowOffsetX(0);
     }
 
     void setMoveTarget(String botName, Point target, boolean precise) {
@@ -127,7 +127,7 @@ final class BotMovementSimulationLab {
     }
 
     void setFollowOffset(String botName, int offsetX) {
-        requireBot(botName).followOffsetX = offsetX;
+        requireBot(botName).setFollowOffsetX(offsetX);
     }
 
     void setAiAccumulator(String botName, int accumulatorMs) {

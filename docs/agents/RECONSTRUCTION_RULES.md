@@ -4350,6 +4350,9 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while active/inactive state
   and trail timestamp reads/writes route through the Agent social airshow
   capability.
+- Formation offset storage now lives in `AgentFormationOffsetState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while per-Agent follow offset
+  reads/writes route through the Agent runtime state.
 
 Initial reconstruction order:
 

@@ -25,6 +25,7 @@ import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
+import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 
@@ -1449,14 +1450,18 @@ public class BotEntry {
     }
 
     // Human-like spacing and stagger — assigned at registration based on bot index
-    int followOffsetX = 0;
+    private final AgentFormationOffsetState formationOffsetState = new AgentFormationOffsetState();
 
     public int followOffsetX() {
-        return followOffsetX;
+        return formationOffsetState.followOffsetX();
     }
 
     public void setFollowOffsetX(int followOffsetX) {
-        this.followOffsetX = followOffsetX;
+        formationOffsetState.setFollowOffsetX(followOffsetX);
+    }
+
+    public AgentFormationOffsetState formationOffsetState() {
+        return formationOffsetState;
     }
 
     int skipDelayMs = ThreadLocalRandom.current().nextInt(0, 501);

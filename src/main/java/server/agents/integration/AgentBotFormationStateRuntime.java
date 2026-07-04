@@ -10,10 +10,10 @@ public final class AgentBotFormationStateRuntime {
     }
 
     public static int followOffsetX(BotEntry entry) {
-        return entry.followOffsetX();
+        return entry.formationOffsetState().followOffsetX();
     }
 
     public static void setFollowOffsetX(BotEntry entry, int followOffsetX) {
-        entry.setFollowOffsetX(followOffsetX);
+        entry.formationOffsetState().setFollowOffsetX(followOffsetX);
     }
 }
