@@ -4565,6 +4565,9 @@ Current physics correction:
   `BotEntry`. Scheduler handles route through `AgentScheduledTaskState` and
   `AgentBotManagerSchedulerRuntime`; script task queue operations route through
   `AgentBotScriptTaskStateRuntime` and `AgentScriptTaskQueueState`.
+- Airshow state wrappers have been removed from `BotEntry`. Airshow active
+  state and trail timing now route through `AgentBotAirshowStateRuntime` and
+  `AgentAirshowState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

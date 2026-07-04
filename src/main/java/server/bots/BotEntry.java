@@ -94,22 +94,6 @@ public class BotEntry {
         return scheduledTaskState;
     }
 
-    public boolean airshowActive() {
-        return airshowState.active();
-    }
-
-    public void setAirshowActive(boolean airshowActive) {
-        airshowState.setActive(airshowActive);
-    }
-
-    public long airshowLastTrailAtMs() {
-        return airshowState.lastTrailAtMs();
-    }
-
-    public void setAirshowLastTrailAtMs(long airshowLastTrailAtMs) {
-        airshowState.setLastTrailAtMs(airshowLastTrailAtMs);
-    }
-
     public AgentAirshowState airshowState() {
         return airshowState;
     }

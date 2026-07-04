@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentBotAirshowStateRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 
@@ -55,7 +56,7 @@ class AgentBotManagerStatusRuntimeTest {
 
         assertFalse(AgentBotManagerStatusRuntime.airshowActive(entry));
 
-        entry.setAirshowActive(true);
+        AgentBotAirshowStateRuntime.start(entry);
 
         assertTrue(AgentBotManagerStatusRuntime.airshowActive(entry));
     }
