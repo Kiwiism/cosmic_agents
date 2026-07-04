@@ -55,6 +55,23 @@ class AgentRopeMovementServiceTest {
     }
 
     @Test
+    void advanceClimbMovesAlongRopeByLegacyStep() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 30));
+        when(agent.getHp()).thenReturn(1);
+        BotEntry entry = new BotEntry(agent, null, null);
+        Rope rope = new Rope(100, 0, 80, false);
+        AgentRopeMovementService.attachToRope(entry, agent, rope, 30);
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 1);
+
+        AgentRopeMovementService.advanceClimb(entry, agent);
+
+        verify(agent).setPosition(new Point(100, 30 + AgentMovementKinematicsService.climbStepPerTick()));
+        assertSame(rope, AgentBotClimbStateRuntime.climbRope(entry));
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+    }
+
+    @Test
     void beginGroundJumpStartsAirborneWithLegacyJumpImpulse() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));

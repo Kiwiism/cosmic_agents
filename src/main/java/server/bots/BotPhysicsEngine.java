@@ -669,38 +669,11 @@ public final class BotPhysicsEngine {
      * intent before calling.
      */
     public static void advanceClimb(BotEntry entry, Character bot) {
-        Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
-        if (rope == null) {
-            beginFall(entry, bot, 0);
-            return;
-        }
-
-        int climbDir = Integer.compare(AgentBotClimbStateRuntime.climbVerticalDirection(entry), 0);
-        if (climbDir == 0) {
-            holdClimb(entry, bot);
-            return;
-        }
-
-        int nextY = bot.getPosition().y + climbDir * climbStepPerTick();
-        if (resolveClimbBoundary(entry, bot, rope, nextY)) {
-            return;
-        }
-
-        setClimbPosition(entry, bot, rope, nextY);
+        AgentRopeMovementService.advanceClimb(entry, bot);
     }
 
     public static void holdClimb(BotEntry entry, Character bot) {
-        Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
-        if (rope == null) {
-            beginFall(entry, bot, 0);
-            return;
-        }
-        if (resolveClimbBoundary(entry, bot, rope, bot.getPosition().y)) {
-            return;
-        }
-
-        setMovementVelocity(entry, 0, 0);
-        syncCharacterState(entry);
+        AgentRopeMovementService.holdClimb(entry, bot);
     }
 
     public static void tickMotionTimers(BotEntry entry) {

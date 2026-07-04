@@ -1,13 +1,15 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
+import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -26,11 +28,38 @@ public final class AgentRopeMovementService {
     }
 
     public static void holdClimb(BotEntry entry, Character agent) {
-        BotPhysicsEngine.holdClimb(entry, agent);
+        Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
+        if (rope == null) {
+            beginFall(entry, agent, 0);
+            return;
+        }
+        if (resolveClimbBoundary(entry, agent, rope, agent.getPosition().y)) {
+            return;
+        }
+
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        AgentMovementPoseService.syncCharacterState(entry);
     }
 
     public static void advanceClimb(BotEntry entry, Character agent) {
-        BotPhysicsEngine.advanceClimb(entry, agent);
+        Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
+        if (rope == null) {
+            beginFall(entry, agent, 0);
+            return;
+        }
+
+        int climbDirection = Integer.compare(AgentBotClimbStateRuntime.climbVerticalDirection(entry), 0);
+        if (climbDirection == 0) {
+            holdClimb(entry, agent);
+            return;
+        }
+
+        int nextY = agent.getPosition().y + climbDirection * AgentMovementKinematicsService.climbStepPerTick();
+        if (resolveClimbBoundary(entry, agent, rope, nextY)) {
+            return;
+        }
+
+        setClimbPosition(entry, agent, rope, nextY);
     }
 
     public static void beginGroundJump(BotEntry entry, Character agent, int airVelocityX) {
@@ -117,6 +146,72 @@ public final class AgentRopeMovementService {
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 0,
                 Math.round(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
         AgentMovementPoseService.syncCharacterState(entry);
+    }
+
+    private static boolean resolveClimbBoundary(BotEntry entry, Character agent, Rope rope, int candidateY) {
+        if (candidateY <= rope.topY()) {
+            Point landing = findTopLandingPoint(agent, rope, candidateY);
+            if (landing != null) {
+                landOnTopGround(entry, agent, landing);
+            } else {
+                setClimbPosition(entry, agent, rope, AgentNavigationPhysicsService.firstClimbableY(rope));
+            }
+            return true;
+        }
+        if (candidateY > rope.bottomY()) {
+            beginFall(entry, agent, 0);
+            return true;
+        }
+        return false;
+    }
+
+    private static Point findTopLandingPoint(Character agent, Rope rope, int candidateY) {
+        MapleMap map = agent.getMap();
+        if (map == null) {
+            return null;
+        }
+
+        int probeY = Math.min(candidateY, rope.topY()) - 3;
+        Point probe = new Point(rope.x(), probeY);
+        Point below = map.getPointBelow(probe);
+        if (below == null) {
+            return null;
+        }
+        int maxDrop = AgentMovementPhysicsConfig.configuredMaxSnapDrop() + AgentMovementPhysicsConfig.configuredMaxSlopeUp();
+        if (below.y - probeY > maxDrop) {
+            return null;
+        }
+        return below;
+    }
+
+    private static void beginFall(BotEntry entry, Character agent, int airVelocityX) {
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+        Point position = agent.getPosition();
+        agent.setPosition(new Point(position));
+        AgentAirborneLaunchService.launchAirborne(entry, position, 0f, airVelocityX, false);
+    }
+
+    private static void landOnTopGround(BotEntry entry, Character agent, Point position) {
+        agent.setPosition(position);
+        AgentBotMovementStateRuntime.setInAir(entry, false);
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentBotClimbStateRuntime.clearRopeEntry(entry);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        AgentMovementPoseService.syncCharacterState(entry);
+        AgentBotCombatDamageRuntime.applyFallDamage(entry, agent, 0f, AgentCombatConfig.cfg);
+        AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 
     private static AgentMovementProfile profileOrBase(AgentMovementProfile profile) {

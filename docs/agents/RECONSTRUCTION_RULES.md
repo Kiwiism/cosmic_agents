@@ -202,6 +202,10 @@ Recent reconstruction notes:
   live in `AgentRopeMovementService`. The swim-map ground-jump branch stays
   behavior-identical, including the zeroed air X velocity, swim impulse, swim
   cooldown, and unconverted packet movement velocity.
+- Rope/ladder climb hold and advance now live in `AgentRopeMovementService`.
+  The Agent service owns idle climb sync, vertical step advancement, top-rope
+  landing, and bottom-rope fall launch while `BotPhysicsEngine` keeps only
+  temporary delegate entry points for legacy callers.
 - Movement timer countdown implementation moved into `AgentMotionTimerService`.
   `BotPhysicsEngine.tickMotionTimers` remains a temporary delegate while
   physics callers migrate.

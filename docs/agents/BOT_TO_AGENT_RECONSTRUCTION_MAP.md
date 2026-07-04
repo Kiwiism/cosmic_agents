@@ -198,6 +198,11 @@ Recent map updates:
   ownership moved to `AgentRopeMovementService`. The swim-map ground-jump
   special case preserves its legacy swim impulse, cooldown, and packet velocity
   behavior; the `BotPhysicsEngine` entry points are compatibility delegates.
+- Rope/ladder climb hold, advance, top landing, and bottom fall boundary
+  handling moved to `AgentRopeMovementService`. The Agent service now owns the
+  packet-visible rope position, zero-velocity hold, top foothold snap, and
+  fall launch behavior; the `BotPhysicsEngine` methods are compatibility
+  delegates.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement
