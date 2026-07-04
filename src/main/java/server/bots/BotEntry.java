@@ -47,6 +47,7 @@ import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 import server.agents.runtime.AgentMovementBroadcastState;
+import server.agents.runtime.AgentMovementPhysicsCacheState;
 import server.agents.runtime.AgentMovementStuckState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentTickFailureState;
@@ -1568,6 +1569,7 @@ public class BotEntry {
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
     private final AgentMovementBroadcastState movementBroadcastState = new AgentMovementBroadcastState();
+    private final AgentMovementPhysicsCacheState movementPhysicsCacheState = new AgentMovementPhysicsCacheState();
     private final AgentMovementStuckState movementStuckState = new AgentMovementStuckState();
     private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
     private final AgentTickFailureState tickFailureState = new AgentTickFailureState();
@@ -1801,6 +1803,10 @@ public class BotEntry {
 
     public AgentMovementBroadcastState movementBroadcastState() {
         return movementBroadcastState;
+    }
+
+    public AgentMovementPhysicsCacheState movementPhysicsCacheState() {
+        return movementPhysicsCacheState;
     }
 
     public AgentMovementStuckState movementStuckState() {
@@ -2066,15 +2072,12 @@ public class BotEntry {
         manualTradeState.setTimeoutMs(manualTradeTimeoutMs);
     }
 
-    // Movement packet cache so repeated no-op packets are suppressed
-    int lastGroundFhId = 0;
-
     public int lastGroundFhId() {
-        return lastGroundFhId;
+        return movementPhysicsCacheState.lastGroundFootholdId();
     }
 
     public void setLastGroundFhId(int lastGroundFhId) {
-        this.lastGroundFhId = lastGroundFhId;
+        movementPhysicsCacheState.setLastGroundFootholdId(lastGroundFhId);
     }
 
     public boolean movementBroadcastValid() {

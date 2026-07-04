@@ -4445,6 +4445,10 @@ Current physics correction:
   `AgentMovementBroadcastState`. `BotEntry` temporarily hosts the Agent-owned
   state object, while last broadcast position, velocity, stance, and foothold
   route through Agent runtime state.
+- Last-ground foothold cache state now lives in
+  `AgentMovementPhysicsCacheState`. `BotEntry` temporarily hosts the
+  Agent-owned state object, while grounded movement and airshow trail readers
+  route through Agent runtime state.
 
 Initial reconstruction order:
 

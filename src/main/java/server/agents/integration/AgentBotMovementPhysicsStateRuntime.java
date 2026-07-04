@@ -135,11 +135,11 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static int lastGroundFhId(BotEntry entry) {
-        return entry.lastGroundFhId();
+        return entry.movementPhysicsCacheState().lastGroundFootholdId();
     }
 
     public static void setLastGroundFhId(BotEntry entry, int footholdId) {
-        entry.setLastGroundFhId(footholdId);
+        entry.movementPhysicsCacheState().setLastGroundFootholdId(footholdId);
     }
 
     public static AgentGroundTravelState groundTravelState(BotEntry entry) {
