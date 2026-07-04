@@ -139,7 +139,7 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.AfkReturnActions() {
             @Override
             public boolean hasAgent() {
-                return entry.bot() != null;
+                return AgentBotRuntimeIdentityRuntime.bot(entry) != null;
             }
 
             @Override
@@ -149,7 +149,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void changeFaceExpression(int expression) {
-                entry.bot().changeFaceExpression(expression);
+                AgentBotRuntimeIdentityRuntime.bot(entry).changeFaceExpression(expression);
             }
 
             @Override

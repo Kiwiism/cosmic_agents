@@ -4751,6 +4751,10 @@ Current physics correction:
   identity through `AgentBotRuntimeIdentityRuntime`. Fame target resolution,
   fame status checks, report delivery, and offer recommendation behavior remain
   unchanged.
+- Chat orchestration and AFK-return status adapters now resolve live Agent
+  identity through `AgentBotRuntimeIdentityRuntime` for job/level checks and
+  face-expression side effects. Dialogue classification and welcome-back
+  behavior remain unchanged.
 
 Initial reconstruction order:
 

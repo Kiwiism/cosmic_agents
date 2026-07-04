@@ -132,12 +132,12 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public Job currentJob() {
-        return entry.bot().getJob();
+        return AgentBotRuntimeIdentityRuntime.bot(entry).getJob();
     }
 
     @Override
     public int level() {
-        return entry.bot().getLevel();
+        return AgentBotRuntimeIdentityRuntime.bot(entry).getLevel();
     }
 
     @Override
