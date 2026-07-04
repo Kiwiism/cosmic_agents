@@ -4546,6 +4546,10 @@ Current physics correction:
   cooldowns, mob-touch sweep cache, degenerate attack latch, retreat hold,
   breakout, and AoE reposition state now route through Agent-owned state
   adapters or direct Agent-owned state accessors.
+- Pending trade sequence wrappers have been removed from `BotEntry`. Trade
+  category, recipient, item batch, meso, timer, invite, completion, budget, and
+  restore-slot state now route through `AgentBotPendingTradeStateRuntime` and
+  the Agent-owned `AgentPendingTradeSequenceState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
