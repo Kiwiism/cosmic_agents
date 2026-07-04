@@ -57,6 +57,7 @@ import server.agents.runtime.AgentMoveTargetState;
 import server.agents.runtime.AgentMovementBroadcastState;
 import server.agents.runtime.AgentMovementPhysicsCacheState;
 import server.agents.runtime.AgentMovementStuckState;
+import server.agents.runtime.AgentAoeRepositionState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentPatrolState;
 import server.agents.runtime.AgentRetreatHoldState;
@@ -691,8 +692,7 @@ public class BotEntry {
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
     private final AgentRetreatHoldState retreatHoldState = new AgentRetreatHoldState();
     private final AgentBreakoutState breakoutState = new AgentBreakoutState();
-    private Point aoeRepositionAnchor = null; // committed AoE sweet-spot to walk to before firing, null = not repositioning
-    private long aoeRepositionDeadlineMs = 0L; // bounded-chase timeout for the AoE reposition commitment
+    private final AgentAoeRepositionState aoeRepositionState = new AgentAoeRepositionState();
     private final AgentGrindWanderState grindWanderState = new AgentGrindWanderState();
 
     public boolean degenAttackDone() {
@@ -739,26 +739,20 @@ public class BotEntry {
         breakoutState.clear();
     }
 
-    public Point aoeRepositionAnchor() {
-        return aoeRepositionAnchor == null ? null : new Point(aoeRepositionAnchor);
-    }
+    public AgentAoeRepositionState aoeRepositionState() { return aoeRepositionState; }
 
-    public boolean hasAoeRepositionAnchor() {
-        return aoeRepositionAnchor != null;
-    }
+    public Point aoeRepositionAnchor() { return aoeRepositionState.anchor(); }
 
-    public long aoeRepositionDeadlineMs() {
-        return aoeRepositionDeadlineMs;
-    }
+    public boolean hasAoeRepositionAnchor() { return aoeRepositionState.hasAnchor(); }
+
+    public long aoeRepositionDeadlineMs() { return aoeRepositionState.deadlineMs(); }
 
     public void setAoeRepositionAnchor(Point anchor, long deadlineMs) {
-        aoeRepositionAnchor = anchor == null ? null : new Point(anchor);
-        aoeRepositionDeadlineMs = anchor == null ? 0L : deadlineMs;
+        aoeRepositionState.setAnchor(anchor, deadlineMs);
     }
 
     public void clearAoeRepositionAnchor() {
-        aoeRepositionAnchor = null;
-        aoeRepositionDeadlineMs = 0L;
+        aoeRepositionState.clear();
     }
 
     private final AgentShopState shopState = new AgentShopState();

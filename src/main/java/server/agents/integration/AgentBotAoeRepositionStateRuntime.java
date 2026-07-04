@@ -12,30 +12,26 @@ public final class AgentBotAoeRepositionStateRuntime {
     }
 
     public static Point anchor(BotEntry entry) {
-        return entry.aoeRepositionAnchor();
+        return entry.aoeRepositionState().anchor();
     }
 
     public static boolean hasAnchor(BotEntry entry) {
-        return entry.hasAoeRepositionAnchor();
+        return entry.aoeRepositionState().hasAnchor();
     }
 
     public static long deadlineMs(BotEntry entry) {
-        return entry.aoeRepositionDeadlineMs();
+        return entry.aoeRepositionState().deadlineMs();
     }
 
     public static void setAnchor(BotEntry entry, Point anchor, long deadlineMs) {
-        entry.setAoeRepositionAnchor(anchor, deadlineMs);
+        entry.aoeRepositionState().setAnchor(anchor, deadlineMs);
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearAoeRepositionAnchor();
+        entry.aoeRepositionState().clear();
     }
 
     public static boolean isExpiredOrArrived(BotEntry entry, Point botPos, long nowMs, int arrivalX) {
-        Point anchor = anchor(entry);
-        return anchor == null
-                || nowMs > deadlineMs(entry)
-                || botPos == null
-                || Math.abs(anchor.x - botPos.x) <= arrivalX;
+        return entry.aoeRepositionState().expiredOrArrived(botPos, nowMs, arrivalX);
     }
 }

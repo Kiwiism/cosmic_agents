@@ -4483,6 +4483,10 @@ Current physics correction:
 - Surround-breakout commitment storage now lives in `AgentBreakoutState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while escape
   direction and hard timeout reads/writes route through Agent runtime state.
+- AoE reposition commitment storage now lives in `AgentAoeRepositionState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while sweet-spot
+  anchor, bounded-chase deadline, and arrival/expiry checks route through Agent
+  runtime state.
 
 Initial reconstruction order:
 
