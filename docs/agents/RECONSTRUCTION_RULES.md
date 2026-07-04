@@ -4621,7 +4621,8 @@ Current physics correction:
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
-  swim-jump cooldown route through the Agent movement capability.
+  swim-jump cooldown route through `AgentBotSwimStateRuntime` and the Agent
+  movement capability.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

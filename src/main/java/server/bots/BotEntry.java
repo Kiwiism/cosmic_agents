@@ -174,46 +174,6 @@ public class BotEntry {
         return swimIntentState;
     }
 
-    public boolean swimming() {
-        return swimIntentState.swimming();
-    }
-
-    public void setSwimming(boolean swimming) {
-        swimIntentState.setSwimming(swimming);
-    }
-
-    public int swimMoveDirection() {
-        return swimIntentState.moveDirection();
-    }
-
-    public void setSwimMoveDirection(int direction) {
-        swimIntentState.setMoveDirection(direction);
-    }
-
-    public int swimVerticalHold() {
-        return swimIntentState.verticalHold();
-    }
-
-    public void setSwimVerticalHold(int verticalHold) {
-        swimIntentState.setVerticalHold(verticalHold);
-    }
-
-    public boolean swimJumpRequested() {
-        return swimIntentState.jumpRequested();
-    }
-
-    public void setSwimJumpRequested(boolean swimJumpRequested) {
-        swimIntentState.setJumpRequested(swimJumpRequested);
-    }
-
-    public long swimNextJumpAtMs() {
-        return swimIntentState.nextJumpAtMs();
-    }
-
-    public void setSwimNextJumpAtMs(long swimNextJumpAtMs) {
-        swimIntentState.setNextJumpAtMs(swimNextJumpAtMs);
-    }
-
     // Movement intent — set by movement/fidget layer, consumed by physics engine.
     // Maps to the same left/right key hold used by the real client for both
     // ground walking and air steering. Physics reads this in the active mode:
