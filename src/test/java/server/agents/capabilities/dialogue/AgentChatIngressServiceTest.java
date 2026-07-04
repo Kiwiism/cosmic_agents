@@ -105,10 +105,10 @@ class AgentChatIngressServiceTest {
         return order.subList(0, order.indexOf(route) + 1);
     }
 
-    private static AgentChatIngressService.Hooks hooks(String handledRoute,
+    private static AgentChatIngressService.Hooks<BotEntry> hooks(String handledRoute,
                                                        List<BotEntry> entries,
                                                        List<String> calls) {
-        return new AgentChatIngressService.Hooks(
+        return new AgentChatIngressService.Hooks<>(
                 (leader, message) -> route("pending", handledRoute, calls),
                 (leader, message) -> route("recruit", handledRoute, calls),
                 (leader, message) -> route("transfer", handledRoute, calls),

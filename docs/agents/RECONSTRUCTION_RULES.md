@@ -4771,6 +4771,10 @@ Current physics correction:
   legacy `BotEntry` command resolution into `AgentTargetedCommandMatch`, so
   reply-channel, typo suggestion, follow routing, LLM fall-through, and owner
   command recording behavior stay unchanged.
+- Top-level chat ingress now also accepts `AgentRuntimeHandle` entries, keeping
+  pending-offer, recruit, transfer, formation, dismiss, targeted, and
+  untargeted route ordering unchanged while removing another capability-level
+  `BotEntry` signature.
 
 Initial reconstruction order:
 

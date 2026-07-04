@@ -2,7 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
 
@@ -10,14 +10,14 @@ public final class AgentChatIngressService {
     private AgentChatIngressService() {
     }
 
-    public record Hooks(PendingOfferRoute pendingOfferRoute,
+    public record Hooks<E extends AgentRuntimeHandle>(PendingOfferRoute pendingOfferRoute,
                         RecruitRoute recruitRoute,
                         TransferRoute transferRoute,
                         FormationRoute formationRoute,
-                        EntriesForLeader entriesForLeader,
+                        EntriesForLeader<E> entriesForLeader,
                         DismissRoute dismissRoute,
-                        TargetedRoute targetedRoute,
-                        UntargetedRoute untargetedRoute) {
+                        TargetedRoute<E> targetedRoute,
+                        UntargetedRoute<E> untargetedRoute) {
     }
 
     @FunctionalInterface
@@ -41,8 +41,8 @@ public final class AgentChatIngressService {
     }
 
     @FunctionalInterface
-    public interface EntriesForLeader {
-        List<BotEntry> entries(int leaderCharId);
+    public interface EntriesForLeader<E extends AgentRuntimeHandle> {
+        List<E> entries(int leaderCharId);
     }
 
     @FunctionalInterface
@@ -51,16 +51,20 @@ public final class AgentChatIngressService {
     }
 
     @FunctionalInterface
-    public interface TargetedRoute {
-        boolean handle(Character leader, List<BotEntry> entries, String message, AgentReplyChannel channel);
+    public interface TargetedRoute<E extends AgentRuntimeHandle> {
+        boolean handle(Character leader, List<E> entries, String message, AgentReplyChannel channel);
     }
 
     @FunctionalInterface
-    public interface UntargetedRoute {
-        void handle(Character leader, List<BotEntry> entries, String message, AgentReplyChannel channel);
+    public interface UntargetedRoute<E extends AgentRuntimeHandle> {
+        void handle(Character leader, List<E> entries, String message, AgentReplyChannel channel);
     }
 
-    public static void handleChat(Character leader, String message, AgentReplyChannel channel, Hooks hooks) {
+    public static <E extends AgentRuntimeHandle> void handleChat(
+            Character leader,
+            String message,
+            AgentReplyChannel channel,
+            Hooks<E> hooks) {
         if (hooks.pendingOfferRoute().handle(leader, message)) {
             return;
         }
@@ -74,7 +78,7 @@ public final class AgentChatIngressService {
             return;
         }
 
-        List<BotEntry> entries = hooks.entriesForLeader().entries(leader.getId());
+        List<E> entries = hooks.entriesForLeader().entries(leader.getId());
         if (entries == null || entries.isEmpty()) {
             return;
         }

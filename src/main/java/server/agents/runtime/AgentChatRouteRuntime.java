@@ -73,7 +73,7 @@ public final class AgentChatRouteRuntime {
                         defaultSnapRangePx));
     }
 
-    private static AgentChatIngressService.Hooks chatIngressHooks(
+    private static AgentChatIngressService.Hooks<BotEntry> chatIngressHooks(
             Map<Integer, List<BotEntry>> entriesByLeader,
             AgentRecruitCommandService.RecruitAction recruitAction,
             AgentTransferCommandService.TransferAction transferAction,
@@ -81,7 +81,7 @@ public final class AgentChatRouteRuntime {
             AgentFormationService.FormationState defaultFormation,
             int defaultFollowStaggerPx,
             int defaultSnapRangePx) {
-        return new AgentChatIngressService.Hooks(
+        return new AgentChatIngressService.Hooks<>(
                 (speaker, text) -> AgentPendingOfferChatRouteService.handlePendingOfferResponse(
                         entriesByLeader.values(),
                         speaker,

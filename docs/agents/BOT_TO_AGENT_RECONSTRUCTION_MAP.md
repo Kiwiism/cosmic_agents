@@ -17,6 +17,10 @@ Recent map updates:
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
   command routing behavior unchanged while reducing `BotEntry` type leakage
   from dialogue capabilities.
+- `AgentChatIngressService` now uses the same `AgentRuntimeHandle` boundary for
+  entry lookup and route callbacks. `AgentChatRouteRuntime` still supplies the
+  temporary `BotEntry` lists from the legacy runtime registry, preserving route
+  ordering and behavior.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
