@@ -20,7 +20,7 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static void startPathLogging(BotEntry entry) {
-        Character bot = entry.bot();
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         entry.navigationDebugState().setPathLogger(new AgentPathLogger(bot.getName(), bot.getMapId()));
     }
 

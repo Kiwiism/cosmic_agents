@@ -4739,6 +4739,10 @@ Current physics correction:
 - Control chat callbacks now resolve the live Agent through
   `AgentBotRuntimeIdentityRuntime` before buff summaries and AP/SP respec
   commands. Toggle state writes, delays, and replies remain unchanged.
+- Movement diagnostics now resolve Agent and leader identity through
+  `AgentBotRuntimeIdentityRuntime` before creating movement snapshots and
+  path-log sessions. Snapshot content, defensive point copies, and navigation
+  debug state behavior remain unchanged.
 
 Initial reconstruction order:
 
