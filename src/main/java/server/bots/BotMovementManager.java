@@ -7,7 +7,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
-import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundMovementService;
@@ -17,9 +16,7 @@ import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.capabilities.movement.AgentMovementRecoveryService;
-import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.movement.AgentSwimMovementService;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -39,7 +36,6 @@ import server.maps.MapleMap;
 import server.maps.Rope;
 
 import java.awt.*;
-import java.util.Map;
 
 public class BotMovementManager {
 
@@ -71,22 +67,6 @@ public class BotMovementManager {
 
     static void stopGroundMotion(BotEntry entry) {
         AgentGroundPhysicsService.stopGroundMotion(entry);
-    }
-
-    public static boolean refreshMovementProfile(BotEntry entry) {
-        return AgentMovementProfileService.refreshMovementProfile(entry);
-    }
-
-    public static void resetEntryState(BotEntry entry) {
-        AgentMovementStateResetService.resetEntryState(entry);
-    }
-
-    public static void resetEntryStateAfterTeleport(BotEntry entry) {
-        AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
-    }
-
-    public static void clearNavigationState(BotEntry entry) {
-        AgentMovementStateResetService.clearNavigationState(entry);
     }
 
     public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
@@ -200,10 +180,6 @@ public class BotMovementManager {
 
     public static void broadcastMovement(BotEntry entry) {
         AgentMovementBroadcastService.broadcastMovement(entry);
-    }
-
-    public static Map<Integer, Foothold> buildFhIndex(MapleMap map) {
-        return AgentFootholdIndexService.buildFhIndex(map);
     }
 
 }

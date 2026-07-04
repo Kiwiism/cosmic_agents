@@ -4,6 +4,8 @@ import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -73,7 +75,7 @@ final class BotMovementSimulationLab {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.skipDelayMs = 0;
         entry.lastMapId = map.getId();
-        entry.fhIndex = BotMovementManager.buildFhIndex(map);
+        entry.fhIndex = AgentFootholdIndexService.buildFhIndex(map);
         entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
         bots.put(name, entry);
         return entry;
@@ -113,7 +115,7 @@ final class BotMovementSimulationLab {
         BotEntry entry = bots.get(actorName);
         if (entry != null) {
             BotPhysicsEngine.teleportTo(entry, actor, position);
-            BotMovementManager.resetEntryStateAfterTeleport(entry);
+            AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
         }
     }
 
@@ -133,7 +135,7 @@ final class BotMovementSimulationLab {
     void primeMapState(String botName) {
         BotEntry entry = requireBot(botName);
         entry.lastMapId = entry.bot.getMapId();
-        entry.fhIndex = BotMovementManager.buildFhIndex(entry.bot.getMap());
+        entry.fhIndex = AgentFootholdIndexService.buildFhIndex(entry.bot.getMap());
     }
 
     void attachBotToRope(String botName, Rope rope, int y) {

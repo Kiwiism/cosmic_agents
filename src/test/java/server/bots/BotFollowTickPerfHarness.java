@@ -4,6 +4,8 @@ import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -132,10 +134,10 @@ public class BotFollowTickPerfHarness {
                 BotEntry entry = new BotEntry(bot, owner, null);
                 entry.following = true;
                 entry.lastMapId = map.getId();
-                entry.fhIndex = BotMovementManager.buildFhIndex(map);
+                entry.fhIndex = AgentFootholdIndexService.buildFhIndex(map);
                 entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
                 BotPhysicsEngine.teleportTo(entry, bot, bot.getPosition());
-                BotMovementManager.resetEntryStateAfterTeleport(entry);
+                AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
                 entries.add(entry);
             }
         }

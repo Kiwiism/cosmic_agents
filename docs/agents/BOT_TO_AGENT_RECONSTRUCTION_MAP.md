@@ -137,6 +137,9 @@ Recent map updates:
   have been removed.
 - Dead `BotMovementManager` movement-timer and jump-probe compatibility
   wrappers were removed after their callers moved to Agent-owned services.
+- `BotMovementManager` profile-refresh, movement-state reset, navigation-clear,
+  and foothold-index wrappers were removed after test and harness callers moved
+  to the Agent movement services directly.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

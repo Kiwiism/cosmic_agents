@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementProfileService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -1013,7 +1014,7 @@ class BotMovementManagerTest {
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
-        assertTrue(BotMovementManager.refreshMovementProfile(entry),
+        assertTrue(AgentMovementProfileService.refreshMovementProfile(entry),
                 "profile swap should commit immediately and let nav use closest graph while the exact graph warms");
         assertEquals(targetProfile, entry.movementProfile);
         assertNull(entry.navEdge);

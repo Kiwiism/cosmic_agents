@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 
@@ -454,7 +455,7 @@ class BotManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotModeStateRuntime.setGrinding(entry, true);
         AgentBotGrindTargetStateRuntime.setTarget(entry, target);
-        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), BotMovementManager.buildFhIndex(map));
+        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
         AgentAttackPlan rangedPlan = new AgentAttackPlan(
                 0, 0, 1, new Rectangle(-200, 50, 300, 100),
                 List.of(target), AgentAttackRoute.RANGED,

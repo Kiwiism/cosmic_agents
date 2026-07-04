@@ -155,6 +155,11 @@ Recent reconstruction notes:
   jump-probe landing/reach helpers were removed after scans showed no
   remaining source or test callers. Agent-owned timer and jump-probe services
   keep the behavior surface for active code.
+- Movement profile refresh, teleport-state reset, navigation-state clearing,
+  and foothold-index compatibility wrappers were removed from
+  `BotMovementManager`. Remaining tests and harnesses now call
+  `AgentMovementProfileService`, `AgentMovementStateResetService`, and
+  `AgentFootholdIndexService` directly.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test
