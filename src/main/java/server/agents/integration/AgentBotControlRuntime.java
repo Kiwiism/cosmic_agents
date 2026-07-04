@@ -55,7 +55,7 @@ public final class AgentBotControlRuntime {
             @Override
             public void setProactiveOffers(boolean enabled) {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    entry.setProactiveUpgradeOffers(enabled);
+                    entry.upgradeOfferState().setProactiveUpgradeOffers(enabled);
                     AgentBotControlReplyRuntime.replyNow(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
                 });
             }

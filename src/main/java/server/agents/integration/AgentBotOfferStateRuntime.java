@@ -89,14 +89,14 @@ public final class AgentBotOfferStateRuntime {
     }
 
     public static boolean hasRequestedUpgradeItem(BotEntry entry, int itemId) {
-        return entry.hasRequestedUpgradeItem(itemId);
+        return entry.upgradeOfferState().hasRequestedUpgradeItem(itemId);
     }
 
     public static void rememberRequestedUpgradeItem(BotEntry entry, int itemId) {
-        entry.rememberRequestedUpgradeItem(itemId);
+        entry.upgradeOfferState().rememberRequestedUpgradeItem(itemId);
     }
 
     public static boolean proactiveUpgradeOffers(BotEntry entry) {
-        return entry != null && entry.proactiveUpgradeOffers();
+        return entry != null && entry.upgradeOfferState().proactiveUpgradeOffers();
     }
 }

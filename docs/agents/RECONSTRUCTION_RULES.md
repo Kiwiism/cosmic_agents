@@ -4404,6 +4404,11 @@ Current physics correction:
   enablement, cheap/max mode, scan/action timing, consumable action summary,
   and skill-buff debug action summary route through the Agent combat
   capability.
+- Upgrade-offer/proactive gear suggestion storage now lives in
+  `AgentUpgradeOfferState`. `BotEntry` temporarily hosts the Agent-owned state
+  object, while proactive-offer enablement, requested upgrade item tracking,
+  spawn-upgrade check status, and next gear-suggestion timing route through the
+  Agent trade capability.
 
 Initial reconstruction order:
 

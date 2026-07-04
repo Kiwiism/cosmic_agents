@@ -33,6 +33,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
+import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
@@ -52,7 +53,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -1468,10 +1468,14 @@ public class BotEntry {
     Point patrolWanderTarget = null;
 
     private final AgentBuffState buffState = new AgentBuffState();
-    boolean proactiveUpgradeOffers = true;
+    private final AgentUpgradeOfferState upgradeOfferState = new AgentUpgradeOfferState();
 
     public AgentBuffState buffState() {
         return buffState;
+    }
+
+    public AgentUpgradeOfferState upgradeOfferState() {
+        return upgradeOfferState;
     }
 
     public long lastBuffScanMs() {
@@ -1515,11 +1519,11 @@ public class BotEntry {
     }
 
     public void setProactiveUpgradeOffers(boolean proactiveUpgradeOffers) {
-        this.proactiveUpgradeOffers = proactiveUpgradeOffers;
+        upgradeOfferState.setProactiveUpgradeOffers(proactiveUpgradeOffers);
     }
 
     public boolean proactiveUpgradeOffers() {
-        return proactiveUpgradeOffers;
+        return upgradeOfferState.proactiveUpgradeOffers();
     }
 
     public long lastSkillBuffActionAtMs() {
@@ -1607,8 +1611,6 @@ public class BotEntry {
     long nextFidgetJumpAtMs = 0L;
     Point fidgetOriginPos = null;
     long nextFidgetVisualAtMs = 0L;
-    private long nextGearSuggestionAt = 0L;
-    private boolean spawnUpgradeCheckDone = false;
 
     public AgentFidgetMode fidgetMode() {
         return fidgetMode;
@@ -1751,28 +1753,27 @@ public class BotEntry {
     }
 
     public long nextGearSuggestionAt() {
-        return nextGearSuggestionAt;
+        return upgradeOfferState.nextGearSuggestionAt();
     }
 
     public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
-        this.nextGearSuggestionAt = nextGearSuggestionAt;
+        upgradeOfferState.setNextGearSuggestionAt(nextGearSuggestionAt);
     }
 
     public boolean spawnUpgradeCheckDone() {
-        return spawnUpgradeCheckDone;
+        return upgradeOfferState.spawnUpgradeCheckDone();
     }
 
     public void setSpawnUpgradeCheckDone(boolean spawnUpgradeCheckDone) {
-        this.spawnUpgradeCheckDone = spawnUpgradeCheckDone;
+        upgradeOfferState.setSpawnUpgradeCheckDone(spawnUpgradeCheckDone);
     }
-    final Set<Integer> requestedUpgradeItemIds = ConcurrentHashMap.newKeySet();
 
     public boolean hasRequestedUpgradeItem(int itemId) {
-        return requestedUpgradeItemIds.contains(itemId);
+        return upgradeOfferState.hasRequestedUpgradeItem(itemId);
     }
 
     public void rememberRequestedUpgradeItem(int itemId) {
-        requestedUpgradeItemIds.add(itemId);
+        upgradeOfferState.rememberRequestedUpgradeItem(itemId);
     }
 
     private final AgentScrollReactionState scrollReactionState = new AgentScrollReactionState();
