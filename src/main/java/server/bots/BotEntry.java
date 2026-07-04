@@ -20,6 +20,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.inventory.AgentInventoryCooldownState;
 import server.agents.capabilities.social.AgentScrollReactionState;
+import server.agents.capabilities.supplies.AgentAmmoSupplyState;
 import server.agents.capabilities.supplies.AgentPotionSupplyState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
@@ -642,25 +643,22 @@ public class BotEntry {
         summonSkillIds.add(skillId);
     }
 
-    // Ammo
-    private boolean noAmmo = false;
+    private final AgentAmmoSupplyState ammoSupplyState = new AgentAmmoSupplyState();
 
     public boolean noAmmo() {
-        return noAmmo;
+        return ammoSupplyState.noAmmo();
     }
 
     public void setNoAmmo(boolean noAmmo) {
-        this.noAmmo = noAmmo;
+        ammoSupplyState.setNoAmmo(noAmmo);
     }
 
-    private boolean ammoWarnSent = false;
-
     public boolean ammoWarnSent() {
-        return ammoWarnSent;
+        return ammoSupplyState.warnSent();
     }
 
     public void setAmmoWarnSent(boolean ammoWarnSent) {
-        this.ammoWarnSent = ammoWarnSent;
+        ammoSupplyState.setWarnSent(ammoWarnSent);
     }
     boolean degenAttackDone = false; // force retreat after an accidental close-range hit
     private long retreatHoldUntilMs = 0L; // hysteresis: lock the local retreat goal for a short window
@@ -1045,7 +1043,6 @@ public class BotEntry {
     // Loot and potions
     private final AgentPotionSupplyState potionSupplyState = new AgentPotionSupplyState();
     private final AgentInventoryCooldownState inventoryCooldownState = new AgentInventoryCooldownState();
-    boolean ammoShareRequested = false; // reset when arrow/bolt count recovers above AMMO_LOW_WARN
 
     public int potCheckTimerMs() {
         return potionSupplyState.potCheckTimerMs();
@@ -1079,6 +1076,10 @@ public class BotEntry {
         return potionSupplyState;
     }
 
+    public AgentAmmoSupplyState ammoSupplyState() {
+        return ammoSupplyState;
+    }
+
     public boolean potShareRequestedHp() {
         return potionSupplyState.hpShareRequested();
     }
@@ -1096,11 +1097,11 @@ public class BotEntry {
     }
 
     public boolean ammoShareRequested() {
-        return ammoShareRequested;
+        return ammoSupplyState.shareRequested();
     }
 
     public void setAmmoShareRequested(boolean ammoShareRequested) {
-        this.ammoShareRequested = ammoShareRequested;
+        ammoSupplyState.setShareRequested(ammoShareRequested);
     }
 
     // Job advancement prompts

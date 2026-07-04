@@ -4369,6 +4369,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while potion-check timer, MP
   recovery timer, and HP/MP share-request flag reads/writes route through the
   Agent supplies capability.
+- Ammo supply storage now lives in `AgentAmmoSupplyState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while ammo share-request,
+  no-ammo, and ammo-warning flag reads/writes route through the Agent supplies
+  capability.
 
 Initial reconstruction order:
 
