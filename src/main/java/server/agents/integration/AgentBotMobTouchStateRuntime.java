@@ -12,13 +12,13 @@ public final class AgentBotMobTouchStateRuntime {
     }
 
     public static Point previousCheckPositionOnMap(BotEntry entry, int mapId) {
-        if (entry == null || entry.lastMobTouchMapId() != mapId) {
+        if (entry == null) {
             return null;
         }
-        return entry.lastMobTouchCheckPos();
+        return entry.mobTouchState().previousCheckPositionOnMap(mapId);
     }
 
     public static void rememberCheck(BotEntry entry, Point position, int mapId) {
-        entry.rememberMobTouchCheck(position, mapId);
+        entry.mobTouchState().rememberCheck(position, mapId);
     }
 }

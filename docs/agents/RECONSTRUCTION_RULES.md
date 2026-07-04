@@ -4389,6 +4389,9 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while attack cooldown,
   movement-only attack window, touch-damage cooldown, alert pose expiry, and
   alert reset scheduling route through the Agent combat capability.
+- Mob-touch sweep storage now lives in `AgentMobTouchState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while last checked position
+  and map id reads/writes route through the Agent combat capability.
 
 Initial reconstruction order:
 

@@ -6,6 +6,7 @@ import server.agents.capabilities.navigation.AgentPortalCooldownState;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
+import server.agents.capabilities.combat.AgentMobTouchState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -1021,20 +1022,22 @@ public class BotEntry {
         this.ignoredGrindLootObjectId = 0;
         this.ignoredGrindLootUntilMs = 0L;
     }
-    private Point lastMobTouchCheckPos = null;
-    private int lastMobTouchMapId = -1;
+    private final AgentMobTouchState mobTouchState = new AgentMobTouchState();
+
+    public AgentMobTouchState mobTouchState() {
+        return mobTouchState;
+    }
 
     public Point lastMobTouchCheckPos() {
-        return lastMobTouchCheckPos == null ? null : new Point(lastMobTouchCheckPos);
+        return mobTouchState.lastCheckPosition();
     }
 
     public int lastMobTouchMapId() {
-        return lastMobTouchMapId;
+        return mobTouchState.lastCheckMapId();
     }
 
     public void rememberMobTouchCheck(Point position, int mapId) {
-        lastMobTouchCheckPos = position == null ? null : new Point(position);
-        lastMobTouchMapId = position == null ? -1 : mapId;
+        mobTouchState.rememberCheck(position, mapId);
     }
 
     // Loot and potions
