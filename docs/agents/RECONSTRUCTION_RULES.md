@@ -4760,6 +4760,11 @@ Current physics correction:
   follow/grind supply checks, fidget expressions, and greeting status checks.
   Existing delays, commands, replies, and position-copy behavior remain
   unchanged.
+- Session lifecycle callbacks now resolve Agent and leader identity through
+  `AgentBotRuntimeIdentityRuntime` before relog/logout persistence,
+  disconnects, relog metadata capture, and owner-away safe-mode fanout. Existing
+  confirmation prompts, delay windows, and lifecycle side effects remain
+  unchanged.
 
 Initial reconstruction order:
 

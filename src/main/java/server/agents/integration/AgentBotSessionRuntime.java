@@ -45,18 +45,20 @@ public final class AgentBotSessionRuntime {
 
     public static void scheduleRelogConfirm(BotEntry entry) {
         AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-            Character owner = entry.owner();
+            Character owner = owner(entry);
             if (owner == null) {
                 return;
             }
             AgentBotSessionReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmedReply());
-            int charId = entry.bot().getId();
+            Character bot = bot(entry);
+            int charId = bot.getId();
             int ownerCharId = owner.getId();
-            int world = entry.bot().getClient().getWorld();
-            int channel = entry.bot().getClient().getChannel();
+            int world = bot.getClient().getWorld();
+            int channel = bot.getClient().getChannel();
             AgentBotSessionSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
-                entry.bot().saveCharToDB(true);
-                entry.bot().getClient().disconnect(false, false);
+                Character relogBot = bot(entry);
+                relogBot.saveCharToDB(true);
+                relogBot.getClient().disconnect(false, false);
                 AgentBotSessionSchedulerRuntime.afterRandomDelay(10000, 10100,
                         () -> AgentBotSessionLifecycleSideEffects.reloginBot(charId, ownerCharId, world, channel));
             });
@@ -67,8 +69,9 @@ public final class AgentBotSessionRuntime {
         AgentBotSessionSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
             AgentBotSessionReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             AgentBotSessionSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
-                entry.bot().saveCharToDB(true);
-                entry.bot().getClient().disconnect(false, false);
+                Character logoutBot = bot(entry);
+                logoutBot.saveCharToDB(true);
+                logoutBot.getClient().disconnect(false, false);
             });
         });
     }
@@ -127,7 +130,7 @@ public final class AgentBotSessionRuntime {
 
             @Override
             public void townOrStay(boolean townOffered) {
-                int ownerId = entry.owner() != null ? entry.owner().getId() : 0;
+                int ownerId = ownerId(entry);
                 if (ownerId != 0) {
                     AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, townOffered);
                 }
@@ -137,7 +140,7 @@ public final class AgentBotSessionRuntime {
 
             @Override
             public void stay() {
-                int ownerId = entry.owner() != null ? entry.owner().getId() : 0;
+                int ownerId = ownerId(entry);
                 if (ownerId != 0) {
                     AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, false);
                 }
@@ -154,7 +157,7 @@ public final class AgentBotSessionRuntime {
     }
 
     private static void logoutOwnerBots(BotEntry entry) {
-        Character owner = entry.owner();
+        Character owner = owner(entry);
         if (owner == null) {
             return;
         }
@@ -162,9 +165,23 @@ public final class AgentBotSessionRuntime {
         for (BotEntry owned : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             AgentBotMovementCommandRuntime.stop(owned);
             AgentBotSessionSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
-                owned.bot().saveCharToDB(true);
-                owned.bot().getClient().disconnect(false, false);
+                Character ownedBot = bot(owned);
+                ownedBot.saveCharToDB(true);
+                ownedBot.getClient().disconnect(false, false);
             });
         }
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
+    }
+
+    private static Character owner(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.owner(entry);
+    }
+
+    private static int ownerId(BotEntry entry) {
+        Character owner = owner(entry);
+        return owner != null ? owner.getId() : 0;
     }
 }
