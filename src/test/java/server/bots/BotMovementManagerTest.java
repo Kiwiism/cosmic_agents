@@ -147,7 +147,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 0), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(true);
-        entry.setAirVelocityX(-8);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -10f);
@@ -159,7 +159,7 @@ class BotMovementManagerTest {
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(300, 0));
 
-        assertEquals(0.0, entry.airSteerVelocityX());
+        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
     }
 
     @Test
@@ -410,11 +410,11 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 
         assertTrue(entry.inAir(), "grounded follow movement should jump over a mob blocking the walk lane");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), entry.airVelocityX());
+        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(250, 100));
 
-        assertEquals(0.0, entry.airSteerVelocityX(), 0.0001,
+        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry), 0.0001,
                 "mob-avoid jumps should keep the simulated fixed forward arc");
     }
 
@@ -487,7 +487,7 @@ class BotMovementManagerTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.setAirVelocityX(8);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
 
@@ -519,12 +519,12 @@ class BotMovementManagerTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.setAirVelocityX(-8);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertTrue(bot.getPosition().x < 0);
-        assertEquals(-8, entry.airVelocityX());
+        assertEquals(-8, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -542,7 +542,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(110, 100));
 
         assertTrue(entry.inAir(), "graph warmup fallback should jump small same-level gaps instead of freezing");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), entry.airVelocityX());
+        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -566,7 +566,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(90, 60));
 
         assertTrue(entry.inAir(), "fallback should jump when a wall blocks walking but a platform is reachable");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), entry.airVelocityX());
+        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -624,7 +624,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
-        entry.setWasMovingX(true);
+        AgentBotMovementStateRuntime.setWasMovingX(entry, true);
         AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
         AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
@@ -684,7 +684,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.crouching());
+        assertTrue(AgentBotMovementStateRuntime.crouching(entry));
     }
 
     @Test
@@ -707,7 +707,7 @@ class BotMovementManagerTest {
 
         AgentFidgetService.clear(entry);
         AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
-        entry.setCrouching(false);
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
@@ -730,7 +730,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.SOCIAL);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.crouching());
+        assertTrue(AgentBotMovementStateRuntime.crouching(entry));
     }
 
     @Test
@@ -747,7 +747,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.AUTO_FOLLOW);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.crouching(), "base-speed follow fidgets should not be blocked by a speed-stat guard");
+        assertTrue(AgentBotMovementStateRuntime.crouching(entry), "base-speed follow fidgets should not be blocked by a speed-stat guard");
     }
 
     @Test
@@ -764,14 +764,14 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        int firstJumpVelX = entry.airVelocityX();
+        int firstJumpVelX = AgentBotMovementPhysicsStateRuntime.airVelocityX(entry);
         assertTrue(firstJumpVelX != 0, "diagonal jump fidget should launch with horizontal momentum");
 
         AgentMovementPoseService.idleOnGround(entry, bot);
         entry.fidgetState().setNextJumpAtMs(0L);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(entry.airVelocityX()),
+        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)),
                 "diagonal jump fidget should alternate jump direction on the next grounded launch");
     }
 
@@ -836,21 +836,21 @@ class BotMovementManagerTest {
         AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true);
 
         entry.fidgetState().setSpamAirSteer(false);
-        entry.setAirSteerVelocityX(0.0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         entry.fidgetState().setNextActionAtMs(0L);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(0.0, entry.airSteerVelocityX(),
+        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry),
                 "non-spam jump fidgets should not reroll random air steering every airborne tick");
 
         entry.fidgetState().setSpamAirSteer(true);
         entry.fidgetState().setActionBaseDelayMs(100);
-        entry.setAirSteerVelocityX(0.0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         entry.fidgetState().setNextActionAtMs(0L);
         long before = System.currentTimeMillis();
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.airSteerVelocityX() != 0.0,
+        assertTrue(AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry) != 0.0,
                 "spam-air-steer jump fidgets should press random side input on their own delay");
         long after = System.currentTimeMillis();
         assertTrue(entry.nextFidgetActionAtMs() >= before + 100
@@ -972,7 +972,7 @@ class BotMovementManagerTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.setAirVelocityX(-8);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 100), new Point(50, 50),
@@ -981,7 +981,7 @@ class BotMovementManagerTest {
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(-300, 100));
 
-        assertEquals(0.0, entry.airSteerVelocityX(), 0.0001);
+        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry), 0.0001);
         assertEquals(new Point(92, 103), bot.getPosition());
     }
 

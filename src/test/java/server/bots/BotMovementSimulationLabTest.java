@@ -75,7 +75,7 @@ class BotMovementSimulationLabTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.setAirVelocityX(8);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
 
         lab.stepRaw("BUMP", new Point(20, 110), false);
 
@@ -98,12 +98,12 @@ class BotMovementSimulationLabTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        entry.setAirVelocityX(-8);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
 
         lab.stepRaw("DROP", new Point(-50, 80), false);
 
         assertTrue(lab.position("DROP").x < 0, "bot should keep horizontal motion past the wall endpoint");
-        assertEquals(-8, entry.airVelocityX());
+        assertEquals(-8, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test

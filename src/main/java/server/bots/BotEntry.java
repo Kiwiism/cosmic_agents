@@ -165,41 +165,8 @@ public class BotEntry {
         return climbState;
     }
 
-    // Horizontal movement hysteresis
-    public boolean wasMovingX() {
-        return movementInputState.wasMovingX();
-    }
-
-    public void setWasMovingX(boolean wasMovingX) {
-        movementInputState.setWasMovingX(wasMovingX);
-    }
-
     public AgentAirborneSteeringState airborneSteeringState() {
         return airborneSteeringState;
-    }
-
-    public int airVelocityX() {
-        return airborneSteeringState.velocityX();
-    }
-
-    public void setAirVelocityX(int airVelocityX) {
-        airborneSteeringState.setVelocityX(airVelocityX);
-    }
-
-    public double airSteerVelocityX() {
-        return airborneSteeringState.steeringVelocityX();
-    }
-
-    public void setAirSteerVelocityX(double airSteerVelocityX) {
-        airborneSteeringState.setSteeringVelocityX(airSteerVelocityX);
-    }
-
-    public boolean fixedAirArc() {
-        return airborneSteeringState.fixedAirArc();
-    }
-
-    public void setFixedAirArc(boolean fixedAirArc) {
-        airborneSteeringState.setFixedAirArc(fixedAirArc);
     }
 
     public AgentDownJumpState downJumpState() {
@@ -504,14 +471,6 @@ public class BotEntry {
 
     public long nextIdleFidgetRollAtMs() {
         return fidgetState.nextIdleRollAtMs();
-    }
-
-    public boolean crouching() {
-        return movementInputState.crouching();
-    }
-
-    public void setCrouching(boolean crouching) {
-        movementInputState.setCrouching(crouching);
     }
 
     public void clearFidgetState() {

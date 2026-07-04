@@ -4630,6 +4630,10 @@ Current physics correction:
   been removed from `BotEntry`. Those reads/writes now route through
   `AgentBotClimbStateRuntime` and `AgentBotMovementStateRuntime` over the
   Agent-owned movement state objects.
+- Airborne steering, horizontal air velocity, fixed-air-arc, crouch, and
+  horizontal movement hysteresis wrappers have been removed from `BotEntry`.
+  Those reads/writes now route through `AgentBotMovementPhysicsStateRuntime`
+  and `AgentBotMovementStateRuntime`.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

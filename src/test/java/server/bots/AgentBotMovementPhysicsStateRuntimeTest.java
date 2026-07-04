@@ -39,7 +39,7 @@ class AgentBotMovementPhysicsStateRuntimeTest {
     void airborneVelocityReadsThroughAgentBoundary() {
         BotEntry entry = new BotEntry(null, null, null);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -12.5f);
-        entry.setAirVelocityX(7);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 7);
 
         assertEquals(-12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
         assertEquals(7, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));

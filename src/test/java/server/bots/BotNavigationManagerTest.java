@@ -779,7 +779,7 @@ class BotNavigationManagerTest {
         assertTrue(AgentBotClimbStateRuntime.ropeEntryPending(entry));
         assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
-        assertFalse(entry.crouching());
+        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 150));
 

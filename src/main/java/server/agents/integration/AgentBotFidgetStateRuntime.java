@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.integration.AgentBotMovementStateRuntime;
+
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetState;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
@@ -128,7 +130,7 @@ public final class AgentBotFidgetStateRuntime {
     }
 
     public static boolean crouching(BotEntry entry) {
-        return entry.crouching();
+        return AgentBotMovementStateRuntime.crouching(entry);
     }
 
     public static void clear(BotEntry entry) {

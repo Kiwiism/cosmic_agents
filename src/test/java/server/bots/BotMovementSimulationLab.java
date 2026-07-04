@@ -401,7 +401,7 @@ final class BotMovementSimulationLab {
                 return String.format("ROPE(x=%d top=%d bot=%d)", AgentBotClimbStateRuntime.climbRope(entry).x(), AgentBotClimbStateRuntime.climbRope(entry).topY(), AgentBotClimbStateRuntime.climbRope(entry).bottomY());
             }
             if (entry.inAir()) {
-                return String.format("AIR(velY=%.1f airVelX=%d)", AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), entry.airVelocityX());
+                return String.format("AIR(velY=%.1f airVelX=%d)", AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
             }
             return "GND";
         }
