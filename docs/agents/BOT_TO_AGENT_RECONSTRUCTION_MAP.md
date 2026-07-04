@@ -140,6 +140,9 @@ Recent map updates:
 - `BotMovementManager` profile-refresh, movement-state reset, navigation-clear,
   and foothold-index wrappers were removed after test and harness callers moved
   to the Agent movement services directly.
+- `BotMovementManager` movement-policy wrappers for grind target adjustment,
+  climb hold/snap, precise navigation stop distance, and ground step
+  calculation were removed after tests moved to the Agent movement services.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

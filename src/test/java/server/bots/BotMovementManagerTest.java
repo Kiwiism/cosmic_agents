@@ -1,6 +1,10 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentClimbMovementService;
+import server.agents.capabilities.movement.AgentGroundMovementPolicy;
+import server.agents.capabilities.movement.AgentGroundMovementService;
+import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 
@@ -52,7 +56,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.grinding = true;
 
-        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, foothold, new Point(190, 100));
+        Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, foothold, new Point(190, 100));
 
         assertEquals(new Point(160, 100), adjusted);
     }
@@ -74,7 +78,7 @@ class BotMovementManagerTest {
         entry.grinding = true;
 
         Point targetPos = new Point(190, 100);
-        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, leftFoothold, targetPos);
+        Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, leftFoothold, targetPos);
 
         assertEquals(targetPos, adjusted);
     }
@@ -96,7 +100,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.grinding = true;
 
-        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, leftFoothold, new Point(190, 100));
+        Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, leftFoothold, new Point(190, 100));
 
         assertEquals(new Point(160, 100), adjusted);
     }
@@ -115,7 +119,7 @@ class BotMovementManagerTest {
         entry.grinding = true;
 
         Point targetPos = new Point(55, 100);
-        Point adjusted = BotMovementManager.adjustGrindingTargetPosition(entry, foothold, targetPos);
+        Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, foothold, targetPos);
 
         assertEquals(targetPos, adjusted);
     }
@@ -151,14 +155,14 @@ class BotMovementManagerTest {
                 0, 0, 10, -100, 40, 100
         );
 
-        assertFalse(BotMovementManager.shouldHoldClimbIdle(entry, 0, 0));
+        assertFalse(AgentClimbMovementService.shouldHoldClimbIdle(entry, 0, 0));
     }
 
     @Test
     void shouldAllowIdleClimbHoldWithoutCommittedClimbEdge() {
         BotEntry entry = new BotEntry(null, null, null);
 
-        assertTrue(BotMovementManager.shouldHoldClimbIdle(entry, 0, 0));
+        assertTrue(AgentClimbMovementService.shouldHoldClimbIdle(entry, 0, 0));
     }
 
     @Test
@@ -245,8 +249,8 @@ class BotMovementManagerTest {
         // Above the rope (y <= topY) and strictly below it (y > bottomY) must reject snap.
         // Snap AT bottomY is allowed for rope-exit launch anchors authored at the rope bottom
         // (pathlog-Leroy/John); see shouldSnapCommittedClimbEdgeAtRopeBottomYAnchor.
-        assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 124), -2));
-        assertFalse(BotMovementManager.shouldSnapToClimbTarget(entry, new Point(3398, 333), 1));
+        assertFalse(AgentClimbMovementService.shouldSnapToClimbTarget(entry, new Point(3398, 124), -2));
+        assertFalse(AgentClimbMovementService.shouldSnapToClimbTarget(entry, new Point(3398, 333), 1));
     }
 
     @Test
@@ -264,12 +268,12 @@ class BotMovementManagerTest {
 
         // Bot within one climbStep of the anchor — natural step would overshoot bottomY.
         int dyWithin = BotPhysicsEngine.climbStepPerTick() - 2;
-        assertTrue(BotMovementManager.shouldSnapToClimbTarget(
+        assertTrue(AgentClimbMovementService.shouldSnapToClimbTarget(
                 entry, new Point(2352, rope.bottomY()), dyWithin));
         // dy >= climbStep: the natural step lands at-or-inside the (point) window. Old
         // behavior — no snap, let the integrator advance.
         int dyAtOrPastStep = BotPhysicsEngine.climbStepPerTick();
-        assertFalse(BotMovementManager.shouldSnapToClimbTarget(
+        assertFalse(AgentClimbMovementService.shouldSnapToClimbTarget(
                 entry, new Point(2352, rope.bottomY()), dyAtOrPastStep));
     }
 
@@ -335,15 +339,15 @@ class BotMovementManagerTest {
                 0, 0, 0, 0, 0, 100
         );
 
-        assertEquals(1, BotMovementManager.preciseNavStopDist(climbEdge),
+        assertEquals(1, AgentGroundMovementPolicy.preciseNavStopDist(climbEdge),
                 "CLIMB entry must use stopDist=1 to reach exact anchor");
-        assertEquals(0, BotMovementManager.preciseNavStopDist(jumpEdge),
+        assertEquals(0, AgentGroundMovementPolicy.preciseNavStopDist(jumpEdge),
                 "JUMP entry must use stopDist=0 so the bot walks into the launch window");
-        assertEquals(0, BotMovementManager.preciseNavStopDist(downJumpEdge),
+        assertEquals(0, AgentGroundMovementPolicy.preciseNavStopDist(downJumpEdge),
                 "straight down-jump DROP entry must use stopDist=0 so the bot walks into the launch window");
-        assertEquals(4, BotMovementManager.preciseNavStopDist(walkEdge),
+        assertEquals(4, AgentGroundMovementPolicy.preciseNavStopDist(walkEdge),
                 "WALK traversal keeps stopDist=4 to absorb terrain micro-bumps");
-        assertEquals(4, BotMovementManager.preciseNavStopDist(null),
+        assertEquals(4, AgentGroundMovementPolicy.preciseNavStopDist(null),
                 "null edge falls back to WALK tolerance");
     }
 
@@ -585,13 +589,13 @@ class BotMovementManagerTest {
         entry.following = true;
         entry.observedOwnerStepX = 4;
 
-        int stoppedStep = BotMovementManager.resolveGroundStepX(
+        int stoppedStep = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(20, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
         assertEquals(0, stoppedStep,
                 "follow should stop anywhere inside STOP_DIST instead of micro-throttling to an exact point");
 
         int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
-        int followStep = BotMovementManager.resolveGroundStepX(
+        int followStep = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(90, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
         assertEquals(walkStep, followStep,
@@ -613,7 +617,7 @@ class BotMovementManagerTest {
         entry.observedOwnerStepX = 4;
 
         int walkStep = BotPhysicsEngine.walkStep(map, entry.movementProfile);
-        int step = BotMovementManager.resolveGroundStepX(
+        int step = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(60, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
         assertEquals(walkStep, step,

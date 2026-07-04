@@ -160,6 +160,12 @@ Recent reconstruction notes:
   `BotMovementManager`. Remaining tests and harnesses now call
   `AgentMovementProfileService`, `AgentMovementStateResetService`, and
   `AgentFootholdIndexService` directly.
+- Movement policy and ground-target compatibility wrappers were removed from
+  `BotMovementManager`. Tests now call `AgentGroundTargetService`,
+  `AgentClimbMovementService`, `AgentGroundMovementPolicy`, and
+  `AgentGroundMovementService` directly for grind target clamping, climb
+  hold/snap decisions, precise navigation stop distance, and ground step
+  resolution.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

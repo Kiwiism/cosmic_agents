@@ -125,7 +125,7 @@ class BotMovementSimulationLabTest {
 
         List<String> trace = lab.formatRecentTrace("SLASH", 10);
 
-        // The staged rightward exit is now executable directly: BotMovementManager.shouldSnapToClimbTarget
+        // The staged rightward exit is now executable directly: the Agent climb snap policy
         // snaps the bot to startPoint.y when within one climbStep — including at rope.bottomY()
         // (pathlog-Leroy/John fix). The bot reaches the anchor exactly, the strict gate's
         // botPos.y == edge.startPoint.y bypass passes, and the launch fires before any
