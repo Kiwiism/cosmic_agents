@@ -20,7 +20,7 @@ public final class AgentBotControlRuntime {
             @Override
             public void setSupport(boolean enabled) {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    entry.setSkillBuffsEnabled(enabled);
+                    AgentBotCombatBuffStateRuntime.setSkillBuffsEnabled(entry, enabled);
                     AgentBotControlReplyRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
                 });
             }
@@ -28,7 +28,7 @@ public final class AgentBotControlRuntime {
             @Override
             public void setHeals(boolean enabled) {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    entry.setSupportHealsEnabled(enabled);
+                    AgentBotCombatBuffStateRuntime.setSupportHealsEnabled(entry, enabled);
                     AgentBotControlReplyRuntime.replyNow(entry, AgentChatToggleFlow.healsReply(enabled));
                 });
             }
