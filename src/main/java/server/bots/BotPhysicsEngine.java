@@ -5,6 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -351,42 +352,11 @@ public final class BotPhysicsEngine {
     }
 
     public static Foothold findGroundFoothold(MapleMap map, Point position) {
-        if (map == null || map.getFootholds() == null || position == null) {
-            return null;
-        }
-
-        Foothold exact = map.getFootholds().findBelow(position);
-        Foothold offset = map.getFootholds().findBelow(new Point(position.x, position.y - cfg.MAX_SLOPE_UP));
-        if (exact == null) return offset;
-        if (offset == null) return exact;
-
-        // On sloped footholds, integer truncation of the interpolated Y can make the foothold's
-        // computed Y fall 1px above the player's stored position, causing findBelow to skip it
-        // and return a distant platform instead. Mirror findGroundPoint: pick the closer result.
-        Point exactGround = map.getPointBelow(position);
-        Point offsetGround = map.getPointBelow(new Point(position.x, position.y - cfg.MAX_SLOPE_UP));
-        if (exactGround == null) return offset;
-        if (offsetGround == null) return exact;
-        return Math.abs(offsetGround.y - position.y) < Math.abs(exactGround.y - position.y) ? offset : exact;
+        return AgentGroundingService.findGroundFoothold(map, position);
     }
 
     public static Point findGroundPoint(MapleMap map, Point position) {
-        if (map == null || position == null) {
-            return null;
-        }
-
-        Point exactGround = map.getPointBelow(position);
-        Point offsetGround = map.getPointBelow(new Point(position.x, position.y - cfg.MAX_SLOPE_UP));
-        if (exactGround == null) {
-            return offsetGround;
-        }
-        if (offsetGround == null) {
-            return exactGround;
-        }
-
-        int exactDistance = Math.abs(exactGround.y - position.y);
-        int offsetDistance = Math.abs(offsetGround.y - position.y);
-        return offsetDistance < exactDistance ? offsetGround : exactGround;
+        return AgentGroundingService.findGroundPoint(map, position);
     }
 
     // Canonical walk-connectivity rule shared by graph region merging and runtime ground traversal.

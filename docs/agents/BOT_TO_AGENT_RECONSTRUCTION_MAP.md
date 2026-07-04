@@ -155,6 +155,9 @@ Recent map updates:
 - `BotPhysicsEngine` kinematics/report test callers now enter through
   `AgentMovementKinematicsService`; the legacy physics body remains the
   implementation seam until the calculation internals are moved.
+- `BotPhysicsEngine` ground lookup implementation for `findGroundFoothold`
+  and `findGroundPoint` moved to `AgentGroundingService`; bot methods remain
+  temporary delegates for internal physics callers.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

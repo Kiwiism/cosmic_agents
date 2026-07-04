@@ -184,6 +184,10 @@ Recent reconstruction notes:
   `AgentMovementKinematicsService` instead of calling `BotPhysicsEngine`
   directly for walk step, climb step, jump force, jump height, and horizontal
   reach calculations.
+- Ground lookup implementation for `findGroundFoothold` and
+  `findGroundPoint` moved into `AgentGroundingService`. `BotPhysicsEngine`
+  keeps temporary compatibility delegates so deeper physics internals can move
+  one group at a time without changing behavior.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test
