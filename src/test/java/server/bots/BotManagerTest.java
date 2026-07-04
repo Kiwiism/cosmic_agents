@@ -360,7 +360,7 @@ class BotManagerTest {
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, bot.getPosition(), true);
 
         assertEquals(new Point(100, 100), bot.getPosition());
-        assertFalse(entry.inAir);
+        assertFalse(entry.inAir());
         assertFalse(entry.climbing());
     }
 
@@ -570,19 +570,19 @@ class BotManagerTest {
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         Character bot = mockMovingBot(new Point(20, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.inAir = true;
-        entry.physX = -999;
-        entry.physY = -999;
-        entry.velY = 20f;
+        entry.setInAir(true);
+        entry.setPhysicsX(-999);
+        entry.setPhysicsY(-999);
+        entry.setVerticalVelocity(20f);
         entry.setAirVelocityX(6);
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
         AgentSpawnPlacementRuntime.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
 
         assertEquals(new Point(80, 100), bot.getPosition());
-        assertFalse(entry.inAir);
-        assertEquals(80.0, entry.physX);
-        assertEquals(100.0, entry.physY);
+        assertFalse(entry.inAir());
+        assertEquals(80.0, entry.physicsX());
+        assertEquals(100.0, entry.physicsY());
         assertEquals(0, entry.airVelocityX());
         assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
         assertEquals(map.getId(), AgentBotMapStateRuntime.lastMapId(entry));

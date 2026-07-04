@@ -576,7 +576,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.inAir = true;
+        entry.setInAir(true);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
@@ -645,7 +645,7 @@ class BotNavigationManagerTest {
                 AgentNavigationTargetService.resolveTarget(entry, target, true);
 
         assertFalse(directive.consumedTick());
-        assertFalse(entry.inAir);
+        assertFalse(entry.inAir());
         assertEquals("climb-pos", AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry));
     }
 
@@ -674,7 +674,7 @@ class BotNavigationManagerTest {
                 AgentNavigationTargetService.resolveTarget(entry, target, true);
 
         assertTrue(directive.consumedTick());
-        assertTrue(entry.inAir);
+        assertTrue(entry.inAir());
         assertFalse(entry.climbing());
         assertEquals(new Point(1265, 290), bot.getPosition());
     }

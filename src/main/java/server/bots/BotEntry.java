@@ -20,6 +20,7 @@ import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentClimbState;
 import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentMovementInputState;
+import server.agents.capabilities.movement.AgentMovementPhysicsState;
 import server.agents.capabilities.movement.AgentSwimIntentState;
 
 import client.Character;
@@ -129,26 +130,16 @@ public class BotEntry {
     }
 
     // Physics
-    float velY = 0f;
+    private final AgentMovementPhysicsState movementPhysicsState = new AgentMovementPhysicsState();
 
     public float verticalVelocity() {
-        return velY;
+        return movementPhysicsState.verticalVelocity();
     }
 
     public void setVerticalVelocity(float verticalVelocity) {
-        velY = verticalVelocity;
+        movementPhysicsState.setVerticalVelocity(verticalVelocity);
     }
 
-    double hspeed = 0.0;
-    double physX = 0.0;
-    double physY = 0.0;
-    double groundPhysicsCarryMs = 0.0;
-    // Peak (min-y = highest point) reached during current airborne period. Used by landOnGround
-    // to compute fall distance for fall-damage. Positive infinity when grounded / uninitialised;
-    // first airborne-tick lowers it to physY and subsequent ticks keep tracking the peak.
-    double fallPeakPhysY = Double.POSITIVE_INFINITY;
-    boolean inAir = false;
-    int jumpCooldownMs = 0;
     private final AgentAirborneSteeringState airborneSteeringState = new AgentAirborneSteeringState();
     private final AgentDownJumpState downJumpState = new AgentDownJumpState();
     private final AgentMovementInputState movementInputState = new AgentMovementInputState();
@@ -156,61 +147,59 @@ public class BotEntry {
     private final AgentClimbState climbState = new AgentClimbState();
 
     public boolean inAir() {
-        return inAir;
+        return movementPhysicsState.inAir();
     }
 
     public void setInAir(boolean inAir) {
-        this.inAir = inAir;
+        movementPhysicsState.setInAir(inAir);
     }
 
     public double fallPeakPhysicsY() {
-        return fallPeakPhysY;
+        return movementPhysicsState.fallPeakPhysicsY();
     }
 
     public void setFallPeakPhysicsY(double fallPeakPhysicsY) {
-        fallPeakPhysY = fallPeakPhysicsY;
+        movementPhysicsState.setFallPeakPhysicsY(fallPeakPhysicsY);
     }
 
     public void resetFallPeakPhysicsY() {
-        fallPeakPhysY = Double.POSITIVE_INFINITY;
+        movementPhysicsState.resetFallPeakPhysicsY();
     }
 
     public AgentGroundTravelState groundTravelState() {
-        return new AgentGroundTravelState(physX, hspeed, groundPhysicsCarryMs);
+        return movementPhysicsState.groundTravelState();
     }
 
     public double horizontalSpeed() {
-        return hspeed;
+        return movementPhysicsState.horizontalSpeed();
     }
 
     public void setHorizontalSpeed(double horizontalSpeed) {
-        hspeed = horizontalSpeed;
+        movementPhysicsState.setHorizontalSpeed(horizontalSpeed);
     }
 
     public double physicsX() {
-        return physX;
+        return movementPhysicsState.physicsX();
     }
 
     public double physicsY() {
-        return physY;
+        return movementPhysicsState.physicsY();
     }
 
     public void setPhysicsX(double physicsX) {
-        physX = physicsX;
+        movementPhysicsState.setPhysicsX(physicsX);
     }
 
     public void setPhysicsY(double physicsY) {
-        physY = physicsY;
+        movementPhysicsState.setPhysicsY(physicsY);
     }
 
     public void setPhysicsPosition(double physicsX, double physicsY) {
-        physX = physicsX;
-        physY = physicsY;
+        movementPhysicsState.setPhysicsPosition(physicsX, physicsY);
     }
 
     public void addPhysicsPosition(double deltaX, double deltaY) {
-        physX += deltaX;
-        physY += deltaY;
+        movementPhysicsState.addPhysicsPosition(deltaX, deltaY);
     }
 
     public void setPhysicsPosition(Point position) {
@@ -220,19 +209,23 @@ public class BotEntry {
     }
 
     public double groundPhysicsCarryMs() {
-        return groundPhysicsCarryMs;
+        return movementPhysicsState.groundCarryMs();
     }
 
     public void setGroundPhysicsCarryMs(double groundPhysicsCarryMs) {
-        this.groundPhysicsCarryMs = groundPhysicsCarryMs;
+        movementPhysicsState.setGroundCarryMs(groundPhysicsCarryMs);
     }
 
     public int jumpCooldownMs() {
-        return jumpCooldownMs;
+        return movementPhysicsState.jumpCooldownMs();
     }
 
     public void setJumpCooldownMs(int jumpCooldownMs) {
-        this.jumpCooldownMs = jumpCooldownMs;
+        movementPhysicsState.setJumpCooldownMs(jumpCooldownMs);
+    }
+
+    public AgentMovementPhysicsState movementPhysicsState() {
+        return movementPhysicsState;
     }
 
     public int facingDirection() {
@@ -249,11 +242,10 @@ public class BotEntry {
                                          int facingDirection,
                                          boolean inAir,
                                          boolean climbing) {
-        physX = position.x;
-        physY = position.y;
+        movementPhysicsState.setPhysicsPosition(position.x, position.y);
         movementInputState.setVelocity(velocityX, velocityY);
         setFacingDirection(facingDirection);
-        this.inAir = inAir;
+        movementPhysicsState.setInAir(inAir);
         climbState.setClimbingFlag(climbing);
     }
 

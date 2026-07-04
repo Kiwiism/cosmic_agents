@@ -3,6 +3,7 @@ package server.agents.integration;
 import server.bots.BotEntry;
 import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentGroundTravelState;
+import server.agents.capabilities.movement.AgentMovementPhysicsState;
 
 import java.awt.Point;
 
@@ -14,15 +15,15 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static int jumpCooldownMs(BotEntry entry) {
-        return entry.jumpCooldownMs();
+        return state(entry).jumpCooldownMs();
     }
 
     public static void setJumpCooldownMs(BotEntry entry, int cooldownMs) {
-        entry.setJumpCooldownMs(cooldownMs);
+        state(entry).setJumpCooldownMs(cooldownMs);
     }
 
     public static void clearJumpCooldown(BotEntry entry) {
-        entry.setJumpCooldownMs(0);
+        state(entry).clearJumpCooldown();
     }
 
     public static boolean fixedAirArc(BotEntry entry) {
@@ -30,11 +31,11 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static float verticalVelocity(BotEntry entry) {
-        return entry.verticalVelocity();
+        return state(entry).verticalVelocity();
     }
 
     public static void setVerticalVelocity(BotEntry entry, float verticalVelocity) {
-        entry.setVerticalVelocity(verticalVelocity);
+        state(entry).setVerticalVelocity(verticalVelocity);
     }
 
     public static int airVelocityX(BotEntry entry) {
@@ -62,77 +63,75 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static double fallPeakPhysicsY(BotEntry entry) {
-        return entry.fallPeakPhysicsY();
+        return state(entry).fallPeakPhysicsY();
     }
 
     public static boolean hasFallPeakPhysicsY(BotEntry entry) {
-        return Double.isFinite(entry.fallPeakPhysicsY());
+        return state(entry).hasFallPeakPhysicsY();
     }
 
     public static void setFallPeakPhysicsY(BotEntry entry, double fallPeakPhysicsY) {
-        entry.setFallPeakPhysicsY(fallPeakPhysicsY);
+        state(entry).setFallPeakPhysicsY(fallPeakPhysicsY);
     }
 
     public static void resetFallPeakPhysicsY(BotEntry entry) {
-        entry.resetFallPeakPhysicsY();
+        state(entry).resetFallPeakPhysicsY();
     }
 
     public static void recordFallPeakPhysicsY(BotEntry entry, double physicsY) {
-        if (physicsY < entry.fallPeakPhysicsY()) {
-            entry.setFallPeakPhysicsY(physicsY);
-        }
+        state(entry).recordFallPeakPhysicsY(physicsY);
     }
 
     public static double horizontalSpeed(BotEntry entry) {
-        return entry.horizontalSpeed();
+        return state(entry).horizontalSpeed();
     }
 
     public static void setHorizontalSpeed(BotEntry entry, double horizontalSpeed) {
-        entry.setHorizontalSpeed(horizontalSpeed);
+        state(entry).setHorizontalSpeed(horizontalSpeed);
     }
 
     public static double physicsX(BotEntry entry) {
-        return entry.physicsX();
+        return state(entry).physicsX();
     }
 
     public static double physicsY(BotEntry entry) {
-        return entry.physicsY();
+        return state(entry).physicsY();
     }
 
     public static int roundedPhysicsX(BotEntry entry) {
-        return (int) Math.round(entry.physicsX());
+        return (int) Math.round(state(entry).physicsX());
     }
 
     public static Point roundedPhysicsPosition(BotEntry entry) {
-        return new Point((int) Math.round(entry.physicsX()), (int) Math.round(entry.physicsY()));
+        return new Point((int) Math.round(state(entry).physicsX()), (int) Math.round(state(entry).physicsY()));
     }
 
     public static void setPhysicsX(BotEntry entry, double physicsX) {
-        entry.setPhysicsX(physicsX);
+        state(entry).setPhysicsX(physicsX);
     }
 
     public static void setPhysicsY(BotEntry entry, double physicsY) {
-        entry.setPhysicsY(physicsY);
+        state(entry).setPhysicsY(physicsY);
     }
 
     public static void setPhysicsPosition(BotEntry entry, double physicsX, double physicsY) {
-        entry.setPhysicsPosition(physicsX, physicsY);
+        state(entry).setPhysicsPosition(physicsX, physicsY);
     }
 
     public static void setPhysicsPosition(BotEntry entry, Point position) {
-        entry.setPhysicsPosition(position);
+        state(entry).setPhysicsPosition(position);
     }
 
     public static void addPhysicsPosition(BotEntry entry, double deltaX, double deltaY) {
-        entry.addPhysicsPosition(deltaX, deltaY);
+        state(entry).addPhysicsPosition(deltaX, deltaY);
     }
 
     public static double groundPhysicsCarryMs(BotEntry entry) {
-        return entry.groundPhysicsCarryMs();
+        return state(entry).groundCarryMs();
     }
 
     public static void setGroundPhysicsCarryMs(BotEntry entry, double groundPhysicsCarryMs) {
-        entry.setGroundPhysicsCarryMs(groundPhysicsCarryMs);
+        state(entry).setGroundCarryMs(groundPhysicsCarryMs);
     }
 
     public static int lastGroundFhId(BotEntry entry) {
@@ -144,10 +143,14 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static AgentGroundTravelState groundTravelState(BotEntry entry) {
-        return entry.groundTravelState();
+        return state(entry).groundTravelState();
     }
 
     private static AgentAirborneSteeringState airborneSteeringState(BotEntry entry) {
         return entry.airborneSteeringState();
+    }
+
+    private static AgentMovementPhysicsState state(BotEntry entry) {
+        return entry.movementPhysicsState();
     }
 }

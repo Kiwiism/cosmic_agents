@@ -149,14 +149,14 @@ class AgentPhysicsEngineTest {
     @Test
     void shouldClearMovementStateOnReset() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.inAir = true;
+        entry.setInAir(true);
         entry.climbState().setClimbingFlag(true);
         entry.setCrouching(true);
         entry.setClimbUpIntent(true);
-        entry.velY = 7f;
+        entry.setVerticalVelocity(7f);
         entry.setAirVelocityX(12);
-        entry.physX = 99;
-        entry.physY = 88;
+        entry.setPhysicsX(99);
+        entry.setPhysicsY(88);
         entry.setMovementVelocity(123, -456);
         entry.setMoveDirection(-1);
         entry.setDownJumpPending(true);
@@ -164,14 +164,14 @@ class AgentPhysicsEngineTest {
 
         AgentMovementPoseService.resetMotion(entry, new Point(10, 20));
 
-        assertFalse(entry.inAir);
+        assertFalse(entry.inAir());
         assertFalse(entry.climbing());
         assertFalse(entry.crouching());
         assertFalse(entry.climbUpIntent());
         assertFalse(entry.downJumpPending());
         assertEquals(0L, entry.downJumpGracePeriodMs());
-        assertEquals(10.0, entry.physX);
-        assertEquals(20.0, entry.physY);
+        assertEquals(10.0, entry.physicsX());
+        assertEquals(20.0, entry.physicsY());
         assertEquals(0, entry.movementVelX());
         assertEquals(0, entry.movementVelY());
         assertEquals(0, entry.moveDirection());
@@ -197,7 +197,7 @@ class AgentPhysicsEngineTest {
     @Test
     void shouldDeriveMovementSnapshotFromPhysicsState() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.inAir = true;
+        entry.setInAir(true);
         entry.setFacingDirection(-1);
         entry.setMovementVelocity(-180, -240);
 
@@ -251,12 +251,12 @@ class AgentPhysicsEngineTest {
 
         Character bot = mockBot(new Point(100, 200), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.inAir = true;
+        entry.setInAir(true);
         entry.setAirVelocityX(8);
         entry.setMovementVelocity(AgentMovementKinematicsService.velocityFromDeltaX(entry.airVelocityX()), entry.movementVelY());
         entry.setFacingDirection(1);
-        entry.physX = 100;
-        entry.physY = 200;
+        entry.setPhysicsX(100);
+        entry.setPhysicsY(200);
         entry.setMoveDirection(-1);  // set intent for air steering left
 
         AgentAirbornePhysicsService.stepAirborne(entry, bot);
@@ -316,7 +316,7 @@ class AgentPhysicsEngineTest {
 
         AgentQueuedMovementActionService.beginDownJump(entry, bot);
 
-        assertFalse(entry.inAir);
+        assertFalse(entry.inAir());
         assertFalse(entry.crouching());
         assertFalse(entry.downJumpPending());
         assertEquals(0L, entry.downJumpGracePeriodMs());
@@ -347,7 +347,7 @@ class AgentPhysicsEngineTest {
         entry.setClimbVerticalDirection(1);  // intent: climb down
         AgentRopeMovementService.advanceClimb(entry, bot);
 
-        assertTrue(entry.inAir);
+        assertTrue(entry.inAir());
         assertFalse(entry.climbing());
         assertEquals(new Point(100, 40), bot.getPosition());
     }
@@ -372,7 +372,7 @@ class AgentPhysicsEngineTest {
         entry.setClimbVerticalDirection(-1);
         AgentRopeMovementService.advanceClimb(entry, bot);
 
-        assertFalse(entry.inAir);
+        assertFalse(entry.inAir());
         assertFalse(entry.climbing());
         assertEquals(new Point(100, 0), bot.getPosition());
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
@@ -397,7 +397,7 @@ class AgentPhysicsEngineTest {
         assertFalse(motion.lostGround());
         assertEquals(0, motion.stepX());
         assertEquals(new Point(100, 120), bot.getPosition());
-        assertFalse(entry.inAir);
+        assertFalse(entry.inAir());
     }
 
     @Test
@@ -641,14 +641,14 @@ class AgentPhysicsEngineTest {
         Character bot = mockBot(new Point(4, 10), map);
         BotEntry entry = new BotEntry(bot, null, null);
         AgentMovementPoseService.resetMotion(entry, bot.getPosition());
-        entry.physX = 14;
-        entry.hspeed = 0;
+        entry.setPhysicsX(14);
+        entry.setHorizontalSpeed(0);
         entry.setMoveDirection(1);  // intent: walk right
 
         AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, platform);
 
         assertTrue(motion.lostGround());
-        assertTrue(entry.inAir, "walk-off should transition directly into airborne state");
+        assertTrue(entry.inAir(), "walk-off should transition directly into airborne state");
         assertTrue(entry.airVelocityX() > 0, "walk-off should preserve horizontal momentum instead of zeroing X velocity for one tick");
         assertTrue(entry.movementVelX() > 0, "movement packet should carry non-zero horizontal velocity on the ledge-drop tick");
         assertTrue(bot.getPosition().x > 10, "walk-off should keep the full horizontal step instead of snapping to the ledge edge");
@@ -780,15 +780,15 @@ class AgentPhysicsEngineTest {
 
         Character bot = mockBot(new Point(20, 120), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.inAir = true;
-        entry.physX = 20;
-        entry.physY = 120;
-        entry.velY = -30f;
+        entry.setInAir(true);
+        entry.setPhysicsX(20);
+        entry.setPhysicsY(120);
+        entry.setVerticalVelocity(-30f);
         entry.setAirVelocityX(0);
 
         assertEquals(AgentAirborneStepResult.CEILING, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertEquals(new Point(20, 101), bot.getPosition());
-        assertEquals(0f, entry.velY);
+        assertEquals(0f, entry.verticalVelocity());
     }
 
     @Test
@@ -806,10 +806,10 @@ class AgentPhysicsEngineTest {
 
         Character bot = mockBot(new Point(56, 90), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.inAir = true;
-        entry.physX = 56;
-        entry.physY = 90;
-        entry.velY = 0f;
+        entry.setInAir(true);
+        entry.setPhysicsX(56);
+        entry.setPhysicsY(90);
+        entry.setVerticalVelocity(0f);
         entry.setAirVelocityX(-8);
 
         assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
@@ -834,10 +834,10 @@ class AgentPhysicsEngineTest {
 
         Character bot = mockBot(new Point(-389, 61), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.inAir = true;
-        entry.physX = -389;
-        entry.physY = 61;
-        entry.velY = -11.9f;
+        entry.setInAir(true);
+        entry.setPhysicsX(-389);
+        entry.setPhysicsY(61);
+        entry.setVerticalVelocity(-11.9f);
         entry.setAirVelocityX(-11);
 
         assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));

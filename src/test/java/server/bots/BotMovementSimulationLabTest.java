@@ -67,10 +67,10 @@ class BotMovementSimulationLabTest {
         map.setFootholds(footholds);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         BotEntry entry = lab.spawnBot("BUMP", 12, map, new Point(0, 100));
-        entry.inAir = true;
-        entry.physX = 0;
-        entry.physY = 100;
-        entry.velY = 0f;
+        entry.setInAir(true);
+        entry.setPhysicsX(0);
+        entry.setPhysicsY(100);
+        entry.setVerticalVelocity(0f);
         entry.setAirVelocityX(8);
 
         lab.stepRaw("BUMP", new Point(20, 110), false);
@@ -78,7 +78,7 @@ class BotMovementSimulationLabTest {
         Foothold landedFoothold = map.getFootholds().findBelow(lab.position("BUMP"));
         assertNotNull(landedFoothold);
         assertEquals(2, landedFoothold.getId(), "bot should land on the authored intermediate bump foothold");
-        assertTrue(!entry.inAir, "bot should land on the intermediate bump");
+        assertTrue(!entry.inAir(), "bot should land on the intermediate bump");
     }
 
     @Test
@@ -90,10 +90,10 @@ class BotMovementSimulationLabTest {
         map.setFootholds(footholds);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         BotEntry entry = lab.spawnBot("DROP", 13, map, new Point(0, 0));
-        entry.inAir = true;
-        entry.physX = 0;
-        entry.physY = 0;
-        entry.velY = 0f;
+        entry.setInAir(true);
+        entry.setPhysicsX(0);
+        entry.setPhysicsY(0);
+        entry.setVerticalVelocity(0f);
         entry.setAirVelocityX(-8);
 
         lab.stepRaw("DROP", new Point(-50, 80), false);

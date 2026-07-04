@@ -102,15 +102,15 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static boolean inAir(BotEntry entry) {
-        return entry.inAir();
+        return entry.movementPhysicsState().inAir();
     }
 
     public static void setInAir(BotEntry entry, boolean inAir) {
-        entry.setInAir(inAir);
+        entry.movementPhysicsState().setInAir(inAir);
     }
 
     public static boolean grounded(BotEntry entry) {
-        return !entry.inAir();
+        return !entry.movementPhysicsState().inAir();
     }
 
     public static boolean climbing(BotEntry entry) {

@@ -4520,6 +4520,11 @@ Current physics correction:
   hosts the Agent-owned state object, while rope attachment, climb direction,
   climb-up intent, blocked rope grabs, rope-grab cooldowns, and queued rope
   entries route through the Agent movement capability.
+- Movement physics scalar state now lives in `AgentMovementPhysicsState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while in-air
+  state, physics position, vertical/horizontal velocity, ground carry,
+  fall-peak tracking, and jump cooldown route through the Agent movement
+  capability.
 
 Initial reconstruction order:
 
