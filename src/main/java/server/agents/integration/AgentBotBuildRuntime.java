@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import client.Job;
 import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
@@ -23,14 +24,14 @@ public final class AgentBotBuildRuntime {
             public void oneHanded() {
                 AgentBotBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT);
                 AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply());
-                AgentBuildService.autoAssignSp(entry, entry.bot());
+                AgentBuildService.autoAssignSp(entry, bot(entry));
             }
 
             @Override
             public void twoHanded() {
                 AgentBotBuildStateRuntime.setSpVariant(entry, AgentBuildDialogueClassifier.TWO_HANDED_SP_VARIANT);
                 AgentBotBuildReplyRuntime.replyNow(entry, AgentChatBuildFlow.twoHandedSpVariantReply());
-                AgentBuildService.autoAssignSp(entry, entry.bot());
+                AgentBuildService.autoAssignSp(entry, bot(entry));
             }
         };
     }
@@ -40,7 +41,7 @@ public final class AgentBotBuildRuntime {
             @Override
             public void requestBuildPrompt() {
                 AgentBotBuildStateRuntime.clearApBuildPromptState(entry);
-                String prompt = AgentBuildService.requestApBuildPrompt(entry, entry.bot());
+                String prompt = AgentBuildService.requestApBuildPrompt(entry, bot(entry));
                 if (prompt != null) {
                     AgentBotBuildReplyRuntime.replyNow(entry, prompt);
                 }
@@ -66,9 +67,10 @@ public final class AgentBotBuildRuntime {
     }
 
     private static void handleApBuildSelection(BotEntry entry, String message) {
-        Job job = entry.bot().getJob();
+        Character bot = bot(entry);
+        Job job = bot.getJob();
         AgentApBuildDialogueResolver.ApBuildChoice choice = AgentApBuildDialogueResolver.resolve(
-                job, entry.bot().getDex(), entry.bot().getLuk(), entry.bot().getStr(), message);
+                job, bot.getDex(), bot.getLuk(), bot.getStr(), message);
         if (choice != null) {
             applyApBuildChoice(entry, toBotApBuild(choice), choice.confirmMessage(), choice.alreadyMessage());
         }
@@ -108,5 +110,9 @@ public final class AgentBotBuildRuntime {
                 && left.primaryStat() == right.primaryStat()
                 && left.secondaryStat() == right.secondaryStat()
                 && left.secondaryTarget() == right.secondaryTarget();
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

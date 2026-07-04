@@ -4720,6 +4720,10 @@ Current physics correction:
 - Control-triggered buff debug reports now resolve the live Agent through
   `AgentBotRuntimeIdentityRuntime` before forwarding to the existing chat report
   adapter. Report content and delivery behavior are unchanged.
+- Build chat callbacks now resolve the live Agent through
+  `AgentBotRuntimeIdentityRuntime` before AP build resolution, AP prompt
+  creation, and SP auto-assignment. Existing AP/SP/job advancement behavior and
+  replies remain unchanged.
 
 Initial reconstruction order:
 
