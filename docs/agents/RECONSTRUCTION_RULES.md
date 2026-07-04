@@ -4728,6 +4728,10 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before auto-equip, autopot setup, pot-share
   checks, and sibling gear suggestions. The legacy mode-entry side effects and
   cooldown behavior remain unchanged.
+- Build/status checks now resolve the current leader through
+  `AgentBotRuntimeIdentityRuntime` before recommended gear prompts and spawn
+  upgrade gating. Build prompt, AP/SP assignment, idle checks, and offer
+  behavior remain unchanged.
 
 Initial reconstruction order:
 

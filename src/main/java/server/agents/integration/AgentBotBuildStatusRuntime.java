@@ -59,27 +59,29 @@ public final class AgentBotBuildStatusRuntime {
 
             @Override
             public void maybeSuggestRecommendedGear() {
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
                         AgentBotStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
-                                entry.owner() != null,
-                                () -> AgentOfferService.offerBestRecommendedGear(entry, bot, entry.owner())),
+                                owner != null,
+                                () -> AgentOfferService.offerBestRecommendedGear(entry, bot, owner)),
                         System.currentTimeMillis());
             }
 
             @Override
             public void maybeSuggestGearToSiblings() {
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
                         AgentBotStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
-                                entry.owner() != null,
+                                owner != null,
                                 () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
                         System.currentTimeMillis());
             }
 
             @Override
             public boolean canOfferSpawnUpgrade() {
-                return entry.owner() != null
+                return AgentBotRuntimeIdentityRuntime.owner(entry) != null
                         && !AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry))
                         && !AgentBotPendingActionStateRuntime.hasPendingAction(entry)
                         && !AgentOfferService.hasPendingOffer(entry);
@@ -87,7 +89,7 @@ public final class AgentBotBuildStatusRuntime {
 
             @Override
             public void offerSpawnUpgradeIfAvailable() {
-                Character owner = entry.owner();
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
                 List<AgentEquipRecommendation> recs =
                         AgentEquipmentService.findRecommendedEquips(bot, owner);
                 if (!recs.isEmpty()) {
