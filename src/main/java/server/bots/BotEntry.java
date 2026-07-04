@@ -802,32 +802,9 @@ public class BotEntry {
 
     public AgentMoveTargetState moveTargetState() { return moveTargetState; }
     public AgentGrindWanderState grindWanderState() { return grindWanderState; }
-    public int wanderDirection() { return grindWanderState.direction(); }
-    public void setWanderDirection(int wanderDirection) {
-        grindWanderState.setDirection(wanderDirection);
-    }
-    public void clearWanderDirection() {
-        grindWanderState.clear();
-    }
     private final AgentGrindLootState grindLootState = new AgentGrindLootState();
 
     public AgentGrindLootState grindLootState() { return grindLootState; }
-    public MapItem grindLootTarget() { return grindLootState.target(); }
-    public boolean hasGrindLootTarget() { return grindLootState.hasTarget(); }
-    public void setGrindLootTarget(MapItem grindLootTarget) {
-        grindLootState.setTarget(grindLootTarget);
-    }
-    public void clearGrindLootTarget() {
-        grindLootState.clearTarget();
-    }
-    public int ignoredGrindLootObjectId() { return grindLootState.ignoredObjectId(); }
-    public long ignoredGrindLootUntilMs() { return grindLootState.ignoredUntilMs(); }
-    public void suppressGrindLootRetry(int objectId, long untilMs) {
-        grindLootState.suppressRetry(objectId, untilMs);
-    }
-    public void clearGrindLootRetrySuppression() {
-        grindLootState.clearRetrySuppression();
-    }
     private final AgentMobTouchState mobTouchState = new AgentMobTouchState();
 
     public AgentMobTouchState mobTouchState() {

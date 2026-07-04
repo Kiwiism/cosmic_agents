@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` grind wander and grind-loot wrapper methods were removed. Grind
+  fallback and loot targeting behavior enters through Agent runtime adapters
+  backed by `AgentGrindWanderState` and `AgentGrindLootState`.
 - `BotEntry` move-target, farm-anchor, and patrol wrapper methods were
   removed. Movement mode behavior enters through Agent runtime adapters backed
   by `AgentMoveTargetState`, `AgentFarmAnchorState`, and `AgentPatrolState`.

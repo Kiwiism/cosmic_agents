@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Grind wander and grind-loot compatibility wrappers were removed from
+  `BotEntry`. Grind fallback and loot targeting callers already use
+  `AgentBotGrindWanderStateRuntime` and `AgentBotGrindLootStateRuntime` over
+  Agent-owned state.
 - Move target, farm-anchor, and patrol compatibility wrappers were removed
   from `BotEntry`. Movement mode callers already use
   `AgentBotMoveTargetStateRuntime`, `AgentBotFarmAnchorStateRuntime`, and
