@@ -25,7 +25,7 @@ public final class AgentBotReportDeliveryRuntime {
     }
 
     public static void reportRecommendedGear(BotEntry entry, Character bot) {
-        Character owner = entry.owner();
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentChatReportRuntime.reportRecommendedGear(
                 AgentBotStatusRuntime.recommendedGearReportState(entry),
                 AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner),

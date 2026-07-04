@@ -20,10 +20,10 @@ public final class AgentBotSocialRuntime {
     }
 
     public static void handleFameCommand(BotEntry entry, String targetName) {
-        Character bot = entry.bot();
+        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character target;
         if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {
-            target = entry.owner();
+            target = AgentBotRuntimeIdentityRuntime.owner(entry);
         } else {
             target = bot.getMap().getCharacters().stream()
                     .filter(c -> c.getName().equalsIgnoreCase(targetName))

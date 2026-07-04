@@ -4747,6 +4747,10 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before item-choice execution and skill-tree
   follow-up handling. Pending-action state changes, delays, and replies remain
   unchanged.
+- Social fame and recommended-gear report delivery now resolve Agent/leader
+  identity through `AgentBotRuntimeIdentityRuntime`. Fame target resolution,
+  fame status checks, report delivery, and offer recommendation behavior remain
+  unchanged.
 
 Initial reconstruction order:
 
