@@ -18,6 +18,7 @@ import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.social.AgentScrollReactionState;
+import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.monitoring.AgentPathLogger;
@@ -46,8 +47,7 @@ public class BotEntry {
     volatile Character owner;
     volatile boolean following = false;
     volatile int followTargetId = 0; // 0 = owner
-    volatile boolean airshowActive = false;
-    volatile long airshowLastTrailAtMs = 0L;
+    private final AgentAirshowState airshowState = new AgentAirshowState();
     final ScheduledFuture<?> task;
     AgentMovementProfile movementProfile = AgentMovementProfile.base();
 
@@ -62,19 +62,23 @@ public class BotEntry {
     }
 
     public boolean airshowActive() {
-        return airshowActive;
+        return airshowState.active();
     }
 
     public void setAirshowActive(boolean airshowActive) {
-        this.airshowActive = airshowActive;
+        airshowState.setActive(airshowActive);
     }
 
     public long airshowLastTrailAtMs() {
-        return airshowLastTrailAtMs;
+        return airshowState.lastTrailAtMs();
     }
 
     public void setAirshowLastTrailAtMs(long airshowLastTrailAtMs) {
-        this.airshowLastTrailAtMs = airshowLastTrailAtMs;
+        airshowState.setLastTrailAtMs(airshowLastTrailAtMs);
+    }
+
+    public AgentAirshowState airshowState() {
+        return airshowState;
     }
 
     public AgentMovementProfile movementProfile() {

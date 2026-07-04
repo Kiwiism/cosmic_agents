@@ -4346,6 +4346,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while AFK position/timing,
   offline-or-dead recovery timing, returned-to-town safe mode, and last matched
   leader command metadata route through the Agent runtime state.
+- Airshow session storage now lives in `AgentAirshowState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while active/inactive state
+  and trail timestamp reads/writes route through the Agent social airshow
+  capability.
 
 Initial reconstruction order:
 

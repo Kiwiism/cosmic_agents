@@ -12,25 +12,25 @@ public final class AgentBotAirshowStateRuntime {
     }
 
     public static boolean active(BotEntry entry) {
-        return entry.airshowActive();
+        return entry.airshowState().active();
     }
 
     public static void start(BotEntry entry) {
-        entry.setAirshowActive(true);
-        entry.setAirshowLastTrailAtMs(0L);
+        entry.airshowState().setActive(true);
+        entry.airshowState().setLastTrailAtMs(0L);
     }
 
     public static void stop(BotEntry entry) {
-        entry.setAirshowActive(false);
-        entry.setAirshowLastTrailAtMs(0L);
+        entry.airshowState().setActive(false);
+        entry.airshowState().setLastTrailAtMs(0L);
     }
 
     public static boolean trailDue(BotEntry entry, long nowMs, long intervalMs) {
-        return nowMs - entry.airshowLastTrailAtMs() >= intervalMs;
+        return nowMs - entry.airshowState().lastTrailAtMs() >= intervalMs;
     }
 
     public static void markTrail(BotEntry entry, long nowMs) {
-        entry.setAirshowLastTrailAtMs(nowMs);
+        entry.airshowState().setLastTrailAtMs(nowMs);
     }
 
     public static void applyFrame(BotEntry entry,

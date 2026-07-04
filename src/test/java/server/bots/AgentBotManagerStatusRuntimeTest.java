@@ -55,7 +55,7 @@ class AgentBotManagerStatusRuntimeTest {
 
         assertFalse(AgentBotManagerStatusRuntime.airshowActive(entry));
 
-        entry.airshowActive = true;
+        entry.setAirshowActive(true);
 
         assertTrue(AgentBotManagerStatusRuntime.airshowActive(entry));
     }
