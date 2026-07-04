@@ -359,7 +359,7 @@ final class BotMovementSimulationLab {
                     index,
                     elapsedMs,
                     botName,
-                    entry.lastTickWasAi,
+                    AgentBotTickStateRuntime.lastTickWasAi(entry),
                     new Point(botPos),
                     new Point(ownerPos),
                     new Point(goalPos),

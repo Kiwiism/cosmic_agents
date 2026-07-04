@@ -11,30 +11,30 @@ public final class AgentBotTickStateRuntime {
     }
 
     public static boolean lastTickWasAi(BotEntry entry) {
-        return entry.lastTickWasAi();
+        return entry.tickState().lastTickWasAi();
     }
 
     public static long lastTickAtMs(BotEntry entry) {
-        return entry.lastTickAtMs();
+        return entry.tickState().lastTickAtMs();
     }
 
     public static void recordTick(BotEntry entry, boolean aiTick, long tickAtMs) {
-        entry.recordTick(aiTick, tickAtMs);
+        entry.tickState().recordTick(aiTick, tickAtMs);
     }
 
     public static boolean heartbeatDue(BotEntry entry, long nowMs, long intervalMs) {
-        return nowMs - entry.lastHeartbeatAtMs() >= intervalMs;
+        return entry.tickState().heartbeatDue(nowMs, intervalMs);
     }
 
     public static void markHeartbeat(BotEntry entry, long nowMs) {
-        entry.setLastHeartbeatAtMs(nowMs);
+        entry.tickState().setLastHeartbeatAtMs(nowMs);
     }
 
     public static long nextFollowIdleMovementCheckAtMs(BotEntry entry) {
-        return entry.nextFollowIdleMovementCheckAtMs();
+        return entry.tickState().nextFollowIdleMovementCheckAtMs();
     }
 
     public static void setNextFollowIdleMovementCheckAtMs(BotEntry entry, long nextCheckAtMs) {
-        entry.setNextFollowIdleMovementCheckAtMs(nextCheckAtMs);
+        entry.tickState().setNextFollowIdleMovementCheckAtMs(nextCheckAtMs);
     }
 }

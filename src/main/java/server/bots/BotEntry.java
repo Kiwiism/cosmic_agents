@@ -47,6 +47,7 @@ import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 import server.agents.runtime.AgentOwnerMotionState;
+import server.agents.runtime.AgentTickState;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -1564,6 +1565,7 @@ public class BotEntry {
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
     private final AgentOwnerMotionState ownerMotionState = new AgentOwnerMotionState();
+    private final AgentTickState tickState = new AgentTickState();
 
     // Cached movement state shared across ticks
 
@@ -1791,6 +1793,10 @@ public class BotEntry {
         return ownerMotionState;
     }
 
+    public AgentTickState tickState() {
+        return tickState;
+    }
+
     public AgentPathLogger pathLogger() {
         return navigationDebugState.pathLogger();
     }
@@ -1915,12 +1921,6 @@ public class BotEntry {
         upgradeOfferState.reserveGearPrompt(pendingGearPromptAt);
     }
 
-    // Last known leader position (set each tick by Agent runtime, read by pathLogger)
-    boolean lastTickWasAi = false;
-    long lastTickAtMs = 0L;
-    long lastHeartbeatAtMs = 0L;
-    long nextFollowIdleMovementCheckAtMs = 0L;
-
     public Point lastOwnerPosition() {
         return ownerMotionState.lastOwnerPosition();
     }
@@ -1930,32 +1930,31 @@ public class BotEntry {
     }
 
     public boolean lastTickWasAi() {
-        return lastTickWasAi;
+        return tickState.lastTickWasAi();
     }
 
     public long lastTickAtMs() {
-        return lastTickAtMs;
+        return tickState.lastTickAtMs();
     }
 
     public void recordTick(boolean aiTick, long tickAtMs) {
-        this.lastTickWasAi = aiTick;
-        this.lastTickAtMs = tickAtMs;
+        tickState.recordTick(aiTick, tickAtMs);
     }
 
     public long lastHeartbeatAtMs() {
-        return lastHeartbeatAtMs;
+        return tickState.lastHeartbeatAtMs();
     }
 
     public void setLastHeartbeatAtMs(long lastHeartbeatAtMs) {
-        this.lastHeartbeatAtMs = lastHeartbeatAtMs;
+        tickState.setLastHeartbeatAtMs(lastHeartbeatAtMs);
     }
 
     public long nextFollowIdleMovementCheckAtMs() {
-        return nextFollowIdleMovementCheckAtMs;
+        return tickState.nextFollowIdleMovementCheckAtMs();
     }
 
     public void setNextFollowIdleMovementCheckAtMs(long nextFollowIdleMovementCheckAtMs) {
-        this.nextFollowIdleMovementCheckAtMs = nextFollowIdleMovementCheckAtMs;
+        tickState.setNextFollowIdleMovementCheckAtMs(nextFollowIdleMovementCheckAtMs);
     }
 
     int tickFailureCount = 0;

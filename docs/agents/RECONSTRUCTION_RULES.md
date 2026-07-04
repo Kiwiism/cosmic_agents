@@ -4430,6 +4430,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while last
   observed owner position and per-tick owner step deltas route through Agent
   runtime state.
+- Tick/heartbeat/follow-idle metadata now lives in `AgentTickState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while last tick
+  type/time, heartbeat time, and next follow-idle movement check time route
+  through Agent runtime state.
 
 Initial reconstruction order:
 
