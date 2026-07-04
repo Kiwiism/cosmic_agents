@@ -190,7 +190,7 @@ class AgentBotMovementStateRuntimeTest {
         assertEquals(0, AgentBotMovementStateRuntime.movementVelocityY(entry));
         assertFalse(AgentBotMovementStateRuntime.hasMovementVelocity(entry));
 
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         entry.climbState().setClimbingFlag(true);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
         AgentBotMovementStateRuntime.setCrouching(entry, true);

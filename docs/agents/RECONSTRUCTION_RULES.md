@@ -4641,6 +4641,9 @@ Current physics correction:
   `BotEntry`. Active target state now routes through
   `AgentBotGrindTargetStateRuntime`, and search cadence routes through
   `AgentBotGrindSearchStateRuntime`.
+- Movement profile and in-air passthrough wrappers have been removed from
+  `BotEntry`. Movement profile reads/writes and in-air state now route through
+  `AgentBotMovementStateRuntime`.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

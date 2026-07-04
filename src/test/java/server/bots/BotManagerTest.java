@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementStateRuntime;
+
 import server.agents.integration.AgentBotClimbStateRuntime;
 
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
@@ -365,7 +367,7 @@ class BotManagerTest {
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, bot.getPosition(), true);
 
         assertEquals(new Point(100, 100), bot.getPosition());
-        assertFalse(entry.inAir());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
         assertFalse(AgentBotClimbStateRuntime.climbing(entry));
     }
 
@@ -575,7 +577,7 @@ class BotManagerTest {
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         Character bot = mockMovingBot(new Point(20, 100), map);
         BotEntry entry = new BotEntry(bot, mock(Character.class), null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, -999);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, -999);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 20f);
@@ -585,7 +587,7 @@ class BotManagerTest {
         AgentSpawnPlacementRuntime.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
 
         assertEquals(new Point(80, 100), bot.getPosition());
-        assertFalse(entry.inAir());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
         assertEquals(80.0, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
         assertEquals(100.0, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
         assertEquals(0, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));

@@ -148,7 +148,7 @@ class BotMovementManagerTest {
         map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
         Character bot = mockBot(new Point(0, 0), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
@@ -322,7 +322,7 @@ class BotMovementManagerTest {
 
         assertEquals(new Point(3398, 124), bot.getPosition());
         assertFalse(AgentBotClimbStateRuntime.climbing(entry));
-        assertFalse(entry.inAir());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
     }
 
     @Test
@@ -411,7 +411,7 @@ class BotMovementManagerTest {
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 
-        assertTrue(entry.inAir(), "grounded follow movement should jump over a mob blocking the walk lane");
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "grounded follow movement should jump over a mob blocking the walk lane");
         assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(250, 100));
@@ -435,7 +435,7 @@ class BotMovementManagerTest {
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(190, 100));
 
-        assertFalse(entry.inAir(), "mob-avoid jump should be skipped when simulation would leave the current platform region");
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry), "mob-avoid jump should be skipped when simulation would leave the current platform region");
     }
 
     @Test
@@ -485,7 +485,7 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
@@ -494,7 +494,7 @@ class BotMovementManagerTest {
         AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertEquals(new Point(4, 102), bot.getPosition());
-        assertFalse(entry.inAir());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
     }
 
     @Test
@@ -517,7 +517,7 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
@@ -543,7 +543,7 @@ class BotMovementManagerTest {
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(110, 100));
 
-        assertTrue(entry.inAir(), "graph warmup fallback should jump small same-level gaps instead of freezing");
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "graph warmup fallback should jump small same-level gaps instead of freezing");
         assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
@@ -567,7 +567,7 @@ class BotMovementManagerTest {
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(90, 60));
 
-        assertTrue(entry.inAir(), "fallback should jump when a wall blocks walking but a platform is reachable");
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "fallback should jump when a wall blocks walking but a platform is reachable");
         assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
@@ -644,7 +644,7 @@ class BotMovementManagerTest {
         MapleMap map = new MapleMap(910000035, 0, 0, 910000035, 1.0f);
         Character bot = mockBot(new Point(0, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(false);
+        AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 80, AgentBotMovementStateRuntime.movementVelocityY(entry));
         AgentBotMovementStateRuntime.setMoveDirection(entry, 0);
         AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
@@ -791,7 +791,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.inAir());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
 
         bot.setPosition(new Point(100, 0));
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
@@ -813,14 +813,14 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.inAir());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
 
         AgentMovementPoseService.idleOnGround(entry, bot);
         entry.fidgetState().setNextActionAtMs(Long.MAX_VALUE);
         entry.fidgetState().setNextJumpAtMs(0L);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.inAir(), "grounded jump fidgets should launch again even if air steering is cooling down");
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "grounded jump fidgets should launch again even if air steering is cooling down");
     }
 
     @Test
@@ -948,7 +948,7 @@ class BotMovementManagerTest {
         AgentMovementRecoveryService.tickUnstuck(entry);
 
         assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry), "unstuck recovery should only use lateral jumps");
-        assertTrue(entry.inAir(), "unstuck recovery should launch the bot instead of crouching in place");
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "unstuck recovery should launch the bot instead of crouching in place");
     }
 
     @Test
@@ -970,7 +970,7 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
@@ -1000,7 +1000,7 @@ class BotMovementManagerTest {
 
         AgentClimbMovementService.jumpToRope(entry, bot, 8);
 
-        assertTrue(entry.inAir());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
         assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
         assertEquals(0, AgentBotClimbStateRuntime.ropeGrabCooldownMs(entry));
         assertEquals(668, AgentBotClimbStateRuntime.blockedRopeGrab(entry).x());

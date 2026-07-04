@@ -45,7 +45,7 @@ class AgentBotAirshowStateRuntimeTest {
         assertEquals(2000, AgentBotMovementStateRuntime.movementVelocityX(entry));
         assertEquals(-1200, AgentBotMovementStateRuntime.movementVelocityY(entry));
         assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
-        assertTrue(entry.inAir());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
         assertTrue(AgentBotClimbStateRuntime.climbing(entry));
     }
 }

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementStateRuntime;
+
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 
 
@@ -71,7 +73,7 @@ class BotMovementSimulationLabTest {
         map.setFootholds(footholds);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         BotEntry entry = lab.spawnBot("BUMP", 12, map, new Point(0, 100));
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
@@ -82,7 +84,7 @@ class BotMovementSimulationLabTest {
         Foothold landedFoothold = map.getFootholds().findBelow(lab.position("BUMP"));
         assertNotNull(landedFoothold);
         assertEquals(2, landedFoothold.getId(), "bot should land on the authored intermediate bump foothold");
-        assertTrue(!entry.inAir(), "bot should land on the intermediate bump");
+        assertTrue(!AgentBotMovementStateRuntime.inAir(entry), "bot should land on the intermediate bump");
     }
 
     @Test
@@ -94,7 +96,7 @@ class BotMovementSimulationLabTest {
         map.setFootholds(footholds);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         BotEntry entry = lab.spawnBot("DROP", 13, map, new Point(0, 0));
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);

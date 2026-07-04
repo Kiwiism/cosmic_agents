@@ -1295,7 +1295,7 @@ class BotCombatManagerTest {
 
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
-        assertTrue(entry.inAir());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
         assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
         assertEquals(new Point(100, 200), bot.getPosition());
@@ -1312,7 +1312,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         Monster mob = mockMob(new Point(60, 200), 9300001);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 200);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 12.5f);
@@ -1321,7 +1321,7 @@ class BotCombatManagerTest {
 
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
-        assertTrue(entry.inAir());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
         assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
@@ -1340,7 +1340,7 @@ class BotCombatManagerTest {
 
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
-        assertFalse(entry.inAir());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
         assertFalse(AgentBotClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(0, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
@@ -1360,7 +1360,7 @@ class BotCombatManagerTest {
 
         assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
         assertTrue(AgentBotDeathStateRuntime.deadUntilMs(entry) > 0);
-        assertFalse(entry.inAir());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
         assertFalse(AgentBotClimbStateRuntime.climbing(entry));
     }
 
@@ -1500,7 +1500,7 @@ class BotCombatManagerTest {
     void shouldRejectAirborneRangedAttackPlansForWeaponsThatCannotJumpShoot() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setInAir(true);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentAttackPlan rangedBowPlan = new AgentAttackPlan(
                 Hunter.ARROW_BOMB, 1, 1, new Rectangle(100, 150, 300, 100),
                 List.of(mockMob(new Point(180, 200), 9300200)), AgentAttackRoute.RANGED,

@@ -13,7 +13,6 @@ import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatSkillCacheState;
 import server.agents.capabilities.combat.AgentMobTouchState;
 
-import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentClimbState;
@@ -88,14 +87,6 @@ public class BotEntry {
         return airshowState;
     }
 
-    public AgentMovementProfile movementProfile() {
-        return movementProfileState.profile();
-    }
-
-    public void setMovementProfile(AgentMovementProfile movementProfile) {
-        movementProfileState.setProfile(movementProfile);
-    }
-
     public AgentMovementProfileState movementProfileState() {
         return movementProfileState;
     }
@@ -108,14 +99,6 @@ public class BotEntry {
     private final AgentMovementInputState movementInputState = new AgentMovementInputState();
     private final AgentSwimIntentState swimIntentState = new AgentSwimIntentState();
     private final AgentClimbState climbState = new AgentClimbState();
-
-    public boolean inAir() {
-        return movementPhysicsState.inAir();
-    }
-
-    public void setInAir(boolean inAir) {
-        movementPhysicsState.setInAir(inAir);
-    }
 
     public AgentGroundTravelState groundTravelState() {
         return movementPhysicsState.groundTravelState();
