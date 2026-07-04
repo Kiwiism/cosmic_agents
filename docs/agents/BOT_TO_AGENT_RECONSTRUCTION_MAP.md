@@ -218,6 +218,12 @@ Recent map updates:
   packet-visible rope position, zero-velocity hold, top foothold snap, and
   fall launch behavior; the `BotPhysicsEngine` methods are compatibility
   delegates.
+- Airborne runtime stepping moved to `AgentAirbornePhysicsService`. The Agent
+  service now owns air steering, airborne integration, wall/ceiling collision
+  responses, landing state transition, fall-damage handoff, and packet-visible
+  airborne velocity updates. `BotPhysicsEngine.stepAirborne` is now a
+  temporary compatibility delegate that converts the Agent result enum back to
+  the legacy result type.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement

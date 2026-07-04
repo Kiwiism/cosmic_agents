@@ -4296,6 +4296,10 @@ Current physics correction:
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.
+- Airborne runtime stepping now lives in `AgentAirbornePhysicsService`.
+  `BotPhysicsEngine.stepAirborne` is only a temporary compatibility delegate;
+  the Agent service owns air steering, airborne position integration, air
+  collision handling, landing transition cleanup, and fall-damage handoff.
 
 Initial reconstruction order:
 

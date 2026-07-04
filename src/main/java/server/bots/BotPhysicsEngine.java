@@ -1020,29 +1020,12 @@ public final class BotPhysicsEngine {
      * All collision outcome methods are private — movement must not call them directly.
      */
     public static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
-        // Apply air steering from intent. Movement sets moveDir=0 for committed trajectories.
-        if (AgentBotMovementStateRuntime.hasMoveDirection(entry)) {
-            applyAirSteering(entry, AgentBotMovementStateRuntime.moveDirection(entry));
-        }
-
-        Point previousPos = roundedAirPosition(entry);
-        Point nextPos = advanceAirbornePosition(entry, bot);
-        AirCollision collision = resolveAirCollision(bot.getMap(), previousPos, nextPos);
-        if (collision.type() == AirCollisionType.WALL) {
-            collideWithAirWall(entry, bot, collision.point());
-            return AirborneStepResult.WALL;
-        }
-        if (collision.type() == AirCollisionType.CEILING) {
-            collideWithAirCeiling(entry, bot, collision.point());
-            return AirborneStepResult.CEILING;
-        }
-        if (collision.type() == AirCollisionType.LAND && canLand(entry)) {
-            landOnGround(entry, bot, collision.point(), collision.foothold(),
-                    nextPos.x - previousPos.x, nextPos.y - previousPos.y);
-            return AirborneStepResult.LANDED;
-        }
-        applyAirbornePosition(entry, bot, nextPos);
-        return AirborneStepResult.CONTINUE;
+        return switch (AgentAirbornePhysicsService.stepAirborne(entry, bot)) {
+            case WALL -> AirborneStepResult.WALL;
+            case CEILING -> AirborneStepResult.CEILING;
+            case LANDED -> AirborneStepResult.LANDED;
+            case CONTINUE -> AirborneStepResult.CONTINUE;
+        };
     }
 
     private static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {

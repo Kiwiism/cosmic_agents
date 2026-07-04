@@ -29,4 +29,22 @@ class AgentAirbornePhysicsServiceTest {
         assertEquals(AgentAirborneStepResult.CONTINUE, result);
         assertTrue(AgentBotMovementStateRuntime.inAir(entry));
     }
+
+    @Test
+    void stepAirborneAppliesAgentOwnedAirSteering() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(10, 20));
+        when(agent.getHp()).thenReturn(1);
+        when(agent.getMap()).thenReturn(null);
+        BotEntry entry = new BotEntry(agent, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotMovementStateRuntime.setMoveDirection(entry, 1);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, new Point(10, 20));
+
+        AgentAirborneStepResult result = AgentAirbornePhysicsService.stepAirborne(entry, agent);
+
+        assertEquals(AgentAirborneStepResult.CONTINUE, result);
+        assertEquals(0.5, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
+    }
 }
