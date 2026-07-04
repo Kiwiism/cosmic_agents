@@ -519,21 +519,6 @@ public class BotEntry {
 
     private final AgentAmmoSupplyState ammoSupplyState = new AgentAmmoSupplyState();
 
-    public boolean noAmmo() {
-        return ammoSupplyState.noAmmo();
-    }
-
-    public void setNoAmmo(boolean noAmmo) {
-        ammoSupplyState.setNoAmmo(noAmmo);
-    }
-
-    public boolean ammoWarnSent() {
-        return ammoSupplyState.warnSent();
-    }
-
-    public void setAmmoWarnSent(boolean ammoWarnSent) {
-        ammoSupplyState.setWarnSent(ammoWarnSent);
-    }
     private final AgentDegenerateAttackState degenerateAttackState = new AgentDegenerateAttackState();
     private final AgentRetreatHoldState retreatHoldState = new AgentRetreatHoldState();
     private final AgentBreakoutState breakoutState = new AgentBreakoutState();
@@ -542,63 +527,11 @@ public class BotEntry {
 
     public AgentDegenerateAttackState degenerateAttackState() { return degenerateAttackState; }
 
-    public boolean degenAttackDone() { return degenerateAttackState.done(); }
-
-    public void markDegenAttackDone() {
-        degenerateAttackState.markDone();
-    }
-
-    public void clearDegenAttackDone() {
-        degenerateAttackState.clear();
-    }
-
     public AgentRetreatHoldState retreatHoldState() { return retreatHoldState; }
-
-    public Point retreatHoldPos() { return retreatHoldState.position(); }
-
-    public long retreatHoldUntilMs() { return retreatHoldState.untilMs(); }
-
-    public boolean hasRetreatHold() { return retreatHoldState.hasHold(); }
-
-    public void setRetreatHold(Point position, long untilMs) {
-        retreatHoldState.set(position, untilMs);
-    }
-
-    public void clearRetreatHold() {
-        retreatHoldState.clear();
-    }
 
     public AgentBreakoutState breakoutState() { return breakoutState; }
 
-    public int breakoutDirection() { return breakoutState.direction(); }
-
-    public long breakoutUntilMs() { return breakoutState.untilMs(); }
-
-    public boolean hasBreakoutCommitment() { return breakoutState.hasCommitment(); }
-
-    public void setBreakoutCommitment(int direction, long untilMs) {
-        breakoutState.setCommitment(direction, untilMs);
-    }
-
-    public void clearBreakoutCommitment() {
-        breakoutState.clear();
-    }
-
     public AgentAoeRepositionState aoeRepositionState() { return aoeRepositionState; }
-
-    public Point aoeRepositionAnchor() { return aoeRepositionState.anchor(); }
-
-    public boolean hasAoeRepositionAnchor() { return aoeRepositionState.hasAnchor(); }
-
-    public long aoeRepositionDeadlineMs() { return aoeRepositionState.deadlineMs(); }
-
-    public void setAoeRepositionAnchor(Point anchor, long deadlineMs) {
-        aoeRepositionState.setAnchor(anchor, deadlineMs);
-    }
-
-    public void clearAoeRepositionAnchor() {
-        aoeRepositionState.clear();
-    }
 
     private final AgentShopState shopState = new AgentShopState();
 
@@ -675,45 +608,9 @@ public class BotEntry {
         return mobTouchState;
     }
 
-    public Point lastMobTouchCheckPos() {
-        return mobTouchState.lastCheckPosition();
-    }
-
-    public int lastMobTouchMapId() {
-        return mobTouchState.lastCheckMapId();
-    }
-
-    public void rememberMobTouchCheck(Point position, int mapId) {
-        mobTouchState.rememberCheck(position, mapId);
-    }
-
     // Loot and potions
     private final AgentPotionSupplyState potionSupplyState = new AgentPotionSupplyState();
     private final AgentInventoryCooldownState inventoryCooldownState = new AgentInventoryCooldownState();
-
-    public int potCheckTimerMs() {
-        return potionSupplyState.potCheckTimerMs();
-    }
-
-    public void setPotCheckTimerMs(int potCheckTimerMs) {
-        potionSupplyState.setPotCheckTimerMs(potCheckTimerMs);
-    }
-
-    public int mpRecoveryTimerMs() {
-        return potionSupplyState.mpRecoveryTimerMs();
-    }
-
-    public void setMpRecoveryTimerMs(int mpRecoveryTimerMs) {
-        potionSupplyState.setMpRecoveryTimerMs(mpRecoveryTimerMs);
-    }
-
-    public int invFullWarnCooldownMs() {
-        return inventoryCooldownState.inventoryFullWarnCooldownMs();
-    }
-
-    public void setInvFullWarnCooldownMs(int invFullWarnCooldownMs) {
-        inventoryCooldownState.setInventoryFullWarnCooldownMs(invFullWarnCooldownMs);
-    }
 
     public AgentInventoryCooldownState inventoryCooldownState() {
         return inventoryCooldownState;

@@ -4541,6 +4541,11 @@ Current physics correction:
   `AgentBotCombatBuffStateRuntime` and `AgentBotCombatSkillCacheStateRuntime`,
   leaving `BotEntry` as a temporary state-object host only for these combat
   surfaces.
+- Supply and combat positioning state wrappers have been removed from
+  `BotEntry`. Ammo warning/no-ammo state, potion timer state, inventory warning
+  cooldowns, mob-touch sweep cache, degenerate attack latch, retreat hold,
+  breakout, and AoE reposition state now route through Agent-owned state
+  adapters or direct Agent-owned state accessors.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

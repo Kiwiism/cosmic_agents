@@ -4,6 +4,7 @@ import client.BotClient;
 import client.Character;
 import client.Client;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotPotionStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
@@ -43,7 +44,7 @@ class AgentPotionCheckRequestServiceTest {
         try {
             AgentPotionCheckRequestService.requestPotionCheckSoon(agent);
 
-            assertEquals(123, entry.potCheckTimerMs());
+            assertEquals(123, AgentBotPotionStateRuntime.potCheckTimerMs(entry));
         } finally {
             AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = oldDelay;
             AgentRuntimeRegistry.entriesByLeaderId().clear();
