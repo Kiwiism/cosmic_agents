@@ -4466,6 +4466,10 @@ Current physics correction:
   `AgentGrindTargetState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while combat target selection and search cooldowns route through
   Agent runtime state.
+- Grind loot target and retry suppression state now lives in
+  `AgentGrindLootState`. `BotEntry` temporarily hosts the Agent-owned state
+  object, while loot targeting and retry gating route through the Agent
+  looting capability.
 
 Initial reconstruction order:
 

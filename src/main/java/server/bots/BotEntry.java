@@ -27,6 +27,7 @@ import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.inventory.AgentInventoryCooldownState;
+import server.agents.capabilities.looting.AgentGrindLootState;
 import server.agents.capabilities.social.AgentScrollReactionState;
 import server.agents.capabilities.shop.AgentShopState;
 import server.agents.capabilities.supplies.AgentAmmoSupplyState;
@@ -981,23 +982,24 @@ public class BotEntry {
     public void clearWanderDirection() {
         this.wanderDirection = 0;
     }
-    public MapItem grindLootTarget() { return grindLootTarget; }
-    public boolean hasGrindLootTarget() { return grindLootTarget != null; }
+    private final AgentGrindLootState grindLootState = new AgentGrindLootState();
+
+    public AgentGrindLootState grindLootState() { return grindLootState; }
+    public MapItem grindLootTarget() { return grindLootState.target(); }
+    public boolean hasGrindLootTarget() { return grindLootState.hasTarget(); }
     public void setGrindLootTarget(MapItem grindLootTarget) {
-        this.grindLootTarget = grindLootTarget;
+        grindLootState.setTarget(grindLootTarget);
     }
     public void clearGrindLootTarget() {
-        this.grindLootTarget = null;
+        grindLootState.clearTarget();
     }
-    public int ignoredGrindLootObjectId() { return ignoredGrindLootObjectId; }
-    public long ignoredGrindLootUntilMs() { return ignoredGrindLootUntilMs; }
+    public int ignoredGrindLootObjectId() { return grindLootState.ignoredObjectId(); }
+    public long ignoredGrindLootUntilMs() { return grindLootState.ignoredUntilMs(); }
     public void suppressGrindLootRetry(int objectId, long untilMs) {
-        this.ignoredGrindLootObjectId = objectId;
-        this.ignoredGrindLootUntilMs = untilMs;
+        grindLootState.suppressRetry(objectId, untilMs);
     }
     public void clearGrindLootRetrySuppression() {
-        this.ignoredGrindLootObjectId = 0;
-        this.ignoredGrindLootUntilMs = 0L;
+        grindLootState.clearRetrySuppression();
     }
     private final AgentMobTouchState mobTouchState = new AgentMobTouchState();
 
@@ -1456,10 +1458,6 @@ public class BotEntry {
     Point moveTarget = null;
     boolean moveTargetPrecise = false; // true when triggered by "move here" — uses tight stop dist
     // "Farm here" anchor — bot returns to this fixed point and only takes local attacks.
-    // Grind loot — nearest convenient drop, searched each AI tick, cleared when picked up.
-    MapItem grindLootTarget = null;
-    int ignoredGrindLootObjectId = 0;
-    long ignoredGrindLootUntilMs = 0L;
     // "Patrol" region — bot wanders within this nav region and attacks opportunistically.
 
     private final AgentBuffState buffState = new AgentBuffState();

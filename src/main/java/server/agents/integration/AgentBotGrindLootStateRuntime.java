@@ -11,19 +11,19 @@ public final class AgentBotGrindLootStateRuntime {
     }
 
     public static MapItem grindLootTarget(BotEntry entry) {
-        return entry.grindLootTarget();
+        return entry.grindLootState().target();
     }
 
     public static boolean hasGrindLootTarget(BotEntry entry) {
-        return entry.hasGrindLootTarget();
+        return entry.grindLootState().hasTarget();
     }
 
     public static void setGrindLootTarget(BotEntry entry, MapItem loot) {
-        entry.setGrindLootTarget(loot);
+        entry.grindLootState().setTarget(loot);
     }
 
     public static void clearGrindLootTarget(BotEntry entry) {
-        entry.clearGrindLootTarget();
+        entry.grindLootState().clearTarget();
     }
 
     public static void suppressRetry(BotEntry entry, MapItem loot, long untilMs) {
@@ -31,21 +31,21 @@ public final class AgentBotGrindLootStateRuntime {
             clearRetrySuppression(entry);
             return;
         }
-        entry.suppressGrindLootRetry(loot.getObjectId(), untilMs);
+        entry.grindLootState().suppressRetry(loot.getObjectId(), untilMs);
     }
 
     public static boolean isRetrySuppressed(BotEntry entry, MapItem loot, long nowMs) {
-        if (entry == null || loot == null || entry.ignoredGrindLootObjectId() <= 0) {
+        if (entry == null || loot == null || entry.grindLootState().ignoredObjectId() <= 0) {
             return false;
         }
-        if (nowMs >= entry.ignoredGrindLootUntilMs()) {
+        if (nowMs >= entry.grindLootState().ignoredUntilMs()) {
             clearRetrySuppression(entry);
             return false;
         }
-        return entry.ignoredGrindLootObjectId() == loot.getObjectId();
+        return entry.grindLootState().ignoredObjectId() == loot.getObjectId();
     }
 
     public static void clearRetrySuppression(BotEntry entry) {
-        entry.clearGrindLootRetrySuppression();
+        entry.grindLootState().clearRetrySuppression();
     }
 }
