@@ -71,7 +71,7 @@ class BotMovementSimulationLabTest {
         entry.physX = 0;
         entry.physY = 100;
         entry.velY = 0f;
-        entry.airVelX = 8;
+        entry.setAirVelocityX(8);
 
         lab.stepRaw("BUMP", new Point(20, 110), false);
 
@@ -94,12 +94,12 @@ class BotMovementSimulationLabTest {
         entry.physX = 0;
         entry.physY = 0;
         entry.velY = 0f;
-        entry.airVelX = -8;
+        entry.setAirVelocityX(-8);
 
         lab.stepRaw("DROP", new Point(-50, 80), false);
 
         assertTrue(lab.position("DROP").x < 0, "bot should keep horizontal motion past the wall endpoint");
-        assertEquals(-8, entry.airVelX);
+        assertEquals(-8, entry.airVelocityX());
     }
 
     @Test

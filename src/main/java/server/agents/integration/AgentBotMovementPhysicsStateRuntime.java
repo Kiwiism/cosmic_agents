@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.bots.BotEntry;
+import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import java.awt.Point;
@@ -25,7 +26,7 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static boolean fixedAirArc(BotEntry entry) {
-        return entry.fixedAirArc();
+        return airborneSteeringState(entry).fixedAirArc();
     }
 
     public static float verticalVelocity(BotEntry entry) {
@@ -37,27 +38,27 @@ public final class AgentBotMovementPhysicsStateRuntime {
     }
 
     public static int airVelocityX(BotEntry entry) {
-        return entry.airVelocityX();
+        return airborneSteeringState(entry).velocityX();
     }
 
     public static void setAirVelocityX(BotEntry entry, int airVelocityX) {
-        entry.setAirVelocityX(airVelocityX);
+        airborneSteeringState(entry).setVelocityX(airVelocityX);
     }
 
     public static double airSteerVelocityX(BotEntry entry) {
-        return entry.airSteerVelocityX();
+        return airborneSteeringState(entry).steeringVelocityX();
     }
 
     public static void setAirSteerVelocityX(BotEntry entry, double airSteerVelocityX) {
-        entry.setAirSteerVelocityX(airSteerVelocityX);
+        airborneSteeringState(entry).setSteeringVelocityX(airSteerVelocityX);
     }
 
     public static void addClampedAirSteerVelocityX(BotEntry entry, double delta, double maxAbs) {
-        entry.setAirSteerVelocityX(Math.clamp(entry.airSteerVelocityX() + delta, -maxAbs, maxAbs));
+        airborneSteeringState(entry).addClampedSteeringVelocityX(delta, maxAbs);
     }
 
     public static void setFixedAirArc(BotEntry entry, boolean fixed) {
-        entry.setFixedAirArc(fixed);
+        airborneSteeringState(entry).setFixedAirArc(fixed);
     }
 
     public static double fallPeakPhysicsY(BotEntry entry) {
@@ -144,5 +145,9 @@ public final class AgentBotMovementPhysicsStateRuntime {
 
     public static AgentGroundTravelState groundTravelState(BotEntry entry) {
         return entry.groundTravelState();
+    }
+
+    private static AgentAirborneSteeringState airborneSteeringState(BotEntry entry) {
+        return entry.airborneSteeringState();
     }
 }

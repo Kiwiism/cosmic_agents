@@ -388,7 +388,7 @@ final class BotMovementSimulationLab {
                 return String.format("ROPE(x=%d top=%d bot=%d)", entry.climbRope.x(), entry.climbRope.topY(), entry.climbRope.bottomY());
             }
             if (entry.inAir) {
-                return String.format("AIR(velY=%.1f airVelX=%d)", entry.velY, entry.airVelX);
+                return String.format("AIR(velY=%.1f airVelX=%d)", entry.velY, entry.airVelocityX());
             }
             return "GND";
         }

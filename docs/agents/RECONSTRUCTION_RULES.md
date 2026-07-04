@@ -4507,6 +4507,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent
   movement capability.
+- Airborne horizontal steering state now lives in `AgentAirborneSteeringState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while committed
+  air X velocity, corrective air-steer velocity, and fixed-air-arc mode route
+  through the Agent movement capability.
 
 Initial reconstruction order:
 

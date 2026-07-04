@@ -575,7 +575,7 @@ class BotManagerTest {
         entry.physX = -999;
         entry.physY = -999;
         entry.velY = 20f;
-        entry.airVelX = 6;
+        entry.setAirVelocityX(6);
         AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
         AgentSpawnPlacementRuntime.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
@@ -584,7 +584,7 @@ class BotManagerTest {
         assertFalse(entry.inAir);
         assertEquals(80.0, entry.physX);
         assertEquals(100.0, entry.physY);
-        assertEquals(0, entry.airVelX);
+        assertEquals(0, entry.airVelocityX());
         assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
         assertEquals(map.getId(), AgentBotMapStateRuntime.lastMapId(entry));
     }

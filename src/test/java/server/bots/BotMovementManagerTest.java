@@ -139,7 +139,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 0), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = true;
-        entry.airVelX = -8;
+        entry.setAirVelocityX(-8);
         entry.physX = 0;
         entry.physY = 0;
         entry.velY = -10f;
@@ -151,7 +151,7 @@ class BotMovementManagerTest {
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(300, 0));
 
-        assertEquals(0.0, entry.airSteerVelX);
+        assertEquals(0.0, entry.airSteerVelocityX());
     }
 
     @Test
@@ -407,11 +407,11 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 
         assertTrue(entry.inAir, "grounded follow movement should jump over a mob blocking the walk lane");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelocityX());
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(250, 100));
 
-        assertEquals(0.0, entry.airSteerVelX, 0.0001,
+        assertEquals(0.0, entry.airSteerVelocityX(), 0.0001,
                 "mob-avoid jumps should keep the simulated fixed forward arc");
     }
 
@@ -485,7 +485,7 @@ class BotMovementManagerTest {
         entry.physX = 0;
         entry.physY = 100;
         entry.velY = 0f;
-        entry.airVelX = 8;
+        entry.setAirVelocityX(8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
 
@@ -517,12 +517,12 @@ class BotMovementManagerTest {
         entry.physX = 0;
         entry.physY = 0;
         entry.velY = 0f;
-        entry.airVelX = -8;
+        entry.setAirVelocityX(-8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertTrue(bot.getPosition().x < 0);
-        assertEquals(-8, entry.airVelX);
+        assertEquals(-8, entry.airVelocityX());
     }
 
     @Test
@@ -540,7 +540,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(110, 100));
 
         assertTrue(entry.inAir, "graph warmup fallback should jump small same-level gaps instead of freezing");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelocityX());
     }
 
     @Test
@@ -564,7 +564,7 @@ class BotMovementManagerTest {
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(90, 60));
 
         assertTrue(entry.inAir, "fallback should jump when a wall blocks walking but a platform is reachable");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelX);
+        assertEquals(AgentMovementKinematicsService.walkStep(map, entry.movementProfile), entry.airVelocityX());
     }
 
     @Test
@@ -762,14 +762,14 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        int firstJumpVelX = entry.airVelX;
+        int firstJumpVelX = entry.airVelocityX();
         assertTrue(firstJumpVelX != 0, "diagonal jump fidget should launch with horizontal momentum");
 
         AgentMovementPoseService.idleOnGround(entry, bot);
         entry.nextFidgetJumpAtMs = 0L;
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(entry.airVelX),
+        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(entry.airVelocityX()),
                 "diagonal jump fidget should alternate jump direction on the next grounded launch");
     }
 
@@ -834,21 +834,21 @@ class BotMovementManagerTest {
         AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true);
 
         entry.fidgetSpamAirSteer = false;
-        entry.airSteerVelX = 0.0;
+        entry.setAirSteerVelocityX(0.0);
         entry.nextFidgetActionAtMs = 0L;
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(0.0, entry.airSteerVelX,
+        assertEquals(0.0, entry.airSteerVelocityX(),
                 "non-spam jump fidgets should not reroll random air steering every airborne tick");
 
         entry.fidgetSpamAirSteer = true;
         entry.fidgetActionBaseDelayMs = 100;
-        entry.airSteerVelX = 0.0;
+        entry.setAirSteerVelocityX(0.0);
         entry.nextFidgetActionAtMs = 0L;
         long before = System.currentTimeMillis();
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.airSteerVelX != 0.0,
+        assertTrue(entry.airSteerVelocityX() != 0.0,
                 "spam-air-steer jump fidgets should press random side input on their own delay");
         long after = System.currentTimeMillis();
         assertTrue(entry.nextFidgetActionAtMs >= before + 100
@@ -970,7 +970,7 @@ class BotMovementManagerTest {
         entry.physX = 100;
         entry.physY = 100;
         entry.velY = 0f;
-        entry.airVelX = -8;
+        entry.setAirVelocityX(-8);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 100), new Point(50, 50),
@@ -979,7 +979,7 @@ class BotMovementManagerTest {
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(-300, 100));
 
-        assertEquals(0.0, entry.airSteerVelX, 0.0001);
+        assertEquals(0.0, entry.airSteerVelocityX(), 0.0001);
         assertEquals(new Point(92, 103), bot.getPosition());
     }
 

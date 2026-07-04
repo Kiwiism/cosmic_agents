@@ -154,7 +154,7 @@ class AgentPhysicsEngineTest {
         entry.crouching = true;
         entry.climbUpIntent = true;
         entry.velY = 7f;
-        entry.airVelX = 12;
+        entry.setAirVelocityX(12);
         entry.physX = 99;
         entry.physY = 88;
         entry.movementVelX = 123;
@@ -254,8 +254,8 @@ class AgentPhysicsEngineTest {
         Character bot = mockBot(new Point(100, 200), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = true;
-        entry.airVelX = 8;
-        entry.movementVelX = AgentMovementKinematicsService.velocityFromDeltaX(entry.airVelX);
+        entry.setAirVelocityX(8);
+        entry.setMovementVelocity(AgentMovementKinematicsService.velocityFromDeltaX(entry.airVelocityX()), entry.movementVelY());
         entry.facingDir = 1;
         entry.physX = 100;
         entry.physY = 200;
@@ -263,7 +263,7 @@ class AgentPhysicsEngineTest {
 
         AgentAirbornePhysicsService.stepAirborne(entry, bot);
 
-        assertTrue(entry.airSteerVelX < 0.0, "left steer intent should produce negative airSteerVelX");
+        assertTrue(entry.airSteerVelocityX() < 0.0, "left steer intent should produce negative airSteerVelX");
         assertEquals(-1, entry.facingDir, "facing should follow steer direction, not momentum");
         assertEquals(CharacterStance.JUMP_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
     }
@@ -653,7 +653,7 @@ class AgentPhysicsEngineTest {
 
         assertTrue(motion.lostGround());
         assertTrue(entry.inAir, "walk-off should transition directly into airborne state");
-        assertTrue(entry.airVelX > 0, "walk-off should preserve horizontal momentum instead of zeroing X velocity for one tick");
+        assertTrue(entry.airVelocityX() > 0, "walk-off should preserve horizontal momentum instead of zeroing X velocity for one tick");
         assertTrue(entry.movementVelX > 0, "movement packet should carry non-zero horizontal velocity on the ledge-drop tick");
         assertTrue(bot.getPosition().x > 10, "walk-off should keep the full horizontal step instead of snapping to the ledge edge");
     }
@@ -788,7 +788,7 @@ class AgentPhysicsEngineTest {
         entry.physX = 20;
         entry.physY = 120;
         entry.velY = -30f;
-        entry.airVelX = 0;
+        entry.setAirVelocityX(0);
 
         assertEquals(AgentAirborneStepResult.CEILING, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertEquals(new Point(20, 101), bot.getPosition());
@@ -814,12 +814,12 @@ class AgentPhysicsEngineTest {
         entry.physX = 56;
         entry.physY = 90;
         entry.velY = 0f;
-        entry.airVelX = -8;
+        entry.setAirVelocityX(-8);
 
         assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertTrue(bot.getPosition().x > 50, "wall collision should place the bot on the near side, not inside the wall");
 
-        entry.airSteerVelX = -1.5;
+        entry.setAirSteerVelocityX(-1.5);
         AgentAirbornePhysicsService.stepAirborne(entry, bot);
 
         assertTrue(bot.getPosition().x > 50, "continued air steering into the wall must not cross to the far side");
@@ -842,11 +842,11 @@ class AgentPhysicsEngineTest {
         entry.physX = -389;
         entry.physY = 61;
         entry.velY = -11.9f;
-        entry.airVelX = -11;
+        entry.setAirVelocityX(-11);
 
         assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertEquals(-399, bot.getPosition().x);
-        assertEquals(0, entry.airVelX);
+        assertEquals(0, entry.airVelocityX());
     }
 
     private record StandingLookupCase(Point point, Foothold exactFoothold, Foothold offsetFoothold) {

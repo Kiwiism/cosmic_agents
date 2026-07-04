@@ -16,6 +16,7 @@ import server.agents.capabilities.combat.AgentMobTouchState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
+import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentSwimIntentState;
 
@@ -150,6 +151,7 @@ public class BotEntry {
     int movementVelY = 0;
     int facingDir = 1;
     boolean crouching = false;
+    private final AgentAirborneSteeringState airborneSteeringState = new AgentAirborneSteeringState();
     private final AgentDownJumpState downJumpState = new AgentDownJumpState();
     private final AgentSwimIntentState swimIntentState = new AgentSwimIntentState();
 
@@ -384,35 +386,32 @@ public class BotEntry {
         this.wasMovingX = wasMovingX;
     }
 
-    // Committed horizontal step while airborne (set at launch, never changed mid-air)
-    int airVelX = 0;
+    public AgentAirborneSteeringState airborneSteeringState() {
+        return airborneSteeringState;
+    }
 
     public int airVelocityX() {
-        return airVelX;
+        return airborneSteeringState.velocityX();
     }
 
     public void setAirVelocityX(int airVelocityX) {
-        airVelX = airVelocityX;
+        airborneSteeringState.setVelocityX(airVelocityX);
     }
 
-    // Accumulated air-steering correction (gradually adjusted toward target each tick)
-    double airSteerVelX = 0.0;
-    boolean fixedAirArc = false;
-
     public double airSteerVelocityX() {
-        return airSteerVelX;
+        return airborneSteeringState.steeringVelocityX();
     }
 
     public void setAirSteerVelocityX(double airSteerVelocityX) {
-        airSteerVelX = airSteerVelocityX;
+        airborneSteeringState.setSteeringVelocityX(airSteerVelocityX);
     }
 
     public boolean fixedAirArc() {
-        return fixedAirArc;
+        return airborneSteeringState.fixedAirArc();
     }
 
     public void setFixedAirArc(boolean fixedAirArc) {
-        this.fixedAirArc = fixedAirArc;
+        airborneSteeringState.setFixedAirArc(fixedAirArc);
     }
 
     // Movement intent
