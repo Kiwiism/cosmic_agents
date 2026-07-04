@@ -65,6 +65,7 @@ import server.agents.runtime.AgentGrindTargetState;
 import server.agents.runtime.AgentGrindWanderState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
+import server.agents.runtime.AgentModeState;
 import server.agents.runtime.AgentMoveTargetState;
 import server.agents.runtime.AgentMovementBroadcastState;
 import server.agents.runtime.AgentMovementPhysicsCacheState;
@@ -87,8 +88,7 @@ import java.util.concurrent.ScheduledFuture;
 public class BotEntry {
     final Character bot;
     volatile Character owner;
-    volatile boolean following = false;
-    volatile int followTargetId = 0; // 0 = owner
+    private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();
     final ScheduledFuture<?> task;
     AgentMovementProfile movementProfile = AgentMovementProfile.base();
@@ -470,7 +470,6 @@ public class BotEntry {
     }
 
     // Grind mode
-    volatile boolean grinding = false;
     private final AgentCombatCooldownState combatCooldownState = new AgentCombatCooldownState();
     private final AgentGrindTargetState grindTargetState = new AgentGrindTargetState();
 
@@ -843,12 +842,13 @@ public class BotEntry {
         return leaderActivityState;
     }
 
-    public boolean isGrinding() { return grinding; }
-    public boolean isFollowing() { return following; }
-    public int followTargetId() { return followTargetId; }
-    public void setGrinding(boolean grinding) { this.grinding = grinding; }
-    public void setFollowing(boolean following) { this.following = following; }
-    public void setFollowTargetId(int followTargetId) { this.followTargetId = followTargetId; }
+    public AgentModeState modeState() { return modeState; }
+    public boolean isGrinding() { return modeState.grinding(); }
+    public boolean isFollowing() { return modeState.following(); }
+    public int followTargetId() { return modeState.followTargetId(); }
+    public void setGrinding(boolean grinding) { modeState.setGrinding(grinding); }
+    public void setFollowing(boolean following) { modeState.setFollowing(following); }
+    public void setFollowTargetId(int followTargetId) { modeState.setFollowTargetId(followTargetId); }
     public Character bot() { return bot; }
     public Character owner() { return owner; }
     public void setOwner(Character owner) { this.owner = owner; }

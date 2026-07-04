@@ -987,8 +987,8 @@ class BotManagerTest {
         when(followAnchor.isLoggedinWorld()).thenReturn(true);
 
         BotEntry followerEntry = new BotEntry(follower, owner, null);
-        followerEntry.following = true;
-        followerEntry.followTargetId = followAnchor.getId();
+        AgentBotModeStateRuntime.setFollowing(followerEntry, true);
+        AgentBotModeStateRuntime.setFollowTargetId(followerEntry, followAnchor.getId());
         BotEntry anchorEntry = new BotEntry(followAnchor, owner, null);
 
         Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();

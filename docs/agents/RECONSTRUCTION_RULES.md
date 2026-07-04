@@ -4544,6 +4544,10 @@ Current physics correction:
   methods. `BotEntry` temporarily hosts the Agent-owned state object, while
   script id, step index, entered flag, wait timer, and integer scratch values
   route through the Agent script/task runtime adapter.
+- High-level follow/grind mode state now lives in `AgentModeState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while following, grinding,
+  and follow-target id reads/writes route through the Agent mode runtime
+  adapter.
 
 Initial reconstruction order:
 

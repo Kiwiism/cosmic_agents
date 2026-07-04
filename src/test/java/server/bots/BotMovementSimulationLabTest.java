@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -54,7 +56,7 @@ class BotMovementSimulationLabTest {
         int expectedX = 280;
         assertTrue(Math.abs(finalPos.x - expectedX) <= AgentMovementPhysicsConfig.configuredStopDist(),
                 "bot should settle near owner + formation offset");
-        assertTrue(entry.following);
+        assertTrue(AgentBotModeStateRuntime.following(entry));
         assertNotNull(lab.describeCurrentState("CRASH"));
     }
 

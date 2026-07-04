@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -136,7 +138,7 @@ public class BotFollowTickPerfHarness {
             for (int i = 0; i < botCount; i++) {
                 Character bot = mockCharacter("bot" + i, 1000 + i, map, new Point(30 * i, -200));
                 BotEntry entry = new BotEntry(bot, owner, null);
-                entry.following = true;
+                AgentBotModeStateRuntime.setFollowing(entry, true);
                 AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
                 entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
                 AgentMovementPoseService.teleportTo(entry, bot, bot.getPosition());

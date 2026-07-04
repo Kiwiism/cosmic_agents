@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
@@ -478,7 +480,7 @@ class AgentNavigationGraphServiceTest {
         when(owner.getStance()).thenReturn(CharacterStance.ROPE_STANCE);
 
         BotEntry entry = new BotEntry(mockBot(reuseCase.rawTarget(), map), owner, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertEquals(reuseCase.edge().toRegionId,
                 AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, owner.getPosition()));

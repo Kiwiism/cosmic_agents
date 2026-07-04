@@ -402,7 +402,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(botPos, map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.movementProfile = AgentMovementProfile.base();
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleEdge);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
 

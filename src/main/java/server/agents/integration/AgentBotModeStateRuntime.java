@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.bots.BotEntry;
+import server.agents.runtime.AgentModeState;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed high-level movement mode state.
@@ -10,49 +11,46 @@ public final class AgentBotModeStateRuntime {
     }
 
     public static boolean following(BotEntry entry) {
-        return entry.isFollowing();
+        return state(entry).following();
     }
 
     public static boolean grinding(BotEntry entry) {
-        return entry.isGrinding();
+        return state(entry).grinding();
     }
 
     public static int followTargetId(BotEntry entry) {
-        return entry.followTargetId();
+        return state(entry).followTargetId();
     }
 
     public static void setFollowing(BotEntry entry, boolean following) {
-        entry.setFollowing(following);
+        state(entry).setFollowing(following);
     }
 
     public static void setGrinding(BotEntry entry, boolean grinding) {
-        entry.setGrinding(grinding);
+        state(entry).setGrinding(grinding);
     }
 
     public static void setFollowTargetId(BotEntry entry, int followTargetId) {
-        entry.setFollowTargetId(followTargetId);
+        state(entry).setFollowTargetId(followTargetId);
     }
 
     public static void startFollowing(BotEntry entry, int followTargetId) {
-        setFollowTargetId(entry, followTargetId);
-        setGrinding(entry, false);
-        setFollowing(entry, true);
+        state(entry).startFollowing(followTargetId);
     }
 
     public static void startGrinding(BotEntry entry) {
-        setFollowTargetId(entry, 0);
-        setFollowing(entry, false);
-        setGrinding(entry, true);
+        state(entry).startGrinding();
     }
 
     public static void stopFollowing(BotEntry entry) {
-        setFollowTargetId(entry, 0);
-        setFollowing(entry, false);
+        state(entry).stopFollowing();
     }
 
     public static void stopMovementModes(BotEntry entry) {
-        setFollowTargetId(entry, 0);
-        setFollowing(entry, false);
-        setGrinding(entry, false);
+        state(entry).stopMovementModes();
+    }
+
+    private static AgentModeState state(BotEntry entry) {
+        return entry.modeState();
     }
 }

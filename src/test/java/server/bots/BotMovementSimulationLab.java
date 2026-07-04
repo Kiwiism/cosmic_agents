@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -90,14 +92,14 @@ final class BotMovementSimulationLab {
         BotEntry entry = requireBot(botName);
         Character owner = requireActor(ownerName);
         entry.owner = owner;
-        entry.following = true;
-        entry.grinding = false;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotModeStateRuntime.setGrinding(entry, false);
         refreshFormation(owner);
     }
 
     void clearFollow(String botName) {
         BotEntry entry = requireBot(botName);
-        entry.following = false;
+        AgentBotModeStateRuntime.setFollowing(entry, false);
         entry.owner = null;
         entry.setFollowOffsetX(0);
     }

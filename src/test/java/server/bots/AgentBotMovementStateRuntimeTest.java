@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
@@ -28,9 +30,9 @@ class AgentBotMovementStateRuntimeTest {
         when(bot.getPosition()).thenReturn(new Point(10, 20));
         when(owner.getPosition()).thenReturn(new Point(30, 40));
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.following = true;
-        entry.grinding = true;
-        entry.followTargetId = 123;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentBotModeStateRuntime.setFollowTargetId(entry, 123);
 
         AgentMovementSnapshot snapshot = AgentBotMovementStateRuntime.snapshot(entry);
 
@@ -79,7 +81,7 @@ class AgentBotMovementStateRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         assertEquals(AgentMovementMode.STOPPED, AgentBotMovementStateRuntime.mode(entry));
 
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
         assertEquals(AgentMovementMode.FOLLOWING, AgentBotMovementStateRuntime.mode(entry));
 
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(1, 1), false);
@@ -91,7 +93,7 @@ class AgentBotMovementStateRuntimeTest {
         AgentBotPatrolStateRuntime.startPatrol(entry, 9, 100000000);
         assertEquals(AgentMovementMode.PATROLLING, AgentBotMovementStateRuntime.mode(entry));
 
-        entry.grinding = true;
+        AgentBotModeStateRuntime.setGrinding(entry, true);
         assertEquals(AgentMovementMode.GRINDING, AgentBotMovementStateRuntime.mode(entry));
     }
 

@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 
 import server.agents.capabilities.trade.AgentOfferService;
@@ -187,7 +189,7 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldTriggerGreetingFidgetHalfTheTimeWhileFollowing() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
         assertFalse(entry.fidgetMode() == AgentFidgetMode.NONE);
@@ -202,7 +204,7 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldTriggerFidgetCommandWithoutGreetingRoll() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget"));
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
@@ -237,7 +239,7 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldNotTriggerGreetingFidgetWhileOwnerIsAfk() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 0));

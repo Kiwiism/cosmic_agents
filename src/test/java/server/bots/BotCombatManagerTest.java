@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -1079,7 +1081,7 @@ class BotCombatManagerTest {
         when(bot.getPartyMembersOnSameMap()).thenReturn(List.of(ally));
 
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, Cleric.BLESS);
         AgentBotCombatBuffStateRuntime.setNextSupportBuffAt(entry, Cleric.BLESS, 0L);
 
@@ -1106,7 +1108,7 @@ class BotCombatManagerTest {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.following = true;
+        AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertFalse(AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, AgentCombatConfig.cfg));
     }
@@ -1696,9 +1698,9 @@ class BotCombatManagerTest {
         doReturn(List.of(occupiedTarget, openTarget)).when(map).getAllMonsters();
 
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.grinding = true;
+        AgentBotModeStateRuntime.setGrinding(entry, true);
         BotEntry siblingEntry = new BotEntry(siblingBot, owner, null);
-        siblingEntry.grinding = true;
+        AgentBotModeStateRuntime.setGrinding(siblingEntry, true);
 
         Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry, siblingEntry)));
