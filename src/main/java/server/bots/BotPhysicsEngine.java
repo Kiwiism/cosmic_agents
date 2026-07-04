@@ -9,6 +9,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentAirbornePhysicsService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMotionTimerService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -1309,17 +1310,7 @@ public final class BotPhysicsEngine {
     }
 
     public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
-        int dx = Math.abs(rope.x() - from.x);
-        if (dx <= cfg.ROPE_GRAB_X && from.y >= firstClimbableY(rope) && from.y <= rope.bottomY()) {
-            return true;
-        }
-        if (rope.topY() >= from.y) {
-            return false;
-        }
-
-        int jumpReach = (int) Math.ceil(calculateMaxJumpHeight(profile));
-        return rope.bottomY() >= from.y - jumpReach
-                && dx <= maxJumpHorizontalTravel(map, profile);
+        return AgentJumpProbeService.canReachRopeFromGround(map, from, rope, profile);
     }
 
     public static boolean canStartDownJump(MapleMap map, Point from) {

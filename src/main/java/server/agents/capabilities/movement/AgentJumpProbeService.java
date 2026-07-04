@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import server.bots.BotPhysicsEngine;
+import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -33,6 +34,18 @@ public final class AgentJumpProbeService {
     }
 
     public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope, AgentMovementProfile profile) {
-        return BotPhysicsEngine.canReachRopeFromGround(map, from, rope, profile);
+        int dx = Math.abs(rope.x() - from.x);
+        if (dx <= AgentMovementPhysicsConfig.configuredRopeGrabX()
+                && from.y >= AgentNavigationPhysicsService.firstClimbableY(rope)
+                && from.y <= rope.bottomY()) {
+            return true;
+        }
+        if (rope.topY() >= from.y) {
+            return false;
+        }
+
+        int jumpReach = (int) Math.ceil(AgentMovementKinematicsService.calculateMaxJumpHeight(profile));
+        return rope.bottomY() >= from.y - jumpReach
+                && dx <= AgentMovementKinematicsService.maxJumpHorizontalTravel(map, profile);
     }
 }

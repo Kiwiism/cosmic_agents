@@ -4227,6 +4227,9 @@ Current physics correction:
 - Foothold walk-across connectivity policy now also lives in
   `AgentNavigationPhysicsService`; navigation graph region merging calls the
   Agent service directly.
+- Ground-to-rope reach checks now live in `AgentJumpProbeService`; bot physics
+  delegates remain for compatibility while lower-level rope-grab simulation
+  migrates later.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.
