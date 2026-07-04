@@ -1,6 +1,9 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotPhysicsEngine;
 
@@ -18,6 +21,28 @@ public final class AgentKnockbackMovementService {
     }
 
     public static void applyAirKnockback(BotEntry entry, Character agent, int airVelocityX) {
-        BotPhysicsEngine.applyAirKnockback(entry, agent, airVelocityX);
+        int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
+        Point position = agent.getPosition();
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelocityX);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry,
+                AgentMovementKinematicsService.velocityFromDeltaX(airVelocityX),
+                velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
+        AgentBotMovementStateRuntime.setFacingDirection(entry, preservedFacingDir);
+        AgentMovementPoseService.syncCharacterState(entry);
+    }
+
+    private static int velocityFromAirStep(float airVelocityPerTick) {
+        return Math.round(airVelocityPerTick
+                * (1000f / AgentMovementPhysicsConfig.configuredMovementTickMs()));
     }
 }

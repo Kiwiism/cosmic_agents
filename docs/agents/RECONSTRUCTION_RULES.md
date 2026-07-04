@@ -4218,6 +4218,9 @@ Current physics correction:
 - Queued down-jump/top-rope state and top-rope entry validation now live in
   `AgentQueuedMovementActionService`. Down-jump launch still enters
   `BotPhysicsEngine` until the shared airborne launch primitive migrates.
+- Air-knockback state application now lives in `AgentKnockbackMovementService`.
+  Knockback launch still enters `BotPhysicsEngine` until the shared airborne
+  launch primitive migrates.
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.

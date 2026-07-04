@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMotionTimerService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
@@ -748,23 +749,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void applyAirKnockback(BotEntry entry, Character bot, int airVelX) {
-        int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
-        Point position = bot.getPosition();
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-        stopGroundMotion(entry);
-        AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelX);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        setMovementVelocity(entry, velocityFromDeltaX(airVelX),
-                velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
-        AgentBotMovementStateRuntime.setFacingDirection(entry, preservedFacingDir);
-        syncCharacterState(entry);
+        AgentKnockbackMovementService.applyAirKnockback(entry, bot, airVelX);
     }
 
     private static void landOnGround(BotEntry entry, Character bot, Point position) {
