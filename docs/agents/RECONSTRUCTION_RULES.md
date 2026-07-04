@@ -4618,6 +4618,9 @@ Current physics correction:
   velocity, fall peak, horizontal speed, physics position, ground carry, and
   jump cooldown reads/writes now route through
   `AgentBotMovementPhysicsStateRuntime` over `AgentMovementPhysicsState`.
+- Movement input and facing wrappers have been removed from `BotEntry`.
+  Movement velocity, movement direction, and facing direction reads/writes now
+  route through `AgentBotMovementStateRuntime` over `AgentMovementInputState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

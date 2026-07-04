@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementStateRuntime;
+
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 
 
@@ -1156,7 +1158,7 @@ class BotCombatManagerTest {
         }
 
         assertEquals(600, AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry));
-        assertEquals(-1, entry.facingDirection());
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
         assertTrue(AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry) > System.currentTimeMillis());
     }
 
@@ -1287,7 +1289,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         Monster mob = mockMob(new Point(140, 200), 9300000);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setFacingDirection(1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
 
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
@@ -1297,7 +1299,7 @@ class BotCombatManagerTest {
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(-Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelocityX());
         assertEquals(-3.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
-        assertEquals(1, entry.facingDirection());
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
         assertEquals(CharacterStance.JUMP_RIGHT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 0);
     }
@@ -1313,7 +1315,7 @@ class BotCombatManagerTest {
         AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 200);
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 12.5f);
         entry.setAirVelocityX(-4);
-        entry.setFacingDirection(-1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
 
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
@@ -1322,7 +1324,7 @@ class BotCombatManagerTest {
         assertEquals(new Point(100, 200), bot.getPosition());
         assertEquals(12.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
         assertEquals(Math.round(1.5f * AgentMovementPhysicsConfig.configuredMovementTickMs() / 8.0f), entry.airVelocityX());
-        assertEquals(-1, entry.facingDirection());
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
         assertEquals(CharacterStance.JUMP_LEFT_STANCE, bot.getStance());
         assertDamageDirection(map, bot, 2, 1);
     }
@@ -1349,7 +1351,7 @@ class BotCombatManagerTest {
         MapleMap map = mock(MapleMap.class);
         Character bot = mockBot(new Point(100, 200), map, 1, null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setFacingDirection(-1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
         Monster mob = mockMob(new Point(140, 200), 9300003);
 
         runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
@@ -1517,11 +1519,11 @@ class BotCombatManagerTest {
     void shouldRememberLeftFacingAttackForNextStandingStance() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setFacingDirection(1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
 
         AgentBotCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(true));
 
-        assertEquals(-1, entry.facingDirection());
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
         assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
     }
 
@@ -1529,11 +1531,11 @@ class BotCombatManagerTest {
     void shouldRememberRightFacingAttackForNextStandingStance() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setFacingDirection(-1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
 
         AgentBotCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(false));
 
-        assertEquals(1, entry.facingDirection());
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
     }
 

@@ -641,9 +641,9 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setInAir(false);
-        entry.setMovementVelocity(80, entry.movementVelY());
-        entry.setMoveDirection(0);
-        entry.setFacingDirection(1);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 80, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        AgentBotMovementStateRuntime.setMoveDirection(entry, 0);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
 
         assertTrue(AgentMovementPoseService.isStandingResolvedStance(entry),
                 "residual ground velocity should not force a walking stance when no move key is held");
@@ -695,21 +695,21 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
-        entry.setFacingDirection(-1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-1, entry.facingDirection(), "prone fidget should keep the current facing direction");
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry), "prone fidget should keep the current facing direction");
         assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
                 "prone fidget should send left-facing prone stance");
 
         AgentFidgetService.clear(entry);
-        entry.setFacingDirection(-1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
         entry.setCrouching(false);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-1, entry.facingDirection(), "spam-prone fidget should not synthesize a turn input");
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry), "spam-prone fidget should not synthesize a turn input");
         assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
                 "spam-prone fidget should send left-facing prone stance");
     }

@@ -1,5 +1,7 @@
 package server.bots;
 
+import server.agents.integration.AgentBotMovementStateRuntime;
+
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotAirshowStateRuntime;
 
@@ -38,9 +40,9 @@ class AgentBotAirshowStateRuntimeTest {
 
         AgentBotAirshowStateRuntime.applyFrame(entry, new Point(120, 340), 2000, -1200, -1, true, true);
 
-        assertEquals(2000, entry.movementVelX());
-        assertEquals(-1200, entry.movementVelY());
-        assertEquals(-1, entry.facingDirection());
+        assertEquals(2000, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(-1200, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
         assertTrue(entry.inAir());
         assertTrue(entry.climbing());
     }

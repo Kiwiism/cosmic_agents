@@ -129,14 +129,6 @@ public class BotEntry {
         return movementPhysicsState;
     }
 
-    public int facingDirection() {
-        return movementInputState.facingDirection();
-    }
-
-    public void setFacingDirection(int facingDirection) {
-        movementInputState.setFacingDirection(facingDirection);
-    }
-
     public void setScriptedMovementFrame(Point position,
                                          int velocityX,
                                          int velocityY,
@@ -145,25 +137,9 @@ public class BotEntry {
                                          boolean climbing) {
         movementPhysicsState.setPhysicsPosition(position.x, position.y);
         movementInputState.setVelocity(velocityX, velocityY);
-        setFacingDirection(facingDirection);
+        movementInputState.setFacingDirection(facingDirection);
         movementPhysicsState.setInAir(inAir);
         climbState.setClimbingFlag(climbing);
-    }
-
-    public int movementVelX() {
-        return movementInputState.velocityX();
-    }
-
-    public int movementVelY() {
-        return movementInputState.velocityY();
-    }
-
-    public boolean hasMovementVelocity() {
-        return movementInputState.hasVelocity();
-    }
-
-    public void setMovementVelocity(int velocityX, int velocityY) {
-        movementInputState.setVelocity(velocityX, velocityY);
     }
 
     // Swim intent — set by movement layer, consumed by physics engine. Movement
@@ -182,18 +158,6 @@ public class BotEntry {
     // Mutually exclusive by state (inAir vs grounded), so one field suffices.
     public AgentMovementInputState movementInputState() {
         return movementInputState;
-    }
-
-    public int moveDirection() {
-        return movementInputState.moveDirection();
-    }
-
-    public void setMoveDirection(int moveDirection) {
-        movementInputState.setMoveDirection(moveDirection);
-    }
-
-    public void clearMoveDirection() {
-        movementInputState.clearMoveDirection();
     }
 
     // Rope climbing
