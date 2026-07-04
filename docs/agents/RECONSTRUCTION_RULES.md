@@ -4215,6 +4215,9 @@ Current physics correction:
 - Idle and prone-on-ground pose state clearing now also lives in
   `AgentMovementPoseService`; the bot physics methods are compatibility
   delegates.
+- Queued down-jump/top-rope state and top-rope entry validation now live in
+  `AgentQueuedMovementActionService`. Down-jump launch still enters
+  `BotPhysicsEngine` until the shared airborne launch primitive migrates.
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.

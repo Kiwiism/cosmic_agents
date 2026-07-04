@@ -14,6 +14,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementSnapshotService;
+import server.agents.capabilities.movement.AgentQueuedMovementActionService;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 
 import client.Character;
@@ -644,16 +645,11 @@ public final class BotPhysicsEngine {
     }
 
     public static void queueDownJump(BotEntry entry, Character bot) {
-        idleOnGround(entry, bot);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
-        AgentBotMovementStateRuntime.setCrouching(entry, true);
-        syncCharacterState(entry);
+        AgentQueuedMovementActionService.queueDownJump(entry, bot);
     }
 
     public static void queueTopRopeEntry(BotEntry entry, Character bot, Rope rope, int y) {
-        idleOnGround(entry, bot);
-        AgentBotClimbStateRuntime.queueRopeEntry(entry, rope, y);
-        syncCharacterState(entry);
+        AgentQueuedMovementActionService.queueTopRopeEntry(entry, bot, rope, y);
     }
 
     public static void beginGroundJump(BotEntry entry, Character bot, int airVelX) {
@@ -724,19 +720,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void beginTopRopeEntry(BotEntry entry, Character bot) {
-        Rope rope = AgentBotClimbStateRuntime.ropeEntryRope(entry);
-        int ropeY = AgentBotClimbStateRuntime.ropeEntryY(entry);
-        clearRopeEntryIntent(entry);
-        if (rope == null || bot == null) {
-            syncCharacterState(entry);
-            return;
-        }
-        Point position = bot.getPosition();
-        if (position == null || Math.abs(position.x - rope.x()) > cfg.ROPE_GRAB_X) {
-            syncCharacterState(entry);
-            return;
-        }
-        attachToRope(entry, bot, rope, ropeY);
+        AgentQueuedMovementActionService.beginTopRopeEntry(entry, bot);
     }
 
     /** Called by navigation when a DROP edge is executed — bot intentionally walks off a ledge. */
