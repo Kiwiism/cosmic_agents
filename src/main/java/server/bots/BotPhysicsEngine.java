@@ -369,60 +369,7 @@ public final class BotPhysicsEngine {
     // Canonical walk-connectivity rule shared by graph region merging and runtime ground traversal.
     // If two foothold endpoints form a walkable local step, they must be in the same walk region.
     public static boolean canWalkAcrossFootholds(Foothold first, Foothold second) {
-        if (first == null || second == null || first.isWall() || second.isWall()) {
-            return false;
-        }
-
-        EndpointConnection connection = sharedEndpointConnection(first, second);
-        if (connection == null) {
-            connection = closestEndpointConnection(first, second);
-            if (connection == null
-                    || (Math.abs(connection.to().x - connection.from().x)
-                    + Math.abs(connection.to().y - connection.from().y)) > 2) {
-                return false;
-            }
-        }
-
-        int dx = Math.abs(connection.to().x - connection.from().x);
-        int dy = connection.to().y - connection.from().y;
-        if (!isWalkableEndpointStep(dx, dy)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private record EndpointConnection(Point from, Point to) {
-    }
-
-    private static Point[] endpoints(Foothold fh) {
-        return new Point[]{new Point(fh.getX1(), fh.getY1()), new Point(fh.getX2(), fh.getY2())};
-    }
-
-    private static EndpointConnection closestEndpointConnection(Foothold first, Foothold second) {
-        EndpointConnection best = null;
-        int bestDistance = Integer.MAX_VALUE;
-        for (Point from : endpoints(first)) {
-            for (Point to : endpoints(second)) {
-                int distance = Math.abs(to.x - from.x) + Math.abs(to.y - from.y);
-                if (distance < bestDistance) {
-                    best = new EndpointConnection(from, to);
-                    bestDistance = distance;
-                }
-            }
-        }
-        return best;
-    }
-
-    private static EndpointConnection sharedEndpointConnection(Foothold first, Foothold second) {
-        for (Point from : endpoints(first)) {
-            for (Point to : endpoints(second)) {
-                if (from.equals(to)) {
-                    return new EndpointConnection(from, to);
-                }
-            }
-        }
-        return null;
+        return AgentNavigationPhysicsService.canWalkAcrossFootholds(first, second);
     }
 
     static Point findWalkRegionGroundPoint(MapleMap map, Foothold foothold, int x, int referenceY) {

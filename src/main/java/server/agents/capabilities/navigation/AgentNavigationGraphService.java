@@ -896,7 +896,7 @@ public final class AgentNavigationGraphService {
     }
 
     private static void unionWalkableFootholds(UnionFind unionFind, Foothold first, Foothold second) {
-        if (!BotPhysicsEngine.canWalkAcrossFootholds(first, second)) {
+        if (!AgentNavigationPhysicsService.canWalkAcrossFootholds(first, second)) {
             return;
         }
         unionFind.union(first.getId(), second.getId());
