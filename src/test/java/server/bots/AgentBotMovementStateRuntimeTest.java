@@ -191,11 +191,10 @@ class AgentBotMovementStateRuntimeTest {
         entry.inAir = true;
         entry.climbing = true;
         entry.setDownJumpPending(true);
-        entry.crouching = true;
+        entry.setCrouching(true);
         entry.setDownJumpGracePeriodMs(100L);
         AgentBotMovementStateRuntime.setWasMovingX(entry, true);
-        entry.movementVelX = 12;
-        entry.movementVelY = -3;
+        entry.setMovementVelocity(12, -3);
 
         assertTrue(AgentBotMovementStateRuntime.inAir(entry));
         assertFalse(AgentBotMovementStateRuntime.grounded(entry));

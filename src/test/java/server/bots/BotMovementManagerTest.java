@@ -622,7 +622,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.wasMovingX = true;
+        entry.setWasMovingX(true);
         entry.movementProfile = new AgentMovementProfile(140, 100);
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
         AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
@@ -641,9 +641,9 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(0, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = false;
-        entry.movementVelX = 80;
-        entry.moveDir = 0;
-        entry.facingDir = 1;
+        entry.setMovementVelocity(80, entry.movementVelY());
+        entry.setMoveDirection(0);
+        entry.setFacingDirection(1);
 
         assertTrue(AgentMovementPoseService.isStandingResolvedStance(entry),
                 "residual ground velocity should not force a walking stance when no move key is held");
@@ -682,7 +682,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.crouching);
+        assertTrue(entry.crouching());
     }
 
     @Test
@@ -695,21 +695,21 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
-        entry.facingDir = -1;
+        entry.setFacingDirection(-1);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-1, entry.facingDir, "prone fidget should keep the current facing direction");
+        assertEquals(-1, entry.facingDirection(), "prone fidget should keep the current facing direction");
         assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
                 "prone fidget should send left-facing prone stance");
 
         AgentFidgetService.clear(entry);
-        entry.facingDir = -1;
-        entry.crouching = false;
+        entry.setFacingDirection(-1);
+        entry.setCrouching(false);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-1, entry.facingDir, "spam-prone fidget should not synthesize a turn input");
+        assertEquals(-1, entry.facingDirection(), "spam-prone fidget should not synthesize a turn input");
         assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
                 "spam-prone fidget should send left-facing prone stance");
     }
@@ -728,7 +728,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.SOCIAL);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.crouching);
+        assertTrue(entry.crouching());
     }
 
     @Test
@@ -745,7 +745,7 @@ class BotMovementManagerTest {
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.AUTO_FOLLOW);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(entry.crouching, "base-speed follow fidgets should not be blocked by a speed-stat guard");
+        assertTrue(entry.crouching(), "base-speed follow fidgets should not be blocked by a speed-stat guard");
     }
 
     @Test

@@ -4511,6 +4511,11 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while committed
   air X velocity, corrective air-steer velocity, and fixed-air-arc mode route
   through the Agent movement capability.
+- Movement input and packet-pose state now lives in `AgentMovementInputState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while move
+  direction, packet movement velocity, facing direction, crouch/prone state,
+  and horizontal movement hysteresis route through the Agent movement
+  capability.
 
 Initial reconstruction order:
 

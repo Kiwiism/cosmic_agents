@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementMode;
+import server.agents.capabilities.movement.AgentMovementInputState;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.bots.BotEntry;
 import server.agents.capabilities.movement.AgentDownJumpState;
@@ -73,31 +74,31 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static int moveDirection(BotEntry entry) {
-        return entry.moveDirection();
+        return movementInputState(entry).moveDirection();
     }
 
     public static boolean hasMoveDirection(BotEntry entry) {
-        return entry.moveDirection() != 0;
+        return movementInputState(entry).moveDirection() != 0;
     }
 
     public static void setMoveDirection(BotEntry entry, int moveDirection) {
-        entry.setMoveDirection(moveDirection);
+        movementInputState(entry).setMoveDirection(moveDirection);
     }
 
     public static void clearMoveDirection(BotEntry entry) {
-        entry.clearMoveDirection();
+        movementInputState(entry).clearMoveDirection();
     }
 
     public static int facingDirection(BotEntry entry) {
-        return entry.facingDirection();
+        return movementInputState(entry).facingDirection();
     }
 
     public static int facingDirectionSign(BotEntry entry) {
-        return entry.facingDirection() >= 0 ? 1 : -1;
+        return movementInputState(entry).facingDirectionSign();
     }
 
     public static void setFacingDirection(BotEntry entry, int facingDirection) {
-        entry.setFacingDirection(facingDirection);
+        movementInputState(entry).setFacingDirection(facingDirection);
     }
 
     public static boolean inAir(BotEntry entry) {
@@ -129,11 +130,11 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static boolean crouching(BotEntry entry) {
-        return entry.crouching();
+        return movementInputState(entry).crouching();
     }
 
     public static void setCrouching(BotEntry entry, boolean crouching) {
-        entry.setCrouching(crouching);
+        movementInputState(entry).setCrouching(crouching);
     }
 
     public static boolean hasDownJumpPending(BotEntry entry) {
@@ -153,31 +154,35 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static boolean wasMovingX(BotEntry entry) {
-        return entry.wasMovingX();
+        return movementInputState(entry).wasMovingX();
     }
 
     public static void setWasMovingX(BotEntry entry, boolean wasMovingX) {
-        entry.setWasMovingX(wasMovingX);
+        movementInputState(entry).setWasMovingX(wasMovingX);
     }
 
     public static int movementVelocityX(BotEntry entry) {
-        return entry.movementVelX();
+        return movementInputState(entry).velocityX();
     }
 
     public static int movementVelocityY(BotEntry entry) {
-        return entry.movementVelY();
+        return movementInputState(entry).velocityY();
     }
 
     public static boolean hasMovementVelocity(BotEntry entry) {
-        return entry.hasMovementVelocity();
+        return movementInputState(entry).hasVelocity();
     }
 
     public static void setMovementVelocity(BotEntry entry, int velocityX, int velocityY) {
-        entry.setMovementVelocity(velocityX, velocityY);
+        movementInputState(entry).setVelocity(velocityX, velocityY);
     }
 
     private static AgentDownJumpState downJumpState(BotEntry entry) {
         return entry.downJumpState();
+    }
+
+    private static AgentMovementInputState movementInputState(BotEntry entry) {
+        return entry.movementInputState();
     }
 
     private static Point position(Character character) {

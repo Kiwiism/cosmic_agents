@@ -18,6 +18,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentDownJumpState;
+import server.agents.capabilities.movement.AgentMovementInputState;
 import server.agents.capabilities.movement.AgentSwimIntentState;
 
 import client.Character;
@@ -147,12 +148,9 @@ public class BotEntry {
     double fallPeakPhysY = Double.POSITIVE_INFINITY;
     boolean inAir = false;
     int jumpCooldownMs = 0;
-    int movementVelX = 0;
-    int movementVelY = 0;
-    int facingDir = 1;
-    boolean crouching = false;
     private final AgentAirborneSteeringState airborneSteeringState = new AgentAirborneSteeringState();
     private final AgentDownJumpState downJumpState = new AgentDownJumpState();
+    private final AgentMovementInputState movementInputState = new AgentMovementInputState();
     private final AgentSwimIntentState swimIntentState = new AgentSwimIntentState();
 
     public boolean inAir() {
@@ -236,11 +234,11 @@ public class BotEntry {
     }
 
     public int facingDirection() {
-        return facingDir;
+        return movementInputState.facingDirection();
     }
 
     public void setFacingDirection(int facingDirection) {
-        facingDir = facingDirection >= 0 ? 1 : -1;
+        movementInputState.setFacingDirection(facingDirection);
     }
 
     public void setScriptedMovementFrame(Point position,
@@ -251,31 +249,26 @@ public class BotEntry {
                                          boolean climbing) {
         physX = position.x;
         physY = position.y;
-        movementVelX = velocityX;
-        movementVelY = velocityY;
+        movementInputState.setVelocity(velocityX, velocityY);
         setFacingDirection(facingDirection);
         this.inAir = inAir;
         this.climbing = climbing;
     }
 
     public int movementVelX() {
-        return movementVelX;
+        return movementInputState.velocityX();
     }
 
     public int movementVelY() {
-        return movementVelY;
+        return movementInputState.velocityY();
     }
 
     public boolean hasMovementVelocity() {
-        return movementVelX != 0 || movementVelY != 0;
+        return movementInputState.hasVelocity();
     }
 
     public void setMovementVelocity(int velocityX, int velocityY) {
-        movementVelX = velocityX;
-        movementVelY = velocityY;
-        if (velocityX != 0) {
-            setFacingDirection(velocityX);
-        }
+        movementInputState.setVelocity(velocityX, velocityY);
     }
 
     // Swim intent — set by movement layer, consumed by physics engine. Movement
@@ -332,18 +325,20 @@ public class BotEntry {
     //   - Ground: applyGroundMotion() integrates through force/friction model
     //   - Airborne: stepAirborne() applies air steering accel (gated by fixedAirArc)
     // Mutually exclusive by state (inAir vs grounded), so one field suffices.
-    int moveDir = 0;                     // -1 left, 0 none, +1 right
+    public AgentMovementInputState movementInputState() {
+        return movementInputState;
+    }
 
     public int moveDirection() {
-        return moveDir;
+        return movementInputState.moveDirection();
     }
 
     public void setMoveDirection(int moveDirection) {
-        moveDir = Integer.compare(moveDirection, 0);
+        movementInputState.setMoveDirection(moveDirection);
     }
 
     public void clearMoveDirection() {
-        moveDir = 0;
+        movementInputState.clearMoveDirection();
     }
 
     // Rope climbing
@@ -376,14 +371,12 @@ public class BotEntry {
     }
 
     // Horizontal movement hysteresis
-    boolean wasMovingX = false;
-
     public boolean wasMovingX() {
-        return wasMovingX;
+        return movementInputState.wasMovingX();
     }
 
     public void setWasMovingX(boolean wasMovingX) {
-        this.wasMovingX = wasMovingX;
+        movementInputState.setWasMovingX(wasMovingX);
     }
 
     public AgentAirborneSteeringState airborneSteeringState() {
@@ -1632,11 +1625,11 @@ public class BotEntry {
     }
 
     public boolean crouching() {
-        return crouching;
+        return movementInputState.crouching();
     }
 
     public void setCrouching(boolean crouching) {
-        this.crouching = crouching;
+        movementInputState.setCrouching(crouching);
     }
 
     public void clearFidgetState() {
