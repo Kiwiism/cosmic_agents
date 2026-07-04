@@ -4334,6 +4334,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while load decay, cooldown,
   streak, and pruning adapters use Agent social state types instead of a
   BotEntry inner state class.
+- Script task queue storage now lives in `AgentScriptTaskQueueState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while task queueing, active
+  task selection, clearing, and activity epoch checks route through the Agent
+  plan state.
 
 Initial reconstruction order:
 

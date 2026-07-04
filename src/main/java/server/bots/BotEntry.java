@@ -22,6 +22,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
+import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 
 import java.awt.*;
@@ -841,7 +842,7 @@ public class BotEntry {
     }
     // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
     // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
-    volatile int activityEpoch = 0;
+    private final AgentScriptTaskQueueState scriptTaskQueueState = new AgentScriptTaskQueueState();
     Point shopStuckCheckPos = null;
     long shopStuckCheckAtMs = 0L;
 
@@ -1339,42 +1340,40 @@ public class BotEntry {
         messageQueueState.setSending(msgSending);
     }
 
-    // Generic scripted task queue. Per-map scripts enqueue small primitives
-    // (move, follow, grind, drop) and the shared manager executes them.
-    final ArrayDeque<AgentTask> scriptTasks = new ArrayDeque<>();
-    AgentTask activeScriptTask = null;
+    public AgentScriptTaskQueueState scriptTaskQueueState() {
+        return scriptTaskQueueState;
+    }
 
     public int activityEpoch() {
-        return activityEpoch;
+        return scriptTaskQueueState.activityEpoch();
     }
 
     public int bumpActivityEpoch() {
-        return ++activityEpoch;
+        return scriptTaskQueueState.bumpActivityEpoch();
     }
 
     public void addScriptTask(AgentTask task) {
-        scriptTasks.add(task);
+        scriptTaskQueueState.addTask(task);
     }
 
     public AgentTask activeScriptTask() {
-        return activeScriptTask;
+        return scriptTaskQueueState.activeTask();
     }
 
     public void setActiveScriptTask(AgentTask activeScriptTask) {
-        this.activeScriptTask = activeScriptTask;
+        scriptTaskQueueState.setActiveTask(activeScriptTask);
     }
 
     public AgentTask pollScriptTask() {
-        return scriptTasks.poll();
+        return scriptTaskQueueState.pollTask();
     }
 
     public boolean hasScriptTasks() {
-        return activeScriptTask != null || !scriptTasks.isEmpty();
+        return scriptTaskQueueState.hasTasks();
     }
 
     public void clearScriptTasks() {
-        scriptTasks.clear();
-        activeScriptTask = null;
+        scriptTaskQueueState.clearTasks();
     }
 
     // AFK detection

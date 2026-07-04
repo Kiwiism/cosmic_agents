@@ -13,7 +13,7 @@ public final class AgentBotScriptTaskStateRuntime {
     }
 
     public static int activityEpoch(BotEntry entry) {
-        return entry.activityEpoch();
+        return entry.scriptTaskQueueState().activityEpoch();
     }
 
     public static boolean isCurrentActivityEpoch(BotEntry entry, int epoch) {
@@ -21,20 +21,20 @@ public final class AgentBotScriptTaskStateRuntime {
     }
 
     public static void clearTasksAndBumpEpoch(BotEntry entry) {
-        entry.bumpActivityEpoch();
-        entry.clearScriptTasks();
+        entry.scriptTaskQueueState().bumpActivityEpoch();
+        entry.scriptTaskQueueState().clearTasks();
     }
 
     public static void queueTask(BotEntry entry, AgentTask task) {
-        entry.addScriptTask(task);
+        entry.scriptTaskQueueState().addTask(task);
     }
 
     public static boolean hasQueuedTasks(BotEntry entry) {
-        return entry != null && entry.hasScriptTasks();
+        return entry != null && entry.scriptTaskQueueState().hasTasks();
     }
 
     public static AgentTask activeTask(BotEntry entry) {
-        return entry.activeScriptTask();
+        return entry.scriptTaskQueueState().activeTask();
     }
 
     public static boolean hasActiveTask(BotEntry entry) {
@@ -42,17 +42,17 @@ public final class AgentBotScriptTaskStateRuntime {
     }
 
     public static AgentTask activateNextTask(BotEntry entry) {
-        AgentTask activeTask = entry.activeScriptTask();
+        AgentTask activeTask = entry.scriptTaskQueueState().activeTask();
         if (activeTask != null) {
             return activeTask;
         }
-        activeTask = entry.pollScriptTask();
-        entry.setActiveScriptTask(activeTask);
+        activeTask = entry.scriptTaskQueueState().pollTask();
+        entry.scriptTaskQueueState().setActiveTask(activeTask);
         return activeTask;
     }
 
     public static void clearActiveTask(BotEntry entry) {
-        entry.setActiveScriptTask(null);
+        entry.scriptTaskQueueState().setActiveTask(null);
     }
 
     public static boolean isActiveLocalOpportunityMoveTo(BotEntry entry, Point targetPos) {
