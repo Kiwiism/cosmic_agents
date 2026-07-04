@@ -28,7 +28,7 @@ public final class AgentBotEquipmentRuntime {
                     return false;
                 }
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(entry.bot(), slots)));
+                        AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
                 return true;
             }
 
@@ -36,14 +36,14 @@ public final class AgentBotEquipmentRuntime {
             public void unequipAll() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     AgentBotMovementCommandRuntime.stop(entry);
-                    AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(entry.bot()));
+                    AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
             }
 
             @Override
             public void autoEquipDebug() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
-                    List<String> lines = AgentEquipmentService.autoEquipDebug(entry.bot());
+                    List<String> lines = AgentEquipmentService.autoEquipDebug(bot(entry));
                     for (String line : lines) {
                         AgentBotEquipmentReplyRuntime.replyNow(entry, line);
                     }
@@ -53,10 +53,18 @@ public final class AgentBotEquipmentRuntime {
             @Override
             public void autoEquip() {
                 AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
-                    AgentEquipmentService.autoEquip(entry.bot(), entry.owner(), AgentBotOfferStateRuntime.pendingLootOfferItem(entry), true);
+                    AgentEquipmentService.autoEquip(
+                            bot(entry),
+                            AgentBotRuntimeIdentityRuntime.owner(entry),
+                            AgentBotOfferStateRuntime.pendingLootOfferItem(entry),
+                            true);
                     AgentBotEquipmentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }
         };
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

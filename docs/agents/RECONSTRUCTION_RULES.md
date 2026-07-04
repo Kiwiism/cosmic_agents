@@ -4732,6 +4732,10 @@ Current physics correction:
   `AgentBotRuntimeIdentityRuntime` before recommended gear prompts and spawn
   upgrade gating. Build prompt, AP/SP assignment, idle checks, and offer
   behavior remain unchanged.
+- Equipment chat callbacks now resolve Agent and leader identity through
+  `AgentBotRuntimeIdentityRuntime` before unequip, debug, and auto-equip side
+  effects. Scheduling, movement-stop behavior, replies, and pending-offer input
+  remain unchanged.
 
 Initial reconstruction order:
 
