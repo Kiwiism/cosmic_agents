@@ -4568,6 +4568,9 @@ Current physics correction:
 - Airshow state wrappers have been removed from `BotEntry`. Airshow active
   state and trail timing now route through `AgentBotAirshowStateRuntime` and
   `AgentAirshowState`.
+- Manual trade invite wrappers have been removed from `BotEntry`. Manual trade
+  reference, accept delay, and timeout state now route through
+  `AgentBotManualTradeStateRuntime` and `AgentManualTradeState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

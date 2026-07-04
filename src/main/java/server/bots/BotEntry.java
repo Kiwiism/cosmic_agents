@@ -25,7 +25,6 @@ import server.agents.capabilities.movement.AgentMovementProfileState;
 
 import client.Character;
 import client.inventory.Item;
-import server.Trade;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapItem;
@@ -1296,30 +1295,6 @@ public class BotEntry {
 
     public AgentManualTradeState manualTradeState() {
         return manualTradeState;
-    }
-
-    public int manualTradeAcceptDelayMs() {
-        return manualTradeState.acceptDelayMs();
-    }
-
-    public void setManualTradeAcceptDelayMs(int manualTradeAcceptDelayMs) {
-        manualTradeState.setAcceptDelayMs(manualTradeAcceptDelayMs);
-    }
-
-    public Trade manualTradeRef() {
-        return manualTradeState.tradeRef();
-    }
-
-    public void setManualTradeRef(Trade manualTradeRef) {
-        manualTradeState.setTradeRef(manualTradeRef);
-    }
-
-    public int manualTradeTimeoutMs() {
-        return manualTradeState.timeoutMs();
-    }
-
-    public void setManualTradeTimeoutMs(int manualTradeTimeoutMs) {
-        manualTradeState.setTimeoutMs(manualTradeTimeoutMs);
     }
 
     public int lastGroundFhId() {

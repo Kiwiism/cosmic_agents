@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.Trade;
+import server.agents.capabilities.trade.AgentManualTradeState;
 import server.bots.BotEntry;
 
 /**
@@ -11,34 +12,56 @@ public final class AgentBotManualTradeStateRuntime {
     }
 
     public static Trade tradeRef(BotEntry entry) {
-        return entry.manualTradeState().tradeRef();
+        AgentManualTradeState state = state(entry);
+        return state == null ? null : state.tradeRef();
     }
 
     public static void beginTrade(BotEntry entry, Trade trade, int timeoutMs) {
-        entry.manualTradeState().begin(trade, timeoutMs);
+        AgentManualTradeState state = state(entry);
+        if (state != null) {
+            state.begin(trade, timeoutMs);
+        }
     }
 
     public static int timeoutMs(BotEntry entry) {
-        return entry.manualTradeState().timeoutMs();
+        AgentManualTradeState state = state(entry);
+        return state == null ? 0 : state.timeoutMs();
     }
 
     public static void setTimeoutMs(BotEntry entry, int timeoutMs) {
-        entry.manualTradeState().setTimeoutMs(timeoutMs);
+        AgentManualTradeState state = state(entry);
+        if (state != null) {
+            state.setTimeoutMs(timeoutMs);
+        }
     }
 
     public static int acceptDelayMs(BotEntry entry) {
-        return entry.manualTradeState().acceptDelayMs();
+        AgentManualTradeState state = state(entry);
+        return state == null ? 0 : state.acceptDelayMs();
     }
 
     public static void ensureAcceptDelay(BotEntry entry, int delayMs) {
-        entry.manualTradeState().ensureAcceptDelay(delayMs);
+        AgentManualTradeState state = state(entry);
+        if (state != null) {
+            state.ensureAcceptDelay(delayMs);
+        }
     }
 
     public static void setAcceptDelayMs(BotEntry entry, int delayMs) {
-        entry.manualTradeState().setAcceptDelayMs(delayMs);
+        AgentManualTradeState state = state(entry);
+        if (state != null) {
+            state.setAcceptDelayMs(delayMs);
+        }
     }
 
     public static void clear(BotEntry entry) {
-        entry.manualTradeState().clear();
+        AgentManualTradeState state = state(entry);
+        if (state != null) {
+            state.clear();
+        }
+    }
+
+    private static AgentManualTradeState state(BotEntry entry) {
+        return entry == null ? null : entry.manualTradeState();
     }
 }
