@@ -636,28 +636,11 @@ public final class BotPhysicsEngine {
     }
 
     public static void idleOnGround(BotEntry entry, Character bot) {
-        Point position = bot.getPosition();
-        AgentBotMovementStateRuntime.setInAir(entry, false);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
-        clearRopeEntryIntent(entry);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-        stopGroundMotion(entry);
-        setMovementVelocity(entry, 0, 0);
-        syncCharacterState(entry);
+        AgentMovementPoseService.idleOnGround(entry, bot);
     }
 
     public static void proneOnGround(BotEntry entry, Character bot) {
-        idleOnGround(entry, bot);
-        AgentBotMovementStateRuntime.setCrouching(entry, true);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        syncCharacterState(entry);
+        AgentMovementPoseService.proneOnGround(entry, bot);
     }
 
     public static void queueDownJump(BotEntry entry, Character bot) {

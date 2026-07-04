@@ -4212,6 +4212,9 @@ Current physics correction:
   `AgentMovementPoseService`. `BotPhysicsEngine` retains only temporary
   compatibility delegates for those entry points while the remaining collision,
   ground, air, rope, swim, and packet-visible physics runtime migrates.
+- Idle and prone-on-ground pose state clearing now also lives in
+  `AgentMovementPoseService`; the bot physics methods are compatibility
+  delegates.
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.

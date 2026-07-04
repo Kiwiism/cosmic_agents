@@ -8,7 +8,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -37,11 +36,28 @@ public final class AgentMovementPoseService {
     }
 
     public static void idleOnGround(BotEntry entry, Character agent) {
-        BotPhysicsEngine.idleOnGround(entry, agent);
+        Point position = agent.getPosition();
+        AgentBotMovementStateRuntime.setInAir(entry, false);
+        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentBotMovementStateRuntime.setCrouching(entry, false);
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
+        AgentBotClimbStateRuntime.clearRopeEntry(entry);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentBotMovementStateRuntime.clearMoveDirection(entry);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0, 0);
+        syncCharacterState(entry);
     }
 
     public static void proneOnGround(BotEntry entry, Character agent) {
-        BotPhysicsEngine.proneOnGround(entry, agent);
+        idleOnGround(entry, agent);
+        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
+        syncCharacterState(entry);
     }
 
     public static int resolveIdleGroundStance(BotEntry entry) {
