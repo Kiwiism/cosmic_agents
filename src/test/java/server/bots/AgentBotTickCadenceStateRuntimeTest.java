@@ -11,8 +11,8 @@ class AgentBotTickCadenceStateRuntimeTest {
     @Test
     void resetsTickCadenceState() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setSkipDelayMs(250);
-        entry.setAiTickAccumulatorMs(75);
+        AgentBotTickCadenceStateRuntime.setSkipDelayMs(entry, 250);
+        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry, 75);
 
         AgentBotTickCadenceStateRuntime.reset(entry);
 
@@ -23,7 +23,7 @@ class AgentBotTickCadenceStateRuntimeTest {
     @Test
     void consumesSkipDelayByTick() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.setSkipDelayMs(150);
+        AgentBotTickCadenceStateRuntime.setSkipDelayMs(entry, 150);
 
         assertTrue(AgentBotTickCadenceStateRuntime.consumeSkipDelay(entry, 100));
         assertEquals(50, AgentBotTickCadenceStateRuntime.skipDelayMs(entry));

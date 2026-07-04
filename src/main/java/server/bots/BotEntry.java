@@ -538,11 +538,6 @@ public class BotEntry {
     public Character owner() { return identityState.leader(); }
     public void setOwner(Character owner) { identityState.setLeader(owner); }
     public AgentRuntimeIdentityState identityState() { return identityState; }
-    public String lastOwnerCommand() { return leaderActivityState.lastCommand(); }
-    public long lastOwnerCommandAtMs() { return leaderActivityState.lastCommandAtMs(); }
-    public void recordLastOwnerCommand(String command, long commandAtMs) {
-        leaderActivityState.recordLastCommand(command, commandAtMs);
-    }
     public AgentBuildState buildState() {
         return buildState;
     }
@@ -620,54 +615,6 @@ public class BotEntry {
         return scriptTaskQueueState;
     }
 
-    public Point ownerAfkPosition() {
-        return leaderActivityState.afkPosition();
-    }
-
-    public void setOwnerAfkPosition(Point ownerAfkPos) {
-        leaderActivityState.setAfkPosition(ownerAfkPos);
-    }
-
-    public long ownerAfkSinceMs() {
-        return leaderActivityState.afkSinceMs();
-    }
-
-    public void setOwnerAfkSinceMs(long ownerAfkSinceMs) {
-        leaderActivityState.setAfkSinceMs(ownerAfkSinceMs);
-    }
-
-    public boolean ownerWasAfk() {
-        return leaderActivityState.wasAfk();
-    }
-
-    public void setOwnerWasAfk(boolean ownerWasAfk) {
-        leaderActivityState.setWasAfk(ownerWasAfk);
-    }
-
-    public long ownerOfflineOrDeadSinceMs() {
-        return leaderActivityState.offlineOrDeadSinceMs();
-    }
-
-    public void setOwnerOfflineOrDeadSinceMs(long ownerOfflineOrDeadSinceMs) {
-        leaderActivityState.setOfflineOrDeadSinceMs(ownerOfflineOrDeadSinceMs);
-    }
-
-    public boolean ownerReturnedToTown() {
-        return leaderActivityState.returnedToTown();
-    }
-
-    public void setOwnerReturnedToTown(boolean ownerReturnedToTown) {
-        leaderActivityState.setReturnedToTown(ownerReturnedToTown);
-    }
-
-    public boolean ownerAwaySafeMode() {
-        return leaderActivityState.awaySafeMode();
-    }
-
-    public void setOwnerAwaySafeMode(boolean ownerAwaySafeMode) {
-        leaderActivityState.setAwaySafeMode(ownerAwaySafeMode);
-    }
-
     // Foothold index, rebuilt on map change
     private final AgentMapTrackingState mapTrackingState = new AgentMapTrackingState();
 
@@ -680,22 +627,6 @@ public class BotEntry {
 
     public AgentFormationOffsetState formationOffsetState() {
         return formationOffsetState;
-    }
-
-    public int skipDelayMs() {
-        return tickState.skipDelayMs();
-    }
-
-    public void setSkipDelayMs(int skipDelayMs) {
-        tickState.setSkipDelayMs(skipDelayMs);
-    }
-
-    public int aiTickAccumulatorMs() {
-        return tickState.aiTickAccumulatorMs();
-    }
-
-    public void setAiTickAccumulatorMs(int aiTickAccumulatorMs) {
-        tickState.setAiTickAccumulatorMs(aiTickAccumulatorMs);
     }
 
     // "Move here" target — bot navigates to this fixed point, then idles until cleared

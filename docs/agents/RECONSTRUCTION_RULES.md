@@ -4606,6 +4606,10 @@ Current physics correction:
   wrappers were removed from `BotEntry`. KPQ stage-5 reset now routes through
   `AgentBotPqRuntime` directly to `AgentKpqState`; trade and gear-prompt
   callers already use Agent-owned state adapters.
+- Tick cadence and leader activity wrappers have been removed from `BotEntry`.
+  Skip-delay and AI accumulator setup now routes through
+  `AgentBotTickCadenceStateRuntime`; AFK, inactive, returned-to-town, and last
+  leader-command state route through `AgentBotActivityStateRuntime`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

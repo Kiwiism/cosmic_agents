@@ -31,6 +31,7 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
@@ -84,7 +85,7 @@ final class BotMovementSimulationLab {
     BotEntry spawnBot(String name, int id, MapleMap map, Point startPosition) {
         Character bot = spawnActor(name, id, map, startPosition);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.setSkipDelayMs(0);
+        AgentBotTickCadenceStateRuntime.setSkipDelayMs(entry, 0);
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
         AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.fromCharacter(bot));
         bots.put(name, entry);
@@ -137,7 +138,7 @@ final class BotMovementSimulationLab {
     }
 
     void setAiAccumulator(String botName, int accumulatorMs) {
-        requireBot(botName).setAiTickAccumulatorMs(accumulatorMs);
+        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(requireBot(botName), accumulatorMs);
     }
 
     void primeMapState(String botName) {
@@ -273,12 +274,15 @@ final class BotMovementSimulationLab {
     }
 
     private static boolean consumeAiTick(BotEntry entry) {
-        entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() + AgentMovementPhysicsConfig.configuredMovementTickMs());
-        if (entry.aiTickAccumulatorMs() < AgentRuntimeConfig.cfg.AI_TICK_MS) {
+        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)
+                        + AgentMovementPhysicsConfig.configuredMovementTickMs());
+        if (AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) < AgentRuntimeConfig.cfg.AI_TICK_MS) {
             return false;
         }
 
-        entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() - AgentRuntimeConfig.cfg.AI_TICK_MS);
+        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) - AgentRuntimeConfig.cfg.AI_TICK_MS);
         return true;
     }
 

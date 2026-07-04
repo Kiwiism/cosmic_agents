@@ -36,6 +36,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -214,11 +215,14 @@ public class BotFollowTickPerfHarness {
         }
 
         private static boolean consumeAiTick(BotEntry entry) {
-            entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() + AgentMovementPhysicsConfig.configuredMovementTickMs());
-            if (entry.aiTickAccumulatorMs() < AgentRuntimeConfig.cfg.AI_TICK_MS) {
+            AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                    AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)
+                            + AgentMovementPhysicsConfig.configuredMovementTickMs());
+            if (AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) < AgentRuntimeConfig.cfg.AI_TICK_MS) {
                 return false;
             }
-            entry.setAiTickAccumulatorMs(entry.aiTickAccumulatorMs() - AgentRuntimeConfig.cfg.AI_TICK_MS);
+            AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                    AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) - AgentRuntimeConfig.cfg.AI_TICK_MS);
             return true;
         }
     }

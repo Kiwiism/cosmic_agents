@@ -77,7 +77,7 @@ class AgentTickOrchestratorTest {
     @Test
     void prepareTickRecordsAiTickAndCarriesCadenceRemainder() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
-        entry.setAiTickAccumulatorMs(200);
+        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry, 200);
 
         boolean runAiTick = AgentTickOrchestrator.prepareTick(entry, 100, 250, 2_000L);
 

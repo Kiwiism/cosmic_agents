@@ -9,6 +9,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentBotBuildReplyRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBotActivityStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -68,7 +69,7 @@ class AgentBotBuildStatusRuntimeTest {
 
             assertTrue(actions.canOfferSpawnUpgrade());
 
-            entry.setOwnerWasAfk(true);
+            AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
 
             assertFalse(actions.canOfferSpawnUpgrade());
         }

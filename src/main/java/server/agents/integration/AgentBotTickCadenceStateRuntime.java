@@ -18,6 +18,14 @@ public final class AgentBotTickCadenceStateRuntime {
         return state(entry).aiTickAccumulatorMs();
     }
 
+    public static void setSkipDelayMs(BotEntry entry, int skipDelayMs) {
+        state(entry).setSkipDelayMs(skipDelayMs);
+    }
+
+    public static void setAiTickAccumulatorMs(BotEntry entry, int aiTickAccumulatorMs) {
+        state(entry).setAiTickAccumulatorMs(aiTickAccumulatorMs);
+    }
+
     public static void reset(BotEntry entry) {
         state(entry).resetCadence();
     }
