@@ -4775,6 +4775,11 @@ Current physics correction:
   pending-offer, recruit, transfer, formation, dismiss, targeted, and
   untargeted route ordering unchanged while removing another capability-level
   `BotEntry` signature.
+- Whisper-to-Agent routing now splits into a handle-based
+  `AgentWhisperCommandService` and a temporary `AgentWhisperCommandRuntime`
+  adapter. Bot-client detection, same-leader lookup, whisper reply-channel
+  marking, and Agent chat dispatch remain unchanged while the capability no
+  longer imports `BotEntry`.
 
 Initial reconstruction order:
 

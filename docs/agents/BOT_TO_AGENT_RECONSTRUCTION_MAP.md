@@ -21,6 +21,11 @@ Recent map updates:
   entry lookup and route callbacks. `AgentChatRouteRuntime` still supplies the
   temporary `BotEntry` lists from the legacy runtime registry, preserving route
   ordering and behavior.
+- `AgentWhisperCommandService` now uses `AgentRuntimeHandle` hooks for entry
+  resolution, reply-channel marking, and chat dispatch. The new
+  `AgentWhisperCommandRuntime` keeps the temporary `BotEntry` registry lookup
+  and `AgentBotChatOrchestratorContext` construction at the runtime adapter
+  edge.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

@@ -29,7 +29,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.ChatLogger;
-import server.agents.capabilities.dialogue.AgentWhisperCommandService;
+import server.agents.runtime.AgentWhisperCommandRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.auth.AgentOwnershipService;
 import tools.PacketCreator;
@@ -118,6 +118,6 @@ public final class WhisperHandler extends AbstractPacketHandler {
 
         // Whisper-driven bot command: if the recipient is a bot owned by the sender,
         // route the message into the bot command pipeline (no name-prefix needed).
-        AgentWhisperCommandService.handleWhisperToAgent(user, target, message);
+        AgentWhisperCommandRuntime.handleWhisperToAgent(user, target, message);
     }
 }
