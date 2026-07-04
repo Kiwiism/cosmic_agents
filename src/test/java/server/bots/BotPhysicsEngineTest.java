@@ -7,6 +7,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementSnapshotService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMotionTimerService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -274,17 +275,17 @@ class BotPhysicsEngineTest {
         BotEntry entry = new BotEntry(null, null, null);
         entry.downJumpGracePeriodMS = 120;
 
-        BotPhysicsEngine.tickMotionTimers(entry);
+        AgentMotionTimerService.tickMotionTimers(entry);
 
         assertEquals(70, entry.downJumpGracePeriodMS);
         assertFalse(BotPhysicsEngine.canLand(entry));
 
-        BotPhysicsEngine.tickMotionTimers(entry);
+        AgentMotionTimerService.tickMotionTimers(entry);
 
         assertEquals(20, entry.downJumpGracePeriodMS);
         assertFalse(BotPhysicsEngine.canLand(entry));
 
-        BotPhysicsEngine.tickMotionTimers(entry);
+        AgentMotionTimerService.tickMotionTimers(entry);
 
         assertEquals(0, entry.downJumpGracePeriodMS);
         assertTrue(BotPhysicsEngine.canLand(entry));

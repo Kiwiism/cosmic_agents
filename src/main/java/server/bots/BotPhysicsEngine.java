@@ -7,6 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentMotionTimerService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
@@ -894,10 +895,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void tickMotionTimers(BotEntry entry) {
-        if (AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) > 0L) {
-            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry,
-                    Math.max(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) - cfg.TICK_MS));
-        }
+        AgentMotionTimerService.tickMotionTimers(entry);
     }
 
     static boolean canLand(BotEntry entry) {

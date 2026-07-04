@@ -192,6 +192,9 @@ Recent reconstruction notes:
   detection moved into `AgentGroundCollisionService`. `BotPhysicsEngine`
   keeps temporary delegates while larger ground-step preview and wall-collision
   internals remain in the physics body.
+- Movement timer countdown implementation moved into `AgentMotionTimerService`.
+  `BotPhysicsEngine.tickMotionTimers` remains a temporary delegate while
+  physics callers migrate.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

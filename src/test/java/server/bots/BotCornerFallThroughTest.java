@@ -2,6 +2,7 @@ package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMotionTimerService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -102,7 +103,7 @@ class BotCornerFallThroughTest {
         Point last = start;
         for (int tick = 0; tick < 800; tick++) {
             if (!entry.inAir) break;
-            BotPhysicsEngine.tickMotionTimers(entry);
+            AgentMotionTimerService.tickMotionTimers(entry);
             BotPhysicsEngine.stepAirborne(entry, bot);
             last = bot.getPosition();
             if (last.y > fallThroughY) { tunneled = true; break; }

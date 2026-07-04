@@ -161,6 +161,8 @@ Recent map updates:
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.
+- `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
+  `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
