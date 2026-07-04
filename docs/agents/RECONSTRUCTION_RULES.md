@@ -4696,6 +4696,11 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while profile refresh,
   bucketing, and null-to-base normalization route through the Agent movement
   state runtime adapter.
+- Chat status and leader integration now read/write live Agent identity through
+  `AgentBotRuntimeIdentityRuntime` and `AgentBotLeaderStateRuntime` rather than
+  direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
+  calls. The temporary shell methods remain only until all legacy-shaped callers
+  are migrated.
 
 Initial reconstruction order:
 

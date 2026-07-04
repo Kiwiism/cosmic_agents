@@ -11,11 +11,13 @@ public final class AgentBotLeaderStateRuntime {
     }
 
     public static Character leader(BotEntry entry) {
-        return entry.owner();
+        return entry == null ? null : entry.identityState().leader();
     }
 
     public static void setLeader(BotEntry entry, Character leader) {
-        entry.setOwner(leader);
+        if (entry != null) {
+            entry.identityState().setLeader(leader);
+        }
     }
 
     public static boolean matchesLeaderId(BotEntry entry, int leaderCharId) {
