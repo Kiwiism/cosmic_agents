@@ -4525,6 +4525,11 @@ Current physics correction:
   state, physics position, vertical/horizontal velocity, ground carry,
   fall-peak tracking, and jump cooldown route through the Agent movement
   capability.
+- Fidget runtime state now lives in `AgentFidgetState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while fidget mode, trigger,
+  action/jump/visual timers, idle-roll scheduling, movement directions, spam
+  air-steer flag, action delay, and origin position route through the Agent
+  fidget capability.
 
 Initial reconstruction order:
 

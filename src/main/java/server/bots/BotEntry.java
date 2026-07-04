@@ -42,6 +42,7 @@ import server.agents.capabilities.supplies.AgentAmmoSupplyState;
 import server.agents.capabilities.supplies.AgentPotionSupplyState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
+import server.agents.capabilities.movement.fidget.AgentFidgetState;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
 import server.agents.capabilities.trade.AgentPendingTradeSequenceState;
@@ -1527,79 +1528,70 @@ public class BotEntry {
     public void setObservedOwnerStep(int stepX, int stepY) {
         ownerMotionState.setObservedOwnerStep(stepX, stepY);
     }
-    AgentFidgetMode fidgetMode = AgentFidgetMode.NONE;
-    AgentFidgetTrigger fidgetTrigger = AgentFidgetTrigger.NONE;
-    long fidgetUntilMs = 0L;
-    long nextFidgetActionAtMs = 0L;
-    long nextFidgetAtMs = 0L;
-    long nextIdleFidgetRollAtMs = 0L;
-    int fidgetAirSteerDir = 0;
-    int fidgetJumpDir = 0;
-    int fidgetMoveDir = 0;
-    boolean fidgetSpamAirSteer = false;
-    int fidgetActionBaseDelayMs = 0;
-    long nextFidgetJumpAtMs = 0L;
-    Point fidgetOriginPos = null;
-    long nextFidgetVisualAtMs = 0L;
+    private final AgentFidgetState fidgetState = new AgentFidgetState();
+
+    public AgentFidgetState fidgetState() {
+        return fidgetState;
+    }
 
     public AgentFidgetMode fidgetMode() {
-        return fidgetMode;
+        return fidgetState.mode();
     }
 
     public boolean hasActiveFidgetMode() {
-        return fidgetMode != AgentFidgetMode.NONE;
+        return fidgetState.active();
     }
 
     public AgentFidgetTrigger fidgetTrigger() {
-        return fidgetTrigger;
+        return fidgetState.trigger();
     }
 
     public long fidgetUntilMs() {
-        return fidgetUntilMs;
+        return fidgetState.untilMs();
     }
 
     public long nextFidgetActionAtMs() {
-        return nextFidgetActionAtMs;
+        return fidgetState.nextActionAtMs();
     }
 
     public int fidgetAirSteerDir() {
-        return fidgetAirSteerDir;
+        return fidgetState.airSteerDir();
     }
 
     public int fidgetJumpDir() {
-        return fidgetJumpDir;
+        return fidgetState.jumpDir();
     }
 
     public int fidgetMoveDir() {
-        return fidgetMoveDir;
+        return fidgetState.moveDir();
     }
 
     public boolean fidgetSpamAirSteer() {
-        return fidgetSpamAirSteer;
+        return fidgetState.spamAirSteer();
     }
 
     public int fidgetActionBaseDelayMs() {
-        return fidgetActionBaseDelayMs;
+        return fidgetState.actionBaseDelayMs();
     }
 
     public long nextFidgetJumpAtMs() {
-        return nextFidgetJumpAtMs;
+        return fidgetState.nextJumpAtMs();
     }
 
     public Point fidgetOriginPos() {
-        return fidgetOriginPos == null ? null : new Point(fidgetOriginPos);
+        return fidgetState.originPos();
     }
 
     public long nextFidgetVisualAtMs() {
-        return nextFidgetVisualAtMs;
+        return fidgetState.nextVisualAtMs();
     }
 
     public long nextFidgetAtMs() {
-        return nextFidgetAtMs;
+        return fidgetState.nextFidgetAtMs();
     }
 
     public long nextIdleFidgetRollAtMs() {
-        return nextIdleFidgetRollAtMs;
+        return fidgetState.nextIdleRollAtMs();
     }
 
     public boolean crouching() {
@@ -1611,18 +1603,7 @@ public class BotEntry {
     }
 
     public void clearFidgetState() {
-        fidgetMode = AgentFidgetMode.NONE;
-        fidgetTrigger = AgentFidgetTrigger.NONE;
-        fidgetUntilMs = 0L;
-        nextFidgetActionAtMs = 0L;
-        fidgetAirSteerDir = 0;
-        fidgetJumpDir = 0;
-        fidgetMoveDir = 0;
-        fidgetSpamAirSteer = false;
-        fidgetActionBaseDelayMs = 0;
-        nextFidgetJumpAtMs = 0L;
-        fidgetOriginPos = null;
-        nextFidgetVisualAtMs = 0L;
+        fidgetState.clearActiveState();
     }
 
     public void startFidgetState(AgentFidgetMode mode,
@@ -1635,51 +1616,49 @@ public class BotEntry {
                                  Point originPos,
                                  long nextVisualAtMs,
                                  long nextFidgetAtMs) {
-        fidgetMode = mode;
-        fidgetTrigger = trigger;
-        fidgetUntilMs = untilMs;
-        nextFidgetActionAtMs = nowMs;
-        fidgetAirSteerDir = airSteerDir;
-        fidgetJumpDir = airSteerDir == 0 ? 1 : airSteerDir;
-        fidgetMoveDir = airSteerDir;
-        fidgetSpamAirSteer = spamAirSteer;
-        fidgetActionBaseDelayMs = actionBaseDelayMs;
-        nextFidgetJumpAtMs = nowMs;
-        fidgetOriginPos = originPos == null ? null : new Point(originPos);
-        nextFidgetVisualAtMs = nextVisualAtMs;
-        this.nextFidgetAtMs = nextFidgetAtMs;
+        fidgetState.start(
+                mode,
+                trigger,
+                untilMs,
+                nowMs,
+                airSteerDir,
+                spamAirSteer,
+                actionBaseDelayMs,
+                originPos,
+                nextVisualAtMs,
+                nextFidgetAtMs);
     }
 
     public void setNextIdleFidgetRollAtMs(long nextIdleFidgetRollAtMs) {
-        this.nextIdleFidgetRollAtMs = nextIdleFidgetRollAtMs;
+        fidgetState.setNextIdleRollAtMs(nextIdleFidgetRollAtMs);
     }
 
     public void setNextFidgetAtMs(long nextFidgetAtMs) {
-        this.nextFidgetAtMs = nextFidgetAtMs;
+        fidgetState.setNextFidgetAtMs(nextFidgetAtMs);
     }
 
     public void setFidgetAirSteerDir(int fidgetAirSteerDir) {
-        this.fidgetAirSteerDir = fidgetAirSteerDir;
+        fidgetState.setAirSteerDir(fidgetAirSteerDir);
     }
 
     public void setNextFidgetActionAtMs(long nextFidgetActionAtMs) {
-        this.nextFidgetActionAtMs = nextFidgetActionAtMs;
+        fidgetState.setNextActionAtMs(nextFidgetActionAtMs);
     }
 
     public void setFidgetJumpDir(int fidgetJumpDir) {
-        this.fidgetJumpDir = fidgetJumpDir;
+        fidgetState.setJumpDir(fidgetJumpDir);
     }
 
     public void setNextFidgetJumpAtMs(long nextFidgetJumpAtMs) {
-        this.nextFidgetJumpAtMs = nextFidgetJumpAtMs;
+        fidgetState.setNextJumpAtMs(nextFidgetJumpAtMs);
     }
 
     public void setFidgetMoveDir(int fidgetMoveDir) {
-        this.fidgetMoveDir = fidgetMoveDir;
+        fidgetState.setMoveDir(fidgetMoveDir);
     }
 
     public void setNextFidgetVisualAtMs(long nextFidgetVisualAtMs) {
-        this.nextFidgetVisualAtMs = nextFidgetVisualAtMs;
+        fidgetState.setNextVisualAtMs(nextFidgetVisualAtMs);
     }
 
     public long nextGearSuggestionAt() {

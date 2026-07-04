@@ -190,13 +190,13 @@ class AgentChatRuntimeParityTest {
         entry.following = true;
 
         assertTrue(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
-        assertFalse(entry.fidgetMode == AgentFidgetMode.NONE);
-        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger);
+        assertFalse(entry.fidgetMode() == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger());
 
         AgentFidgetService.clear(entry);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 99));
-        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode);
+        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode());
     }
 
     @Test
@@ -212,8 +212,8 @@ class AgentChatRuntimeParityTest {
         }
 
         assertTrue(AgentFidgetService.maybeStartSocialFidget(entry));
-        assertFalse(entry.fidgetMode == AgentFidgetMode.NONE);
-        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger);
+        assertFalse(entry.fidgetMode() == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, entry.fidgetTrigger());
     }
 
     @Test
@@ -241,7 +241,7 @@ class AgentChatRuntimeParityTest {
         AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
-        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode);
+        assertEquals(AgentFidgetMode.NONE, entry.fidgetMode());
     }
 
     @Test

@@ -29,7 +29,7 @@ class AgentBotFidgetRuntimeTest {
 
         assertFalse(AgentBotFidgetRuntime.hasActiveFidgetMode(entry));
 
-        entry.fidgetMode = AgentFidgetMode.PRONE;
+        entry.fidgetState().setMode(AgentFidgetMode.PRONE);
 
         assertTrue(AgentBotFidgetRuntime.hasActiveFidgetMode(entry));
     }
