@@ -16,6 +16,7 @@ import server.agents.capabilities.combat.AgentMobTouchState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
+import server.agents.capabilities.movement.AgentSwimIntentState;
 
 import client.Character;
 import client.inventory.Item;
@@ -148,7 +149,7 @@ public class BotEntry {
     int movementVelY = 0;
     int facingDir = 1;
     boolean crouching = false;
-    boolean swimming = false;
+    private final AgentSwimIntentState swimIntentState = new AgentSwimIntentState();
 
     public boolean inAir() {
         return inAir;
@@ -277,49 +278,48 @@ public class BotEntry {
     // expresses "what the bot is trying to do"; physics integrates accordingly.
     // Mirrors how the real client only exposes discrete inputs (steer L/R,
     // jump-burst, hold UP/DOWN) — no continuous velocity overrides.
-    int swimMoveDir = 0;                 // -1 left, 0 none, +1 right
-    int swimVerticalHold = 0;            // -1 = UP held (slow sink), 0 = none, +1 = DOWN held (fast sink)
-    boolean swimJumpRequested = false;   // one-shot upward burst
-    long swimNextJumpAtMs = 0L;          // cooldown gate
+    public AgentSwimIntentState swimIntentState() {
+        return swimIntentState;
+    }
 
     public boolean swimming() {
-        return swimming;
+        return swimIntentState.swimming();
     }
 
     public void setSwimming(boolean swimming) {
-        this.swimming = swimming;
+        swimIntentState.setSwimming(swimming);
     }
 
     public int swimMoveDirection() {
-        return swimMoveDir;
+        return swimIntentState.moveDirection();
     }
 
     public void setSwimMoveDirection(int direction) {
-        swimMoveDir = Integer.compare(direction, 0);
+        swimIntentState.setMoveDirection(direction);
     }
 
     public int swimVerticalHold() {
-        return swimVerticalHold;
+        return swimIntentState.verticalHold();
     }
 
     public void setSwimVerticalHold(int verticalHold) {
-        swimVerticalHold = Integer.compare(verticalHold, 0);
+        swimIntentState.setVerticalHold(verticalHold);
     }
 
     public boolean swimJumpRequested() {
-        return swimJumpRequested;
+        return swimIntentState.jumpRequested();
     }
 
     public void setSwimJumpRequested(boolean swimJumpRequested) {
-        this.swimJumpRequested = swimJumpRequested;
+        swimIntentState.setJumpRequested(swimJumpRequested);
     }
 
     public long swimNextJumpAtMs() {
-        return swimNextJumpAtMs;
+        return swimIntentState.nextJumpAtMs();
     }
 
     public void setSwimNextJumpAtMs(long swimNextJumpAtMs) {
-        this.swimNextJumpAtMs = swimNextJumpAtMs;
+        swimIntentState.setNextJumpAtMs(swimNextJumpAtMs);
     }
 
     // Movement intent — set by movement/fidget layer, consumed by physics engine.

@@ -4499,6 +4499,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while skill-buff
   toggles, support-heal toggles, rebuff cooldowns, and support-buff cooldowns
   route through the Agent combat capability.
+- Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while swimming
+  mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
+  swim-jump cooldown route through the Agent movement capability.
 
 Initial reconstruction order:
 
