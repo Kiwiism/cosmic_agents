@@ -33,6 +33,7 @@ import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.commands.AgentReplyChannelState;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.inventory.AgentInventoryCooldownState;
 import server.agents.capabilities.looting.AgentGrindLootState;
@@ -1038,7 +1039,11 @@ public class BotEntry {
 
     // Reply channel — tracks the chat channel the last owner command arrived on.
     // Bot replies are routed to this channel until the next command changes it.
-    volatile AgentReplyChannel replyChannel = AgentReplyChannel.MAP;
+    private final AgentReplyChannelState replyChannelState = new AgentReplyChannelState();
+
+    public AgentReplyChannelState replyChannelState() {
+        return replyChannelState;
+    }
 
     private final AgentPendingActionState pendingActionState = new AgentPendingActionState();
 
@@ -2052,6 +2057,6 @@ public class BotEntry {
     // Mutations stay package-private to preserve existing invariants.
     public Character getBot() { return bot; }
     public Character getOwner() { return owner; }
-    public AgentReplyChannel getReplyChannel() { return replyChannel; }
-    public void setReplyChannel(AgentReplyChannel replyChannel) { this.replyChannel = replyChannel; }
+    public AgentReplyChannel getReplyChannel() { return replyChannelState.channel(); }
+    public void setReplyChannel(AgentReplyChannel replyChannel) { replyChannelState.setChannel(replyChannel); }
 }

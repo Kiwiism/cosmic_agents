@@ -4533,6 +4533,9 @@ Current physics correction:
 - Tick cadence state now lives in `AgentTickState`. `BotEntry` temporarily
   hosts the Agent-owned state object, while initial skip delay and AI tick
   accumulator state route through the Agent runtime tick capability.
+- Reply-channel state now lives in `AgentReplyChannelState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while map/party/whisper reply
+  routing and null-to-map normalization route through the Agent command state.
 
 Initial reconstruction order:
 

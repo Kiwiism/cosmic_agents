@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.commands.AgentReplyChannel;
+import server.agents.commands.AgentReplyChannelState;
 import server.bots.BotEntry;
 
 /**
@@ -11,14 +12,18 @@ public final class AgentBotReplyChannelStateRuntime {
     }
 
     public static AgentReplyChannel replyChannel(BotEntry entry) {
-        return entry.getReplyChannel();
+        return state(entry).channel();
     }
 
     public static void setReplyChannel(BotEntry entry, AgentReplyChannel channel) {
-        entry.setReplyChannel(channel == null ? AgentReplyChannel.MAP : channel);
+        state(entry).setChannel(channel);
     }
 
     public static void setWhisper(BotEntry entry) {
-        setReplyChannel(entry, AgentReplyChannel.WHISPER);
+        state(entry).setWhisper();
+    }
+
+    private static AgentReplyChannelState state(BotEntry entry) {
+        return entry.replyChannelState();
     }
 }
