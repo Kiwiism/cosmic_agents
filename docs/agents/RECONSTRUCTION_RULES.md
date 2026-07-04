@@ -4316,6 +4316,9 @@ Current physics correction:
   Agent-owned movement services when the tested behavior has moved. Recent
   movement tests now use Agent ground-collision, movement-config, and rope
   movement services directly.
+- Navigation regression tests should call Agent rope/navigation physics seams
+  for rope attach and first-climbable-Y behavior once those services own the
+  behavior.
 
 Initial reconstruction order:
 

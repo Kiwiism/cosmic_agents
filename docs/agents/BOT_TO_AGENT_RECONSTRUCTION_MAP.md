@@ -242,6 +242,9 @@ Recent map updates:
   ground-step checks, movement tick duration, and rope attachment now use
   `AgentGroundCollisionService`, `AgentMovementPhysicsConfig`, and
   `AgentRopeMovementService` directly instead of `BotPhysicsEngine`.
+- Navigation-manager rope hold regression coverage now uses
+  `AgentRopeMovementService` and `AgentNavigationPhysicsService` directly for
+  rope attachment and first-climbable-Y lookup instead of `BotPhysicsEngine`.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement

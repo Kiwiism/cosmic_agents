@@ -4,10 +4,12 @@ import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
 import server.agents.capabilities.navigation.AgentNavigationLaunchWindowService;
+import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.capabilities.navigation.AgentNavigationRopeEdgeService;
@@ -738,9 +740,9 @@ class BotNavigationManagerTest {
 
         // Simulate the state right after AI tick attached the bot to the rope at firstClimbableY.
         entry.climbVerticalDir = -1;
-        BotPhysicsEngine.attachToRope(entry, bot, rope, BotPhysicsEngine.firstClimbableY(rope));
+        AgentRopeMovementService.attachToRope(entry, bot, rope, AgentNavigationPhysicsService.firstClimbableY(rope));
         assertTrue(entry.climbing);
-        assertEquals(BotPhysicsEngine.firstClimbableY(rope), bot.getPosition().y);
+        assertEquals(AgentNavigationPhysicsService.firstClimbableY(rope), bot.getPosition().y);
         assertEquals(0, entry.climbVerticalDir, "fresh attach must not carry stale climb intent");
 
         // Follow target far above the bot ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â without the fix, dy<0 forces climb-up which dismounts.
@@ -757,7 +759,7 @@ class BotNavigationManagerTest {
         assertTrue(entry.climbing,
                 "Non-AI tick must not dismount: AI is the only place climb direction is decided.");
         assertEquals(rope, entry.climbRope);
-        assertEquals(new Point(100, BotPhysicsEngine.firstClimbableY(rope)), bot.getPosition(),
+        assertEquals(new Point(100, AgentNavigationPhysicsService.firstClimbableY(rope)), bot.getPosition(),
                 "Bot must hold position on the rope without AI-decided intent.");
     }
 
