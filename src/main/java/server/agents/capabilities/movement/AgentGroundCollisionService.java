@@ -58,6 +58,11 @@ public final class AgentGroundCollisionService {
         return ground == null || ground.y > position.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 
+    public static Point findWalkRegionGroundPoint(MapleMap map, Foothold foothold, int x, int referenceY) {
+        GroundRegionSample sample = findWalkRegionGroundSample(map, foothold, x, referenceY);
+        return sample == null ? null : sample.point();
+    }
+
     static GroundStepPreview previewGroundStep(MapleMap map, Point currentPos, Foothold foothold, int nextX) {
         if (map == null || currentPos == null) {
             return null;
@@ -113,11 +118,6 @@ public final class AgentGroundCollisionService {
             return false;
         }
         return lookup.regionIdByFootholdId().getOrDefault(foothold.getId(), -1) >= 0;
-    }
-
-    private static Point findWalkRegionGroundPoint(MapleMap map, Foothold foothold, int x, int referenceY) {
-        GroundRegionSample sample = findWalkRegionGroundSample(map, foothold, x, referenceY);
-        return sample == null ? null : sample.point();
     }
 
     private static GroundRegionSample findWalkRegionGroundSample(MapleMap map, Foothold foothold, int x, int referenceY) {

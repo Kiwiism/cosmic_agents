@@ -254,6 +254,13 @@ Recent map updates:
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement
   snapshot construction moved to `AgentMovementPoseService` and
   `AgentMovementSnapshotService`; bot methods remain temporary delegates.
+- Remaining `BotPhysicsEngine` compatibility callers in the physics regression
+  suite now enter Agent movement/navigation services directly, including jump
+  probes, rope reach/grab simulation, down-jump launch/probes, rope/climb
+  motion, ground motion, ground collision, walk-region lookup, airborne step
+  results, and navigation walk-connectivity checks. `BotPhysicsEngine` has no
+  remaining production or test callers and the production bot file has been
+  deleted. The remaining production `server.bots` file is `BotEntry`.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.
@@ -1299,7 +1306,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.auth.AgentOwnershipService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPathLogger.java` | `server.agents.monitoring.AgentPathLogger` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.runtime.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement.AgentPhysicsEngine` | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; movement-profile physics baseline, movement tick duration, rope/snap/slope threshold values, pure movement kinematics formulas, ground lookup entry points, packet-facing movement snapshot access, continuous ground-travel state shape, movement reset/teleport/death-pose state clearing, idle/prone ground pose state clearing, queued down-jump/top-rope action state and top-rope entry handling, attach-to-rope state application, air-knockback state application, airborne landing eligibility, ground-to-rope reach predicate, ground-motion stop state write, Agent-owned jump and post-landing DTOs for movement/probe/navigation graph callers, first-climbable rope Y, walkable endpoint-step navigation policy, and foothold walk-across connectivity policy, climb/jump-launch action entry points, combat knockback launch entry point, grounded physics entry points, timer countdown entry points, grounded collision query entry points, airborne/swim integration entry points, graph build walk-region lookup lifecycle moved to Agent seams; remaining collision, ground, air, rope, swim, and packet-visible physics runtime still migrates in later slices |
+| `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement`, `server.agents.capabilities.navigation` | `MIGRATED_TO_AGENT`; movement config, kinematics, pose/snapshot, timers, ground lookup/collision/walk-region lookup, ground motion, queued down-jump, rope/climb motion, jump/rope/fall probes, airborne stepping, swim stepping, navigation walk-connectivity, and focused physics regression coverage now call Agent-owned services directly; production bot file deleted after compile and focused physics tests passed |
 | `src/main/java/server/bots/BotPotionManager.java` | `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentAutopotPolicy`, `server.agents.capabilities.supplies.AgentPotionInventoryPolicy`, `server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATED_TO_AGENT`; potion tick orchestration, autopot setup/debug reporting, low-pot supply sharing, donor selection, passive recovery, and grind-start supply reporting now live in Agent supplies |
 | `src/main/java/server/bots/BotScript.java` | `server.agents.plans.AgentScript` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScriptContext.java` | `server.agents.plans.AgentScriptContext` | `MIGRATED_TO_AGENT` |

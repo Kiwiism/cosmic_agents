@@ -174,20 +174,20 @@ Recent reconstruction notes:
   binding shell until `BotPhysicsEngine` config ownership is migrated.
 - The temporary `BotMovementManager` physics-config shell was deleted after
   the final config identity test moved to Agent movement physics config parity
-  checks. Production `server.bots` now contains only `BotEntry` and
-  `BotPhysicsEngine`.
-- Physics pose and movement-snapshot test callers now enter through
+  checks. Production `server.bots` later shrank to `BotEntry` and
+  `BotPhysicsEngine`; after the physics shell was drained, only `BotEntry`
+  remains.
+- Physics pose and movement-snapshot test callers entered through
   `AgentMovementPoseService` and `AgentMovementSnapshotService` instead of
-  calling `BotPhysicsEngine` directly. The services still delegate to the
-  legacy physics body until the internals are migrated.
+  calling `BotPhysicsEngine` directly before the physics shell was deleted.
 - Physics kinematics and movement-report test callers now enter through
   `AgentMovementKinematicsService` instead of calling `BotPhysicsEngine`
   directly for walk step, climb step, jump force, jump height, and horizontal
   reach calculations.
 - Ground lookup implementation for `findGroundFoothold` and
-  `findGroundPoint` moved into `AgentGroundingService`. `BotPhysicsEngine`
-  keeps temporary compatibility delegates so deeper physics internals can move
-  one group at a time without changing behavior.
+  `findGroundPoint` moved into `AgentGroundingService`; later slices removed
+  the temporary `BotPhysicsEngine` delegates after callers moved to Agent
+  services.
 - Simple grounded collision checks for down-jump eligibility and far-ground
   detection moved into `AgentGroundCollisionService`. `BotPhysicsEngine`
   keeps temporary delegates while larger ground-step preview and wall-collision
@@ -4322,6 +4322,10 @@ Current physics correction:
 - Navigation graph tests should call Agent jump-probe DTOs/services and Agent
   ground-collision services directly once probe behavior has moved out of the
   bot physics shell.
+- The final bot-physics compatibility shell has been removed. Physics
+  regression coverage now lives under `server.agents.capabilities.movement` and
+  calls Agent movement/navigation services directly. Production
+  `src/main/java/server/bots` now contains only `BotEntry`.
 
 Initial reconstruction order:
 

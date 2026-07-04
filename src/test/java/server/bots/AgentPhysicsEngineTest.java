@@ -1,17 +1,28 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
-import server.agents.capabilities.movement.AgentMovementPoseService;
-import server.agents.capabilities.movement.AgentMovementSnapshotService;
+import server.agents.capabilities.movement.AgentAirbornePhysicsService;
+import server.agents.capabilities.movement.AgentAirborneStepResult;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
+import server.agents.capabilities.movement.AgentGroundMotion;
+import server.agents.capabilities.movement.AgentGroundPhysicsService;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentJumpLanding;
+import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementSnapshotService;
 import server.agents.capabilities.movement.AgentMotionTimerService;
+import server.agents.capabilities.movement.AgentQueuedMovementActionService;
+import server.agents.capabilities.movement.AgentRopeMovementService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 
 import client.Character;
 import constants.game.CharacterStance;
@@ -40,7 +51,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class BotPhysicsEngineTest {
+class AgentPhysicsEngineTest {
     private static final Supplier<MapleMap> henesysS = lazyMap(100000000);
     private static final Supplier<MapleMap> elliniaWeaponStoreS = lazyMap(101000001);
     private static final Supplier<MapleMap> kerningS = lazyMap(103000000);
@@ -79,15 +90,15 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldPreserveAgentMovementPhysicsConfigValues() {
-        assertEquals(AgentMovementPhysicsConfig.configuredMovementTickMs(), BotPhysicsEngine.cfg.TICK_MS);
-        assertEquals(AgentMovementPhysicsConfig.configuredMaxSnapDrop(), BotPhysicsEngine.cfg.MAX_SNAP_DROP);
-        assertEquals(AgentMovementPhysicsConfig.configuredMaxSlopeUp(), BotPhysicsEngine.cfg.MAX_SLOPE_UP);
-        assertEquals(AgentMovementPhysicsConfig.configuredRopeGrabX(), BotPhysicsEngine.cfg.ROPE_GRAB_X);
+        assertEquals(50, AgentMovementPhysicsConfig.configuredMovementTickMs());
+        assertEquals(16, AgentMovementPhysicsConfig.configuredMaxSnapDrop());
+        assertEquals(26, AgentMovementPhysicsConfig.configuredMaxSlopeUp());
+        assertEquals(8, AgentMovementPhysicsConfig.configuredRopeGrabX());
     }
 
     @Test
     void shouldSimulateKnownHenesysVerticalJumpLanding() {
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateJumpLanding(henesys(), new Point(1080, 334), 0);
+        AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(henesys(), new Point(1080, 334), 0);
 
         assertNotNull(landing);
         assertEquals(new Point(1080, 275), landing.point());
@@ -102,8 +113,8 @@ class BotPhysicsEngineTest {
         Point nearPoint = new Point(rope.x() - AgentMovementKinematicsService.walkStep(map), rope.bottomY());
         Point farPoint = new Point(rope.x() - AgentMovementKinematicsService.maxJumpHorizontalTravel(map, AgentMovementProfile.base()) - 50, rope.bottomY());
 
-        assertTrue(BotPhysicsEngine.canReachRopeFromGround(map, nearPoint, rope));
-        assertFalse(BotPhysicsEngine.canReachRopeFromGround(map, farPoint, rope));
+        assertTrue(AgentJumpProbeService.canReachRopeFromGround(map, nearPoint, rope));
+        assertFalse(AgentJumpProbeService.canReachRopeFromGround(map, farPoint, rope));
     }
 
     @Test
@@ -118,7 +129,8 @@ class BotPhysicsEngineTest {
         Point ropeGrab = null;
         for (int targetX = stepX; targetX <= AgentMovementKinematicsService.maxRopeJumpHorizontalTravel(map, AgentMovementProfile.base()); targetX += stepX) {
             Rope candidate = new Rope(targetX, 120, 220, false);
-            Point candidateGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, jumpStart, stepX, candidate);
+            Point candidateGrab = AgentJumpProbeService.simulateRopeJumpGrab(
+                    map, jumpStart, stepX, candidate, AgentMovementProfile.base());
             if (candidateGrab != null) {
                 targetRope = candidate;
                 ropeGrab = candidateGrab;
@@ -243,13 +255,13 @@ class BotPhysicsEngineTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.inAir = true;
         entry.airVelX = 8;
-        entry.movementVelX = BotPhysicsEngine.velocityFromDeltaX(entry.airVelX);
+        entry.movementVelX = AgentMovementKinematicsService.velocityFromDeltaX(entry.airVelX);
         entry.facingDir = 1;
         entry.physX = 100;
         entry.physY = 200;
         entry.moveDir = -1;  // set intent for air steering left
 
-        BotPhysicsEngine.stepAirborne(entry, bot);
+        AgentAirbornePhysicsService.stepAirborne(entry, bot);
 
         assertTrue(entry.airSteerVelX < 0.0, "left steer intent should produce negative airSteerVelX");
         assertEquals(-1, entry.facingDir, "facing should follow steer direction, not momentum");
@@ -278,17 +290,17 @@ class BotPhysicsEngineTest {
         AgentMotionTimerService.tickMotionTimers(entry);
 
         assertEquals(70, entry.downJumpGracePeriodMS);
-        assertFalse(BotPhysicsEngine.canLand(entry));
+        assertFalse(AgentAirbornePhysicsService.canLand(entry));
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
         assertEquals(20, entry.downJumpGracePeriodMS);
-        assertFalse(BotPhysicsEngine.canLand(entry));
+        assertFalse(AgentAirbornePhysicsService.canLand(entry));
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
         assertEquals(0, entry.downJumpGracePeriodMS);
-        assertTrue(BotPhysicsEngine.canLand(entry));
+        assertTrue(AgentAirbornePhysicsService.canLand(entry));
     }
 
     @Test
@@ -304,9 +316,9 @@ class BotPhysicsEngineTest {
         Character bot = mockBot(new Point(50, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
         AgentMovementPoseService.resetMotion(entry, bot.getPosition());
-        BotPhysicsEngine.queueDownJump(entry, bot);
+        AgentQueuedMovementActionService.queueDownJump(entry, bot);
 
-        BotPhysicsEngine.beginDownJump(entry, bot);
+        AgentQueuedMovementActionService.beginDownJump(entry, bot);
 
         assertFalse(entry.inAir);
         assertFalse(entry.crouching);
@@ -326,7 +338,7 @@ class BotPhysicsEngineTest {
         footholds.insert(upper);
         footholds.insert(lower);
 
-        assertNull(BotPhysicsEngine.simulateDownJumpLanding(map, new Point(50, 100)));
+        assertNull(AgentJumpProbeService.simulateDownJumpLanding(map, new Point(50, 100)));
     }
 
     @Test
@@ -334,10 +346,10 @@ class BotPhysicsEngineTest {
         Character bot = mockBot(new Point(100, 40), null);
         BotEntry entry = new BotEntry(bot, null, null);
         Rope rope = new Rope(100, 0, 40, false);
-        BotPhysicsEngine.attachToRope(entry, bot, rope, rope.bottomY());
+        AgentRopeMovementService.attachToRope(entry, bot, rope, rope.bottomY());
 
         entry.climbVerticalDir = 1;  // intent: climb down
-        BotPhysicsEngine.advanceClimb(entry, bot);
+        AgentRopeMovementService.advanceClimb(entry, bot);
 
         assertTrue(entry.inAir);
         assertFalse(entry.climbing);
@@ -351,18 +363,18 @@ class BotPhysicsEngineTest {
         Character bot = mockBot(new Point(100, 0), map);
         BotEntry entry = new BotEntry(bot, null, null);
         Rope rope = new Rope(100, 0, 40, false);
-        BotPhysicsEngine.attachToRope(entry, bot, rope, rope.topY());
+        AgentRopeMovementService.attachToRope(entry, bot, rope, rope.topY());
 
         assertTrue(entry.climbing);
         assertEquals(new Point(100, 1), bot.getPosition());
 
-        BotPhysicsEngine.holdClimb(entry, bot);
+        AgentRopeMovementService.holdClimb(entry, bot);
 
         assertTrue(entry.climbing);
         assertEquals(new Point(100, 1), bot.getPosition());
 
         entry.climbVerticalDir = -1;
-        BotPhysicsEngine.advanceClimb(entry, bot);
+        AgentRopeMovementService.advanceClimb(entry, bot);
 
         assertFalse(entry.inAir);
         assertFalse(entry.climbing);
@@ -384,7 +396,7 @@ class BotPhysicsEngineTest {
 
         AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         entry.moveDir = 0;  // intent: idle
-        BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, foothold);
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, foothold);
 
         assertFalse(motion.lostGround());
         assertEquals(0, motion.stepX());
@@ -403,7 +415,7 @@ class BotPhysicsEngineTest {
             return new Point(probe.x, 150);
         });
 
-        assertEquals(new Point(-65, 150), BotPhysicsEngine.findGroundPoint(map, new Point(-65, 151)));
+        assertEquals(new Point(-65, 150), AgentGroundingService.findGroundPoint(map, new Point(-65, 151)));
     }
 
     @Test
@@ -420,7 +432,7 @@ class BotPhysicsEngineTest {
         footholds.insert(upper);
         AgentNavigationGraphService.rebuildGraph(map);
 
-        Point ground = BotPhysicsEngine.findWalkRegionGroundPoint(map, lowerLeft, 24, 100);
+        Point ground = AgentGroundCollisionService.findWalkRegionGroundPoint(map, lowerLeft, 24, 100);
 
         assertNotNull(ground);
         assertEquals(new Point(24, 100), ground);
@@ -440,13 +452,13 @@ class BotPhysicsEngineTest {
         AgentMovementPoseService.resetMotion(entry, bot.getPosition());
         entry.moveDir = 1;  // intent: walk right
 
-        Foothold currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1(), bot.getPosition());
+        Foothold currentFoothold = AgentGroundingService.findGroundFoothold(kpqS1(), bot.getPosition());
         assertNotNull(currentFoothold);
 
         for (int i = 0; i < 40 && bot.getPosition().x < target.x; i++) {
-            BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, currentFoothold);
+            AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, currentFoothold);
             assertFalse(motion.lostGround(), "Walking across the same KPQ region should not lose ground because of the nearby upper platform");
-            currentFoothold = BotPhysicsEngine.findGroundFoothold(kpqS1(), bot.getPosition());
+            currentFoothold = AgentGroundingService.findGroundFoothold(kpqS1(), bot.getPosition());
             assertNotNull(currentFoothold);
             assertEquals(startRegionId, graph.findRegionId(kpqS1(), bot.getPosition()));
         }
@@ -461,7 +473,7 @@ class BotPhysicsEngineTest {
         footholds.insert(new Foothold(new Point(0, 110), new Point(20, 110), 1));
         footholds.insert(new Foothold(new Point(4, 102), new Point(6, 102), 2));
 
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateFallLanding(map, new Point(0, 100), 8);
+        AgentJumpLanding landing = AgentJumpProbeService.simulateFallLanding(map, new Point(0, 100), 8);
 
         assertNotNull(landing);
         assertEquals(new Point(4, 102), landing.point());
@@ -470,8 +482,8 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldLandApexJumpOnSleepyForestUpperPlatform() {
-        BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(sleepyForest(), new Point(197, -14), 8);
+        AgentJumpLanding landing =
+                AgentJumpProbeService.simulateJumpLanding(sleepyForest(), new Point(197, -14), 8);
 
         assertNotNull(landing);
         assertTrue(landing.point().y < 0,
@@ -483,8 +495,8 @@ class BotPhysicsEngineTest {
         Point start = new Point(376, 182);
         int stepX = AgentMovementKinematicsService.walkStep(elliniaWeaponStore());
 
-        BotPhysicsEngine.JumpLanding landing =
-                BotPhysicsEngine.simulateJumpLanding(elliniaWeaponStore(), start, stepX);
+        AgentJumpLanding landing =
+                AgentJumpProbeService.simulateJumpLanding(elliniaWeaponStore(), start, stepX);
 
         assertNotNull(landing, "rightward shop jump should hit the map boundary and fall back to the platform");
         assertEquals(new Point(400, 182), landing.point());
@@ -501,8 +513,8 @@ class BotPhysicsEngineTest {
 
         assertNotNull(lookupCase, "Expected at least one standing point where offset-only lookup picks a different foothold");
         assertNotEquals(lookupCase.exactFoothold().getId(), lookupCase.offsetFoothold().getId());
-        Point chosenGround = BotPhysicsEngine.findGroundPoint(map, lookupCase.point());
-        Foothold chosenFoothold = BotPhysicsEngine.findGroundFoothold(map, lookupCase.point());
+        Point chosenGround = AgentGroundingService.findGroundPoint(map, lookupCase.point());
+        Foothold chosenFoothold = AgentGroundingService.findGroundFoothold(map, lookupCase.point());
 
         assertNotNull(chosenGround);
         assertNotNull(chosenFoothold);
@@ -525,7 +537,8 @@ class BotPhysicsEngineTest {
             for (int x = minX + 1; x < maxX; x += 4) {
                 Point point = new Point(x, footingY(foothold, x));
                 Foothold exact = map.getFootholds().findBelow(point);
-                Foothold offset = map.getFootholds().findBelow(new Point(point.x, point.y - BotPhysicsEngine.cfg.MAX_SLOPE_UP));
+                Foothold offset = map.getFootholds().findBelow(
+                        new Point(point.x, point.y - AgentMovementPhysicsConfig.configuredMaxSlopeUp()));
                 if (exact != null && offset != null && exact.getId() != offset.getId()) {
                     return new StandingLookupCase(point, exact, offset);
                 }
@@ -588,8 +601,8 @@ class BotPhysicsEngineTest {
 
     @Test
     void shouldPermitWalkableEndpointStep() {
-        assertTrue(BotPhysicsEngine.isWalkableEndpointStep(0, -1));
-        assertTrue(BotPhysicsEngine.isWalkableEndpointStep(BotPhysicsEngine.WALK_GAP_PX, 0));
+        assertTrue(AgentNavigationPhysicsService.isWalkableEndpointStep(0, -1));
+        assertTrue(AgentNavigationPhysicsService.isWalkableEndpointStep(12, 0));
     }
 
     @Test
@@ -598,7 +611,7 @@ class BotPhysicsEngineTest {
         Foothold platform  = new Foothold(new Point(0, 10),    new Point(10, 10),   1);
         Foothold floating  = new Foothold(new Point(-100, -16), new Point(100, -16), 2);
 
-        assertFalse(BotPhysicsEngine.canWalkAcrossFootholds(platform, floating));
+        assertFalse(AgentNavigationPhysicsService.canWalkAcrossFootholds(platform, floating));
     }
 
     @Test
@@ -606,7 +619,7 @@ class BotPhysicsEngineTest {
         Foothold platform = new Foothold(new Point(0, 10), new Point(10, 10), 1);
         Foothold step     = new Foothold(new Point(10, 9), new Point(40, 9),  2);
 
-        assertTrue(BotPhysicsEngine.canWalkAcrossFootholds(platform, step));
+        assertTrue(AgentNavigationPhysicsService.canWalkAcrossFootholds(platform, step));
     }
 
     @Test
@@ -614,7 +627,7 @@ class BotPhysicsEngineTest {
         Foothold platform = new Foothold(new Point(0, 10), new Point(10, 10), 1);
         Foothold adjacent = new Foothold(new Point(10, 1), new Point(40, 1),  2);
 
-        assertFalse(BotPhysicsEngine.canWalkAcrossFootholds(platform, adjacent));
+        assertFalse(AgentNavigationPhysicsService.canWalkAcrossFootholds(platform, adjacent));
     }
 
     @Test
@@ -636,7 +649,7 @@ class BotPhysicsEngineTest {
         entry.hspeed = 0;
         entry.moveDir = 1;  // intent: walk right
 
-        BotPhysicsEngine.GroundMotion motion = BotPhysicsEngine.applyGroundMotion(entry, bot, platform);
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, platform);
 
         assertTrue(motion.lostGround());
         assertTrue(entry.inAir, "walk-off should transition directly into airborne state");
@@ -658,7 +671,7 @@ class BotPhysicsEngineTest {
         footholds.insert(wall);
         footholds.insert(upper);
 
-        assertFalse(BotPhysicsEngine.canWalkGroundStep(map, new Point(44, 100), 12),
+        assertFalse(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12),
                 "ground movement should not phase through collidable stair/platform walls");
     }
 
@@ -675,7 +688,7 @@ class BotPhysicsEngineTest {
         footholds.insert(wall);
         footholds.insert(upper);
 
-        assertTrue(BotPhysicsEngine.canWalkGroundStep(map, new Point(44, 100), 12),
+        assertTrue(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12),
                 "short wall endpoints should behave like a walkable step up within MAX_SLOPE_UP");
     }
 
@@ -692,7 +705,7 @@ class BotPhysicsEngineTest {
         footholds.insert(wall);
         footholds.insert(lower);
 
-        assertFalse(BotPhysicsEngine.isGroundStepBlockedByWall(map, new Point(44, 80), 12),
+        assertFalse(AgentGroundCollisionService.isGroundStepBlockedByWall(map, new Point(44, 80), 12),
                 "a wall whose top is level with the current ground is a ledge edge, not a blocking wall");
     }
 
@@ -706,7 +719,7 @@ class BotPhysicsEngineTest {
         footholds.insert(lower);
         footholds.insert(wall);
 
-        assertFalse(BotPhysicsEngine.canWalkGroundStep(map, new Point(44, 100), 12),
+        assertFalse(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12),
                 "bottom-connected walls with an open top should still be collidable");
     }
 
@@ -777,7 +790,7 @@ class BotPhysicsEngineTest {
         entry.velY = -30f;
         entry.airVelX = 0;
 
-        assertEquals(BotPhysicsEngine.AirborneStepResult.CEILING, BotPhysicsEngine.stepAirborne(entry, bot));
+        assertEquals(AgentAirborneStepResult.CEILING, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertEquals(new Point(20, 101), bot.getPosition());
         assertEquals(0f, entry.velY);
     }
@@ -803,11 +816,11 @@ class BotPhysicsEngineTest {
         entry.velY = 0f;
         entry.airVelX = -8;
 
-        assertEquals(BotPhysicsEngine.AirborneStepResult.WALL, BotPhysicsEngine.stepAirborne(entry, bot));
+        assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertTrue(bot.getPosition().x > 50, "wall collision should place the bot on the near side, not inside the wall");
 
-        entry.airSteerVelX = -BotPhysicsEngine.cfg.AIR_STEER_MAX;
-        BotPhysicsEngine.stepAirborne(entry, bot);
+        entry.airSteerVelX = -1.5;
+        AgentAirbornePhysicsService.stepAirborne(entry, bot);
 
         assertTrue(bot.getPosition().x > 50, "continued air steering into the wall must not cross to the far side");
     }
@@ -831,7 +844,7 @@ class BotPhysicsEngineTest {
         entry.velY = -11.9f;
         entry.airVelX = -11;
 
-        assertEquals(BotPhysicsEngine.AirborneStepResult.WALL, BotPhysicsEngine.stepAirborne(entry, bot));
+        assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
         assertEquals(-399, bot.getPosition().x);
         assertEquals(0, entry.airVelX);
     }
