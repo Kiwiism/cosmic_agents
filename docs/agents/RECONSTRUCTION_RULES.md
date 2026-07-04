@@ -4491,6 +4491,10 @@ Current physics correction:
   `AgentDegenerateAttackState`. `BotEntry` temporarily hosts the Agent-owned
   state object, while ranged-grind spacing and cleanup paths route through
   Agent runtime state.
+- Combat skill cache storage now lives in `AgentCombatSkillCacheState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while job/level
+  signature matching, attack/AoE/heal skill ids, buff ids, and summon-skill
+  buckets route through the Agent combat capability.
 
 Initial reconstruction order:
 

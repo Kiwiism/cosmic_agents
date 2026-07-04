@@ -10,6 +10,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
+import server.agents.capabilities.combat.AgentCombatSkillCacheState;
 import server.agents.capabilities.combat.AgentMobTouchState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -67,7 +68,6 @@ import server.agents.runtime.AgentTickState;
 
 import java.awt.*;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -544,21 +544,7 @@ public class BotEntry {
         combatCooldownState.setMoveWindowMs(moveWindowMs);
     }
 
-    // Skill cache
-    private int cachedSkillJob = -1;
-    private int cachedSkillLevel = -1;
-    private int cachedSkillSignature = 0;
-    private final List<Integer> attackSkillIds = new ArrayList<>();
-    private int attackSkillId = 0;
-    private int aoeSkillId = 0;
-    private int aoeSkillMobs = 1;
-    private int healSkillId = 0;
-    private final List<Integer> buffSkillIds = new ArrayList<>();
-    // Summon skills (Phoenix, Puppet, Beholder, ...) classified into their own bucket: they are
-    // NOT rebuffable (the bot has no summon-cast path that sends a spawn position, so casting them
-    // via the buff loop only burns MP without spawning the creature). Held here for a future
-    // place/condition-gated summon caster; the generic rebuff loop ignores this list.
-    private final List<Integer> summonSkillIds = new ArrayList<>();
+    private final AgentCombatSkillCacheState combatSkillCacheState = new AgentCombatSkillCacheState();
     private final Map<Integer, Long> nextBuffAt = new HashMap<>();
     private final Map<Integer, Long> nextSupportBuffAt = new HashMap<>();
     long nextSupportHealAt = 0L;
@@ -602,75 +588,67 @@ public class BotEntry {
     }
 
     public boolean skillCacheMatches(int jobId, int level, int signature) {
-        return cachedSkillJob == jobId
-                && cachedSkillLevel == level
-                && cachedSkillSignature == signature;
+        return combatSkillCacheState.matches(jobId, level, signature);
     }
 
     public void resetSkillCache(int jobId, int level, int signature) {
-        cachedSkillJob = jobId;
-        cachedSkillLevel = level;
-        cachedSkillSignature = signature;
-        attackSkillId = 0;
-        aoeSkillId = 0;
-        aoeSkillMobs = 1;
-        attackSkillIds.clear();
-        healSkillId = 0;
-        buffSkillIds.clear();
-        summonSkillIds.clear();
+        combatSkillCacheState.reset(jobId, level, signature);
     }
 
     public List<Integer> attackSkillIds() {
-        return attackSkillIds;
+        return combatSkillCacheState.attackSkillIds();
     }
 
     public void addAttackSkillId(int skillId) {
-        attackSkillIds.add(skillId);
+        combatSkillCacheState.addAttackSkillId(skillId);
     }
 
     public int attackSkillId() {
-        return attackSkillId;
+        return combatSkillCacheState.attackSkillId();
     }
 
     public void setAttackSkillId(int attackSkillId) {
-        this.attackSkillId = attackSkillId;
+        combatSkillCacheState.setAttackSkillId(attackSkillId);
     }
 
     public int aoeSkillId() {
-        return aoeSkillId;
+        return combatSkillCacheState.aoeSkillId();
     }
 
     public int aoeSkillMobs() {
-        return aoeSkillMobs;
+        return combatSkillCacheState.aoeSkillMobs();
     }
 
     public void setAoeSkill(int skillId, int mobCount) {
-        aoeSkillId = skillId;
-        aoeSkillMobs = mobCount;
+        combatSkillCacheState.setAoeSkill(skillId, mobCount);
     }
 
     public int healSkillId() {
-        return healSkillId;
+        return combatSkillCacheState.healSkillId();
     }
 
     public void setHealSkillId(int healSkillId) {
-        this.healSkillId = healSkillId;
+        combatSkillCacheState.setHealSkillId(healSkillId);
     }
 
     public List<Integer> buffSkillIds() {
-        return buffSkillIds;
+        return combatSkillCacheState.buffSkillIds();
     }
 
     public void addBuffSkillId(int skillId) {
-        buffSkillIds.add(skillId);
+        combatSkillCacheState.addBuffSkillId(skillId);
     }
 
     public List<Integer> summonSkillIds() {
-        return summonSkillIds;
+        return combatSkillCacheState.summonSkillIds();
     }
 
     public void addSummonSkillId(int skillId) {
-        summonSkillIds.add(skillId);
+        combatSkillCacheState.addSummonSkillId(skillId);
+    }
+
+    public AgentCombatSkillCacheState combatSkillCacheState() {
+        return combatSkillCacheState;
     }
 
     private final AgentAmmoSupplyState ammoSupplyState = new AgentAmmoSupplyState();

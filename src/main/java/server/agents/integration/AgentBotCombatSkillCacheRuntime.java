@@ -62,7 +62,7 @@ public final class AgentBotCombatSkillCacheRuntime {
             }
 
             if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.SUMMON) {
-                // Own bucket, not rebuffable - see BotEntry.summonSkillIds.
+                // Own bucket, not rebuffable - see AgentCombatSkillCacheState.summonSkillIds.
                 AgentBotCombatSkillCacheStateRuntime.addSummonSkillId(entry, skill.getId());
                 continue;
             }

@@ -12,15 +12,15 @@ public final class AgentBotCombatSkillCacheStateRuntime {
     }
 
     public static boolean matches(BotEntry entry, int jobId, int level, int signature) {
-        return entry.skillCacheMatches(jobId, level, signature);
+        return entry.combatSkillCacheState().matches(jobId, level, signature);
     }
 
     public static void reset(BotEntry entry, int jobId, int level, int signature) {
-        entry.resetSkillCache(jobId, level, signature);
+        entry.combatSkillCacheState().reset(jobId, level, signature);
     }
 
     public static List<Integer> attackSkillIds(BotEntry entry) {
-        return entry.attackSkillIds();
+        return entry.combatSkillCacheState().attackSkillIds();
     }
 
     public static boolean hasAttackSkillIds(BotEntry entry) {
@@ -28,11 +28,11 @@ public final class AgentBotCombatSkillCacheStateRuntime {
     }
 
     public static void addAttackSkillId(BotEntry entry, int skillId) {
-        entry.addAttackSkillId(skillId);
+        entry.combatSkillCacheState().addAttackSkillId(skillId);
     }
 
     public static int attackSkillId(BotEntry entry) {
-        return entry.attackSkillId();
+        return entry.combatSkillCacheState().attackSkillId();
     }
 
     public static boolean hasAttackSkill(BotEntry entry) {
@@ -40,15 +40,15 @@ public final class AgentBotCombatSkillCacheStateRuntime {
     }
 
     public static void setAttackSkillId(BotEntry entry, int skillId) {
-        entry.setAttackSkillId(skillId);
+        entry.combatSkillCacheState().setAttackSkillId(skillId);
     }
 
     public static int aoeSkillId(BotEntry entry) {
-        return entry.aoeSkillId();
+        return entry.combatSkillCacheState().aoeSkillId();
     }
 
     public static int aoeSkillMobs(BotEntry entry) {
-        return entry.aoeSkillMobs();
+        return entry.combatSkillCacheState().aoeSkillMobs();
     }
 
     public static boolean hasAoeSkill(BotEntry entry) {
@@ -60,11 +60,11 @@ public final class AgentBotCombatSkillCacheStateRuntime {
     }
 
     public static void setAoeSkill(BotEntry entry, int skillId, int mobCount) {
-        entry.setAoeSkill(skillId, mobCount);
+        entry.combatSkillCacheState().setAoeSkill(skillId, mobCount);
     }
 
     public static int healSkillId(BotEntry entry) {
-        return entry.healSkillId();
+        return entry.combatSkillCacheState().healSkillId();
     }
 
     public static boolean hasHealSkill(BotEntry entry) {
@@ -72,11 +72,11 @@ public final class AgentBotCombatSkillCacheStateRuntime {
     }
 
     public static void setHealSkillId(BotEntry entry, int skillId) {
-        entry.setHealSkillId(skillId);
+        entry.combatSkillCacheState().setHealSkillId(skillId);
     }
 
     public static List<Integer> buffSkillIds(BotEntry entry) {
-        return entry.buffSkillIds();
+        return entry.combatSkillCacheState().buffSkillIds();
     }
 
     public static boolean hasBuffSkillIds(BotEntry entry) {
@@ -84,14 +84,14 @@ public final class AgentBotCombatSkillCacheStateRuntime {
     }
 
     public static void addBuffSkillId(BotEntry entry, int skillId) {
-        entry.addBuffSkillId(skillId);
+        entry.combatSkillCacheState().addBuffSkillId(skillId);
     }
 
     public static List<Integer> summonSkillIds(BotEntry entry) {
-        return entry.summonSkillIds();
+        return entry.combatSkillCacheState().summonSkillIds();
     }
 
     public static void addSummonSkillId(BotEntry entry, int skillId) {
-        entry.addSummonSkillId(skillId);
+        entry.combatSkillCacheState().addSummonSkillId(skillId);
     }
 }
