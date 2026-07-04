@@ -188,7 +188,7 @@ public class BotFollowTickPerfHarness {
         }
 
         private void runOneTick(BotEntry entry) {
-            Character bot = entry.bot;
+            Character bot = entry.bot();
             // Mirror BotManager.tick() timing wrap so "tick-total" is captured.
             long startedAt = AgentPerformanceMonitor.start();
             try {

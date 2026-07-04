@@ -75,6 +75,7 @@ import server.agents.runtime.AgentAoeRepositionState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentPatrolState;
 import server.agents.runtime.AgentRetreatHoldState;
+import server.agents.runtime.AgentRuntimeIdentityState;
 import server.agents.runtime.AgentScheduledTaskState;
 import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
@@ -88,8 +89,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 public class BotEntry {
-    final Character bot;
-    volatile Character owner;
+    private final AgentRuntimeIdentityState identityState;
     private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();
     private final AgentScheduledTaskState scheduledTaskState;
@@ -857,9 +857,10 @@ public class BotEntry {
     public void setGrinding(boolean grinding) { modeState.setGrinding(grinding); }
     public void setFollowing(boolean following) { modeState.setFollowing(following); }
     public void setFollowTargetId(int followTargetId) { modeState.setFollowTargetId(followTargetId); }
-    public Character bot() { return bot; }
-    public Character owner() { return owner; }
-    public void setOwner(Character owner) { this.owner = owner; }
+    public Character bot() { return identityState.agent(); }
+    public Character owner() { return identityState.leader(); }
+    public void setOwner(Character owner) { identityState.setLeader(owner); }
+    public AgentRuntimeIdentityState identityState() { return identityState; }
     public String lastOwnerCommand() { return leaderActivityState.lastCommand(); }
     public long lastOwnerCommandAtMs() { return leaderActivityState.lastCommandAtMs(); }
     public void recordLastOwnerCommand(String command, long commandAtMs) {
@@ -2065,15 +2066,14 @@ public class BotEntry {
     }
 
     public BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
-        this.bot = bot;
-        this.owner = owner;
+        this.identityState = new AgentRuntimeIdentityState(bot, owner);
         this.scheduledTaskState = new AgentScheduledTaskState(task);
     }
 
     // Accessors for code outside the server.bots package (e.g. server.agents.capabilities.dialogue.llm).
     // Mutations stay package-private to preserve existing invariants.
-    public Character getBot() { return bot; }
-    public Character getOwner() { return owner; }
+    public Character getBot() { return identityState.agent(); }
+    public Character getOwner() { return identityState.leader(); }
     public AgentReplyChannel getReplyChannel() { return replyChannelState.channel(); }
     public void setReplyChannel(AgentReplyChannel replyChannel) { replyChannelState.setChannel(replyChannel); }
 }

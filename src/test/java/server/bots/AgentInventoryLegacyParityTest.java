@@ -53,8 +53,8 @@ class AgentInventoryLegacyParityTest {
     @Test
     void shouldOnlyAnnounceTradeInviteOnFirstBatchOfSequence() {
         BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
-        Character bot = entry.bot;
-        Character owner = entry.owner;
+        Character bot = entry.bot();
+        Character owner = entry.owner();
 
         when(owner.getId()).thenReturn(42);
         when(owner.getTrade()).thenReturn(null);
@@ -100,7 +100,7 @@ class AgentInventoryLegacyParityTest {
     @Test
     void shouldCancelUnmanagedBotTradeWhenManualTimeoutExpires() {
         BotEntry entry = new BotEntry(mock(Character.class), null, null);
-        Character bot = entry.bot;
+        Character bot = entry.bot();
         Trade trade = mock(Trade.class);
 
         when(bot.getId()).thenReturn(99);

@@ -93,7 +93,7 @@ final class BotMovementSimulationLab {
     void setFollow(String botName, String ownerName) {
         BotEntry entry = requireBot(botName);
         Character owner = requireActor(ownerName);
-        entry.owner = owner;
+        entry.setOwner(owner);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotModeStateRuntime.setGrinding(entry, false);
         refreshFormation(owner);
@@ -102,7 +102,7 @@ final class BotMovementSimulationLab {
     void clearFollow(String botName) {
         BotEntry entry = requireBot(botName);
         AgentBotModeStateRuntime.setFollowing(entry, false);
-        entry.owner = null;
+        entry.setOwner(null);
         entry.setFollowOffsetX(0);
     }
 
@@ -143,13 +143,13 @@ final class BotMovementSimulationLab {
         BotEntry entry = requireBot(botName);
         AgentBotMapStateRuntime.setMapTracking(
                 entry,
-                entry.bot.getMapId(),
-                AgentFootholdIndexService.buildFhIndex(entry.bot.getMap()));
+                entry.bot().getMapId(),
+                AgentFootholdIndexService.buildFhIndex(entry.bot().getMap()));
     }
 
     void attachBotToRope(String botName, Rope rope, int y) {
         BotEntry entry = requireBot(botName);
-        AgentRopeMovementService.attachToRope(entry, entry.bot, rope, y);
+        AgentRopeMovementService.attachToRope(entry, entry.bot(), rope, y);
         primeMapState(botName);
     }
 
@@ -250,8 +250,8 @@ final class BotMovementSimulationLab {
 
     private List<BotEntry> followersOf(Character owner) {
         return bots.values().stream()
-                .filter(entry -> entry.owner != null && entry.owner.getId() == owner.getId())
-                .sorted(Comparator.comparing(entry -> entry.bot.getName()))
+                .filter(entry -> entry.owner() != null && entry.owner().getId() == owner.getId())
+                .sorted(Comparator.comparing(entry -> entry.bot().getName()))
                 .toList();
     }
 
@@ -354,7 +354,7 @@ final class BotMovementSimulationLab {
                                   String botName,
                                   BotEntry entry,
                                   AgentMovementTargetSnapshot targetSnapshot) {
-            Point botPos = entry.bot.getPosition();
+            Point botPos = entry.bot().getPosition();
             Point ownerPos = targetSnapshot.rawOwnerPosition();
             Point goalPos = targetSnapshot.primaryTargetPosition();
             Point steeringPos = targetSnapshot.steeringTargetPosition();

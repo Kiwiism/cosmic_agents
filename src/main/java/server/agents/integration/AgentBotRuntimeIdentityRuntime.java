@@ -14,11 +14,11 @@ public final class AgentBotRuntimeIdentityRuntime {
     }
 
     public static Character bot(BotEntry entry) {
-        return entry == null ? null : entry.bot();
+        return entry == null ? null : entry.identityState().agent();
     }
 
     public static Character owner(BotEntry entry) {
-        return entry == null ? null : entry.owner();
+        return entry == null ? null : entry.identityState().leader();
     }
 
     public static int botId(BotEntry entry) {

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` live character identity ownership moved to
+  `server.agents.runtime.AgentRuntimeIdentityState`. The temporary shell keeps
+  compatibility accessors while Agent identity adapters now read the
+  Agent-owned state directly.
 - `BotEntry` scheduled task handle ownership moved to
   `server.agents.runtime.AgentScheduledTaskState`. The temporary `BotEntry`
   shell delegates scheduled tick presence/cancellation to Agent runtime state,

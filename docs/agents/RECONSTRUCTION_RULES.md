@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Live Agent/leader character identity moved to
+  `server.agents.runtime.AgentRuntimeIdentityState`. `BotEntry` temporarily
+  delegates `bot()`, `owner()`, `setOwner(...)`, and legacy getters to the
+  Agent-owned state object so relog/session refresh behavior remains unchanged.
 - Scheduled runtime task handle state moved to
   `server.agents.runtime.AgentScheduledTaskState`. `BotEntry` temporarily hosts
   the Agent-owned state object for compatibility, while Agent scheduler and
