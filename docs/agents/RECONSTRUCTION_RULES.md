@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Scheduled runtime task handle state moved to
+  `server.agents.runtime.AgentScheduledTaskState`. `BotEntry` temporarily hosts
+  the Agent-owned state object for compatibility, while Agent scheduler and
+  lifecycle callers now route has/cancel behavior through the Agent runtime
+  state.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

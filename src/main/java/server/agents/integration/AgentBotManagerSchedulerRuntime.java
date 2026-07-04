@@ -14,12 +14,12 @@ public final class AgentBotManagerSchedulerRuntime {
     }
 
     public static boolean hasScheduledTask(BotEntry entry) {
-        return entry != null && entry.hasScheduledTask();
+        return entry != null && entry.scheduledTaskState().hasScheduledTask();
     }
 
     public static void cancelScheduledTask(BotEntry entry) {
         if (entry != null) {
-            entry.cancelScheduledTask();
+            entry.scheduledTaskState().cancelScheduledTask();
         }
     }
 }

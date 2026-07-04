@@ -308,8 +308,8 @@ public final class AgentLifecycleService {
     }
 
     public static void cancelScheduledTickIfPresent(BotEntry entry) {
-        if (entry != null && entry.hasScheduledTask()) {
-            entry.cancelScheduledTask();
+        if (entry != null && entry.scheduledTaskState().hasScheduledTask()) {
+            entry.scheduledTaskState().cancelScheduledTask();
         }
     }
 

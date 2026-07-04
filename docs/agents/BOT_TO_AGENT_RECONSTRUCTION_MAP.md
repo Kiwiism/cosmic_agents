@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` scheduled task handle ownership moved to
+  `server.agents.runtime.AgentScheduledTaskState`. The temporary `BotEntry`
+  shell delegates scheduled tick presence/cancellation to Agent runtime state,
+  and scheduler/lifecycle adapters now use that Agent-owned state.
 - Fixed-weapon DP optimizer entry points moved from direct
   `BotEquipManager.solveForWeapon` test/production usage to
   `AgentEquipmentOptimizer.solveForWeapon`. Branch score comparison,

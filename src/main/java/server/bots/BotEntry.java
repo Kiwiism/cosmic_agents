@@ -75,6 +75,7 @@ import server.agents.runtime.AgentAoeRepositionState;
 import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentPatrolState;
 import server.agents.runtime.AgentRetreatHoldState;
+import server.agents.runtime.AgentScheduledTaskState;
 import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
 
@@ -91,17 +92,19 @@ public class BotEntry {
     volatile Character owner;
     private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();
-    final ScheduledFuture<?> task;
+    private final AgentScheduledTaskState scheduledTaskState;
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
 
     public boolean hasScheduledTask() {
-        return task != null;
+        return scheduledTaskState.hasScheduledTask();
     }
 
     public void cancelScheduledTask() {
-        if (task != null) {
-            task.cancel(false);
-        }
+        scheduledTaskState.cancelScheduledTask();
+    }
+
+    public AgentScheduledTaskState scheduledTaskState() {
+        return scheduledTaskState;
     }
 
     public boolean airshowActive() {
@@ -2064,7 +2067,7 @@ public class BotEntry {
     public BotEntry(Character bot, Character owner, ScheduledFuture<?> task) {
         this.bot = bot;
         this.owner = owner;
-        this.task = task;
+        this.scheduledTaskState = new AgentScheduledTaskState(task);
     }
 
     // Accessors for code outside the server.bots package (e.g. server.agents.capabilities.dialogue.llm).
