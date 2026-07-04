@@ -47,6 +47,7 @@ import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentFarmAnchorState;
+import server.agents.runtime.AgentGrindTargetState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 import server.agents.runtime.AgentMovementBroadcastState;
@@ -489,32 +490,35 @@ public class BotEntry {
 
     // Grind mode
     volatile boolean grinding = false;
-    Monster grindTarget = null;
-    long nextGrindTargetSearchAtMs = 0L;
     private final AgentCombatCooldownState combatCooldownState = new AgentCombatCooldownState();
+    private final AgentGrindTargetState grindTargetState = new AgentGrindTargetState();
 
     public Monster grindTarget() {
-        return grindTarget;
+        return grindTargetState.target();
     }
 
     public void setGrindTarget(Monster grindTarget) {
-        this.grindTarget = grindTarget;
+        grindTargetState.setTarget(grindTarget);
     }
 
     public void clearGrindTarget() {
-        grindTarget = null;
+        grindTargetState.clearTarget();
     }
 
     public long nextGrindTargetSearchAtMs() {
-        return nextGrindTargetSearchAtMs;
+        return grindTargetState.nextSearchAtMs();
     }
 
     public void setNextGrindTargetSearchAtMs(long nextGrindTargetSearchAtMs) {
-        this.nextGrindTargetSearchAtMs = nextGrindTargetSearchAtMs;
+        grindTargetState.setNextSearchAtMs(nextGrindTargetSearchAtMs);
     }
 
     public void clearNextGrindTargetSearchAtMs() {
-        nextGrindTargetSearchAtMs = 0L;
+        grindTargetState.clearNextSearchAtMs();
+    }
+
+    public AgentGrindTargetState grindTargetState() {
+        return grindTargetState;
     }
 
     public int attackCooldownMs() {

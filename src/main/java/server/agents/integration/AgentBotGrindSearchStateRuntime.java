@@ -10,7 +10,7 @@ public final class AgentBotGrindSearchStateRuntime {
     }
 
     public static long nextSearchAtMs(BotEntry entry) {
-        return entry.nextGrindTargetSearchAtMs();
+        return entry.grindTargetState().nextSearchAtMs();
     }
 
     public static boolean searchBlocked(BotEntry entry, long nowMs) {
@@ -18,10 +18,10 @@ public final class AgentBotGrindSearchStateRuntime {
     }
 
     public static void scheduleNextSearch(BotEntry entry, long nextSearchAtMs) {
-        entry.setNextGrindTargetSearchAtMs(nextSearchAtMs);
+        entry.grindTargetState().setNextSearchAtMs(nextSearchAtMs);
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearNextGrindTargetSearchAtMs();
+        entry.grindTargetState().clearNextSearchAtMs();
     }
 }

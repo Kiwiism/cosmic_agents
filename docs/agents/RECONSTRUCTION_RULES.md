@@ -4462,6 +4462,10 @@ Current physics correction:
 - Patrol region/wander state now lives in `AgentPatrolState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while patrol region, map id,
   and wander target route through Agent runtime state.
+- Active grind target and search cadence state now lives in
+  `AgentGrindTargetState`. `BotEntry` temporarily hosts the Agent-owned state
+  object, while combat target selection and search cooldowns route through
+  Agent runtime state.
 
 Initial reconstruction order:
 

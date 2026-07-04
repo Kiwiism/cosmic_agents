@@ -15,7 +15,7 @@ public final class AgentBotGrindTargetStateRuntime {
     }
 
     public static Monster target(BotEntry entry) {
-        return entry.grindTarget();
+        return entry.grindTargetState().target();
     }
 
     public static Monster activeTargetInMap(BotEntry entry, MapleMap map) {
@@ -35,10 +35,10 @@ public final class AgentBotGrindTargetStateRuntime {
     }
 
     public static void setTarget(BotEntry entry, Monster target) {
-        entry.setGrindTarget(target);
+        entry.grindTargetState().setTarget(target);
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearGrindTarget();
+        entry.grindTargetState().clearTarget();
     }
 }
