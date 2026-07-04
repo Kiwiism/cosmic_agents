@@ -4395,6 +4395,10 @@ Current physics correction:
 - Death/respawn window storage now lives in `AgentDeathState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while death deadline,
   dead-state entry, and respawn-due checks route through Agent runtime.
+- Shop visit lifecycle storage now lives in `AgentShopState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while visit/sequence flags,
+  NPC and target positions, approach delay, sell-trash flag, timeout windows,
+  and stuck-near-NPC fallback tracking route through the Agent shop capability.
 
 Initial reconstruction order:
 

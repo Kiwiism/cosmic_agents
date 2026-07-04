@@ -20,9 +20,8 @@ class AgentBotShopStateRuntimeTest {
         assertFalse(AgentBotShopStateRuntime.hasActiveShopTransition(entry));
         assertEquals(0, AgentBotShopStateRuntime.shopApproachDelayMs(entry));
 
-        entry.shopVisitPending = true;
-        entry.shopSequenceActive = true;
-        entry.shopApproachDelayMs = 250;
+        AgentBotShopStateRuntime.startShopVisit(entry, null, null, 250, 1_000L);
+        AgentBotShopStateRuntime.markShopSequenceActive(entry, 2_000L);
 
         assertTrue(AgentBotShopStateRuntime.shopVisitPending(entry));
         assertTrue(AgentBotShopStateRuntime.shopSequenceActive(entry));
@@ -36,7 +35,7 @@ class AgentBotShopStateRuntimeTest {
 
         assertNull(AgentBotShopStateRuntime.activeShopTargetPosition(entry));
 
-        entry.shopNpcPos = new Point(100, 200);
+        AgentBotShopStateRuntime.startShopVisit(entry, new Point(100, 200), null, 0, 1_000L);
 
         Point npcPosition = AgentBotShopStateRuntime.shopNpcPosition(entry);
         npcPosition.x = 999;
@@ -44,7 +43,7 @@ class AgentBotShopStateRuntimeTest {
         assertEquals(new Point(100, 200), AgentBotShopStateRuntime.shopNpcPosition(entry));
         assertEquals(new Point(100, 200), AgentBotShopStateRuntime.activeShopTargetPosition(entry));
 
-        entry.shopTargetPos = new Point(300, 400);
+        AgentBotShopStateRuntime.startShopVisit(entry, new Point(100, 200), new Point(300, 400), 0, 1_000L);
 
         Point targetPosition = AgentBotShopStateRuntime.shopTargetPosition(entry);
         targetPosition.y = 888;

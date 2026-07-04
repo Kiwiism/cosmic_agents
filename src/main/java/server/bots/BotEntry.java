@@ -24,6 +24,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.inventory.AgentInventoryCooldownState;
 import server.agents.capabilities.social.AgentScrollReactionState;
+import server.agents.capabilities.shop.AgentShopState;
 import server.agents.capabilities.supplies.AgentAmmoSupplyState;
 import server.agents.capabilities.supplies.AgentPotionSupplyState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
@@ -752,114 +753,75 @@ public class BotEntry {
         aoeRepositionDeadlineMs = 0L;
     }
 
-    // Shop auto-buy (triggered once per map change)
-    volatile boolean shopVisitPending = false;
-    volatile Point shopNpcPos = null;
-    volatile Point shopTargetPos = null;
-    int shopApproachDelayMs = 0;
-    boolean shopSequenceActive = false;
-    long shopVisitStartedAtMs = 0L;
-    long shopSequenceStartedAtMs = 0L;
-    boolean shopSellTrashPending = false;
+    private final AgentShopState shopState = new AgentShopState();
+
+    public AgentShopState shopState() {
+        return shopState;
+    }
 
     public boolean shopVisitPending() {
-        return shopVisitPending;
+        return shopState.visitPending();
     }
 
     public boolean shopSequenceActive() {
-        return shopSequenceActive;
+        return shopState.sequenceActive();
     }
 
     public Point shopNpcPos() {
-        return shopNpcPos == null ? null : new Point(shopNpcPos);
+        return shopState.npcPosition();
     }
 
     public Point shopTargetPos() {
-        return shopTargetPos == null ? null : new Point(shopTargetPos);
+        return shopState.targetPosition();
     }
 
     public Point activeShopTargetPos() {
-        Point target = shopTargetPos != null ? shopTargetPos : shopNpcPos;
-        return target == null ? null : new Point(target);
+        return shopState.activeTargetPosition();
     }
 
     public int shopApproachDelayMs() {
-        return shopApproachDelayMs;
+        return shopState.approachDelayMs();
     }
 
     public void setShopApproachDelayMs(int delayMs) {
-        shopApproachDelayMs = Math.max(0, delayMs);
+        shopState.setApproachDelayMs(delayMs);
     }
 
     public long shopVisitStartedAtMs() {
-        return shopVisitStartedAtMs;
+        return shopState.visitStartedAtMs();
     }
 
     public long shopSequenceStartedAtMs() {
-        return shopSequenceStartedAtMs;
+        return shopState.sequenceStartedAtMs();
     }
 
     public boolean shopSellTrashPending() {
-        return shopSellTrashPending;
+        return shopState.sellTrashPending();
     }
 
     public void setShopSellTrashPending(boolean pending) {
-        shopSellTrashPending = pending;
+        shopState.setSellTrashPending(pending);
     }
 
     public void startShopVisit(Point npcPosition, Point targetPosition, int approachDelayMs, long startedAtMs) {
-        shopVisitPending = true;
-        shopNpcPos = npcPosition == null ? null : new Point(npcPosition);
-        shopTargetPos = targetPosition == null ? null : new Point(targetPosition);
-        shopApproachDelayMs = Math.max(0, approachDelayMs);
-        shopVisitStartedAtMs = startedAtMs;
-        shopSequenceStartedAtMs = 0L;
+        shopState.startVisit(npcPosition, targetPosition, approachDelayMs, startedAtMs);
     }
 
     public void markShopSequenceActive(long startedAtMs) {
-        shopSequenceActive = true;
-        shopSequenceStartedAtMs = startedAtMs;
+        shopState.markSequenceActive(startedAtMs);
     }
 
     public boolean stuckNearShopNpc(Point botPosition, long nowMs, long fallbackMs, int moveTolerancePx,
                                     int arriveDistance) {
-        if (shopNpcPos == null || botPosition == null) {
-            return false;
-        }
-        if (shopStuckCheckPos == null) {
-            shopStuckCheckPos = new Point(botPosition);
-            shopStuckCheckAtMs = nowMs;
-            return false;
-        }
-        if (botPosition.distanceSq(shopStuckCheckPos) > (long) moveTolerancePx * moveTolerancePx) {
-            shopStuckCheckPos.setLocation(botPosition);
-            shopStuckCheckAtMs = nowMs;
-            return false;
-        }
-        if (nowMs - shopStuckCheckAtMs < fallbackMs) {
-            return false;
-        }
-        return Math.abs(botPosition.x - shopNpcPos.x) + Math.abs(botPosition.y - shopNpcPos.y) <= arriveDistance;
+        return shopState.stuckNearNpc(botPosition, nowMs, fallbackMs, moveTolerancePx, arriveDistance);
     }
 
     public void clearShopState() {
-        shopVisitPending = false;
-        shopNpcPos = null;
-        shopTargetPos = null;
-        shopApproachDelayMs = 0;
-        shopSequenceActive = false;
-        shopVisitStartedAtMs = 0L;
-        shopSequenceStartedAtMs = 0L;
-        shopSellTrashPending = false;
-        shopStuckCheckPos = null;
-        shopStuckCheckAtMs = 0L;
+        shopState.clear();
     }
     // bumped whenever a new player directive resets scripted state (follow/stop/move/farm/patrol/grind);
     // background batches (Maker crafting / disassembly) capture it and self-interrupt when it changes
     private final AgentScriptTaskQueueState scriptTaskQueueState = new AgentScriptTaskQueueState();
-    Point shopStuckCheckPos = null;
-    long shopStuckCheckAtMs = 0L;
-
     private final AgentDeathState deathState = new AgentDeathState();
 
     public AgentDeathState deathState() {

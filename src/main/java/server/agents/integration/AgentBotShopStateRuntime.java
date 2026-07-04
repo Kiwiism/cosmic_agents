@@ -12,98 +12,84 @@ public final class AgentBotShopStateRuntime {
     }
 
     public static boolean shopVisitPending(BotEntry entry) {
-        return entry.shopVisitPending();
+        return entry.shopState().visitPending();
     }
 
     public static boolean shopSequenceActive(BotEntry entry) {
-        return entry.shopSequenceActive();
+        return entry.shopState().sequenceActive();
     }
 
     public static boolean hasActiveShopTransition(BotEntry entry) {
-        return shopVisitPending(entry) || shopSequenceActive(entry);
+        return entry.shopState().hasActiveTransition();
     }
 
     public static Point shopNpcPosition(BotEntry entry) {
-        return entry.shopNpcPos();
+        return entry.shopState().npcPosition();
     }
 
     public static Point shopTargetPosition(BotEntry entry) {
-        return entry.shopTargetPos();
+        return entry.shopState().targetPosition();
     }
 
     public static Point activeShopTargetPosition(BotEntry entry) {
-        return entry.activeShopTargetPos();
+        return entry.shopState().activeTargetPosition();
     }
 
     public static int shopApproachDelayMs(BotEntry entry) {
-        return entry.shopApproachDelayMs();
+        return entry.shopState().approachDelayMs();
     }
 
     public static void setShopApproachDelayMs(BotEntry entry, int delayMs) {
-        entry.setShopApproachDelayMs(delayMs);
+        entry.shopState().setApproachDelayMs(delayMs);
     }
 
     public static boolean shopSellTrashPending(BotEntry entry) {
-        return entry.shopSellTrashPending();
+        return entry.shopState().sellTrashPending();
     }
 
     public static void setShopSellTrashPending(BotEntry entry, boolean pending) {
-        entry.setShopSellTrashPending(pending);
+        entry.shopState().setSellTrashPending(pending);
     }
 
     public static boolean hasShopNpcPosition(BotEntry entry) {
-        return entry.shopNpcPos() != null;
+        return entry.shopState().hasNpcPosition();
     }
 
     public static boolean visitTimedOut(BotEntry entry, long nowMs, long timeoutMs) {
-        return entry.shopVisitStartedAtMs() > 0
-                && !entry.shopSequenceActive()
-                && nowMs - entry.shopVisitStartedAtMs() > timeoutMs;
+        return entry.shopState().visitTimedOut(nowMs, timeoutMs);
     }
 
     public static boolean sequenceTimedOut(BotEntry entry, long nowMs, long timeoutMs) {
-        return entry.shopSequenceActive()
-                && entry.shopSequenceStartedAtMs() > 0
-                && nowMs - entry.shopSequenceStartedAtMs() > timeoutMs;
+        return entry.shopState().sequenceTimedOut(nowMs, timeoutMs);
     }
 
     public static void startShopVisit(BotEntry entry, Point npcPosition, Point targetPosition, int approachDelayMs,
                                       long startedAtMs) {
-        entry.startShopVisit(npcPosition, targetPosition, approachDelayMs, startedAtMs);
+        entry.shopState().startVisit(npcPosition, targetPosition, approachDelayMs, startedAtMs);
     }
 
     public static Point shopTargetOrNpcPosition(BotEntry entry) {
-        Point target = entry.shopTargetPos();
-        return target != null ? target : entry.shopNpcPos();
+        return entry.shopState().activeTargetPosition();
     }
 
     public static void markShopSequenceActive(BotEntry entry, long startedAtMs) {
-        entry.markShopSequenceActive(startedAtMs);
+        entry.shopState().markSequenceActive(startedAtMs);
     }
 
     public static boolean stuckNearNpc(BotEntry entry, Point botPosition, long nowMs, long fallbackMs,
                                        int moveTolerancePx, int arriveDistance) {
-        return entry.stuckNearShopNpc(botPosition, nowMs, fallbackMs, moveTolerancePx, arriveDistance);
+        return entry.shopState().stuckNearNpc(botPosition, nowMs, fallbackMs, moveTolerancePx, arriveDistance);
     }
 
     public static boolean sequenceValid(BotEntry entry, Point botPosition, Point npcPosition, int arriveDistance) {
-        if (!entry.shopVisitPending() || !entry.shopSequenceActive() || npcPosition == null || botPosition == null) {
-            return false;
-        }
-        Point approach = entry.shopTargetPos() != null ? entry.shopTargetPos() : npcPosition;
-        return manhattan(botPosition, approach) <= arriveDistance
-                || manhattan(botPosition, npcPosition) <= arriveDistance;
+        return entry.shopState().sequenceValid(botPosition, npcPosition, arriveDistance);
     }
 
     public static boolean shouldRunScheduledShopStep(BotEntry entry) {
-        return entry.shopVisitPending();
+        return entry.shopState().visitPending();
     }
 
     public static void clearShopState(BotEntry entry) {
-        entry.clearShopState();
-    }
-
-    private static int manhattan(Point a, Point b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        entry.shopState().clear();
     }
 }

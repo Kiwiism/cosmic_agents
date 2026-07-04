@@ -68,6 +68,7 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentBotShopStateRuntime;
 import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
@@ -1012,9 +1013,7 @@ class BotManagerTest {
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
-        entry.shopVisitPending = true;
-        entry.shopNpcPos = new Point(900, 100);
-        entry.shopTargetPos = new Point(850, 100);
+        AgentBotShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
 
@@ -1063,17 +1062,15 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.shopVisitPending = true;
-        entry.shopSequenceActive = true;
-        entry.shopNpcPos = new Point(900, 100);
-        entry.shopTargetPos = new Point(850, 100);
+        AgentBotShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
+        AgentBotShopStateRuntime.markShopSequenceActive(entry, 2_000L);
 
         AgentBotMovementCommandRuntime.followOwner(entry);
 
-        assertFalse(entry.shopVisitPending);
-        assertFalse(entry.shopSequenceActive);
-        assertNull(entry.shopNpcPos);
-        assertNull(entry.shopTargetPos);
+        assertFalse(AgentBotShopStateRuntime.shopVisitPending(entry));
+        assertFalse(AgentBotShopStateRuntime.shopSequenceActive(entry));
+        assertNull(AgentBotShopStateRuntime.shopNpcPosition(entry));
+        assertNull(AgentBotShopStateRuntime.shopTargetPosition(entry));
         assertTrue(AgentBotModeStateRuntime.following(entry));
     }
 
@@ -1101,19 +1098,17 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.shopVisitPending = true;
-        entry.shopSequenceActive = true;
-        entry.shopNpcPos = new Point(900, 100);
-        entry.shopTargetPos = new Point(850, 100);
+        AgentBotShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
+        AgentBotShopStateRuntime.markShopSequenceActive(entry, 2_000L);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
         AgentBotMovementCommandRuntime.stop(entry);
 
-        assertFalse(entry.shopVisitPending);
-        assertFalse(entry.shopSequenceActive);
-        assertNull(entry.shopNpcPos);
-        assertNull(entry.shopTargetPos);
+        assertFalse(AgentBotShopStateRuntime.shopVisitPending(entry));
+        assertFalse(AgentBotShopStateRuntime.shopSequenceActive(entry));
+        assertNull(AgentBotShopStateRuntime.shopNpcPosition(entry));
+        assertNull(AgentBotShopStateRuntime.shopTargetPosition(entry));
         assertFalse(AgentBotModeStateRuntime.following(entry));
         assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
     }
