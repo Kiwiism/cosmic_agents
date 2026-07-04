@@ -31,7 +31,7 @@ class AgentBotNavigationDebugStateRuntimeTest {
         AgentBotNavigationDebugStateRuntime.startPathLogging(entry);
 
         assertTrue(AgentBotNavigationDebugStateRuntime.isPathLogging(entry));
-        assertNotNull(entry.pathLogger());
+        assertNotNull(entry.navigationDebugState().pathLogger());
 
         AgentBotNavigationDebugStateRuntime.clearPathLogging(entry);
 

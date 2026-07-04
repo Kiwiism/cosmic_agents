@@ -4592,6 +4592,11 @@ Current physics correction:
   routing and null-to-map normalization now route through
   `AgentBotReplyChannelStateRuntime` and the Agent-owned
   `AgentReplyChannelState`.
+- Navigation debug, target, and active-edge wrappers have been removed from
+  `BotEntry`. Path logging, last decision/block reason, graph-warmup fallback,
+  waypoint target, precise-target flag, active edge, and jump-launch cache now
+  route through `AgentBotNavigationDebugStateRuntime` over Agent-owned
+  navigation state objects.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

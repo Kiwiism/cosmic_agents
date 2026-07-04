@@ -48,7 +48,6 @@ import server.agents.capabilities.trade.AgentManualTradeState;
 import server.agents.capabilities.trade.AgentOwnerGivenTradeItemState;
 import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
-import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.runtime.AgentFormationOffsetState;
@@ -951,82 +950,6 @@ public class BotEntry {
 
     public AgentTickFailureState tickFailureState() {
         return tickFailureState;
-    }
-
-    public AgentPathLogger pathLogger() {
-        return navigationDebugState.pathLogger();
-    }
-
-    public void setPathLogger(AgentPathLogger pathLogger) {
-        navigationDebugState.setPathLogger(pathLogger);
-    }
-
-    public void clearPathLogger() {
-        navigationDebugState.clearPathLogger();
-    }
-
-    public String lastNavDecision() {
-        return navigationDebugState.lastDecision();
-    }
-
-    public void setLastNavDecision(String lastNavDecision) {
-        navigationDebugState.setLastDecision(lastNavDecision);
-    }
-
-    public String lastEdgeBlockReason() {
-        return navigationDebugState.lastEdgeBlockReason();
-    }
-
-    public void setLastEdgeBlockReason(String lastEdgeBlockReason) {
-        navigationDebugState.setLastEdgeBlockReason(lastEdgeBlockReason);
-    }
-
-    public boolean graphWarmupFallback() {
-        return navigationDebugState.graphWarmupFallback();
-    }
-
-    public void setGraphWarmupFallback(boolean graphWarmupFallback) {
-        navigationDebugState.setGraphWarmupFallback(graphWarmupFallback);
-    }
-
-    public Point navTargetPos() {
-        return navigationTargetState.position();
-    }
-
-    public void setNavTargetPos(Point navTargetPos) {
-        navigationTargetState.setPosition(navTargetPos);
-    }
-
-    public int navTargetRegionId() {
-        return navigationTargetState.regionId();
-    }
-
-    public void setNavTargetRegionId(int navTargetRegionId) {
-        navigationTargetState.setRegionId(navTargetRegionId);
-    }
-
-    public boolean navPreciseTarget() {
-        return navigationTargetState.precise();
-    }
-
-    public void setNavPreciseTarget(boolean navPreciseTarget) {
-        navigationTargetState.setPrecise(navPreciseTarget);
-    }
-
-    public boolean matchesNavJumpLaunchEdge(Object edge) {
-        return navigationEdgeState.matchesJumpLaunchEdge(edge);
-    }
-
-    public boolean hasNavJumpLaunchEdge() {
-        return navigationEdgeState.hasJumpLaunchEdge();
-    }
-
-    public int navJumpLaunchX() {
-        return navigationEdgeState.jumpLaunchX();
-    }
-
-    public void setNavJumpLaunch(Object navJumpLaunchEdge, int navJumpLaunchX) {
-        navigationEdgeState.setJumpLaunch(navJumpLaunchEdge, navJumpLaunchX);
     }
 
     public AgentScrollReactionState scrollReactionState() {

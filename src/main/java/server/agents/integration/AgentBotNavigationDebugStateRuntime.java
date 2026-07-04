@@ -86,7 +86,7 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static void clearNavTargetPosition(BotEntry entry) {
-        entry.setNavTargetPos(null);
+        entry.navigationTargetState().setPosition(null);
     }
 
     public static int navTargetRegionId(BotEntry entry) {
@@ -129,7 +129,7 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static boolean hasNavJumpLaunchEdge(BotEntry entry) {
-        return entry.hasNavJumpLaunchEdge();
+        return entry.navigationEdgeState().hasJumpLaunchEdge();
     }
 
     public static boolean hasActiveNavigationEdge(BotEntry entry) {
