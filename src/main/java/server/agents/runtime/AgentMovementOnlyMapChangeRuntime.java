@@ -4,12 +4,13 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 public final class AgentMovementOnlyMapChangeRuntime {
     private AgentMovementOnlyMapChangeRuntime() {
@@ -21,8 +22,8 @@ public final class AgentMovementOnlyMapChangeRuntime {
                 agent,
                 new AgentMovementOnlyMapChangeService.Hooks(
                         AgentFootholdIndexService::buildFhIndex,
-                        BotPhysicsEngine::findGroundPoint,
-                        BotPhysicsEngine::teleportTo,
+                        AgentGroundingService::findGroundPoint,
+                        AgentMovementPoseService::teleportTo,
                         AgentMovementStateResetService::resetEntryStateAfterTeleport,
                         AgentMovementBroadcastService::broadcastMovement,
                         AgentShopService::onMapChange,

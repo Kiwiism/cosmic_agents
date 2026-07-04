@@ -12,7 +12,6 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 
 import java.awt.Point;

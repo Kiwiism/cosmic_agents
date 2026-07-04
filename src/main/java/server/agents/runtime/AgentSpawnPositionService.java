@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.bots.BotPhysicsEngine;
+import server.agents.capabilities.movement.AgentGroundingService;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -10,7 +10,7 @@ public final class AgentSpawnPositionService {
     }
 
     public static Point resolveSpawnPosition(MapleMap map, Point desiredPosition) {
-        return resolveSpawnPosition(map, desiredPosition, BotPhysicsEngine::findGroundPoint);
+        return resolveSpawnPosition(map, desiredPosition, AgentGroundingService::findGroundPoint);
     }
 
     static Point resolveSpawnPosition(MapleMap map, Point desiredPosition, GroundPointResolver groundPointResolver) {

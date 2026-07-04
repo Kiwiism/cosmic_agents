@@ -4253,6 +4253,9 @@ Current physics correction:
 - Navigation build walk-region lookup storage now lives in
   `AgentNavigationWalkRegionLookupService`; `BotPhysicsEngine` only resolves
   through that Agent-owned service while its ground-step preview body remains.
+- Runtime hook bundles now use Agent-owned movement services for ground lookup,
+  teleport, idle-ground pose, and jump-height calculations. The runtime package
+  no longer imports `BotPhysicsEngine` directly.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

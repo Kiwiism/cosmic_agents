@@ -1,10 +1,11 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 public final class AgentFollowMapSyncRuntime {
     private AgentFollowMapSyncRuntime() {
@@ -16,8 +17,8 @@ public final class AgentFollowMapSyncRuntime {
                 agent,
                 followAnchor,
                 new AgentFollowMapSyncService.FollowMapSyncHooks(
-                        BotPhysicsEngine::findGroundPoint,
-                        BotPhysicsEngine::idleOnGround,
+                        AgentGroundingService::findGroundPoint,
+                        AgentMovementPoseService::idleOnGround,
                         Character::changeMap,
                         AgentMovementStateResetService::resetEntryState));
     }

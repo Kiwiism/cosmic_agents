@@ -173,6 +173,10 @@ Recent map updates:
   in `AgentNavigationWalkRegionLookupService`. The remaining bot physics
   ground-step preview code resolves through the Agent service while that
   preview body is migrated later.
+- Runtime hook bundles no longer import `BotPhysicsEngine` for ground lookup,
+  teleport, idle-ground pose, or max-jump-height callbacks. They now use
+  `AgentGroundingService`, `AgentMovementPoseService`, and
+  `AgentMovementKinematicsService` directly.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.

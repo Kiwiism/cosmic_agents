@@ -3,8 +3,8 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 import java.awt.Point;
 
@@ -52,7 +52,7 @@ public final class AgentLocalOpportunityAttackRuntime {
     private static AgentLocalOpportunityAttackService.Hooks hooks() {
         return new AgentLocalOpportunityAttackService.Hooks(
                 AgentGrindNavigationRuntime::selectGrindNavigationTarget,
-                BotPhysicsEngine::calculateMaxJumpHeight,
+                AgentMovementKinematicsService::calculateMaxJumpHeight,
                 AgentJumpActionService::initiateJump,
                 AgentLocalOpportunityAttackRuntime::setLocalAttackMoveWindow);
     }

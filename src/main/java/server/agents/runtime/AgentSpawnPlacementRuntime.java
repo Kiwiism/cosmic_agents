@@ -4,6 +4,7 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -13,7 +14,6 @@ import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -37,7 +37,7 @@ public final class AgentSpawnPlacementRuntime {
     private static AgentSpawnPlacementService.Hooks hooks() {
         return new AgentSpawnPlacementService.Hooks(
                 AgentSpawnPositionService::resolveSpawnPosition,
-                BotPhysicsEngine::teleportTo,
+                AgentMovementPoseService::teleportTo,
                 AgentMovementStateResetService::resetEntryStateAfterTeleport,
                 AgentBotDeathStateRuntime::clear,
                 (entry, map, mapId) -> AgentBotMapStateRuntime.setMapTracking(

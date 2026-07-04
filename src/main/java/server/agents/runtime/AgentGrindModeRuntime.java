@@ -2,7 +2,9 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -17,7 +19,6 @@ import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 
 import java.awt.Point;
 
@@ -100,9 +101,9 @@ public final class AgentGrindModeRuntime {
                 AgentBotCombatAttackRuntime::attackMonster,
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
                 AgentCombatRangePolicy::isTargetJumpable,
-                BotPhysicsEngine::calculateMaxJumpHeight,
+                AgentMovementKinematicsService::calculateMaxJumpHeight,
                 AgentJumpActionService::initiateJump,
-                BotPhysicsEngine::idleOnGround,
+                AgentMovementPoseService::idleOnGround,
                 AgentMovementBroadcastService::broadcastMovement);
     }
 
