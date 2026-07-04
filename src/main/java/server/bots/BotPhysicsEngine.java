@@ -172,11 +172,11 @@ public final class BotPhysicsEngine {
             return foothold;
         }
 
-        double incomingDeltaX() {
+        public double incomingDeltaX() {
             return incomingDeltaX;
         }
 
-        double incomingDeltaY() {
+        public double incomingDeltaY() {
             return incomingDeltaY;
         }
 

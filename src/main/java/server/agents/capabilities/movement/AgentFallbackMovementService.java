@@ -276,7 +276,7 @@ public final class AgentFallbackMovementService {
         MapleMap map = map(entry);
         int direction = Integer.signum(stepX);
         int jumpStep = direction * AgentMovementKinematicsService.walkStep(map, movementProfile(entry));
-        BotPhysicsEngine.JumpLanding landing =
+        AgentJumpLanding landing =
                 AgentJumpProbeService.simulateJumpLanding(map, botPos, jumpStep, movementProfile(entry));
         return isUsefulJumpProbeLanding(botPos, steeringTarget, direction, landing);
     }
@@ -296,7 +296,7 @@ public final class AgentFallbackMovementService {
     private static boolean isUsefulJumpProbeLanding(Point botPos,
                                                     Point steeringTarget,
                                                     int direction,
-                                                    BotPhysicsEngine.JumpLanding landing) {
+                                                    AgentJumpLanding landing) {
         if (landing == null || landing.point() == null || direction == 0) {
             return false;
         }

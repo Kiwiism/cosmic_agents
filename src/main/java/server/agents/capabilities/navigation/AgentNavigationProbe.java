@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentJumpProbeService;
+import server.agents.capabilities.movement.AgentJumpLanding;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 import server.maps.Foothold;
@@ -372,7 +373,7 @@ public final class AgentNavigationProbe {
 
         System.out.printf("%nJump probe %d,%d  region=%d%n", point.x, point.y, regionId);
         for (int stepX : new int[]{-walkStep, 0, walkStep}) {
-            BotPhysicsEngine.JumpLanding landing = AgentJumpProbeService.simulateJumpLanding(map, point, stepX, graph.movementProfile);
+            AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(map, point, stepX, graph.movementProfile);
             if (landing == null) {
                 System.out.printf("  stepX=%d -> no landing%n", stepX);
                 continue;

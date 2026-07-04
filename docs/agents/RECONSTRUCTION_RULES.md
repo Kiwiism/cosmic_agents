@@ -4232,6 +4232,9 @@ Current physics correction:
   migrates later.
 - Ground-motion stop state writes now live in `AgentGroundPhysicsService`;
   `BotPhysicsEngine.stopGroundMotion` remains a compatibility delegate.
+- Movement jump-probe callers now use the Agent-owned `AgentJumpLanding` DTO.
+  The temporary bot landing simulator still supplies the data until collision
+  simulation moves.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

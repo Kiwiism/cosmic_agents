@@ -102,7 +102,7 @@ public final class AgentMobAvoidanceService {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         int airVelX = AgentJumpActionService.resolveAirVelocityX(map, profile, stepX);
-        BotPhysicsEngine.JumpLanding landing = AgentJumpProbeService.simulateJumpLanding(map, botPos, airVelX, profile);
+        AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(map, botPos, airVelX, profile);
         if (landing == null || landing.point() == null || landing.foothold() == null) {
             return false;
         }
