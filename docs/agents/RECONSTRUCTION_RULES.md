@@ -166,6 +166,12 @@ Recent reconstruction notes:
   `AgentGroundMovementService` directly for grind target clamping, climb
   hold/snap decisions, precise navigation stop distance, and ground step
   resolution.
+- Movement execution compatibility wrappers were removed from
+  `BotMovementManager`. Movement and navigation tests now call
+  `AgentAirborneMovementService`, `AgentClimbMovementService`,
+  `AgentGroundMovementRuntimeService`, and `AgentMovementRecoveryService`
+  directly; `BotMovementManager` remains only as a temporary physics-config
+  binding shell until `BotPhysicsEngine` config ownership is migrated.
 - Non-legacy Agent config and supply tests now use `AgentRuntimeConfig` and
   `AgentRuntimeRegistry` directly instead of compiling through
   `server.bots.BotManager`; this removed the final compatibility-shell test

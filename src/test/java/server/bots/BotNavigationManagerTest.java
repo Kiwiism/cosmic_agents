@@ -1,6 +1,8 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
+import server.agents.capabilities.movement.AgentClimbMovementService;
+import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -750,7 +752,7 @@ class BotNavigationManagerTest {
         entry.navEdge = null;
 
         // Run one non-AI physics tick.
-        BotMovementManager.tickClimbing(entry, followTargetAbove, false);
+        AgentClimbMovementService.tickClimbing(entry, followTargetAbove, false);
 
         assertTrue(entry.climbing,
                 "Non-AI tick must not dismount: AI is the only place climb direction is decided.");
@@ -777,7 +779,7 @@ class BotNavigationManagerTest {
         assertFalse(entry.downJumpPending);
         assertFalse(entry.crouching);
 
-        BotMovementManager.tickGrounded(entry, new Point(100, 150));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 150));
 
         assertFalse(entry.ropeEntryPending);
         assertTrue(entry.climbing);

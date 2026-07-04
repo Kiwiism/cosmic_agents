@@ -143,6 +143,9 @@ Recent map updates:
 - `BotMovementManager` movement-policy wrappers for grind target adjustment,
   climb hold/snap, precise navigation stop distance, and ground step
   calculation were removed after tests moved to the Agent movement services.
+- `BotMovementManager` movement execution wrappers were removed after tests
+  moved to Agent movement services. The remaining class is a temporary
+  config-binding shell for `BotPhysicsEngine`.
 - Manual and spawned registration entry points moved to
   `AgentInteractionRuntime`; BotManager no longer owns the private tick
   callback used by registration.

@@ -1,12 +1,15 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
+import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
 import server.agents.capabilities.movement.AgentGroundTargetService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
+import server.agents.capabilities.movement.AgentMovementRecoveryService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
@@ -141,7 +144,7 @@ class BotMovementManagerTest {
                 -8, 0, -437, -1471, 84, 250
         );
 
-        BotMovementManager.tickAirborne(entry, new Point(300, 0));
+        AgentAirborneMovementService.tickAirborne(entry, new Point(300, 0));
 
         assertEquals(0.0, entry.airSteerVelX);
     }
@@ -204,7 +207,7 @@ class BotMovementManagerTest {
                 8, 0, 668, 1727, 1980, 650
         );
 
-        BotMovementManager.tickClimbing(entry, new Point(668, 1757), false);
+        AgentClimbMovementService.tickClimbing(entry, new Point(668, 1757), false);
 
         assertEquals(new Point(668, 1757), bot.getPosition());
     }
@@ -233,7 +236,7 @@ class BotMovementManagerTest {
         );
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
-        BotMovementManager.tickClimbing(entry, new Point(-437, -1141), true);
+        AgentClimbMovementService.tickClimbing(entry, new Point(-437, -1141), true);
 
         assertEquals(new Point(-437, -1141), bot.getPosition(),
                 "climb movement should snap to a precise anchor that is closer than one climb step");
@@ -305,7 +308,7 @@ class BotMovementManagerTest {
         );
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
-        BotMovementManager.tickClimbing(entry, new Point(3398, 124), true);
+        AgentClimbMovementService.tickClimbing(entry, new Point(3398, 124), true);
 
         assertEquals(new Point(3398, 124), bot.getPosition());
         assertFalse(entry.climbing);
@@ -377,7 +380,7 @@ class BotMovementManagerTest {
         );
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
-        BotMovementManager.tickGrounded(entry, new Point(60, 100));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(60, 100));
 
         assertNull(entry.navEdge);
         assertEquals(new Point(8, 100), bot.getPosition());
@@ -396,12 +399,12 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
 
-        BotMovementManager.tickGrounded(entry, new Point(250, 100));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 
         assertTrue(entry.inAir, "grounded follow movement should jump over a mob blocking the walk lane");
         assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
 
-        BotMovementManager.tickAirborne(entry, new Point(250, 100));
+        AgentAirborneMovementService.tickAirborne(entry, new Point(250, 100));
 
         assertEquals(0.0, entry.airSteerVelX, 0.0001,
                 "mob-avoid jumps should keep the simulated fixed forward arc");
@@ -420,7 +423,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.following = true;
 
-        BotMovementManager.tickGrounded(entry, new Point(190, 100));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(190, 100));
 
         assertFalse(entry.inAir, "mob-avoid jump should be skipped when simulation would leave the current platform region");
     }
@@ -448,7 +451,7 @@ class BotMovementManagerTest {
                 8, 0, -157, -115, 118, 650
         );
 
-        BotMovementManager.tickClimbing(entry, new Point(-157, -25), false);
+        AgentClimbMovementService.tickClimbing(entry, new Point(-157, -25), false);
 
         assertEquals(new Point(-157, -23), bot.getPosition());
     }
@@ -479,7 +482,7 @@ class BotMovementManagerTest {
         entry.velY = 0f;
         entry.airVelX = 8;
 
-        BotMovementManager.tickAirborne(entry, null);
+        AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertEquals(new Point(4, 102), bot.getPosition());
         assertFalse(entry.inAir);
@@ -511,7 +514,7 @@ class BotMovementManagerTest {
         entry.velY = 0f;
         entry.airVelX = -8;
 
-        BotMovementManager.tickAirborne(entry, null);
+        AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertTrue(bot.getPosition().x < 0);
         assertEquals(-8, entry.airVelX);
@@ -529,7 +532,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
-        BotMovementManager.tickGrounded(entry, new Point(110, 100));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(110, 100));
 
         assertTrue(entry.inAir, "graph warmup fallback should jump small same-level gaps instead of freezing");
         assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
@@ -553,7 +556,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
-        BotMovementManager.tickGrounded(entry, new Point(90, 60));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(90, 60));
 
         assertTrue(entry.inAir, "fallback should jump when a wall blocks walking but a platform is reachable");
         assertEquals(BotPhysicsEngine.walkStep(map, entry.movementProfile), entry.airVelX);
@@ -571,7 +574,7 @@ class BotMovementManagerTest {
         BotEntry entry = new BotEntry(bot, null, null);
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
-        BotMovementManager.tickGrounded(entry, new Point(100, 40));
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 40));
 
         assertTrue(entry.climbing, "graph warmup fallback should use a nearby rope for vertical travel");
         assertEquals(new Point(100, 120), bot.getPosition());
@@ -930,7 +933,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
 
-        BotMovementManager.tickUnstuck(entry);
+        AgentMovementRecoveryService.tickUnstuck(entry);
 
         assertFalse(entry.downJumpPending, "unstuck recovery should only use lateral jumps");
         assertTrue(entry.inAir, "unstuck recovery should launch the bot instead of crouching in place");
@@ -966,7 +969,7 @@ class BotMovementManagerTest {
                 -8, 0, 0, 0, 0, 300
         );
 
-        BotMovementManager.tickAirborne(entry, new Point(-300, 100));
+        AgentAirborneMovementService.tickAirborne(entry, new Point(-300, 100));
 
         assertEquals(0.0, entry.airSteerVelX, 0.0001);
         assertEquals(new Point(92, 103), bot.getPosition());
@@ -984,7 +987,7 @@ class BotMovementManagerTest {
         entry.climbing = true;
         entry.climbRope = new Rope(668, 1727, 1980, false);
 
-        BotMovementManager.jumpToRope(entry, bot, 8);
+        AgentClimbMovementService.jumpToRope(entry, bot, 8);
 
         assertTrue(entry.inAir);
         assertTrue(entry.climbUpIntent);
