@@ -4300,6 +4300,11 @@ Current physics correction:
   `BotPhysicsEngine.stepAirborne` is only a temporary compatibility delegate;
   the Agent service owns air steering, airborne position integration, air
   collision handling, landing transition cleanup, and fall-damage handoff.
+- Swim runtime stepping now lives in `AgentSwimPhysicsService`.
+  `BotPhysicsEngine.applySwimMotion` is only a temporary compatibility
+  delegate; the Agent service owns swim rebasing, swim impulse/intent,
+  drag/gravity/thrust, collision sweep handling, grounded landing handoff, and
+  packet-visible swim velocity updates.
 
 Initial reconstruction order:
 

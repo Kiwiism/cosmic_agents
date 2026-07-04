@@ -224,6 +224,12 @@ Recent map updates:
   airborne velocity updates. `BotPhysicsEngine.stepAirborne` is now a
   temporary compatibility delegate that converts the Agent result enum back to
   the legacy result type.
+- Swim runtime stepping moved to `AgentSwimPhysicsService`. The Agent service
+  now owns swim integrator rebasing, swim-jump impulse, horizontal/vertical
+  swim intent, drag/gravity/thrust, wall/floor sweep collision, grounded
+  landing handoff, and packet-visible swim velocity updates.
+  `BotPhysicsEngine.applySwimMotion` is now a temporary compatibility
+  delegate.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement

@@ -2,11 +2,14 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.bots.BotEntry;
 
 import java.awt.Point;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -22,6 +25,22 @@ class AgentSwimPhysicsServiceTest {
 
         AgentSwimPhysicsService.applySwimMotion(entry);
 
+        assertTrue(AgentBotSwimStateRuntime.swimming(entry));
+    }
+
+    @Test
+    void applySwimMotionAppliesAgentOwnedHorizontalIntent() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(10, 20));
+        when(agent.getHp()).thenReturn(1);
+        when(agent.getMap()).thenReturn(null);
+        BotEntry entry = new BotEntry(agent, null, null);
+        AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
+
+        AgentSwimPhysicsService.applySwimMotion(entry);
+
+        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
+        assertTrue(AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry) > 0.0);
         assertTrue(AgentBotSwimStateRuntime.swimming(entry));
     }
 }
