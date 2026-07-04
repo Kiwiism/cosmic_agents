@@ -8,6 +8,7 @@ import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentAirbornePhysicsService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
+import server.agents.capabilities.movement.AgentGroundPhysicsService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
@@ -573,7 +574,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void stopGroundMotion(BotEntry entry) {
-        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
+        AgentGroundPhysicsService.stopGroundMotion(entry);
     }
 
     public static void resetMotion(BotEntry entry, Point position) {

@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
@@ -22,7 +23,7 @@ public final class AgentGroundPhysicsService {
     }
 
     public static void stopGroundMotion(BotEntry entry) {
-        BotPhysicsEngine.stopGroundMotion(entry);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
     }
 
     public static int velocityFromDeltaX(double deltaX) {

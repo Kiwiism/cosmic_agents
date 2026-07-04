@@ -4230,6 +4230,8 @@ Current physics correction:
 - Ground-to-rope reach checks now live in `AgentJumpProbeService`; bot physics
   delegates remain for compatibility while lower-level rope-grab simulation
   migrates later.
+- Ground-motion stop state writes now live in `AgentGroundPhysicsService`;
+  `BotPhysicsEngine.stopGroundMotion` remains a compatibility delegate.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.
