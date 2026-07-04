@@ -6,6 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
 
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.movement.AgentAirbornePhysicsService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
@@ -847,7 +848,7 @@ public final class BotPhysicsEngine {
     }
 
     static boolean canLand(BotEntry entry) {
-        return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
+        return AgentAirbornePhysicsService.canLand(entry);
     }
 
     /**

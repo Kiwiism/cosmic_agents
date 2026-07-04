@@ -4227,6 +4227,8 @@ Current physics correction:
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.
+- Airborne landing eligibility now lives in `AgentAirbornePhysicsService`;
+  `BotPhysicsEngine.canLand` remains a package-level compatibility delegate.
 - Pure movement kinematics formulas now live in `AgentMovementKinematicsService`.
   `BotPhysicsEngine` delegates its public formula entry points there while
   remaining integrators continue to use the same values.

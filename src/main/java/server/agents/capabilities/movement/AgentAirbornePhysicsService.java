@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.bots.BotEntry;
 import server.bots.BotPhysicsEngine;
 
@@ -18,5 +19,9 @@ public final class AgentAirbornePhysicsService {
             case LANDED -> AgentAirborneStepResult.LANDED;
             case CONTINUE -> AgentAirborneStepResult.CONTINUE;
         };
+    }
+
+    public static boolean canLand(BotEntry entry) {
+        return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
     }
 }
