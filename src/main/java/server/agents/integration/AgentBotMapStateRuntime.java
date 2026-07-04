@@ -14,7 +14,7 @@ public final class AgentBotMapStateRuntime {
     }
 
     public static int lastMapId(BotEntry entry) {
-        return entry.lastMapId();
+        return entry.mapTrackingState().lastMapId();
     }
 
     public static boolean isTrackingMap(BotEntry entry, int mapId) {
@@ -26,11 +26,11 @@ public final class AgentBotMapStateRuntime {
     }
 
     public static Map<Integer, Foothold> footholdIndex(BotEntry entry) {
-        return entry.footholdIndex();
+        return entry.mapTrackingState().footholdIndex();
     }
 
     public static void setMapTracking(BotEntry entry, int mapId, Map<Integer, Foothold> footholdIndex) {
-        entry.setMapTracking(mapId, footholdIndex);
+        entry.mapTrackingState().setMapTracking(mapId, footholdIndex);
     }
 
     public static void setMapTracking(BotEntry entry, MapleMap map, Map<Integer, Foothold> footholdIndex) {

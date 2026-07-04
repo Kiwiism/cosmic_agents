@@ -24,6 +24,7 @@ import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
+import server.agents.runtime.AgentMapTrackingState;
 
 import java.awt.*;
 import java.util.ArrayDeque;
@@ -1437,20 +1438,22 @@ public class BotEntry {
     }
 
     // Foothold index, rebuilt on map change
-    int lastMapId = -1;
-    Map<Integer, Foothold> fhIndex = new HashMap<>();
+    private final AgentMapTrackingState mapTrackingState = new AgentMapTrackingState();
+
+    public AgentMapTrackingState mapTrackingState() {
+        return mapTrackingState;
+    }
 
     public int lastMapId() {
-        return lastMapId;
+        return mapTrackingState.lastMapId();
     }
 
     public Map<Integer, Foothold> footholdIndex() {
-        return Collections.unmodifiableMap(fhIndex);
+        return mapTrackingState.footholdIndex();
     }
 
     public void setMapTracking(int mapId, Map<Integer, Foothold> footholdIndex) {
-        lastMapId = mapId;
-        fhIndex = footholdIndex == null ? new HashMap<>() : new HashMap<>(footholdIndex);
+        mapTrackingState.setMapTracking(mapId, footholdIndex);
     }
 
     // Human-like spacing and stagger — assigned at registration based on bot index

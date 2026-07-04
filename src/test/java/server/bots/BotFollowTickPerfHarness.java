@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -134,8 +135,7 @@ public class BotFollowTickPerfHarness {
                 Character bot = mockCharacter("bot" + i, 1000 + i, map, new Point(30 * i, -200));
                 BotEntry entry = new BotEntry(bot, owner, null);
                 entry.following = true;
-                entry.lastMapId = map.getId();
-                entry.fhIndex = AgentFootholdIndexService.buildFhIndex(map);
+                AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
                 entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
                 AgentMovementPoseService.teleportTo(entry, bot, bot.getPosition());
                 AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);

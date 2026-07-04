@@ -21,6 +21,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.runtime.AgentFormationService;
@@ -76,8 +77,7 @@ final class BotMovementSimulationLab {
         Character bot = spawnActor(name, id, map, startPosition);
         BotEntry entry = new BotEntry(bot, null, null);
         entry.skipDelayMs = 0;
-        entry.lastMapId = map.getId();
-        entry.fhIndex = AgentFootholdIndexService.buildFhIndex(map);
+        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
         entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
         bots.put(name, entry);
         return entry;
@@ -136,8 +136,10 @@ final class BotMovementSimulationLab {
 
     void primeMapState(String botName) {
         BotEntry entry = requireBot(botName);
-        entry.lastMapId = entry.bot.getMapId();
-        entry.fhIndex = AgentFootholdIndexService.buildFhIndex(entry.bot.getMap());
+        AgentBotMapStateRuntime.setMapTracking(
+                entry,
+                entry.bot.getMapId(),
+                AgentFootholdIndexService.buildFhIndex(entry.bot.getMap()));
     }
 
     void attachBotToRope(String botName, Rope rope, int y) {

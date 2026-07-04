@@ -4338,6 +4338,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while task queueing, active
   task selection, clearing, and activity epoch checks route through the Agent
   plan state.
+- Map tracking storage now lives in `AgentMapTrackingState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while current-map id,
+  foothold-index snapshots, null-index handling, and read-only index exposure
+  route through the Agent runtime state.
 
 Initial reconstruction order:
 
