@@ -43,29 +43,23 @@ public final class AgentBotPendingTradeStateRuntime {
     }
 
     public static boolean hasQueuedRetry(BotEntry entry) {
-        return entry.pendingBotTradeRetry() != null;
+        return entry.tradeRetryState().hasRetry();
     }
 
     public static void queueRetry(BotEntry entry, Runnable retry, int delayMs) {
-        if (hasQueuedRetry(entry)) {
-            return;
-        }
-        entry.setPendingBotTradeRetry(retry);
-        entry.setPendingBotTradeRetryMs(delayMs);
+        entry.tradeRetryState().queueRetry(retry, delayMs);
     }
 
     public static int retryDelayMs(BotEntry entry) {
-        return entry.pendingBotTradeRetryMs();
+        return entry.tradeRetryState().delayMs();
     }
 
     public static void setRetryDelayMs(BotEntry entry, int delayMs) {
-        entry.setPendingBotTradeRetryMs(delayMs);
+        entry.tradeRetryState().setDelayMs(delayMs);
     }
 
     public static Runnable takeRetry(BotEntry entry) {
-        Runnable retry = entry.pendingBotTradeRetry();
-        entry.setPendingBotTradeRetry(null);
-        return retry;
+        return entry.tradeRetryState().takeRetry();
     }
 
     public static int shareBudget(BotEntry entry) {

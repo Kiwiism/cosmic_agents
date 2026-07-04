@@ -27,6 +27,7 @@ import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.trade.AgentPendingLootOfferState;
+import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.monitoring.AgentPathLogger;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
@@ -1139,6 +1140,7 @@ public class BotEntry {
     public void setPendingDropCategory(String pendingDropCategory) { pendingActionState.setPendingDropCategory(pendingDropCategory); }
     public void clearPendingDropCategory() { pendingActionState.clearPendingDropCategory(); }
     private final AgentPendingLootOfferState pendingLootOfferState = new AgentPendingLootOfferState();
+    private final AgentTradeRetryState tradeRetryState = new AgentTradeRetryState();
 
     public AgentPendingLootOfferState pendingLootOfferState() {
         return pendingLootOfferState;
@@ -1185,23 +1187,24 @@ public class BotEntry {
     // Bot-initiated trade retry: when a pot-share / ammo-share / loot-offer is blocked
     // because the sender or recipient is already in a trade, the attempt is stored here
     // and re-fired once the sender's trade clears and the delay expires.
-    Runnable pendingBotTradeRetry = null;
-    int pendingBotTradeRetryMs = 0;
+    public AgentTradeRetryState tradeRetryState() {
+        return tradeRetryState;
+    }
 
     public Runnable pendingBotTradeRetry() {
-        return pendingBotTradeRetry;
+        return tradeRetryState.retry();
     }
 
     public void setPendingBotTradeRetry(Runnable pendingBotTradeRetry) {
-        this.pendingBotTradeRetry = pendingBotTradeRetry;
+        tradeRetryState.setRetry(pendingBotTradeRetry);
     }
 
     public int pendingBotTradeRetryMs() {
-        return pendingBotTradeRetryMs;
+        return tradeRetryState.delayMs();
     }
 
     public void setPendingBotTradeRetryMs(int pendingBotTradeRetryMs) {
-        this.pendingBotTradeRetryMs = pendingBotTradeRetryMs;
+        tradeRetryState.setDelayMs(pendingBotTradeRetryMs);
     }
 
     // Trade queue

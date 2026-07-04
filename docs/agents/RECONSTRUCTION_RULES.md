@@ -4377,6 +4377,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while AP build selection, AP
   prompt flag, SP variant/prompt flag, job-prompt milestone, and
   last-known-level reads/writes route through the Agent build capability.
+- Queued trade-retry storage now lives in `AgentTradeRetryState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while bot-initiated trade
+  retry callback and retry-delay reads/writes route through the Agent trade
+  capability.
 
 Initial reconstruction order:
 
