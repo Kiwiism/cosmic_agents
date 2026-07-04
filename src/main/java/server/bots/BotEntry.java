@@ -49,6 +49,7 @@ import server.agents.runtime.AgentFormationOffsetState;
 import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentFarmAnchorState;
 import server.agents.runtime.AgentBreakoutState;
+import server.agents.runtime.AgentDegenerateAttackState;
 import server.agents.runtime.AgentGrindTargetState;
 import server.agents.runtime.AgentGrindWanderState;
 import server.agents.runtime.AgentLeaderActivityState;
@@ -689,22 +690,22 @@ public class BotEntry {
     public void setAmmoWarnSent(boolean ammoWarnSent) {
         ammoSupplyState.setWarnSent(ammoWarnSent);
     }
-    boolean degenAttackDone = false; // force retreat after an accidental close-range hit
+    private final AgentDegenerateAttackState degenerateAttackState = new AgentDegenerateAttackState();
     private final AgentRetreatHoldState retreatHoldState = new AgentRetreatHoldState();
     private final AgentBreakoutState breakoutState = new AgentBreakoutState();
     private final AgentAoeRepositionState aoeRepositionState = new AgentAoeRepositionState();
     private final AgentGrindWanderState grindWanderState = new AgentGrindWanderState();
 
-    public boolean degenAttackDone() {
-        return degenAttackDone;
-    }
+    public AgentDegenerateAttackState degenerateAttackState() { return degenerateAttackState; }
+
+    public boolean degenAttackDone() { return degenerateAttackState.done(); }
 
     public void markDegenAttackDone() {
-        degenAttackDone = true;
+        degenerateAttackState.markDone();
     }
 
     public void clearDegenAttackDone() {
-        degenAttackDone = false;
+        degenerateAttackState.clear();
     }
 
     public AgentRetreatHoldState retreatHoldState() { return retreatHoldState; }

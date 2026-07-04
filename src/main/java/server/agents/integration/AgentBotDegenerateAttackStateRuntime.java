@@ -10,14 +10,14 @@ public final class AgentBotDegenerateAttackStateRuntime {
     }
 
     public static boolean degenAttackDone(BotEntry entry) {
-        return entry.degenAttackDone();
+        return entry.degenerateAttackState().done();
     }
 
     public static void markDegenAttackDone(BotEntry entry) {
-        entry.markDegenAttackDone();
+        entry.degenerateAttackState().markDone();
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearDegenAttackDone();
+        entry.degenerateAttackState().clear();
     }
 }

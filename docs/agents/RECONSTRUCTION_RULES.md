@@ -4487,6 +4487,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while sweet-spot
   anchor, bounded-chase deadline, and arrival/expiry checks route through Agent
   runtime state.
+- Degenerate close-range attack latch storage now lives in
+  `AgentDegenerateAttackState`. `BotEntry` temporarily hosts the Agent-owned
+  state object, while ranged-grind spacing and cleanup paths route through
+  Agent runtime state.
 
 Initial reconstruction order:
 
