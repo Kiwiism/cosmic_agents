@@ -4588,6 +4588,10 @@ Current physics correction:
 - Scroll reaction wrappers have been removed from `BotEntry`. Cooldown, recent
   load, observation timestamp, streak map, and prune timing now route through
   `AgentBotScrollReactionStateRuntime` and `AgentScrollReactionState`.
+- Reply-channel wrappers have been removed from `BotEntry`. Map/party/whisper
+  routing and null-to-map normalization now route through
+  `AgentBotReplyChannelStateRuntime` and the Agent-owned
+  `AgentReplyChannelState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

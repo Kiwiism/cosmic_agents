@@ -29,7 +29,6 @@ import server.life.Monster;
 import server.maps.MapItem;
 import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
-import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelState;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
 import server.agents.capabilities.inventory.AgentInventoryCooldownState;
@@ -1206,6 +1205,4 @@ public class BotEntry {
     // Mutations stay package-private to preserve existing invariants.
     public Character getBot() { return identityState.agent(); }
     public Character getOwner() { return identityState.leader(); }
-    public AgentReplyChannel getReplyChannel() { return replyChannelState.channel(); }
-    public void setReplyChannel(AgentReplyChannel replyChannel) { replyChannelState.setChannel(replyChannel); }
 }

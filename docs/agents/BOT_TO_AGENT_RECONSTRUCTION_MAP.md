@@ -296,6 +296,10 @@ Recent map updates:
 - Reply message queue state moved into `AgentMessageQueueState`. `BotEntry`
   still hosts the state object temporarily, but queue ownership, sending-state
   mutation, snapshots, and idle checks now live in `server.agents.commands`.
+- Reply-channel state moved into `AgentReplyChannelState`, and the direct
+  `BotEntry` reply-channel wrappers were removed. Reply routing now enters
+  through `AgentBotReplyChannelStateRuntime` while the temporary shell only
+  hosts the Agent-owned state object.
 - Scroll-reaction load/cooldown/streak state moved into
   `AgentScrollReactionState`. `BotEntry` still hosts the state object
   temporarily, while the social reaction adapter uses Agent-owned streak data.
