@@ -943,7 +943,7 @@ class BotMovementManagerTest {
 
         AgentMovementRecoveryService.tickUnstuck(entry);
 
-        assertFalse(entry.downJumpPending, "unstuck recovery should only use lateral jumps");
+        assertFalse(entry.downJumpPending(), "unstuck recovery should only use lateral jumps");
         assertTrue(entry.inAir, "unstuck recovery should launch the bot instead of crouching in place");
     }
 

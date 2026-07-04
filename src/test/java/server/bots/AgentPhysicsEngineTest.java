@@ -160,8 +160,8 @@ class AgentPhysicsEngineTest {
         entry.movementVelX = 123;
         entry.movementVelY = -456;
         entry.moveDir = -1;
-        entry.downJumpPending = true;
-        entry.downJumpGracePeriodMS = 350;
+        entry.setDownJumpPending(true);
+        entry.setDownJumpGracePeriodMs(350);
 
         AgentMovementPoseService.resetMotion(entry, new Point(10, 20));
 
@@ -169,8 +169,8 @@ class AgentPhysicsEngineTest {
         assertFalse(entry.climbing);
         assertFalse(entry.crouching);
         assertFalse(entry.climbUpIntent);
-        assertFalse(entry.downJumpPending);
-        assertEquals(0L, entry.downJumpGracePeriodMS);
+        assertFalse(entry.downJumpPending());
+        assertEquals(0L, entry.downJumpGracePeriodMs());
         assertEquals(10.0, entry.physX);
         assertEquals(20.0, entry.physY);
         assertEquals(0, entry.movementVelX);
@@ -285,21 +285,21 @@ class AgentPhysicsEngineTest {
     @Test
     void shouldTickDownDownJumpGraceInsidePhysicsEngine() {
         BotEntry entry = new BotEntry(null, null, null);
-        entry.downJumpGracePeriodMS = 120;
+        entry.setDownJumpGracePeriodMs(120);
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
-        assertEquals(70, entry.downJumpGracePeriodMS);
+        assertEquals(70, entry.downJumpGracePeriodMs());
         assertFalse(AgentAirbornePhysicsService.canLand(entry));
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
-        assertEquals(20, entry.downJumpGracePeriodMS);
+        assertEquals(20, entry.downJumpGracePeriodMs());
         assertFalse(AgentAirbornePhysicsService.canLand(entry));
 
         AgentMotionTimerService.tickMotionTimers(entry);
 
-        assertEquals(0, entry.downJumpGracePeriodMS);
+        assertEquals(0, entry.downJumpGracePeriodMs());
         assertTrue(AgentAirbornePhysicsService.canLand(entry));
     }
 
@@ -322,8 +322,8 @@ class AgentPhysicsEngineTest {
 
         assertFalse(entry.inAir);
         assertFalse(entry.crouching);
-        assertFalse(entry.downJumpPending);
-        assertEquals(0L, entry.downJumpGracePeriodMS);
+        assertFalse(entry.downJumpPending());
+        assertEquals(0L, entry.downJumpGracePeriodMs());
         assertEquals(new Point(50, 100), bot.getPosition());
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
     }

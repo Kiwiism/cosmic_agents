@@ -16,6 +16,7 @@ import server.agents.capabilities.combat.AgentMobTouchState;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentGroundTravelState;
+import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentSwimIntentState;
 
 import client.Character;
@@ -149,6 +150,7 @@ public class BotEntry {
     int movementVelY = 0;
     int facingDir = 1;
     boolean crouching = false;
+    private final AgentDownJumpState downJumpState = new AgentDownJumpState();
     private final AgentSwimIntentState swimIntentState = new AgentSwimIntentState();
 
     public boolean inAir() {
@@ -446,24 +448,24 @@ public class BotEntry {
         this.ropeGrabCooldownMs = ropeGrabCooldownMs;
     }
 
-    // Down-jump: true when crouch was shown last tick, jump fires this tick
-    boolean downJumpPending = false;
-    long downJumpGracePeriodMS = 0;
+    public AgentDownJumpState downJumpState() {
+        return downJumpState;
+    }
 
     public boolean downJumpPending() {
-        return downJumpPending;
+        return downJumpState.pending();
     }
 
     public long downJumpGracePeriodMs() {
-        return downJumpGracePeriodMS;
+        return downJumpState.gracePeriodMs();
     }
 
     public void setDownJumpPending(boolean downJumpPending) {
-        this.downJumpPending = downJumpPending;
+        downJumpState.setPending(downJumpPending);
     }
 
     public void setDownJumpGracePeriodMs(long downJumpGracePeriodMs) {
-        this.downJumpGracePeriodMS = downJumpGracePeriodMs;
+        downJumpState.setGracePeriodMs(downJumpGracePeriodMs);
     }
 
     boolean ropeEntryPending = false;

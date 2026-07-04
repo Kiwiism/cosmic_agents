@@ -190,9 +190,9 @@ class AgentBotMovementStateRuntimeTest {
 
         entry.inAir = true;
         entry.climbing = true;
-        entry.downJumpPending = true;
+        entry.setDownJumpPending(true);
         entry.crouching = true;
-        entry.downJumpGracePeriodMS = 100L;
+        entry.setDownJumpGracePeriodMs(100L);
         AgentBotMovementStateRuntime.setWasMovingX(entry, true);
         entry.movementVelX = 12;
         entry.movementVelY = -3;

@@ -778,7 +778,7 @@ class BotNavigationManagerTest {
         assertTrue(directive.consumedTick());
         assertTrue(entry.ropeEntryPending);
         assertFalse(entry.climbing);
-        assertFalse(entry.downJumpPending);
+        assertFalse(entry.downJumpPending());
         assertFalse(entry.crouching);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 150));
@@ -805,7 +805,7 @@ class BotNavigationManagerTest {
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertTrue(immediateAction);
-        assertTrue(entry.downJumpPending);
+        assertTrue(entry.downJumpPending());
     }
 
     @Test
@@ -825,7 +825,7 @@ class BotNavigationManagerTest {
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertTrue(immediateAction);
-        assertTrue(entry.downJumpPending);
+        assertTrue(entry.downJumpPending());
     }
 
     @Test
@@ -846,7 +846,7 @@ class BotNavigationManagerTest {
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
-        assertFalse(entry.downJumpPending);
+        assertFalse(entry.downJumpPending());
         assertNotNull(steeringTarget);
         assertTrue(steeringTarget.y > bot.getPosition().y);
         assertTrue(steeringTarget.x > 200 || steeringTarget.x < 0,
@@ -870,7 +870,7 @@ class BotNavigationManagerTest {
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
-        assertFalse(entry.downJumpPending);
+        assertFalse(entry.downJumpPending());
         assertEquals(target, steeringTarget);
     }
 

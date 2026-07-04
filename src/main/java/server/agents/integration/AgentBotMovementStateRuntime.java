@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.bots.BotEntry;
+import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import java.awt.Point;
@@ -120,11 +121,11 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static boolean downJumpPending(BotEntry entry) {
-        return entry.downJumpPending();
+        return downJumpState(entry).pending();
     }
 
     public static void setDownJumpPending(BotEntry entry, boolean downJumpPending) {
-        entry.setDownJumpPending(downJumpPending);
+        downJumpState(entry).setPending(downJumpPending);
     }
 
     public static boolean crouching(BotEntry entry) {
@@ -136,19 +137,19 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static boolean hasDownJumpPending(BotEntry entry) {
-        return entry.downJumpPending();
+        return downJumpState(entry).pending();
     }
 
     public static boolean hasDownJumpGracePeriod(BotEntry entry) {
-        return entry.downJumpGracePeriodMs() != 0L;
+        return downJumpState(entry).hasGracePeriod();
     }
 
     public static long downJumpGracePeriodMs(BotEntry entry) {
-        return entry.downJumpGracePeriodMs();
+        return downJumpState(entry).gracePeriodMs();
     }
 
     public static void setDownJumpGracePeriodMs(BotEntry entry, long downJumpGracePeriodMs) {
-        entry.setDownJumpGracePeriodMs(downJumpGracePeriodMs);
+        downJumpState(entry).setGracePeriodMs(downJumpGracePeriodMs);
     }
 
     public static boolean wasMovingX(BotEntry entry) {
@@ -173,6 +174,10 @@ public final class AgentBotMovementStateRuntime {
 
     public static void setMovementVelocity(BotEntry entry, int velocityX, int velocityY) {
         entry.setMovementVelocity(velocityX, velocityY);
+    }
+
+    private static AgentDownJumpState downJumpState(BotEntry entry) {
+        return entry.downJumpState();
     }
 
     private static Point position(Character character) {
