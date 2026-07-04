@@ -9,6 +9,7 @@ import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupServ
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentAirbornePhysicsService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
+import server.agents.capabilities.movement.AgentGroundMotion;
 import server.agents.capabilities.movement.AgentGroundPhysicsService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentJumpProbeService;
@@ -342,12 +343,7 @@ public final class BotPhysicsEngine {
      * returns null. Movement must check for null and return early without applying ground actions.
      */
     public static Foothold syncAndDetectGround(BotEntry entry, Character bot) {
-        syncGroundPosition(entry, bot.getPosition().x);
-        Foothold fh = findGroundFoothold(bot.getMap(), bot.getPosition());
-        if (fh == null) {
-            beginFall(entry, bot, 0);
-        }
-        return fh;
+        return AgentGroundPhysicsService.syncAndDetectGround(entry, bot);
     }
 
     public static Foothold findGroundFoothold(MapleMap map, Point position) {
@@ -681,40 +677,8 @@ public final class BotPhysicsEngine {
      * physics never returns velocity to movement.
      */
     public static GroundMotion applyGroundMotion(BotEntry entry, Character bot, Foothold foothold) {
-        MapleMap map = bot.getMap();
-        Point currentPos = bot.getPosition();
-        int desiredDir = AgentBotMovementStateRuntime.moveDirection(entry);
-        GroundStepResult step = simulateGroundMotion(map, currentPos, foothold, desiredDir,
-                new AgentGroundTravelState(AgentBotMovementPhysicsStateRuntime.physicsX(entry),
-                        AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry),
-                        AgentBotMovementPhysicsStateRuntime.groundPhysicsCarryMs(entry)),
-                AgentBotMovementStateRuntime.movementProfile(entry));
-
-        // Snap-up to a *different* foothold means the bot walked off the edge and a separate
-        // platform happens to be within MAX_SLOPE_UP above. That is not an uphill slope of the
-        // current foothold - the bot should fall, not jump up to the unconnected platform.
-        if (step.lostGround()) {
-            beginFall(entry, bot, step.point(), step.stepX());
-            return new GroundMotion(step.stepX(), true);
-        }
-
-        Point position = step.point();
-        bot.setPosition(position);
-        AgentBotMovementStateRuntime.setInAir(entry, false);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, step.state().hspeed());
-        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, step.state().carryMs());
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        setMovementVelocity(entry, step.velocityX(), 0);
-        syncCharacterState(entry);
-        return new GroundMotion(step.stepX(), false);
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, foothold);
+        return new GroundMotion(motion.stepX(), motion.lostGround());
     }
 
     static AgentGroundTravelState initialGroundTravelState(Point position) {

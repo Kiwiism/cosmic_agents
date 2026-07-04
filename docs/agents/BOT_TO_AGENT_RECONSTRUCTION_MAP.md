@@ -195,6 +195,11 @@ Recent map updates:
   the public ground collision query behavior used by navigation and movement;
   `BotPhysicsEngine` keeps compatibility delegates and its private integrator
   preview until the full ground physics body migrates.
+- Ground physics entry points moved to `AgentGroundPhysicsService`, including
+  ground-position synchronization, no-ground fall launch, horizontal ground
+  force/friction stepping, blocked-step handling, walk-off fall launch, and
+  packet-visible ground movement velocity. `BotPhysicsEngine.syncAndDetectGround`
+  and `applyGroundMotion` are compatibility delegates.
 - Down-jump launch ownership moved to `AgentQueuedMovementActionService`.
   `BotPhysicsEngine.beginDownJump` is now a compatibility delegate while the
   Agent service applies the same down-jump kick and grace-period values from

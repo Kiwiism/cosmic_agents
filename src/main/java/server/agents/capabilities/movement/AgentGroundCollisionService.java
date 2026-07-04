@@ -58,7 +58,7 @@ public final class AgentGroundCollisionService {
         return ground == null || ground.y > position.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 
-    private static GroundStepPreview previewGroundStep(MapleMap map, Point currentPos, Foothold foothold, int nextX) {
+    static GroundStepPreview previewGroundStep(MapleMap map, Point currentPos, Foothold foothold, int nextX) {
         if (map == null || currentPos == null) {
             return null;
         }
@@ -333,6 +333,6 @@ public final class AgentGroundCollisionService {
     private record GroundRegionSample(Point point, Foothold foothold) {
     }
 
-    private record GroundStepPreview(int baseY, Point point, Foothold foothold, boolean lostGround, boolean blocked) {
+    record GroundStepPreview(int baseY, Point point, Foothold foothold, boolean lostGround, boolean blocked) {
     }
 }

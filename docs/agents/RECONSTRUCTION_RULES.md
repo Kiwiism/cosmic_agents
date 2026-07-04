@@ -197,6 +197,11 @@ Recent reconstruction notes:
   walk-region snapping, map-side boundary checks, and collidable-wall fallback
   lookup. `BotPhysicsEngine` delegates those public query methods while its
   private ground integrator preview remains temporarily bot-owned.
+- Ground physics runtime entry points now live in
+  `AgentGroundPhysicsService`. Ground position synchronization, no-ground fall
+  launch, force/friction stepping, blocked-step handling, walk-off fall launch,
+  and packet velocity updates preserve the legacy algorithm while
+  `BotPhysicsEngine` keeps only compatibility delegates for those methods.
 - Down-jump launch state now lives in
   `AgentQueuedMovementActionService`, with shared airborne setup in
   `AgentAirborneLaunchService`. `BotPhysicsEngine.beginDownJump` remains only
