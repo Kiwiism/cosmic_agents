@@ -2,7 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -11,15 +11,15 @@ public final class AgentUntargetedChatRouteService {
     private AgentUntargetedChatRouteService() {
     }
 
-    public record Hooks(FollowTargetMatcher followTargetMatcher,
-                        FollowTargetCommand followTargetCommand,
+    public record Hooks<E extends AgentRuntimeHandle>(FollowTargetMatcher followTargetMatcher,
+                        FollowTargetCommand<E> followTargetCommand,
                         GroupSupplyRequestClassifier groupSupplyRequestClassifier,
-                        GroupSupplyResponderSelector groupSupplyResponderSelector,
-                        ReplyChannelSetter replyChannelSetter,
-                        AgentChatHandler agentChatHandler,
+                        GroupSupplyResponderSelector<E> groupSupplyResponderSelector,
+                        ReplyChannelSetter<E> replyChannelSetter,
+                        AgentChatHandler<E> agentChatHandler,
                         BooleanSupplier typoSuggesterEnabled,
                         TypoSuggester typoSuggester,
-                        AgentReplyQueue agentReplyQueue) {
+                        AgentReplyQueue<E> agentReplyQueue) {
     }
 
     @FunctionalInterface
@@ -28,8 +28,8 @@ public final class AgentUntargetedChatRouteService {
     }
 
     @FunctionalInterface
-    public interface FollowTargetCommand {
-        void apply(Character leader, List<BotEntry> entries, String targetToken);
+    public interface FollowTargetCommand<E extends AgentRuntimeHandle> {
+        void apply(Character leader, List<E> entries, String targetToken);
     }
 
     @FunctionalInterface
@@ -38,18 +38,18 @@ public final class AgentUntargetedChatRouteService {
     }
 
     @FunctionalInterface
-    public interface GroupSupplyResponderSelector {
-        BotEntry select(Character leader, List<BotEntry> entries);
+    public interface GroupSupplyResponderSelector<E extends AgentRuntimeHandle> {
+        E select(Character leader, List<E> entries);
     }
 
     @FunctionalInterface
-    public interface ReplyChannelSetter {
-        void set(BotEntry entry, AgentReplyChannel channel);
+    public interface ReplyChannelSetter<E extends AgentRuntimeHandle> {
+        void set(E entry, AgentReplyChannel channel);
     }
 
     @FunctionalInterface
-    public interface AgentChatHandler {
-        void handle(BotEntry entry, String message);
+    public interface AgentChatHandler<E extends AgentRuntimeHandle> {
+        void handle(E entry, String message);
     }
 
     @FunctionalInterface
@@ -58,15 +58,15 @@ public final class AgentUntargetedChatRouteService {
     }
 
     @FunctionalInterface
-    public interface AgentReplyQueue {
-        void queue(BotEntry entry, String reply);
+    public interface AgentReplyQueue<E extends AgentRuntimeHandle> {
+        void queue(E entry, String reply);
     }
 
-    public static void handleUntargetedChat(Character leader,
-                                            List<BotEntry> entries,
+    public static <E extends AgentRuntimeHandle> void handleUntargetedChat(Character leader,
+                                            List<E> entries,
                                             String message,
                                             AgentReplyChannel channel,
-                                            Hooks hooks) {
+                                            Hooks<E> hooks) {
         String followTargetToken = hooks.followTargetMatcher().match(message);
         if (followTargetToken != null) {
             hooks.followTargetCommand().apply(leader, entries, followTargetToken);
@@ -74,7 +74,7 @@ public final class AgentUntargetedChatRouteService {
         }
 
         if (hooks.groupSupplyRequestClassifier().isGroupSupplyRequest(message)) {
-            BotEntry responder = hooks.groupSupplyResponderSelector().select(leader, entries);
+            E responder = hooks.groupSupplyResponderSelector().select(leader, entries);
             if (responder != null) {
                 hooks.replyChannelSetter().set(responder, channel);
                 hooks.agentChatHandler().handle(responder, message);
@@ -85,14 +85,14 @@ public final class AgentUntargetedChatRouteService {
         if (hooks.typoSuggesterEnabled().getAsBoolean()) {
             String typo = hooks.typoSuggester().suggest(message);
             if (typo != null) {
-                BotEntry first = entries.get(0);
+                E first = entries.get(0);
                 hooks.replyChannelSetter().set(first, channel);
                 hooks.agentReplyQueue().queue(first, "did you mean '" + typo + "'?");
                 return;
             }
         }
 
-        for (BotEntry entry : entries) {
+        for (E entry : entries) {
             hooks.replyChannelSetter().set(entry, channel);
             hooks.agentChatHandler().handle(entry, message);
         }

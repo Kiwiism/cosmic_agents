@@ -3,7 +3,6 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.bots.BotEntry;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ class AgentTargetedChatRouteServiceTest {
                 List.of(),
                 "hello",
                 AgentReplyChannel.MAP,
-                hooks(new AgentBotTargetedCommandMatch(null, null, null), false, false, calls));
+                hooks(new AgentTargetedCommandMatch<>(null, null, null), false, false, calls));
 
         assertFalse(handled);
         assertEquals(List.of("resolve:hello"), calls);
@@ -41,7 +40,7 @@ class AgentTargetedChatRouteServiceTest {
                 List.of(),
                 "zz hello",
                 AgentReplyChannel.MAP,
-                hooks(new AgentBotTargetedCommandMatch(null, null, "not found"), false, false, calls));
+                hooks(new AgentTargetedCommandMatch<>(null, null, "not found"), false, false, calls));
 
         assertTrue(handled);
         assertEquals(List.of("resolve:zz hello", "leader:not found"), calls);
@@ -58,7 +57,7 @@ class AgentTargetedChatRouteServiceTest {
                 List.of(entry),
                 "Agent follow Bob",
                 AgentReplyChannel.PARTY,
-                hooks(new AgentBotTargetedCommandMatch(entry, "follow Bob", null), false, false, calls));
+                hooks(new AgentTargetedCommandMatch<>(entry, "follow Bob", null), false, false, calls));
 
         assertTrue(handled);
         assertEquals(List.of(
@@ -78,7 +77,7 @@ class AgentTargetedChatRouteServiceTest {
                 List.of(entry),
                 "Agent potsz",
                 AgentReplyChannel.PARTY,
-                hooks(new AgentBotTargetedCommandMatch(entry, "potsz", null), true, false, calls));
+                hooks(new AgentTargetedCommandMatch<>(entry, "potsz", null), true, false, calls));
 
         assertTrue(handled);
         assertEquals(List.of(
@@ -100,7 +99,7 @@ class AgentTargetedChatRouteServiceTest {
                 List.of(entry),
                 "Agent pots",
                 AgentReplyChannel.PARTY,
-                hooks(new AgentBotTargetedCommandMatch(entry, "pots", null), false, true, calls));
+                hooks(new AgentTargetedCommandMatch<>(entry, "pots", null), false, true, calls));
 
         assertTrue(handled);
         assertEquals(List.of(
@@ -122,7 +121,7 @@ class AgentTargetedChatRouteServiceTest {
                 List.of(entry),
                 "Agent hi",
                 AgentReplyChannel.PARTY,
-                hooks(new AgentBotTargetedCommandMatch(entry, "hi", null), false, false, calls));
+                hooks(new AgentTargetedCommandMatch<>(entry, "hi", null), false, false, calls));
 
         assertTrue(handled);
         assertEquals(List.of(
@@ -133,12 +132,12 @@ class AgentTargetedChatRouteServiceTest {
                 "llm:hi"), calls);
     }
 
-    private static AgentTargetedChatRouteService.Hooks hooks(AgentBotTargetedCommandMatch match,
+    private static AgentTargetedChatRouteService.Hooks<BotEntry> hooks(AgentTargetedCommandMatch<BotEntry> match,
                                                              boolean typoEnabled,
                                                              boolean matched,
                                                              List<String> calls) {
         AtomicBoolean chatMatched = new AtomicBoolean(matched);
-        return new AgentTargetedChatRouteService.Hooks(
+        return new AgentTargetedChatRouteService.Hooks<BotEntry>(
                 (entries, message) -> {
                     calls.add("resolve:" + message);
                     return match;
@@ -158,6 +157,7 @@ class AgentTargetedChatRouteServiceTest {
                 (entry, commandText) -> calls.add("chat:" + commandText),
                 chatMatched::get,
                 () -> 123L,
+                BotEntry::owner,
                 (entry, commandText, commandAtMs) -> calls.add("record:" + commandText + ":" + commandAtMs),
                 () -> true,
                 (entry, sender, commandText) -> calls.add("llm:" + commandText),

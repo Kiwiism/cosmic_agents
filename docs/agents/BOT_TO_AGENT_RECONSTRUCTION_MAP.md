@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Targeted and untargeted chat route services now depend on the Agent-owned
+  `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
+  `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
+  command routing behavior unchanged while reducing `BotEntry` type leakage
+  from dialogue capabilities.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

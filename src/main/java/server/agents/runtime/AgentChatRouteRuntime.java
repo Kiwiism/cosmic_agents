@@ -6,6 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatIngressService;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
+import server.agents.capabilities.dialogue.AgentTargetedCommandMatch;
 import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
@@ -19,6 +20,7 @@ import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotManagerReplyRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -118,9 +120,12 @@ public final class AgentChatRouteRuntime {
                         untargetedChatHooks()));
     }
 
-    private static AgentTargetedChatRouteService.Hooks targetedChatHooks() {
-        return new AgentTargetedChatRouteService.Hooks(
-                AgentBotCommandParser::resolveTargetedBot,
+    private static AgentTargetedChatRouteService.Hooks<BotEntry> targetedChatHooks() {
+        return new AgentTargetedChatRouteService.Hooks<>(
+                (entries, message) -> {
+                    var match = AgentBotCommandParser.resolveTargetedBot(entries, message);
+                    return new AgentTargetedCommandMatch<>(match.entry(), match.commandText(), match.feedbackMessage());
+                },
                 AgentChatCommandClassifier::matchFollowTarget,
                 AgentFollowTargetRuntime::applyFollowTargetCommand,
                 AgentBotReplyChannelStateRuntime::setReplyChannel,
@@ -130,14 +135,15 @@ public final class AgentChatRouteRuntime {
                 AgentChatRouteRuntime::handleAgentChat,
                 AgentChatRuntime::wasLastChatHandled,
                 System::currentTimeMillis,
+                AgentBotRuntimeIdentityRuntime::owner,
                 AgentBotActivityStateRuntime::recordLastOwnerCommand,
                 () -> AgentLlmConfig.enabled,
                 AgentLlmReplyService::maybeRespond,
                 Character::yellowMessage);
     }
 
-    private static AgentUntargetedChatRouteService.Hooks untargetedChatHooks() {
-        return new AgentUntargetedChatRouteService.Hooks(
+    private static AgentUntargetedChatRouteService.Hooks<BotEntry> untargetedChatHooks() {
+        return new AgentUntargetedChatRouteService.Hooks<>(
                 AgentChatCommandClassifier::matchFollowTarget,
                 AgentFollowTargetRuntime::applyFollowTargetCommand,
                 AgentChatCommandClassifier::isGroupSupplyRequest,

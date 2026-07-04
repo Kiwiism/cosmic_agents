@@ -95,10 +95,10 @@ class AgentUntargetedChatRouteServiceTest {
                 "chat:Other:hello"), calls);
     }
 
-    private static AgentUntargetedChatRouteService.Hooks hooks(BotEntry groupResponder,
+    private static AgentUntargetedChatRouteService.Hooks<BotEntry> hooks(BotEntry groupResponder,
                                                                boolean typoDisabled,
                                                                List<String> calls) {
-        return new AgentUntargetedChatRouteService.Hooks(
+        return new AgentUntargetedChatRouteService.Hooks<BotEntry>(
                 message -> {
                     calls.add("followMatcher:" + message);
                     return message.startsWith("follow ") ? message.substring("follow ".length()) : null;

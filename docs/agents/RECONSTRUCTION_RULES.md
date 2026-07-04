@@ -4765,6 +4765,12 @@ Current physics correction:
   disconnects, relog metadata capture, and owner-away safe-mode fanout. Existing
   confirmation prompts, delay windows, and lifecycle side effects remain
   unchanged.
+- Targeted and untargeted dialogue route capabilities now accept the
+  Agent-owned `AgentRuntimeHandle` boundary instead of naming `BotEntry`
+  directly. `AgentChatRouteRuntime` remains the temporary adapter that converts
+  legacy `BotEntry` command resolution into `AgentTargetedCommandMatch`, so
+  reply-channel, typo suggestion, follow routing, LLM fall-through, and owner
+  command recording behavior stay unchanged.
 
 Initial reconstruction order:
 

@@ -63,6 +63,7 @@ import server.agents.runtime.AgentOwnerMotionState;
 import server.agents.runtime.AgentPatrolState;
 import server.agents.runtime.AgentRetreatHoldState;
 import server.agents.runtime.AgentRuntimeIdentityState;
+import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentScheduledTaskState;
 import server.agents.runtime.AgentTickFailureState;
 import server.agents.runtime.AgentTickState;
@@ -72,7 +73,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
-public class BotEntry {
+public class BotEntry implements AgentRuntimeHandle {
     private final AgentRuntimeIdentityState identityState;
     private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();

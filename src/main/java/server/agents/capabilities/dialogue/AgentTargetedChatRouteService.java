@@ -2,9 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotTargetedCommandMatch;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -14,25 +12,26 @@ public final class AgentTargetedChatRouteService {
     private AgentTargetedChatRouteService() {
     }
 
-    public record Hooks(TargetedCommandResolver targetedCommandResolver,
+    public record Hooks<E extends AgentRuntimeHandle>(TargetedCommandResolver<E> targetedCommandResolver,
                         FollowTargetMatcher followTargetMatcher,
-                        FollowTargetCommand followTargetCommand,
-                        ReplyChannelSetter replyChannelSetter,
+                        FollowTargetCommand<E> followTargetCommand,
+                        ReplyChannelSetter<E> replyChannelSetter,
                         BooleanSupplier typoSuggesterEnabled,
                         TypoSuggester typoSuggester,
-                        AgentReplyQueue agentReplyQueue,
-                        AgentChatHandler agentChatHandler,
+                        AgentReplyQueue<E> agentReplyQueue,
+                        AgentChatHandler<E> agentChatHandler,
                         BooleanSupplier lastChatHandled,
                         LongSupplier nowMs,
-                        OwnerCommandRecorder ownerCommandRecorder,
+                        LeaderResolver<E> leaderResolver,
+                        OwnerCommandRecorder<E> ownerCommandRecorder,
                         BooleanSupplier llmEnabled,
-                        LlmResponder llmResponder,
+                        LlmResponder<E> llmResponder,
                         LeaderMessage leaderMessage) {
     }
 
     @FunctionalInterface
-    public interface TargetedCommandResolver {
-        AgentBotTargetedCommandMatch resolve(List<BotEntry> entries, String message);
+    public interface TargetedCommandResolver<E extends AgentRuntimeHandle> {
+        AgentTargetedCommandMatch<E> resolve(List<E> entries, String message);
     }
 
     @FunctionalInterface
@@ -41,13 +40,13 @@ public final class AgentTargetedChatRouteService {
     }
 
     @FunctionalInterface
-    public interface FollowTargetCommand {
-        void apply(Character leader, List<BotEntry> entries, String targetToken);
+    public interface FollowTargetCommand<E extends AgentRuntimeHandle> {
+        void apply(Character leader, List<E> entries, String targetToken);
     }
 
     @FunctionalInterface
-    public interface ReplyChannelSetter {
-        void set(BotEntry entry, AgentReplyChannel channel);
+    public interface ReplyChannelSetter<E extends AgentRuntimeHandle> {
+        void set(E entry, AgentReplyChannel channel);
     }
 
     @FunctionalInterface
@@ -56,23 +55,28 @@ public final class AgentTargetedChatRouteService {
     }
 
     @FunctionalInterface
-    public interface AgentReplyQueue {
-        void queue(BotEntry entry, String reply);
+    public interface AgentReplyQueue<E extends AgentRuntimeHandle> {
+        void queue(E entry, String reply);
     }
 
     @FunctionalInterface
-    public interface AgentChatHandler {
-        void handle(BotEntry entry, String commandText);
+    public interface AgentChatHandler<E extends AgentRuntimeHandle> {
+        void handle(E entry, String commandText);
     }
 
     @FunctionalInterface
-    public interface OwnerCommandRecorder {
-        void record(BotEntry entry, String commandText, long commandAtMs);
+    public interface LeaderResolver<E extends AgentRuntimeHandle> {
+        Character resolve(E entry);
     }
 
     @FunctionalInterface
-    public interface LlmResponder {
-        void maybeRespond(BotEntry entry, Character sender, String commandText);
+    public interface OwnerCommandRecorder<E extends AgentRuntimeHandle> {
+        void record(E entry, String commandText, long commandAtMs);
+    }
+
+    @FunctionalInterface
+    public interface LlmResponder<E extends AgentRuntimeHandle> {
+        void maybeRespond(E entry, Character sender, String commandText);
     }
 
     @FunctionalInterface
@@ -80,14 +84,14 @@ public final class AgentTargetedChatRouteService {
         void send(Character leader, String message);
     }
 
-    public static boolean handleTargetedChat(Character leader,
-                                             List<BotEntry> entries,
+    public static <E extends AgentRuntimeHandle> boolean handleTargetedChat(Character leader,
+                                             List<E> entries,
                                              String message,
                                              AgentReplyChannel channel,
-                                             Hooks hooks) {
-        AgentBotTargetedCommandMatch targetedAgent = hooks.targetedCommandResolver().resolve(entries, message);
+                                             Hooks<E> hooks) {
+        AgentTargetedCommandMatch<E> targetedAgent = hooks.targetedCommandResolver().resolve(entries, message);
         if (targetedAgent.entry() != null) {
-            BotEntry entry = targetedAgent.entry();
+            E entry = targetedAgent.entry();
             String commandText = targetedAgent.commandText();
             String followTargetToken = hooks.followTargetMatcher().match(commandText);
             if (followTargetToken != null) {
@@ -106,7 +110,7 @@ public final class AgentTargetedChatRouteService {
 
             hooks.agentChatHandler().handle(entry, commandText);
             boolean matched = hooks.lastChatHandled().getAsBoolean();
-            Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+            Character owner = hooks.leaderResolver().resolve(entry);
             if (matched && owner != null && leader.getId() == owner.getId()) {
                 hooks.ownerCommandRecorder().record(entry, commandText, hooks.nowMs().getAsLong());
             }
