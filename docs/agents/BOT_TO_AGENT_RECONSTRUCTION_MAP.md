@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` pending chat action wrapper methods were removed after callers
+  moved to `server.agents.integration.AgentBotPendingActionStateRuntime`.
+  `AgentPendingActionState` remains the Agent-owned mutable state object.
 - `BotEntry` live character identity ownership moved to
   `server.agents.runtime.AgentRuntimeIdentityState`. The temporary shell keeps
   compatibility accessors while Agent identity adapters now read the

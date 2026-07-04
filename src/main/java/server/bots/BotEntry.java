@@ -1061,13 +1061,6 @@ public class BotEntry {
         return pendingActionState;
     }
 
-    // Pending two-step action
-    public String pendingAction() { return pendingActionState.pendingAction(); }
-    public void setPendingAction(String pendingAction) { pendingActionState.setPendingAction(pendingAction); }
-    public void clearPendingAction() { pendingActionState.clearPendingAction(); }
-    public String pendingDropCategory() { return pendingActionState.pendingDropCategory(); }
-    public void setPendingDropCategory(String pendingDropCategory) { pendingActionState.setPendingDropCategory(pendingDropCategory); }
-    public void clearPendingDropCategory() { pendingActionState.clearPendingDropCategory(); }
     private final AgentPendingLootOfferState pendingLootOfferState = new AgentPendingLootOfferState();
     private final AgentTradeRetryState tradeRetryState = new AgentTradeRetryState();
 

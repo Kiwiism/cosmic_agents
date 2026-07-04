@@ -9,6 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -42,7 +43,7 @@ class AgentOfferServiceTest {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         BotEntry entry = new BotEntry(bot, owner, null);
-        entry.setPendingAction("trade");
+        AgentBotPendingActionStateRuntime.setPendingAction(entry, "trade");
 
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
             AgentOfferService.requestBestUpgradeFromOwner(entry, bot);

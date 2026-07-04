@@ -74,7 +74,7 @@ class AgentBotSessionRuntimeTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(123);
         BotEntry entry = new BotEntry(null, owner, null);
-        entry.setPendingAction(AgentChatPendingAction.OWNER_AWAY);
+        AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
 
         try (MockedStatic<AgentBotSessionSchedulerRuntime> scheduler = mockStatic(AgentBotSessionSchedulerRuntime.class);
              MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);

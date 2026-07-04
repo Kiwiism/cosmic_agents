@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Pending chat action compatibility wrappers were removed from `BotEntry`.
+  Pending action reads/writes now enter through
+  `AgentBotPendingActionStateRuntime` and the Agent-owned
+  `AgentPendingActionState` hosted temporarily by the shell.
 - Live Agent/leader character identity moved to
   `server.agents.runtime.AgentRuntimeIdentityState`. `BotEntry` temporarily
   delegates `bot()`, `owner()`, `setOwner(...)`, and legacy getters to the
