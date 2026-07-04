@@ -22,6 +22,7 @@ import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentMovementInputState;
 import server.agents.capabilities.movement.AgentMovementPhysicsState;
 import server.agents.capabilities.movement.AgentSwimIntentState;
+import server.agents.capabilities.movement.AgentMovementProfileState;
 
 import client.Character;
 import client.inventory.Item;
@@ -91,7 +92,7 @@ public class BotEntry {
     private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();
     final ScheduledFuture<?> task;
-    AgentMovementProfile movementProfile = AgentMovementProfile.base();
+    private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
 
     public boolean hasScheduledTask() {
         return task != null;
@@ -124,11 +125,15 @@ public class BotEntry {
     }
 
     public AgentMovementProfile movementProfile() {
-        return movementProfile != null ? movementProfile : AgentMovementProfile.base();
+        return movementProfileState.profile();
     }
 
     public void setMovementProfile(AgentMovementProfile movementProfile) {
-        this.movementProfile = movementProfile != null ? movementProfile : AgentMovementProfile.base();
+        movementProfileState.setProfile(movementProfile);
+    }
+
+    public AgentMovementProfileState movementProfileState() {
+        return movementProfileState;
     }
 
     // Physics

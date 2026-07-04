@@ -1,6 +1,8 @@
 package server.bots;
 
 
+
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
@@ -83,7 +85,7 @@ final class BotMovementSimulationLab {
         BotEntry entry = new BotEntry(bot, null, null);
         entry.setSkipDelayMs(0);
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
-        entry.movementProfile = AgentMovementProfile.fromCharacter(bot);
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.fromCharacter(bot));
         bots.put(name, entry);
         return entry;
     }

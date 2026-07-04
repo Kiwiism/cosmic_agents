@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
 
@@ -38,7 +40,7 @@ class AgentNavigationGraphFallbackTest {
 
         Character bot = mockBot(new Point(60, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = new AgentMovementProfile(125, 110);
+        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(125, 110));
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, new Point(180, 160), true);

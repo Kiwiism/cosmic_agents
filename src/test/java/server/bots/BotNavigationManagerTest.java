@@ -1,5 +1,7 @@
 package server.bots;
 
+
+import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
@@ -401,7 +403,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleEdge);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
@@ -504,7 +506,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(20, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = new AgentMovementProfile(105, 105);
+        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(105, 105));
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, new Point(180, 100), true);
@@ -515,7 +517,7 @@ class BotNavigationManagerTest {
         assertTrue(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
         assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
 
-        AgentNavigationGraphService.getGraph(map, entry.movementProfile);
+        AgentNavigationGraphService.getGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
     }
 
     @Test
@@ -637,7 +639,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(fromRegion.pointAt(outsideLaunchX), lithHarbor);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, ropeEntry);
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
 
@@ -667,7 +669,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, lithHarbor);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         entry.setClimbingOnRope(new Rope(1265, 289, 597, false));
 
         AgentNavigationTargetService.NavigationDirective directive =
@@ -689,7 +691,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(ropeTop, map);
         bot.setStance(CharacterStance.ROPE_RIGHT_STANCE);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = new AgentMovementProfile(105, 100);
+        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(105, 100));
 
         assertEquals(graph.findRopeRegionId(ropeTop),
                 AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, ropeTop));
@@ -732,7 +734,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(100, 0), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
 
         // Simulate the state right after AI tick attached the bot to the rope at firstClimbableY.
         entry.setClimbVerticalDirection(-1);
@@ -766,7 +768,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, new Point(100, 150), true);
@@ -794,7 +796,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
@@ -814,7 +816,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
@@ -834,7 +836,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(260, 220);
@@ -858,7 +860,7 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(40, 114), map);
         BotEntry entry = new BotEntry(bot, null, null);
-        entry.movementProfile = AgentMovementProfile.base();
+        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
         AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(320, 212);

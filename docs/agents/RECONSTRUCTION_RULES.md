@@ -4548,6 +4548,10 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while following, grinding,
   and follow-target id reads/writes route through the Agent mode runtime
   adapter.
+- Movement profile storage now lives in `AgentMovementProfileState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while profile refresh,
+  bucketing, and null-to-base normalization route through the Agent movement
+  state runtime adapter.
 
 Initial reconstruction order:
 

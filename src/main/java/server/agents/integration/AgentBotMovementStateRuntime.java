@@ -7,6 +7,7 @@ import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.bots.BotEntry;
 import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementProfileState;
 
 import java.awt.Point;
 
@@ -54,23 +55,23 @@ public final class AgentBotMovementStateRuntime {
     }
 
     public static AgentMovementProfile movementProfile(BotEntry entry) {
-        return entry.movementProfile();
+        return movementProfileState(entry).profile();
     }
 
     public static AgentMovementProfile movementProfileOrCharacter(BotEntry entry, Character bot) {
         if (entry == null) {
             return AgentMovementProfile.fromCharacter(null);
         }
-        AgentMovementProfile profile = entry.movementProfile();
+        AgentMovementProfile profile = movementProfileState(entry).profile();
         return profile == null ? AgentMovementProfile.fromCharacter(bot) : profile;
     }
 
     public static void setMovementProfile(BotEntry entry, AgentMovementProfile movementProfile) {
-        entry.setMovementProfile(movementProfile);
+        movementProfileState(entry).setProfile(movementProfile);
     }
 
     public static void refreshMovementProfile(BotEntry entry, Character bot) {
-        entry.setMovementProfile(AgentMovementProfile.fromCharacter(bot));
+        movementProfileState(entry).refreshFrom(bot);
     }
 
     public static int moveDirection(BotEntry entry) {
@@ -183,6 +184,10 @@ public final class AgentBotMovementStateRuntime {
 
     private static AgentMovementInputState movementInputState(BotEntry entry) {
         return entry.movementInputState();
+    }
+
+    private static AgentMovementProfileState movementProfileState(BotEntry entry) {
+        return entry.movementProfileState();
     }
 
     private static Point position(Character character) {
