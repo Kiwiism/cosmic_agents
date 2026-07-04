@@ -8,11 +8,11 @@ public final class AgentBotScrollReactionStateRuntime {
     }
 
     public static boolean isOnCooldown(BotEntry entry, long nowMs) {
-        return nowMs < entry.nextScrollReactionAtMs();
+        return nowMs < entry.scrollReactionState().nextReactionAtMs();
     }
 
     public static void startCooldown(BotEntry entry, long nowMs, long cooldownMs) {
-        entry.setNextScrollReactionAtMs(nowMs + Math.max(0, cooldownMs));
+        entry.scrollReactionState().setNextReactionAtMs(nowMs + Math.max(0, cooldownMs));
     }
 
     public static double recordReactionLoad(BotEntry entry, long nowMs, long decayMs) {
@@ -21,14 +21,14 @@ public final class AgentBotScrollReactionStateRuntime {
         }
 
         long safeDecayMs = Math.max(1, decayMs);
-        double load = entry.recentScrollReactionLoad();
-        long lastObservedAtMs = entry.lastScrollReactionObservedAtMs();
+        double load = entry.scrollReactionState().recentLoad();
+        long lastObservedAtMs = entry.scrollReactionState().lastObservedAtMs();
         if (lastObservedAtMs > 0L && nowMs > lastObservedAtMs) {
             load *= Math.exp(-(double) (nowMs - lastObservedAtMs) / safeDecayMs);
         }
         load += 1.0;
-        entry.setRecentScrollReactionLoad(load);
-        entry.setLastScrollReactionObservedAtMs(nowMs);
+        entry.scrollReactionState().setRecentLoad(load);
+        entry.scrollReactionState().setLastObservedAtMs(nowMs);
         return load;
     }
 
@@ -45,7 +45,7 @@ public final class AgentBotScrollReactionStateRuntime {
 
         pruneStreaks(entry, nowMs, windowMs, pruneIntervalMs);
         long safeWindowMs = Math.max(1, windowMs);
-        AgentScrollReactionState.StreakState state = entry.scrollReactionStreaksByScroller()
+        AgentScrollReactionState.StreakState state = entry.scrollReactionState().streaksByScroller()
                 .computeIfAbsent(scrollerId, ignored -> new AgentScrollReactionState.StreakState());
         if (state.lastOutcomeAtMs == 0L
                 || nowMs - state.lastOutcomeAtMs > safeWindowMs
@@ -60,12 +60,12 @@ public final class AgentBotScrollReactionStateRuntime {
     }
 
     public static void pruneStreaks(BotEntry entry, long nowMs, long windowMs, long pruneIntervalMs) {
-        if (nowMs < entry.nextScrollReactionStreakPruneAtMs()) {
+        if (nowMs < entry.scrollReactionState().nextStreakPruneAtMs()) {
             return;
         }
         long cutoff = nowMs - windowMs;
-        entry.scrollReactionStreaksByScroller().entrySet()
+        entry.scrollReactionState().streaksByScroller().entrySet()
                 .removeIf(it -> it.getValue() == null || it.getValue().lastOutcomeAtMs < cutoff);
-        entry.setNextScrollReactionStreakPruneAtMs(nowMs + pruneIntervalMs);
+        entry.scrollReactionState().setNextStreakPruneAtMs(nowMs + pruneIntervalMs);
     }
 }

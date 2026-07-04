@@ -4585,6 +4585,9 @@ Current physics correction:
   `BotEntry`. Buff enablement, cheap mode, scan timestamps, action summaries,
   and skill-buff debug summaries now route through `AgentBotBuffStateRuntime`
   and Agent-owned buff state adapters.
+- Scroll reaction wrappers have been removed from `BotEntry`. Cooldown, recent
+  load, observation timestamp, streak map, and prune timing now route through
+  `AgentBotScrollReactionStateRuntime` and `AgentScrollReactionState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

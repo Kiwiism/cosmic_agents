@@ -29,7 +29,7 @@ class AgentBotScrollReactionStateRuntimeTest {
 
         assertTrue(decayed > 1.0);
         assertTrue(decayed < 2.0);
-        assertEquals(61_000, entry.lastScrollReactionObservedAtMs());
+        assertEquals(61_000, entry.scrollReactionState().lastObservedAtMs());
     }
 
     @Test

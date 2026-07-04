@@ -1030,44 +1030,8 @@ public class BotEntry {
         navigationEdgeState.setJumpLaunch(navJumpLaunchEdge, navJumpLaunchX);
     }
 
-    public double recentScrollReactionLoad() {
-        return scrollReactionState.recentLoad();
-    }
-
-    public void setRecentScrollReactionLoad(double recentScrollReactionLoad) {
-        scrollReactionState.setRecentLoad(recentScrollReactionLoad);
-    }
-
-    public long lastScrollReactionObservedAtMs() {
-        return scrollReactionState.lastObservedAtMs();
-    }
-
-    public void setLastScrollReactionObservedAtMs(long lastScrollReactionObservedAtMs) {
-        scrollReactionState.setLastObservedAtMs(lastScrollReactionObservedAtMs);
-    }
-
-    public long nextScrollReactionAtMs() {
-        return scrollReactionState.nextReactionAtMs();
-    }
-
-    public void setNextScrollReactionAtMs(long nextScrollReactionAtMs) {
-        scrollReactionState.setNextReactionAtMs(nextScrollReactionAtMs);
-    }
-
     public AgentScrollReactionState scrollReactionState() {
         return scrollReactionState;
-    }
-
-    public Map<Integer, AgentScrollReactionState.StreakState> scrollReactionStreaksByScroller() {
-        return scrollReactionState.streaksByScroller();
-    }
-
-    public long nextScrollReactionStreakPruneAtMs() {
-        return scrollReactionState.nextStreakPruneAtMs();
-    }
-
-    public void setNextScrollReactionStreakPruneAtMs(long nextScrollReactionStreakPruneAtMs) {
-        scrollReactionState.setNextStreakPruneAtMs(nextScrollReactionStreakPruneAtMs);
     }
 
     public void setPendingGearPromptAt(long pendingGearPromptAt) {
