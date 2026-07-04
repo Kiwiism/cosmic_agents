@@ -165,6 +165,10 @@ Recent map updates:
 - Directional-drop waypoint validation now uses the Agent-owned
   `AgentWalkOffLanding` DTO through `AgentJumpProbeService`; the underlying
   walk-off simulation remains temporarily bot-backed.
+- Navigation graph physics probes for fall/rope-grab estimates, ground-jump
+  rope grabs, down-jump rope grabs, rope-jump grabs, rope-jump landing costs,
+  and runway wall checks now enter through Agent movement seams. The graph
+  builder no longer imports `BotPhysicsEngine` directly.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.

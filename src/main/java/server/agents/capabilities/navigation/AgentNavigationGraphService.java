@@ -16,7 +16,6 @@ import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import server.maps.Rope;
-import server.bots.BotPhysicsEngine;
 
 import java.awt.*;
 import java.io.IOException;
@@ -1017,7 +1016,7 @@ public final class AgentNavigationGraphService {
             return;
         }
         Point startPoint = from.pointAt(launchX);
-        if (BotPhysicsEngine.isGroundRunwayBlockedByWall(map, startPoint, endpoint)) {
+        if (AgentGroundCollisionService.isGroundRunwayBlockedByWall(map, startPoint, endpoint)) {
             return;
         }
 
@@ -1037,7 +1036,7 @@ public final class AgentNavigationGraphService {
             return;
         }
 
-        int travelMs = BotPhysicsEngine.estimateFallLandingTimeMs(map, endpoint, stepX)
+        int travelMs = AgentJumpProbeService.estimateFallLandingTimeMs(map, endpoint, stepX)
                 + estimateHorizontalTravelTimeMs(actualRunway, movementProfile);
 
         addEdge(from.id, below.id, AgentNavigationGraph.EdgeType.DROP,
@@ -1155,7 +1154,7 @@ public final class AgentNavigationGraphService {
             return null;
         }
 
-        Point grab = BotPhysicsEngine.simulateGroundJumpRopeGrab(map, start, launchStepX, rope, movementProfile);
+        Point grab = AgentJumpProbeService.simulateGroundJumpRopeGrab(map, start, launchStepX, rope, movementProfile);
         if (grab == null) {
             ropeGrabCache.misses.add(key);
         } else {
@@ -1461,7 +1460,7 @@ public final class AgentNavigationGraphService {
             return null;
         }
 
-        int travelMs = BotPhysicsEngine.estimateGroundJumpRopeGrabTimeMs(
+        int travelMs = AgentJumpProbeService.estimateGroundJumpRopeGrabTimeMs(
                 map, representativeStart, launchStepX, rope, movementProfile);
         return new JumpLaunchWindow(minX, maxX, representativeStart, representativeGrab, travelMs);
     }
@@ -1607,9 +1606,9 @@ public final class AgentNavigationGraphService {
                 }
 
                 if (canTopStep) {
-                    Point ropeGrab = BotPhysicsEngine.simulateDownJumpRopeGrab(map, anchor, rope);
+                    Point ropeGrab = AgentJumpProbeService.simulateDownJumpRopeGrab(map, anchor, rope);
                     if (ropeGrab != null) {
-                        int cost = BotPhysicsEngine.estimateDownJumpRopeGrabTimeMs(map, anchor, rope);
+                        int cost = AgentJumpProbeService.estimateDownJumpRopeGrabTimeMs(map, anchor, rope);
                         addEdge(ground.id, ropeRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
                                 anchor, ropeGrab, 0, 0, cost, outgoing, edgeKeys);
                     }
@@ -1670,7 +1669,7 @@ public final class AgentNavigationGraphService {
                     continue;
                 }
 
-                int cost = BotPhysicsEngine.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX, movementProfile);
+                int cost = AgentJumpProbeService.estimateRopeJumpLandingTimeMs(map, ropePoint, stepX, movementProfile);
                 addEdge(ropeRegion.id, toRegion.id, AgentNavigationGraph.EdgeType.CLIMB,
                         ropePoint, landing.point(), stepX, 0, cost, outgoing, edgeKeys);
             }
@@ -1695,12 +1694,12 @@ public final class AgentNavigationGraphService {
                 }
 
                 int launchDir = targetRope.x() > ropeX ? jumpStep : -jumpStep;
-                Point ropeGrab = BotPhysicsEngine.simulateRopeJumpGrab(map, ropePoint, launchDir, targetRope, movementProfile);
+                Point ropeGrab = AgentJumpProbeService.simulateRopeJumpGrab(map, ropePoint, launchDir, targetRope, movementProfile);
                 if (ropeGrab == null) {
                     continue;
                 }
 
-                int cost = BotPhysicsEngine.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope, movementProfile);
+                int cost = AgentJumpProbeService.estimateRopeJumpGrabTimeMs(map, ropePoint, launchDir, targetRope, movementProfile);
                 addEdge(ropeRegion.id, otherRope.id, AgentNavigationGraph.EdgeType.CLIMB,
                         ropePoint, ropeGrab, launchDir, 0, cost, outgoing, edgeKeys);
             }

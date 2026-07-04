@@ -4246,6 +4246,10 @@ Current physics correction:
   `AgentWalkOffLanding` DTO through `AgentJumpProbeService`. The simulator
   still delegates to `BotPhysicsEngine` until walk-off ground/air integration
   is moved.
+- Navigation graph physics probes now enter through `AgentJumpProbeService`
+  and `AgentGroundCollisionService` for fall/rope-grab estimates, rope-grab
+  simulations, and runway wall checks. `AgentNavigationGraphService` no longer
+  imports `BotPhysicsEngine` directly.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

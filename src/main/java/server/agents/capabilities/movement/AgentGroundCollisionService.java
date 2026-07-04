@@ -21,6 +21,10 @@ public final class AgentGroundCollisionService {
         return BotPhysicsEngine.isGroundStepBlockedByWall(map, from, stepX);
     }
 
+    public static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
+        return BotPhysicsEngine.isGroundRunwayBlockedByWall(map, from, to);
+    }
+
     public static boolean canStartDownJump(MapleMap map, Point position) {
         Foothold foothold = AgentGroundingService.findGroundFoothold(map, position);
         return foothold != null && !foothold.isForbidFallDown();

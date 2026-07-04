@@ -46,6 +46,57 @@ public final class AgentJumpProbeService {
                 BotPhysicsEngine.simulateWalkOffLanding(map, from, desiredDir, initialState, profile));
     }
 
+    public static int estimateFallLandingTimeMs(MapleMap map, Point from, int stepX) {
+        return BotPhysicsEngine.estimateFallLandingTimeMs(map, from, stepX);
+    }
+
+    public static Point simulateGroundJumpRopeGrab(MapleMap map,
+                                                   Point from,
+                                                   int stepX,
+                                                   Rope targetRope,
+                                                   AgentMovementProfile profile) {
+        return BotPhysicsEngine.simulateGroundJumpRopeGrab(map, from, stepX, targetRope, profile);
+    }
+
+    public static int estimateGroundJumpRopeGrabTimeMs(MapleMap map,
+                                                       Point from,
+                                                       int stepX,
+                                                       Rope targetRope,
+                                                       AgentMovementProfile profile) {
+        return BotPhysicsEngine.estimateGroundJumpRopeGrabTimeMs(map, from, stepX, targetRope, profile);
+    }
+
+    public static Point simulateDownJumpRopeGrab(MapleMap map, Point from, Rope targetRope) {
+        return BotPhysicsEngine.simulateDownJumpRopeGrab(map, from, targetRope);
+    }
+
+    public static int estimateDownJumpRopeGrabTimeMs(MapleMap map, Point from, Rope targetRope) {
+        return BotPhysicsEngine.estimateDownJumpRopeGrabTimeMs(map, from, targetRope);
+    }
+
+    public static int estimateRopeJumpLandingTimeMs(MapleMap map,
+                                                    Point from,
+                                                    int stepX,
+                                                    AgentMovementProfile profile) {
+        return BotPhysicsEngine.estimateRopeJumpLandingTimeMs(map, from, stepX, profile);
+    }
+
+    public static Point simulateRopeJumpGrab(MapleMap map,
+                                             Point from,
+                                             int stepX,
+                                             Rope targetRope,
+                                             AgentMovementProfile profile) {
+        return BotPhysicsEngine.simulateRopeJumpGrab(map, from, stepX, targetRope, profile);
+    }
+
+    public static int estimateRopeJumpGrabTimeMs(MapleMap map,
+                                                 Point from,
+                                                 int stepX,
+                                                 Rope targetRope,
+                                                 AgentMovementProfile profile) {
+        return BotPhysicsEngine.estimateRopeJumpGrabTimeMs(map, from, stepX, targetRope, profile);
+    }
+
     public static AgentPostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
                                                                                Point from,
                                                                                int stepX,
