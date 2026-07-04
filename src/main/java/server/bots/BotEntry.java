@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationDebugState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
 import server.agents.capabilities.build.AgentBuildService;
@@ -1555,8 +1556,7 @@ public class BotEntry {
         return ownerGivenItems;
     }
 
-    // Last reason an edge execution was blocked (for debug logs)
-    String lastEdgeBlockReason = null;
+    private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
 
     // Cached movement state shared across ticks
     Point navTargetPos = null;
@@ -1565,7 +1565,6 @@ public class BotEntry {
     int navJumpLaunchX = Integer.MIN_VALUE;
     int navTargetRegionId = -1;
     boolean navPreciseTarget = false;
-    boolean graphWarmupFallback = false;
     int observedOwnerStepX = 0;
     int observedOwnerStepY = 0;
 
@@ -1778,44 +1777,44 @@ public class BotEntry {
 
     private final AgentScrollReactionState scrollReactionState = new AgentScrollReactionState();
 
-    // Path logging (debug)
-    AgentPathLogger pathLogger = null;
-    String lastNavDecision = "-";
+    public AgentNavigationDebugState navigationDebugState() {
+        return navigationDebugState;
+    }
 
     public AgentPathLogger pathLogger() {
-        return pathLogger;
+        return navigationDebugState.pathLogger();
     }
 
     public void setPathLogger(AgentPathLogger pathLogger) {
-        this.pathLogger = pathLogger;
+        navigationDebugState.setPathLogger(pathLogger);
     }
 
     public void clearPathLogger() {
-        this.pathLogger = null;
+        navigationDebugState.clearPathLogger();
     }
 
     public String lastNavDecision() {
-        return lastNavDecision;
+        return navigationDebugState.lastDecision();
     }
 
     public void setLastNavDecision(String lastNavDecision) {
-        this.lastNavDecision = lastNavDecision;
+        navigationDebugState.setLastDecision(lastNavDecision);
     }
 
     public String lastEdgeBlockReason() {
-        return lastEdgeBlockReason;
+        return navigationDebugState.lastEdgeBlockReason();
     }
 
     public void setLastEdgeBlockReason(String lastEdgeBlockReason) {
-        this.lastEdgeBlockReason = lastEdgeBlockReason;
+        navigationDebugState.setLastEdgeBlockReason(lastEdgeBlockReason);
     }
 
     public boolean graphWarmupFallback() {
-        return graphWarmupFallback;
+        return navigationDebugState.graphWarmupFallback();
     }
 
     public void setGraphWarmupFallback(boolean graphWarmupFallback) {
-        this.graphWarmupFallback = graphWarmupFallback;
+        navigationDebugState.setGraphWarmupFallback(graphWarmupFallback);
     }
 
     public Point navTargetPos() {

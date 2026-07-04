@@ -4409,6 +4409,10 @@ Current physics correction:
   object, while proactive-offer enablement, requested upgrade item tracking,
   pending gear-prompt reservation timing, spawn-upgrade check status, and next
   gear-suggestion timing route through the Agent trade capability.
+- Navigation debug/path-log storage now lives in `AgentNavigationDebugState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while path logger,
+  last navigation decision, last edge block reason, and graph-warmup fallback
+  reads/writes route through the Agent navigation capability.
 
 Initial reconstruction order:
 

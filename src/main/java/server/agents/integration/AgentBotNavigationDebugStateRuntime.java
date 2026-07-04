@@ -16,44 +16,44 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static boolean isPathLogging(BotEntry entry) {
-        return entry != null && entry.pathLogger() != null;
+        return entry != null && entry.navigationDebugState().pathLogger() != null;
     }
 
     public static void startPathLogging(BotEntry entry) {
         Character bot = entry.bot();
-        entry.setPathLogger(new AgentPathLogger(bot.getName(), bot.getMapId()));
+        entry.navigationDebugState().setPathLogger(new AgentPathLogger(bot.getName(), bot.getMapId()));
     }
 
     public static String dumpPathLog(BotEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
-        AgentPathLogger logger = entry.pathLogger();
-        entry.clearPathLogger();
+        AgentPathLogger logger = entry.navigationDebugState().pathLogger();
+        entry.navigationDebugState().clearPathLogger();
         return logger.dumpToFile(entry, targetSnapshot, note);
     }
 
     public static void clearPathLogging(BotEntry entry) {
         if (entry != null) {
-            entry.clearPathLogger();
+            entry.navigationDebugState().clearPathLogger();
         }
     }
 
     public static String lastDecision(BotEntry entry) {
-        return entry.lastNavDecision();
+        return entry.navigationDebugState().lastDecision();
     }
 
     public static void setLastDecision(BotEntry entry, String decision) {
-        entry.setLastNavDecision(decision);
+        entry.navigationDebugState().setLastDecision(decision);
     }
 
     public static String lastEdgeBlockReason(BotEntry entry) {
-        return entry.lastEdgeBlockReason();
+        return entry.navigationDebugState().lastEdgeBlockReason();
     }
 
     public static void setLastEdgeBlockReason(BotEntry entry, String reason) {
-        entry.setLastEdgeBlockReason(reason);
+        entry.navigationDebugState().setLastEdgeBlockReason(reason);
     }
 
     public static void clearLastEdgeBlockReason(BotEntry entry) {
-        entry.setLastEdgeBlockReason(null);
+        entry.navigationDebugState().setLastEdgeBlockReason(null);
     }
 
     public static String decisionWithBlockReason(BotEntry entry) {
@@ -62,15 +62,15 @@ public final class AgentBotNavigationDebugStateRuntime {
     }
 
     public static boolean graphWarmupFallback(BotEntry entry) {
-        return entry.graphWarmupFallback();
+        return entry.navigationDebugState().graphWarmupFallback();
     }
 
     public static void setGraphWarmupFallback(BotEntry entry, boolean fallback) {
-        entry.setGraphWarmupFallback(fallback);
+        entry.navigationDebugState().setGraphWarmupFallback(fallback);
     }
 
     public static void clearGraphWarmupFallback(BotEntry entry) {
-        entry.setGraphWarmupFallback(false);
+        entry.navigationDebugState().setGraphWarmupFallback(false);
     }
 
     public static Point navTargetPosition(BotEntry entry) {
@@ -169,7 +169,7 @@ public final class AgentBotNavigationDebugStateRuntime {
                                      int botRegionId,
                                      boolean consumedTick,
                                      boolean aiTick) {
-        AgentPathLogger logger = entry == null ? null : entry.pathLogger();
+        AgentPathLogger logger = entry == null ? null : entry.navigationDebugState().pathLogger();
         if (logger != null) {
             logger.record(entry, targetSnapshot, botRegionId, consumedTick, aiTick);
         }
