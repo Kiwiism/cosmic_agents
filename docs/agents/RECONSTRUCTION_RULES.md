@@ -192,6 +192,12 @@ Recent reconstruction notes:
   detection moved into `AgentGroundCollisionService`. `BotPhysicsEngine`
   keeps temporary delegates while larger ground-step preview and wall-collision
   internals remain in the physics body.
+- Down-jump launch state now lives in
+  `AgentQueuedMovementActionService`, with shared airborne setup in
+  `AgentAirborneLaunchService`. `BotPhysicsEngine.beginDownJump` remains only
+  as a temporary compatibility delegate; the Agent path preserves the same
+  down-jump velocity and grace-period constants through
+  `AgentMovementPhysicsConfig`.
 - Movement timer countdown implementation moved into `AgentMotionTimerService`.
   `BotPhysicsEngine.tickMotionTimers` remains a temporary delegate while
   physics callers migrate.

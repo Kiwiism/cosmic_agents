@@ -10,6 +10,7 @@ public final class AgentMovementPhysicsConfig {
     private static final double HFORCE_PXS = 16.667;
     private static final float GRAVITY_PXS2 = 2000.0f;
     private static final float JUMP_SPEED_PXS = 555.0f;
+    private static final float DOWN_JUMP_SPEED_PXS = 196.0f;
     private static final float ROPE_JUMP_SPEED_PXS = 375.0f;
     private static final float CLIMB_SPEED_PXS = 100.0f;
     private static final int ROPE_GRAB_X = 8;
@@ -23,6 +24,7 @@ public final class AgentMovementPhysicsConfig {
     private static final int TELEPORT_DIST = 4000;
     private static final int OUT_OF_BOUNDS_TELEPORT_DIST = 600;
     private static final int FOLLOW_Y_CAP = 200;
+    private static final int DOWN_JUMP_GRACE_MS = 350;
     private static final int SWIM_ARRIVAL_RADIUS_PX = 8;
     private static final int SWIM_JUMP_COOLDOWN_MS = 500;
     private static final int SWIM_LEVEL_BAND_PX = 30;
@@ -50,6 +52,10 @@ public final class AgentMovementPhysicsConfig {
 
     public static float configuredJumpSpeedPxs() {
         return JUMP_SPEED_PXS;
+    }
+
+    public static float configuredDownJumpSpeedPxs() {
+        return DOWN_JUMP_SPEED_PXS;
     }
 
     public static float configuredRopeJumpSpeedPxs() {
@@ -102,6 +108,10 @@ public final class AgentMovementPhysicsConfig {
 
     public static int configuredFollowYCap() {
         return FOLLOW_Y_CAP;
+    }
+
+    public static int configuredDownJumpGraceMs() {
+        return DOWN_JUMP_GRACE_MS;
     }
 
     public static int configuredSwimArrivalRadiusPx() {

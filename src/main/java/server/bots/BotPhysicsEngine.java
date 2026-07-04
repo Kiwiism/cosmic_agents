@@ -623,16 +623,7 @@ public final class BotPhysicsEngine {
     }
 
     public static void beginDownJump(BotEntry entry, Character bot) {
-        if (!canStartDownJump(bot.getMap(), bot.getPosition())) {
-            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
-            AgentBotMovementStateRuntime.setCrouching(entry, false);
-            syncCharacterState(entry);
-            return;
-        }
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        launchAirborne(entry, bot, bot.getPosition(), -downJumpForcePerTick(), 0, false);
-        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, cfg.DOWN_JUMP_GRACE_MS);
+        AgentQueuedMovementActionService.beginDownJump(entry, bot);
     }
 
     public static void beginTopRopeEntry(BotEntry entry, Character bot) {

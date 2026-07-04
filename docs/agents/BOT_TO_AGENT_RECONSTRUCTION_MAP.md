@@ -183,9 +183,17 @@ Recent map updates:
 - Combat knockback launch state mutation now lives in
   `AgentKnockbackMovementService`; `BotPhysicsEngine.beginKnockback` is a
   compatibility delegate.
+- Shared airborne launch state setup now lives in
+  `AgentAirborneLaunchService`. Combat knockback and down-jump launch use the
+  same Agent-owned velocity/airborne-state setup while preserving the legacy
+  movement velocity conversion.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.
+- Down-jump launch ownership moved to `AgentQueuedMovementActionService`.
+  `BotPhysicsEngine.beginDownJump` is now a compatibility delegate while the
+  Agent service applies the same down-jump kick and grace-period values from
+  `AgentMovementPhysicsConfig`.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement

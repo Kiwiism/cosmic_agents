@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Rope;
 
 /**
@@ -35,7 +34,16 @@ public final class AgentQueuedMovementActionService {
             AgentMovementPoseService.syncCharacterState(entry);
             return;
         }
-        BotPhysicsEngine.beginDownJump(entry, agent);
+        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+        AgentAirborneLaunchService.launchAirborne(
+                entry,
+                agent.getPosition(),
+                -AgentAirborneLaunchService.downJumpForcePerTick(),
+                0,
+                false);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(
+                entry,
+                AgentMovementPhysicsConfig.configuredDownJumpGraceMs());
     }
 
     public static void beginTopRopeEntry(BotEntry entry, Character agent) {
