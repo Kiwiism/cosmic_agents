@@ -6,6 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentRopeMovementService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -141,7 +142,7 @@ final class BotMovementSimulationLab {
 
     void attachBotToRope(String botName, Rope rope, int y) {
         BotEntry entry = requireBot(botName);
-        BotPhysicsEngine.attachToRope(entry, entry.bot, rope, y);
+        AgentRopeMovementService.attachToRope(entry, entry.bot, rope, y);
         primeMapState(botName);
     }
 

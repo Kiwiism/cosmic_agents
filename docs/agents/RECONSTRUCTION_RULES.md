@@ -4312,6 +4312,10 @@ Current physics correction:
   once the tested behavior has Agent-owned APIs. The corner fall-through
   regression now exercises Agent knockback, airborne stepping, timers, pose,
   and grounding services directly.
+- Bot-named test harnesses that remain during reconstruction should still call
+  Agent-owned movement services when the tested behavior has moved. Recent
+  movement tests now use Agent ground-collision, movement-config, and rope
+  movement services directly.
 
 Initial reconstruction order:
 

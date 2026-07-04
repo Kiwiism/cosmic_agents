@@ -3,6 +3,7 @@ package server.bots;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementService;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundMovementPolicy;
 import server.agents.capabilities.movement.AgentGroundMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
@@ -183,7 +184,7 @@ class BotMovementManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
 
-        assertTrue(BotPhysicsEngine.canWalkGroundStep(map, new Point(-73, 151), 8));
+        assertTrue(AgentGroundCollisionService.canWalkGroundStep(map, new Point(-73, 151), 8));
     }
 
     @Test
@@ -863,7 +864,7 @@ class BotMovementManagerTest {
         entry.movementProfile = new AgentMovementProfile(140, 100);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
         assertTrue(entry.fidgetActionBaseDelayMs >= 100 && entry.fidgetActionBaseDelayMs <= 250);
-        assertEquals(0, entry.fidgetActionBaseDelayMs % BotPhysicsEngine.cfg.TICK_MS);
+        assertEquals(0, entry.fidgetActionBaseDelayMs % AgentMovementPhysicsConfig.configuredMovementTickMs());
 
         long before = System.currentTimeMillis();
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));

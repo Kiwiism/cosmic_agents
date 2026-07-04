@@ -1,6 +1,7 @@
 package server.bots;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -314,7 +315,7 @@ class BotMovementSimulationLabTest {
             if (candidate == null || graph.findRegionId(map, candidate) != edge.fromRegionId) {
                 continue;
             }
-            if (BotPhysicsEngine.canWalkGroundStep(map, candidate, edge.launchStepX)) {
+            if (AgentGroundCollisionService.canWalkGroundStep(map, candidate, edge.launchStepX)) {
                 return candidate;
             }
         }
