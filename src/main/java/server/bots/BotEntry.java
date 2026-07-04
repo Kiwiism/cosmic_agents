@@ -1065,36 +1065,6 @@ public class BotEntry {
         return pendingLootOfferState;
     }
 
-    public Item pendingLootOfferItem() { return pendingLootOfferState.item(); }
-
-    public int pendingLootOfferRecipientId() {
-        return pendingLootOfferState.recipientId();
-    }
-
-    public long pendingLootOfferExpiresAt() {
-        return pendingLootOfferState.expiresAt();
-    }
-
-    public boolean pendingLootOfferBotRequesting() {
-        return pendingLootOfferState.botRequesting();
-    }
-
-    public void setPendingLootOffer(Item item, int recipientId, long expiresAt, boolean botRequesting) {
-        pendingLootOfferState.set(item, recipientId, expiresAt, botRequesting);
-    }
-
-    public void clearPendingLootOffer() {
-        setPendingLootOffer(null, 0, 0L, false);
-    }
-
-    public void clearPendingLootOfferForAcceptedTransfer() {
-        pendingLootOfferState.clearAcceptedTransfer();
-    }
-
-    public void clearPendingLootOfferItem() {
-        pendingLootOfferState.clearItem();
-    }
-
     public int lootInhibitMs() {
         return inventoryCooldownState.lootInhibitMs();
     }
@@ -1108,22 +1078,6 @@ public class BotEntry {
     // and re-fired once the sender's trade clears and the delay expires.
     public AgentTradeRetryState tradeRetryState() {
         return tradeRetryState;
-    }
-
-    public Runnable pendingBotTradeRetry() {
-        return tradeRetryState.retry();
-    }
-
-    public void setPendingBotTradeRetry(Runnable pendingBotTradeRetry) {
-        tradeRetryState.setRetry(pendingBotTradeRetry);
-    }
-
-    public int pendingBotTradeRetryMs() {
-        return tradeRetryState.delayMs();
-    }
-
-    public void setPendingBotTradeRetryMs(int pendingBotTradeRetryMs) {
-        tradeRetryState.setDelayMs(pendingBotTradeRetryMs);
     }
 
     private final AgentPendingTradeSequenceState pendingTradeSequenceState = new AgentPendingTradeSequenceState();

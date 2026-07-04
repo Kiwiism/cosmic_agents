@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` pending loot-offer and trade-retry wrapper methods were removed.
+  Offer and retry behavior enters through `AgentBotOfferStateRuntime` and
+  `AgentBotPendingTradeStateRuntime`, backed by Agent-owned trade state.
 - `BotEntry` message queue wrapper methods were removed after callers moved to
   `server.agents.integration.AgentBotMessageQueueStateRuntime`. The queue
   remains owned by `server.agents.commands.AgentMessageQueueState`.

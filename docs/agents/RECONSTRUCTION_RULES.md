@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Pending loot-offer and bot trade-retry compatibility wrappers were removed
+  from `BotEntry`. Offer/trade callers now use
+  `AgentBotOfferStateRuntime` and `AgentBotPendingTradeStateRuntime` over the
+  Agent-owned trade state objects.
 - Message queue compatibility wrappers were removed from `BotEntry`.
   Chat/reply queue callers already use `AgentBotMessageQueueStateRuntime` over
   the Agent-owned `AgentMessageQueueState`.
