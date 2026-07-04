@@ -4235,6 +4235,9 @@ Current physics correction:
 - Movement jump-probe callers now use the Agent-owned `AgentJumpLanding` DTO.
   The temporary bot landing simulator still supplies the data until collision
   simulation moves.
+- Navigation graph jump-cache callers now use the Agent-owned
+  `AgentPostLandingJump` DTO. The temporary bot post-landing simulator still
+  supplies the data through `AgentJumpProbeService`.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

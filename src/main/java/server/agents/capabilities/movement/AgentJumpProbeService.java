@@ -29,6 +29,15 @@ public final class AgentJumpProbeService {
         return fromBotLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX, profile));
     }
 
+    public static AgentPostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
+                                                                               Point from,
+                                                                               int stepX,
+                                                                               AgentMovementProfile profile,
+                                                                               int postLandingTicks) {
+        return fromBotPostLanding(BotPhysicsEngine.simulateJumpLandingWithPostLandingTicks(
+                map, from, stepX, profile, postLandingTicks));
+    }
+
     public static boolean canReachRopeFromGround(MapleMap map, Point from, Rope rope) {
         return canReachRopeFromGround(map, from, rope, AgentMovementProfile.base());
     }
@@ -55,5 +64,13 @@ public final class AgentJumpProbeService {
         }
         return new AgentJumpLanding(landing.point(), landing.foothold(), landing.incomingDeltaX(),
                 landing.incomingDeltaY(), landing.timeMs());
+    }
+
+    private static AgentPostLandingJump fromBotPostLanding(BotPhysicsEngine.PostLandingJump landing) {
+        if (landing == null) {
+            return null;
+        }
+        return new AgentPostLandingJump(fromBotLanding(landing.landing()), landing.finalPoint(),
+                landing.finalFoothold(), landing.lostGround());
     }
 }

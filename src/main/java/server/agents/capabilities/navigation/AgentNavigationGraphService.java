@@ -1,6 +1,8 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentJumpProbeService;
+import server.agents.capabilities.movement.AgentJumpLanding;
+import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -293,7 +295,7 @@ public final class AgentNavigationGraphService {
     }
 
     private static final class JumpLandingCache {
-        private final Map<JumpLandingKey, BotPhysicsEngine.PostLandingJump> hits = new HashMap<>();
+        private final Map<JumpLandingKey, AgentPostLandingJump> hits = new HashMap<>();
         private final Set<JumpLandingKey> misses = new HashSet<>();
     }
 
@@ -1062,12 +1064,12 @@ public final class AgentNavigationGraphService {
         JumpBuildStats stats = new JumpBuildStats();
         for (Point anchor : anchors) {
             for (int launchStepX : new int[]{-jumpStep, 0, jumpStep}) {
-                BotPhysicsEngine.PostLandingJump simulatedLanding = simulateJumpLandingCached(
+                AgentPostLandingJump simulatedLanding = simulateJumpLandingCached(
                         map, anchor, launchStepX, jumpLandingCache, stats, movementProfile);
                 if (simulatedLanding == null || simulatedLanding.lostGround()) {
                     continue;
                 }
-                BotPhysicsEngine.JumpLanding landing = simulatedLanding.landing();
+                AgentJumpLanding landing = simulatedLanding.landing();
 
                 int toRegionId = regionIdByFootholdId.getOrDefault(simulatedLanding.finalFoothold().getId(), -1);
                 AgentNavigationGraph.Region to = regionsById.get(toRegionId);
@@ -1106,14 +1108,14 @@ public final class AgentNavigationGraphService {
         }
     }
 
-    private static BotPhysicsEngine.PostLandingJump simulateJumpLandingCached(MapleMap map,
-                                                                              Point start,
-                                                                              int launchStepX,
-                                                                              JumpLandingCache jumpLandingCache,
-                                                                              JumpBuildStats stats,
-                                                                              AgentMovementProfile movementProfile) {
+    private static AgentPostLandingJump simulateJumpLandingCached(MapleMap map,
+                                                                  Point start,
+                                                                  int launchStepX,
+                                                                  JumpLandingCache jumpLandingCache,
+                                                                  JumpBuildStats stats,
+                                                                  AgentMovementProfile movementProfile) {
         JumpLandingKey key = new JumpLandingKey(start.x, start.y, launchStepX);
-        BotPhysicsEngine.PostLandingJump cachedLanding = jumpLandingCache.hits.get(key);
+        AgentPostLandingJump cachedLanding = jumpLandingCache.hits.get(key);
         if (cachedLanding != null) {
             recordJumpSample(stats, true);
             return cachedLanding;
@@ -1123,7 +1125,7 @@ public final class AgentNavigationGraphService {
             return null;
         }
 
-        BotPhysicsEngine.PostLandingJump landing = BotPhysicsEngine.simulateJumpLandingWithPostLandingTicks(
+        AgentPostLandingJump landing = AgentJumpProbeService.simulateJumpLandingWithPostLandingTicks(
                 map, start, launchStepX, movementProfile, JUMP_POST_LANDING_STABILITY_TICKS);
         if (landing == null) {
             jumpLandingCache.misses.add(key);
@@ -1211,7 +1213,7 @@ public final class AgentNavigationGraphService {
 
         int representativeX = (minX + maxX) / 2;
         Point representativeStart = from.pointAt(representativeX);
-        BotPhysicsEngine.PostLandingJump representativeSimulation =
+        AgentPostLandingJump representativeSimulation =
                 simulateJumpLandingCached(map, representativeStart, launchStepX, jumpLandingCache, stats, movementProfile);
         if (representativeSimulation == null || representativeSimulation.lostGround()) {
             return null;
@@ -1362,7 +1364,7 @@ public final class AgentNavigationGraphService {
         if (!isApproachableJumpLaunchX(from, map, launchX)) {
             return false;
         }
-        BotPhysicsEngine.PostLandingJump landing = simulateJumpLandingCached(
+        AgentPostLandingJump landing = simulateJumpLandingCached(
                 map, from.pointAt(launchX), launchStepX, jumpLandingCache, stats, movementProfile);
         return landing != null
                 && !landing.lostGround()

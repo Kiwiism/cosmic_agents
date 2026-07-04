@@ -27,6 +27,16 @@ class AgentJumpProbeServiceTest {
     }
 
     @Test
+    void simulatePostLandingJumpReturnsAgentOwnedResultType() {
+        MapleMap map = new MapleMap(910000034, 0, 0, 910000034, 1.0f);
+
+        AgentPostLandingJump landing = AgentJumpProbeService.simulateJumpLandingWithPostLandingTicks(
+                map, new Point(0, 100), 0, AgentMovementProfile.base(), 3);
+
+        assertNull(landing);
+    }
+
+    @Test
     void canReachRopeFromGroundPreservesNullMapLegacyResult() {
         Rope rope = new Rope(100, 40, 120, false);
 
