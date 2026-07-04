@@ -232,6 +232,12 @@ Recent map updates:
   delegate.
 - Dead private air/swim helper bodies were removed from `BotPhysicsEngine`
   after airborne and swim runtime stepping moved into Agent movement services.
+- The corner fall-through regression test moved from
+  `src/test/java/server/bots/BotCornerFallThroughTest` to
+  `server.agents.capabilities.movement.AgentCornerFallThroughTest`. It now
+  verifies the same map-edge knockback behavior through Agent knockback,
+  airborne, timer, pose, and grounding services instead of the
+  `BotPhysicsEngine` compatibility API.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement

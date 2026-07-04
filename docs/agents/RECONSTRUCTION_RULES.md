@@ -4308,6 +4308,10 @@ Current physics correction:
 - Unreachable private air/swim helper bodies should be deleted from
   `BotPhysicsEngine` after their Agent-owned service migrations pass focused
   compatibility tests; only the public temporary delegate entry points remain.
+- Historical bot-named movement regression tests should move to Agent packages
+  once the tested behavior has Agent-owned APIs. The corner fall-through
+  regression now exercises Agent knockback, airborne stepping, timers, pose,
+  and grounding services directly.
 
 Initial reconstruction order:
 
