@@ -158,6 +158,10 @@ Recent map updates:
 - `BotPhysicsEngine` ground lookup implementation for `findGroundFoothold`
   and `findGroundPoint` moved to `AgentGroundingService`; bot methods remain
   temporary delegates for internal physics callers.
+- Navigation graph fall, down-jump, and rope-jump landing callers now use the
+  Agent-owned `AgentJumpLanding` DTO through `AgentJumpProbeService`. The
+  temporary bot physics simulator still supplies the raw landing data until the
+  collision/integration body moves.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.

@@ -1023,7 +1023,7 @@ public final class AgentNavigationGraphService {
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
         int stepX = AgentMovementKinematicsService.walkStep(map, movementProfile) * direction;
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateFallLanding(map, endpoint, stepX);
+        AgentJumpLanding landing = AgentJumpProbeService.simulateFallLanding(map, endpoint, stepX);
         if (landing == null) {
             return;
         }
@@ -1233,7 +1233,7 @@ public final class AgentNavigationGraphService {
                                                                Map<Integer, Integer> regionIdByFootholdId,
                                                                int anchorX,
                                                                AgentMovementProfile movementProfile) {
-        BotPhysicsEngine.JumpLanding anchorLanding = validateDownJumpLaunchX(
+        AgentJumpLanding anchorLanding = validateDownJumpLaunchX(
                 from, map, regionIdByFootholdId, anchorX, movementProfile);
         if (anchorLanding == null) {
             return null;
@@ -1249,7 +1249,7 @@ public final class AgentNavigationGraphService {
 
         int representativeX = (minX + maxX) / 2;
         Point representativeStart = from.pointAt(representativeX);
-        BotPhysicsEngine.JumpLanding representativeLanding = validateDownJumpLaunchX(
+        AgentJumpLanding representativeLanding = validateDownJumpLaunchX(
                 from, map, regionIdByFootholdId, representativeX, movementProfile, targetRegionId);
         if (representativeLanding == null) {
             return null;
@@ -1371,11 +1371,11 @@ public final class AgentNavigationGraphService {
                 && regionIdByFootholdId.getOrDefault(landing.finalFoothold().getId(), -1) == targetRegionId;
     }
 
-    private static BotPhysicsEngine.JumpLanding validateDownJumpLaunchX(AgentNavigationGraph.Region from,
-                                                                         MapleMap map,
-                                                                         Map<Integer, Integer> regionIdByFootholdId,
-                                                                         int launchX,
-                                                                         AgentMovementProfile movementProfile) {
+    private static AgentJumpLanding validateDownJumpLaunchX(AgentNavigationGraph.Region from,
+                                                            MapleMap map,
+                                                            Map<Integer, Integer> regionIdByFootholdId,
+                                                            int launchX,
+                                                            AgentMovementProfile movementProfile) {
         return validateDownJumpLaunchX(from, map, regionIdByFootholdId, launchX, movementProfile, Integer.MIN_VALUE);
     }
 
@@ -1388,12 +1388,12 @@ public final class AgentNavigationGraphService {
         return validateDownJumpLaunchX(from, map, regionIdByFootholdId, launchX, movementProfile, targetRegionId) != null;
     }
 
-    private static BotPhysicsEngine.JumpLanding validateDownJumpLaunchX(AgentNavigationGraph.Region from,
-                                                                         MapleMap map,
-                                                                         Map<Integer, Integer> regionIdByFootholdId,
-                                                                         int launchX,
-                                                                         AgentMovementProfile movementProfile,
-                                                                         int requiredTargetRegionId) {
+    private static AgentJumpLanding validateDownJumpLaunchX(AgentNavigationGraph.Region from,
+                                                            MapleMap map,
+                                                            Map<Integer, Integer> regionIdByFootholdId,
+                                                            int launchX,
+                                                            AgentMovementProfile movementProfile,
+                                                            int requiredTargetRegionId) {
         if (from == null || from.isRopeRegion || map == null) {
             return null;
         }
@@ -1407,7 +1407,7 @@ public final class AgentNavigationGraphService {
             return null;
         }
 
-        BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateDownJumpLanding(map, launchPoint);
+        AgentJumpLanding landing = AgentJumpProbeService.simulateDownJumpLanding(map, launchPoint);
         if (landing == null || landing.point().y <= launchPoint.y + 4) {
             return null;
         }
@@ -1659,7 +1659,7 @@ public final class AgentNavigationGraphService {
         for (int anchorY : ropeAnchorYs(rope)) {
             Point ropePoint = new Point(ropeX, anchorY);
             for (int stepX : new int[]{-jumpStep, 0, jumpStep}) {
-                BotPhysicsEngine.JumpLanding landing = BotPhysicsEngine.simulateRopeJumpLanding(map, ropePoint, stepX, movementProfile);
+                AgentJumpLanding landing = AgentJumpProbeService.simulateRopeJumpLanding(map, ropePoint, stepX, movementProfile);
                 if (landing == null) {
                     continue;
                 }

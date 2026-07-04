@@ -29,6 +29,14 @@ public final class AgentJumpProbeService {
         return fromBotLanding(BotPhysicsEngine.simulateRopeJumpLanding(map, from, stepX, profile));
     }
 
+    public static AgentJumpLanding simulateFallLanding(MapleMap map, Point from, int stepX) {
+        return fromBotLanding(BotPhysicsEngine.simulateFallLanding(map, from, stepX));
+    }
+
+    public static AgentJumpLanding simulateDownJumpLanding(MapleMap map, Point from) {
+        return fromBotLanding(BotPhysicsEngine.simulateDownJumpLanding(map, from));
+    }
+
     public static AgentPostLandingJump simulateJumpLandingWithPostLandingTicks(MapleMap map,
                                                                                Point from,
                                                                                int stepX,

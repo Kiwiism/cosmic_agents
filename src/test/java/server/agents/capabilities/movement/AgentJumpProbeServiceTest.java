@@ -37,6 +37,24 @@ class AgentJumpProbeServiceTest {
     }
 
     @Test
+    void simulateFallLandingReturnsAgentOwnedResultType() {
+        MapleMap map = new MapleMap(910000034, 0, 0, 910000034, 1.0f);
+
+        AgentJumpLanding landing = AgentJumpProbeService.simulateFallLanding(map, new Point(0, 100), 0);
+
+        assertNull(landing);
+    }
+
+    @Test
+    void simulateDownJumpLandingReturnsAgentOwnedResultType() {
+        MapleMap map = new MapleMap(910000034, 0, 0, 910000034, 1.0f);
+
+        AgentJumpLanding landing = AgentJumpProbeService.simulateDownJumpLanding(map, new Point(0, 100));
+
+        assertNull(landing);
+    }
+
+    @Test
     void canReachRopeFromGroundPreservesNullMapLegacyResult() {
         Rope rope = new Rope(100, 40, 120, false);
 
