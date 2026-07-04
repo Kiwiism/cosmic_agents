@@ -6,7 +6,6 @@ import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
 
-import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.combat.AgentCombatBuffState;
 import server.agents.capabilities.combat.AgentBuffState;
@@ -584,17 +583,6 @@ public class BotEntry {
     public AgentBuildState buildState() {
         return buildState;
     }
-    public AgentBuildService.ApBuild apBuild() { return buildState.apBuild(); }
-    public void setApBuild(AgentBuildService.ApBuild apBuild) { buildState.setApBuild(apBuild); }
-    public void clearApBuildPromptState() {
-        buildState.clearApBuildPromptState();
-    }
-    public void markApPromptSent() { buildState.markApPromptSent(); }
-    public void setSpVariant(String spVariant) { buildState.setSpVariant(spVariant); }
-    public boolean apPromptSent() { return buildState.apPromptSent(); }
-    public String spVariant() { return buildState.spVariant(); }
-    public boolean spVariantPromptSent() { return buildState.spVariantPromptSent(); }
-    public void markSpVariantPromptSent() { buildState.markSpVariantPromptSent(); }
     private final AgentMoveTargetState moveTargetState = new AgentMoveTargetState();
 
     public AgentMoveTargetState moveTargetState() { return moveTargetState; }
@@ -646,22 +634,6 @@ public class BotEntry {
 
     public void setAmmoShareRequested(boolean ammoShareRequested) {
         ammoSupplyState.setShareRequested(ammoShareRequested);
-    }
-
-    public int jobPromptSent() {
-        return buildState.jobPromptSent();
-    }
-
-    public void setJobPromptSent(int jobPromptSent) {
-        buildState.setJobPromptSent(jobPromptSent);
-    }
-
-    public int lastKnownLevel() {
-        return buildState.lastKnownLevel();
-    }
-
-    public void setLastKnownLevel(int lastKnownLevel) {
-        buildState.setLastKnownLevel(lastKnownLevel);
     }
 
     // Reply channel — tracks the chat channel the last owner command arrived on.

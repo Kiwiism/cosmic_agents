@@ -4550,6 +4550,10 @@ Current physics correction:
   category, recipient, item batch, meso, timer, invite, completion, budget, and
   restore-slot state now route through `AgentBotPendingTradeStateRuntime` and
   the Agent-owned `AgentPendingTradeSequenceState`.
+- Build prompt/progression wrappers have been removed from `BotEntry`. AP
+  build selection, AP/SP prompt flags, SP variant, job prompt level, and last
+  known level now route through `AgentBotBuildStateRuntime` and
+  `AgentBuildState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
