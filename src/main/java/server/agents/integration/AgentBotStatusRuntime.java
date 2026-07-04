@@ -78,12 +78,12 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.StatusCheckState() {
             @Override
             public boolean spawnUpgradeCheckDone() {
-                return entry.upgradeOfferState().spawnUpgradeCheckDone();
+                return AgentBotOfferStateRuntime.spawnUpgradeCheckDone(entry);
             }
 
             @Override
             public void setSpawnUpgradeCheckDone(boolean done) {
-                entry.upgradeOfferState().setSpawnUpgradeCheckDone(done);
+                AgentBotOfferStateRuntime.setSpawnUpgradeCheckDone(entry, done);
             }
         };
     }
@@ -92,18 +92,18 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.GearSuggestionState() {
             @Override
             public long nextGearSuggestionAt() {
-                return entry.upgradeOfferState().nextGearSuggestionAt();
+                return AgentBotOfferStateRuntime.nextGearSuggestionAt(entry);
             }
 
             @Override
             public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
-                entry.upgradeOfferState().setNextGearSuggestionAt(nextGearSuggestionAt);
+                AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
             }
         };
     }
 
     public static AgentChatReportRuntime.RecommendedGearState recommendedGearReportState(BotEntry entry) {
-        return nextGearSuggestionAt -> entry.upgradeOfferState().setNextGearSuggestionAt(nextGearSuggestionAt);
+        return nextGearSuggestionAt -> AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
     }
 
     public static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(Character bot) {

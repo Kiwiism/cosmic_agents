@@ -64,6 +64,6 @@ public final class AgentBotActiveModeRuntime {
     }
 
     private static void resetGearSuggestionCooldown(BotEntry entry) {
-        entry.setNextGearSuggestionAt(0);
+        AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, 0);
     }
 }

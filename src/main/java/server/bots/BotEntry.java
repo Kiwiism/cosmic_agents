@@ -758,14 +758,6 @@ public class BotEntry {
         buffState.resetLastConsumableScan();
     }
 
-    public void setProactiveUpgradeOffers(boolean proactiveUpgradeOffers) {
-        upgradeOfferState.setProactiveUpgradeOffers(proactiveUpgradeOffers);
-    }
-
-    public boolean proactiveUpgradeOffers() {
-        return upgradeOfferState.proactiveUpgradeOffers();
-    }
-
     public long lastSkillBuffActionAtMs() {
         return buffState.lastSkillActionAtMs();
     }
@@ -968,30 +960,6 @@ public class BotEntry {
         fidgetState.setNextVisualAtMs(nextFidgetVisualAtMs);
     }
 
-    public long nextGearSuggestionAt() {
-        return upgradeOfferState.nextGearSuggestionAt();
-    }
-
-    public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
-        upgradeOfferState.setNextGearSuggestionAt(nextGearSuggestionAt);
-    }
-
-    public boolean spawnUpgradeCheckDone() {
-        return upgradeOfferState.spawnUpgradeCheckDone();
-    }
-
-    public void setSpawnUpgradeCheckDone(boolean spawnUpgradeCheckDone) {
-        upgradeOfferState.setSpawnUpgradeCheckDone(spawnUpgradeCheckDone);
-    }
-
-    public boolean hasRequestedUpgradeItem(int itemId) {
-        return upgradeOfferState.hasRequestedUpgradeItem(itemId);
-    }
-
-    public void rememberRequestedUpgradeItem(int itemId) {
-        upgradeOfferState.rememberRequestedUpgradeItem(itemId);
-    }
-
     private final AgentScrollReactionState scrollReactionState = new AgentScrollReactionState();
 
     public AgentNavigationDebugState navigationDebugState() {
@@ -1112,10 +1080,6 @@ public class BotEntry {
 
     public void setNavJumpLaunch(Object navJumpLaunchEdge, int navJumpLaunchX) {
         navigationEdgeState.setJumpLaunch(navJumpLaunchEdge, navJumpLaunchX);
-    }
-
-    public long pendingGearPromptAt() {
-        return upgradeOfferState.pendingGearPromptAt();
     }
 
     public double recentScrollReactionLoad() {

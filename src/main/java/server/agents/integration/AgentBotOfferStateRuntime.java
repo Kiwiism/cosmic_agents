@@ -99,4 +99,24 @@ public final class AgentBotOfferStateRuntime {
     public static boolean proactiveUpgradeOffers(BotEntry entry) {
         return entry != null && entry.upgradeOfferState().proactiveUpgradeOffers();
     }
+
+    public static void setProactiveUpgradeOffers(BotEntry entry, boolean proactive) {
+        entry.upgradeOfferState().setProactiveUpgradeOffers(proactive);
+    }
+
+    public static long nextGearSuggestionAt(BotEntry entry) {
+        return entry.upgradeOfferState().nextGearSuggestionAt();
+    }
+
+    public static void setNextGearSuggestionAt(BotEntry entry, long nextGearSuggestionAt) {
+        entry.upgradeOfferState().setNextGearSuggestionAt(nextGearSuggestionAt);
+    }
+
+    public static boolean spawnUpgradeCheckDone(BotEntry entry) {
+        return entry.upgradeOfferState().spawnUpgradeCheckDone();
+    }
+
+    public static void setSpawnUpgradeCheckDone(BotEntry entry, boolean done) {
+        entry.upgradeOfferState().setSpawnUpgradeCheckDone(done);
+    }
 }

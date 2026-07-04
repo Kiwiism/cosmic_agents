@@ -82,7 +82,7 @@ class AgentBotOfferStateRuntimeTest {
         assertTrue(AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry));
 
         AgentBotOfferStateRuntime.rememberRequestedUpgradeItem(entry, 1002000);
-        entry.setProactiveUpgradeOffers(false);
+        AgentBotOfferStateRuntime.setProactiveUpgradeOffers(entry, false);
 
         assertTrue(AgentBotOfferStateRuntime.hasRequestedUpgradeItem(entry, 1002000));
         assertFalse(AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry));

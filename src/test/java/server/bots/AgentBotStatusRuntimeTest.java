@@ -6,6 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotStatusReplyRuntime;
@@ -75,7 +76,7 @@ class AgentBotStatusRuntimeTest {
 
         state.setSpawnUpgradeCheckDone(true);
 
-        assertTrue(entry.spawnUpgradeCheckDone());
+        assertTrue(AgentBotOfferStateRuntime.spawnUpgradeCheckDone(entry));
         assertTrue(state.spawnUpgradeCheckDone());
     }
 
@@ -86,7 +87,7 @@ class AgentBotStatusRuntimeTest {
 
         state.setNextGearSuggestionAt(9000L);
 
-        assertEquals(9000L, entry.nextGearSuggestionAt());
+        assertEquals(9000L, AgentBotOfferStateRuntime.nextGearSuggestionAt(entry));
         assertEquals(9000L, state.nextGearSuggestionAt());
     }
 
@@ -96,7 +97,7 @@ class AgentBotStatusRuntimeTest {
 
         AgentBotStatusRuntime.recommendedGearReportState(entry).setNextGearSuggestionAt(12_000L);
 
-        assertEquals(12_000L, entry.nextGearSuggestionAt());
+        assertEquals(12_000L, AgentBotOfferStateRuntime.nextGearSuggestionAt(entry));
     }
 
     @Test

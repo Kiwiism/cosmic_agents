@@ -4577,6 +4577,10 @@ Current physics correction:
 - Leader motion observation wrappers have been removed from `BotEntry`. Last
   leader position and observed step deltas now route through
   `AgentBotOwnerMotionStateRuntime` and `AgentOwnerMotionState`.
+- Upgrade-offer and gear-suggestion wrappers have been removed from
+  `BotEntry`. Proactive-offer toggles, requested upgrade item tracking,
+  spawn-upgrade checks, next suggestion cooldowns, and pending gear prompts now
+  route through `AgentBotOfferStateRuntime` and `AgentUpgradeOfferState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
