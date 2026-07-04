@@ -801,45 +801,6 @@ public class BotEntry {
     private final AgentMoveTargetState moveTargetState = new AgentMoveTargetState();
 
     public AgentMoveTargetState moveTargetState() { return moveTargetState; }
-    public java.awt.Point moveTarget() { return moveTargetState.target(); }
-    public boolean isMoveTargetPrecise() { return moveTargetState.precise(); }
-    public boolean hasMoveTarget() { return moveTargetState.hasTarget(); }
-    public void setMoveTarget(java.awt.Point moveTarget, boolean precise) {
-        moveTargetState.setTarget(moveTarget, precise);
-    }
-    public void clearMoveTarget() {
-        moveTargetState.clear();
-    }
-    public boolean moveTargetEquals(java.awt.Point point) {
-        return moveTargetState.targetEquals(point);
-    }
-    public java.awt.Point farmAnchor() { return farmAnchorState.anchor(); }
-    public int farmAnchorMapId() { return farmAnchorState.mapId(); }
-    public boolean hasFarmAnchor() { return farmAnchorState.hasAnchor(); }
-    public void setFarmAnchor(java.awt.Point farmAnchor, int mapId) {
-        farmAnchorState.setAnchor(farmAnchor, mapId);
-    }
-    public void clearFarmAnchor() {
-        farmAnchorState.clear();
-    }
-    public int patrolRegionId() { return patrolState.regionId(); }
-    public int patrolMapId() { return patrolState.mapId(); }
-    public java.awt.Point patrolWanderTarget() {
-        return patrolState.wanderTarget();
-    }
-    public boolean hasPatrolRegion() { return patrolState.hasRegion(); }
-    public void setPatrolRegion(int regionId, int mapId) {
-        patrolState.setRegion(regionId, mapId);
-    }
-    public void clearPatrol() {
-        patrolState.clear();
-    }
-    public void setPatrolWanderTarget(java.awt.Point patrolWanderTarget) {
-        patrolState.setWanderTarget(patrolWanderTarget);
-    }
-    public void clearPatrolWanderTarget() {
-        patrolState.clearWanderTarget();
-    }
     public AgentGrindWanderState grindWanderState() { return grindWanderState; }
     public int wanderDirection() { return grindWanderState.direction(); }
     public void setWanderDirection(int wanderDirection) {

@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Move target, farm-anchor, and patrol compatibility wrappers were removed
+  from `BotEntry`. Movement mode callers already use
+  `AgentBotMoveTargetStateRuntime`, `AgentBotFarmAnchorStateRuntime`, and
+  `AgentBotPatrolStateRuntime` over the Agent-owned runtime state objects.
 - Death window and portal cooldown compatibility wrappers were removed from
   `BotEntry`. Runtime callers already use `AgentBotDeathStateRuntime` and
   `AgentBotNavigationDebugStateRuntime` over Agent-owned state.

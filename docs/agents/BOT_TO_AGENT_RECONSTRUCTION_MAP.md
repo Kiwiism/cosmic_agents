@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `BotEntry` move-target, farm-anchor, and patrol wrapper methods were
+  removed. Movement mode behavior enters through Agent runtime adapters backed
+  by `AgentMoveTargetState`, `AgentFarmAnchorState`, and `AgentPatrolState`.
 - `BotEntry` death-window and portal-cooldown wrappers were removed. Death and
   navigation callers use Agent runtime adapters backed by `AgentDeathState` and
   `AgentPortalCooldownState`.
