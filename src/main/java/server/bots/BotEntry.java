@@ -36,6 +36,7 @@ import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.runtime.AgentFormationOffsetState;
+import server.agents.runtime.AgentDeathState;
 import server.agents.runtime.AgentLeaderActivityState;
 import server.agents.runtime.AgentMapTrackingState;
 
@@ -859,19 +860,22 @@ public class BotEntry {
     Point shopStuckCheckPos = null;
     long shopStuckCheckAtMs = 0L;
 
-    // Damage taken
-    long deadUntil = 0;
+    private final AgentDeathState deathState = new AgentDeathState();
+
+    public AgentDeathState deathState() {
+        return deathState;
+    }
 
     public long deadUntilMs() {
-        return deadUntil;
+        return deathState.deadUntilMs();
     }
 
     public void setDeadUntilMs(long deadUntilMs) {
-        deadUntil = deadUntilMs;
+        deathState.setDeadUntilMs(deadUntilMs);
     }
 
     public void clearDeadUntilMs() {
-        deadUntil = 0L;
+        deathState.clear();
     }
 
     public int mobHitCooldownMs() {

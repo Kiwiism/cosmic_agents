@@ -10,27 +10,26 @@ public final class AgentBotDeathStateRuntime {
     }
 
     public static long deadUntilMs(BotEntry entry) {
-        return entry.deadUntilMs();
+        return entry.deathState().deadUntilMs();
     }
 
     public static boolean isDead(BotEntry entry) {
-        return deadUntilMs(entry) > 0L;
+        return entry.deathState().isDead();
     }
 
     public static boolean shouldEnterDeadState(BotEntry entry, int hp) {
-        return !isDead(entry) && hp <= 0;
+        return entry.deathState().shouldEnterDeadState(hp);
     }
 
     public static boolean isRespawnDue(BotEntry entry, long nowMs) {
-        long deadUntilMs = deadUntilMs(entry);
-        return deadUntilMs > 0L && nowMs >= deadUntilMs;
+        return entry.deathState().isRespawnDue(nowMs);
     }
 
     public static void enterDeadState(BotEntry entry, long nowMs, long deadDurationMs) {
-        entry.setDeadUntilMs(nowMs + deadDurationMs);
+        entry.deathState().enterDeadState(nowMs, deadDurationMs);
     }
 
     public static void clear(BotEntry entry) {
-        entry.clearDeadUntilMs();
+        entry.deathState().clear();
     }
 }

@@ -4392,6 +4392,9 @@ Current physics correction:
 - Mob-touch sweep storage now lives in `AgentMobTouchState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while last checked position
   and map id reads/writes route through the Agent combat capability.
+- Death/respawn window storage now lives in `AgentDeathState`. `BotEntry`
+  temporarily hosts the Agent-owned state object, while death deadline,
+  dead-state entry, and respawn-due checks route through Agent runtime.
 
 Initial reconstruction order:
 
