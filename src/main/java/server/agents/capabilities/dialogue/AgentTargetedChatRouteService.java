@@ -3,6 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotTargetedCommandMatch;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -105,7 +106,8 @@ public final class AgentTargetedChatRouteService {
 
             hooks.agentChatHandler().handle(entry, commandText);
             boolean matched = hooks.lastChatHandled().getAsBoolean();
-            if (matched && entry.getOwner() != null && leader.getId() == entry.getOwner().getId()) {
+            Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+            if (matched && owner != null && leader.getId() == owner.getId()) {
                 hooks.ownerCommandRecorder().record(entry, commandText, hooks.nowMs().getAsLong());
             }
             if (hooks.llmEnabled().getAsBoolean() && !matched) {

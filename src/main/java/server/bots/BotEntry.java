@@ -430,8 +430,4 @@ public class BotEntry {
         this.scheduledTaskState = new AgentScheduledTaskState(task);
     }
 
-    // Accessors for code outside the server.bots package (e.g. server.agents.capabilities.dialogue.llm).
-    // Mutations stay package-private to preserve existing invariants.
-    public Character getBot() { return identityState.agent(); }
-    public Character getOwner() { return identityState.leader(); }
 }

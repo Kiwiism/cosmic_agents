@@ -4644,6 +4644,9 @@ Current physics correction:
 - Movement profile and in-air passthrough wrappers have been removed from
   `BotEntry`. Movement profile reads/writes and in-air state now route through
   `AgentBotMovementStateRuntime`.
+- Legacy JavaBean identity aliases `BotEntry.getBot()` and
+  `BotEntry.getOwner()` have been removed. Agent identity reads now route
+  through `AgentBotRuntimeIdentityRuntime`.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent

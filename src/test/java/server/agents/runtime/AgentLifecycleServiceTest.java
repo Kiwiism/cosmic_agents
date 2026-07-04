@@ -8,6 +8,7 @@ import org.mockito.MockedStatic;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.bots.BotEntry;
 import server.maps.MapleMap;
@@ -205,7 +206,7 @@ class AgentLifecycleServiceTest {
                         }));
 
         assertTrue(relogged);
-        assertSame(agent, registeredEntry.get().getBot());
+        assertSame(agent, AgentBotRuntimeIdentityRuntime.bot(registeredEntry.get()));
         delayedAction.get().run();
         assertEquals("back!!", spoken.get());
     }

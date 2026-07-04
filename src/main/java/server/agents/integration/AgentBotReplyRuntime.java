@@ -36,10 +36,10 @@ public final class AgentBotReplyRuntime {
 
     public static void replyNow(BotEntry entry, String message) {
         switch (AgentBotReplyChannelStateRuntime.replyChannel(entry)) {
-            case PARTY -> sayPartyNow(entry.getBot(), message);
+            case PARTY -> sayPartyNow(AgentBotRuntimeIdentityRuntime.bot(entry), message);
             case WHISPER -> {
-                Character owner = entry.getOwner();
-                Character bot = entry.getBot();
+                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
                 if (owner != null && owner.getClient() != null) {
                     owner.sendPacket(PacketCreator.getWhisperReceive(
                             bot.getName(),
@@ -48,12 +48,12 @@ public final class AgentBotReplyRuntime {
                             AgentChatTextSanitizer.sanitize(message)));
                 }
             }
-            default -> sayMapNow(entry.getBot(), message);
+            default -> sayMapNow(AgentBotRuntimeIdentityRuntime.bot(entry), message);
         }
     }
 
     public static void visibleSayNow(BotEntry entry, String message) {
-        sayNow(entry.getBot(), AgentBotReplyChannelStateRuntime.replyChannel(entry), message);
+        sayNow(AgentBotRuntimeIdentityRuntime.bot(entry), AgentBotReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
     public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
