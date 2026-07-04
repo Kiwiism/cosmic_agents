@@ -1002,7 +1002,7 @@ public final class AgentNavigationGraphService {
         // O(1) runway: place the edge startPoint so the bot has room to accelerate
         // to (near) max walk speed before walking off. No candidate iteration, no
         // runway simulation — just constants from config.
-        int runwayPx = BotPhysicsEngine.launchRunwayPx(map, movementProfile);
+        int runwayPx = AgentMovementKinematicsService.launchRunwayPx(map, movementProfile);
         int launchX;
         if (direction < 0) {
             launchX = Math.min(from.maxX, endpoint.x + runwayPx);

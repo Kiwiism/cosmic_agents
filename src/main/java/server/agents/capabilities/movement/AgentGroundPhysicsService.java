@@ -26,6 +26,6 @@ public final class AgentGroundPhysicsService {
     }
 
     public static int velocityFromDeltaX(double deltaX) {
-        return BotPhysicsEngine.velocityFromDeltaX(deltaX);
+        return AgentMovementKinematicsService.velocityFromDeltaX(deltaX);
     }
 }

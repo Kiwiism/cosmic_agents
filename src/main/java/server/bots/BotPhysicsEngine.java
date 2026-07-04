@@ -8,6 +8,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMotionTimerService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
@@ -283,7 +284,7 @@ public final class BotPhysicsEngine {
     }
 
     public static float jumpForcePerTick(AgentMovementProfile profile) {
-        return profileOrBase(profile).jumpSpeedPxs() * tickS();
+        return AgentMovementKinematicsService.jumpForcePerTick(profile);
     }
 
     static float downJumpForcePerTick() {
@@ -295,16 +296,15 @@ public final class BotPhysicsEngine {
     }
 
     public static float ropeJumpForcePerTick(AgentMovementProfile profile) {
-        return profileOrBase(profile).ropeJumpSpeedPxs() * tickS();
+        return AgentMovementKinematicsService.ropeJumpForcePerTick(profile);
     }
 
     public static int climbStepPerTick() {
-        return Math.max(1, Math.round(cfg.CLIMB_SPEED_PXS * tickS()));
+        return AgentMovementKinematicsService.climbStepPerTick();
     }
 
     public static float gravityPerTick() {
-        float t = tickS();
-        return cfg.GRAVITY_PXS2 * t * t;
+        return AgentMovementKinematicsService.gravityPerTick();
     }
 
     static int walkStep(MapleMap map) {
@@ -312,8 +312,7 @@ public final class BotPhysicsEngine {
     }
 
     public static int walkStep(MapleMap map, AgentMovementProfile profile) {
-        double step = maxHSpeedPerClientStep(profile) * cfg.TICK_MS * mapGroundSpeedScale(map) / CLIENT_GROUND_STEP_MS;
-        return Math.max(1, (int) Math.round(step));
+        return AgentMovementKinematicsService.walkStep(map, profile);
     }
 
     /**
@@ -326,12 +325,11 @@ public final class BotPhysicsEngine {
      * exceeds the 95% mark for the calibrated constants without iterating.
      */
     public static int launchRunwayPx(MapleMap map, AgentMovementProfile profile) {
-        int step = walkStep(map, profile);
-        return Math.max(40, step * 6);
+        return AgentMovementKinematicsService.launchRunwayPx(map, profile);
     }
 
     public static int velocityFromDeltaX(double deltaX) {
-        return (int) Math.round(deltaX * (1000.0 / cfg.TICK_MS));
+        return AgentMovementKinematicsService.velocityFromDeltaX(deltaX);
     }
 
     static void syncGroundPosition(BotEntry entry, int x) {
@@ -1363,8 +1361,7 @@ public final class BotPhysicsEngine {
     }
 
     public static float calculateMaxJumpHeight(AgentMovementProfile profile) {
-        float jumpForce = jumpForcePerTick(profile);
-        return jumpForce * jumpForce / (2 * gravityPerTick());
+        return AgentMovementKinematicsService.calculateMaxJumpHeight(profile);
     }
 
     static int maxJumpHorizontalTravel(MapleMap map) {
@@ -1372,7 +1369,7 @@ public final class BotPhysicsEngine {
     }
 
     public static int maxJumpHorizontalTravel(MapleMap map, AgentMovementProfile profile) {
-        return maxHorizontalTravel(map, profile, jumpForcePerTick(profile));
+        return AgentMovementKinematicsService.maxJumpHorizontalTravel(map, profile);
     }
 
     static int maxRopeJumpHorizontalTravel(MapleMap map) {
@@ -1380,12 +1377,11 @@ public final class BotPhysicsEngine {
     }
 
     public static int maxRopeJumpHorizontalTravel(MapleMap map, AgentMovementProfile profile) {
-        return maxHorizontalTravel(map, profile, ropeJumpForcePerTick(profile));
+        return AgentMovementKinematicsService.maxRopeJumpHorizontalTravel(map, profile);
     }
 
     public static int maxRopeGrabSimulationHorizontalTravel(MapleMap map, AgentMovementProfile profile) {
-        int maxTicks = Math.max(1, 1500 / cfg.TICK_MS);
-        return walkStep(map, profile) * maxTicks;
+        return AgentMovementKinematicsService.maxRopeGrabSimulationHorizontalTravel(map, profile);
     }
 
     static Point simulateRopeJumpGrab(MapleMap map, Point from, int stepX, Rope targetRope) {
@@ -1700,11 +1696,6 @@ public final class BotPhysicsEngine {
 
     private static double maxHSpeedPerClientStep(AgentMovementProfile profile) {
         return maxHForcePerClientStep(profile) * cfg.GROUNDSLIP / (cfg.FRICTION + cfg.SLOPEFACTOR);
-    }
-
-    private static int maxHorizontalTravel(MapleMap map, AgentMovementProfile profile, float launchSpeedPerTick) {
-        int airtimeTicks = Math.max(1, (int) Math.ceil((2 * launchSpeedPerTick) / gravityPerTick()));
-        return walkStep(map, profile) * airtimeTicks;
     }
 
     private static AirCollision findGroundCollision(MapleMap map, Point previousPos, Point nextPos) {

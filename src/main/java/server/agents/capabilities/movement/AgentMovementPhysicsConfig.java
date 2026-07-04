@@ -8,6 +8,7 @@ public final class AgentMovementPhysicsConfig {
     private static final int MOVEMENT_TICK_MS = 50;
     private static final int WALK_VEL_PXS = 125;
     private static final double HFORCE_PXS = 16.667;
+    private static final float GRAVITY_PXS2 = 2000.0f;
     private static final float JUMP_SPEED_PXS = 555.0f;
     private static final float ROPE_JUMP_SPEED_PXS = 375.0f;
     private static final float CLIMB_SPEED_PXS = 100.0f;
@@ -41,6 +42,10 @@ public final class AgentMovementPhysicsConfig {
 
     public static double configuredHorizontalForcePxs() {
         return HFORCE_PXS;
+    }
+
+    public static float configuredGravityPxs2() {
+        return GRAVITY_PXS2;
     }
 
     public static float configuredJumpSpeedPxs() {
