@@ -4256,6 +4256,8 @@ Current physics correction:
 - Runtime hook bundles now use Agent-owned movement services for ground lookup,
   teleport, idle-ground pose, and jump-height calculations. The runtime package
   no longer imports `BotPhysicsEngine` directly.
+- Fidget movement remains Agent-owned for jump, pose, collision, ground-motion,
+  and broadcast work, and no longer carries a stale `BotPhysicsEngine` import.
 - Attach-to-rope state application now lives in `AgentRopeMovementService`.
   Hold/advance climb still enter `BotPhysicsEngine` until climb boundary and
   fall handling migrate.

@@ -177,6 +177,9 @@ Recent map updates:
   teleport, idle-ground pose, or max-jump-height callbacks. They now use
   `AgentGroundingService`, `AgentMovementPoseService`, and
   `AgentMovementKinematicsService` directly.
+- Fidget movement no longer imports `BotPhysicsEngine`; it already routes
+  jump, pose, ground-collision, ground-motion, and broadcast work through
+  Agent movement services.
 - `BotPhysicsEngine` simple down-jump eligibility and far-ground detection
   moved to `AgentGroundCollisionService`; ground-step preview and wall
   collision remain later slices.

@@ -27,7 +27,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRandom;
 import server.bots.BotEntry;
-import server.bots.BotPhysicsEngine;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
