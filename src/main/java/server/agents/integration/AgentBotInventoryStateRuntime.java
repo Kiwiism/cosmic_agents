@@ -12,7 +12,7 @@ public final class AgentBotInventoryStateRuntime {
     }
 
     public static int lootInhibitMs(BotEntry entry) {
-        return entry.lootInhibitMs();
+        return entry.inventoryCooldownState().lootInhibitMs();
     }
 
     public static boolean hasLootInhibit(BotEntry entry) {
@@ -20,15 +20,16 @@ public final class AgentBotInventoryStateRuntime {
     }
 
     public static void tickLootInhibit(BotEntry entry, IntUnaryOperator tickDown) {
-        entry.setLootInhibitMs(tickDown.applyAsInt(entry.lootInhibitMs()));
+        entry.inventoryCooldownState().setLootInhibitMs(
+                tickDown.applyAsInt(entry.inventoryCooldownState().lootInhibitMs()));
     }
 
     public static void setLootInhibitMs(BotEntry entry, int delayMs) {
-        entry.setLootInhibitMs(delayMs);
+        entry.inventoryCooldownState().setLootInhibitMs(delayMs);
     }
 
     public static int inventoryFullWarnCooldownMs(BotEntry entry) {
-        return entry.invFullWarnCooldownMs();
+        return entry.inventoryCooldownState().inventoryFullWarnCooldownMs();
     }
 
     public static boolean canWarnInventoryFull(BotEntry entry) {
@@ -36,10 +37,11 @@ public final class AgentBotInventoryStateRuntime {
     }
 
     public static void tickInventoryFullWarnCooldown(BotEntry entry, IntUnaryOperator tickDown) {
-        entry.setInvFullWarnCooldownMs(tickDown.applyAsInt(entry.invFullWarnCooldownMs()));
+        entry.inventoryCooldownState().setInventoryFullWarnCooldownMs(
+                tickDown.applyAsInt(entry.inventoryCooldownState().inventoryFullWarnCooldownMs()));
     }
 
     public static void setInventoryFullWarnCooldownMs(BotEntry entry, int delayMs) {
-        entry.setInvFullWarnCooldownMs(delayMs);
+        entry.inventoryCooldownState().setInventoryFullWarnCooldownMs(delayMs);
     }
 }

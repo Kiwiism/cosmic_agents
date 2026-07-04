@@ -4361,6 +4361,10 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while offered
   item, recipient id, expiry timestamp, and bot-requesting flag reads/writes
   route through the Agent trade capability.
+- Inventory cooldown storage now lives in `AgentInventoryCooldownState`.
+  `BotEntry` temporarily hosts the Agent-owned state object, while loot inhibit
+  and inventory-full warning cooldown reads/writes route through the Agent
+  inventory capability.
 
 Initial reconstruction order:
 

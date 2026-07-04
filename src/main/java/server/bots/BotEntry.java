@@ -18,6 +18,7 @@ import server.agents.commands.AgentMessageQueueState;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.capabilities.dialogue.AgentPendingActionState;
+import server.agents.capabilities.inventory.AgentInventoryCooldownState;
 import server.agents.capabilities.social.AgentScrollReactionState;
 import server.agents.capabilities.social.airshow.AgentAirshowState;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
@@ -1043,7 +1044,7 @@ public class BotEntry {
     // Loot and potions
     int potCheckTimerMs = 0;
     int mpRecoveryTimerMs = 0;
-    int invFullWarnCooldownMs = 0;
+    private final AgentInventoryCooldownState inventoryCooldownState = new AgentInventoryCooldownState();
     boolean potShareRequestedHp = false; // true once an HP pot-share request has been broadcast this episode
     boolean potShareRequestedMp = false; // reset when pot count recovers above POT_LOW_WARN
     boolean ammoShareRequested = false; // reset when arrow/bolt count recovers above AMMO_LOW_WARN
@@ -1065,11 +1066,15 @@ public class BotEntry {
     }
 
     public int invFullWarnCooldownMs() {
-        return invFullWarnCooldownMs;
+        return inventoryCooldownState.inventoryFullWarnCooldownMs();
     }
 
     public void setInvFullWarnCooldownMs(int invFullWarnCooldownMs) {
-        this.invFullWarnCooldownMs = invFullWarnCooldownMs;
+        inventoryCooldownState.setInventoryFullWarnCooldownMs(invFullWarnCooldownMs);
+    }
+
+    public AgentInventoryCooldownState inventoryCooldownState() {
+        return inventoryCooldownState;
     }
 
     public boolean potShareRequestedHp() {
@@ -1175,14 +1180,12 @@ public class BotEntry {
         pendingLootOfferState.clearItem();
     }
 
-    int lootInhibitMs = 0;
-
     public int lootInhibitMs() {
-        return lootInhibitMs;
+        return inventoryCooldownState.lootInhibitMs();
     }
 
     public void setLootInhibitMs(int lootInhibitMs) {
-        this.lootInhibitMs = lootInhibitMs;
+        inventoryCooldownState.setLootInhibitMs(lootInhibitMs);
     }
 
     // Bot-initiated trade retry: when a pot-share / ammo-share / loot-offer is blocked
