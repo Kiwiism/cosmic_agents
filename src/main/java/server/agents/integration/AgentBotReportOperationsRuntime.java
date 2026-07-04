@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.bots.BotEntry;
 
@@ -20,83 +21,87 @@ public final class AgentBotReportOperationsRuntime {
 
             @Override
             public void requestUpgrade() {
-                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, entry.bot());
+                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, bot(entry));
             }
 
             @Override
             public void recommendedGear() {
-                AgentBotChatReportRuntime.reportRecommendedGear(entry, entry.bot());
+                AgentBotChatReportRuntime.reportRecommendedGear(entry, bot(entry));
             }
 
             @Override
             public void skills() {
-                AgentBotChatReportRuntime.reportSkills(entry, entry.bot());
+                AgentBotChatReportRuntime.reportSkills(entry, bot(entry));
             }
 
             @Override
             public void stats() {
-                AgentBotChatReportRuntime.reportStats(entry, entry.bot());
+                AgentBotChatReportRuntime.reportStats(entry, bot(entry));
             }
 
             @Override
             public void movementStats() {
-                AgentBotChatReportRuntime.reportMovementStats(entry, entry.bot());
+                AgentBotChatReportRuntime.reportMovementStats(entry, bot(entry));
             }
 
             @Override
             public void range() {
-                AgentBotChatReportRuntime.reportRange(entry, entry.bot());
+                AgentBotChatReportRuntime.reportRange(entry, bot(entry));
             }
 
             @Override
             public void build() {
-                AgentBotChatReportRuntime.reportBuild(entry, entry.bot());
+                AgentBotChatReportRuntime.reportBuild(entry, bot(entry));
             }
 
             @Override
             public void inventory() {
-                AgentBotChatReportRuntime.reportInventory(entry, entry.bot());
+                AgentBotChatReportRuntime.reportInventory(entry, bot(entry));
             }
 
             @Override
             public void mesos() {
-                AgentBotChatReportRuntime.reportMesos(entry, entry.bot());
+                AgentBotChatReportRuntime.reportMesos(entry, bot(entry));
             }
 
             @Override
             public void exp() {
-                AgentBotChatReportRuntime.reportExp(entry, entry.bot());
+                AgentBotChatReportRuntime.reportExp(entry, bot(entry));
             }
 
             @Override
             public void inventorySlots() {
-                AgentBotChatReportRuntime.reportInventorySlots(entry, entry.bot());
+                AgentBotChatReportRuntime.reportInventorySlots(entry, bot(entry));
             }
 
             @Override
             public void scrolls() {
-                AgentBotChatReportRuntime.reportScrolls(entry, entry.bot());
+                AgentBotChatReportRuntime.reportScrolls(entry, bot(entry));
             }
 
             @Override
             public void potions() {
-                AgentBotChatReportRuntime.reportPotions(entry, entry.bot());
+                AgentBotChatReportRuntime.reportPotions(entry, bot(entry));
             }
 
             @Override
             public void debugStats() {
-                AgentBotChatReportRuntime.reportDebugStats(entry, entry.bot());
+                AgentBotChatReportRuntime.reportDebugStats(entry, bot(entry));
             }
 
             @Override
             public void critDebug() {
-                AgentBotChatReportRuntime.reportCritDebug(entry, entry.bot());
+                AgentBotChatReportRuntime.reportCritDebug(entry, bot(entry));
             }
 
             @Override
             public void potDebug() {
-                AgentBotChatReportRuntime.reportPotDebug(entry, entry.bot());
+                AgentBotChatReportRuntime.reportPotDebug(entry, bot(entry));
             }
         };
+    }
+
+    private static Character bot(BotEntry entry) {
+        return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

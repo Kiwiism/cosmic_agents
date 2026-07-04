@@ -4713,6 +4713,10 @@ Current physics correction:
 - Supply chat requests now resolve the current leader through
   `AgentBotRuntimeIdentityRuntime` before potion counting and ammo weapon checks.
   Potion share, ammo share, and reply routing behavior is unchanged.
+- Report operation callbacks now resolve the live Agent through
+  `AgentBotRuntimeIdentityRuntime` before invoking the existing report and
+  request-upgrade side effects. Help, gear, skill, stat, inventory, meso, exp,
+  scroll, potion, and debug reporting remain behavior-identical.
 
 Initial reconstruction order:
 
