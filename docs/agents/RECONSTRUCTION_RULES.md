@@ -4571,6 +4571,9 @@ Current physics correction:
 - Manual trade invite wrappers have been removed from `BotEntry`. Manual trade
   reference, accept delay, and timeout state now route through
   `AgentBotManualTradeStateRuntime` and `AgentManualTradeState`.
+- Map tracking and formation offset wrappers have been removed from `BotEntry`.
+  Last-map/foothold tracking routes through `AgentBotMapStateRuntime`; follow
+  spacing routes through `AgentBotFormationStateRuntime`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and

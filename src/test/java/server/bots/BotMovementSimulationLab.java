@@ -3,6 +3,7 @@ package server.bots;
 
 
 import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
@@ -103,7 +104,7 @@ final class BotMovementSimulationLab {
         BotEntry entry = requireBot(botName);
         AgentBotModeStateRuntime.setFollowing(entry, false);
         entry.setOwner(null);
-        entry.setFollowOffsetX(0);
+        AgentBotFormationStateRuntime.setFollowOffsetX(entry, 0);
     }
 
     void setMoveTarget(String botName, Point target, boolean precise) {
@@ -132,7 +133,7 @@ final class BotMovementSimulationLab {
     }
 
     void setFollowOffset(String botName, int offsetX) {
-        requireBot(botName).setFollowOffsetX(offsetX);
+        AgentBotFormationStateRuntime.setFollowOffsetX(requireBot(botName), offsetX);
     }
 
     void setAiAccumulator(String botName, int accumulatorMs) {

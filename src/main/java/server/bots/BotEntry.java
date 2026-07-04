@@ -26,7 +26,6 @@ import server.agents.capabilities.movement.AgentMovementProfileState;
 import client.Character;
 import client.inventory.Item;
 import server.life.Monster;
-import server.maps.Foothold;
 import server.maps.MapItem;
 import server.maps.Rope;
 import server.agents.commands.AgentMessageQueueState;
@@ -680,28 +679,8 @@ public class BotEntry {
         return mapTrackingState;
     }
 
-    public int lastMapId() {
-        return mapTrackingState.lastMapId();
-    }
-
-    public Map<Integer, Foothold> footholdIndex() {
-        return mapTrackingState.footholdIndex();
-    }
-
-    public void setMapTracking(int mapId, Map<Integer, Foothold> footholdIndex) {
-        mapTrackingState.setMapTracking(mapId, footholdIndex);
-    }
-
     // Human-like spacing and stagger — assigned at registration based on bot index
     private final AgentFormationOffsetState formationOffsetState = new AgentFormationOffsetState();
-
-    public int followOffsetX() {
-        return formationOffsetState.followOffsetX();
-    }
-
-    public void setFollowOffsetX(int followOffsetX) {
-        formationOffsetState.setFollowOffsetX(followOffsetX);
-    }
 
     public AgentFormationOffsetState formationOffsetState() {
         return formationOffsetState;
