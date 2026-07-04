@@ -4305,6 +4305,9 @@ Current physics correction:
   delegate; the Agent service owns swim rebasing, swim impulse/intent,
   drag/gravity/thrust, collision sweep handling, grounded landing handoff, and
   packet-visible swim velocity updates.
+- Unreachable private air/swim helper bodies should be deleted from
+  `BotPhysicsEngine` after their Agent-owned service migrations pass focused
+  compatibility tests; only the public temporary delegate entry points remain.
 
 Initial reconstruction order:
 

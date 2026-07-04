@@ -797,85 +797,10 @@ public final class BotPhysicsEngine {
         return new PostLandingJump(landing, cursor, currentFoothold, false);
     }
 
-    private static Point roundedAirPosition(BotEntry entry) {
-        return AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
-    }
-
-    /**
-     * Intent-driven swim integrator. Mirrors wasm Physics::move_swimming, but
-     * the only inputs are discrete intents read through AgentBotSwimStateRuntime:
-     *   swimMoveDirection — -1/0/+1 horizontal steer
-     *   swimVerticalHold  — -1 (UP slow sink) / 0 (free sink) / +1 (DOWN fast sink)
-     *   swimJumpRequested — one-shot upward burst (consumed here)
-     *
-     * Movement layer never writes velY/hspeed directly — the engine owns physics.
-     * On contact with a foothold floor the bot transitions out of swim mode and
-     * clears airborne state through Agent movement adapters so the next tick
-     * routes through tickGrounded and the bot walks normally on the platform.
-     * This matches the real client behavior
-     * where SWIMMING physics applies only while airborne underwater.
-     */
     public static void applySwimMotion(BotEntry entry) {
         AgentSwimPhysicsService.applySwimMotion(entry);
     }
 
-    private static double clampMagnitude(double value, double maxAbs) {
-        if (value > maxAbs) {
-            return maxAbs;
-        }
-        if (value < -maxAbs) {
-            return -maxAbs;
-        }
-        return value;
-    }
-
-    /** Apply air steering acceleration based on discrete steer direction. */
-    private static void applyAirSteering(BotEntry entry, int steerDir) {
-        if (steerDir == 0) return;
-        double accel = steerDir > 0 ? cfg.AIR_STEER_ACCEL : -cfg.AIR_STEER_ACCEL;
-        AgentBotMovementPhysicsStateRuntime.addClampedAirSteerVelocityX(entry, accel, cfg.AIR_STEER_MAX);
-        // Client jump stance follows the held steering direction, not the preserved horizontal
-        // launch momentum. Updating facing here makes airborne debug output line up with what the
-        // client is visually trying to do, even before the net X velocity changes sign.
-        AgentBotMovementStateRuntime.setFacingDirection(entry, steerDir > 0 ? 1 : -1);
-    }
-
-    private static Point advanceAirbornePosition(BotEntry entry, Character bot) {
-        double deltaX = AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
-                + AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry);
-        float gravity = gravityPerTick();
-        double deltaY = AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
-        AgentBotMovementPhysicsStateRuntime.addPhysicsPosition(entry, deltaX, deltaY);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
-                Math.min(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + gravity, maxFallPerTick()));
-        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry,
-                AgentBotMovementPhysicsStateRuntime.physicsY(entry));
-
-        return roundedAirPosition(entry);
-    }
-
-    private static void applyAirbornePosition(BotEntry entry, Character bot, Point position) {
-        bot.setPosition(position);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        // Preserve facing set by air steering (moveDir intent) - setMovementVelocity would
-        // overwrite it based on momentum velocity, which is wrong for airborne steering.
-        int facingDir = AgentBotMovementStateRuntime.facingDirection(entry);
-        setMovementVelocity(entry, velocityFromDeltaX(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)),
-                velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
-        AgentBotMovementStateRuntime.setFacingDirection(entry, facingDir);
-        syncCharacterState(entry);
-    }
-
-    /**
-     * Intent-driven airborne integrator. Reads horizontal air steering (-1/0/+1)
-     * through Agent movement state. Movement layer gates steering for committed
-     * nav trajectories (fixedAirArc, JUMP/DROP edges) by clearing movement intent.
-     *
-     * One physics step: apply air steering from intent, advance position, resolve collision, apply result.
-     * All collision outcome methods are private — movement must not call them directly.
-     */
     public static AirborneStepResult stepAirborne(BotEntry entry, Character bot) {
         return switch (AgentAirbornePhysicsService.stepAirborne(entry, bot)) {
             case WALL -> AirborneStepResult.WALL;
@@ -884,33 +809,6 @@ public final class BotPhysicsEngine {
             case CONTINUE -> AirborneStepResult.CONTINUE;
         };
     }
-
-    private static void collideWithAirWall(BotEntry entry, Character bot, Point collisionPoint) {
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
-        bot.setPosition(collisionPoint);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        setMovementVelocity(entry, 0,
-                velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
-        syncCharacterState(entry);
-    }
-
-    private static void collideWithAirCeiling(BotEntry entry, Character bot, Point collisionPoint) {
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
-        bot.setPosition(collisionPoint);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        setMovementVelocity(entry, velocityFromDeltaX(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)), 0);
-        syncCharacterState(entry);
-    }
-
     public static MovementSnapshot movementSnapshot(BotEntry entry) {
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
         return new MovementSnapshot(snapshot.velX(), snapshot.velY(), snapshot.stance());

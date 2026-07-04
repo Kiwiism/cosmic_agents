@@ -230,6 +230,8 @@ Recent map updates:
   landing handoff, and packet-visible swim velocity updates.
   `BotPhysicsEngine.applySwimMotion` is now a temporary compatibility
   delegate.
+- Dead private air/swim helper bodies were removed from `BotPhysicsEngine`
+  after airborne and swim runtime stepping moved into Agent movement services.
 - `BotPhysicsEngine.tickMotionTimers` countdown implementation moved to
   `AgentMotionTimerService`; the bot method remains a temporary delegate.
 - `BotPhysicsEngine` stance resolution, stance sync, and packet movement
