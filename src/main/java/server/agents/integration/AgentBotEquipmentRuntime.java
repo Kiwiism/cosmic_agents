@@ -16,7 +16,7 @@ public final class AgentBotEquipmentRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentBotEquipmentReplyRuntime.sayMapNow(bot, message);
+        AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
     public static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {
@@ -27,38 +27,38 @@ public final class AgentBotEquipmentRuntime {
                 if (slots.length == 0) {
                     return false;
                 }
-                AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
+                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                        AgentBotReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
                 return true;
             }
 
             @Override
             public void unequipAll() {
-                AgentBotEquipmentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     AgentBotMovementCommandRuntime.stop(entry);
-                    AgentBotEquipmentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
+                    AgentBotReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
             }
 
             @Override
             public void autoEquipDebug() {
-                AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
+                AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                     List<String> lines = AgentEquipmentService.autoEquipDebug(bot(entry));
                     for (String line : lines) {
-                        AgentBotEquipmentReplyRuntime.replyNow(entry, line);
+                        AgentBotReplyRuntime.replyNow(entry, line);
                     }
                 });
             }
 
             @Override
             public void autoEquip() {
-                AgentBotEquipmentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
+                AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                     AgentEquipmentService.autoEquip(
                             bot(entry),
                             AgentBotRuntimeIdentityRuntime.owner(entry),
                             AgentBotOfferStateRuntime.pendingLootOfferItem(entry),
                             true);
-                    AgentBotEquipmentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
+                    AgentBotReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }
         };

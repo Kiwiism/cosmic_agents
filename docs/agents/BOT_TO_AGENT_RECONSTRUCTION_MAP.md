@@ -89,6 +89,9 @@ Recent map updates:
   calls the existing Agent reply runtime directly through `AgentBotPqRuntime`.
 - LLM reply pass-through bridge was removed. LLM reply delivery now calls the
   existing Agent reply runtime directly through `AgentBotLlmRuntime`.
+- Equipment reply and scheduler pass-through bridges were removed. Equipment
+  visible replies, unequip, auto-equip debug, and auto-equip callbacks now call
+  the existing Agent reply and scheduler runtimes directly.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

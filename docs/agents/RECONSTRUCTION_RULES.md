@@ -1695,9 +1695,9 @@ Recent reconstruction notes:
   scheduler runtimes directly while preserving the same toggle, buff-query, and
   respec timings and replies.
 - Equipment visible replies, unequip, unequip-all, auto-equip-debug, and
-  auto-equip callbacks now enter through narrow `AgentBotEquipmentReplyRuntime`
-  and `AgentBotEquipmentSchedulerRuntime` adapters; equipment orchestration no
-  longer reaches directly into the broad reply or scheduler runtimes.
+  auto-equip callbacks now call the existing `AgentBotReplyRuntime` and
+  `AgentBotSchedulerRuntime` directly; the pure equipment reply/scheduler
+  pass-through adapters were removed while preserving equipment behavior.
 - Inventory, trade, drop, and meso reply/timing bridge methods now enter
   through narrow `AgentBotInventoryReplyRuntime` and
   `AgentBotInventorySchedulerRuntime` adapters; inventory orchestration no
