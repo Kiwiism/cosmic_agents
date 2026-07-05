@@ -2538,6 +2538,9 @@ Recent reconstruction notes:
   Report delivery now calls Agent dialogue reporters directly from the chat
   report runtime, preserving the same stats, build, meso, exp, inventory,
   slots, and scroll report text.
+- The supply report pass-through bridge has been removed. Potion reports and
+  autopot debug reports are delivered directly through Agent supply/dialogue
+  services with the same text.
 - First-job starter-kit service/data now live in `AgentStarterKitService`,
   `AgentStarterKitCatalog`, and `AgentStarterItemGrant`; the old
   `BotStarterKitManager` file has been removed without changing job-change,

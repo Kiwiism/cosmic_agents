@@ -7,6 +7,8 @@ import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
+import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
+import server.agents.capabilities.supplies.AgentPotionService;
 import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -80,11 +82,13 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportPotions(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotSupplyReportRuntime.potionReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(
+                entry,
+                AgentSupplyDialogueReporter.potionReport(AgentPotionService.countPotions(bot)));
     }
 
     public static void reportPotDebug(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotSupplyReportRuntime.autopotDebugReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentPotionService.autopotDebugReport(bot));
     }
 
     public static void reportDebugStats(BotEntry entry, Character bot) {

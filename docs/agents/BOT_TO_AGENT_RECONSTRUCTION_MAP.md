@@ -87,6 +87,10 @@ Recent map updates:
   `AgentBotChatReportRuntime` now calls `AgentCharacterDialogueReporter` and
   `AgentInventoryDialogueReporter` directly; the existing dialogue reporter
   tests cover the unchanged formatting behavior.
+- The supply report pass-through bridge was removed. Potion count and autopot
+  debug report delivery now calls `AgentSupplyDialogueReporter` and
+  `AgentPotionService` directly from the chat report runtime, preserving the
+  same report text.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or
