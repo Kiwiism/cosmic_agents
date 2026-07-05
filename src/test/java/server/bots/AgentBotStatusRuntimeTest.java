@@ -9,9 +9,7 @@ import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
-import server.agents.integration.AgentBotStatusReplyRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
-import server.agents.integration.AgentBotStatusSchedulerRuntime;
 
 import java.awt.Point;
 
@@ -113,69 +111,43 @@ class AgentBotStatusRuntimeTest {
     }
 
     @Test
-    void offlineReturnActionsUseStatusReplyAndSchedulerAdapters() {
+    void offlineReturnActionsUseReplyAndSchedulerRuntimes() {
         Character bot = mock(Character.class);
         Runnable action = () -> {
         };
 
-        try (MockedStatic<AgentBotStatusSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotStatusSchedulerRuntime.class);
-             MockedStatic<AgentBotStatusReplyRuntime> replies =
-                     mockStatic(AgentBotStatusReplyRuntime.class)) {
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotSchedulerRuntime.class);
+             MockedStatic<AgentBotReplyRuntime> replies =
+                     mockStatic(AgentBotReplyRuntime.class)) {
             AgentChatStatusRuntime.OfflineReturnActions actions =
                     AgentBotStatusRuntime.offlineReturnActions(bot);
 
             actions.afterRandomDelay(900, 1100, action);
             actions.sayParty("wb");
 
-            scheduler.verify(() -> AgentBotStatusSchedulerRuntime.afterRandomDelay(900, 1100, action));
-            replies.verify(() -> AgentBotStatusReplyRuntime.sayPartyNow(bot, "wb"));
+            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, action));
+            replies.verify(() -> AgentBotReplyRuntime.sayPartyNow(bot, "wb"));
         }
     }
 
     @Test
-    void afkReturnActionsUseStatusReplyAndSchedulerAdapters() {
+    void afkReturnActionsUseReplyAndSchedulerRuntimes() {
         BotEntry entry = new BotEntry(mock(Character.class), null, null);
         Runnable action = () -> {
         };
 
-        try (MockedStatic<AgentBotStatusSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotStatusSchedulerRuntime.class);
-             MockedStatic<AgentBotStatusReplyRuntime> replies =
-                     mockStatic(AgentBotStatusReplyRuntime.class)) {
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotSchedulerRuntime.class);
+             MockedStatic<AgentBotReplyRuntime> replies =
+                     mockStatic(AgentBotReplyRuntime.class)) {
             AgentChatStatusRuntime.AfkReturnActions actions = AgentBotStatusRuntime.afkReturnActions(entry);
 
             actions.afterRandomDelay(700, 900, action);
             actions.reply("back");
 
-            scheduler.verify(() -> AgentBotStatusSchedulerRuntime.afterRandomDelay(700, 900, action));
-            replies.verify(() -> AgentBotStatusReplyRuntime.replyNow(entry, "back"));
-        }
-    }
-
-    @Test
-    void statusReplyAdapterDelegatesToBroadReplyRuntime() {
-        BotEntry entry = new BotEntry(null, null, null);
-        Character bot = mock(Character.class);
-
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
-            AgentBotStatusReplyRuntime.sayPartyNow(bot, "party");
-            AgentBotStatusReplyRuntime.replyNow(entry, "owner");
-
-            replies.verify(() -> AgentBotReplyRuntime.sayPartyNow(bot, "party"));
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "owner"));
-        }
-    }
-
-    @Test
-    void statusSchedulerAdapterDelegatesToBroadSchedulerRuntime() {
-        Runnable action = () -> {
-        };
-
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            AgentBotStatusSchedulerRuntime.afterRandomDelay(1200, 1800, action);
-
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(1200, 1800, action));
+            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(700, 900, action));
+            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "back"));
         }
     }
 }

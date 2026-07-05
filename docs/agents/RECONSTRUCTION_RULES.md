@@ -1678,10 +1678,10 @@ Recent reconstruction notes:
 - Report operation callback wiring now lives directly in
   `AgentBotChatReportRuntime`; the standalone report-operations bridge was
   removed while preserving the same help/request-upgrade/report dispatch table.
-- AFK-return and offline-return status actions now enter through narrow
-  `AgentBotStatusReplyRuntime` and `AgentBotStatusSchedulerRuntime` adapters;
-  `AgentBotStatusRuntime` no longer reaches directly into the broad reply or
-  scheduler runtimes for those status-owned side effects.
+- Status reply and scheduler pass-through adapters were removed.
+  AFK-return and offline-return actions now call the existing reply and
+  random-delay scheduler runtimes directly while preserving the same status
+  side effects and delay windows.
 - Relog/logout/away session prompts, confirmations, and delayed lifecycle
   callbacks now enter through narrow `AgentBotSessionReplyRuntime` and
   `AgentBotSessionSchedulerRuntime` adapters; `AgentBotSessionRuntime` no
