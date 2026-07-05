@@ -4845,6 +4845,11 @@ Current physics correction:
 - Range report assembly now lives in `AgentRangeReportService` under the
   dialogue capability. Chat report delivery and equipment debug dumps call the
   Agent-owned service directly, preserving the same damage/range text.
+- Movement report snapshot formatting now lives in
+  `AgentMovementDialogueReporter`. The temporary chat report runtime still
+  obtains the movement kinematics snapshot from the integration edge, but the
+  conversion from snapshot values to legacy movement report lines is
+  dialogue-owned.
 
 Initial reconstruction order:
 

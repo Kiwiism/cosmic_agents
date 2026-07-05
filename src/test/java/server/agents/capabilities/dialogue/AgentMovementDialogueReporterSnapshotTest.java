@@ -1,11 +1,10 @@
-package server.bots;
-
-import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.capabilities.movement.AgentMovementKinematicsService;
+package server.agents.capabilities.dialogue;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementReportRuntime;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.integration.AgentBotMovementKinematicsRuntime;
 import server.maps.MapleMap;
 
 import java.util.List;
@@ -15,17 +14,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentBotMovementReportRuntimeTest {
+class AgentMovementDialogueReporterSnapshotTest {
     @Test
-    void movementStatsReportUsesBotMovementAndPhysicsData() {
-        Character bot = mock(Character.class);
+    void movementStatsReportUsesMovementSnapshotData() {
+        Character agent = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
-        when(bot.getMap()).thenReturn(map);
-        when(bot.getTotalMoveSpeedStat()).thenReturn(120);
-        when(bot.getTotalJumpStat()).thenReturn(110);
-        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(bot);
+        when(agent.getMap()).thenReturn(map);
+        when(agent.getTotalMoveSpeedStat()).thenReturn(120);
+        when(agent.getTotalJumpStat()).thenReturn(110);
+        AgentMovementProfile profile = AgentMovementProfile.fromCharacter(agent);
 
-        List<String> report = AgentBotMovementReportRuntime.movementStatsReport(bot);
+        List<String> report = AgentMovementDialogueReporter.movementStatsReport(
+                AgentBotMovementKinematicsRuntime.snapshot(agent));
 
         assertEquals(List.of(
                 "speed 120% jump 110%",

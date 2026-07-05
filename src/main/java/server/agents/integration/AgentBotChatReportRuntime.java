@@ -7,6 +7,7 @@ import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
+import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.capabilities.dialogue.AgentSkillReportDecisionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
@@ -52,7 +53,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static List<String> buildMovementStatsReport(Character bot) {
-        return AgentBotMovementReportRuntime.movementStatsReport(bot);
+        return AgentMovementDialogueReporter.movementStatsReport(AgentBotMovementKinematicsRuntime.snapshot(bot));
     }
 
     public static void reportBuild(BotEntry entry, Character bot) {

@@ -1,5 +1,7 @@
 package server.agents.capabilities.dialogue;
 
+import server.agents.capabilities.movement.AgentMovementKinematicsSnapshot;
+
 import java.util.List;
 
 public final class AgentMovementDialogueReporter {
@@ -70,5 +72,37 @@ public final class AgentMovementDialogueReporter {
                     profile.totalSpeedStat(), profile.totalJumpStat(), rawSpeedStat, rawJumpStat);
         }
         return AgentDialogueReportFormatter.movementStatLine(profile.totalSpeedStat(), profile.totalJumpStat());
+    }
+
+    public static List<String> movementStatsReport(AgentMovementKinematicsSnapshot snapshot) {
+        if (snapshot == null) {
+            return movementStatsReport(null, 0, 0, false, 0, null);
+        }
+
+        AgentMovementKinematicsSnapshot.MovementProfile profile = snapshot.movementProfile();
+        MovementProfile dialogueProfile =
+                new MovementProfile(
+                        profile.totalSpeedStat(),
+                        profile.totalJumpStat(),
+                        profile.walkVelocityPxs(),
+                        profile.hForcePxs(),
+                        profile.jumpForcePerTick(),
+                        profile.ropeJumpForcePerTick(),
+                        profile.maxJumpHeight());
+        AgentMovementKinematicsSnapshot.MapMovementProfile mapProfile = snapshot.mapMovementProfile();
+        MapMovementProfile dialogueMapProfile = mapProfile == null
+                ? null
+                : new MapMovementProfile(
+                        mapProfile.walkStep(),
+                        mapProfile.climbStepPerTick(),
+                        mapProfile.maxJumpHorizontalTravel(),
+                        mapProfile.maxRopeJumpHorizontalTravel());
+        return movementStatsReport(
+                dialogueProfile,
+                snapshot.rawSpeedStat(),
+                snapshot.rawJumpStat(),
+                snapshot.movementSkillsForced(),
+                snapshot.climbStepPerTick(),
+                dialogueMapProfile);
     }
 }

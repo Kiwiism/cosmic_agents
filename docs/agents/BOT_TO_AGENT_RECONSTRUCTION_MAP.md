@@ -100,6 +100,10 @@ Recent map updates:
   `AgentRangeReportService` in the dialogue capability, and equipment debug
   plus chat report callers use it directly while keeping the existing range
   text unchanged.
+- The movement report bridge was removed. Movement kinematics snapshot
+  formatting now lives in `AgentMovementDialogueReporter`, with the temporary
+  chat report runtime only supplying the current snapshot from the integration
+  edge.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or
