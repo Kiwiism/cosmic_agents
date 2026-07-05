@@ -5,7 +5,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.inventory.ItemConstants;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.bots.BotEntry;
@@ -30,7 +30,7 @@ public final class AgentOwnerItemNotificationService {
             return;
         }
 
-        AgentBotManagerSchedulerRuntime.afterDelay(0L, () -> {
+        AgentBotSchedulerRuntime.afterDelay(0L, () -> {
             for (BotEntry entry : entries) {
                 AgentOfferService.notifyOwnerGainedEquip(entry, AgentBotRuntimeIdentityRuntime.bot(entry), item);
             }

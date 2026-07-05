@@ -101,6 +101,9 @@ Recent map updates:
 - Movement reply and scheduler pass-through bridges were removed.
   Movement/follow/grind/stop/fidget/greeting replies and random-delay callbacks
   now call the existing Agent reply and scheduler runtimes directly.
+- Manager scheduler pass-through bridge was removed. Delayed callbacks now call
+  the existing Agent scheduler runtime directly, while scheduled-task
+  cancellation state moved to `AgentScheduledTaskRuntime`.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

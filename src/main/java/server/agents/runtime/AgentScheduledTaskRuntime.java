@@ -1,16 +1,13 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import server.bots.BotEntry;
 
 /**
- * Agent-owned bridge for delayed runtime callbacks.
+ * Temporary scheduled-task state bridge while BotEntry remains the live session
+ * shell.
  */
-public final class AgentBotManagerSchedulerRuntime {
-    private AgentBotManagerSchedulerRuntime() {
-    }
-
-    public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
+public final class AgentScheduledTaskRuntime {
+    private AgentScheduledTaskRuntime() {
     }
 
     public static boolean hasScheduledTask(BotEntry entry) {

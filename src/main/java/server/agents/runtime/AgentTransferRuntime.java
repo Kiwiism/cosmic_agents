@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -32,10 +32,10 @@ public final class AgentTransferRuntime {
                         AgentRuntimeRegistry::findByName,
                         (candidateLeader, target) -> candidateLeader.getMap().getCharacterByName(target),
                         (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),
-                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
+                        AgentScheduledTaskRuntime::cancelScheduledTask,
                         stopper,
                         registrar,
-                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        AgentBotSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(700, 900),
                         AgentBotReplyRuntime::sayMapNow,
                         () -> AgentDialogueSelector.randomReply(List.of(

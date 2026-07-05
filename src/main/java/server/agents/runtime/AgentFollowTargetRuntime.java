@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
@@ -45,7 +45,7 @@ public final class AgentFollowTargetRuntime {
                         AgentFollowTargetRuntime::followTargetReply,
                         AgentBotReplyRuntime::queueReply,
                         () -> AgentRandom.randMs(250, 750),
-                        AgentBotManagerSchedulerRuntime::afterDelay,
+                        AgentBotSchedulerRuntime::afterDelay,
                         AgentFollowTargetRuntime::autoEquipForFollow,
                         AgentFollowTargetRuntime::checkPotShareForFollow,
                         AgentBotMovementCommandRuntime::follow));

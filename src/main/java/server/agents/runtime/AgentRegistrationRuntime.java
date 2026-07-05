@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.bots.BotEntry;
 
 /**
@@ -42,7 +41,7 @@ public final class AgentRegistrationRuntime {
                         AgentMovementPhysicsConfig.configuredMovementTickMs(),
                         TimerManager.getInstance()::register,
                         tickCallback,
-                        AgentBotManagerSchedulerRuntime::cancelScheduledTask,
+                        AgentScheduledTaskRuntime::cancelScheduledTask,
                         defaultFormationState(),
                         AgentSpawnPlacementRuntime::normalizeSpawnedAgent,
                         () -> AgentRandom.randMs(30_000, 31_000)));

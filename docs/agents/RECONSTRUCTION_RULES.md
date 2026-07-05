@@ -1608,10 +1608,10 @@ Recent reconstruction notes:
   `AgentBotReplyRuntime` directly; the pure manager reply pass-through adapter
   was removed while preserving internal command/error/formation replies and
   compatibility delivery wrappers.
-- BotManager-triggered delayed callbacks now enter through
-  `AgentBotManagerSchedulerRuntime`; `BotManager` no longer reaches directly
-  into the lower-level `AgentBotSchedulerRuntime` for follow-target, dismiss,
-  ownership-transfer, pickup-scan, scroll-reaction, or relog-greeting delays.
+- BotManager-triggered delayed callbacks now call `AgentBotSchedulerRuntime`
+  directly; the pure manager scheduler pass-through was removed for
+  follow-target, dismiss, ownership-transfer, pickup-scan, scroll-reaction, and
+  relog-greeting delays.
 - Inventory/trade/drop/meso reply delivery and trade-thanks delayed callbacks
   now enter through `AgentBotInventoryRuntime`; `BotInventoryManager` no longer
   reaches directly into the lower-level reply or scheduler runtime for those
@@ -1758,9 +1758,9 @@ Recent reconstruction notes:
   Transfer/item-query immediate replies, fixed-delay callbacks, random-delay
   callbacks, and delay sampling now call the existing reply and scheduler
   runtimes directly while preserving the same transfer behavior.
-- Manager spawn-status delayed callbacks now enter through the narrow
-  `AgentBotManagerSchedulerRuntime` adapter; manager status orchestration no
-  longer reaches directly into the broad scheduler runtime.
+- Manager spawn-status delayed callbacks now call `AgentBotSchedulerRuntime`
+  directly; the pure manager scheduler pass-through was removed while
+  preserving status-check timing.
 - Movement/follow/grind/stop/fidget/greeting immediate replies, queued replies,
   and random-delay callbacks now call the existing `AgentBotReplyRuntime` and
   `AgentBotSchedulerRuntime` directly; the pure movement reply/scheduler
@@ -2116,9 +2116,9 @@ Recent reconstruction notes:
   as the temporary backing store but no longer reads `airshowActive` directly in
   production.
 - Scheduled tick task cancellation now enters through
-  `AgentBotManagerSchedulerRuntime`; BotManager lifecycle removal keeps BotEntry
-  as the temporary backing store but no longer reads or cancels `task` directly
-  in production.
+  `AgentScheduledTaskRuntime`; BotManager lifecycle removal keeps BotEntry as
+  the temporary backing store but no longer reads or cancels `task` directly in
+  production.
 - Runtime identity lookup state now enters through
   `AgentBotRuntimeIdentityRuntime`; BotManager follow-target filtering,
   ownership transfer, active-owner lookup, and name lookup keep BotEntry as the
@@ -2490,10 +2490,9 @@ Recent reconstruction notes:
   fields directly in those paths.
 - BotManager sibling target discovery, bot-id lookup, replacement cancellation,
   removal matching, and transfer authorization identity now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotManagerSchedulerRuntime`; the
-  registry behavior, task cancellation timing, and authorization inputs remain
-  unchanged while those paths stop reading BotEntry identity/task fields
-  directly.
+  `AgentBotRuntimeIdentityRuntime` and `AgentScheduledTaskRuntime`; the registry
+  behavior, task cancellation timing, and authorization inputs remain unchanged
+  while those paths stop reading BotEntry identity/task fields directly.
 - BotManager first-bot lookup now enters through
   `AgentBotRuntimeIdentityRuntime`; public owner-to-bot lookup preserves the
   same first-entry behavior while no longer reading the BotEntry bot field
@@ -4576,7 +4575,7 @@ Current physics correction:
   Agent-owned supply/inventory state objects.
 - Scheduled-task and script-task queue wrappers have been removed from
   `BotEntry`. Scheduler handles route through `AgentScheduledTaskState` and
-  `AgentBotManagerSchedulerRuntime`; script task queue operations route through
+  `AgentScheduledTaskRuntime`; script task queue operations route through
   `AgentBotScriptTaskStateRuntime` and `AgentScriptTaskQueueState`.
 - Airshow state wrappers have been removed from `BotEntry`. Airshow active
   state and trail timing now route through `AgentBotAirshowStateRuntime` and

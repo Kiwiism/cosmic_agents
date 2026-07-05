@@ -6,8 +6,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotAirshowStateRuntime;
-import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentBotSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,11 +21,11 @@ class AgentBotManagerStatusRuntimeTest {
         Character bot = mock(Character.class);
         ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
 
-        try (MockedStatic<AgentBotManagerSchedulerRuntime> scheduler = mockStatic(AgentBotManagerSchedulerRuntime.class);
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class);
              MockedStatic<AgentBotChatStatusRuntime> status = mockStatic(AgentBotChatStatusRuntime.class)) {
             AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, bot, 1234L);
 
-            scheduler.verify(() -> AgentBotManagerSchedulerRuntime.afterDelay(
+            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(
                     org.mockito.ArgumentMatchers.eq(1234L),
                     callback.capture()));
             callback.getValue().run();
