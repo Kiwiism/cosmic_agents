@@ -4,7 +4,7 @@ import client.Character;
 import org.slf4j.Logger;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeCommandProfiler {
     private AgentTradeCommandProfiler() {
@@ -22,7 +22,7 @@ public final class AgentTradeCommandProfiler {
 
     public static void logSlowCommand(String category,
                                       String phase,
-                                      BotEntry entry,
+                                      AgentRuntimeEntry entry,
                                       Character agent,
                                       long startedAt,
                                       long warnThresholdNs,

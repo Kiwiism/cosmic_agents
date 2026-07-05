@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public final class AgentTradeSequenceService {
                                      List<Item> items,
                                      int mesos,
                                      boolean singleBatch,
-                                     BotEntry entry,
+                                     AgentRuntimeEntry entry,
                                      TradeBatchStarter batchStarter) {
         if (recipient == null) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());

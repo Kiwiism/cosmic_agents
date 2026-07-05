@@ -5,7 +5,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeInviteWaitService {
     private static final int REQUEST_TIMEOUT_MS = 30_000;
@@ -13,7 +13,7 @@ public final class AgentTradeInviteWaitService {
     private AgentTradeInviteWaitService() {
     }
 
-    public static void tickWaitingForAccept(BotEntry entry,
+    public static void tickWaitingForAccept(AgentRuntimeEntry entry,
                                             Character agent,
                                             int tickMs,
                                             Runnable resetTradeState) {

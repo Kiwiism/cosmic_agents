@@ -5,7 +5,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -16,7 +16,7 @@ public final class AgentTradeConfirmWaitService {
     private AgentTradeConfirmWaitService() {
     }
 
-    public static boolean tickWaitingForConfirmation(BotEntry entry,
+    public static boolean tickWaitingForConfirmation(AgentRuntimeEntry entry,
                                                      Character agent,
                                                      Trade trade,
                                                      int tickMs,

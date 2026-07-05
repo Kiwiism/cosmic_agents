@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.IntSupplier;
@@ -15,7 +15,7 @@ public final class AgentTradeItemAddTickService {
     private AgentTradeItemAddTickService() {
     }
 
-    public static boolean tickAddingItems(BotEntry entry,
+    public static boolean tickAddingItems(AgentRuntimeEntry entry,
                                           Character agent,
                                           Trade trade,
                                           ItemAddTickCallbacks callbacks) {

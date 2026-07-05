@@ -2,13 +2,13 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentManualPeerTradeService {
     private AgentManualPeerTradeService() {
     }
 
-    public static boolean tickPeerTrade(BotEntry entry,
+    public static boolean tickPeerTrade(AgentRuntimeEntry entry,
                                         Character agent,
                                         Character owner,
                                         Trade trade,

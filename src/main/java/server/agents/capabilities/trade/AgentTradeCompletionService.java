@@ -8,7 +8,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
@@ -19,7 +19,7 @@ public final class AgentTradeCompletionService {
     private AgentTradeCompletionService() {
     }
 
-    public static void completeAndReact(BotEntry entry,
+    public static void completeAndReact(AgentRuntimeEntry entry,
                                         Character agent,
                                         Trade trade,
                                         LongSupplier replyDelayMs,

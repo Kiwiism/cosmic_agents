@@ -4949,6 +4949,12 @@ Current physics correction:
   `AgentBotReplyRuntime` and `AgentBotInventoryRuntime` boundaries. The same
   reply-channel, message-queue, identity, scheduler, whisper, party, and map
   broadcast paths are used; this only moves the adapter seam off the bot shell.
+- Trade tick/control helpers now accept `AgentRuntimeEntry` for sequence start,
+  tick dispatch, invite wait, confirmation wait, closed-window handling,
+  cancellation, completion reactions, item-add ticks, item-add execution,
+  command profiling, and peer-trade ticks. Existing callers still pass the
+  temporary runtime shell where needed, but these Agent-owned trade services no
+  longer require the bot shell type.
 
 Initial reconstruction order:
 

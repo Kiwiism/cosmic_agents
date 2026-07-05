@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntSupplier;
 
@@ -11,7 +11,7 @@ public final class AgentTradeClosedWindowService {
     private AgentTradeClosedWindowService() {
     }
 
-    public static boolean handleClosedTrade(BotEntry entry,
+    public static boolean handleClosedTrade(AgentRuntimeEntry entry,
                                             IntSupplier betweenBatchDelayMs,
                                             Runnable resetTradeState,
                                             Runnable refillEquipmentSlots) {

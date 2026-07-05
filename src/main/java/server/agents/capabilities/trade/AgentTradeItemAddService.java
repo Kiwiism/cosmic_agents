@@ -8,7 +8,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import net.packet.Packet;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import tools.PacketCreator;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public final class AgentTradeItemAddService {
     private AgentTradeItemAddService() {
     }
 
-    public static boolean addNextItem(BotEntry entry, Character agent, Trade trade, int delayMs) {
+    public static boolean addNextItem(AgentRuntimeEntry entry, Character agent, Trade trade, int delayMs) {
         return addNextItem(
                 entry,
                 agent,
@@ -28,7 +28,7 @@ public final class AgentTradeItemAddService {
                 PacketCreator::getTradeItemAdd);
     }
 
-    static boolean addNextItem(BotEntry entry,
+    static boolean addNextItem(AgentRuntimeEntry entry,
                                Character agent,
                                Trade trade,
                                int delayMs,
