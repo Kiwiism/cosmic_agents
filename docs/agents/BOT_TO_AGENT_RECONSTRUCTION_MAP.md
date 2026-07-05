@@ -79,6 +79,10 @@ Recent map updates:
   `AgentNamedCommandTarget<E extends AgentRuntimeHandle>` in the commands
   package. `AgentBotCommandParser` now supplies names from the temporary
   identity adapter without owning a Bot-specific target DTO.
+- Pending-offer response routing now operates on generic Agent runtime handles.
+  `AgentPendingOfferResponseService` owns the routing algorithm without
+  importing `BotEntry`; the temporary `AgentPendingOfferChatRouteService`
+  adapter keeps the BotEntry-specific pending-offer target check.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or

@@ -2530,6 +2530,10 @@ Recent reconstruction notes:
 - Targeted dialogue routing now shares the Agent commands
   `AgentTargetedCommandMatch`; the duplicate dialogue-local match record has
   been removed while preserving the same targeted chat behavior.
+- Pending-offer response routing is now generic over Agent runtime handles.
+  Pending-offer expiry, target checks, targeted command resolution, and response
+  handling are supplied as hooks; the current BotEntry target check remains in
+  the chat-route adapter, preserving the same pending-offer response behavior.
 - First-job starter-kit service/data now live in `AgentStarterKitService`,
   `AgentStarterKitCatalog`, and `AgentStarterItemGrant`; the old
   `BotStarterKitManager` file has been removed without changing job-change,

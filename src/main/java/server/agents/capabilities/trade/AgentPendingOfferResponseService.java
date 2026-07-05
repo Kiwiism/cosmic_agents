@@ -2,9 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.agents.commands.AgentTargetedCommandMatch;
-import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,31 +12,31 @@ public final class AgentPendingOfferResponseService {
     private AgentPendingOfferResponseService() {
     }
 
-    public record Hooks(PendingOfferExpiry pendingOfferExpiry,
-                        PendingOfferTargetCheck pendingOfferTargetCheck,
-                        TargetedCommandResolver targetedCommandResolver,
-                        PendingOfferResponseHandler pendingOfferResponseHandler,
+    public record Hooks<E extends AgentRuntimeHandle>(PendingOfferExpiry<E> pendingOfferExpiry,
+                        PendingOfferTargetCheck<E> pendingOfferTargetCheck,
+                        TargetedCommandResolver<E> targetedCommandResolver,
+                        PendingOfferResponseHandler<E> pendingOfferResponseHandler,
                         SpeakerFeedback speakerFeedback) {
     }
 
     @FunctionalInterface
-    public interface PendingOfferExpiry {
-        void expire(BotEntry entry);
+    public interface PendingOfferExpiry<E extends AgentRuntimeHandle> {
+        void expire(E entry);
     }
 
     @FunctionalInterface
-    public interface PendingOfferTargetCheck {
-        boolean isTarget(BotEntry entry, Character speaker);
+    public interface PendingOfferTargetCheck<E extends AgentRuntimeHandle> {
+        boolean isTarget(E entry, Character speaker);
     }
 
     @FunctionalInterface
-    public interface TargetedCommandResolver {
-        AgentTargetedCommandMatch<BotEntry> resolve(List<BotEntry> entries, String message);
+    public interface TargetedCommandResolver<E extends AgentRuntimeHandle> {
+        AgentTargetedCommandMatch<E> resolve(List<E> entries, String message);
     }
 
     @FunctionalInterface
-    public interface PendingOfferResponseHandler {
-        boolean handle(BotEntry entry, Character speaker, String message);
+    public interface PendingOfferResponseHandler<E extends AgentRuntimeHandle> {
+        boolean handle(E entry, Character speaker, String message);
     }
 
     @FunctionalInterface
@@ -46,13 +44,13 @@ public final class AgentPendingOfferResponseService {
         void send(Character speaker, String message);
     }
 
-    public static boolean handlePendingOfferResponse(Collection<List<BotEntry>> entryGroups,
+    public static <E extends AgentRuntimeHandle> boolean handlePendingOfferResponse(Collection<List<E>> entryGroups,
                                                      Character speaker,
                                                      String message,
-                                                     Hooks hooks) {
-        List<BotEntry> matches = new ArrayList<>();
-        for (List<BotEntry> entries : entryGroups) {
-            for (BotEntry entry : entries) {
+                                                     Hooks<E> hooks) {
+        List<E> matches = new ArrayList<>();
+        for (List<E> entries : entryGroups) {
+            for (E entry : entries) {
                 hooks.pendingOfferExpiry().expire(entry);
                 if (hooks.pendingOfferTargetCheck().isTarget(entry, speaker)) {
                     matches.add(entry);
@@ -60,7 +58,7 @@ public final class AgentPendingOfferResponseService {
             }
         }
 
-        AgentTargetedCommandMatch<BotEntry> targetedAgent = hooks.targetedCommandResolver().resolve(matches, message);
+        AgentTargetedCommandMatch<E> targetedAgent = hooks.targetedCommandResolver().resolve(matches, message);
         if (targetedAgent.entry() != null) {
             return hooks.pendingOfferResponseHandler().handle(targetedAgent.entry(), speaker, targetedAgent.commandText());
         }
@@ -85,10 +83,4 @@ public final class AgentPendingOfferResponseService {
         return normalized.matches(".*\\b(yes|yep|yeah|yea|y|ok|sure|confirm|no|nope|nah|nvm|never\\s*mind|dont|don't|not\\s+now|skip)\\b.*");
     }
 
-    public static boolean isPendingOfferTarget(BotEntry entry, Character speaker) {
-        return entry != null
-                && AgentOfferService.hasPendingOffer(entry)
-                && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
-                && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
-    }
 }

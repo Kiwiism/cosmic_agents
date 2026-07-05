@@ -117,20 +117,20 @@ class AgentPendingOfferResponseServiceTest {
         BotEntry entry = new BotEntry(agent, mock(Character.class), null);
         AgentBotOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, 1L, false);
 
-        assertTrue(AgentPendingOfferResponseService.isPendingOfferTarget(entry, speaker));
+        assertTrue(AgentPendingOfferChatRouteService.isPendingOfferTarget(entry, speaker));
 
         when(speaker.getMapId()).thenReturn(30000);
-        assertFalse(AgentPendingOfferResponseService.isPendingOfferTarget(entry, speaker));
+        assertFalse(AgentPendingOfferChatRouteService.isPendingOfferTarget(entry, speaker));
 
         Character otherSpeaker = mock(Character.class);
         when(otherSpeaker.getId()).thenReturn(101);
         when(otherSpeaker.getMapId()).thenReturn(20000);
-        assertFalse(AgentPendingOfferResponseService.isPendingOfferTarget(entry, otherSpeaker));
+        assertFalse(AgentPendingOfferChatRouteService.isPendingOfferTarget(entry, otherSpeaker));
 
-        assertFalse(AgentPendingOfferResponseService.isPendingOfferTarget(null, speaker));
+        assertFalse(AgentPendingOfferChatRouteService.isPendingOfferTarget(null, speaker));
     }
 
-    private static AgentPendingOfferResponseService.Hooks hooks(BotEntry match, List<String> calls) {
+    private static AgentPendingOfferResponseService.Hooks<BotEntry> hooks(BotEntry match, List<String> calls) {
         return new AgentPendingOfferResponseService.Hooks(
                 entry -> calls.add("expire"),
                 (entry, speaker) -> {
