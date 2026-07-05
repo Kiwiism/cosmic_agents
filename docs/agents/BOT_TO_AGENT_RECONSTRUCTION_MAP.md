@@ -38,6 +38,9 @@ Recent map updates:
 - LLM follow-up reply delivery now accepts `AgentRuntimeHandle` plus a reply
   emitter callback; the current `BotEntry` delivery path remains supplied by
   `AgentLlmReplyService` through `AgentBotLlmRuntime.replyNow`.
+- `AgentLlmPromptContext` now carries prompt/situation snapshot values without
+  importing `BotEntry`; `AgentLlmReplyService` remains the temporary adapter
+  that populates it from runtime state.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

@@ -4797,6 +4797,11 @@ Current physics correction:
   emitter callback. `AgentLlmReplyService` still supplies
   `AgentBotLlmRuntime.replyNow` at the temporary adapter edge, preserving
   immediate/follow-up reply timing and failure swallowing.
+- LLM prompt assembly now flows through `AgentLlmPromptContext`, an Agent-owned
+  snapshot of identity, map, mode, farm-anchor, and last-command values. The
+  context is still populated by `AgentLlmReplyService` from temporary runtime
+  adapters, preserving prompt content while creating the next seam for removing
+  `BotEntry` from LLM orchestration.
 
 Initial reconstruction order:
 

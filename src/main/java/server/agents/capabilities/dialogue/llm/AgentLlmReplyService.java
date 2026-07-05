@@ -118,22 +118,19 @@ public final class AgentLlmReplyService {
         List<AgentMemoryStore.Turn> recent = AgentLlmConfig.memoryEnabled
                 ? AgentMemoryStore.loadUncompacted(botName)
                 : loadRecentMemory(botId, System.currentTimeMillis());
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        AgentLlmPromptContext promptContext = promptContext(entry);
         long now = System.currentTimeMillis();
-        String system = AgentPromptBuilder.buildSystem(agent, relation, senderName);
+        String system = AgentPromptBuilder.buildSystem(promptContext.agent(), relation, senderName);
         String prompt = AgentPromptBuilder.buildPrompt(
-                AgentBotRuntimeIdentityRuntime.hasBot(entry)
-                        ? AgentBotRuntimeIdentityRuntime.botName(entry)
-                        : "bot",
+                promptContext.botName(),
                 AgentSituationBuilder.build(
-                        agent,
-                        map,
-                        AgentBotModeStateRuntime.grinding(entry),
-                        AgentBotModeStateRuntime.following(entry),
-                        map != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, map.getId()),
-                        AgentBotActivityStateRuntime.lastOwnerCommand(entry),
-                        AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry),
+                        promptContext.agent(),
+                        promptContext.map(),
+                        promptContext.grinding(),
+                        promptContext.following(),
+                        promptContext.farmAnchorInCurrentMap(),
+                        promptContext.lastOwnerCommand(),
+                        promptContext.lastOwnerCommandAtMs(),
                         now),
                 senderName,
                 message,
@@ -254,6 +251,22 @@ public final class AgentLlmReplyService {
                 }
             }, (long) AgentLlmConfig.multiMessageDelayMs * i);
         }
+    }
+
+    private static AgentLlmPromptContext promptContext(BotEntry entry) {
+        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        return new AgentLlmPromptContext(
+                agent,
+                AgentBotRuntimeIdentityRuntime.hasBot(entry)
+                        ? AgentBotRuntimeIdentityRuntime.botName(entry)
+                        : "bot",
+                map,
+                AgentBotModeStateRuntime.grinding(entry),
+                AgentBotModeStateRuntime.following(entry),
+                map != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, map.getId()),
+                AgentBotActivityStateRuntime.lastOwnerCommand(entry),
+                AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry));
     }
 
     /**
