@@ -5,7 +5,7 @@ import constants.game.CharacterStance;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned movement snapshot seam while physics internals migrate.
@@ -14,7 +14,7 @@ public final class AgentMovementSnapshotService {
     private AgentMovementSnapshotService() {
     }
 
-    public static AgentMovementPacketSnapshot currentSnapshot(BotEntry entry) {
+    public static AgentMovementPacketSnapshot currentSnapshot(AgentRuntimeEntry entry) {
         int stance = AgentMovementPoseService.resolveStance(entry);
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (agent != null && agent.getStance() != stance) {
@@ -26,7 +26,7 @@ public final class AgentMovementSnapshotService {
                 broadcastStance(entry, stance));
     }
 
-    private static int broadcastStance(BotEntry entry, int baseStance) {
+    private static int broadcastStance(AgentRuntimeEntry entry, int baseStance) {
         if (System.currentTimeMillis() >= AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
             return baseStance;
         }

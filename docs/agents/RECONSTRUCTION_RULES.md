@@ -4964,6 +4964,10 @@ Current physics correction:
 - Combat action-lock ticking now accepts `AgentRuntimeEntry`. It still uses the
   same attack-cooldown and move-window state with the same movement timer
   countdown policy.
+- Movement packet snapshot and broadcast services now accept
+  `AgentRuntimeEntry`. Packet construction, stance resolution, foothold
+  z-layer cache behavior, duplicate-broadcast suppression, and performance
+  monitoring are unchanged.
 
 Initial reconstruction order:
 

@@ -9,7 +9,7 @@ import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -20,7 +20,7 @@ public final class AgentMovementBroadcastService {
     private AgentMovementBroadcastService() {
     }
 
-    public static void broadcastMovement(BotEntry entry) {
+    public static void broadcastMovement(AgentRuntimeEntry entry) {
         if (!AgentPerformanceMonitor.enabled()) {
             doBroadcastMovement(entry);
             return;
@@ -34,7 +34,7 @@ public final class AgentMovementBroadcastService {
         }
     }
 
-    private static void doBroadcastMovement(BotEntry entry) {
+    private static void doBroadcastMovement(AgentRuntimeEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         int x = bot.getPosition().x;
         int y = bot.getPosition().y;
@@ -55,7 +55,7 @@ public final class AgentMovementBroadcastService {
     // client uses it to pick the render z-layer. Without it, bots draw on the top layer
     // (in front of tiles/walls). While airborne, clients keep sending the last-known
     // ground fh, so cache it on the bot entry.
-    private static int resolveBroadcastFhId(BotEntry entry, Character bot) {
+    private static int resolveBroadcastFhId(AgentRuntimeEntry entry, Character bot) {
         Foothold fh = AgentGroundingService.findGroundFoothold(bot.getMap(), bot.getPosition());
         if (fh != null) {
             AgentBotMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());
