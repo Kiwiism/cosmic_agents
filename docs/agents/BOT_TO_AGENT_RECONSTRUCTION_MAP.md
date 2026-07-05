@@ -98,6 +98,9 @@ Recent map updates:
 - Manager reply pass-through bridge was removed. Runtime command/error,
   formation, transfer, relogin, respawn, and tick-failure replies now call the
   existing Agent reply runtime directly.
+- Movement reply and scheduler pass-through bridges were removed.
+  Movement/follow/grind/stop/fidget/greeting replies and random-delay callbacks
+  now call the existing Agent reply and scheduler runtimes directly.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

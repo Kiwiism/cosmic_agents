@@ -1762,10 +1762,9 @@ Recent reconstruction notes:
   `AgentBotManagerSchedulerRuntime` adapter; manager status orchestration no
   longer reaches directly into the broad scheduler runtime.
 - Movement/follow/grind/stop/fidget/greeting immediate replies, queued replies,
-  and random-delay callbacks now enter through narrow
-  `AgentBotMovementReplyRuntime` and `AgentBotMovementSchedulerRuntime`
-  adapters; movement chat orchestration no longer reaches directly into the
-  broad reply or scheduler runtimes.
+  and random-delay callbacks now call the existing `AgentBotReplyRuntime` and
+  `AgentBotSchedulerRuntime` directly; the pure movement reply/scheduler
+  pass-through adapters were removed while preserving movement chat behavior.
 - Gear-prompt reservation state now enters through the narrow
   `AgentBotOfferStateRuntime` adapter; offer scheduling keeps BotEntry as the
   temporary backing store but no longer owns the pending gear prompt field
