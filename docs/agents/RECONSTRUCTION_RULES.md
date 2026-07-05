@@ -66,6 +66,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentRuntimeEntry` directly. The AP/SP build prompts,
   job prompt markers, consumable-buff toggles, scan cadence, and last-action
   summaries still use the same Agent-owned state objects.
+- Activity, mode, tick, and tick-failure runtime state adapters now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. Follow/grind mode flags,
+  leader activity state, heartbeat cadence, and tick failure windows preserve
+  the same Agent-owned state backing without importing `server.bots`.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

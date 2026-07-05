@@ -212,6 +212,11 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeEntry` directly. AP/SP build state, job
   prompt state, consumable buff toggles, scan cadence, and last-action summaries
   remain backed by the same Agent-owned state objects.
+- Activity, mode, tick, and tick-failure state runtime adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Follow/grind flags,
+  leader activity metadata, heartbeat timing, and failure windows keep identical
+  storage and behavior while dropping direct `server.bots` imports at this
+  boundary.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

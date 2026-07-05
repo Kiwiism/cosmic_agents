@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed tick and heartbeat
@@ -10,31 +10,31 @@ public final class AgentBotTickStateRuntime {
     private AgentBotTickStateRuntime() {
     }
 
-    public static boolean lastTickWasAi(BotEntry entry) {
+    public static boolean lastTickWasAi(AgentRuntimeEntry entry) {
         return entry.tickState().lastTickWasAi();
     }
 
-    public static long lastTickAtMs(BotEntry entry) {
+    public static long lastTickAtMs(AgentRuntimeEntry entry) {
         return entry.tickState().lastTickAtMs();
     }
 
-    public static void recordTick(BotEntry entry, boolean aiTick, long tickAtMs) {
+    public static void recordTick(AgentRuntimeEntry entry, boolean aiTick, long tickAtMs) {
         entry.tickState().recordTick(aiTick, tickAtMs);
     }
 
-    public static boolean heartbeatDue(BotEntry entry, long nowMs, long intervalMs) {
+    public static boolean heartbeatDue(AgentRuntimeEntry entry, long nowMs, long intervalMs) {
         return entry.tickState().heartbeatDue(nowMs, intervalMs);
     }
 
-    public static void markHeartbeat(BotEntry entry, long nowMs) {
+    public static void markHeartbeat(AgentRuntimeEntry entry, long nowMs) {
         entry.tickState().setLastHeartbeatAtMs(nowMs);
     }
 
-    public static long nextFollowIdleMovementCheckAtMs(BotEntry entry) {
+    public static long nextFollowIdleMovementCheckAtMs(AgentRuntimeEntry entry) {
         return entry.tickState().nextFollowIdleMovementCheckAtMs();
     }
 
-    public static void setNextFollowIdleMovementCheckAtMs(BotEntry entry, long nextCheckAtMs) {
+    public static void setNextFollowIdleMovementCheckAtMs(AgentRuntimeEntry entry, long nextCheckAtMs) {
         entry.tickState().setNextFollowIdleMovementCheckAtMs(nextCheckAtMs);
     }
 }
