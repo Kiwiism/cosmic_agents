@@ -199,6 +199,11 @@ Recent map updates:
   direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
   calls. `BotEntry` still hosts the Agent-owned identity state temporarily
   while broader `BotEntry` signature migration continues.
+- The `BotEntry` runtime/session implementation moved to
+  `server.agents.runtime.AgentRuntimeEntry`. `server.bots.BotEntry` is now a
+  deprecated constructor-compatible shell only; remaining imports should move to
+  `AgentRuntimeEntry` or narrower Agent runtime handles before `server.bots` is
+  removed.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
