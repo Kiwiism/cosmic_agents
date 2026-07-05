@@ -100,7 +100,7 @@ import scripting.AbstractPlayerInteraction;
 import scripting.event.EventInstanceManager;
 import scripting.item.ItemScriptManager;
 import server.agents.capabilities.quest.AgentPartyQuestSyncService;
-import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
+import server.agents.runtime.AgentPotionCheckRequestRuntime;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.CashShop;
@@ -9288,7 +9288,7 @@ public class Character extends AbstractCharacterObject {
                     if (autohpItem != null) {
                         runAutopotAction(autohpItem.getPosition(), autohpItemid);
                     } else if (this.client instanceof BotClient) {
-                        AgentPotionCheckRequestService.requestPotionCheckSoon(this);
+                        AgentPotionCheckRequestRuntime.requestPotionCheckSoon(this);
                     }
                 }
             }
@@ -9305,7 +9305,7 @@ public class Character extends AbstractCharacterObject {
                         this.setAutopotMpAlert(0.9f * autompAlert); // autoMP would stick to using pots at every depletion in some cases... thanks Rohenn
                         runAutopotAction(autompItem.getPosition(), autompItemid);
                     } else if (this.client instanceof BotClient) {
-                        AgentPotionCheckRequestService.requestPotionCheckSoon(this);
+                        AgentPotionCheckRequestRuntime.requestPotionCheckSoon(this);
                     }
                 }
             }

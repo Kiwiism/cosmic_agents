@@ -4808,6 +4808,12 @@ Current physics correction:
   legacy shell, builds the request, and supplies `AgentBotLlmRuntime.replyNow`.
   Existing enablement checks, stranger-whisper suppression, in-flight gates,
   async scheduling, memory behavior, and reply delivery timing are unchanged.
+- Potion check requests now split into a handle-based
+  `AgentPotionCheckRequestService` and temporary
+  `AgentPotionCheckRequestRuntime` adapter. Character/autopot call sites still
+  request the same soon retry window, while BotClient detection, active-leader
+  lookup, BotEntry resolution, and potion timer writes remain at the runtime
+  edge.
 
 Initial reconstruction order:
 

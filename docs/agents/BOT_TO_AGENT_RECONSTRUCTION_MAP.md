@@ -45,6 +45,10 @@ Recent map updates:
   `AgentLlmReplyRequest` plus an Agent handle reply emitter. The new
   `AgentLlmReplyRuntime` owns the temporary `BotEntry` adaptation for identity,
   reply-channel, prompt-context, and reply delivery wiring.
+- `AgentPotionCheckRequestService` no longer imports `BotEntry`; it accepts an
+  Agent handle resolver and potion-check requester. The temporary
+  `AgentPotionCheckRequestRuntime` owns BotClient detection, active leader
+  lookup, BotEntry lookup, and `AgentBotPotionStateRuntime` wiring.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
