@@ -146,7 +146,10 @@ public final class AgentChatRouteRuntime {
                 AgentChatCommandClassifier::matchFollowTarget,
                 AgentFollowTargetRuntime::applyFollowTargetCommand,
                 AgentChatCommandClassifier::isGroupSupplyRequest,
-                AgentGroupSupplyResponderSelector::select,
+                (leader, entries) -> AgentGroupSupplyResponderSelector.select(
+                        leader,
+                        entries,
+                        AgentBotRuntimeIdentityRuntime::botMapId),
                 AgentBotReplyChannelStateRuntime::setReplyChannel,
                 AgentChatRouteRuntime::handleAgentChat,
                 () -> AgentLlmConfig.typoSuggesterEnabled,

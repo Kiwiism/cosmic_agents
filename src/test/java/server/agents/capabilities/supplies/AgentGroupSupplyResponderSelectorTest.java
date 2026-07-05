@@ -2,7 +2,7 @@ package server.agents.capabilities.supplies;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
 
@@ -16,17 +16,17 @@ class AgentGroupSupplyResponderSelectorTest {
     void returnsNullForMissingEntries() {
         Character leader = character(100);
 
-        assertNull(AgentGroupSupplyResponderSelector.select(leader, null));
-        assertNull(AgentGroupSupplyResponderSelector.select(leader, List.of()));
+        assertNull(AgentGroupSupplyResponderSelector.select(leader, null, TestHandle::mapId));
+        assertNull(AgentGroupSupplyResponderSelector.select(leader, List.of(), TestHandle::mapId));
     }
 
     @Test
     void prefersAgentInLeaderCurrentMap() {
         Character leader = character(100);
-        BotEntry first = entryWithAgentMap(200);
-        BotEntry sameMap = entryWithAgentMap(100);
+        TestHandle first = new TestHandle(200);
+        TestHandle sameMap = new TestHandle(100);
 
-        BotEntry selected = AgentGroupSupplyResponderSelector.select(leader, List.of(first, sameMap));
+        TestHandle selected = AgentGroupSupplyResponderSelector.select(leader, List.of(first, sameMap), TestHandle::mapId);
 
         assertSame(sameMap, selected);
     }
@@ -34,10 +34,10 @@ class AgentGroupSupplyResponderSelectorTest {
     @Test
     void fallsBackToFirstEntryWhenNoAgentInLeaderMap() {
         Character leader = character(100);
-        BotEntry first = entryWithAgentMap(200);
-        BotEntry second = entryWithAgentMap(300);
+        TestHandle first = new TestHandle(200);
+        TestHandle second = new TestHandle(300);
 
-        BotEntry selected = AgentGroupSupplyResponderSelector.select(leader, List.of(first, second));
+        TestHandle selected = AgentGroupSupplyResponderSelector.select(leader, List.of(first, second), TestHandle::mapId);
 
         assertSame(first, selected);
     }
@@ -48,8 +48,6 @@ class AgentGroupSupplyResponderSelectorTest {
         return character;
     }
 
-    private static BotEntry entryWithAgentMap(int mapId) {
-        Character agent = character(mapId);
-        return new BotEntry(agent, mock(Character.class), null);
+    private record TestHandle(int mapId) implements AgentRuntimeHandle {
     }
 }

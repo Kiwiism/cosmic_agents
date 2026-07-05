@@ -4814,6 +4814,10 @@ Current physics correction:
   request the same soon retry window, while BotClient detection, active-leader
   lookup, BotEntry resolution, and potion timer writes remain at the runtime
   edge.
+- Group supply responder selection now accepts Agent handles plus an explicit
+  Agent-map-id reader instead of `BotEntry`. The policy still prefers an Agent
+  in the leader's current map and falls back to the first entry; the chat route
+  runtime supplies the temporary BotEntry map-id adapter.
 
 Initial reconstruction order:
 

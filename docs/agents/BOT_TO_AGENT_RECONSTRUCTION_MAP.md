@@ -49,6 +49,9 @@ Recent map updates:
   Agent handle resolver and potion-check requester. The temporary
   `AgentPotionCheckRequestRuntime` owns BotClient detection, active leader
   lookup, BotEntry lookup, and `AgentBotPotionStateRuntime` wiring.
+- `AgentGroupSupplyResponderSelector` no longer imports `BotEntry`; it selects
+  over Agent handles using a supplied map-id reader. `AgentChatRouteRuntime`
+  keeps the temporary map-id adapter.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
