@@ -1723,9 +1723,9 @@ Recent reconstruction notes:
   `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure shop
   reply/scheduler pass-through adapters were removed while preserving shop
   behavior.
-- LLM dialogue replies now enter through the narrow `AgentBotLlmReplyRuntime`
-  adapter; LLM orchestration no longer reaches directly into the broad reply
-  runtime.
+- LLM dialogue replies now call the existing `AgentBotReplyRuntime` directly;
+  the pure LLM reply pass-through adapter was removed while preserving LLM
+  reply delivery behavior.
 - PQ queued dialogue now calls the existing `AgentBotReplyRuntime` directly;
   the pure PQ reply pass-through adapter was removed while preserving PQ
   dialogue behavior.

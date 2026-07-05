@@ -11,6 +11,6 @@ public final class AgentBotLlmRuntime {
     }
 
     public static void replyNow(BotEntry entry, String message) {
-        AgentBotLlmReplyRuntime.replyNow(entry, message);
+        AgentBotReplyRuntime.replyNow(entry, message);
     }
 }

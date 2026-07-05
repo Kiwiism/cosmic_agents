@@ -87,6 +87,8 @@ Recent map updates:
   callbacks now call the existing Agent reply and scheduler runtimes directly.
 - PQ reply pass-through bridge was removed. Queued party-quest dialogue now
   calls the existing Agent reply runtime directly through `AgentBotPqRuntime`.
+- LLM reply pass-through bridge was removed. LLM reply delivery now calls the
+  existing Agent reply runtime directly through `AgentBotLlmRuntime`.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.
