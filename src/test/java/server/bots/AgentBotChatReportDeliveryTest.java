@@ -4,8 +4,8 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
+import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
-import server.agents.integration.AgentBotReportDeliveryRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 
 import java.util.ArrayList;
@@ -15,27 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotReportDeliveryRuntimeTest {
-    @Test
-    void reportLineAndLinesQueueRepliesInOrder() {
-        BotEntry entry = new BotEntry(null, null, null);
-        List<String> replies = new ArrayList<>();
-
-        try (MockedStatic<AgentBotReplyRuntime> replyRuntime = mockStatic(AgentBotReplyRuntime.class)) {
-            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(entry, "one"))
-                    .thenAnswer(invocation -> replies.add("one"));
-            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(entry, "two"))
-                    .thenAnswer(invocation -> replies.add("two"));
-            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(entry, "three"))
-                    .thenAnswer(invocation -> replies.add("three"));
-
-            AgentBotReportDeliveryRuntime.reportLine(entry, "one");
-            AgentBotReportDeliveryRuntime.reportLines(entry, List.of("two", "three"));
-        }
-
-        assertEquals(List.of("one", "two", "three"), replies);
-    }
-
+class AgentBotChatReportDeliveryTest {
     @Test
     void reportHelpQueuesHelpLines() {
         BotEntry entry = new BotEntry(null, null, null);
@@ -48,7 +28,7 @@ class AgentBotReportDeliveryRuntimeTest {
                         return null;
                     });
 
-            AgentBotReportDeliveryRuntime.reportHelp(entry);
+            AgentBotChatReportRuntime.reportHelp(entry);
         }
 
         assertEquals(AgentChatReportFlow.helpLines(), replies);
@@ -78,7 +58,7 @@ class AgentBotReportDeliveryRuntimeTest {
                         }
                     });
 
-            AgentBotReportDeliveryRuntime.reportRecommendedGear(entry, bot);
+            AgentBotChatReportRuntime.reportRecommendedGear(entry, bot);
 
             offers.verify(() -> AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner));
         }

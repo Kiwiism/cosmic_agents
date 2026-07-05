@@ -117,6 +117,9 @@ Recent map updates:
   Report callback construction still dispatches to the same help, upgrade,
   gear, skill, stat, movement, range, inventory, potion, and debug report
   methods.
+- The report delivery bridge was folded into `AgentBotChatReportRuntime`.
+  Help, line, multi-line, and recommended-gear report delivery now use the
+  existing reply and offer runtimes directly from the chat-report facade.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or

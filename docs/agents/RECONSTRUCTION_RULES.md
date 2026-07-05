@@ -1667,8 +1667,8 @@ Recent reconstruction notes:
   compatibility shims were removed after all production and test callers moved
   to Agent reply runtimes; `botSay(...)` and `botSayParty(...)` remain for
   legacy channel delivery compatibility.
-- The old report reply pass-through bridge was removed.
-  `AgentBotReportDeliveryRuntime` now queues report lines directly through the
+- The old report reply and delivery pass-through bridges were removed.
+  `AgentBotChatReportRuntime` now queues report lines directly through the
   existing reply runtime while preserving the same queued owner-directed reply
   behavior.
 - The old report scheduler pass-through bridge was removed.

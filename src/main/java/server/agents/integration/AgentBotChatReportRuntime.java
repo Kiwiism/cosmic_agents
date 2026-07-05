@@ -122,11 +122,11 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportStats(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.statsReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
 
     public static void reportRange(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, buildRangeReport(bot));
+        reportLine(entry, buildRangeReport(bot));
     }
 
     public static String buildRangeReport(Character bot) {
@@ -138,7 +138,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportMovementStats(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLines(entry, buildMovementStatsReport(bot));
+        reportLines(entry, buildMovementStatsReport(bot));
     }
 
     public static List<String> buildMovementStatsReport(Character bot) {
@@ -146,7 +146,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportBuild(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.buildReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.buildReport(bot));
     }
 
     public static void reportSkills(BotEntry entry, Character bot) {
@@ -156,56 +156,68 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportInventory(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
     }
 
     public static void reportMesos(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.mesoReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.mesoReport(bot));
     }
 
     public static void reportExp(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.expReport(bot));
+        reportLine(entry, AgentCharacterDialogueReporter.expReport(bot));
     }
 
     public static void reportInventorySlots(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentInventoryDialogueReporter.slotsReport(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.slotsReport(bot));
     }
 
     public static void reportScrolls(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentInventoryDialogueReporter.scrollReport(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.scrollReport(bot));
     }
 
     public static void reportPotions(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(
+        reportLine(
                 entry,
                 AgentSupplyDialogueReporter.potionReport(AgentPotionService.countPotions(bot)));
     }
 
     public static void reportPotDebug(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentPotionService.autopotDebugReport(bot));
+        reportLine(entry, AgentPotionService.autopotDebugReport(bot));
     }
 
     public static void reportDebugStats(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
+        reportLine(entry, AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
     }
 
     public static void reportCritDebug(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotCombatReportRuntime.critDebugReport(bot));
+        reportLine(entry, AgentBotCombatReportRuntime.critDebugReport(bot));
     }
 
     public static void reportBuffDebug(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLines(entry, AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
+        reportLines(entry, AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
     }
 
     public static void reportSkillBuffDebug(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLines(entry, AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot));
+        reportLines(entry, AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot));
     }
 
     public static void reportHelp(BotEntry entry) {
-        AgentBotReportDeliveryRuntime.reportHelp(entry);
+        AgentChatReportRuntime.reportHelp(line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 
     public static void reportRecommendedGear(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportRecommendedGear(entry, bot);
+        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        AgentChatReportRuntime.reportRecommendedGear(
+                AgentBotStatusRuntime.recommendedGearReportState(entry),
+                AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner),
+                System.currentTimeMillis());
+    }
+
+    private static void reportLine(BotEntry entry, String line) {
+        AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReplyRuntime.queueReply(entry, replyLine));
+    }
+
+    private static void reportLines(BotEntry entry, Iterable<String> lines) {
+        AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 }
