@@ -11,10 +11,10 @@ public final class AgentBotCombatRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentBotCombatReplyRuntime.sayMapNow(bot, message);
+        AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotCombatSchedulerRuntime.afterDelay(delayMs, action);
+        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
     }
 }

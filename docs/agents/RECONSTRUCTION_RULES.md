@@ -1702,10 +1702,10 @@ Recent reconstruction notes:
   through narrow `AgentBotInventoryReplyRuntime` and
   `AgentBotInventorySchedulerRuntime` adapters; inventory orchestration no
   longer reaches directly into the broad reply or scheduler runtimes.
-- Combat warning/status reply and delay bridge methods now enter through
-  narrow `AgentBotCombatReplyRuntime` and `AgentBotCombatSchedulerRuntime`
-  adapters; combat orchestration no longer reaches directly into the broad
-  reply or scheduler runtimes.
+- Combat warning/status reply and delay bridge methods now call the existing
+  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure
+  combat reply/scheduler pass-through adapters were removed while preserving
+  combat behavior.
 - Ammo-sharing reply, delay, random-delay, and delay-sampling bridge methods
   now enter through narrow `AgentBotAmmoReplyRuntime` and
   `AgentBotAmmoSchedulerRuntime` adapters; ammo orchestration no longer reaches

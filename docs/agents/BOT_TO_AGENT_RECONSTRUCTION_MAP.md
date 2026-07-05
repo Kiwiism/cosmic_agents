@@ -60,6 +60,9 @@ Recent map updates:
   `AgentPotionDonorPlan<E extends AgentRuntimeHandle>` in the supplies
   capability. Existing potion donor selection and tests now use the Agent-owned
   value object while `AgentPotionService` still adapts with `BotEntry`.
+- Combat reply and scheduler pass-through bridges were removed. Combat
+  warning/status delivery now calls the existing Agent reply and scheduler
+  runtimes directly through `AgentBotCombatRuntime`.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.
