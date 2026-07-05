@@ -74,6 +74,10 @@ Recent reconstruction notes:
   take `server.agents.runtime.AgentRuntimeEntry` directly. Explicit move
   targets, sentry/farm anchors, patrol regions, and stuck recovery counters keep
   the same behavior and state backing.
+- Reply-channel, message-queue, and pending-action runtime state adapters now
+  take `server.agents.runtime.AgentRuntimeEntry` directly. Whisper routing,
+  queued reply delivery, pending confirmations, and pending drop categories are
+  unchanged.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

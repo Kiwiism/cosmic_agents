@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned pending-action state adapter.
@@ -9,31 +9,31 @@ public final class AgentBotPendingActionStateRuntime {
     private AgentBotPendingActionStateRuntime() {
     }
 
-    public static boolean hasPendingAction(BotEntry entry) {
+    public static boolean hasPendingAction(AgentRuntimeEntry entry) {
         return entry.pendingActionState().pendingAction() != null;
     }
 
-    public static String pendingAction(BotEntry entry) {
+    public static String pendingAction(AgentRuntimeEntry entry) {
         return entry.pendingActionState().pendingAction();
     }
 
-    public static void setPendingAction(BotEntry entry, String pendingAction) {
+    public static void setPendingAction(AgentRuntimeEntry entry, String pendingAction) {
         entry.pendingActionState().setPendingAction(pendingAction);
     }
 
-    public static void clearPendingAction(BotEntry entry) {
+    public static void clearPendingAction(AgentRuntimeEntry entry) {
         entry.pendingActionState().clearPendingAction();
     }
 
-    public static String pendingDropCategory(BotEntry entry) {
+    public static String pendingDropCategory(AgentRuntimeEntry entry) {
         return entry.pendingActionState().pendingDropCategory();
     }
 
-    public static void setPendingDropCategory(BotEntry entry, String pendingDropCategory) {
+    public static void setPendingDropCategory(AgentRuntimeEntry entry, String pendingDropCategory) {
         entry.pendingActionState().setPendingDropCategory(pendingDropCategory);
     }
 
-    public static void clearPendingDropCategory(BotEntry entry) {
+    public static void clearPendingDropCategory(AgentRuntimeEntry entry) {
         entry.pendingActionState().clearPendingDropCategory();
     }
 }

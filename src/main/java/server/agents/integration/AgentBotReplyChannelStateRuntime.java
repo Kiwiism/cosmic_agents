@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelState;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed reply-channel state.
@@ -11,19 +11,19 @@ public final class AgentBotReplyChannelStateRuntime {
     private AgentBotReplyChannelStateRuntime() {
     }
 
-    public static AgentReplyChannel replyChannel(BotEntry entry) {
+    public static AgentReplyChannel replyChannel(AgentRuntimeEntry entry) {
         return state(entry).channel();
     }
 
-    public static void setReplyChannel(BotEntry entry, AgentReplyChannel channel) {
+    public static void setReplyChannel(AgentRuntimeEntry entry, AgentReplyChannel channel) {
         state(entry).setChannel(channel);
     }
 
-    public static void setWhisper(BotEntry entry) {
+    public static void setWhisper(AgentRuntimeEntry entry) {
         state(entry).setWhisper();
     }
 
-    private static AgentReplyChannelState state(BotEntry entry) {
+    private static AgentReplyChannelState state(AgentRuntimeEntry entry) {
         return entry.replyChannelState();
     }
 }

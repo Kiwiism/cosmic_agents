@@ -221,6 +221,10 @@ Recent map updates:
   accept `server.agents.runtime.AgentRuntimeEntry` directly. Explicit move
   targets, sentry/farm anchors, patrol regions, and stuck recovery counters keep
   the same Agent-owned state backing.
+- Reply-channel, message-queue, and pending-action state runtime adapters now
+  accept `server.agents.runtime.AgentRuntimeEntry` directly. Whisper routing,
+  queued reply delivery, pending confirmations, and pending drop categories keep
+  identical state and behavior.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
