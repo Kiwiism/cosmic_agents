@@ -1675,6 +1675,9 @@ Recent reconstruction notes:
   `AgentBotChatReportRuntime` now supplies the existing random-delay scheduler
   directly when constructing report callbacks, preserving the same delay
   behavior.
+- Report operation callback wiring now lives directly in
+  `AgentBotChatReportRuntime`; the standalone report-operations bridge was
+  removed while preserving the same help/request-upgrade/report dispatch table.
 - AFK-return and offline-return status actions now enter through narrow
   `AgentBotStatusReplyRuntime` and `AgentBotStatusSchedulerRuntime` adapters;
   `AgentBotStatusRuntime` no longer reaches directly into the broad reply or

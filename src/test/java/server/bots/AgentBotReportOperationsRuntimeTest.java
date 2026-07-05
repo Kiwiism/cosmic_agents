@@ -6,7 +6,6 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotSupplyRuntime;
-import server.agents.integration.AgentBotReportOperationsRuntime;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -17,7 +16,7 @@ class AgentBotReportOperationsRuntimeTest {
         Character bot = mock(Character.class);
         BotEntry entry = new BotEntry(bot, null, null);
         AgentChatReportRuntime.ReportOperations operations =
-                AgentBotReportOperationsRuntime.reportOperations(entry);
+                AgentBotChatReportRuntime.reportOperations(entry);
 
         try (MockedStatic<AgentBotChatReportRuntime> reports = mockStatic(AgentBotChatReportRuntime.class);
              MockedStatic<AgentBotSupplyRuntime> supplies = mockStatic(AgentBotSupplyRuntime.class)) {

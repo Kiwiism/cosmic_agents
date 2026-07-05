@@ -29,7 +29,96 @@ public final class AgentBotChatReportRuntime {
     public static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
         return AgentChatReportRuntime.reportCallbacks(
                 AgentBotSchedulerRuntime::afterRandomDelay,
-                AgentBotReportOperationsRuntime.reportOperations(entry));
+                reportOperations(entry));
+    }
+
+    public static AgentChatReportRuntime.ReportOperations reportOperations(BotEntry entry) {
+        return new AgentChatReportRuntime.ReportOperations() {
+            @Override
+            public void help() {
+                reportHelp(entry);
+            }
+
+            @Override
+            public void requestUpgrade() {
+                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void recommendedGear() {
+                reportRecommendedGear(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void skills() {
+                reportSkills(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void stats() {
+                reportStats(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void movementStats() {
+                reportMovementStats(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void range() {
+                reportRange(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void build() {
+                reportBuild(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void inventory() {
+                reportInventory(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void mesos() {
+                reportMesos(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void exp() {
+                reportExp(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void inventorySlots() {
+                reportInventorySlots(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void scrolls() {
+                reportScrolls(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void potions() {
+                reportPotions(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void debugStats() {
+                reportDebugStats(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void critDebug() {
+                reportCritDebug(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+
+            @Override
+            public void potDebug() {
+                reportPotDebug(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+            }
+        };
     }
 
     public static void reportStats(BotEntry entry, Character bot) {

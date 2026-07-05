@@ -113,6 +113,10 @@ Recent map updates:
 - The control report pass-through bridge was removed. Control buff-debug and
   skill-buff-debug callbacks now call the existing chat-report facade directly
   from the same delayed control action.
+- The report operations bridge was folded into `AgentBotChatReportRuntime`.
+  Report callback construction still dispatches to the same help, upgrade,
+  gear, skill, stat, movement, range, inventory, potion, and debug report
+  methods.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or
