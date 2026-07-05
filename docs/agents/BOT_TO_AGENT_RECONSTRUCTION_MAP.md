@@ -41,6 +41,10 @@ Recent map updates:
 - `AgentLlmPromptContext` now carries prompt/situation snapshot values without
   importing `BotEntry`; `AgentLlmReplyService` remains the temporary adapter
   that populates it from runtime state.
+- `AgentLlmReplyService` no longer imports `BotEntry`; it now accepts
+  `AgentLlmReplyRequest` plus an Agent handle reply emitter. The new
+  `AgentLlmReplyRuntime` owns the temporary `BotEntry` adaptation for identity,
+  reply-channel, prompt-context, and reply delivery wiring.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

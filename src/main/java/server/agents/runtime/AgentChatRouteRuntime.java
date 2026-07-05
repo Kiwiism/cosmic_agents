@@ -10,7 +10,6 @@ import server.agents.capabilities.dialogue.AgentTargetedCommandMatch;
 import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
-import server.agents.capabilities.dialogue.llm.AgentLlmReplyService;
 import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.commands.AgentCommandTypoSuggester;
@@ -138,7 +137,7 @@ public final class AgentChatRouteRuntime {
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentBotActivityStateRuntime::recordLastOwnerCommand,
                 () -> AgentLlmConfig.enabled,
-                AgentLlmReplyService::maybeRespond,
+                AgentLlmReplyRuntime::maybeRespond,
                 Character::yellowMessage);
     }
 

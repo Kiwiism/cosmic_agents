@@ -4802,6 +4802,12 @@ Current physics correction:
   context is still populated by `AgentLlmReplyService` from temporary runtime
   adapters, preserving prompt content while creating the next seam for removing
   `BotEntry` from LLM orchestration.
+- LLM reply orchestration now accepts `AgentLlmReplyRequest` and
+  `AgentRuntimeHandle` instead of `BotEntry`. `AgentLlmReplyRuntime` is the
+  temporary adapter that reads live identity/reply-channel/mode state from the
+  legacy shell, builds the request, and supplies `AgentBotLlmRuntime.replyNow`.
+  Existing enablement checks, stranger-whisper suppression, in-flight gates,
+  async scheduling, memory behavior, and reply delivery timing are unchanged.
 
 Initial reconstruction order:
 

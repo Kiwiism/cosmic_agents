@@ -2,19 +2,10 @@ package server.agents.capabilities.dialogue.llm;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
-import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.integration.AgentBotLlmRuntime;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotReplyChannelStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeHandle;
-import server.maps.MapleMap;
 
 import java.util.List;
 import java.util.Locale;
@@ -65,23 +56,23 @@ public final class AgentLlmReplyService {
         return globalGate;
     }
 
-    public static void maybeRespond(BotEntry entry, Character sender, String message) {
+    public static <E extends AgentRuntimeHandle> void maybeRespond(
+            AgentLlmReplyRequest<E> request,
+            client.Character sender,
+            String message,
+            ReplyEmitter<E> replyEmitter) {
         if (!AgentLlmConfig.enabled) return;
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) return;
+        if (request == null || request.entry() == null || sender == null) return;
         if (message == null || message.isBlank()) return;
 
-        AgentSenderRelation relation = AgentSenderRelation.resolve(
-                AgentBotRuntimeIdentityRuntime.bot(entry),
-                AgentBotRuntimeIdentityRuntime.owner(entry),
-                sender);
         // Strangers' whispers are dropped pre-LLM (whisper hook isn't wired in
         // Phase 1 anyway, but defend in depth).
-        if (relation == AgentSenderRelation.STRANGER
-                && AgentBotReplyChannelStateRuntime.replyChannel(entry) == AgentReplyChannel.WHISPER) {
+        if (request.relation() == AgentSenderRelation.STRANGER
+                && request.replyChannel() == AgentReplyChannel.WHISPER) {
             return;
         }
 
-        int botId = AgentBotRuntimeIdentityRuntime.botId(entry);
+        int botId = request.agentId();
         AtomicInteger inflight = inflightByBotId.computeIfAbsent(botId, k -> new AtomicInteger(0));
         if (!compareAndIncrement(inflight, 0, 1)) {
             // already 1 in-flight for this bot; drop this one
@@ -97,7 +88,7 @@ public final class AgentLlmReplyService {
         final String senderName = sender.getName();
         EXEC.submit(() -> {
             try {
-                runReply(entry, senderName, relation, message);
+                runReply(request, senderName, message, replyEmitter);
             } catch (Throwable t) {
                 log.warn("llm reply failed: {}", t.toString());
             } finally {
@@ -107,9 +98,13 @@ public final class AgentLlmReplyService {
         });
     }
 
-    private static void runReply(BotEntry entry, String senderName, AgentSenderRelation relation, String message) {
-        String botName = AgentBotRuntimeIdentityRuntime.botName(entry);
-        int botId = AgentBotRuntimeIdentityRuntime.botId(entry);
+    private static <E extends AgentRuntimeHandle> void runReply(
+            AgentLlmReplyRequest<E> request,
+            String senderName,
+            String message,
+            ReplyEmitter<E> replyEmitter) {
+        String botName = request.agentName();
+        int botId = request.agentId();
         // Use disk-backed memory only when enabled; otherwise keep a tiny recent in-memory window.
         String summary = AgentLlmConfig.memoryEnabled ? AgentMemoryStore.loadSummary(botName) : "";
         // Prompt shows ALL uncompacted turns (cursor..end). The summary covers everything before
@@ -118,9 +113,9 @@ public final class AgentLlmReplyService {
         List<AgentMemoryStore.Turn> recent = AgentLlmConfig.memoryEnabled
                 ? AgentMemoryStore.loadUncompacted(botName)
                 : loadRecentMemory(botId, System.currentTimeMillis());
-        AgentLlmPromptContext promptContext = promptContext(entry);
+        AgentLlmPromptContext promptContext = request.promptContext();
         long now = System.currentTimeMillis();
-        String system = AgentPromptBuilder.buildSystem(promptContext.agent(), relation, senderName);
+        String system = AgentPromptBuilder.buildSystem(promptContext.agent(), request.relation(), senderName);
         String prompt = AgentPromptBuilder.buildPrompt(
                 promptContext.botName(),
                 AgentSituationBuilder.build(
@@ -174,13 +169,13 @@ public final class AgentLlmReplyService {
             log.info("llm[{}] split into {} messages", botName, parts.size());
         }
 
-        deliverReplyParts(entry, parts,
-                AgentBotLlmRuntime::replyNow,
+        deliverReplyParts(request.entry(), parts,
+                replyEmitter,
                 (action, delayMs) -> EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS));
 
         if (!looksLowQuality(message, reply)) {
             AgentMemoryStore.Turn turn = new AgentMemoryStore.Turn(System.currentTimeMillis(),
-                    relation.name().toLowerCase(), senderName, message, reply);
+                    request.relation().name().toLowerCase(), senderName, message, reply);
             if (AgentLlmConfig.memoryEnabled) {
                 AgentMemoryStore.appendTurn(botName, turn);
             } else {
@@ -230,7 +225,7 @@ public final class AgentLlmReplyService {
     }
 
     @FunctionalInterface
-    interface ReplyEmitter<E extends AgentRuntimeHandle> {
+    public interface ReplyEmitter<E extends AgentRuntimeHandle> {
         void replyNow(E entry, String message);
     }
 
@@ -251,22 +246,6 @@ public final class AgentLlmReplyService {
                 }
             }, (long) AgentLlmConfig.multiMessageDelayMs * i);
         }
-    }
-
-    private static AgentLlmPromptContext promptContext(BotEntry entry) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
-        return new AgentLlmPromptContext(
-                agent,
-                AgentBotRuntimeIdentityRuntime.hasBot(entry)
-                        ? AgentBotRuntimeIdentityRuntime.botName(entry)
-                        : "bot",
-                map,
-                AgentBotModeStateRuntime.grinding(entry),
-                AgentBotModeStateRuntime.following(entry),
-                map != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, map.getId()),
-                AgentBotActivityStateRuntime.lastOwnerCommand(entry),
-                AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry));
     }
 
     /**
