@@ -263,6 +263,11 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeEntry` directly. Movement snapshots,
   profile/input/down-jump state, fidget mode/timing/input state, and crouch
   checks keep the same runtime behavior.
+- Offer and pending-trade state adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Gear prompt reservations,
+  pending loot offers, proactive upgrade flags, trade sequence category/timers,
+  item/meso batch state, restore slots, and queued retries keep the same
+  behavior and storage.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

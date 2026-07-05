@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import client.inventory.Item;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned offer state adapter.
@@ -11,64 +11,64 @@ public final class AgentBotOfferStateRuntime {
     private AgentBotOfferStateRuntime() {
     }
 
-    public static boolean hasPendingGearPromptAfter(BotEntry entry, long nowMs) {
+    public static boolean hasPendingGearPromptAfter(AgentRuntimeEntry entry, long nowMs) {
         return entry.upgradeOfferState().hasPendingGearPromptAfter(nowMs);
     }
 
-    public static long pendingGearPromptAt(BotEntry entry) {
+    public static long pendingGearPromptAt(AgentRuntimeEntry entry) {
         return entry.upgradeOfferState().pendingGearPromptAt();
     }
 
-    public static void reserveGearPrompt(BotEntry entry, long scheduledAt) {
+    public static void reserveGearPrompt(AgentRuntimeEntry entry, long scheduledAt) {
         entry.upgradeOfferState().reserveGearPrompt(scheduledAt);
     }
 
-    public static boolean isReservedGearPrompt(BotEntry entry, long scheduledAt) {
+    public static boolean isReservedGearPrompt(AgentRuntimeEntry entry, long scheduledAt) {
         return entry.upgradeOfferState().isReservedGearPrompt(scheduledAt);
     }
 
-    public static void clearGearPrompt(BotEntry entry) {
+    public static void clearGearPrompt(AgentRuntimeEntry entry) {
         entry.upgradeOfferState().clearGearPrompt();
     }
 
-    public static Item pendingLootOfferItem(BotEntry entry) {
+    public static Item pendingLootOfferItem(AgentRuntimeEntry entry) {
         return entry.pendingLootOfferState().item();
     }
 
-    public static int pendingLootOfferRecipientId(BotEntry entry) {
+    public static int pendingLootOfferRecipientId(AgentRuntimeEntry entry) {
         return entry.pendingLootOfferState().recipientId();
     }
 
-    public static long pendingLootOfferExpiresAt(BotEntry entry) {
+    public static long pendingLootOfferExpiresAt(AgentRuntimeEntry entry) {
         return entry.pendingLootOfferState().expiresAt();
     }
 
-    public static boolean pendingLootOfferBotRequesting(BotEntry entry) {
+    public static boolean pendingLootOfferBotRequesting(AgentRuntimeEntry entry) {
         return entry.pendingLootOfferState().botRequesting();
     }
 
-    public static boolean hasOfferReservation(BotEntry entry) {
+    public static boolean hasOfferReservation(AgentRuntimeEntry entry) {
         return pendingLootOfferItem(entry) != null
                 && pendingLootOfferRecipientId(entry) > 0;
     }
 
-    public static boolean hasPendingOffer(BotEntry entry) {
+    public static boolean hasPendingOffer(AgentRuntimeEntry entry) {
         return hasOfferReservation(entry) && pendingLootOfferExpiresAt(entry) > 0L;
     }
 
-    public static boolean pendingOfferRecipientIs(BotEntry entry, Character recipient) {
+    public static boolean pendingOfferRecipientIs(AgentRuntimeEntry entry, Character recipient) {
         return recipient != null && pendingLootOfferRecipientId(entry) == recipient.getId();
     }
 
-    public static boolean pendingOfferMatches(BotEntry entry, Item item, int recipientId) {
+    public static boolean pendingOfferMatches(AgentRuntimeEntry entry, Item item, int recipientId) {
         return pendingLootOfferItem(entry) == item && pendingLootOfferRecipientId(entry) == recipientId;
     }
 
-    public static boolean pendingOfferExpired(BotEntry entry, long nowMs) {
+    public static boolean pendingOfferExpired(AgentRuntimeEntry entry, long nowMs) {
         return hasPendingOffer(entry) && nowMs >= pendingLootOfferExpiresAt(entry);
     }
 
-    public static void setPendingLootOffer(BotEntry entry,
+    public static void setPendingLootOffer(AgentRuntimeEntry entry,
                                            Item item,
                                            int recipientId,
                                            long expiresAt,
@@ -76,47 +76,47 @@ public final class AgentBotOfferStateRuntime {
         entry.pendingLootOfferState().set(item, recipientId, expiresAt, botRequesting);
     }
 
-    public static void clearPendingOfferForAcceptedTransfer(BotEntry entry) {
+    public static void clearPendingOfferForAcceptedTransfer(AgentRuntimeEntry entry) {
         entry.pendingLootOfferState().clearAcceptedTransfer();
     }
 
-    public static void clearPendingOfferItem(BotEntry entry) {
+    public static void clearPendingOfferItem(AgentRuntimeEntry entry) {
         entry.pendingLootOfferState().clearItem();
     }
 
-    public static void clearPendingOffer(BotEntry entry) {
+    public static void clearPendingOffer(AgentRuntimeEntry entry) {
         entry.pendingLootOfferState().clear();
     }
 
-    public static boolean hasRequestedUpgradeItem(BotEntry entry, int itemId) {
+    public static boolean hasRequestedUpgradeItem(AgentRuntimeEntry entry, int itemId) {
         return entry.upgradeOfferState().hasRequestedUpgradeItem(itemId);
     }
 
-    public static void rememberRequestedUpgradeItem(BotEntry entry, int itemId) {
+    public static void rememberRequestedUpgradeItem(AgentRuntimeEntry entry, int itemId) {
         entry.upgradeOfferState().rememberRequestedUpgradeItem(itemId);
     }
 
-    public static boolean proactiveUpgradeOffers(BotEntry entry) {
+    public static boolean proactiveUpgradeOffers(AgentRuntimeEntry entry) {
         return entry != null && entry.upgradeOfferState().proactiveUpgradeOffers();
     }
 
-    public static void setProactiveUpgradeOffers(BotEntry entry, boolean proactive) {
+    public static void setProactiveUpgradeOffers(AgentRuntimeEntry entry, boolean proactive) {
         entry.upgradeOfferState().setProactiveUpgradeOffers(proactive);
     }
 
-    public static long nextGearSuggestionAt(BotEntry entry) {
+    public static long nextGearSuggestionAt(AgentRuntimeEntry entry) {
         return entry.upgradeOfferState().nextGearSuggestionAt();
     }
 
-    public static void setNextGearSuggestionAt(BotEntry entry, long nextGearSuggestionAt) {
+    public static void setNextGearSuggestionAt(AgentRuntimeEntry entry, long nextGearSuggestionAt) {
         entry.upgradeOfferState().setNextGearSuggestionAt(nextGearSuggestionAt);
     }
 
-    public static boolean spawnUpgradeCheckDone(BotEntry entry) {
+    public static boolean spawnUpgradeCheckDone(AgentRuntimeEntry entry) {
         return entry.upgradeOfferState().spawnUpgradeCheckDone();
     }
 
-    public static void setSpawnUpgradeCheckDone(BotEntry entry, boolean done) {
+    public static void setSpawnUpgradeCheckDone(AgentRuntimeEntry entry, boolean done) {
         entry.upgradeOfferState().setSpawnUpgradeCheckDone(done);
     }
 }

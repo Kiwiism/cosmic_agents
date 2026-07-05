@@ -116,6 +116,11 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentRuntimeEntry` directly. Movement snapshots,
   profile/input/down-jump state, fidget mode/timing/input state, and crouch
   checks keep the same behavior and state backing.
+- Offer and pending-trade runtime state adapters now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. Gear prompt reservations,
+  pending loot offers, proactive upgrade flags, trade sequence category/timers,
+  item/meso batch state, restore slots, and queued retries keep the same
+  behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call
