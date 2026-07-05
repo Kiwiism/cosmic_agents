@@ -1691,10 +1691,10 @@ Recent reconstruction notes:
   queueing now enter through narrow `AgentBotPendingActionReplyRuntime` and
   `AgentBotPendingActionSchedulerRuntime` adapters; pending-action orchestration
   no longer reaches directly into the broad reply or scheduler runtimes.
-- Toggle, buff-query, and respec control callbacks now enter through narrow
-  `AgentBotControlReplyRuntime` and `AgentBotControlSchedulerRuntime` adapters;
-  control orchestration no longer reaches directly into the broad reply or
-  scheduler runtimes for control-owned chat timing.
+- Control reply and scheduler pass-through adapters were removed.
+  `AgentBotControlRuntime` now calls the existing reply and random-delay
+  scheduler runtimes directly while preserving the same toggle, buff-query, and
+  respec timings and replies.
 - Equipment visible replies, unequip, unequip-all, auto-equip-debug, and
   auto-equip callbacks now enter through narrow `AgentBotEquipmentReplyRuntime`
   and `AgentBotEquipmentSchedulerRuntime` adapters; equipment orchestration no
