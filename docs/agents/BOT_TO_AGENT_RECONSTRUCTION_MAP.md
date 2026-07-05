@@ -91,6 +91,11 @@ Recent map updates:
   debug report delivery now calls `AgentSupplyDialogueReporter` and
   `AgentPotionService` directly from the chat report runtime, preserving the
   same report text.
+- The skill report decision bridge was removed. Skill report decision assembly
+  now lives in `AgentSkillReportDecisionService` in the dialogue capability,
+  while the temporary chat report runtime still applies the decision through
+  `AgentBotPendingActionRuntime` until pending-action side effects are fully
+  reconstructed.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or

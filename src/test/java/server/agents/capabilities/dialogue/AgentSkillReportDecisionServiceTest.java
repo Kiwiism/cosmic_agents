@@ -1,8 +1,7 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 
 import java.util.Map;
 
@@ -11,16 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentBotSkillReportRuntimeTest {
+class AgentSkillReportDecisionServiceTest {
     @Test
     void skillReportDecisionUsesAgentSkillReportFlowForNoJobSkillsWithSp() {
-        Character bot = mock(Character.class);
-        when(bot.isBeginnerJob()).thenReturn(false);
-        when(bot.getRemainingSp()).thenReturn(3);
-        when(bot.getSkills()).thenReturn(Map.of());
+        Character agent = mock(Character.class);
+        when(agent.isBeginnerJob()).thenReturn(false);
+        when(agent.getRemainingSp()).thenReturn(3);
+        when(agent.getSkills()).thenReturn(Map.of());
 
         AgentSkillReportFlow.SkillReportDecision decision =
-                AgentBotSkillReportRuntime.skillReportDecision(bot);
+                AgentSkillReportDecisionService.skillReportDecision(agent);
 
         assertFalse(decision.requestSkillTreeChoice());
         assertFalse(decision.clearPendingAction());

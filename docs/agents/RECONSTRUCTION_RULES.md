@@ -4837,6 +4837,11 @@ Current physics correction:
   capability and is generic over `AgentRuntimeHandle`. The ammo service still
   uses `BotEntry` at its temporary runtime boundary, but donor scoring,
   selection fields, and scheduled transfer behavior are unchanged.
+- Skill report decision assembly now lives in
+  `AgentSkillReportDecisionService` under the dialogue capability. The
+  temporary chat report runtime only applies that Agent-owned decision through
+  the pending-action adapter, preserving reply text and pending skill-tree
+  prompt behavior.
 
 Initial reconstruction order:
 

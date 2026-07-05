@@ -7,6 +7,7 @@ import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
+import server.agents.capabilities.dialogue.AgentSkillReportDecisionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.bots.BotEntry;
@@ -58,7 +59,9 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportSkills(BotEntry entry, Character bot) {
-        AgentBotSkillReportRuntime.reportSkills(entry, bot);
+        AgentBotPendingActionRuntime.applySkillReportDecision(
+                entry,
+                AgentSkillReportDecisionService.skillReportDecision(bot));
     }
 
     public static void reportInventory(BotEntry entry, Character bot) {
