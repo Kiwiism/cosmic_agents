@@ -3,13 +3,13 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeRecipientService {
     private AgentTradeRecipientService() {
     }
 
-    public static Character resolveTradeRecipient(BotEntry entry, Character agent) {
+    public static Character resolveTradeRecipient(AgentRuntimeEntry entry, Character agent) {
         int recipientId = AgentBotPendingTradeStateRuntime.recipientId(entry);
         if (recipientId <= 0) {
             return AgentBotRuntimeIdentityRuntime.owner(entry);

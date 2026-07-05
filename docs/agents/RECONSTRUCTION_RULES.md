@@ -4936,6 +4936,11 @@ Current physics correction:
   obtains the movement kinematics snapshot from the integration edge, but the
   conversion from snapshot values to legacy movement report lines is
   dialogue-owned.
+- Trade queued-retry, between-batch, and recipient resolution helpers now
+  accept `AgentRuntimeEntry` instead of `BotEntry`. The trade capability still
+  uses the same pending-trade and identity state adapters, preserving retry
+  timing, batch advancement, and recipient lookup behavior while removing
+  another direct bot-shell dependency from pure trade services.
 
 Initial reconstruction order:
 

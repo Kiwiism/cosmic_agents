@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.inventory.Item;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.Function;
@@ -12,7 +12,7 @@ public final class AgentTradeBetweenBatchService {
     private AgentTradeBetweenBatchService() {
     }
 
-    public static boolean tickBetweenBatches(BotEntry entry, BetweenBatchCallbacks callbacks) {
+    public static boolean tickBetweenBatches(AgentRuntimeEntry entry, BetweenBatchCallbacks callbacks) {
         if (!AgentBotPendingTradeStateRuntime.isBetweenBatches(entry)) {
             return false;
         }
