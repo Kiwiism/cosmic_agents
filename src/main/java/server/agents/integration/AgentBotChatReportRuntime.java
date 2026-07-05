@@ -3,8 +3,10 @@ package server.agents.integration;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 
 import client.Character;
+import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
+import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -26,7 +28,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportStats(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotCharacterReportRuntime.statsReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
 
     public static void reportRange(BotEntry entry, Character bot) {
@@ -50,7 +52,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportBuild(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotCharacterReportRuntime.buildReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.buildReport(bot));
     }
 
     public static void reportSkills(BotEntry entry, Character bot) {
@@ -58,23 +60,23 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportInventory(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotInventoryReportRuntime.inventorySummary(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
     }
 
     public static void reportMesos(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotCharacterReportRuntime.mesoReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.mesoReport(bot));
     }
 
     public static void reportExp(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotCharacterReportRuntime.expReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentCharacterDialogueReporter.expReport(bot));
     }
 
     public static void reportInventorySlots(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotInventoryReportRuntime.slotsReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentInventoryDialogueReporter.slotsReport(bot));
     }
 
     public static void reportScrolls(BotEntry entry, Character bot) {
-        AgentBotReportDeliveryRuntime.reportLine(entry, AgentBotInventoryReportRuntime.scrollReport(bot));
+        AgentBotReportDeliveryRuntime.reportLine(entry, AgentInventoryDialogueReporter.scrollReport(bot));
     }
 
     public static void reportPotions(BotEntry entry, Character bot) {

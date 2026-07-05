@@ -2534,6 +2534,10 @@ Recent reconstruction notes:
   Pending-offer expiry, target checks, targeted command resolution, and response
   handling are supplied as hooks; the current BotEntry target check remains in
   the chat-route adapter, preserving the same pending-offer response behavior.
+- Character and inventory report pass-through bridges have been removed.
+  Report delivery now calls Agent dialogue reporters directly from the chat
+  report runtime, preserving the same stats, build, meso, exp, inventory,
+  slots, and scroll report text.
 - First-job starter-kit service/data now live in `AgentStarterKitService`,
   `AgentStarterKitCatalog`, and `AgentStarterItemGrant`; the old
   `BotStarterKitManager` file has been removed without changing job-change,

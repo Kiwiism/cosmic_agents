@@ -83,6 +83,10 @@ Recent map updates:
   `AgentPendingOfferResponseService` owns the routing algorithm without
   importing `BotEntry`; the temporary `AgentPendingOfferChatRouteService`
   adapter keeps the BotEntry-specific pending-offer target check.
+- Character and inventory report pass-through bridges were removed.
+  `AgentBotChatReportRuntime` now calls `AgentCharacterDialogueReporter` and
+  `AgentInventoryDialogueReporter` directly; the existing dialogue reporter
+  tests cover the unchanged formatting behavior.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or
