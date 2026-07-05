@@ -14,9 +14,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.integration.AgentBotMessageQueueStateRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
-import server.agents.integration.AgentBotSupplyReplyRuntime;
 import server.agents.integration.AgentBotSupplyRuntime;
-import server.agents.integration.AgentBotSupplySchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,17 +56,17 @@ class AgentBotSupplyRuntimeTest {
     }
 
     @Test
-    void potionRequestQueuesReplyThroughSupplyReplyAdapter() {
+    void potionRequestQueuesReplyThroughReplyRuntime() {
         BotEntry entry = new BotEntry(null, null, null);
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
-             MockedStatic<AgentBotSupplyReplyRuntime> replies = mockStatic(AgentBotSupplyReplyRuntime.class)) {
+             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
             potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
                     .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
-            replies.verify(() -> AgentBotSupplyReplyRuntime.queueReply(eq(entry), any(String.class)));
+            replies.verify(() -> AgentBotReplyRuntime.queueReply(eq(entry), any(String.class)));
         }
     }
 
@@ -90,57 +88,35 @@ class AgentBotSupplyRuntimeTest {
     }
 
     @Test
-    void ammoRequestQueuesReplyThroughSupplyReplyAdapter() {
+    void ammoRequestQueuesReplyThroughReplyRuntime() {
         Character owner = mock(Character.class);
         BotEntry entry = new BotEntry(null, owner, null);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
-             MockedStatic<AgentBotSupplyReplyRuntime> replies = mockStatic(AgentBotSupplyReplyRuntime.class)) {
+             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
 
-            replies.verify(() -> AgentBotSupplyReplyRuntime.queueReply(eq(entry), any(String.class)));
+            replies.verify(() -> AgentBotReplyRuntime.queueReply(eq(entry), any(String.class)));
         }
     }
 
     @Test
-    void supplyRequestCallbacksScheduleThroughSupplySchedulerAdapter() {
+    void supplyRequestCallbacksScheduleThroughSchedulerRuntime() {
         BotEntry entry = new BotEntry(null, null, null);
         AgentChatSupplyRequestFlow.SupplyRequestCallbacks callbacks = AgentBotSupplyRuntime.supplyRequestCallbacks(entry);
 
-        try (MockedStatic<AgentBotSupplySchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSupplySchedulerRuntime.class)) {
+        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
+                     mockStatic(AgentBotSchedulerRuntime.class)) {
             callbacks.requestPotion(true);
             callbacks.requestAnyPotion();
             callbacks.requestAmmo();
 
             scheduler.verify(
-                    () -> AgentBotSupplySchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+                    () -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     times(3));
-        }
-    }
-
-    @Test
-    void supplyReplyAdapterDelegatesToAgentReplyRuntime() {
-        BotEntry entry = new BotEntry(null, null, null);
-
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
-            AgentBotSupplyReplyRuntime.queueReply(entry, "reply");
-
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(entry, "reply"));
-        }
-    }
-
-    @Test
-    void supplySchedulerAdapterDelegatesToAgentSchedulerRuntime() {
-        Runnable action = mock(Runnable.class);
-
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            AgentBotSupplySchedulerRuntime.afterRandomDelay(500, 700, action);
-
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(500, 700, action));
         }
     }
 }
