@@ -208,6 +208,10 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeEntry` directly. Existing `BotEntry` call
   sites remain source-compatible through the temporary shell while the supplies
   state boundary no longer imports `server.bots`.
+- Build and consumable-buff state runtime adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. AP/SP build state, job
+  prompt state, consumable buff toggles, scan cadence, and last-action summaries
+  remain backed by the same Agent-owned state objects.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

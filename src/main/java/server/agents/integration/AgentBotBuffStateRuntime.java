@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed consumable buff state.
@@ -9,47 +9,47 @@ public final class AgentBotBuffStateRuntime {
     private AgentBotBuffStateRuntime() {
     }
 
-    public static boolean enabled(BotEntry entry) {
+    public static boolean enabled(AgentRuntimeEntry entry) {
         return entry.buffState().consumablesEnabled();
     }
 
-    public static void setEnabled(BotEntry entry, boolean enabled) {
+    public static void setEnabled(AgentRuntimeEntry entry, boolean enabled) {
         entry.buffState().setConsumablesEnabled(enabled);
     }
 
-    public static void disable(BotEntry entry) {
+    public static void disable(AgentRuntimeEntry entry) {
         setEnabled(entry, false);
     }
 
-    public static boolean cheapMode(BotEntry entry) {
+    public static boolean cheapMode(AgentRuntimeEntry entry) {
         return entry.buffState().cheapMode();
     }
 
-    public static void setCheapMode(BotEntry entry, boolean cheapMode) {
+    public static void setCheapMode(AgentRuntimeEntry entry, boolean cheapMode) {
         entry.buffState().setCheapMode(cheapMode);
     }
 
-    public static void resetScan(BotEntry entry) {
+    public static void resetScan(AgentRuntimeEntry entry) {
         entry.buffState().resetLastConsumableScan();
     }
 
-    public static boolean scanDue(BotEntry entry, long nowMs, long intervalMs) {
+    public static boolean scanDue(AgentRuntimeEntry entry, long nowMs, long intervalMs) {
         return entry.buffState().consumableScanDue(nowMs, intervalMs);
     }
 
-    public static void markScanned(BotEntry entry, long nowMs) {
+    public static void markScanned(AgentRuntimeEntry entry, long nowMs) {
         entry.buffState().setLastConsumableScanMs(nowMs);
     }
 
-    public static long lastActionAtMs(BotEntry entry) {
+    public static long lastActionAtMs(AgentRuntimeEntry entry) {
         return entry.buffState().lastConsumableActionAtMs();
     }
 
-    public static String lastActionSummary(BotEntry entry) {
+    public static String lastActionSummary(AgentRuntimeEntry entry) {
         return entry.buffState().lastConsumableActionSummary();
     }
 
-    public static void noteDecision(BotEntry entry, long nowMs, String summary) {
+    public static void noteDecision(AgentRuntimeEntry entry, long nowMs, String summary) {
         entry.buffState().rememberConsumableAction(nowMs, summary);
     }
 }
