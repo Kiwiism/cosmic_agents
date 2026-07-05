@@ -82,6 +82,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentRuntimeEntry` directly. Loot inhibit timers,
   inventory-full warning cooldowns, manual trade references, accept delays, and
   timeout state keep the same behavior.
+- Death, map tracking, live leader, and formation runtime state adapters now
+  take `server.agents.runtime.AgentRuntimeEntry` directly. Respawn windows,
+  foothold tracking, live leader references, and follow offsets keep the same
+  behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

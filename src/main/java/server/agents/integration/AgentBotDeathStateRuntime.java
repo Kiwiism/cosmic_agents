@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed death/respawn window state.
@@ -9,27 +9,27 @@ public final class AgentBotDeathStateRuntime {
     private AgentBotDeathStateRuntime() {
     }
 
-    public static long deadUntilMs(BotEntry entry) {
+    public static long deadUntilMs(AgentRuntimeEntry entry) {
         return entry.deathState().deadUntilMs();
     }
 
-    public static boolean isDead(BotEntry entry) {
+    public static boolean isDead(AgentRuntimeEntry entry) {
         return entry.deathState().isDead();
     }
 
-    public static boolean shouldEnterDeadState(BotEntry entry, int hp) {
+    public static boolean shouldEnterDeadState(AgentRuntimeEntry entry, int hp) {
         return entry.deathState().shouldEnterDeadState(hp);
     }
 
-    public static boolean isRespawnDue(BotEntry entry, long nowMs) {
+    public static boolean isRespawnDue(AgentRuntimeEntry entry, long nowMs) {
         return entry.deathState().isRespawnDue(nowMs);
     }
 
-    public static void enterDeadState(BotEntry entry, long nowMs, long deadDurationMs) {
+    public static void enterDeadState(AgentRuntimeEntry entry, long nowMs, long deadDurationMs) {
         entry.deathState().enterDeadState(nowMs, deadDurationMs);
     }
 
-    public static void clear(BotEntry entry) {
+    public static void clear(AgentRuntimeEntry entry) {
         entry.deathState().clear();
     }
 }

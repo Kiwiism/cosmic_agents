@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed formation spacing state.
@@ -9,11 +9,11 @@ public final class AgentBotFormationStateRuntime {
     private AgentBotFormationStateRuntime() {
     }
 
-    public static int followOffsetX(BotEntry entry) {
+    public static int followOffsetX(AgentRuntimeEntry entry) {
         return entry.formationOffsetState().followOffsetX();
     }
 
-    public static void setFollowOffsetX(BotEntry entry, int followOffsetX) {
+    public static void setFollowOffsetX(AgentRuntimeEntry entry, int followOffsetX) {
         entry.formationOffsetState().setFollowOffsetX(followOffsetX);
     }
 }

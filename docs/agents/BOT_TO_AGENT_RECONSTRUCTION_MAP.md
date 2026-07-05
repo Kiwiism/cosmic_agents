@@ -229,6 +229,10 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeEntry` directly. Loot inhibit timers,
   inventory-full warning cooldowns, manual trade references, accept delays, and
   timeout state are unchanged.
+- Death, map tracking, live leader, and formation state runtime adapters now
+  accept `server.agents.runtime.AgentRuntimeEntry` directly. Respawn windows,
+  foothold index tracking, live leader references, and follow offsets remain
+  backed by the same Agent runtime state.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
