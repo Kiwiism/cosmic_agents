@@ -6,7 +6,7 @@ import server.agents.capabilities.dialogue.AgentChatTextSanitizer;
 import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import net.server.world.Party;
 import tools.PacketCreator;
 
@@ -18,23 +18,23 @@ public final class AgentBotReplyRuntime {
     private AgentBotReplyRuntime() {
     }
 
-    public static void queueSay(BotEntry entry, String message) {
+    public static void queueSay(AgentRuntimeEntry entry, String message) {
         AgentChatReplyRuntime.queueSay(state(entry), message, dispatcher(entry));
     }
 
-    public static void queueReply(BotEntry entry, String message) {
+    public static void queueReply(AgentRuntimeEntry entry, String message) {
         AgentChatReplyRuntime.queueReply(state(entry), message, dispatcher(entry));
     }
 
-    public static long queueSayWithEstimatedDelay(BotEntry entry, String message) {
+    public static long queueSayWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
         return AgentChatReplyRuntime.queueSayWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
-    public static long queueReplyWithEstimatedDelay(BotEntry entry, String message) {
+    public static long queueReplyWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
         return AgentChatReplyRuntime.queueReplyWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
-    public static void replyNow(BotEntry entry, String message) {
+    public static void replyNow(AgentRuntimeEntry entry, String message) {
         switch (AgentBotReplyChannelStateRuntime.replyChannel(entry)) {
             case PARTY -> sayPartyNow(AgentBotRuntimeIdentityRuntime.bot(entry), message);
             case WHISPER -> {
@@ -52,7 +52,7 @@ public final class AgentBotReplyRuntime {
         }
     }
 
-    public static void visibleSayNow(BotEntry entry, String message) {
+    public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
         sayNow(AgentBotRuntimeIdentityRuntime.bot(entry), AgentBotReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
@@ -83,7 +83,7 @@ public final class AgentBotReplyRuntime {
         }
     }
 
-    private static AgentReplyQueue.State state(BotEntry entry) {
+    private static AgentReplyQueue.State state(AgentRuntimeEntry entry) {
         return new AgentReplyQueue.State() {
             @Override
             public Object lock() {
@@ -117,7 +117,7 @@ public final class AgentBotReplyRuntime {
         };
     }
 
-    private static AgentReplyQueue.Dispatcher dispatcher(BotEntry entry) {
+    private static AgentReplyQueue.Dispatcher dispatcher(AgentRuntimeEntry entry) {
         return new AgentReplyQueue.Dispatcher() {
             @Override
             public void dispatch(AgentQueuedMessage message) {

@@ -4945,6 +4945,10 @@ Current physics correction:
   instead of `BotEntry`. The service still reads the same pending-trade item
   index/list state, marks the same all-items-added flag, clears the same timer,
   and sends the same trade-window chat line.
+- Reply delivery adapters now accept `AgentRuntimeEntry` at the
+  `AgentBotReplyRuntime` and `AgentBotInventoryRuntime` boundaries. The same
+  reply-channel, message-queue, identity, scheduler, whisper, party, and map
+  broadcast paths are used; this only moves the adapter seam off the bot shell.
 
 Initial reconstruction order:
 

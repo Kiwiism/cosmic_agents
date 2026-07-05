@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Temporary Agent-owned bridge for inventory, trade, drop, and meso reply
@@ -11,11 +11,11 @@ public final class AgentBotInventoryRuntime {
     private AgentBotInventoryRuntime() {
     }
 
-    public static void replyNow(BotEntry entry, String message) {
+    public static void replyNow(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.replyNow(entry, message);
     }
 
-    public static void visibleSayNow(BotEntry entry, String message) {
+    public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.visibleSayNow(entry, message);
     }
 
