@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.bots.BotEntry;
 
@@ -37,7 +37,7 @@ public final class AgentTransferRuntime {
                         registrar,
                         AgentBotManagerSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(700, 900),
-                        AgentBotManagerReplyRuntime::sayMapNow,
+                        AgentBotReplyRuntime::sayMapNow,
                         () -> AgentDialogueSelector.randomReply(List.of(
                                 "ok!",
                                 "sure!",

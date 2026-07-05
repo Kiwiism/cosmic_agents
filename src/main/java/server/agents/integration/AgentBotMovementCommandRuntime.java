@@ -68,7 +68,7 @@ public final class AgentBotMovementCommandRuntime {
                 map, AgentBotMovementStateRuntime.movementProfile(entry));
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
-            AgentBotManagerReplyRuntime.replyNow(entry, "can't find a patrol region here");
+            AgentBotReplyRuntime.replyNow(entry, "can't find a patrol region here");
             return;
         }
         AgentCommandModeService.runPreparedModeCommand(

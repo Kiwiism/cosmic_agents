@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.bots.BotEntry;
 
@@ -29,7 +29,7 @@ public final class AgentDismissRuntime {
                         stopAgent,
                         AgentBotManagerSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(400, 600),
-                        AgentBotManagerReplyRuntime::replyNow,
+                        AgentBotReplyRuntime::replyNow,
                         () -> AgentDialogueSelector.randomReply(FAREWELL_MESSAGES)));
     }
 }

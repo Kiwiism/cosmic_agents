@@ -1604,10 +1604,10 @@ Recent reconstruction notes:
 - Bot performance-monitor diagnostics now label the common AFK check as
   `AgentBotManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
   BotManager status boundary used by the tick shell.
-- BotManager-triggered queue/reply/map/party delivery now enters through
-  `AgentBotManagerReplyRuntime`; `BotManager` no longer reaches directly into
-  the lower-level `AgentBotReplyRuntime` for internal command/error/formation
-  replies or compatibility delivery wrappers.
+- BotManager-triggered queue/reply/map/party delivery now calls
+  `AgentBotReplyRuntime` directly; the pure manager reply pass-through adapter
+  was removed while preserving internal command/error/formation replies and
+  compatibility delivery wrappers.
 - BotManager-triggered delayed callbacks now enter through
   `AgentBotManagerSchedulerRuntime`; `BotManager` no longer reaches directly
   into the lower-level `AgentBotSchedulerRuntime` for follow-target, dismiss,

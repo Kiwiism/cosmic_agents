@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import net.server.Server;
 import org.slf4j.Logger;
-import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.maps.MapleMap;
 
@@ -61,7 +61,7 @@ public final class AgentReloginRuntime {
                         registerSpawnedAgent,
                         AgentBotManagerSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(900, 1100),
-                        AgentBotManagerReplyRuntime::sayMapNow),
+                        AgentBotReplyRuntime::sayMapNow),
                 (failedAgentCharId, e) -> log.warn("reloginBot: failed to reload charId={}", failedAgentCharId, e));
     }
 

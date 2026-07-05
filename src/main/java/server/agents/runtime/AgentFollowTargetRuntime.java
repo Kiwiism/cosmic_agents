@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotManagerSchedulerRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
@@ -43,7 +43,7 @@ public final class AgentFollowTargetRuntime {
                 new AgentFollowTargetCommandService.Hooks(
                         AgentFollowTargetRuntime::resolveFollowTarget,
                         AgentFollowTargetRuntime::followTargetReply,
-                        AgentBotManagerReplyRuntime::queueReply,
+                        AgentBotReplyRuntime::queueReply,
                         () -> AgentRandom.randMs(250, 750),
                         AgentBotManagerSchedulerRuntime::afterDelay,
                         AgentFollowTargetRuntime::autoEquipForFollow,

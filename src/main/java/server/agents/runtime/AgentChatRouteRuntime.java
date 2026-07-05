@@ -17,7 +17,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.integration.AgentBotCommandParser;
-import server.agents.integration.AgentBotManagerReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
@@ -130,7 +130,7 @@ public final class AgentChatRouteRuntime {
                 AgentBotReplyChannelStateRuntime::setReplyChannel,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
-                AgentBotManagerReplyRuntime::queueReply,
+                AgentBotReplyRuntime::queueReply,
                 AgentChatRouteRuntime::handleAgentChat,
                 AgentChatRuntime::wasLastChatHandled,
                 System::currentTimeMillis,
@@ -154,7 +154,7 @@ public final class AgentChatRouteRuntime {
                 AgentChatRouteRuntime::handleAgentChat,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
-                AgentBotManagerReplyRuntime::queueReply);
+                AgentBotReplyRuntime::queueReply);
     }
 
     private static void handleAgentChat(BotEntry entry, String message) {
