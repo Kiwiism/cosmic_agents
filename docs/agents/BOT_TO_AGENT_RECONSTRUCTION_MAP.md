@@ -56,6 +56,10 @@ Recent map updates:
   `AgentAmmoDonorPlan<E extends AgentRuntimeHandle>` in the supplies
   capability. Existing ammo donor selection and tests now use the Agent-owned
   value object while `AgentAmmoService` still adapts with `BotEntry`.
+- `AgentBotPotionDonorPlan` moved out of integration as
+  `AgentPotionDonorPlan<E extends AgentRuntimeHandle>` in the supplies
+  capability. Existing potion donor selection and tests now use the Agent-owned
+  value object while `AgentPotionService` still adapts with `BotEntry`.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

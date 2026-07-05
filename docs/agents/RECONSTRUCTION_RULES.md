@@ -2513,14 +2513,14 @@ Recent reconstruction notes:
   `AgentBotShopShortfallReason`; AgentShopService preserves the same quantity,
   meso, space, and generic-failure reporting while the purchase report value
   object is owned by the Agent integration layer.
-- Potion donor planning now uses `AgentBotPotionDonorPlan`; AgentPotionService
+- Potion donor planning now uses `AgentPotionDonorPlan`; AgentPotionService
   preserves the same donor selection, qualification threshold, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
-  by the Agent integration layer instead of a private bot runtime record.
-- Ammo donor planning now uses `AgentBotAmmoDonorPlan`; AgentAmmoService
+  by the Agent supplies capability instead of a private bot runtime record.
+- Ammo donor planning now uses `AgentAmmoDonorPlan`; AgentAmmoService
   preserves the same donor selection ordering, same-ammo preference, donation
   quantity, delay, and transfer behavior while the donor plan context is owned
-  by the Agent integration layer instead of a bot package record.
+  by the Agent supplies capability instead of a bot package record.
 - Bot command target, transfer, targeted-command match, and bot-entry parser
   adapter now use `AgentBotCommandTarget`, `AgentBotTransferCommand`,
   `AgentBotTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
