@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.function.IntFunction;
@@ -13,7 +12,7 @@ public final class AgentScriptTaskCompletionService {
     private AgentScriptTaskCompletionService() {
     }
 
-    public static boolean isComplete(BotEntry entry,
+    public static boolean isComplete(AgentRuntimeEntry entry,
                                      AgentTask task,
                                      int normalMoveArrivalDistance,
                                      IntFunction<Character> followTargetResolver) {

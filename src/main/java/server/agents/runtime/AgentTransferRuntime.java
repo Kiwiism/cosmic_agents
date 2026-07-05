@@ -5,7 +5,6 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
-import server.bots.BotEntry;
 
 import java.util.List;
 

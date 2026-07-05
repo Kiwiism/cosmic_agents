@@ -121,6 +121,9 @@ Recent reconstruction notes:
   pending loot offers, proactive upgrade flags, trade sequence category/timers,
   item/meso batch state, restore slots, and queued retries keep the same
   behavior and state backing.
+- Script task completion checks now take `server.agents.runtime.AgentRuntimeEntry`
+  directly, and an unused `server.bots.BotEntry` import was removed from the
+  transfer runtime. Script movement/follow completion behavior is unchanged.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

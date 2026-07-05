@@ -268,6 +268,9 @@ Recent map updates:
   pending loot offers, proactive upgrade flags, trade sequence category/timers,
   item/meso batch state, restore slots, and queued retries keep the same
   behavior and storage.
+- Script task completion checks now accept `server.agents.runtime.AgentRuntimeEntry`
+  directly, and an unused `server.bots.BotEntry` import was removed from the
+  transfer runtime. Script movement/follow completion behavior is unchanged.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
