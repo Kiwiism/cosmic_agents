@@ -122,6 +122,9 @@ Recent map updates:
 - Session reply and scheduler pass-through bridges were removed. Relog,
   logout, and owner-away session callbacks now call the existing reply and
   scheduler runtimes directly with the same prompts, confirmations, and delays.
+- Pending-action reply and scheduler pass-through bridges were removed. Item
+  choices, cancel replies, and skill-tree reply queueing now call the existing
+  reply and scheduler runtimes directly with the same pending-action behavior.
 - The report operations bridge was folded into `AgentBotChatReportRuntime`.
   Report callback construction still dispatches to the same help, upgrade,
   gear, skill, stat, movement, range, inventory, potion, and debug report

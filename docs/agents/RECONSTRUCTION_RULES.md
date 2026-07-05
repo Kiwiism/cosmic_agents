@@ -1686,10 +1686,10 @@ Recent reconstruction notes:
   Relog/logout/away prompts, confirmations, and delayed lifecycle callbacks now
   call the existing reply and random-delay scheduler runtimes directly while
   preserving the same session-owned chat timing.
-- Pending chat-action item choices, cancel replies, and skill-tree reply
-  queueing now enter through narrow `AgentBotPendingActionReplyRuntime` and
-  `AgentBotPendingActionSchedulerRuntime` adapters; pending-action orchestration
-  no longer reaches directly into the broad reply or scheduler runtimes.
+- Pending-action reply and scheduler pass-through adapters were removed.
+  Item choices, cancel replies, and skill-tree reply queueing now call the
+  existing reply and random-delay scheduler runtimes directly while preserving
+  the same pending-action behavior.
 - Control reply and scheduler pass-through adapters were removed.
   `AgentBotControlRuntime` now calls the existing reply and random-delay
   scheduler runtimes directly while preserving the same toggle, buff-query, and
