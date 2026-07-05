@@ -15,7 +15,7 @@ public final class AgentBotSocialRuntime {
     }
 
     public static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
-        return targetName -> AgentBotSocialSchedulerRuntime.afterRandomDelay(
+        return targetName -> AgentBotSchedulerRuntime.afterRandomDelay(
                 500, 900, () -> handleFameCommand(entry, targetName));
     }
 
@@ -68,7 +68,7 @@ public final class AgentBotSocialRuntime {
 
             @Override
             public void reply(String message) {
-                AgentBotSocialReplyRuntime.replyNow(entry, message);
+                AgentBotReplyRuntime.replyNow(entry, message);
             }
         });
     }

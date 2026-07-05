@@ -134,6 +134,9 @@ Recent map updates:
 - Supply reply and scheduler pass-through bridges were removed. Potion/ammo
   request replies and delayed supply callbacks now call the existing reply and
   scheduler runtimes directly.
+- Social reply and scheduler pass-through bridges were removed. Fame replies
+  and delayed social callbacks now call the existing reply and scheduler
+  runtimes directly.
 - The report operations bridge was folded into `AgentBotChatReportRuntime`.
   Report callback construction still dispatches to the same help, upgrade,
   gear, skill, stat, movement, range, inventory, potion, and debug report

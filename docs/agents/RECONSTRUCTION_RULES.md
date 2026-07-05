@@ -1738,10 +1738,9 @@ Recent reconstruction notes:
   Supply request queued replies and random-delay callbacks now call the existing
   reply and random-delay scheduler runtimes directly while preserving the same
   supply behavior.
-- Social/fame replies and random-delay callbacks now enter through narrow
-  `AgentBotSocialReplyRuntime` and `AgentBotSocialSchedulerRuntime` adapters;
-  social orchestration no longer reaches directly into the broad reply or
-  scheduler runtimes.
+- Social reply and scheduler pass-through adapters were removed.
+  Fame replies and random-delay callbacks now call the existing reply and
+  scheduler runtimes directly while preserving the same social behavior.
 - Utility reply and scheduler pass-through adapters were removed.
   Trade-invite replies and trade/shop/Maker random-delay callbacks now call the
   existing reply and random-delay scheduler runtimes directly while preserving
