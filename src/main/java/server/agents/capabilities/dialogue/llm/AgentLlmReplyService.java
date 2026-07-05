@@ -13,6 +13,7 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.runtime.AgentRuntimeHandle;
 import server.maps.MapleMap;
 
 import java.util.List;
@@ -177,6 +178,7 @@ public final class AgentLlmReplyService {
         }
 
         deliverReplyParts(entry, parts,
+                AgentBotLlmRuntime::replyNow,
                 (action, delayMs) -> EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS));
 
         if (!looksLowQuality(message, reply)) {
@@ -230,14 +232,23 @@ public final class AgentLlmReplyService {
         void schedule(Runnable action, long delayMs);
     }
 
-    static void deliverReplyParts(BotEntry entry, List<String> parts, FollowUpScheduler scheduler) {
+    @FunctionalInterface
+    interface ReplyEmitter<E extends AgentRuntimeHandle> {
+        void replyNow(E entry, String message);
+    }
+
+    static <E extends AgentRuntimeHandle> void deliverReplyParts(
+            E entry,
+            List<String> parts,
+            ReplyEmitter<E> replyEmitter,
+            FollowUpScheduler scheduler) {
         if (parts.isEmpty()) return;
-        AgentBotLlmRuntime.replyNow(entry, parts.get(0));
+        replyEmitter.replyNow(entry, parts.get(0));
         for (int i = 1; i < parts.size(); i++) {
             final String part = parts.get(i);
             scheduler.schedule(() -> {
                 try {
-                    AgentBotLlmRuntime.replyNow(entry, part);
+                    replyEmitter.replyNow(entry, part);
                 } catch (Throwable t) {
                     log.warn("llm follow-up reply failed: {}", t.toString());
                 }

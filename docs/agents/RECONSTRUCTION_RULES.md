@@ -4793,6 +4793,10 @@ Current physics correction:
   and last-command state through temporary runtime adapters, preserving the
   existing "grinding", "following owner", map, party, mob, level, and last
   command text.
+- LLM multi-message delivery now uses an Agent-owned runtime handle and reply
+  emitter callback. `AgentLlmReplyService` still supplies
+  `AgentBotLlmRuntime.replyNow` at the temporary adapter edge, preserving
+  immediate/follow-up reply timing and failure swallowing.
 
 Initial reconstruction order:
 

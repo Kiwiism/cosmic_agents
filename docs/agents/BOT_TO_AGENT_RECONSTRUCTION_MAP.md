@@ -35,6 +35,9 @@ Recent map updates:
 - `AgentSituationBuilder` no longer imports `BotEntry`; situation text is built
   from resolved Agent/map/activity snapshot values supplied by
   `AgentLlmReplyService`.
+- LLM follow-up reply delivery now accepts `AgentRuntimeHandle` plus a reply
+  emitter callback; the current `BotEntry` delivery path remains supplied by
+  `AgentLlmReplyService` through `AgentBotLlmRuntime.replyNow`.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

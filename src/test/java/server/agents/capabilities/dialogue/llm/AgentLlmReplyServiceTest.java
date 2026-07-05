@@ -5,8 +5,7 @@ import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotLlmRuntime;
+import server.agents.runtime.AgentRuntimeHandle;
 import server.bots.BotEntry;
 
 import java.lang.reflect.Constructor;
@@ -17,7 +16,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentLlmReplyServiceTest {
@@ -28,19 +26,23 @@ class AgentLlmReplyServiceTest {
         AgentLlmConfig.multiMessageDelayMs = 250;
         List<Long> delays = new ArrayList<>();
         List<Runnable> actions = new ArrayList<>();
+        List<String> replies = new ArrayList<>();
+        TestHandle handle = new TestHandle();
 
-        try (MockedStatic<AgentBotLlmRuntime> replies = mockStatic(AgentBotLlmRuntime.class)) {
-            AgentLlmReplyService.deliverReplyParts(entry, List.of("one", "two", "three"), (action, delayMs) -> {
+        try {
+            AgentLlmReplyService.deliverReplyParts(handle, List.of("one", "two", "three"), (replyHandle, message) -> {
+                assertEquals(handle, replyHandle);
+                replies.add(message);
+            }, (action, delayMs) -> {
                 delays.add(delayMs);
                 actions.add(action);
             });
 
-            replies.verify(() -> AgentBotLlmRuntime.replyNow(entry, "one"));
-            org.junit.jupiter.api.Assertions.assertEquals(List.of(250L, 500L), delays);
+            assertEquals(List.of("one"), replies);
+            assertEquals(List.of(250L, 500L), delays);
 
             actions.forEach(Runnable::run);
-            replies.verify(() -> AgentBotLlmRuntime.replyNow(entry, "two"));
-            replies.verify(() -> AgentBotLlmRuntime.replyNow(entry, "three"));
+            assertEquals(List.of("one", "two", "three"), replies);
         } finally {
             AgentLlmConfig.multiMessageDelayMs = oldDelay;
         }
@@ -102,5 +104,8 @@ class AgentLlmReplyServiceTest {
                 Character.class, Character.class, ScheduledFuture.class);
         constructor.setAccessible(true);
         return constructor.newInstance(bot, owner, null);
+    }
+
+    private static final class TestHandle implements AgentRuntimeHandle {
     }
 }
