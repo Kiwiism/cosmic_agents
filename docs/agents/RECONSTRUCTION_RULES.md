@@ -4955,6 +4955,9 @@ Current physics correction:
   command profiling, and peer-trade ticks. Existing callers still pass the
   temporary runtime shell where needed, but these Agent-owned trade services no
   longer require the bot shell type.
+- Shop and Maker reply bridges now accept `AgentRuntimeEntry` for immediate
+  replies. Delayed execution and map-say helpers are unchanged, preserving shop
+  and Maker automation timing while moving the reply seam off `BotEntry`.
 
 Initial reconstruction order:
 

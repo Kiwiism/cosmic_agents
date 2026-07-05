@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Temporary Agent-owned bridge for shop automation replies and delayed shop
@@ -11,7 +11,7 @@ public final class AgentBotShopRuntime {
     private AgentBotShopRuntime() {
     }
 
-    public static void replyNow(BotEntry entry, String message) {
+    public static void replyNow(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.replyNow(entry, message);
     }
 
