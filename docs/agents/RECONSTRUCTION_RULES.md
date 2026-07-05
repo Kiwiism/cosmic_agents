@@ -1745,10 +1745,10 @@ Recent reconstruction notes:
   existing reply and random-delay scheduler runtimes directly while preserving
   the same utility behavior.
 - Build/AP/SP/job-advance immediate replies, queued build-status replies, and
-  job-advance random-delay callbacks now enter through narrow
-  `AgentBotBuildReplyRuntime` and `AgentBotBuildSchedulerRuntime` adapters;
-  build orchestration no longer reaches directly into the broad reply or
-  scheduler runtimes.
+  job-advance random-delay callbacks now call the existing
+  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure
+  build reply/scheduler pass-through adapters were removed while preserving
+  build behavior.
 - Gear/loot offer immediate replies, queued replies, map/channel dialogue,
   queued-say delay estimation, fixed-delay callbacks, random-delay callbacks,
   and delay sampling now enter through narrow `AgentBotOfferReplyRuntime` and

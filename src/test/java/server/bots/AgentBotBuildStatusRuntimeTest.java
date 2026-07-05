@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.integration.AgentBotBuildReplyRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -76,16 +76,16 @@ class AgentBotBuildStatusRuntimeTest {
     }
 
     @Test
-    void statusCheckQueueReplyUsesBuildReplyAdapter() {
+    void statusCheckQueueReplyUsesAgentReplyRuntime() {
         BotEntry entry = new BotEntry(null, null, null);
         Character bot = mock(Character.class);
         AgentChatStatusRuntime.StatusCheckActions actions =
                 AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
 
-        try (MockedStatic<AgentBotBuildReplyRuntime> replies = mockStatic(AgentBotBuildReplyRuntime.class)) {
+        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
             actions.queueReply("build?");
 
-            replies.verify(() -> AgentBotBuildReplyRuntime.queueReply(entry, "build?"));
+            replies.verify(() -> AgentBotReplyRuntime.queueReply(entry, "build?"));
         }
     }
 }

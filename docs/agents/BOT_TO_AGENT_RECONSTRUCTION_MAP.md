@@ -79,6 +79,9 @@ Recent map updates:
 - Maker reply and scheduler pass-through bridges were removed. Maker owner
   replies and delayed batch callbacks now call the existing Agent reply and
   scheduler runtimes directly through `AgentBotMakerRuntime`.
+- Build reply and scheduler pass-through bridges were removed. Build/AP/SP/job
+  replies, build-status queued replies, and delayed job advancement callbacks
+  now call the existing Agent reply and scheduler runtimes directly.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

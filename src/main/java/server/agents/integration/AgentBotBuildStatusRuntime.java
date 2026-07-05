@@ -44,7 +44,7 @@ public final class AgentBotBuildStatusRuntime {
 
             @Override
             public void queueReply(String message) {
-                AgentBotBuildReplyRuntime.queueReply(entry, message);
+                AgentBotReplyRuntime.queueReply(entry, message);
             }
 
             @Override
