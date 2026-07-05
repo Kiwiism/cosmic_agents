@@ -225,6 +225,10 @@ Recent map updates:
   accept `server.agents.runtime.AgentRuntimeEntry` directly. Whisper routing,
   queued reply delivery, pending confirmations, and pending drop categories keep
   identical state and behavior.
+- Inventory cooldown and manual-trade state runtime adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Loot inhibit timers,
+  inventory-full warning cooldowns, manual trade references, accept delays, and
+  timeout state are unchanged.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

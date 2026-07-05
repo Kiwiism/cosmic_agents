@@ -78,6 +78,10 @@ Recent reconstruction notes:
   take `server.agents.runtime.AgentRuntimeEntry` directly. Whisper routing,
   queued reply delivery, pending confirmations, and pending drop categories are
   unchanged.
+- Inventory cooldown and manual-trade runtime state adapters now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. Loot inhibit timers,
+  inventory-full warning cooldowns, manual trade references, accept delays, and
+  timeout state keep the same behavior.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call
