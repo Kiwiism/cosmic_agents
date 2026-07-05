@@ -2,6 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;

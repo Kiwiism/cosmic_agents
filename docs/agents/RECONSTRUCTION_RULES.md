@@ -2527,6 +2527,9 @@ Recent reconstruction notes:
   boundary data is owned by Agent commands while bot-entry adaptation remains
   in the Agent integration layer, preserving the same `AgentCommandParser`
   matching behavior.
+- Targeted dialogue routing now shares the Agent commands
+  `AgentTargetedCommandMatch`; the duplicate dialogue-local match record has
+  been removed while preserving the same targeted chat behavior.
 - First-job starter-kit service/data now live in `AgentStarterKitService`,
   `AgentStarterKitCatalog`, and `AgentStarterItemGrant`; the old
   `BotStarterKitManager` file has been removed without changing job-change,

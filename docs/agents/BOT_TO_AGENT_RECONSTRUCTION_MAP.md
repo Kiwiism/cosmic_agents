@@ -75,6 +75,10 @@ Recent map updates:
   AgentRuntimeHandle>` in the commands package. `AgentBotCommandParser` still
   supplies the temporary `BotEntry` adapter until targeted command resolution
   stops depending on the bot shell.
+- Dialogue targeted chat routing now reuses the commands-package
+  `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
+  record without changing targeted reply, typo-suggestion, LLM fallback, or
+  owner-command recording behavior.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

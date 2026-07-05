@@ -6,7 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentChatIngressService;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
-import server.agents.capabilities.dialogue.AgentTargetedCommandMatch;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
 import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;

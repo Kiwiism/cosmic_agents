@@ -3,6 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.bots.BotEntry;
 
 import java.util.ArrayList;
