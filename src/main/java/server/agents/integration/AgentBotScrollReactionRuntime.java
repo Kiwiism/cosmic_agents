@@ -11,14 +11,14 @@ public final class AgentBotScrollReactionRuntime {
     }
 
     public static void queueSay(BotEntry entry, String message) {
-        AgentBotScrollReactionReplyRuntime.queueSay(entry, message);
+        AgentBotReplyRuntime.queueSay(entry, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotScrollReactionSchedulerRuntime.afterDelay(delayMs, action);
+        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
     }
 
     public static long randomDelayMs(int minMs, int maxMs) {
-        return AgentBotScrollReactionSchedulerRuntime.randomDelayMs(minMs, maxMs);
+        return AgentBotSchedulerRuntime.randomDelayMs(minMs, maxMs);
     }
 }

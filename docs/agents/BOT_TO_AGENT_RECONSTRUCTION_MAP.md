@@ -72,6 +72,10 @@ Recent map updates:
 - Potion reply and scheduler pass-through bridges were removed. Potion map
   replies, delayed callbacks, and delay sampling now call the existing Agent
   reply and scheduler runtimes directly through `AgentBotPotionRuntime`.
+- Scroll-reaction reply and scheduler pass-through bridges were removed.
+  Queued scroll-reaction dialogue and delayed callbacks now call the existing
+  Agent reply and scheduler runtimes directly through
+  `AgentBotScrollReactionRuntime`.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

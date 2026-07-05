@@ -1730,10 +1730,9 @@ Recent reconstruction notes:
   adapter; PQ orchestration no longer reaches directly into the broad reply
   runtime.
 - Scroll-reaction queued dialogue, fixed-delay callbacks, and delay-sampling
-  bridge methods now enter through narrow `AgentBotScrollReactionReplyRuntime`
-  and `AgentBotScrollReactionSchedulerRuntime` adapters; scroll-reaction
-  orchestration no longer reaches directly into the broad reply or scheduler
-  runtimes.
+  bridge methods now call the existing `AgentBotReplyRuntime` and
+  `AgentBotSchedulerRuntime` directly; the pure scroll-reaction reply/scheduler
+  pass-through adapters were removed while preserving scroll-reaction behavior.
 - Supply reply and scheduler pass-through adapters were removed.
   Supply request queued replies and random-delay callbacks now call the existing
   reply and random-delay scheduler runtimes directly while preserving the same
