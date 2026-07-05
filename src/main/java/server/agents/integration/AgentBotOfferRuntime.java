@@ -18,35 +18,35 @@ public final class AgentBotOfferRuntime {
     }
 
     public static void replyNow(BotEntry entry, String message) {
-        AgentBotOfferReplyRuntime.replyNow(entry, message);
+        AgentBotReplyRuntime.replyNow(entry, message);
     }
 
     public static void queueSay(BotEntry entry, String message) {
-        AgentBotOfferReplyRuntime.queueSay(entry, message);
+        AgentBotReplyRuntime.queueSay(entry, message);
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentBotOfferReplyRuntime.sayMapNow(bot, message);
+        AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
     public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
-        AgentBotOfferReplyRuntime.sayNow(bot, channel, message);
+        AgentBotReplyRuntime.sayNow(bot, channel, message);
     }
 
     public static long queueSayWithEstimatedDelay(BotEntry entry, String message) {
-        return AgentBotOfferReplyRuntime.queueSayWithEstimatedDelay(entry, message);
+        return AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotOfferSchedulerRuntime.afterDelay(delayMs, action);
+        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
     }
 
     public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-        AgentBotOfferSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+        AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
     }
 
     public static long randomDelayMs(int minMs, int maxMs) {
-        return AgentBotOfferSchedulerRuntime.randomDelayMs(minMs, maxMs);
+        return AgentBotSchedulerRuntime.randomDelayMs(minMs, maxMs);
     }
 
     public static boolean hasPendingGearPromptAfter(BotEntry entry, long nowMs) {
@@ -82,7 +82,7 @@ public final class AgentBotOfferRuntime {
 
             @Override
             public void queueReply(String line) {
-                AgentBotOfferReplyRuntime.queueReply(entry, line);
+                AgentBotReplyRuntime.queueReply(entry, line);
             }
         };
     }

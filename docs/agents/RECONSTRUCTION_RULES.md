@@ -1751,9 +1751,9 @@ Recent reconstruction notes:
   build behavior.
 - Gear/loot offer immediate replies, queued replies, map/channel dialogue,
   queued-say delay estimation, fixed-delay callbacks, random-delay callbacks,
-  and delay sampling now enter through narrow `AgentBotOfferReplyRuntime` and
-  `AgentBotOfferSchedulerRuntime` adapters; offer orchestration no longer
-  reaches directly into the broad reply or scheduler runtimes.
+  and delay sampling now call the existing `AgentBotReplyRuntime` and
+  `AgentBotSchedulerRuntime` directly; the pure offer reply/scheduler
+  pass-through adapters were removed while preserving offer behavior.
 - Transfer reply and scheduler pass-through adapters were removed.
   Transfer/item-query immediate replies, fixed-delay callbacks, random-delay
   callbacks, and delay sampling now call the existing reply and scheduler

@@ -82,6 +82,9 @@ Recent map updates:
 - Build reply and scheduler pass-through bridges were removed. Build/AP/SP/job
   replies, build-status queued replies, and delayed job advancement callbacks
   now call the existing Agent reply and scheduler runtimes directly.
+- Offer reply and scheduler pass-through bridges were removed. Gear/loot offer
+  replies, queued/map/channel dialogue, queued-say delay estimation, and delayed
+  callbacks now call the existing Agent reply and scheduler runtimes directly.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.
