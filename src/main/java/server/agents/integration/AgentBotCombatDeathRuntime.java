@@ -7,13 +7,13 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.movement.AgentMovementPoseService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBotCombatDeathRuntime {
     private AgentBotCombatDeathRuntime() {
     }
 
-    public static void enterDeadState(BotEntry entry, Character bot,
+    public static void enterDeadState(AgentRuntimeEntry entry, Character bot,
                                       boolean announceDeath,
                                       AgentCombatConfig.Config config) {
         AgentBotCombatActionStateRuntime.clearActionState(entry);

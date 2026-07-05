@@ -4968,6 +4968,9 @@ Current physics correction:
   `AgentRuntimeEntry`. Packet construction, stance resolution, foothold
   z-layer cache behavior, duplicate-broadcast suppression, and performance
   monitoring are unchanged.
+- Combat death-state entry and attack-facing memory wrappers now accept
+  `AgentRuntimeEntry`. Dead pose marking, movement broadcast, death timer
+  state, optional death dialogue, and attack-facing stance sync are unchanged.
 
 Initial reconstruction order:
 
