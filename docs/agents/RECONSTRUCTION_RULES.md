@@ -105,6 +105,10 @@ Recent reconstruction notes:
   directly. Airshow trail timing, observed leader movement, tick
   accumulator/skip delay, social reaction cooldown/streak tracking, and
   skill-buff debug summaries keep the same behavior and state backing.
+- AoE reposition, shop transition, and script-task runtime state adapters now
+  take `server.agents.runtime.AgentRuntimeEntry` directly. AoE reposition
+  anchors, shop visit/sequence transition state, and scripted task queues/runtime
+  step state keep the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

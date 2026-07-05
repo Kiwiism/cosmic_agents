@@ -1,48 +1,48 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptRuntimeState;
 
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed scripted task queue state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed scripted task queue state.
  */
 public final class AgentBotScriptTaskStateRuntime {
     private AgentBotScriptTaskStateRuntime() {
     }
 
-    public static int activityEpoch(BotEntry entry) {
+    public static int activityEpoch(AgentRuntimeEntry entry) {
         return entry.scriptTaskQueueState().activityEpoch();
     }
 
-    public static boolean isCurrentActivityEpoch(BotEntry entry, int epoch) {
+    public static boolean isCurrentActivityEpoch(AgentRuntimeEntry entry, int epoch) {
         return activityEpoch(entry) == epoch;
     }
 
-    public static void clearTasksAndBumpEpoch(BotEntry entry) {
+    public static void clearTasksAndBumpEpoch(AgentRuntimeEntry entry) {
         entry.scriptTaskQueueState().bumpActivityEpoch();
         entry.scriptTaskQueueState().clearTasks();
     }
 
-    public static void queueTask(BotEntry entry, AgentTask task) {
+    public static void queueTask(AgentRuntimeEntry entry, AgentTask task) {
         entry.scriptTaskQueueState().addTask(task);
     }
 
-    public static boolean hasQueuedTasks(BotEntry entry) {
+    public static boolean hasQueuedTasks(AgentRuntimeEntry entry) {
         return entry != null && entry.scriptTaskQueueState().hasTasks();
     }
 
-    public static AgentTask activeTask(BotEntry entry) {
+    public static AgentTask activeTask(AgentRuntimeEntry entry) {
         return entry.scriptTaskQueueState().activeTask();
     }
 
-    public static boolean hasActiveTask(BotEntry entry) {
+    public static boolean hasActiveTask(AgentRuntimeEntry entry) {
         return activeTask(entry) != null;
     }
 
-    public static AgentTask activateNextTask(BotEntry entry) {
+    public static AgentTask activateNextTask(AgentRuntimeEntry entry) {
         AgentTask activeTask = entry.scriptTaskQueueState().activeTask();
         if (activeTask != null) {
             return activeTask;
@@ -52,11 +52,11 @@ public final class AgentBotScriptTaskStateRuntime {
         return activeTask;
     }
 
-    public static void clearActiveTask(BotEntry entry) {
+    public static void clearActiveTask(AgentRuntimeEntry entry) {
         entry.scriptTaskQueueState().setActiveTask(null);
     }
 
-    public static boolean isActiveLocalOpportunityMoveTo(BotEntry entry, Point targetPos) {
+    public static boolean isActiveLocalOpportunityMoveTo(AgentRuntimeEntry entry, Point targetPos) {
         if (entry == null || targetPos == null) {
             return false;
         }
@@ -74,51 +74,51 @@ public final class AgentBotScriptTaskStateRuntime {
         return !AgentBotModeStateRuntime.following(entry);
     }
 
-    public static String scriptId(BotEntry entry) {
+    public static String scriptId(AgentRuntimeEntry entry) {
         return scriptState(entry).scriptId();
     }
 
-    public static boolean hasScriptId(BotEntry entry) {
+    public static boolean hasScriptId(AgentRuntimeEntry entry) {
         return scriptId(entry) != null;
     }
 
-    public static void resetScript(BotEntry entry, String scriptId) {
+    public static void resetScript(AgentRuntimeEntry entry, String scriptId) {
         scriptState(entry).reset(scriptId);
     }
 
-    public static int scriptStepIndex(BotEntry entry) {
+    public static int scriptStepIndex(AgentRuntimeEntry entry) {
         return scriptState(entry).stepIndex();
     }
 
-    public static boolean scriptStepEntered(BotEntry entry) {
+    public static boolean scriptStepEntered(AgentRuntimeEntry entry) {
         return scriptState(entry).stepEntered();
     }
 
-    public static void markScriptStepEntered(BotEntry entry) {
+    public static void markScriptStepEntered(AgentRuntimeEntry entry) {
         scriptState(entry).markStepEntered();
     }
 
-    public static void advanceScriptStep(BotEntry entry) {
+    public static void advanceScriptStep(AgentRuntimeEntry entry) {
         scriptState(entry).advanceStep();
     }
 
-    public static int scriptInt(BotEntry entry, String key) {
+    public static int scriptInt(AgentRuntimeEntry entry, String key) {
         return scriptState(entry).intValue(key);
     }
 
-    public static void setScriptInt(BotEntry entry, String key, int value) {
+    public static void setScriptInt(AgentRuntimeEntry entry, String key, int value) {
         scriptState(entry).setIntValue(key, value);
     }
 
-    public static void waitScriptUntil(BotEntry entry, long untilMs) {
+    public static void waitScriptUntil(AgentRuntimeEntry entry, long untilMs) {
         scriptState(entry).waitUntil(untilMs);
     }
 
-    public static boolean scriptWaitDone(BotEntry entry, long nowMs) {
+    public static boolean scriptWaitDone(AgentRuntimeEntry entry, long nowMs) {
         return scriptState(entry).waitDone(nowMs);
     }
 
-    private static AgentScriptRuntimeState scriptState(BotEntry entry) {
+    private static AgentScriptRuntimeState scriptState(AgentRuntimeEntry entry) {
         return entry.scriptRuntimeState();
     }
 }

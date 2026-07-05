@@ -251,6 +251,10 @@ Recent map updates:
   Airshow trail timing, observed leader movement, tick accumulator/skip delay,
   social reaction cooldown/streak tracking, and skill-buff debug summaries keep
   the same runtime state.
+- AoE reposition, shop transition, and script-task state adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. AoE reposition anchors,
+  shop visit/sequence transition state, and scripted task queues/runtime step
+  state keep the same behavior and storage.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
