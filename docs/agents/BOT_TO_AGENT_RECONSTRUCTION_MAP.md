@@ -75,6 +75,10 @@ Recent map updates:
   AgentRuntimeHandle>` in the commands package. `AgentBotCommandParser` still
   supplies the temporary `BotEntry` adapter until targeted command resolution
   stops depending on the bot shell.
+- The BotEntry-specific command target wrapper moved out of integration as
+  `AgentNamedCommandTarget<E extends AgentRuntimeHandle>` in the commands
+  package. `AgentBotCommandParser` now supplies names from the temporary
+  identity adapter without owning a Bot-specific target DTO.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or

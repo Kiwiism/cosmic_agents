@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import java.util.List;
 import server.agents.commands.AgentCommandParser;
+import server.agents.commands.AgentNamedCommandTarget;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
 import server.bots.BotEntry;
@@ -20,10 +21,12 @@ public final class AgentBotCommandParser {
     }
 
     public static AgentTargetedCommandMatch<BotEntry> resolveTargetedBot(List<BotEntry> entries, String message) {
-        List<AgentBotCommandTarget> targets = entries == null
+        List<AgentNamedCommandTarget<BotEntry>> targets = entries == null
                 ? null
-                : entries.stream().map(AgentBotCommandTarget::new).toList();
-        AgentCommandParser.TargetedAgentMatch<AgentBotCommandTarget> match =
+                : entries.stream()
+                .map(entry -> new AgentNamedCommandTarget<>(entry, AgentBotRuntimeIdentityRuntime.botName(entry)))
+                .toList();
+        AgentCommandParser.TargetedAgentMatch<AgentNamedCommandTarget<BotEntry>> match =
                 AgentCommandParser.resolveTargetedAgent(targets, message);
         return new AgentTargetedCommandMatch<>(
                 match.target() == null ? null : match.target().entry(),

@@ -1,12 +1,12 @@
 package server.agents.integration;
 
 import org.junit.jupiter.api.Test;
+import server.agents.commands.AgentNamedCommandTarget;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
 import server.bots.BotEntry;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,13 +30,11 @@ class AgentBotCommandBoundaryTest {
     }
 
     @Test
-    void commandTargetResolvesNameThroughRuntimeIdentity() {
+    void commandTargetPreservesEntryAndName() {
         BotEntry entry = mock(BotEntry.class);
+        AgentNamedCommandTarget<BotEntry> target = new AgentNamedCommandTarget<>(entry, "agent123");
 
-        try (var identity = mockStatic(AgentBotRuntimeIdentityRuntime.class)) {
-            identity.when(() -> AgentBotRuntimeIdentityRuntime.botName(entry)).thenReturn("agent123");
-
-            assertEquals("agent123", new AgentBotCommandTarget(entry).name());
-        }
+        assertEquals(entry, target.entry());
+        assertEquals("agent123", target.name());
     }
 }
