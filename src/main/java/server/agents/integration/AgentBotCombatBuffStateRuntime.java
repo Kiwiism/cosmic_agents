@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for temporary BotEntry-backed combat buff/support state.
@@ -9,43 +9,43 @@ public final class AgentBotCombatBuffStateRuntime {
     private AgentBotCombatBuffStateRuntime() {
     }
 
-    public static boolean skillBuffsEnabled(BotEntry entry) {
+    public static boolean skillBuffsEnabled(AgentRuntimeEntry entry) {
         return entry.combatBuffState().skillBuffsEnabled();
     }
 
-    public static void setSkillBuffsEnabled(BotEntry entry, boolean enabled) {
+    public static void setSkillBuffsEnabled(AgentRuntimeEntry entry, boolean enabled) {
         entry.combatBuffState().setSkillBuffsEnabled(enabled);
     }
 
-    public static boolean supportHealsEnabled(BotEntry entry) {
+    public static boolean supportHealsEnabled(AgentRuntimeEntry entry) {
         return entry.combatBuffState().supportHealsEnabled();
     }
 
-    public static void setSupportHealsEnabled(BotEntry entry, boolean enabled) {
+    public static void setSupportHealsEnabled(AgentRuntimeEntry entry, boolean enabled) {
         entry.combatBuffState().setSupportHealsEnabled(enabled);
     }
 
-    public static long nextBuffAt(BotEntry entry, int skillId) {
+    public static long nextBuffAt(AgentRuntimeEntry entry, int skillId) {
         return entry.combatBuffState().nextBuffAt(skillId);
     }
 
-    public static void ensureNextBuffAt(BotEntry entry, int skillId, long nextAt) {
+    public static void ensureNextBuffAt(AgentRuntimeEntry entry, int skillId, long nextAt) {
         entry.combatBuffState().ensureNextBuffAt(skillId, nextAt);
     }
 
-    public static void setNextBuffAt(BotEntry entry, int skillId, long nextAt) {
+    public static void setNextBuffAt(AgentRuntimeEntry entry, int skillId, long nextAt) {
         entry.combatBuffState().setNextBuffAt(skillId, nextAt);
     }
 
-    public static long nextSupportBuffAt(BotEntry entry, int skillId) {
+    public static long nextSupportBuffAt(AgentRuntimeEntry entry, int skillId) {
         return entry.combatBuffState().nextSupportBuffAt(skillId);
     }
 
-    public static boolean supportBuffOnCooldown(BotEntry entry, int skillId, long nowMs) {
+    public static boolean supportBuffOnCooldown(AgentRuntimeEntry entry, int skillId, long nowMs) {
         return entry.combatBuffState().supportBuffOnCooldown(skillId, nowMs);
     }
 
-    public static void setNextSupportBuffAt(BotEntry entry, int skillId, long nextAt) {
+    public static void setNextSupportBuffAt(AgentRuntimeEntry entry, int skillId, long nextAt) {
         entry.combatBuffState().setNextSupportBuffAt(skillId, nextAt);
     }
 }

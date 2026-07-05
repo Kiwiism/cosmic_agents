@@ -233,6 +233,10 @@ Recent map updates:
   accept `server.agents.runtime.AgentRuntimeEntry` directly. Respawn windows,
   foothold index tracking, live leader references, and follow offsets remain
   backed by the same Agent runtime state.
+- Combat cooldown, combat skill cache, and combat support-buff state adapters
+  now accept `server.agents.runtime.AgentRuntimeEntry` directly. Attack windows,
+  mob-hit cooldowns, cached attack/support skills, and buff timing retain the
+  same Agent-owned state.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

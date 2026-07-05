@@ -86,6 +86,10 @@ Recent reconstruction notes:
   take `server.agents.runtime.AgentRuntimeEntry` directly. Respawn windows,
   foothold tracking, live leader references, and follow offsets keep the same
   behavior and state backing.
+- Combat cooldown, combat skill cache, and combat support-buff runtime state
+  adapters now take `server.agents.runtime.AgentRuntimeEntry` directly. Attack
+  windows, mob-hit cooldowns, cached attack/support skills, and buff timing keep
+  the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call
