@@ -4941,6 +4941,10 @@ Current physics correction:
   uses the same pending-trade and identity state adapters, preserving retry
   timing, batch advancement, and recipient lookup behavior while removing
   another direct bot-shell dependency from pure trade services.
+- Trade all-items-added completion marking now accepts `AgentRuntimeEntry`
+  instead of `BotEntry`. The service still reads the same pending-trade item
+  index/list state, marks the same all-items-added flag, clears the same timer,
+  and sends the same trade-window chat line.
 
 Initial reconstruction order:
 

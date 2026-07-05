@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -11,7 +11,7 @@ public final class AgentTradeAllItemsAddedService {
     private AgentTradeAllItemsAddedService() {
     }
 
-    public static boolean markCompleteIfNoMoreItems(BotEntry entry,
+    public static boolean markCompleteIfNoMoreItems(AgentRuntimeEntry entry,
                                                     Trade trade,
                                                     Supplier<String> allDoneReply) {
         List<?> items = AgentBotPendingTradeStateRuntime.items(entry);
