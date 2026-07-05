@@ -58,6 +58,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentRuntimeEntry`. `server.bots.BotEntry` remains only
   as a deprecated constructor-compatible shell while remaining signatures are
   migrated to Agent runtime types; behavior is unchanged.
+- Ammo and potion runtime state adapters now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. This preserves behavior
+  because the temporary `BotEntry` shell extends the Agent runtime entry, while
+  removing another supplies-state dependency on `server.bots`.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

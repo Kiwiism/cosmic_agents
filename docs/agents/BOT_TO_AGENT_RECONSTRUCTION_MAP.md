@@ -204,6 +204,10 @@ Recent map updates:
   deprecated constructor-compatible shell only; remaining imports should move to
   `AgentRuntimeEntry` or narrower Agent runtime handles before `server.bots` is
   removed.
+- Ammo and potion state runtime adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Existing `BotEntry` call
+  sites remain source-compatible through the temporary shell while the supplies
+  state boundary no longer imports `server.bots`.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

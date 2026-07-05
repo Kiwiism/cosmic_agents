@@ -253,6 +253,19 @@ input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0
 .creation-form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .creation-form-grid>label,.ign-check-field{border:1px solid var(--line);background:#fafbfe;border-radius:11px;padding:10px;color:#737b91;font-size:10px;font-weight:900;text-transform:uppercase;display:grid;gap:7px}
 .creation-form-grid input,.ign-check-field input{border:0;border-bottom:1px dashed #c8ccda;background:transparent;outline:0;color:var(--ink);font-size:14px;font-weight:800;padding:4px 0;text-transform:none}
+.password-field-row{display:flex;align-items:center;gap:7px}
+.password-field-row input{flex:1;border:0;border-bottom:1px dashed #c8ccda;background:transparent;outline:0;color:var(--ink);font-size:14px;font-weight:800;padding:4px 0;text-transform:none}
+.password-toggle{border:0;background:transparent;color:#6d7590;padding:6px;display:grid;place-items:center;border-radius:8px}
+.password-toggle:hover{color:var(--brand)}
+.password-toggle:disabled{opacity:.55}
+.gender-icon-select{border:1px solid var(--line);background:#fafbfe;border-radius:11px;padding:10px;color:#737b91;font-size:10px;font-weight:900;text-transform:uppercase;display:grid;gap:7px}
+.gender-icon-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.gender-choice{display:flex;align-items:center;justify-content:center;gap:8px;height:40px;border:1px solid var(--line);background:#fff;color:#5a6279;border-radius:9px;font-size:12px;font-weight:800}
+.gender-choice svg{color:#707b95}
+.gender-choice .gender-symbol{font-size:16px;line-height:1}
+.gender-choice span{text-transform:none}
+.gender-choice.active{border-color:var(--brand);color:var(--brand);background:#f5f3ff;box-shadow:0 0 0 1px rgba(103,87,217,.16) inset}
+.gender-choice.active svg{color:var(--brand)}
 .creation-identity-row{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:start}
 .creation-identity-row>label{border:1px solid var(--line);background:#fafbfe;border-radius:11px;padding:10px;color:#737b91;font-size:10px;font-weight:900;text-transform:uppercase;display:grid;gap:7px}
 .creation-identity-row>label input{border:0;border-bottom:1px dashed #c8ccda;background:transparent;outline:0;color:var(--ink);font-size:14px;font-weight:800;padding:4px 0;text-transform:none}
@@ -330,8 +343,13 @@ body[data-theme="dark"] .compact-form input,
 body[data-theme="dark"] .compact-filters input,
 body[data-theme="dark"] .compact-filters select,
 body[data-theme="dark"] .creation-form-grid>label,
+body[data-theme="dark"] .password-field,
 body[data-theme="dark"] .creation-identity-row>label,
 body[data-theme="dark"] .ign-check-field,
+body[data-theme="dark"] .password-field-row input,
+body[data-theme="dark"] .gender-icon-select,
+body[data-theme="dark"] .gender-icon-select .gender-choice,
+body[data-theme="dark"] .gender-choice.active,
 body[data-theme="dark"] .appearance-selector,
 body[data-theme="dark"] .appearance-dropdown,
 body[data-theme="dark"] .appearance-current,
@@ -475,6 +493,10 @@ body[data-theme="dark"] .stat-editor-grid input[type="number"]:focus{
   color:var(--ink);
   border-color:var(--line);
 }
+body[data-theme="dark"] .gender-choice{background:#111827;color:var(--ink)}
+body[data-theme="dark"] .gender-choice svg{color:var(--muted)}
+body[data-theme="dark"] .gender-choice.active{background:#221d47;color:var(--brand)}
+body[data-theme="dark"] .gender-choice.active svg{color:var(--brand)}
 
 /* Character/account list contrast hardening (night mode). */
 body[data-theme="dark"] .character-dock-card{
