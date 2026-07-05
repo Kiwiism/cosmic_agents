@@ -63,6 +63,9 @@ Recent map updates:
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
+- Shop reply and scheduler pass-through bridges were removed. Shop owner/map
+  replies and delayed shop callbacks now call the existing Agent reply and
+  scheduler runtimes directly through `AgentBotShopRuntime`.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

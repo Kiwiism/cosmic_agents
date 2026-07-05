@@ -1719,10 +1719,10 @@ Recent reconstruction notes:
   `AgentBotMakerSchedulerRuntime` adapters; Maker orchestration no longer
   reaches directly into the broad reply or scheduler runtimes.
 - Shop automation owner replies, map-visible replies, fixed-delay callbacks,
-  and delay-sampling bridge methods now enter through narrow
-  `AgentBotShopReplyRuntime` and `AgentBotShopSchedulerRuntime` adapters; shop
-  orchestration no longer reaches directly into the broad reply or scheduler
-  runtimes.
+  and delay-sampling bridge methods now call the existing
+  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure shop
+  reply/scheduler pass-through adapters were removed while preserving shop
+  behavior.
 - LLM dialogue replies now enter through the narrow `AgentBotLlmReplyRuntime`
   adapter; LLM orchestration no longer reaches directly into the broad reply
   runtime.
