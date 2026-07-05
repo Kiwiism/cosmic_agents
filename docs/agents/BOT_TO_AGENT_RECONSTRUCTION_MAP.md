@@ -96,6 +96,10 @@ Recent map updates:
   while the temporary chat report runtime still applies the decision through
   `AgentBotPendingActionRuntime` until pending-action side effects are fully
   reconstructed.
+- The range report bridge was removed. Range report assembly now lives in
+  `AgentRangeReportService` in the dialogue capability, and equipment debug
+  plus chat report callers use it directly while keeping the existing range
+  text unchanged.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or

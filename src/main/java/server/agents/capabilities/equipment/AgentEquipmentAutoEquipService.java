@@ -33,8 +33,8 @@ import server.agents.capabilities.equipment.AgentEquipmentUnequipService;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 import server.agents.capabilities.equipment.AgentWeaponScoreBreakdown;
+import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.integration.AgentBotEquipmentRuntime;
-import server.agents.integration.AgentBotRangeReportRuntime;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -251,7 +251,7 @@ public final class AgentEquipmentAutoEquipService {
             if (anyCap) out.add("WARN: pareto cap hit, result is best-effort");
         }
 
-        out.add("range: " + AgentBotRangeReportRuntime.rangeReport(bot));
+        out.add("range: " + AgentRangeReportService.rangeReport(bot));
 
         // Full dump to disk — chat is too narrow for inventory + per-branch breakdown.
         String filePath = writeAutoEquipDumpFile(bot, ii, eqpInv, eqdInv, mob, naked,
@@ -299,7 +299,7 @@ public final class AgentEquipmentAutoEquipService {
           .append(" watk=").append(naked.watk())
           .append(" mag=").append(naked.magic())
           .append(" acc=").append(naked.totalAcc()).append('\n');
-        sb.append("range:   ").append(AgentBotRangeReportRuntime.rangeReport(bot, mob)).append('\n');
+        sb.append("range:   ").append(AgentRangeReportService.rangeReport(bot, mob)).append('\n');
 
         sb.append("\n--- equipped ---\n");
         sb.append(AgentEquipmentDebugReportFormatter.itemHeader(false));

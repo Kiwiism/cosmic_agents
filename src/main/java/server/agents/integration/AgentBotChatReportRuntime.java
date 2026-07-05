@@ -7,6 +7,7 @@ import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
+import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.capabilities.dialogue.AgentSkillReportDecisionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -39,11 +40,11 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static String buildRangeReport(Character bot) {
-        return AgentBotRangeReportRuntime.rangeReport(bot);
+        return AgentRangeReportService.rangeReport(bot);
     }
 
     public static String buildRangeReport(Character bot, AgentMapDamageProfile mobProfile) {
-        return AgentBotRangeReportRuntime.rangeReport(bot, mobProfile);
+        return AgentRangeReportService.rangeReport(bot, mobProfile);
     }
 
     public static void reportMovementStats(BotEntry entry, Character bot) {
