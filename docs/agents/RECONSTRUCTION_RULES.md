@@ -1742,10 +1742,10 @@ Recent reconstruction notes:
   `AgentBotSocialReplyRuntime` and `AgentBotSocialSchedulerRuntime` adapters;
   social orchestration no longer reaches directly into the broad reply or
   scheduler runtimes.
-- Utility chat trade-invite replies and trade/shop/Maker random-delay callbacks
-  now enter through narrow `AgentBotUtilityReplyRuntime` and
-  `AgentBotUtilitySchedulerRuntime` adapters; utility orchestration no longer
-  reaches directly into the broad reply or scheduler runtimes.
+- Utility reply and scheduler pass-through adapters were removed.
+  Trade-invite replies and trade/shop/Maker random-delay callbacks now call the
+  existing reply and random-delay scheduler runtimes directly while preserving
+  the same utility behavior.
 - Build/AP/SP/job-advance immediate replies, queued build-status replies, and
   job-advance random-delay callbacks now enter through narrow
   `AgentBotBuildReplyRuntime` and `AgentBotBuildSchedulerRuntime` adapters;
