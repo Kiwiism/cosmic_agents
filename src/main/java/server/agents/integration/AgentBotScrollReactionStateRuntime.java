@@ -1,21 +1,21 @@
 package server.agents.integration;
 
 import server.agents.capabilities.social.AgentScrollReactionState;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBotScrollReactionStateRuntime {
     private AgentBotScrollReactionStateRuntime() {
     }
 
-    public static boolean isOnCooldown(BotEntry entry, long nowMs) {
+    public static boolean isOnCooldown(AgentRuntimeEntry entry, long nowMs) {
         return nowMs < entry.scrollReactionState().nextReactionAtMs();
     }
 
-    public static void startCooldown(BotEntry entry, long nowMs, long cooldownMs) {
+    public static void startCooldown(AgentRuntimeEntry entry, long nowMs, long cooldownMs) {
         entry.scrollReactionState().setNextReactionAtMs(nowMs + Math.max(0, cooldownMs));
     }
 
-    public static double recordReactionLoad(BotEntry entry, long nowMs, long decayMs) {
+    public static double recordReactionLoad(AgentRuntimeEntry entry, long nowMs, long decayMs) {
         if (entry == null) {
             return 0.0;
         }
@@ -33,7 +33,7 @@ public final class AgentBotScrollReactionStateRuntime {
     }
 
     public static int updateReactionStreak(
-            BotEntry entry,
+            AgentRuntimeEntry entry,
             int scrollerId,
             boolean success,
             long nowMs,
@@ -59,7 +59,7 @@ public final class AgentBotScrollReactionStateRuntime {
         return state.streak;
     }
 
-    public static void pruneStreaks(BotEntry entry, long nowMs, long windowMs, long pruneIntervalMs) {
+    public static void pruneStreaks(AgentRuntimeEntry entry, long nowMs, long windowMs, long pruneIntervalMs) {
         if (nowMs < entry.scrollReactionState().nextStreakPruneAtMs()) {
             return;
         }

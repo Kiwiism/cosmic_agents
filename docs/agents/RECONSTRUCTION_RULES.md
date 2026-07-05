@@ -100,6 +100,11 @@ Recent reconstruction notes:
   adapters now take `server.agents.runtime.AgentRuntimeEntry` directly. Rope
   state, swim input, physics integration fields, movement broadcast cache, and
   mob-touch sweep memory keep the same behavior and state backing.
+- Airshow, owner-motion, tick-cadence, scroll-reaction, and skill-buff debug
+  runtime state adapters now take `server.agents.runtime.AgentRuntimeEntry`
+  directly. Airshow trail timing, observed leader movement, tick
+  accumulator/skip delay, social reaction cooldown/streak tracking, and
+  skill-buff debug summaries keep the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

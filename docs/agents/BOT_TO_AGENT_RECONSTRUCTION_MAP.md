@@ -246,6 +246,11 @@ Recent map updates:
   adapters now accept `server.agents.runtime.AgentRuntimeEntry` directly. Rope
   state, swim input, physics integration fields, movement broadcast cache, and
   mob-touch sweep memory keep the same runtime state.
+- Airshow, owner-motion, tick-cadence, scroll-reaction, and skill-buff debug
+  state adapters now accept `server.agents.runtime.AgentRuntimeEntry` directly.
+  Airshow trail timing, observed leader movement, tick accumulator/skip delay,
+  social reaction cooldown/streak tracking, and skill-buff debug summaries keep
+  the same runtime state.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

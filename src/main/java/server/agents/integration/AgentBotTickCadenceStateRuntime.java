@@ -1,36 +1,36 @@
 package server.agents.integration;
 
 import server.agents.runtime.AgentTickState;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed tick cadence state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed tick cadence state.
  */
 public final class AgentBotTickCadenceStateRuntime {
     private AgentBotTickCadenceStateRuntime() {
     }
 
-    public static int skipDelayMs(BotEntry entry) {
+    public static int skipDelayMs(AgentRuntimeEntry entry) {
         return state(entry).skipDelayMs();
     }
 
-    public static int aiTickAccumulatorMs(BotEntry entry) {
+    public static int aiTickAccumulatorMs(AgentRuntimeEntry entry) {
         return state(entry).aiTickAccumulatorMs();
     }
 
-    public static void setSkipDelayMs(BotEntry entry, int skipDelayMs) {
+    public static void setSkipDelayMs(AgentRuntimeEntry entry, int skipDelayMs) {
         state(entry).setSkipDelayMs(skipDelayMs);
     }
 
-    public static void setAiTickAccumulatorMs(BotEntry entry, int aiTickAccumulatorMs) {
+    public static void setAiTickAccumulatorMs(AgentRuntimeEntry entry, int aiTickAccumulatorMs) {
         state(entry).setAiTickAccumulatorMs(aiTickAccumulatorMs);
     }
 
-    public static void reset(BotEntry entry) {
+    public static void reset(AgentRuntimeEntry entry) {
         state(entry).resetCadence();
     }
 
-    public static boolean consumeSkipDelay(BotEntry entry, int tickMs) {
+    public static boolean consumeSkipDelay(AgentRuntimeEntry entry, int tickMs) {
         int skipDelayMs = skipDelayMs(entry);
         if (skipDelayMs <= 0) {
             return false;
@@ -39,7 +39,7 @@ public final class AgentBotTickCadenceStateRuntime {
         return true;
     }
 
-    public static boolean consumeAiTick(BotEntry entry, int tickMs, int aiTickMs) {
+    public static boolean consumeAiTick(AgentRuntimeEntry entry, int tickMs, int aiTickMs) {
         int accumulator = aiTickAccumulatorMs(entry) + tickMs;
         if (accumulator < aiTickMs) {
             state(entry).setAiTickAccumulatorMs(accumulator);
@@ -49,7 +49,7 @@ public final class AgentBotTickCadenceStateRuntime {
         return true;
     }
 
-    private static AgentTickState state(BotEntry entry) {
+    private static AgentTickState state(AgentRuntimeEntry entry) {
         return entry.tickState();
     }
 }

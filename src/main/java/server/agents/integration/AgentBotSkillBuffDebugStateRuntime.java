@@ -1,27 +1,27 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed skill-buff debug state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed skill-buff debug state.
  */
 public final class AgentBotSkillBuffDebugStateRuntime {
     private AgentBotSkillBuffDebugStateRuntime() {
     }
 
-    public static long lastActionAtMs(BotEntry entry) {
+    public static long lastActionAtMs(AgentRuntimeEntry entry) {
         return entry.buffState().lastSkillActionAtMs();
     }
 
-    public static String lastActionSummary(BotEntry entry) {
+    public static String lastActionSummary(AgentRuntimeEntry entry) {
         return entry.buffState().lastSkillActionSummary();
     }
 
-    public static long lastActionAgeMs(BotEntry entry, long nowMs) {
+    public static long lastActionAgeMs(AgentRuntimeEntry entry, long nowMs) {
         return entry.buffState().lastSkillActionAgeMs(nowMs);
     }
 
-    public static void rememberAction(BotEntry entry, long atMs, String summary) {
+    public static void rememberAction(AgentRuntimeEntry entry, long atMs, String summary) {
         entry.buffState().rememberSkillAction(atMs, summary);
     }
 }

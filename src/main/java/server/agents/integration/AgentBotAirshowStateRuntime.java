@@ -1,39 +1,39 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed airshow state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed airshow state.
  */
 public final class AgentBotAirshowStateRuntime {
     private AgentBotAirshowStateRuntime() {
     }
 
-    public static boolean active(BotEntry entry) {
+    public static boolean active(AgentRuntimeEntry entry) {
         return entry.airshowState().active();
     }
 
-    public static void start(BotEntry entry) {
+    public static void start(AgentRuntimeEntry entry) {
         entry.airshowState().setActive(true);
         entry.airshowState().setLastTrailAtMs(0L);
     }
 
-    public static void stop(BotEntry entry) {
+    public static void stop(AgentRuntimeEntry entry) {
         entry.airshowState().setActive(false);
         entry.airshowState().setLastTrailAtMs(0L);
     }
 
-    public static boolean trailDue(BotEntry entry, long nowMs, long intervalMs) {
+    public static boolean trailDue(AgentRuntimeEntry entry, long nowMs, long intervalMs) {
         return nowMs - entry.airshowState().lastTrailAtMs() >= intervalMs;
     }
 
-    public static void markTrail(BotEntry entry, long nowMs) {
+    public static void markTrail(AgentRuntimeEntry entry, long nowMs) {
         entry.airshowState().setLastTrailAtMs(nowMs);
     }
 
-    public static void applyFrame(BotEntry entry,
+    public static void applyFrame(AgentRuntimeEntry entry,
                                   Point position,
                                   int velocityX,
                                   int velocityY,

@@ -1,50 +1,50 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed leader/owner motion
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed leader/owner motion
  * observation state.
  */
 public final class AgentBotOwnerMotionStateRuntime {
     private AgentBotOwnerMotionStateRuntime() {
     }
 
-    public static Point lastOwnerPosition(BotEntry entry) {
+    public static Point lastOwnerPosition(AgentRuntimeEntry entry) {
         return entry.ownerMotionState().lastOwnerPosition();
     }
 
-    public static void rememberOwnerPosition(BotEntry entry, Point ownerPosition) {
+    public static void rememberOwnerPosition(AgentRuntimeEntry entry, Point ownerPosition) {
         entry.ownerMotionState().setLastOwnerPosition(ownerPosition);
     }
 
-    public static int observedOwnerStepX(BotEntry entry) {
+    public static int observedOwnerStepX(AgentRuntimeEntry entry) {
         return entry.ownerMotionState().observedOwnerStepX();
     }
 
-    public static int observedOwnerStepY(BotEntry entry) {
+    public static int observedOwnerStepY(AgentRuntimeEntry entry) {
         return entry.ownerMotionState().observedOwnerStepY();
     }
 
-    public static boolean observedOwnerMoved(BotEntry entry) {
+    public static boolean observedOwnerMoved(AgentRuntimeEntry entry) {
         return entry.ownerMotionState().observedOwnerMoved();
     }
 
-    public static int maxObservedOwnerStep(BotEntry entry) {
+    public static int maxObservedOwnerStep(AgentRuntimeEntry entry) {
         return entry.ownerMotionState().maxObservedOwnerStep();
     }
 
-    public static boolean ownerMostlyIdle(BotEntry entry) {
+    public static boolean ownerMostlyIdle(AgentRuntimeEntry entry) {
         return entry.ownerMotionState().ownerMostlyIdle();
     }
 
-    public static void clearObservedOwnerStep(BotEntry entry) {
+    public static void clearObservedOwnerStep(AgentRuntimeEntry entry) {
         entry.ownerMotionState().clearObservedOwnerStep();
     }
 
-    public static void updateObservedOwnerStep(BotEntry entry, Point ownerPosition) {
+    public static void updateObservedOwnerStep(AgentRuntimeEntry entry, Point ownerPosition) {
         entry.ownerMotionState().updateObservedOwnerStep(ownerPosition);
     }
 }
