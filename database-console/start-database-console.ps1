@@ -5,6 +5,35 @@ $projectRoot = Split-Path $databaseConsoleRoot -Parent
 $envFile = Join-Path $databaseConsoleRoot ".env"
 $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
 $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue
+$logRoot = Join-Path $databaseConsoleRoot ".runtime"
+
+function Stop-ListeningProcesses {
+    param(
+        [int]$Port,
+        [string]$CommandHint = $null,
+        [string]$ProcessNameHint = $null
+    )
+
+    try {
+        $listeners = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+        if (-not $listeners) { return }
+        $pids = $listeners | Select-Object -ExpandProperty OwningProcess -Unique
+        foreach ($pid in $pids) {
+            $process = Get-CimInstance Win32_Process -Filter "ProcessId=$pid" -ErrorAction SilentlyContinue
+            if (-not $process) { continue }
+            $commandMatch = (-not [string]::IsNullOrWhiteSpace($CommandHint) -and $process.CommandLine -like "*$CommandHint*")
+            $processMatch = (-not [string]::IsNullOrWhiteSpace($ProcessNameHint) -and $process.Name -like "*$ProcessNameHint*")
+            if ($commandMatch -or $processMatch) {
+                Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+            }
+        }
+    } catch {
+        # ignore transient socket/process lookup failures during startup cleanup
+    }
+}
+
+Stop-ListeningProcesses -Port 8081 -CommandHint "cosmic-database-console" -ProcessNameHint "java"
+Stop-ListeningProcesses -Port 3000 -CommandHint "database-console\\web" -ProcessNameHint "node.exe"
 
 if (-not $nodeCommand) {
     $bundledNode = Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
@@ -65,8 +94,9 @@ try {
 $logRoot = Join-Path $databaseConsoleRoot ".runtime"
 New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
 
+$apiJar = Join-Path $databaseConsoleRoot "api/target/cosmic-database-console-api-0.1.0-SNAPSHOT.jar"
 $api = Start-Process -FilePath "java" `
-    -ArgumentList "-jar", (Join-Path $databaseConsoleRoot "api/target/cosmic-database-console-api-0.1.0-SNAPSHOT.jar") `
+    -ArgumentList @("-jar", "`"$apiJar`"") `
     -WorkingDirectory (Join-Path $databaseConsoleRoot "api") -WindowStyle Hidden -PassThru `
     -RedirectStandardOutput (Join-Path $logRoot "api.log") `
     -RedirectStandardError (Join-Path $logRoot "api-error.log")
@@ -76,7 +106,8 @@ $standaloneRoot = Join-Path $webRoot ".next/standalone"
 Copy-Item -Path (Join-Path $webRoot ".next/static") -Destination (Join-Path $standaloneRoot ".next") `
     -Recurse -Force
 
-$web = Start-Process -FilePath $nodeExecutable -ArgumentList (Join-Path $standaloneRoot "server.js") `
+$webServer = Join-Path $standaloneRoot "server.js"
+$web = Start-Process -FilePath $nodeExecutable -ArgumentList "`"$webServer`"" `
     -WorkingDirectory $webRoot -WindowStyle Hidden -PassThru `
     -RedirectStandardOutput (Join-Path $logRoot "web.log") `
     -RedirectStandardError (Join-Path $logRoot "web-error.log")

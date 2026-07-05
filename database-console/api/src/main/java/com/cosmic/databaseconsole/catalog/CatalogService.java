@@ -164,9 +164,17 @@ public class CatalogService {
                     WHERE i.itemid=:id ORDER BY c.name LIMIT 200
                     """, Map.of("id", id)));
             result.put("gachapon", jdbc.queryForList("""
-                    SELECT location_code, npc_id, tier, position, source_kind
-                    FROM console_gachapon_entries WHERE item_id=? AND enabled=TRUE
-                    ORDER BY location_code,tier,position
+                    SELECT g.location_code, g.npc_id, g.tier, g.position, g.source_kind,
+                           counts.tier_count
+                    FROM console_gachapon_entries g
+                    JOIN (
+                        SELECT location_code, tier, COUNT(*) tier_count
+                        FROM console_gachapon_entries
+                        WHERE enabled=TRUE
+                        GROUP BY location_code, tier
+                    ) counts ON counts.location_code=g.location_code AND counts.tier=g.tier
+                    WHERE g.item_id=? AND g.enabled=TRUE
+                    ORDER BY g.location_code,g.tier,g.position
                     """, id));
         } else if ("MOB".equals(type)) {
             result.put("drops", game.queryForList("""

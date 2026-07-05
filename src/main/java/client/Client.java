@@ -702,28 +702,22 @@ public class Client extends ChannelInboundHandlerAdapter {
             if (loginok == 0 || loginok == 4) {
                 AntiMulticlientResult res = SessionCoordinator.getInstance().attemptLoginSession(this, hwid, accId, loginok == 4);
 
-                switch (res) {
-                    case SUCCESS:
-                        if (loginok == 0) {
-                            loginattempt = 0;
-                        }
+                if (res == AntiMulticlientResult.SUCCESS) {
+                    if (loginok == 0) {
+                        loginattempt = 0;
+                    }
 
-                        return loginok;
-
-                    case REMOTE_LOGGEDIN:
-                        return 17;
-
-                    case REMOTE_REACHED_LIMIT:
-                        return 13;
-
-                    case REMOTE_PROCESSING:
-                        return 10;
-
-                    case MANY_ACCOUNT_ATTEMPTS:
-                        return 16;
-
-                    default:
-                        return 8;
+                    return loginok;
+                } else if (res == AntiMulticlientResult.REMOTE_LOGGEDIN) {
+                    return 17;
+                } else if (res == AntiMulticlientResult.REMOTE_REACHED_LIMIT) {
+                    return 13;
+                } else if (res == AntiMulticlientResult.REMOTE_PROCESSING) {
+                    return 10;
+                } else if (res == AntiMulticlientResult.MANY_ACCOUNT_ATTEMPTS) {
+                    return 16;
+                } else {
+                    return 8;
                 }
             } else {
                 return loginok;
