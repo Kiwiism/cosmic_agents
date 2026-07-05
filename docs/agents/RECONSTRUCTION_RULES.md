@@ -4961,6 +4961,9 @@ Current physics correction:
 - LLM reply and scroll-reaction queue bridges now accept `AgentRuntimeEntry`.
   They still delegate to the same Agent reply queue/scheduler paths, preserving
   reply delivery and delayed scroll reaction behavior.
+- Combat action-lock ticking now accepts `AgentRuntimeEntry`. It still uses the
+  same attack-cooldown and move-window state with the same movement timer
+  countdown policy.
 
 Initial reconstruction order:
 
