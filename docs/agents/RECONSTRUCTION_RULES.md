@@ -1707,9 +1707,9 @@ Recent reconstruction notes:
   combat reply/scheduler pass-through adapters were removed while preserving
   combat behavior.
 - Ammo-sharing reply, delay, random-delay, and delay-sampling bridge methods
-  now enter through narrow `AgentBotAmmoReplyRuntime` and
-  `AgentBotAmmoSchedulerRuntime` adapters; ammo orchestration no longer reaches
-  directly into the broad reply or scheduler runtimes.
+  now call the existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`
+  directly; the pure ammo reply/scheduler pass-through adapters were removed
+  while preserving ammo-sharing behavior.
 - Potion-sharing reply, delay, random-delay, and delay-sampling bridge methods
   now enter through narrow `AgentBotPotionReplyRuntime` and
   `AgentBotPotionSchedulerRuntime` adapters; potion orchestration no longer
