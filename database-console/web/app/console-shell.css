@@ -177,9 +177,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: auto;
-  padding: 18px 7px 0;
-  border-top: 1px solid #2c2e48;
+  margin-top: 0;
+  padding: 0 7px;
+  border-top: 0;
   color: #8c93ae;
   font-size: 11px;
 }
