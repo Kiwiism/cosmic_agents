@@ -112,6 +112,10 @@ Recent reconstruction notes:
 - Live Agent identity runtime now takes `server.agents.runtime.AgentRuntimeEntry`
   directly. Bot/leader character lookup, ids, map lookup, and copied position
   snapshots keep the same behavior and state backing.
+- Movement state facade and fidget runtime state adapter now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. Movement snapshots,
+  profile/input/down-jump state, fidget mode/timing/input state, and crouch
+  checks keep the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

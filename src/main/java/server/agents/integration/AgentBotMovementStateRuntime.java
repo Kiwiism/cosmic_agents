@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementInputState;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.movement.AgentDownJumpState;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementProfileState;
@@ -12,13 +12,13 @@ import server.agents.capabilities.movement.AgentMovementProfileState;
 import java.awt.Point;
 
 /**
- * Agent-owned read-only movement state facade over temporary BotEntry state.
+ * Agent-owned read-only movement state facade over temporary AgentRuntimeEntry state.
  */
 public final class AgentBotMovementStateRuntime {
     private AgentBotMovementStateRuntime() {
     }
 
-    public static AgentMovementSnapshot snapshot(BotEntry entry) {
+    public static AgentMovementSnapshot snapshot(AgentRuntimeEntry entry) {
         return new AgentMovementSnapshot(
                 AgentBotModeStateRuntime.following(entry),
                 AgentBotModeStateRuntime.grinding(entry),
@@ -35,7 +35,7 @@ public final class AgentBotMovementStateRuntime {
                 mode(entry));
     }
 
-    public static AgentMovementMode mode(BotEntry entry) {
+    public static AgentMovementMode mode(AgentRuntimeEntry entry) {
         if (AgentBotModeStateRuntime.grinding(entry)) {
             return AgentMovementMode.GRINDING;
         }
@@ -54,11 +54,11 @@ public final class AgentBotMovementStateRuntime {
         return AgentMovementMode.STOPPED;
     }
 
-    public static AgentMovementProfile movementProfile(BotEntry entry) {
+    public static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {
         return movementProfileState(entry).profile();
     }
 
-    public static AgentMovementProfile movementProfileOrCharacter(BotEntry entry, Character bot) {
+    public static AgentMovementProfile movementProfileOrCharacter(AgentRuntimeEntry entry, Character bot) {
         if (entry == null) {
             return AgentMovementProfile.fromCharacter(null);
         }
@@ -66,127 +66,127 @@ public final class AgentBotMovementStateRuntime {
         return profile == null ? AgentMovementProfile.fromCharacter(bot) : profile;
     }
 
-    public static void setMovementProfile(BotEntry entry, AgentMovementProfile movementProfile) {
+    public static void setMovementProfile(AgentRuntimeEntry entry, AgentMovementProfile movementProfile) {
         movementProfileState(entry).setProfile(movementProfile);
     }
 
-    public static void refreshMovementProfile(BotEntry entry, Character bot) {
+    public static void refreshMovementProfile(AgentRuntimeEntry entry, Character bot) {
         movementProfileState(entry).refreshFrom(bot);
     }
 
-    public static int moveDirection(BotEntry entry) {
+    public static int moveDirection(AgentRuntimeEntry entry) {
         return movementInputState(entry).moveDirection();
     }
 
-    public static boolean hasMoveDirection(BotEntry entry) {
+    public static boolean hasMoveDirection(AgentRuntimeEntry entry) {
         return movementInputState(entry).moveDirection() != 0;
     }
 
-    public static void setMoveDirection(BotEntry entry, int moveDirection) {
+    public static void setMoveDirection(AgentRuntimeEntry entry, int moveDirection) {
         movementInputState(entry).setMoveDirection(moveDirection);
     }
 
-    public static void clearMoveDirection(BotEntry entry) {
+    public static void clearMoveDirection(AgentRuntimeEntry entry) {
         movementInputState(entry).clearMoveDirection();
     }
 
-    public static int facingDirection(BotEntry entry) {
+    public static int facingDirection(AgentRuntimeEntry entry) {
         return movementInputState(entry).facingDirection();
     }
 
-    public static int facingDirectionSign(BotEntry entry) {
+    public static int facingDirectionSign(AgentRuntimeEntry entry) {
         return movementInputState(entry).facingDirectionSign();
     }
 
-    public static void setFacingDirection(BotEntry entry, int facingDirection) {
+    public static void setFacingDirection(AgentRuntimeEntry entry, int facingDirection) {
         movementInputState(entry).setFacingDirection(facingDirection);
     }
 
-    public static boolean inAir(BotEntry entry) {
+    public static boolean inAir(AgentRuntimeEntry entry) {
         return entry.movementPhysicsState().inAir();
     }
 
-    public static void setInAir(BotEntry entry, boolean inAir) {
+    public static void setInAir(AgentRuntimeEntry entry, boolean inAir) {
         entry.movementPhysicsState().setInAir(inAir);
     }
 
-    public static boolean grounded(BotEntry entry) {
+    public static boolean grounded(AgentRuntimeEntry entry) {
         return !entry.movementPhysicsState().inAir();
     }
 
-    public static boolean climbing(BotEntry entry) {
+    public static boolean climbing(AgentRuntimeEntry entry) {
         return entry.climbState().climbing();
     }
 
-    public static boolean notClimbing(BotEntry entry) {
+    public static boolean notClimbing(AgentRuntimeEntry entry) {
         return !entry.climbState().climbing();
     }
 
-    public static boolean downJumpPending(BotEntry entry) {
+    public static boolean downJumpPending(AgentRuntimeEntry entry) {
         return downJumpState(entry).pending();
     }
 
-    public static void setDownJumpPending(BotEntry entry, boolean downJumpPending) {
+    public static void setDownJumpPending(AgentRuntimeEntry entry, boolean downJumpPending) {
         downJumpState(entry).setPending(downJumpPending);
     }
 
-    public static boolean crouching(BotEntry entry) {
+    public static boolean crouching(AgentRuntimeEntry entry) {
         return movementInputState(entry).crouching();
     }
 
-    public static void setCrouching(BotEntry entry, boolean crouching) {
+    public static void setCrouching(AgentRuntimeEntry entry, boolean crouching) {
         movementInputState(entry).setCrouching(crouching);
     }
 
-    public static boolean hasDownJumpPending(BotEntry entry) {
+    public static boolean hasDownJumpPending(AgentRuntimeEntry entry) {
         return downJumpState(entry).pending();
     }
 
-    public static boolean hasDownJumpGracePeriod(BotEntry entry) {
+    public static boolean hasDownJumpGracePeriod(AgentRuntimeEntry entry) {
         return downJumpState(entry).hasGracePeriod();
     }
 
-    public static long downJumpGracePeriodMs(BotEntry entry) {
+    public static long downJumpGracePeriodMs(AgentRuntimeEntry entry) {
         return downJumpState(entry).gracePeriodMs();
     }
 
-    public static void setDownJumpGracePeriodMs(BotEntry entry, long downJumpGracePeriodMs) {
+    public static void setDownJumpGracePeriodMs(AgentRuntimeEntry entry, long downJumpGracePeriodMs) {
         downJumpState(entry).setGracePeriodMs(downJumpGracePeriodMs);
     }
 
-    public static boolean wasMovingX(BotEntry entry) {
+    public static boolean wasMovingX(AgentRuntimeEntry entry) {
         return movementInputState(entry).wasMovingX();
     }
 
-    public static void setWasMovingX(BotEntry entry, boolean wasMovingX) {
+    public static void setWasMovingX(AgentRuntimeEntry entry, boolean wasMovingX) {
         movementInputState(entry).setWasMovingX(wasMovingX);
     }
 
-    public static int movementVelocityX(BotEntry entry) {
+    public static int movementVelocityX(AgentRuntimeEntry entry) {
         return movementInputState(entry).velocityX();
     }
 
-    public static int movementVelocityY(BotEntry entry) {
+    public static int movementVelocityY(AgentRuntimeEntry entry) {
         return movementInputState(entry).velocityY();
     }
 
-    public static boolean hasMovementVelocity(BotEntry entry) {
+    public static boolean hasMovementVelocity(AgentRuntimeEntry entry) {
         return movementInputState(entry).hasVelocity();
     }
 
-    public static void setMovementVelocity(BotEntry entry, int velocityX, int velocityY) {
+    public static void setMovementVelocity(AgentRuntimeEntry entry, int velocityX, int velocityY) {
         movementInputState(entry).setVelocity(velocityX, velocityY);
     }
 
-    private static AgentDownJumpState downJumpState(BotEntry entry) {
+    private static AgentDownJumpState downJumpState(AgentRuntimeEntry entry) {
         return entry.downJumpState();
     }
 
-    private static AgentMovementInputState movementInputState(BotEntry entry) {
+    private static AgentMovementInputState movementInputState(AgentRuntimeEntry entry) {
         return entry.movementInputState();
     }
 
-    private static AgentMovementProfileState movementProfileState(BotEntry entry) {
+    private static AgentMovementProfileState movementProfileState(AgentRuntimeEntry entry) {
         return entry.movementProfileState();
     }
 

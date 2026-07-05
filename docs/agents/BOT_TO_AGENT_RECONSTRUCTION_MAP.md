@@ -259,6 +259,10 @@ Recent map updates:
   directly. Bot/leader character lookup, ids, map lookup, and copied position
   snapshots keep the same behavior while removing another `server.bots`
   boundary import.
+- Movement state facade and fidget state adapter now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Movement snapshots,
+  profile/input/down-jump state, fidget mode/timing/input state, and crouch
+  checks keep the same runtime behavior.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
