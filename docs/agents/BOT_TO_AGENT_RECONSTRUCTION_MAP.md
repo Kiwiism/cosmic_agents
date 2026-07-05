@@ -286,6 +286,10 @@ Recent map updates:
 - Movement profile refresh now accepts `server.agents.runtime.AgentRuntimeEntry`
   directly. Profile comparison, graph warmup, profile storage, and navigation
   state reset behavior are unchanged.
+- AoE combat reposition service/runtime now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. AoE reposition eligibility,
+  target clustering, scoring, debug logging, and anchor commitment behavior are
+  unchanged.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

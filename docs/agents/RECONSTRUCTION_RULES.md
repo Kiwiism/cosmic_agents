@@ -139,6 +139,10 @@ Recent reconstruction notes:
 - Movement profile refresh now takes `server.agents.runtime.AgentRuntimeEntry`
   directly. Profile comparison, graph warmup, profile storage, and navigation
   state reset behavior are unchanged.
+- AoE combat reposition service/runtime now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. AoE reposition eligibility,
+  target clustering, scoring, debug logging, and anchor commitment behavior are
+  unchanged.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

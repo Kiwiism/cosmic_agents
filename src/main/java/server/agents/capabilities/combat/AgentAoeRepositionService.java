@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -15,7 +15,7 @@ public final class AgentAoeRepositionService {
     private AgentAoeRepositionService() {
     }
 
-    public static Point resolveAoeReposition(BotEntry entry,
+    public static Point resolveAoeReposition(AgentRuntimeEntry entry,
                                              Character agent,
                                              Monster target,
                                              AgentAttackPlan attackPlan,

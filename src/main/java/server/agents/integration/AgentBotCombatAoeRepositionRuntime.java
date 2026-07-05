@@ -10,7 +10,7 @@ import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -23,7 +23,7 @@ public final class AgentBotCombatAoeRepositionRuntime {
     private AgentBotCombatAoeRepositionRuntime() {
     }
 
-    public static Point aoeRepositionTarget(BotEntry entry, Character bot, Monster primaryTarget,
+    public static Point aoeRepositionTarget(AgentRuntimeEntry entry, Character bot, Monster primaryTarget,
                                             AgentAttackPlan fireNowBest, AgentCombatConfig.Config config) {
         boolean hasMultiMobAoeSkill = entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry);
         int aoeSkillId = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
