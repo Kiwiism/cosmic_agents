@@ -1698,10 +1698,10 @@ Recent reconstruction notes:
   auto-equip callbacks now call the existing `AgentBotReplyRuntime` and
   `AgentBotSchedulerRuntime` directly; the pure equipment reply/scheduler
   pass-through adapters were removed while preserving equipment behavior.
-- Inventory, trade, drop, and meso reply/timing bridge methods now enter
-  through narrow `AgentBotInventoryReplyRuntime` and
-  `AgentBotInventorySchedulerRuntime` adapters; inventory orchestration no
-  longer reaches directly into the broad reply or scheduler runtimes.
+- Inventory, trade, drop, and meso reply/timing bridge methods now call the
+  existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the
+  pure inventory reply/scheduler pass-through adapters were removed while
+  preserving inventory behavior.
 - Combat warning/status reply and delay bridge methods now call the existing
   `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure
   combat reply/scheduler pass-through adapters were removed while preserving

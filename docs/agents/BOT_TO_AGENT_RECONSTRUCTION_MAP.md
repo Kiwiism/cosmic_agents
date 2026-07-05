@@ -92,6 +92,9 @@ Recent map updates:
 - Equipment reply and scheduler pass-through bridges were removed. Equipment
   visible replies, unequip, auto-equip debug, and auto-equip callbacks now call
   the existing Agent reply and scheduler runtimes directly.
+- Inventory reply and scheduler pass-through bridges were removed. Inventory,
+  trade, drop, and meso reply/timing bridge methods now call the existing Agent
+  reply and scheduler runtimes directly.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.
