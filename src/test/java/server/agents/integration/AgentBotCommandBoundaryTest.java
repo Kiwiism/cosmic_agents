@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import org.junit.jupiter.api.Test;
+import server.agents.commands.AgentTransferCommand;
 import server.bots.BotEntry;
 
 import static org.mockito.Mockito.mock;
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class AgentBotCommandBoundaryTest {
     @Test
     void transferCommandPreservesParsedNames() {
-        AgentBotTransferCommand command = new AgentBotTransferCommand("agent123", "Admin");
+        AgentTransferCommand command = new AgentTransferCommand("agent123", "Admin");
 
         assertEquals("agent123", command.botName());
         assertEquals("Admin", command.targetName());

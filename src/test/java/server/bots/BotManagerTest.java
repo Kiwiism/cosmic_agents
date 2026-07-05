@@ -59,9 +59,9 @@ import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentAmmoDonorPlan;
+import server.agents.commands.AgentTransferCommand;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotTargetedCommandMatch;
-import server.agents.integration.AgentBotTransferCommand;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
@@ -117,7 +117,7 @@ import static org.mockito.Mockito.when;
 class BotManagerTest {
     @Test
     void shouldParseTransferBotCommands() {
-        AgentBotTransferCommand command = AgentBotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
+        AgentTransferCommand command = AgentBotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -126,7 +126,7 @@ class BotManagerTest {
 
     @Test
     void shouldStillAllowTransferWithoutTo() {
-        AgentBotTransferCommand command = AgentBotCommandParser.matchBotTransferCommand("transfer Jason Bob");
+        AgentTransferCommand command = AgentBotCommandParser.matchBotTransferCommand("transfer Jason Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());

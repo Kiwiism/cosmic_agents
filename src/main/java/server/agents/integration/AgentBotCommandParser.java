@@ -2,19 +2,20 @@ package server.agents.integration;
 
 import java.util.List;
 import server.agents.commands.AgentCommandParser;
+import server.agents.commands.AgentTransferCommand;
 import server.bots.BotEntry;
 
 public final class AgentBotCommandParser {
     private AgentBotCommandParser() {
     }
 
-    public static AgentBotTransferCommand matchBotTransferCommand(String message) {
+    public static AgentTransferCommand matchBotTransferCommand(String message) {
         AgentCommandParser.AgentTransferCommand command = AgentCommandParser.matchTransferCommand(message);
         if (command == null) {
             return null;
         }
 
-        return new AgentBotTransferCommand(command.agentName(), command.targetName());
+        return new AgentTransferCommand(command.agentName(), command.targetName());
     }
 
     public static AgentBotTargetedCommandMatch resolveTargetedBot(List<BotEntry> entries, String message) {

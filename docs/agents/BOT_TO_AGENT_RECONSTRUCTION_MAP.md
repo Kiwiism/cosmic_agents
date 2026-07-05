@@ -66,6 +66,10 @@ Recent map updates:
   Existing shop purchase flow and tests now use the Agent-owned value objects
   while the sequence still carries `BotEntry` until the shop runtime boundary is
   replaced.
+- The pure transfer-command wrapper moved out of integration as
+  `AgentTransferCommand` in the commands package. The temporary
+  `AgentBotCommandParser` still adapts legacy bot-targeted command matching
+  while transfer command data is Agent-owned.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

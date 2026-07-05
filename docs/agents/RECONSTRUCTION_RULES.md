@@ -2522,10 +2522,11 @@ Recent reconstruction notes:
   quantity, delay, and transfer behavior while the donor plan context is owned
   by the Agent supplies capability instead of a bot package record.
 - Bot command target, transfer, targeted-command match, and bot-entry parser
-  adapter now use `AgentBotCommandTarget`, `AgentBotTransferCommand`,
+  adapter now use `AgentBotCommandTarget`, `AgentTransferCommand`,
   `AgentBotTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
-  boundary data and bot-entry adaptation are owned by the Agent integration
-  layer while preserving the same `AgentCommandParser` matching behavior.
+  boundary data is owned by Agent commands while bot-entry adaptation remains
+  in the Agent integration layer, preserving the same `AgentCommandParser`
+  matching behavior.
 - First-job starter-kit service/data now live in `AgentStarterKitService`,
   `AgentStarterKitCatalog`, and `AgentStarterItemGrant`; the old
   `BotStarterKitManager` file has been removed without changing job-change,
