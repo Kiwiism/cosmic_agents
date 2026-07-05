@@ -279,6 +279,10 @@ Recent map updates:
 - Movement pose reset/sync helpers and the fidget clear helper now accept
   `server.agents.runtime.AgentRuntimeEntry` directly so navigation reset can
   clear transient movement state without re-entering the `server.bots` shell.
+- Pure trade state services now accept `server.agents.runtime.AgentRuntimeEntry`
+  directly for sequence initialization, batch setup, meso insertion, category
+  announcement, and reset behavior. Trade state storage and trade-window side
+  effects are unchanged.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

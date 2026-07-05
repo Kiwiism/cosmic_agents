@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntSupplier;
 
@@ -11,7 +11,7 @@ public final class AgentTradeMesoAddService {
     private AgentTradeMesoAddService() {
     }
 
-    public static boolean handlePendingMeso(BotEntry entry,
+    public static boolean handlePendingMeso(AgentRuntimeEntry entry,
                                             Character agent,
                                             Trade trade,
                                             Runnable insufficientMesoCancel,

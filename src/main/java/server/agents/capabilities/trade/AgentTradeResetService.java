@@ -2,13 +2,13 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeResetService {
     private AgentTradeResetService() {
     }
 
-    public static void reset(BotEntry entry,
+    public static void reset(AgentRuntimeEntry entry,
                              Character agent,
                              Runnable restoreTemporarilyUnequippedItems,
                              Runnable clearManualTradeState,

@@ -132,6 +132,10 @@ Recent reconstruction notes:
 - Movement pose reset/sync helpers and the fidget clear helper now take
   `server.agents.runtime.AgentRuntimeEntry` directly so navigation reset can
   clear transient movement state without re-entering the `server.bots` shell.
+- Pure trade state services now take `server.agents.runtime.AgentRuntimeEntry`
+  directly for sequence initialization, batch setup, meso insertion, category
+  announcement, and reset behavior. Trade state storage and trade-window side
+  effects are unchanged.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

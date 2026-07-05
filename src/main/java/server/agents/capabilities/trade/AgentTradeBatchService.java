@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -14,7 +14,7 @@ public final class AgentTradeBatchService {
     private AgentTradeBatchService() {
     }
 
-    public static void openBatch(BotEntry entry,
+    public static void openBatch(AgentRuntimeEntry entry,
                                  Character agent,
                                  List<Item> items,
                                  int mesos,
