@@ -28,7 +28,7 @@ public final class AgentBotChatReportRuntime {
 
     public static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
         return AgentChatReportRuntime.reportCallbacks(
-                AgentBotReportSchedulerRuntime.reportScheduler(),
+                AgentBotSchedulerRuntime::afterRandomDelay,
                 AgentBotReportOperationsRuntime.reportOperations(entry));
     }
 

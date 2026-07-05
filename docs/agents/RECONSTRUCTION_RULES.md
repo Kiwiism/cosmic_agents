@@ -1671,10 +1671,10 @@ Recent reconstruction notes:
   `AgentBotReportDeliveryRuntime` now queues report lines directly through the
   existing reply runtime while preserving the same queued owner-directed reply
   behavior.
-- Report callback scheduling now enters through the narrow
-  `AgentBotReportSchedulerRuntime`; `AgentBotChatReportRuntime` no longer
-  reaches directly into the broad `AgentBotSchedulerRuntime` when constructing
-  report callbacks, while the same random delay scheduler remains underneath.
+- The old report scheduler pass-through bridge was removed.
+  `AgentBotChatReportRuntime` now supplies the existing random-delay scheduler
+  directly when constructing report callbacks, preserving the same delay
+  behavior.
 - AFK-return and offline-return status actions now enter through narrow
   `AgentBotStatusReplyRuntime` and `AgentBotStatusSchedulerRuntime` adapters;
   `AgentBotStatusRuntime` no longer reaches directly into the broad reply or
