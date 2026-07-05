@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Temporary Agent-owned bridge for scroll reaction chat and timing while scroll
@@ -10,7 +10,7 @@ public final class AgentBotScrollReactionRuntime {
     private AgentBotScrollReactionRuntime() {
     }
 
-    public static void queueSay(BotEntry entry, String message) {
+    public static void queueSay(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.queueSay(entry, message);
     }
 

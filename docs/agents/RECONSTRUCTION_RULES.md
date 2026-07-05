@@ -4958,6 +4958,9 @@ Current physics correction:
 - Shop and Maker reply bridges now accept `AgentRuntimeEntry` for immediate
   replies. Delayed execution and map-say helpers are unchanged, preserving shop
   and Maker automation timing while moving the reply seam off `BotEntry`.
+- LLM reply and scroll-reaction queue bridges now accept `AgentRuntimeEntry`.
+  They still delegate to the same Agent reply queue/scheduler paths, preserving
+  reply delivery and delayed scroll reaction behavior.
 
 Initial reconstruction order:
 

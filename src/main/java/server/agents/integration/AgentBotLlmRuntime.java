@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Temporary Agent-owned bridge for LLM reply delivery while LLM orchestration
@@ -10,7 +10,7 @@ public final class AgentBotLlmRuntime {
     private AgentBotLlmRuntime() {
     }
 
-    public static void replyNow(BotEntry entry, String message) {
+    public static void replyNow(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.replyNow(entry, message);
     }
 }
