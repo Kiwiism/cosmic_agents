@@ -6,7 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotReportDeliveryRuntime;
-import server.agents.integration.AgentBotReportReplyRuntime;
+import server.agents.integration.AgentBotReplyRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +21,12 @@ class AgentBotReportDeliveryRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         List<String> replies = new ArrayList<>();
 
-        try (MockedStatic<AgentBotReportReplyRuntime> replyRuntime = mockStatic(AgentBotReportReplyRuntime.class)) {
-            replyRuntime.when(() -> AgentBotReportReplyRuntime.queueReply(entry, "one"))
+        try (MockedStatic<AgentBotReplyRuntime> replyRuntime = mockStatic(AgentBotReplyRuntime.class)) {
+            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(entry, "one"))
                     .thenAnswer(invocation -> replies.add("one"));
-            replyRuntime.when(() -> AgentBotReportReplyRuntime.queueReply(entry, "two"))
+            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(entry, "two"))
                     .thenAnswer(invocation -> replies.add("two"));
-            replyRuntime.when(() -> AgentBotReportReplyRuntime.queueReply(entry, "three"))
+            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(entry, "three"))
                     .thenAnswer(invocation -> replies.add("three"));
 
             AgentBotReportDeliveryRuntime.reportLine(entry, "one");
@@ -41,8 +41,8 @@ class AgentBotReportDeliveryRuntimeTest {
         BotEntry entry = new BotEntry(null, null, null);
         List<String> replies = new ArrayList<>();
 
-        try (MockedStatic<AgentBotReportReplyRuntime> replyRuntime = mockStatic(AgentBotReportReplyRuntime.class)) {
-            replyRuntime.when(() -> AgentBotReportReplyRuntime.queueReply(org.mockito.Mockito.eq(entry), org.mockito.Mockito.anyString()))
+        try (MockedStatic<AgentBotReplyRuntime> replyRuntime = mockStatic(AgentBotReplyRuntime.class)) {
+            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(org.mockito.Mockito.eq(entry), org.mockito.Mockito.anyString()))
                     .thenAnswer(invocation -> {
                         replies.add(invocation.getArgument(1));
                         return null;

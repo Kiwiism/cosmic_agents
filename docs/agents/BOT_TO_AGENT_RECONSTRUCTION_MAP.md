@@ -104,6 +104,9 @@ Recent map updates:
   formatting now lives in `AgentMovementDialogueReporter`, with the temporary
   chat report runtime only supplying the current snapshot from the integration
   edge.
+- The report reply pass-through bridge was removed. Report delivery now queues
+  through the existing reply runtime directly, preserving the same owner-directed
+  queued reply behavior while reducing one temporary BotEntry adapter.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or
