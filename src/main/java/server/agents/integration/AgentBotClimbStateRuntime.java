@@ -1,93 +1,93 @@
 package server.agents.integration;
 
 import server.agents.capabilities.movement.AgentClimbState;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed climb and rope state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed climb and rope state.
  */
 public final class AgentBotClimbStateRuntime {
     private AgentBotClimbStateRuntime() {
     }
 
-    public static boolean climbing(BotEntry entry) {
+    public static boolean climbing(AgentRuntimeEntry entry) {
         return state(entry).climbing();
     }
 
-    public static Rope climbRope(BotEntry entry) {
+    public static Rope climbRope(AgentRuntimeEntry entry) {
         return state(entry).climbRope();
     }
 
-    public static boolean hasClimbRope(BotEntry entry) {
+    public static boolean hasClimbRope(AgentRuntimeEntry entry) {
         return state(entry).hasClimbRope();
     }
 
-    public static void setClimbingOnRope(BotEntry entry, Rope rope) {
+    public static void setClimbingOnRope(AgentRuntimeEntry entry, Rope rope) {
         state(entry).setClimbingOnRope(rope);
     }
 
-    public static int climbVerticalDirection(BotEntry entry) {
+    public static int climbVerticalDirection(AgentRuntimeEntry entry) {
         return state(entry).verticalDirection();
     }
 
-    public static boolean hasClimbVerticalDirection(BotEntry entry) {
+    public static boolean hasClimbVerticalDirection(AgentRuntimeEntry entry) {
         return state(entry).hasVerticalDirection();
     }
 
-    public static void setClimbVerticalDirection(BotEntry entry, int direction) {
+    public static void setClimbVerticalDirection(AgentRuntimeEntry entry, int direction) {
         state(entry).setVerticalDirection(direction);
     }
 
-    public static boolean climbUpIntent(BotEntry entry) {
+    public static boolean climbUpIntent(AgentRuntimeEntry entry) {
         return state(entry).climbUpIntent();
     }
 
-    public static void setClimbUpIntent(BotEntry entry, boolean climbUpIntent) {
+    public static void setClimbUpIntent(AgentRuntimeEntry entry, boolean climbUpIntent) {
         state(entry).setClimbUpIntent(climbUpIntent);
     }
 
-    public static Rope blockedRopeGrab(BotEntry entry) {
+    public static Rope blockedRopeGrab(AgentRuntimeEntry entry) {
         return state(entry).blockedRopeGrab();
     }
 
-    public static void setBlockedRopeGrab(BotEntry entry, Rope rope) {
+    public static void setBlockedRopeGrab(AgentRuntimeEntry entry, Rope rope) {
         state(entry).setBlockedRopeGrab(rope);
     }
 
-    public static void clearBlockedRopeGrab(BotEntry entry) {
+    public static void clearBlockedRopeGrab(AgentRuntimeEntry entry) {
         state(entry).clearBlockedRopeGrab();
     }
 
-    public static int ropeGrabCooldownMs(BotEntry entry) {
+    public static int ropeGrabCooldownMs(AgentRuntimeEntry entry) {
         return state(entry).ropeGrabCooldownMs();
     }
 
-    public static void setRopeGrabCooldownMs(BotEntry entry, int cooldownMs) {
+    public static void setRopeGrabCooldownMs(AgentRuntimeEntry entry, int cooldownMs) {
         state(entry).setRopeGrabCooldownMs(cooldownMs);
     }
 
-    public static boolean ropeEntryPending(BotEntry entry) {
+    public static boolean ropeEntryPending(AgentRuntimeEntry entry) {
         return state(entry).ropeEntryPending();
     }
 
-    public static Rope ropeEntryRope(BotEntry entry) {
+    public static Rope ropeEntryRope(AgentRuntimeEntry entry) {
         return state(entry).ropeEntryRope();
     }
 
-    public static int ropeEntryY(BotEntry entry) {
+    public static int ropeEntryY(AgentRuntimeEntry entry) {
         return state(entry).ropeEntryY();
     }
 
-    public static void queueRopeEntry(BotEntry entry, Rope rope, int y) {
+    public static void queueRopeEntry(AgentRuntimeEntry entry, Rope rope, int y) {
         state(entry).queueRopeEntry(rope, y);
     }
 
-    public static void clearRopeEntry(BotEntry entry) {
+    public static void clearRopeEntry(AgentRuntimeEntry entry) {
         state(entry).clearRopeEntry();
     }
 
-    private static AgentClimbState state(BotEntry entry) {
+    private static AgentClimbState state(AgentRuntimeEntry entry) {
         return entry.climbState();
     }
 }

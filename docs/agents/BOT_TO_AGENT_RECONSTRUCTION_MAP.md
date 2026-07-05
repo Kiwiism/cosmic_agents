@@ -242,6 +242,10 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeEntry` directly. Target references, search
   cadence, wander direction, loot retry suppression, retreat holds, breakout
   commitments, and degenerate-hit markers keep the same runtime state.
+- Climb, swim, movement physics, movement broadcast, and mob-touch state
+  adapters now accept `server.agents.runtime.AgentRuntimeEntry` directly. Rope
+  state, swim input, physics integration fields, movement broadcast cache, and
+  mob-touch sweep memory keep the same runtime state.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

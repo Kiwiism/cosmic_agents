@@ -1,19 +1,19 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed movement broadcast cache state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed movement broadcast cache state.
  */
 public final class AgentBotMovementBroadcastStateRuntime {
     private AgentBotMovementBroadcastStateRuntime() {
     }
 
-    public static void invalidate(BotEntry entry) {
+    public static void invalidate(AgentRuntimeEntry entry) {
         entry.movementBroadcastState().setValid(false);
     }
 
-    public static boolean matches(BotEntry entry,
+    public static boolean matches(AgentRuntimeEntry entry,
                                   int x,
                                   int y,
                                   int velocityX,
@@ -23,7 +23,7 @@ public final class AgentBotMovementBroadcastStateRuntime {
         return entry.movementBroadcastState().matches(x, y, velocityX, velocityY, stance, footholdId);
     }
 
-    public static void record(BotEntry entry,
+    public static void record(AgentRuntimeEntry entry,
                               int x,
                               int y,
                               int velocityX,

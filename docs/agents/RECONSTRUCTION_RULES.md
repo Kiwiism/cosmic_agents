@@ -96,6 +96,10 @@ Recent reconstruction notes:
   cadence, wander direction, loot retry suppression, retreat holds, breakout
   commitments, and degenerate-hit markers keep the same behavior and state
   backing.
+- Climb, swim, movement physics, movement broadcast, and mob-touch runtime state
+  adapters now take `server.agents.runtime.AgentRuntimeEntry` directly. Rope
+  state, swim input, physics integration fields, movement broadcast cache, and
+  mob-touch sweep memory keep the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

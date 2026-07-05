@@ -1,60 +1,60 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
 import server.agents.capabilities.movement.AgentSwimIntentState;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed swim intent state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed swim intent state.
  */
 public final class AgentBotSwimStateRuntime {
     private AgentBotSwimStateRuntime() {
     }
 
-    public static boolean swimming(BotEntry entry) {
+    public static boolean swimming(AgentRuntimeEntry entry) {
         return state(entry).swimming();
     }
 
-    public static void setSwimming(BotEntry entry, boolean swimming) {
+    public static void setSwimming(AgentRuntimeEntry entry, boolean swimming) {
         state(entry).setSwimming(swimming);
     }
 
-    public static int swimMoveDirection(BotEntry entry) {
+    public static int swimMoveDirection(AgentRuntimeEntry entry) {
         return state(entry).moveDirection();
     }
 
-    public static void setSwimMoveDirection(BotEntry entry, int direction) {
+    public static void setSwimMoveDirection(AgentRuntimeEntry entry, int direction) {
         state(entry).setMoveDirection(direction);
     }
 
-    public static int swimVerticalHold(BotEntry entry) {
+    public static int swimVerticalHold(AgentRuntimeEntry entry) {
         return state(entry).verticalHold();
     }
 
-    public static void setSwimVerticalHold(BotEntry entry, int verticalHold) {
+    public static void setSwimVerticalHold(AgentRuntimeEntry entry, int verticalHold) {
         state(entry).setVerticalHold(verticalHold);
     }
 
-    public static boolean swimJumpRequested(BotEntry entry) {
+    public static boolean swimJumpRequested(AgentRuntimeEntry entry) {
         return state(entry).jumpRequested();
     }
 
-    public static void setSwimJumpRequested(BotEntry entry, boolean requested) {
+    public static void setSwimJumpRequested(AgentRuntimeEntry entry, boolean requested) {
         state(entry).setJumpRequested(requested);
     }
 
-    public static long swimNextJumpAtMs(BotEntry entry) {
+    public static long swimNextJumpAtMs(AgentRuntimeEntry entry) {
         return state(entry).nextJumpAtMs();
     }
 
-    public static void setSwimNextJumpAtMs(BotEntry entry, long nextJumpAtMs) {
+    public static void setSwimNextJumpAtMs(AgentRuntimeEntry entry, long nextJumpAtMs) {
         state(entry).setNextJumpAtMs(nextJumpAtMs);
     }
 
-    public static void clearSwimInput(BotEntry entry) {
+    public static void clearSwimInput(AgentRuntimeEntry entry) {
         state(entry).clearInput();
     }
 
-    private static AgentSwimIntentState state(BotEntry entry) {
+    private static AgentSwimIntentState state(AgentRuntimeEntry entry) {
         return entry.swimIntentState();
     }
 }
