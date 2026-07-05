@@ -1711,9 +1711,9 @@ Recent reconstruction notes:
   directly; the pure ammo reply/scheduler pass-through adapters were removed
   while preserving ammo-sharing behavior.
 - Potion-sharing reply, delay, random-delay, and delay-sampling bridge methods
-  now enter through narrow `AgentBotPotionReplyRuntime` and
-  `AgentBotPotionSchedulerRuntime` adapters; potion orchestration no longer
-  reaches directly into the broad reply or scheduler runtimes.
+  now call the existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`
+  directly; the pure potion reply/scheduler pass-through adapters were removed
+  while preserving potion-sharing behavior.
 - Maker automation reply, delay, and random-delay bridge methods now enter
   through narrow `AgentBotMakerReplyRuntime` and
   `AgentBotMakerSchedulerRuntime` adapters; Maker orchestration no longer
