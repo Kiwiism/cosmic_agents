@@ -1,32 +1,32 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed grind loot targeting state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed grind loot targeting state.
  */
 public final class AgentBotGrindLootStateRuntime {
     private AgentBotGrindLootStateRuntime() {
     }
 
-    public static MapItem grindLootTarget(BotEntry entry) {
+    public static MapItem grindLootTarget(AgentRuntimeEntry entry) {
         return entry.grindLootState().target();
     }
 
-    public static boolean hasGrindLootTarget(BotEntry entry) {
+    public static boolean hasGrindLootTarget(AgentRuntimeEntry entry) {
         return entry.grindLootState().hasTarget();
     }
 
-    public static void setGrindLootTarget(BotEntry entry, MapItem loot) {
+    public static void setGrindLootTarget(AgentRuntimeEntry entry, MapItem loot) {
         entry.grindLootState().setTarget(loot);
     }
 
-    public static void clearGrindLootTarget(BotEntry entry) {
+    public static void clearGrindLootTarget(AgentRuntimeEntry entry) {
         entry.grindLootState().clearTarget();
     }
 
-    public static void suppressRetry(BotEntry entry, MapItem loot, long untilMs) {
+    public static void suppressRetry(AgentRuntimeEntry entry, MapItem loot, long untilMs) {
         if (loot == null) {
             clearRetrySuppression(entry);
             return;
@@ -34,7 +34,7 @@ public final class AgentBotGrindLootStateRuntime {
         entry.grindLootState().suppressRetry(loot.getObjectId(), untilMs);
     }
 
-    public static boolean isRetrySuppressed(BotEntry entry, MapItem loot, long nowMs) {
+    public static boolean isRetrySuppressed(AgentRuntimeEntry entry, MapItem loot, long nowMs) {
         if (entry == null || loot == null || entry.grindLootState().ignoredObjectId() <= 0) {
             return false;
         }
@@ -45,7 +45,7 @@ public final class AgentBotGrindLootStateRuntime {
         return entry.grindLootState().ignoredObjectId() == loot.getObjectId();
     }
 
-    public static void clearRetrySuppression(BotEntry entry) {
+    public static void clearRetrySuppression(AgentRuntimeEntry entry) {
         entry.grindLootState().clearRetrySuppression();
     }
 }

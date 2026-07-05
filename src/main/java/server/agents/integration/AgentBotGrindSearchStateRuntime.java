@@ -1,27 +1,27 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed grind retarget search cadence.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed grind retarget search cadence.
  */
 public final class AgentBotGrindSearchStateRuntime {
     private AgentBotGrindSearchStateRuntime() {
     }
 
-    public static long nextSearchAtMs(BotEntry entry) {
+    public static long nextSearchAtMs(AgentRuntimeEntry entry) {
         return entry.grindTargetState().nextSearchAtMs();
     }
 
-    public static boolean searchBlocked(BotEntry entry, long nowMs) {
+    public static boolean searchBlocked(AgentRuntimeEntry entry, long nowMs) {
         return nowMs < nextSearchAtMs(entry);
     }
 
-    public static void scheduleNextSearch(BotEntry entry, long nextSearchAtMs) {
+    public static void scheduleNextSearch(AgentRuntimeEntry entry, long nextSearchAtMs) {
         entry.grindTargetState().setNextSearchAtMs(nextSearchAtMs);
     }
 
-    public static void clear(BotEntry entry) {
+    public static void clear(AgentRuntimeEntry entry) {
         entry.grindTargetState().clearNextSearchAtMs();
     }
 }

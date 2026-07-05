@@ -237,6 +237,11 @@ Recent map updates:
   now accept `server.agents.runtime.AgentRuntimeEntry` directly. Attack windows,
   mob-hit cooldowns, cached attack/support skills, and buff timing retain the
   same Agent-owned state.
+- Grind target, grind search, grind wander, grind loot, retreat hold, breakout,
+  and degenerate ranged-attack state adapters now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Target references, search
+  cadence, wander direction, loot retry suppression, retreat holds, breakout
+  commitments, and degenerate-hit markers keep the same runtime state.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

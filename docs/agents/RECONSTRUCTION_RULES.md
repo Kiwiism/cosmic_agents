@@ -90,6 +90,12 @@ Recent reconstruction notes:
   adapters now take `server.agents.runtime.AgentRuntimeEntry` directly. Attack
   windows, mob-hit cooldowns, cached attack/support skills, and buff timing keep
   the same behavior and state backing.
+- Grind target, grind search, grind wander, grind loot, retreat hold, breakout,
+  and degenerate ranged-attack runtime state adapters now take
+  `server.agents.runtime.AgentRuntimeEntry` directly. Target references, search
+  cadence, wander direction, loot retry suppression, retreat holds, breakout
+  commitments, and degenerate-hit markers keep the same behavior and state
+  backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

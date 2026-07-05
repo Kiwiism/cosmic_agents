@@ -1,29 +1,29 @@
 package server.agents.integration;
 
 import client.Character;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed active grind target state.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed active grind target state.
  */
 public final class AgentBotGrindTargetStateRuntime {
     private AgentBotGrindTargetStateRuntime() {
     }
 
-    public static Monster target(BotEntry entry) {
+    public static Monster target(AgentRuntimeEntry entry) {
         return entry.grindTargetState().target();
     }
 
-    public static Monster activeTargetInMap(BotEntry entry, MapleMap map) {
+    public static Monster activeTargetInMap(AgentRuntimeEntry entry, MapleMap map) {
         Monster target = target(entry);
         return target != null && target.isAlive() && target.getMap() == map ? target : null;
     }
 
-    public static Monster targetInSeekRange(BotEntry entry, Character bot, Point botPos, double seekRangeSq) {
+    public static Monster targetInSeekRange(AgentRuntimeEntry entry, Character bot, Point botPos, double seekRangeSq) {
         if (bot == null || botPos == null) {
             return null;
         }
@@ -34,11 +34,11 @@ public final class AgentBotGrindTargetStateRuntime {
         return target;
     }
 
-    public static void setTarget(BotEntry entry, Monster target) {
+    public static void setTarget(AgentRuntimeEntry entry, Monster target) {
         entry.grindTargetState().setTarget(target);
     }
 
-    public static void clear(BotEntry entry) {
+    public static void clear(AgentRuntimeEntry entry) {
         entry.grindTargetState().clearTarget();
     }
 }
