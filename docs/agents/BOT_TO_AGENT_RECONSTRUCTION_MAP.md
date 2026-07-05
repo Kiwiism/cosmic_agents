@@ -76,6 +76,9 @@ Recent map updates:
   Queued scroll-reaction dialogue and delayed callbacks now call the existing
   Agent reply and scheduler runtimes directly through
   `AgentBotScrollReactionRuntime`.
+- Maker reply and scheduler pass-through bridges were removed. Maker owner
+  replies and delayed batch callbacks now call the existing Agent reply and
+  scheduler runtimes directly through `AgentBotMakerRuntime`.
 - Shop purchase sequencing and shortfall value objects moved out of integration
   as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
   `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.

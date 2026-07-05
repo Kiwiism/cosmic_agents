@@ -1714,10 +1714,10 @@ Recent reconstruction notes:
   now call the existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`
   directly; the pure potion reply/scheduler pass-through adapters were removed
   while preserving potion-sharing behavior.
-- Maker automation reply, delay, and random-delay bridge methods now enter
-  through narrow `AgentBotMakerReplyRuntime` and
-  `AgentBotMakerSchedulerRuntime` adapters; Maker orchestration no longer
-  reaches directly into the broad reply or scheduler runtimes.
+- Maker automation reply, delay, and random-delay bridge methods now call the
+  existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the
+  pure Maker reply/scheduler pass-through adapters were removed while
+  preserving Maker behavior.
 - Shop automation owner replies, map-visible replies, fixed-delay callbacks,
   and delay-sampling bridge methods now call the existing
   `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure shop
