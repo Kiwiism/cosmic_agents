@@ -128,6 +128,9 @@ Recent map updates:
 - Utility reply and scheduler pass-through bridges were removed. Trade-invite,
   sell-trash, crystal-making, and disassemble-trash utility callbacks now call
   the existing reply and scheduler runtimes directly with the same timings.
+- Transfer reply and scheduler pass-through bridges were removed. Immediate
+  transfer replies, fixed-delay callbacks, random-delay callbacks, and delay
+  sampling now call the existing reply and scheduler runtimes directly.
 - The report operations bridge was folded into `AgentBotChatReportRuntime`.
   Report callback construction still dispatches to the same help, upgrade,
   gear, skill, stat, movement, range, inventory, potion, and debug report
