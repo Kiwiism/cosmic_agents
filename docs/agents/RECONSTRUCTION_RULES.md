@@ -2504,15 +2504,15 @@ Recent reconstruction notes:
   accessors; the stage script preserves Cloto movement, coupon assignment,
   progress reporting, exchange, and pass delivery behavior while no longer
   reading script context runtime fields directly.
-- Shop purchase sequencing now uses `AgentBotShopPurchaseSequence` and
-  `AgentBotShopPurchaseAction`; AgentShopService preserves resupply, recharge,
+- Shop purchase sequencing now uses `AgentShopPurchaseSequence` and
+  `AgentShopPurchaseAction`; AgentShopService preserves resupply, recharge,
   potion purchase, trash-sale, shortfall, announcement, and finish behavior
-  while the active purchase context is owned by the Agent integration layer
+  while the active purchase context is owned by the Agent shop capability
   instead of a private bot runtime record.
-- Shop purchase shortfall reporting now uses `AgentBotShopBuyReport` and
-  `AgentBotShopShortfallReason`; AgentShopService preserves the same quantity,
+- Shop purchase shortfall reporting now uses `AgentShopBuyReport` and
+  `AgentShopShortfallReason`; AgentShopService preserves the same quantity,
   meso, space, and generic-failure reporting while the purchase report value
-  object is owned by the Agent integration layer.
+  object is owned by the Agent shop capability.
 - Potion donor planning now uses `AgentPotionDonorPlan`; AgentPotionService
   preserves the same donor selection, qualification threshold, donation
   quantity, delay, and transfer behavior while the donor plan context is owned

@@ -25,12 +25,8 @@ import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotShopBuyReport;
-import server.agents.integration.AgentBotShopPurchaseAction;
-import server.agents.integration.AgentBotShopPurchaseSequence;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotShopRuntime;
-import server.agents.integration.AgentBotShopShortfallReason;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
@@ -254,11 +250,11 @@ public final class AgentShopService {
         }
 
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        List<AgentBotShopPurchaseAction> actions = new ArrayList<>();
+        List<AgentShopPurchaseAction> actions = new ArrayList<>();
 
         if (shouldRechargeWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> {
-                AgentBotShopBuyReport recharge = doRecharge(bot, shop, wt);
+                AgentShopBuyReport recharge = doRecharge(bot, shop, wt);
                 if (recharge.quantity() > 0) {
                     int recharged = recharge.quantity();
                     String ammoName = wt == WeaponType.GUN ? "bullets" : "throwing stars";
@@ -286,10 +282,10 @@ public final class AgentShopService {
             return sequence;
         });
 
-        runPurchaseStep(new AgentBotShopPurchaseSequence(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
+        runPurchaseStep(new AgentShopPurchaseSequence(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
     }
 
-    private static void runPurchaseStep(AgentBotShopPurchaseSequence sequence, int index) {
+    private static void runPurchaseStep(AgentShopPurchaseSequence sequence, int index) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopBuyInterruptedReply());
             return;
@@ -314,11 +310,11 @@ public final class AgentShopService {
             return;
         }
 
-        AgentBotShopPurchaseSequence next = sequence.actions().get(index).run(sequence, shop);
+        AgentShopPurchaseSequence next = sequence.actions().get(index).run(sequence, shop);
         scheduleShopStep(sequence.entry(), () -> runPurchaseStep(next, index + 1));
     }
 
-    private static void finishPurchaseSequence(AgentBotShopPurchaseSequence sequence, boolean announceIfEmpty) {
+    private static void finishPurchaseSequence(AgentShopPurchaseSequence sequence, boolean announceIfEmpty) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopFinishFailedReply());
             return;
@@ -350,7 +346,7 @@ public final class AgentShopService {
         finish.run();
     }
 
-    private static void startSellTrashSequence(AgentBotShopPurchaseSequence sequence) {
+    private static void startSellTrashSequence(AgentShopPurchaseSequence sequence) {
         List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
@@ -373,7 +369,7 @@ public final class AgentShopService {
     }
 
     private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
-                                         List<String> bought, AgentBotShopBuyReport firstShortfall) {
+                                         List<String> bought, AgentShopBuyReport firstShortfall) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopSellInterruptedReply());
             return;
@@ -393,7 +389,7 @@ public final class AgentShopService {
             } else if (soldCount == 0) {
                 AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
             }
-            finishPurchaseSequence(new AgentBotShopPurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
+            finishPurchaseSequence(new AgentShopPurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
         }
 
@@ -428,7 +424,7 @@ public final class AgentShopService {
                 () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall));
     }
 
-    private static AgentBotShopPurchaseSequence appendBuyReport(AgentBotShopPurchaseSequence sequence, AgentBotShopBuyReport report, String fallbackName) {
+    private static AgentShopPurchaseSequence appendBuyReport(AgentShopPurchaseSequence sequence, AgentShopBuyReport report, String fallbackName) {
         if (report.quantity() > 0) {
             sequence.bought().add(report.quantity() + " " + resolveItemName(report.itemId(), fallbackName));
         }
@@ -501,10 +497,10 @@ public final class AgentShopService {
         return best;
     }
 
-    private static AgentBotShopBuyReport buyAmmo(Character bot, Shop shop, WeaponType wt) {
+    private static AgentShopBuyReport buyAmmo(Character bot, Shop shop, WeaponType wt) {
         ShopSlotItem ammo = findAmmoItem(shop, wt);
         if (ammo == null) {
-            return new AgentBotShopBuyReport(0, 0, 0, AgentBotShopShortfallReason.NONE);
+            return new AgentShopBuyReport(0, 0, 0, AgentShopShortfallReason.NONE);
         }
 
         int target = ammoTargetThreshold();
@@ -520,7 +516,7 @@ public final class AgentShopService {
         return AgentShopAmmoPolicy.matchesRechargeWeapon(itemId, wt);
     }
 
-    private static AgentBotShopBuyReport doRecharge(Character bot, Shop shop, WeaponType wt) {
+    private static AgentShopBuyReport doRecharge(Character bot, Shop shop, WeaponType wt) {
         // Only recharge ammo matching the equipped weapon (claw->stars, gun->bullets) and only
         // the best stacks by attack: recharging off-weapon or low-tier leftovers just wastes meso,
         // and an off-weapon failure must never short-circuit the real ammo refill.
@@ -541,7 +537,7 @@ public final class AgentShopService {
         int recharged = 0;
         int attempted = 0;
         int shortfallItemId = 0;
-        AgentBotShopShortfallReason reason = AgentBotShopShortfallReason.NONE;
+        AgentShopShortfallReason reason = AgentShopShortfallReason.NONE;
         for (Item item : refillable) {
             if (recharged >= RECHARGE_MAX_SETS) {
                 break;
@@ -555,13 +551,13 @@ public final class AgentShopService {
             attempted++;
             shortfallItemId = item.getItemId();
             reason = switch (result) {
-                case NOT_ENOUGH_MESO -> AgentBotShopShortfallReason.NO_MESO;
-                case NO_SPACE -> AgentBotShopShortfallReason.NO_SPACE;
-                default -> AgentBotShopShortfallReason.OTHER;
+                case NOT_ENOUGH_MESO -> AgentShopShortfallReason.NO_MESO;
+                case NO_SPACE -> AgentShopShortfallReason.NO_SPACE;
+                default -> AgentShopShortfallReason.OTHER;
             };
             break;
         }
-        return new AgentBotShopBuyReport(shortfallItemId, recharged, attempted, reason);
+        return new AgentShopBuyReport(shortfallItemId, recharged, attempted, reason);
     }
 
     private static ShopSlotItem findPotionItem(Shop shop, Character bot, boolean forHp) {
@@ -575,10 +571,10 @@ public final class AgentShopService {
         return selected == null ? null : new ShopSlotItem(selected.slot(), selected.shopItem());
     }
 
-    private static AgentBotShopBuyReport buyPotions(Character bot, Shop shop, boolean forHp) {
+    private static AgentShopBuyReport buyPotions(Character bot, Shop shop, boolean forHp) {
         ShopSlotItem pot = findPotionItem(shop, bot, forHp);
         if (pot == null) {
-            return new AgentBotShopBuyReport(0, 0, 0, AgentBotShopShortfallReason.NONE);
+            return new AgentShopBuyReport(0, 0, 0, AgentShopShortfallReason.NONE);
         }
 
         int target = AgentRuntimeConfig.cfg.POT_LOW_WARN * POT_TARGET_THRESHOLD;
@@ -587,13 +583,13 @@ public final class AgentShopService {
         return buyFixedCostItem(bot, shop, pot, Math.max(0, target - current), 100);
     }
 
-    private static AgentBotShopBuyReport buyFixedCostItem(Character bot, Shop shop, ShopSlotItem item, int desiredQuantity, int batchSize) {
+    private static AgentShopBuyReport buyFixedCostItem(Character bot, Shop shop, ShopSlotItem item, int desiredQuantity, int batchSize) {
         if (item == null || desiredQuantity <= 0) {
-            return new AgentBotShopBuyReport(0, 0, 0, AgentBotShopShortfallReason.NONE);
+            return new AgentShopBuyReport(0, 0, 0, AgentShopShortfallReason.NONE);
         }
 
         int totalBought = 0;
-        AgentBotShopShortfallReason reason = AgentBotShopShortfallReason.NONE;
+        AgentShopShortfallReason reason = AgentShopShortfallReason.NONE;
         int price = item.shopItem.getPrice();
 
         while (totalBought < desiredQuantity) {
@@ -605,28 +601,28 @@ public final class AgentShopService {
                 continue;
             }
             if (result == Shop.TransactionResult.NOT_ENOUGH_MESO) {
-                reason = AgentBotShopShortfallReason.NO_MESO;
+                reason = AgentShopShortfallReason.NO_MESO;
                 int affordable = price > 0 ? Math.min(remaining, bot.getMeso() / price) : 0;
                 if (affordable > 0) {
                     Shop.TransactionResult partial = shop.buyDirect(bot, item.slot, item.shopItem.getItemId(), (short) affordable);
                     if (partial == Shop.TransactionResult.SUCCESS) {
                         totalBought += affordable;
                     } else if (partial == Shop.TransactionResult.NO_SPACE) {
-                        reason = AgentBotShopShortfallReason.NO_SPACE;
+                        reason = AgentShopShortfallReason.NO_SPACE;
                     }
                 }
             } else if (result == Shop.TransactionResult.NO_SPACE) {
-                reason = AgentBotShopShortfallReason.NO_SPACE;
+                reason = AgentShopShortfallReason.NO_SPACE;
             } else {
-                reason = AgentBotShopShortfallReason.OTHER;
+                reason = AgentShopShortfallReason.OTHER;
             }
             break;
         }
 
-        return new AgentBotShopBuyReport(item.shopItem.getItemId(), totalBought, desiredQuantity, reason);
+        return new AgentShopBuyReport(item.shopItem.getItemId(), totalBought, desiredQuantity, reason);
     }
 
-    private static String buildShortfallMessage(AgentBotShopBuyReport report) {
+    private static String buildShortfallMessage(AgentShopBuyReport report) {
         String itemName = resolveItemName(report.itemId(), "item");
         String got = GameConstants.numberWithCommas(report.quantity());
         String want = GameConstants.numberWithCommas(report.requestedQuantity());

@@ -60,6 +60,12 @@ Recent map updates:
   `AgentPotionDonorPlan<E extends AgentRuntimeHandle>` in the supplies
   capability. Existing potion donor selection and tests now use the Agent-owned
   value object while `AgentPotionService` still adapts with `BotEntry`.
+- Shop purchase sequencing and shortfall value objects moved out of integration
+  as `AgentShopPurchaseSequence`, `AgentShopPurchaseAction`,
+  `AgentShopBuyReport`, and `AgentShopShortfallReason` in the shop capability.
+  Existing shop purchase flow and tests now use the Agent-owned value objects
+  while the sequence still carries `BotEntry` until the shop runtime boundary is
+  replaced.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
