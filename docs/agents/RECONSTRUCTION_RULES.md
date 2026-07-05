@@ -1629,10 +1629,10 @@ Recent reconstruction notes:
   `AgentRangeReportService`; equipment code no longer imports an integration
   bridge or the broad chat-report facade just to render range text, and the
   underlying range formatter remains unchanged.
-- Control-triggered buff-debug and skill-buff-debug report delivery now enters
-  through `AgentBotControlReportRuntime`; `AgentBotControlRuntime` still owns
-  the same 500-700 ms command delay, but no longer reaches directly into the
-  broad chat-report facade for those control-owned report callbacks.
+- The old control report pass-through bridge was removed.
+  `AgentBotControlRuntime` still owns the same 500-700 ms command delay, but
+  now calls the existing chat-report facade directly for buff-debug and
+  skill-buff-debug reports.
 - Offer-manager map-visible rejection replies and bot-to-bot loot-offer accept
   replies now enter through `AgentBotOfferRuntime`; `AgentOfferService` no longer
   calls `BotManager.botSay` directly for offer-owned reply delivery, while the

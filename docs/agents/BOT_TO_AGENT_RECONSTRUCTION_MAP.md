@@ -110,6 +110,9 @@ Recent map updates:
 - The report scheduler pass-through bridge was removed. Report callback wiring
   now supplies the existing random-delay scheduler directly while preserving the
   same report delay behavior.
+- The control report pass-through bridge was removed. Control buff-debug and
+  skill-buff-debug callbacks now call the existing chat-report facade directly
+  from the same delayed control action.
 - Dialogue targeted chat routing now reuses the commands-package
   `AgentTargetedCommandMatch`, removing the duplicate dialogue-local match
   record without changing targeted reply, typo-suggestion, LLM fallback, or

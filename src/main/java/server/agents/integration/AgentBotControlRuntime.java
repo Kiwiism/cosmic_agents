@@ -79,13 +79,13 @@ public final class AgentBotControlRuntime {
             @Override
             public void reportBuffDebug() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotControlReportRuntime.reportBuffDebug(entry));
+                        AgentBotChatReportRuntime.reportBuffDebug(entry, bot(entry)));
             }
 
             @Override
             public void reportSkillBuffDebug() {
                 AgentBotControlSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotControlReportRuntime.reportSkillBuffDebug(entry));
+                        AgentBotChatReportRuntime.reportSkillBuffDebug(entry, bot(entry)));
             }
         };
     }
