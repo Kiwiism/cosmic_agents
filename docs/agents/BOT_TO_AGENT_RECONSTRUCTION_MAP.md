@@ -119,6 +119,9 @@ Recent map updates:
 - Status reply and scheduler pass-through bridges were removed. AFK-return and
   offline-return callbacks now call the existing reply and scheduler runtimes
   directly with the same status side effects and delay windows.
+- Session reply and scheduler pass-through bridges were removed. Relog,
+  logout, and owner-away session callbacks now call the existing reply and
+  scheduler runtimes directly with the same prompts, confirmations, and delays.
 - The report operations bridge was folded into `AgentBotChatReportRuntime`.
   Report callback construction still dispatches to the same help, upgrade,
   gear, skill, stat, movement, range, inventory, potion, and debug report

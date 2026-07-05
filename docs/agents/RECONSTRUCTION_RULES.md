@@ -1682,11 +1682,10 @@ Recent reconstruction notes:
   AFK-return and offline-return actions now call the existing reply and
   random-delay scheduler runtimes directly while preserving the same status
   side effects and delay windows.
-- Relog/logout/away session prompts, confirmations, and delayed lifecycle
-  callbacks now enter through narrow `AgentBotSessionReplyRuntime` and
-  `AgentBotSessionSchedulerRuntime` adapters; `AgentBotSessionRuntime` no
-  longer reaches directly into the broad reply or scheduler runtimes for
-  session-owned chat timing.
+- Session reply and scheduler pass-through adapters were removed.
+  Relog/logout/away prompts, confirmations, and delayed lifecycle callbacks now
+  call the existing reply and random-delay scheduler runtimes directly while
+  preserving the same session-owned chat timing.
 - Pending chat-action item choices, cancel replies, and skill-tree reply
   queueing now enter through narrow `AgentBotPendingActionReplyRuntime` and
   `AgentBotPendingActionSchedulerRuntime` adapters; pending-action orchestration
