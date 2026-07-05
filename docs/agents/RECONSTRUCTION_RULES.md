@@ -109,6 +109,9 @@ Recent reconstruction notes:
   take `server.agents.runtime.AgentRuntimeEntry` directly. AoE reposition
   anchors, shop visit/sequence transition state, and scripted task queues/runtime
   step state keep the same behavior and state backing.
+- Live Agent identity runtime now takes `server.agents.runtime.AgentRuntimeEntry`
+  directly. Bot/leader character lookup, ids, map lookup, and copied position
+  snapshots keep the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

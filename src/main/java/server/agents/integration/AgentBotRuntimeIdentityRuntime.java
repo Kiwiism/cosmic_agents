@@ -1,74 +1,74 @@
 package server.agents.integration;
 
 import client.Character;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed live runtime identity.
+ * Agent-owned adapter for temporary AgentRuntimeEntry-backed live runtime identity.
  */
 public final class AgentBotRuntimeIdentityRuntime {
     private AgentBotRuntimeIdentityRuntime() {
     }
 
-    public static Character bot(BotEntry entry) {
+    public static Character bot(AgentRuntimeEntry entry) {
         return entry == null ? null : entry.identityState().agent();
     }
 
-    public static Character owner(BotEntry entry) {
+    public static Character owner(AgentRuntimeEntry entry) {
         return entry == null ? null : entry.identityState().leader();
     }
 
-    public static int botId(BotEntry entry) {
+    public static int botId(AgentRuntimeEntry entry) {
         Character bot = bot(entry);
         return bot == null ? -1 : bot.getId();
     }
 
-    public static int botAccountId(BotEntry entry) {
+    public static int botAccountId(AgentRuntimeEntry entry) {
         Character bot = bot(entry);
         return bot == null ? -1 : bot.getAccountID();
     }
 
-    public static String botName(BotEntry entry) {
+    public static String botName(AgentRuntimeEntry entry) {
         Character bot = bot(entry);
         return bot == null ? null : bot.getName();
     }
 
-    public static int ownerId(BotEntry entry) {
+    public static int ownerId(AgentRuntimeEntry entry) {
         Character owner = owner(entry);
         return owner == null ? -1 : owner.getId();
     }
 
-    public static boolean hasBot(BotEntry entry) {
+    public static boolean hasBot(AgentRuntimeEntry entry) {
         return bot(entry) != null;
     }
 
-    public static boolean botIs(BotEntry entry, int characterId) {
+    public static boolean botIs(AgentRuntimeEntry entry, int characterId) {
         return botId(entry) == characterId;
     }
 
-    public static boolean botNameEquals(BotEntry entry, String name) {
+    public static boolean botNameEquals(AgentRuntimeEntry entry, String name) {
         Character bot = bot(entry);
         return bot != null && name != null && bot.getName().equalsIgnoreCase(name);
     }
 
-    public static int botMapId(BotEntry entry) {
+    public static int botMapId(AgentRuntimeEntry entry) {
         Character bot = bot(entry);
         return bot == null ? -1 : bot.getMapId();
     }
 
-    public static MapleMap botMap(BotEntry entry) {
+    public static MapleMap botMap(AgentRuntimeEntry entry) {
         Character bot = bot(entry);
         return bot == null ? null : bot.getMap();
     }
 
-    public static boolean botHasMap(BotEntry entry) {
+    public static boolean botHasMap(AgentRuntimeEntry entry) {
         return botMap(entry) != null;
     }
 
-    public static Point botPosition(BotEntry entry) {
+    public static Point botPosition(AgentRuntimeEntry entry) {
         Character bot = bot(entry);
         Point position = bot == null ? null : bot.getPosition();
         return position == null ? null : new Point(position);

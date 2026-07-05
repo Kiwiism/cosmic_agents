@@ -255,6 +255,10 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeEntry` directly. AoE reposition anchors,
   shop visit/sequence transition state, and scripted task queues/runtime step
   state keep the same behavior and storage.
+- Live Agent identity runtime now accepts `server.agents.runtime.AgentRuntimeEntry`
+  directly. Bot/leader character lookup, ids, map lookup, and copied position
+  snapshots keep the same behavior while removing another `server.bots`
+  boundary import.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
