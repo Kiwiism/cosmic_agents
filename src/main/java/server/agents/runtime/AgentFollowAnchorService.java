@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.List;
 
@@ -11,7 +10,9 @@ public final class AgentFollowAnchorService {
     private AgentFollowAnchorService() {
     }
 
-    public static Character resolve(BotEntry entry, Character leader, List<BotEntry> siblingEntries) {
+    public static Character resolve(AgentRuntimeEntry entry,
+                                    Character leader,
+                                    List<? extends AgentRuntimeEntry> siblingEntries) {
         if (leader == null) {
             return null;
         }
@@ -19,10 +20,10 @@ public final class AgentFollowAnchorService {
         return resolveTarget(entry, leader, AgentBotModeStateRuntime.followTargetId(entry), siblingEntries);
     }
 
-    public static Character resolveTarget(BotEntry entry,
+    public static Character resolveTarget(AgentRuntimeEntry entry,
                                           Character leader,
                                           int targetId,
-                                          List<BotEntry> siblingEntries) {
+                                          List<? extends AgentRuntimeEntry> siblingEntries) {
         if (leader == null) {
             return null;
         }
@@ -39,7 +40,7 @@ public final class AgentFollowAnchorService {
         }
 
         if (siblingEntries != null) {
-            for (BotEntry sibling : siblingEntries) {
+            for (AgentRuntimeEntry sibling : siblingEntries) {
                 Character siblingAgent = AgentBotRuntimeIdentityRuntime.bot(sibling);
                 if (siblingAgent != null && siblingAgent.getId() == targetId && siblingAgent.isLoggedinWorld()) {
                     return siblingAgent;
@@ -50,9 +51,9 @@ public final class AgentFollowAnchorService {
         return leader;
     }
 
-    public static Character resolveTargetFromRuntimeRegistry(BotEntry entry, int targetId) {
+    public static Character resolveTargetFromRuntimeRegistry(AgentRuntimeEntry entry, int targetId) {
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
-        List<BotEntry> siblingEntries = leader == null
+        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
                 : AgentRuntimeRegistry.entriesForLeader(leader.getId());
         return resolveTarget(entry, leader, targetId, siblingEntries);

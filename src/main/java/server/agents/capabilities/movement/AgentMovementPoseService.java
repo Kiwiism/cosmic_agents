@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -19,23 +19,23 @@ public final class AgentMovementPoseService {
     private AgentMovementPoseService() {
     }
 
-    public static void resetMotion(BotEntry entry, Point position) {
+    public static void resetMotion(AgentRuntimeEntry entry, Point position) {
         clearMovementState(entry, position);
         syncCharacterState(entry);
     }
 
-    public static void teleportTo(BotEntry entry, Character agent, Point position) {
+    public static void teleportTo(AgentRuntimeEntry entry, Character agent, Point position) {
         agent.setPosition(position);
         clearMovementState(entry, position);
         syncCharacterState(entry);
     }
 
-    public static void markDead(BotEntry entry, Character agent) {
+    public static void markDead(AgentRuntimeEntry entry, Character agent) {
         clearMovementState(entry, agent.getPosition());
         syncCharacterState(entry);
     }
 
-    public static void idleOnGround(BotEntry entry, Character agent) {
+    public static void idleOnGround(AgentRuntimeEntry entry, Character agent) {
         Point position = agent.getPosition();
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
@@ -53,20 +53,20 @@ public final class AgentMovementPoseService {
         syncCharacterState(entry);
     }
 
-    public static void proneOnGround(BotEntry entry, Character agent) {
+    public static void proneOnGround(AgentRuntimeEntry entry, Character agent) {
         idleOnGround(entry, agent);
         AgentBotMovementStateRuntime.setCrouching(entry, true);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
         syncCharacterState(entry);
     }
 
-    public static int resolveIdleGroundStance(BotEntry entry) {
+    public static int resolveIdleGroundStance(AgentRuntimeEntry entry) {
         return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
                 ? CharacterStance.STAND_RIGHT_STANCE
                 : CharacterStance.STAND_LEFT_STANCE;
     }
 
-    public static int resolveStance(BotEntry entry) {
+    public static int resolveStance(AgentRuntimeEntry entry) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (agent != null && agent.getHp() <= 0) {
             return resolveDeadStance(entry);
@@ -101,7 +101,7 @@ public final class AgentMovementPoseService {
         return resolveIdleGroundStance(entry);
     }
 
-    private static int resolveDeadStance(BotEntry entry) {
+    private static int resolveDeadStance(AgentRuntimeEntry entry) {
         return AgentBotMovementStateRuntime.facingDirectionSign(entry) >= 0
                 ? CharacterStance.DEAD_RIGHT_STANCE
                 : CharacterStance.DEAD_LEFT_STANCE;
@@ -111,11 +111,11 @@ public final class AgentMovementPoseService {
         return CharacterStance.isStanding(stance);
     }
 
-    public static boolean isStandingResolvedStance(BotEntry entry) {
+    public static boolean isStandingResolvedStance(AgentRuntimeEntry entry) {
         return isStandingStance(resolveStance(entry));
     }
 
-    public static void syncCharacterState(BotEntry entry) {
+    public static void syncCharacterState(AgentRuntimeEntry entry) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (agent == null) {
             return;
@@ -123,7 +123,7 @@ public final class AgentMovementPoseService {
         agent.setStance(resolveStance(entry));
     }
 
-    private static void clearMovementState(BotEntry entry, Point position) {
+    private static void clearMovementState(AgentRuntimeEntry entry, Point position) {
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setCrouching(entry, false);

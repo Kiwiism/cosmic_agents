@@ -12,7 +12,7 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -27,7 +27,7 @@ public final class AgentNavigationRegionService {
     }
 
     public static int resolveCurrentRegionId(AgentNavigationGraph graph,
-                                             BotEntry entry,
+                                             AgentRuntimeEntry entry,
                                              MapleMap map,
                                              Point botPos) {
         if (AgentBotClimbStateRuntime.climbing(entry) || (AgentBotRuntimeIdentityRuntime.hasBot(entry) && CharacterStance.isClimbing(AgentBotRuntimeIdentityRuntime.bot(entry).getStance()))) {
@@ -52,7 +52,7 @@ public final class AgentNavigationRegionService {
     }
 
     public static int resolveTargetRegionId(AgentNavigationGraph graph,
-                                            BotEntry entry,
+                                            AgentRuntimeEntry entry,
                                             MapleMap map,
                                             Point targetPos) {
         if (targetPos == null) {
@@ -60,7 +60,7 @@ public final class AgentNavigationRegionService {
         }
 
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-        List<BotEntry> siblingEntries = owner == null
+        List<? extends AgentRuntimeEntry> siblingEntries = owner == null
                 ? List.of()
                 : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
         Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);

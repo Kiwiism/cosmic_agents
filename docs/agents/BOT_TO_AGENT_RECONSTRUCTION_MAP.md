@@ -271,6 +271,14 @@ Recent map updates:
 - Script task completion checks now accept `server.agents.runtime.AgentRuntimeEntry`
   directly, and an unused `server.bots.BotEntry` import was removed from the
   transfer runtime. Script movement/follow completion behavior is unchanged.
+- Navigation debug/path logging, movement state reset, follow-anchor resolution,
+  navigation region classification, and combat action state reset now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly. Path-log output,
+  navigation edge/debug state, transient movement cleanup, follow-anchor
+  selection, and combat action cleanup behavior are unchanged.
+- Movement pose reset/sync helpers and the fidget clear helper now accept
+  `server.agents.runtime.AgentRuntimeEntry` directly so navigation reset can
+  clear transient movement state without re-entering the `server.bots` shell.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

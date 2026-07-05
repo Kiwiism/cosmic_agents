@@ -25,7 +25,7 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
@@ -35,7 +35,7 @@ import server.maps.Rope;
 
 /**
  * Records per-tick navigation snapshots for a single bot and dumps them to a human-readable file.
- * Attach to BotEntry.pathLogger to start recording; call dumpToFile() to write the report.
+ * Attach to AgentRuntimeEntry.pathLogger to start recording; call dumpToFile() to write the report.
  */
 public final class AgentPathLogger {
     private static final int MAX_TICKS = 120; // 6s at 50ms tick
@@ -78,7 +78,7 @@ public final class AgentPathLogger {
         this.mapId = mapId;
     }
 
-    public void record(BotEntry entry,
+    public void record(AgentRuntimeEntry entry,
                 AgentMovementTargetSnapshot targetSnapshot,
                 int botRegionId,
                 boolean consumedTick,
@@ -120,7 +120,7 @@ public final class AgentPathLogger {
      * @param note optional free-text comment included in the report header (may be null)
      * @return absolute file path, or an error string if the write failed
      */
-    public String dumpToFile(BotEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
+    public String dumpToFile(AgentRuntimeEntry entry, AgentMovementTargetSnapshot targetSnapshot, String note) {
         LocalDateTime now = LocalDateTime.now();
         String filename = "pathlog-" + botName + "-" + now.format(FILE_FMT) + ".txt";
 
@@ -161,7 +161,7 @@ public final class AgentPathLogger {
         }
     }
 
-    private static GraphSnapshot resolveGraphSnapshot(BotEntry entry) {
+    private static GraphSnapshot resolveGraphSnapshot(AgentRuntimeEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile requestedProfile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
@@ -179,14 +179,14 @@ public final class AgentPathLogger {
         return new GraphSnapshot(requestedProfile, null, "none/warming");
     }
 
-    private static int resolveCurrentRegionId(AgentNavigationGraph graph, BotEntry entry, Point point) {
+    private static int resolveCurrentRegionId(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point point) {
         if (graph == null) {
             return -1;
         }
         return AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
     }
 
-    private static int resolveTargetRegionId(AgentNavigationGraph graph, BotEntry entry, Point point) {
+    private static int resolveTargetRegionId(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point point) {
         if (graph == null) {
             return -1;
         }
@@ -205,7 +205,7 @@ public final class AgentPathLogger {
     }
 
     private void appendCurrentState(StringBuilder sb,
-                                    BotEntry entry,
+                                    AgentRuntimeEntry entry,
                                     AgentMovementTargetSnapshot targetSnapshot,
                                     Point botPos,
                                     int botRegionId,
@@ -278,7 +278,7 @@ public final class AgentPathLogger {
         sb.append("\n");
     }
 
-    private void appendMovementGraphState(StringBuilder sb, BotEntry entry, GraphSnapshot graphSnapshot) {
+    private void appendMovementGraphState(StringBuilder sb, AgentRuntimeEntry entry, GraphSnapshot graphSnapshot) {
         AgentMovementProfile requested = graphSnapshot.requestedProfile();
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
@@ -312,7 +312,7 @@ public final class AgentPathLogger {
     }
 
     private void appendCurrentPath(StringBuilder sb,
-                                   BotEntry entry,
+                                   AgentRuntimeEntry entry,
                                    AgentMovementTargetSnapshot targetSnapshot,
                                    int goalRegionId,
                                    int rawOwnerRegionId,
@@ -330,7 +330,7 @@ public final class AgentPathLogger {
     }
 
     private void appendPath(StringBuilder sb,
-                            BotEntry entry,
+                            AgentRuntimeEntry entry,
                             Point targetPos,
                             int targetRegionId,
                             int botRegionId,
@@ -394,7 +394,7 @@ public final class AgentPathLogger {
                 .allMatch(r -> Math.abs(r.botX - x) <= 8 && Math.abs(r.botY - y) <= 8);
     }
 
-    static String physState(BotEntry entry) {
+    static String physState(AgentRuntimeEntry entry) {
         if (AgentBotClimbStateRuntime.climbing(entry)) {
             Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
             if (climbRope != null) {
@@ -414,7 +414,7 @@ public final class AgentPathLogger {
                 + (AgentBotMovementStateRuntime.crouching(entry) ? "(crouch)" : "");
     }
 
-    static String navEdgeSummary(BotEntry entry) {
+    static String navEdgeSummary(AgentRuntimeEntry entry) {
         AgentNavigationGraph.Edge e = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (e == null) {
             return "none";
@@ -426,7 +426,7 @@ public final class AgentPathLogger {
                 + (e.launchStepX != 0 ? " stepX=" + e.launchStepX : "");
     }
 
-    private static String navTargetSummary(BotEntry entry) {
+    private static String navTargetSummary(AgentRuntimeEntry entry) {
         Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
         if (navTargetPos == null) {
             return "none";

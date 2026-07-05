@@ -26,6 +26,7 @@ import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.maps.Foothold;
 import tools.PacketCreator;
@@ -76,7 +77,7 @@ public final class AgentFidgetService {
         return handleActiveTick(entry, botPos, targetPos, now);
     }
 
-    public static void clear(BotEntry entry) {
+    public static void clear(AgentRuntimeEntry entry) {
         if (entry == null) {
             return;
         }
