@@ -2523,7 +2523,7 @@ Recent reconstruction notes:
   by the Agent supplies capability instead of a bot package record.
 - Bot command target, transfer, targeted-command match, and bot-entry parser
   adapter now use `AgentBotCommandTarget`, `AgentTransferCommand`,
-  `AgentBotTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
+  `AgentTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
   boundary data is owned by Agent commands while bot-entry adaptation remains
   in the Agent integration layer, preserving the same `AgentCommandParser`
   matching behavior.

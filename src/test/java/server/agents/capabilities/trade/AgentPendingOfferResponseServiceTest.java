@@ -3,8 +3,8 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.bots.BotEntry;
 
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ class AgentPendingOfferResponseServiceTest {
                         (entry, tickSpeaker) -> true,
                         (entries, message) -> {
                             calls.add("resolve:" + entries.size());
-                            return new AgentBotTargetedCommandMatch(second, "yes", null);
+                            return new AgentTargetedCommandMatch<>(second, "yes", null);
                         },
                         (entry, tickSpeaker, message) -> {
                             calls.add("handle:" + (entry == second) + ":" + message);
@@ -82,7 +82,7 @@ class AgentPendingOfferResponseServiceTest {
                 new AgentPendingOfferResponseService.Hooks(
                         entry -> { },
                         (entry, tickSpeaker) -> true,
-                        (entries, message) -> new AgentBotTargetedCommandMatch(null, null, null),
+                        (entries, message) -> new AgentTargetedCommandMatch<>(null, null, null),
                         (entry, tickSpeaker, message) -> {
                             calls.add("handle");
                             return true;
@@ -140,7 +140,7 @@ class AgentPendingOfferResponseServiceTest {
                 },
                 (entries, message) -> {
                     calls.add("resolve:" + entries.size() + ":" + message);
-                    return new AgentBotTargetedCommandMatch(null, null, null);
+                    return new AgentTargetedCommandMatch<>(null, null, null);
                 },
                 (entry, speaker, message) -> {
                     calls.add("handle:" + message);

@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import org.junit.jupiter.api.Test;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
 import server.bots.BotEntry;
 
@@ -21,7 +22,7 @@ class AgentBotCommandBoundaryTest {
 
     @Test
     void targetedCommandMatchPreservesTargetAndFeedback() {
-        AgentBotTargetedCommandMatch match = new AgentBotTargetedCommandMatch(null, "follow me", "not found");
+        AgentTargetedCommandMatch<?> match = new AgentTargetedCommandMatch<>(null, "follow me", "not found");
 
         assertNull(match.entry());
         assertEquals("follow me", match.commandText());

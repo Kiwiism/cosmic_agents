@@ -1,9 +1,9 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.bots.BotEntry;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public final class AgentPendingOfferResponseService {
 
     @FunctionalInterface
     public interface TargetedCommandResolver {
-        AgentBotTargetedCommandMatch resolve(List<BotEntry> entries, String message);
+        AgentTargetedCommandMatch<BotEntry> resolve(List<BotEntry> entries, String message);
     }
 
     @FunctionalInterface
@@ -60,7 +60,7 @@ public final class AgentPendingOfferResponseService {
             }
         }
 
-        AgentBotTargetedCommandMatch targetedAgent = hooks.targetedCommandResolver().resolve(matches, message);
+        AgentTargetedCommandMatch<BotEntry> targetedAgent = hooks.targetedCommandResolver().resolve(matches, message);
         if (targetedAgent.entry() != null) {
             return hooks.pendingOfferResponseHandler().handle(targetedAgent.entry(), speaker, targetedAgent.commandText());
         }

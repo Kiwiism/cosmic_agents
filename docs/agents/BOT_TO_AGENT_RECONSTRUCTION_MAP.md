@@ -70,6 +70,11 @@ Recent map updates:
   `AgentTransferCommand` in the commands package. The temporary
   `AgentBotCommandParser` still adapts legacy bot-targeted command matching
   while transfer command data is Agent-owned.
+- The BotEntry-specific targeted-command match wrapper moved out of
+  integration as generic `AgentTargetedCommandMatch<E extends
+  AgentRuntimeHandle>` in the commands package. `AgentBotCommandParser` still
+  supplies the temporary `BotEntry` adapter until targeted command resolution
+  stops depending on the bot shell.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live

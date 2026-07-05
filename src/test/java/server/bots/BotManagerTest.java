@@ -59,9 +59,9 @@ import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentAmmoDonorPlan;
+import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
 import server.agents.integration.AgentBotCommandParser;
-import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
@@ -203,7 +203,7 @@ class BotManagerTest {
         BotEntry jason = botEntryNamed("Jason");
         BotEntry bob = botEntryNamed("Bob");
 
-        AgentBotTargetedCommandMatch match = AgentBotCommandParser.resolveTargetedBot(
+        AgentTargetedCommandMatch<BotEntry> match = AgentBotCommandParser.resolveTargetedBot(
                 List.of(jason, bob), "Ja pots?");
 
         assertEquals(jason, match.entry());
@@ -216,7 +216,7 @@ class BotManagerTest {
         BotEntry jason = botEntryNamed("Jason");
         BotEntry bob = botEntryNamed("Bob");
 
-        AgentBotTargetedCommandMatch match = AgentBotCommandParser.resolveTargetedBot(
+        AgentTargetedCommandMatch<BotEntry> match = AgentBotCommandParser.resolveTargetedBot(
                 List.of(jason, bob), "2 follow Alice");
 
         assertEquals(bob, match.entry());
@@ -229,7 +229,7 @@ class BotManagerTest {
         BotEntry jane = botEntryNamed("Jane");
         BotEntry jason = botEntryNamed("Jason");
 
-        AgentBotTargetedCommandMatch match = AgentBotCommandParser.resolveTargetedBot(
+        AgentTargetedCommandMatch<BotEntry> match = AgentBotCommandParser.resolveTargetedBot(
                 List.of(jane, jason), "Ja yes");
 
         assertNull(match.entry());
