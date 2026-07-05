@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -11,39 +11,39 @@ public final class AgentBotPatrolStateRuntime {
     private AgentBotPatrolStateRuntime() {
     }
 
-    public static boolean hasPatrolRegion(BotEntry entry) {
+    public static boolean hasPatrolRegion(AgentRuntimeEntry entry) {
         return entry.patrolState().hasRegion();
     }
 
-    public static int patrolRegionId(BotEntry entry) {
+    public static int patrolRegionId(AgentRuntimeEntry entry) {
         return entry.patrolState().regionId();
     }
 
-    public static int patrolMapId(BotEntry entry) {
+    public static int patrolMapId(AgentRuntimeEntry entry) {
         return entry.patrolState().mapId();
     }
 
-    public static Point patrolWanderTarget(BotEntry entry) {
+    public static Point patrolWanderTarget(AgentRuntimeEntry entry) {
         return entry.patrolState().wanderTarget();
     }
 
-    public static void startPatrol(BotEntry entry, int regionId, int mapId) {
+    public static void startPatrol(AgentRuntimeEntry entry, int regionId, int mapId) {
         entry.patrolState().setRegion(regionId, mapId);
     }
 
-    public static void setPatrolWanderTarget(BotEntry entry, Point target) {
+    public static void setPatrolWanderTarget(AgentRuntimeEntry entry, Point target) {
         entry.patrolState().setWanderTarget(target);
     }
 
-    public static void clearPatrolWanderTarget(BotEntry entry) {
+    public static void clearPatrolWanderTarget(AgentRuntimeEntry entry) {
         entry.patrolState().clearWanderTarget();
     }
 
-    public static void clearPatrol(BotEntry entry) {
+    public static void clearPatrol(AgentRuntimeEntry entry) {
         entry.patrolState().clear();
     }
 
-    public static boolean clearPatrolIfMapChanged(BotEntry entry, int mapId) {
+    public static boolean clearPatrolIfMapChanged(AgentRuntimeEntry entry, int mapId) {
         if (!hasPatrolRegion(entry) || patrolMapId(entry) == mapId) {
             return false;
         }

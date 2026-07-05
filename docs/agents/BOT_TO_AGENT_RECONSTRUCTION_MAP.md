@@ -217,6 +217,10 @@ Recent map updates:
   leader activity metadata, heartbeat timing, and failure windows keep identical
   storage and behavior while dropping direct `server.bots` imports at this
   boundary.
+- Movement target, farm anchor, patrol, and stuck-state runtime adapters now
+  accept `server.agents.runtime.AgentRuntimeEntry` directly. Explicit move
+  targets, sentry/farm anchors, patrol regions, and stuck recovery counters keep
+  the same Agent-owned state backing.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.

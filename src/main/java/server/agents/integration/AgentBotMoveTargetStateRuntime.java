@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -11,35 +11,35 @@ public final class AgentBotMoveTargetStateRuntime {
     private AgentBotMoveTargetStateRuntime() {
     }
 
-    public static Point moveTarget(BotEntry entry) {
+    public static Point moveTarget(AgentRuntimeEntry entry) {
         return entry.moveTargetState().target();
     }
 
-    public static boolean hasMoveTarget(BotEntry entry) {
+    public static boolean hasMoveTarget(AgentRuntimeEntry entry) {
         return entry.moveTargetState().hasTarget();
     }
 
-    public static boolean isPrecise(BotEntry entry) {
+    public static boolean isPrecise(AgentRuntimeEntry entry) {
         return entry.moveTargetState().precise();
     }
 
-    public static void setMoveTarget(BotEntry entry, Point target, boolean precise) {
+    public static void setMoveTarget(AgentRuntimeEntry entry, Point target, boolean precise) {
         entry.moveTargetState().setTarget(target, precise);
     }
 
-    public static void setPreciseMoveTarget(BotEntry entry, Point target) {
+    public static void setPreciseMoveTarget(AgentRuntimeEntry entry, Point target) {
         setMoveTarget(entry, target, true);
     }
 
-    public static void clearMoveTarget(BotEntry entry) {
+    public static void clearMoveTarget(AgentRuntimeEntry entry) {
         entry.moveTargetState().clear();
     }
 
-    public static boolean moveTargetEquals(BotEntry entry, Point point) {
+    public static boolean moveTargetEquals(AgentRuntimeEntry entry, Point point) {
         return entry.moveTargetState().targetEquals(point);
     }
 
-    public static boolean hasReachedMoveTarget(BotEntry entry, Point currentPosition, int normalArrivalDistance) {
+    public static boolean hasReachedMoveTarget(AgentRuntimeEntry entry, Point currentPosition, int normalArrivalDistance) {
         Point target = moveTarget(entry);
         if (target == null || currentPosition == null) {
             return false;

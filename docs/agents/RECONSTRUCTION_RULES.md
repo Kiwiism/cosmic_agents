@@ -70,6 +70,10 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentRuntimeEntry` directly. Follow/grind mode flags,
   leader activity state, heartbeat cadence, and tick failure windows preserve
   the same Agent-owned state backing without importing `server.bots`.
+- Movement target, farm anchor, patrol, and stuck-state runtime adapters now
+  take `server.agents.runtime.AgentRuntimeEntry` directly. Explicit move
+  targets, sentry/farm anchors, patrol regions, and stuck recovery counters keep
+  the same behavior and state backing.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

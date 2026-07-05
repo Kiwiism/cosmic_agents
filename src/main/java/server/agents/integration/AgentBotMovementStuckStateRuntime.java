@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -13,53 +13,53 @@ public final class AgentBotMovementStuckStateRuntime {
     private AgentBotMovementStuckStateRuntime() {
     }
 
-    public static int stuckMs(BotEntry entry) {
+    public static int stuckMs(AgentRuntimeEntry entry) {
         return entry.movementStuckState().stuckMs();
     }
 
-    public static void resetStuckMs(BotEntry entry) {
+    public static void resetStuckMs(AgentRuntimeEntry entry) {
         entry.movementStuckState().setStuckMs(0);
     }
 
-    public static void addStuckMs(BotEntry entry, int deltaMs) {
+    public static void addStuckMs(AgentRuntimeEntry entry, int deltaMs) {
         entry.movementStuckState().addStuckMs(deltaMs);
     }
 
-    public static int unstuckCooldownMs(BotEntry entry) {
+    public static int unstuckCooldownMs(AgentRuntimeEntry entry) {
         return entry.movementStuckState().unstuckCooldownMs();
     }
 
-    public static boolean hasUnstuckCooldown(BotEntry entry) {
+    public static boolean hasUnstuckCooldown(AgentRuntimeEntry entry) {
         return entry.movementStuckState().unstuckCooldownMs() > 0;
     }
 
-    public static void setUnstuckCooldownMs(BotEntry entry, int cooldownMs) {
+    public static void setUnstuckCooldownMs(AgentRuntimeEntry entry, int cooldownMs) {
         entry.movementStuckState().setUnstuckCooldownMs(cooldownMs);
     }
 
-    public static void clearStuckCheck(BotEntry entry) {
+    public static void clearStuckCheck(AgentRuntimeEntry entry) {
         entry.movementStuckState().clearStuckCheckPosition();
     }
 
-    public static void resetStuckProgress(BotEntry entry) {
+    public static void resetStuckProgress(AgentRuntimeEntry entry) {
         resetStuckMs(entry);
         clearStuckCheck(entry);
     }
 
-    public static boolean hasStuckCheckPosition(BotEntry entry) {
+    public static boolean hasStuckCheckPosition(AgentRuntimeEntry entry) {
         return entry.movementStuckState().hasStuckCheckPosition();
     }
 
-    public static void rememberStuckCheckPosition(BotEntry entry, Point position) {
+    public static void rememberStuckCheckPosition(AgentRuntimeEntry entry, Point position) {
         entry.movementStuckState().setStuckCheckPosition(position);
     }
 
-    public static boolean movedSinceStuckCheck(BotEntry entry, Point position, int thresholdPx) {
+    public static boolean movedSinceStuckCheck(AgentRuntimeEntry entry, Point position, int thresholdPx) {
         return Math.abs(position.x - entry.movementStuckState().stuckCheckX()) > thresholdPx
                 || Math.abs(position.y - entry.movementStuckState().stuckCheckY()) > thresholdPx;
     }
 
-    public static boolean stuckForAtLeast(BotEntry entry, int thresholdMs) {
+    public static boolean stuckForAtLeast(AgentRuntimeEntry entry, int thresholdMs) {
         return entry.movementStuckState().stuckMs() >= thresholdMs;
     }
 }

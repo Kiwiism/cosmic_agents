@@ -1,6 +1,6 @@
 package server.agents.integration;
 
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -11,35 +11,35 @@ public final class AgentBotFarmAnchorStateRuntime {
     private AgentBotFarmAnchorStateRuntime() {
     }
 
-    public static Point farmAnchor(BotEntry entry) {
+    public static Point farmAnchor(AgentRuntimeEntry entry) {
         return entry.farmAnchorState().anchor();
     }
 
-    public static int farmAnchorMapId(BotEntry entry) {
+    public static int farmAnchorMapId(AgentRuntimeEntry entry) {
         return entry.farmAnchorState().mapId();
     }
 
-    public static boolean hasFarmAnchor(BotEntry entry) {
+    public static boolean hasFarmAnchor(AgentRuntimeEntry entry) {
         return entry.farmAnchorState().hasAnchor();
     }
 
-    public static boolean isFarmAnchorInMap(BotEntry entry, int mapId) {
+    public static boolean isFarmAnchorInMap(AgentRuntimeEntry entry, int mapId) {
         return hasFarmAnchor(entry) && farmAnchorMapId(entry) == mapId;
     }
 
-    public static Point farmAnchorInMap(BotEntry entry, int mapId) {
+    public static Point farmAnchorInMap(AgentRuntimeEntry entry, int mapId) {
         return isFarmAnchorInMap(entry, mapId) ? farmAnchor(entry) : null;
     }
 
-    public static void setFarmAnchor(BotEntry entry, Point anchor, int mapId) {
+    public static void setFarmAnchor(AgentRuntimeEntry entry, Point anchor, int mapId) {
         entry.farmAnchorState().setAnchor(anchor, mapId);
     }
 
-    public static void clearFarmAnchor(BotEntry entry) {
+    public static void clearFarmAnchor(AgentRuntimeEntry entry) {
         entry.farmAnchorState().clear();
     }
 
-    public static boolean clearFarmAnchorIfMapChanged(BotEntry entry, int mapId) {
+    public static boolean clearFarmAnchorIfMapChanged(AgentRuntimeEntry entry, int mapId) {
         if (!hasFarmAnchor(entry) || farmAnchorMapId(entry) == mapId) {
             return false;
         }
