@@ -58,7 +58,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.supplies.AgentAmmoService;
-import server.agents.integration.AgentBotAmmoDonorPlan;
+import server.agents.capabilities.supplies.AgentAmmoDonorPlan;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotTargetedCommandMatch;
 import server.agents.integration.AgentBotTransferCommand;
@@ -1343,7 +1343,7 @@ class BotManagerTest {
             return WeaponType.SWORD1H;
         })) {
 
-            AgentBotAmmoDonorPlan plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentAmmoDonorPlan<BotEntry> plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(nonBow800Entry, plan.entry());
@@ -1371,7 +1371,7 @@ class BotManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class,
                 invocation -> WeaponType.BOW)) {
-            AgentBotAmmoDonorPlan plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentAmmoDonorPlan<BotEntry> plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(bow3000Entry, plan.entry());

@@ -4818,6 +4818,10 @@ Current physics correction:
   Agent-map-id reader instead of `BotEntry`. The policy still prefers an Agent
   in the leader's current map and falls back to the first entry; the chat route
   runtime supplies the temporary BotEntry map-id adapter.
+- Ammo donor plan data now lives in `AgentAmmoDonorPlan` under the supplies
+  capability and is generic over `AgentRuntimeHandle`. The ammo service still
+  uses `BotEntry` at its temporary runtime boundary, but donor scoring,
+  selection fields, and scheduled transfer behavior are unchanged.
 
 Initial reconstruction order:
 

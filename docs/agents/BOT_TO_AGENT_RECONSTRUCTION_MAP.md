@@ -52,6 +52,10 @@ Recent map updates:
 - `AgentGroupSupplyResponderSelector` no longer imports `BotEntry`; it selects
   over Agent handles using a supplied map-id reader. `AgentChatRouteRuntime`
   keeps the temporary map-id adapter.
+- `AgentBotAmmoDonorPlan` moved out of integration as
+  `AgentAmmoDonorPlan<E extends AgentRuntimeHandle>` in the supplies
+  capability. Existing ammo donor selection and tests now use the Agent-owned
+  value object while `AgentAmmoService` still adapts with `BotEntry`.
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
