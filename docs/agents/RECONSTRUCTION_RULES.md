@@ -136,6 +136,9 @@ Recent reconstruction notes:
   directly for sequence initialization, batch setup, meso insertion, category
   announcement, and reset behavior. Trade state storage and trade-window side
   effects are unchanged.
+- Movement profile refresh now takes `server.agents.runtime.AgentRuntimeEntry`
+  directly. Profile comparison, graph warmup, profile storage, and navigation
+  state reset behavior are unchanged.
 - Fixed-weapon equipment DP execution now enters through
   `server.agents.capabilities.equipment.AgentEquipmentOptimizer`.
   `BotEquipManager` auto-equip, debug, and future-recommendation branches call

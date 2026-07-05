@@ -283,6 +283,9 @@ Recent map updates:
   directly for sequence initialization, batch setup, meso insertion, category
   announcement, and reset behavior. Trade state storage and trade-window side
   effects are unchanged.
+- Movement profile refresh now accepts `server.agents.runtime.AgentRuntimeEntry`
+  directly. Profile comparison, graph warmup, profile storage, and navigation
+  state reset behavior are unchanged.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
   `AgentBotCombatCooldownStateRuntime`.
