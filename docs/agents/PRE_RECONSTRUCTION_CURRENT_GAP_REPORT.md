@@ -62,6 +62,17 @@ post-reconstruction implementation:
 Before the goal can be honestly marked complete, collect at least one real
 baseline server/player evidence package.
 
+Current local scaffold:
+
+```text
+logs/soak/baseline/baseline-20260707-0512
+```
+
+The scaffold verifies as structurally valid but incomplete. It has provenance
+logs and templates, but it still needs real startup, serverhealth,
+scale-health, slow-operation, shutdown, checklist, and summary evidence from an
+actual server run.
+
 Required baseline proof:
 
 - startup log.
