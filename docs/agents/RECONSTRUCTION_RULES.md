@@ -4971,6 +4971,8 @@ Current physics correction:
 - Combat death-state entry and attack-facing memory wrappers now accept
   `AgentRuntimeEntry`. Dead pose marking, movement broadcast, death timer
   state, optional death dialogue, and attack-facing stance sync are unchanged.
+- Movement motion-timer countdown now accepts `AgentRuntimeEntry`; down-jump
+  grace-period countdown math is unchanged.
 
 Initial reconstruction order:
 
