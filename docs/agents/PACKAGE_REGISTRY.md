@@ -808,9 +808,104 @@ Implementation focus:
 5. add batch command dry-run and partial-acceptance flow.
 6. add audit events and result summaries.
 
+### 19. Agent Population Director
+
+Status: well defined.
+
+Purpose:
+
+- Control world-level distribution of archetypes, jobs, economic roles,
+  social idlers, farmers, merchants, islanders, and progression paths.
+- Keep Agent populations varied instead of letting every Agent converge on
+  the same efficient build, map, plan, or economy role.
+- Provide seeded population presets for soak tests and long-running scaling
+  experiments.
+
+Primary docs:
+
+- `docs/agents/population-director/AGENT_POPULATION_DIRECTOR_DESIGN_SPECIFICATION.md`
+- `docs/agents/population-director/AGENT_POPULATION_DIRECTOR_TECHNICAL_SPECIFICATION.md`
+
+Owns:
+
+- world population plans.
+- cohort and role distribution targets.
+- map capacity-aware assignment proposals.
+- spawn wave planning.
+- gradual rebalance proposals.
+- population decision journal records.
+- class/job population demand signals for Economy Engine.
+- seeded population presets for soak-test repeatability.
+
+Does not own:
+
+- live Agent action execution.
+- navigation, combat, looting, NPC, quest, shop, trade, or LLM actions.
+- Profile Platform hard constraints.
+- Plan Runtime objective execution.
+- Economy Engine price decisions.
+- direct Cosmic server mutation.
+
+Implementation focus:
+
+1. add portable population plan schema.
+2. add population snapshot interface.
+3. add target-vs-current gap planner.
+4. add capacity-aware assignment proposal builder.
+5. add stable rebalance proposal builder with anti-thrash rules.
+6. add population demand signal output.
+7. add seeded soak-test population presets.
+
+### 20. Portable Installer / Patcher
+
+Status: well defined.
+
+Purpose:
+
+- Install the portable Agent platform into clean Cosmic-like servers with
+  minimal marker-block edits.
+- Keep install, verify, update, and uninstall flows idempotent and reversible.
+- Preserve portability by limiting Cosmic-specific code to the server adapter
+  and plugin bridge.
+
+Primary docs:
+
+- `docs/agents/server-adapter/MINIMAL_COSMIC_EDIT_INSTALL_TARGET.md`
+- `docs/agents/server-adapter/PORTABLE_INSTALLER_TECHNICAL_SPECIFICATION.md`
+
+Owns:
+
+- install manifest format.
+- dry-run install planner.
+- marker-block patch engine.
+- installed file copy/update rules.
+- config merge rules.
+- verification reports.
+- uninstall flow.
+- update flow.
+- clean Cosmic clone compatibility checks.
+
+Does not own:
+
+- Agent runtime behavior.
+- live Agent command behavior.
+- BotClient behavior.
+- catalog/profile/economy/LLM runtime logic.
+- server owner data, catalogs, profiles, or logs.
+
+Implementation focus:
+
+1. add install manifest format.
+2. add dry-run planner.
+3. add marker-block patch engine.
+4. add file copy and config merge helpers.
+5. add verify report.
+6. add uninstall/update flows.
+7. add golden file tests and clean-clone compile verification.
+
 ## Partially Defined Packages
 
-### 19. Quest / Combat Focus Policy Package
+### 21. Quest / Combat Focus Policy Package
 
 Status: policy defined, package not fully defined.
 
@@ -849,33 +944,7 @@ agent-quest-objective-policy
 
 ## Backlog Packages To Promote
 
-### 20. Agent Population Director
-
-Status: discussed, not yet packaged.
-
-Purpose:
-
-- Control world-level distribution of archetypes, jobs, economic roles,
-  social idlers, farmers, merchants, islanders, and progression paths.
-
-Why useful:
-
-- Prevents every agent from becoming the same optimal build.
-- Lets the world feel intentionally varied.
-- Can drive economy demand by class population growth.
-
-Suggested docs:
-
-- `AGENT_POPULATION_DIRECTOR_DESIGN_SPECIFICATION.md`
-- `AGENT_POPULATION_DIRECTOR_TECHNICAL_SPECIFICATION.md`
-
-Recommended package:
-
-```text
-agent-population-director
-```
-
-### 21. Relationship / Social Graph Runtime
+### 22. Relationship / Social Graph Runtime
 
 Status: included inside profile docs, but may deserve its own package later.
 
@@ -898,34 +967,6 @@ Potential package:
 
 ```text
 agent-social-relationship-runtime
-```
-
-### 22. Portable Installer / Patcher
-
-Status: contract exists, implementation package not fully specified.
-
-Purpose:
-
-- Install the portable platform into clean Cosmic-like servers with minimal
-  marker-block edits.
-
-Why useful:
-
-- Keeps the agent platform portable.
-- Makes future updates/uninstall possible.
-
-Existing docs:
-
-- `docs/agents/server-adapter/MINIMAL_COSMIC_EDIT_INSTALL_TARGET.md`
-
-Suggested extra docs:
-
-- `PORTABLE_INSTALLER_TECHNICAL_SPECIFICATION.md`
-
-Recommended package:
-
-```text
-agent-platform-installer
 ```
 
 ## Recommended Implementation Order
@@ -983,10 +1024,8 @@ Reasoning:
 
 Highest priority:
 
-1. Population Director design + technical specs.
-2. Portable Installer technical spec.
-3. Quest Objective Policy design + technical specs.
-4. Relationship / Social Graph split-out spec if profile package grows large.
+1. Quest Objective Policy design + technical specs.
+2. Relationship / Social Graph split-out spec if profile package grows large.
 
 Second priority:
 

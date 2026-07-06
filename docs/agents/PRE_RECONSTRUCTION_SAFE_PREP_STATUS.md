@@ -148,6 +148,8 @@ Well-defined packages:
 - Background Action Runtime.
 - Agent Soak Test Harness.
 - LLM Control Gateway Package.
+- Agent Population Director.
+- Portable Installer / Patcher.
 
 Partially defined packages that need specs before implementation:
 
@@ -155,9 +157,7 @@ Partially defined packages that need specs before implementation:
 
 Backlog packages to promote:
 
-- Agent Population Director.
 - Relationship / Social Graph Runtime.
-- Portable Installer / Patcher.
 
 ## Verification Rules For Every Safe-Prep Batch
 
@@ -182,10 +182,8 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write Population Director design and technical specs.
-2. Write Portable Installer technical spec.
-3. Write Quest Objective Policy design and technical specs.
-4. Keep server-only diagnostics stable and collect soak evidence.
+1. Write Quest Objective Policy design and technical specs.
+2. Keep server-only diagnostics stable and collect soak evidence.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.

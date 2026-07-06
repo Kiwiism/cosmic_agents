@@ -45,6 +45,9 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Agent Soak Test Harness technical specification.
 - [x] LLM Gateway design specification.
 - [x] LLM Gateway technical specification.
+- [x] Agent Population Director design specification.
+- [x] Agent Population Director technical specification.
+- [x] Portable Installer technical specification.
 
 ## Builder Work
 
@@ -130,6 +133,25 @@ This TODO tracks the future portable Agent Knowledge Platform.
   and party/help requests.
 - [ ] Add LLM profile summary API.
 
+## Population Director Work
+
+- [x] Define Agent Population Director design and technical specifications.
+- [ ] Create world population plan schema files.
+- [ ] Create cohort and role target schema files.
+- [ ] Create map capacity policy schema files.
+- [ ] Create population snapshot provider interface.
+- [ ] Create target-vs-current gap planner.
+- [ ] Create capacity-aware spawn wave planner.
+- [ ] Create stable rebalance proposal planner.
+- [ ] Add anti-thrash cooldown and proposal rejection memory.
+- [ ] Add hard constraint validation against Profile Platform.
+- [ ] Add map capacity validation against Catalog Platform.
+- [ ] Add population demand signals for Economy Engine.
+- [ ] Add seeded population presets for soak tests.
+- [ ] Add observe-only and plan-only modes before live assignment.
+- [ ] Add decision journal records for assignments and rebalances.
+- [ ] Add Agent Console population overview and proposal preview.
+
 ## Plan Card Work
 
 - [x] Document Plan Card system contract.
@@ -185,6 +207,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
 
 - [ ] Define DTOs in code after reconstruction boundary is stable.
 - [ ] Implement Cosmic server adapter.
+- [x] Document minimal Cosmic install patcher technical contract.
 - [ ] Implement minimal Cosmic install patcher from `docs/agents/server-adapter/MINIMAL_COSMIC_EDIT_INSTALL_TARGET.md`.
 - [ ] Add installer verification for clean Cosmic clones.
 - [ ] Add installer uninstall/update mode using `AGENT_PLATFORM_BEGIN` marker blocks.
