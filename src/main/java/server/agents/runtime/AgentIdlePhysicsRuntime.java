@@ -22,11 +22,15 @@ public final class AgentIdlePhysicsRuntime {
     private static AgentIdlePhysicsService.PhysicsHooks hooks() {
         return new AgentIdlePhysicsService.PhysicsHooks(
                 AgentMapEnvironmentService::isSwimMap,
-                entry -> AgentMovementPhaseDispatchService.tickSwimming(entry, null),
-                entry -> AgentMovementPhaseDispatchService.tickAirborne(entry, null),
-                AgentMovementPoseService::resolveIdleGroundStance,
-                AgentMovementPoseService::resolveStance,
-                AgentMovementPoseService::idleOnGround,
-                AgentMovementBroadcastService::broadcastMovement);
+                entry -> AgentMovementPhaseDispatchService.tickSwimming(asBotEntry(entry), null),
+                entry -> AgentMovementPhaseDispatchService.tickAirborne(asBotEntry(entry), null),
+                entry -> AgentMovementPoseService.resolveIdleGroundStance(asBotEntry(entry)),
+                entry -> AgentMovementPoseService.resolveStance(asBotEntry(entry)),
+                (entry, agent) -> AgentMovementPoseService.idleOnGround(asBotEntry(entry), agent),
+                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

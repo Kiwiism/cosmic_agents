@@ -5134,6 +5134,9 @@ Current physics correction:
 - Heartbeat service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; interval gating, heartbeat timestamp update, last-packet
   update, and movement broadcast behavior are unchanged.
+- Idle-physics service now accepts `AgentRuntimeEntry`; active-mode gating,
+  swim/airborne/grounded physics dispatch, idle stance correction, and movement
+  broadcast behavior are unchanged.
 
 Initial reconstruction order:
 

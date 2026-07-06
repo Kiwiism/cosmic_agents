@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,7 +17,7 @@ class AgentIdlePhysicsServiceTest {
     @Test
     void tickIdleReturnsFalseWithoutPhysicsWhenAgentIsInActiveMode() {
         Character agent = characterWithStance(0);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         Counters counters = new Counters();
 
@@ -31,7 +30,7 @@ class AgentIdlePhysicsServiceTest {
     @Test
     void tickIdleConsumesAndTicksSwimmingWhenInAirOnSwimMap() {
         Character agent = characterWithStance(0);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
@@ -45,7 +44,7 @@ class AgentIdlePhysicsServiceTest {
     @Test
     void physicsOnlyTicksAirborneWhenInAirOutsideSwimMap() {
         Character agent = characterWithStance(0);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
@@ -58,7 +57,7 @@ class AgentIdlePhysicsServiceTest {
     @Test
     void groundedMismatchIdlesAndBroadcasts() {
         Character agent = characterWithStance(1);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
 
         AgentIdlePhysicsService.tickPhysicsOnly(entry, agent, hooks(counters, false, 2, 1));
@@ -70,7 +69,7 @@ class AgentIdlePhysicsServiceTest {
     @Test
     void groundedMatchingStanceHasNoSideEffects() {
         Character agent = characterWithStance(2);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
 
         AgentIdlePhysicsService.tickPhysicsOnly(entry, agent, hooks(counters, false, 2, 2));

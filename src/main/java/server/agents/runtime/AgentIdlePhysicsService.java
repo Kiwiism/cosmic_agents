@@ -6,7 +6,6 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -14,19 +13,19 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 public final class AgentIdlePhysicsService {
-    public record PhysicsHooks(Predicate<BotEntry> swimMap,
-                               Consumer<BotEntry> swimmingTick,
-                               Consumer<BotEntry> airborneTick,
-                               ToIntFunction<BotEntry> idleGroundStanceResolver,
-                               ToIntFunction<BotEntry> stanceResolver,
-                               BiConsumer<BotEntry, Character> idleOnGround,
-                               Consumer<BotEntry> movementBroadcaster) {
+    public record PhysicsHooks(Predicate<AgentRuntimeEntry> swimMap,
+                               Consumer<AgentRuntimeEntry> swimmingTick,
+                               Consumer<AgentRuntimeEntry> airborneTick,
+                               ToIntFunction<AgentRuntimeEntry> idleGroundStanceResolver,
+                               ToIntFunction<AgentRuntimeEntry> stanceResolver,
+                               BiConsumer<AgentRuntimeEntry, Character> idleOnGround,
+                               Consumer<AgentRuntimeEntry> movementBroadcaster) {
     }
 
     private AgentIdlePhysicsService() {
     }
 
-    public static boolean tickIdleEntry(BotEntry entry, Character agent, PhysicsHooks hooks) {
+    public static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent, PhysicsHooks hooks) {
         if (AgentBotModeStateRuntime.following(entry)
                 || AgentBotModeStateRuntime.grinding(entry)
                 || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
@@ -38,7 +37,7 @@ public final class AgentIdlePhysicsService {
         return true;
     }
 
-    public static void tickPhysicsOnly(BotEntry entry, Character agent, PhysicsHooks hooks) {
+    public static void tickPhysicsOnly(AgentRuntimeEntry entry, Character agent, PhysicsHooks hooks) {
         if (hooks.swimMap().test(entry)
                 && AgentBotMovementStateRuntime.inAir(entry)
                 && !AgentBotMovementStateRuntime.climbing(entry)) {

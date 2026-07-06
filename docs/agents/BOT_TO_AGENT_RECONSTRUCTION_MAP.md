@@ -107,6 +107,10 @@ Recent map updates:
 - `AgentHeartbeatServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Interval gating, heartbeat timestamp update,
   last-packet update, and movement broadcast behavior remain unchanged.
+- `AgentIdlePhysicsService` now accepts `AgentRuntimeEntry`. Active-mode
+  gating, swim/airborne/grounded physics dispatch, idle stance correction, and
+  movement broadcast behavior remain unchanged while `AgentIdlePhysicsRuntime`
+  keeps the temporary `BotEntry` adapter edge.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
