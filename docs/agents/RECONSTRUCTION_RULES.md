@@ -5075,6 +5075,9 @@ Current physics correction:
 - Follow-target candidate selection now accepts Agent runtime sibling entries;
   leader inclusion, party-member filtering, sibling-agent filtering, and
   duplicate suppression are unchanged.
+- Formation state lookup and offset application now accept Agent runtime
+  entries; formation store access, leader/default resolution, and offset
+  assignment patterns are unchanged.
 
 Initial reconstruction order:
 

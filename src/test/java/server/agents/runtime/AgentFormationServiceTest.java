@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.runtime.AgentFormationService.FormationState;
 import server.agents.runtime.AgentFormationService.FormationType;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -32,8 +31,8 @@ class AgentFormationServiceTest {
 
     @Test
     void appliesOffsetsToEntries() {
-        BotEntry first = new BotEntry(mock(Character.class), mock(Character.class), null);
-        BotEntry second = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 
         AgentFormationService.applyOffsets(
                 List.of(first, second), new FormationState(FormationType.STAGGER, 60, 120));
@@ -53,9 +52,9 @@ class AgentFormationServiceTest {
         assertEquals(customFormation, AgentFormationService.stateForLeader(formations, leader.getId(), defaultFormation));
         assertEquals(defaultFormation, AgentFormationService.stateForLeader(formations, 999, defaultFormation));
         assertEquals(customFormation, AgentFormationService.stateForEntry(
-                new BotEntry(mock(Character.class), leader, null), formations, defaultFormation));
+                new AgentRuntimeEntry(mock(Character.class), leader, null), formations, defaultFormation));
         assertEquals(defaultFormation, AgentFormationService.stateForEntry(
-                new BotEntry(mock(Character.class), null, null), formations, defaultFormation));
+                new AgentRuntimeEntry(mock(Character.class), null, null), formations, defaultFormation));
     }
 
     @Test
