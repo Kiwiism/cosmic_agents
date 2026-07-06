@@ -5032,6 +5032,10 @@ Current physics correction:
   profile refresh, follow-anchor resolution, target snapshot capture, observed
   leader motion updates, map-change cleanup, and follow-action cleanup ordering
   are unchanged.
+- Tick core orchestration now accepts `AgentRuntimeEntry`; preflight,
+  leader-resolution, inactive-leader, ownerless, death, live-context, live-gate,
+  and live-mode ordering are unchanged. `AgentTickCoreRuntime` remains the
+  temporary compatibility bridge to BotEntry-shaped downstream callbacks.
 
 Initial reconstruction order:
 

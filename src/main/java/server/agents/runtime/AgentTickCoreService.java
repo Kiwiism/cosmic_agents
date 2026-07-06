@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.util.function.BooleanSupplier;
 
@@ -28,37 +27,37 @@ public final class AgentTickCoreService {
 
     @FunctionalInterface
     public interface PreflightRunner {
-        AgentTickPreflightService.Result run(BotEntry entry, int agentCharId, long nowMs);
+        AgentTickPreflightService.Result run(AgentRuntimeEntry entry, int agentCharId, long nowMs);
     }
 
     @FunctionalInterface
     public interface LeaderResolver {
-        Character resolve(BotEntry entry, int leaderCharId);
+        Character resolve(AgentRuntimeEntry entry, int leaderCharId);
     }
 
     @FunctionalInterface
     public interface InactiveLeaderTick {
-        boolean tick(BotEntry entry, Character agent, Character leader, long nowMs, int leaderCharId);
+        boolean tick(AgentRuntimeEntry entry, Character agent, Character leader, long nowMs, int leaderCharId);
     }
 
     @FunctionalInterface
     public interface OwnerlessTick {
-        void tick(BotEntry entry, Character agent, boolean runAiTick);
+        void tick(AgentRuntimeEntry entry, Character agent, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface DeadTick {
-        boolean tick(BotEntry entry, Character agent, Character leader);
+        boolean tick(AgentRuntimeEntry entry, Character agent, Character leader);
     }
 
     @FunctionalInterface
     public interface LiveContextPreparer {
-        AgentLiveTickContextService.Context prepare(BotEntry entry, Character agent, Character leader);
+        AgentLiveTickContextService.Context prepare(AgentRuntimeEntry entry, Character agent, Character leader);
     }
 
     @FunctionalInterface
     public interface LiveGateRunner {
-        boolean tick(BotEntry entry,
+        boolean tick(AgentRuntimeEntry entry,
                      Character agent,
                      Character leader,
                      Character followAnchor,
@@ -69,7 +68,7 @@ public final class AgentTickCoreService {
 
     @FunctionalInterface
     public interface LiveModeRunner {
-        void tick(BotEntry entry,
+        void tick(AgentRuntimeEntry entry,
                   Character agent,
                   Character followAnchor,
                   AgentLiveTickContextService.Context liveContext,
@@ -78,7 +77,7 @@ public final class AgentTickCoreService {
                   boolean performanceEnabled);
     }
 
-    public static void tickCore(BotEntry entry, int leaderCharId, int agentCharId, Hooks hooks) {
+    public static void tickCore(AgentRuntimeEntry entry, int leaderCharId, int agentCharId, Hooks hooks) {
         long nowMs = hooks.nowMillis().get();
         AgentTickPreflightService.Result preflight = hooks.preflightRunner().run(entry, agentCharId, nowMs);
         if (preflight.consumedTick()) {

@@ -21,14 +21,22 @@ public final class AgentTickCoreRuntime {
                 entry,
                 leaderCharId,
                 agentCharId,
-                AgentLeaderSessionRuntime::resolveTickLeader,
-                AgentLeaderSafetyRuntime::handleInactiveLeaderTick,
+                (runtimeEntry, runtimeLeaderCharId) ->
+                        AgentLeaderSessionRuntime.resolveTickLeader(asBotEntry(runtimeEntry), runtimeLeaderCharId),
+                (runtimeEntry, agent, leader, nowMs, runtimeLeaderCharId) ->
+                        AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
+                                asBotEntry(runtimeEntry),
+                                agent,
+                                leader,
+                                nowMs,
+                                runtimeLeaderCharId),
                 AgentMapTransitionRuntime::groundAfterMapChange,
                 AgentStandaloneMoveTargetRuntime::tickStandaloneMoveTarget,
-                AgentDeathTickRuntime::handleDeadTick,
+                (runtimeEntry, agent, leader) ->
+                        AgentDeathTickRuntime.handleDeadTick(asBotEntry(runtimeEntry), agent, leader),
                 (runtimeEntry, leader) -> AgentTargetSnapshotRuntime.resolveFollowAnchor((BotEntry) runtimeEntry, leader),
                 runtimeEntry -> AgentTargetSnapshotRuntime.captureTargetSnapshot((BotEntry) runtimeEntry),
-                AgentScriptTaskRuntime::tick,
+                runtimeEntry -> AgentScriptTaskRuntime.tick(asBotEntry(runtimeEntry)),
                 issueGrind,
                 issueFollow,
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
@@ -151,19 +159,19 @@ public final class AgentTickCoreRuntime {
                                                     int followDistance) {
         return new AgentTickCoreService.Hooks(
                 System::currentTimeMillis,
-                AgentTickPreflightRuntime::runPreflight,
+                (runtimeEntry, agentCharId, nowMs) -> AgentTickPreflightRuntime.runPreflight(asBotEntry(runtimeEntry), agentCharId, nowMs),
                 leaderResolver,
                 inactiveLeaderTick,
                 (ownerlessEntry, ownerlessAgent, ownerlessRunAiTick) -> AgentOwnerlessTickService.tickOwnerless(
-                        ownerlessEntry,
+                        asBotEntry(ownerlessEntry),
                         ownerlessAgent,
                         ownerlessRunAiTick,
                         groundAfterMapChange,
                         standaloneMoveTargetTick,
-                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessAgent)),
+                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(ownerlessEntry), ownerlessAgent)),
                 deadTick,
                 (liveEntry, liveAgent, liveLeader) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
-                        liveEntry,
+                        asBotEntry(liveEntry),
                         liveAgent,
                         liveLeader,
                         followAnchorResolver,
@@ -188,7 +196,7 @@ public final class AgentTickCoreRuntime {
                 (modeEntry, modeAgent, modeFollowAnchor, liveContext, modeRunAiTick, nowMs, perf) ->
                         AgentLiveModeTickRuntime.tickLiveModes(
                                 new AgentLiveModeTickService.Context(
-                                        modeEntry,
+                                        asBotEntry(modeEntry),
                                         modeAgent,
                                         liveContext.agentPosition(),
                                         liveContext.targetPosition(),
@@ -202,5 +210,9 @@ public final class AgentTickCoreRuntime {
                                 anchoredFarmTick,
                                 grindModeTick,
                                 followDistance));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }
