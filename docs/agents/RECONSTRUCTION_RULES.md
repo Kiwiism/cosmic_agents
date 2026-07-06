@@ -5131,6 +5131,9 @@ Current physics correction:
   and move-window update ordering are unchanged.
 - Map-environment service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; null-map handling and swim-map detection are unchanged.
+- Heartbeat service tests now exercise the existing `AgentRuntimeEntry`
+  boundary directly; interval gating, heartbeat timestamp update, last-packet
+  update, and movement broadcast behavior are unchanged.
 
 Initial reconstruction order:
 

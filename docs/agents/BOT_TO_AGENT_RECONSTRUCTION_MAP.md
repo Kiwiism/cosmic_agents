@@ -104,6 +104,9 @@ Recent map updates:
 - `AgentMapEnvironmentServiceTest` now exercises the existing
   Agent-runtime-entry service boundary directly. Null-map handling and swim-map
   detection remain unchanged.
+- `AgentHeartbeatServiceTest` now exercises the existing Agent-runtime-entry
+  service boundary directly. Interval gating, heartbeat timestamp update,
+  last-packet update, and movement broadcast behavior remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

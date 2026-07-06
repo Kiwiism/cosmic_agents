@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,7 +15,7 @@ class AgentHeartbeatServiceTest {
     @Test
     void skipsHeartbeatWhenIntervalHasNotElapsed() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotTickStateRuntime.markHeartbeat(entry, 1_000L);
         AtomicInteger lastPacketUpdates = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
@@ -32,7 +31,7 @@ class AgentHeartbeatServiceTest {
     @Test
     void marksHeartbeatAndRunsSideEffectsWhenDue() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotTickStateRuntime.markHeartbeat(entry, 1_000L);
         AtomicInteger lastPacketUpdates = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
