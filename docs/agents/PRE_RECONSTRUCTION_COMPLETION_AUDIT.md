@@ -31,13 +31,14 @@ Before reconstruction is stable:
 | Server-only hardening and diagnostics | Ready for current phase | `docs/SERVER_HARDENING_DIAGNOSTICS.md`, `docs/SERVER_SCALE_TODO.md`, `docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md` | Run baseline/player soak and archive `!serverhealth` / scale-health samples. |
 | Agent scaling prep | Ready as strategy/specs | `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`, `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`, simulation/background/perception specs | Implement after reconstruction, then run staged Agent soak. |
 | Catalog prep | Ready as contract and partial tooling | `docs/agents/catalog-platform/*`, `tools/game-catalog`, `tools/npc-catalog`, `tools/agent-llm-catalog` | Implement unified bundle builder and validation reports. |
-| Maple Island MVP prep | Ready as first gameplay package | `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`, `docs/agents/MAPLE_ISLAND_MVP_DESIGN_SPECIFICATION.md`, `docs/agents/MAPLE_ISLAND_MVP_TECHNICAL_IMPLEMENTATION_SPECIFICATION.md`, `docs/agents/plans/maple-island-mvp.plan.json` | Implement after reconstructed Plan/Capability runtime is stable. |
+| Maple Island MVP prep | Ready as first gameplay package | `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`, `docs/agents/MAPLE_ISLAND_MVP_DESIGN_SPECIFICATION.md`, `docs/agents/MAPLE_ISLAND_MVP_TECHNICAL_SPECIFICATION.md`, `docs/agents/plans/maple-island-mvp.plan.json` | Implement after reconstructed Plan/Capability runtime is stable. |
 | Portable platform package specs | Ready as contracts | `docs/agents/PACKAGE_REGISTRY.md` and each package directory | Implement packages after reconstruction boundaries are stable. |
 | Plan Card prep | Ready as contract | `docs/agents/llm-autonomy/PLAN_CARD_SYSTEM.md`, `docs/agents/plan-runtime/*` | Add schema/code after reconstruction. |
 | Profile prep | Ready as contract | `docs/agents/profile-platform/*`, `docs/agents/social-relationship-runtime/*` | Add schema/store/adaptation implementation later. |
 | Economy prep | Ready as contract | `docs/agents/llm-autonomy/ECONOMY_*`, `docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md` | Implement observation store after event bus/catalog/profile foundations. |
 | Console planning | Ready as planning docs | `docs/consoles/DATABASE_CONSOLE_*`, `docs/consoles/SERVER_CONSOLE_SCOPE.md` | Keep console implementation modular. |
 | Nutnnut-over-Cosmic review | Ready as decision record | `docs/NUTNNUT_OVER_COSMIC_REVIEW.md`, `docs/COSMIC_REVERT_REVIEW.md` | Apply only explicit approved reversions. |
+| Reusable goal prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse for future safe-prep continuation threads. |
 
 ## Package Evidence
 

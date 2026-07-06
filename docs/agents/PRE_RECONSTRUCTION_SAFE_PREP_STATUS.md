@@ -16,6 +16,10 @@ Completion/evidence audit:
 
 - `docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md`
 
+Reusable goal prompt:
+
+- `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md`
+
 ## Hard Boundaries
 
 Before reconstruction is stable:
@@ -56,6 +60,7 @@ Allowed before reconstruction is stable:
 | Economy engine prep | Ready as contract | `docs/agents/llm-autonomy/ECONOMY_*`, `docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md` | Implement observation store only after event bus/profile/catalog foundation. |
 | Database Console / Server Console planning | Ready as planning docs | `docs/consoles/DATABASE_CONSOLE_*`, `docs/consoles/SERVER_CONSOLE_SCOPE.md` | Keep console work modular and separate from Agent runtime. |
 | NuTNNuT over Cosmic review records | Ready as decision log | `docs/NUTNNUT_OVER_COSMIC_REVIEW.md`, `docs/COSMIC_REVERT_REVIEW.md` | Apply only explicit approved reversions; leave bot-related items to reconstruction. |
+| Reusable pre-reconstruction prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse when starting or resuming a broad safe-prep thread. |
 | Verification | Ready for current server batch | recent clean compile and scope checks from server diagnostics commit | Repeat after every safe-prep batch. |
 
 ## Current Safe-Prep Completion State
