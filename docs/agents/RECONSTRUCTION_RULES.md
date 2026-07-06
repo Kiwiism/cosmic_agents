@@ -5125,6 +5125,10 @@ Current physics correction:
   boundary directly; preflight short-circuiting, leader resolution, inactive,
   ownerless, dead, live-context, live-gate, and live-mode ordering are
   unchanged.
+- Live-tick context service tests now exercise the existing
+  `AgentRuntimeEntry` boundary directly; movement-profile refresh, follow-anchor
+  resolution, target snapshot capture, leader observation, map-change cleanup,
+  and move-window update ordering are unchanged.
 
 Initial reconstruction order:
 

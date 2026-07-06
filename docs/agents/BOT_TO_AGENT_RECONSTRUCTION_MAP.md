@@ -97,6 +97,10 @@ Recent map updates:
   service boundary directly. Preflight short-circuiting, leader resolution,
   inactive, ownerless, dead, live-context, live-gate, and live-mode ordering
   remain unchanged.
+- `AgentLiveTickContextServiceTest` now exercises the existing
+  Agent-runtime-entry service boundary directly. Movement-profile refresh,
+  follow-anchor resolution, target snapshot capture, leader observation,
+  map-change cleanup, and move-window update ordering remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
