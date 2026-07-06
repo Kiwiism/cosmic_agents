@@ -64,6 +64,11 @@ Recent map updates:
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`
   adapter edge shrinks.
+- `AgentMovementOnlyMapChangeService` now accepts `AgentRuntimeEntry`. Map
+  tracking, foothold index rebuild, ground-point resolution, teleport/reset,
+  movement broadcast, shop map-change hook, and status check ordering remain
+  unchanged while the temporary `BotEntry` adapter edge stays in
+  `AgentMovementOnlyMapChangeRuntime`.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

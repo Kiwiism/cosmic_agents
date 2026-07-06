@@ -5096,6 +5096,10 @@ Current physics correction:
 - Standalone move-target ticking now accepts `AgentRuntimeEntry`; map-change
   grounding, movement-profile refresh, stored-target lookup, and movement-step
   dispatch are unchanged.
+- Movement-only map-change handling now accepts `AgentRuntimeEntry`; map
+  tracking, foothold index rebuild, ground-point resolution, teleport/reset,
+  movement broadcast, shop map-change hook, and status check ordering are
+  unchanged.
 
 Initial reconstruction order:
 

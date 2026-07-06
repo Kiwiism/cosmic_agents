@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotMapStateRuntime;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -20,18 +19,18 @@ public final class AgentMovementOnlyMapChangeService {
     public record Hooks(Function<MapleMap, Map<Integer, Foothold>> footholdIndexBuilder,
                         BiFunction<MapleMap, Point, Point> groundPointFinder,
                         TeleportAction teleporter,
-                        Consumer<BotEntry> afterTeleportReset,
-                        Consumer<BotEntry> movementBroadcaster,
-                        BiConsumer<BotEntry, Character> shopMapChange,
-                        BiConsumer<BotEntry, Character> statusCheck) {
+                        Consumer<AgentRuntimeEntry> afterTeleportReset,
+                        Consumer<AgentRuntimeEntry> movementBroadcaster,
+                        BiConsumer<AgentRuntimeEntry, Character> shopMapChange,
+                        BiConsumer<AgentRuntimeEntry, Character> statusCheck) {
     }
 
     @FunctionalInterface
     public interface TeleportAction {
-        void teleport(BotEntry entry, Character agent, Point position);
+        void teleport(AgentRuntimeEntry entry, Character agent, Point position);
     }
 
-    public static boolean handleMapChange(BotEntry entry, Character agent, Hooks hooks) {
+    public static boolean handleMapChange(AgentRuntimeEntry entry, Character agent, Hooks hooks) {
         if (AgentBotMapStateRuntime.isTrackingMap(entry, agent.getMapId())) {
             return false;
         }

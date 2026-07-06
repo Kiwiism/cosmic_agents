@@ -23,10 +23,14 @@ public final class AgentMovementOnlyMapChangeRuntime {
                 new AgentMovementOnlyMapChangeService.Hooks(
                         AgentFootholdIndexService::buildFhIndex,
                         AgentGroundingService::findGroundPoint,
-                        AgentMovementPoseService::teleportTo,
-                        AgentMovementStateResetService::resetEntryStateAfterTeleport,
-                        AgentMovementBroadcastService::broadcastMovement,
-                        AgentShopService::onMapChange,
-                        AgentBotManagerStatusRuntime::checkManagerStatus));
+                        (mapEntry, mapAgent, position) -> AgentMovementPoseService.teleportTo(asBotEntry(mapEntry), mapAgent, position),
+                        mapEntry -> AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(mapEntry)),
+                        mapEntry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(mapEntry)),
+                        (mapEntry, mapAgent) -> AgentShopService.onMapChange(asBotEntry(mapEntry), mapAgent),
+                        (mapEntry, mapAgent) -> AgentBotManagerStatusRuntime.checkManagerStatus(asBotEntry(mapEntry), mapAgent)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

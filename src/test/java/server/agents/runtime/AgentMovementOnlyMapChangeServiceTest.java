@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMapStateRuntime;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -26,7 +25,7 @@ class AgentMovementOnlyMapChangeServiceTest {
         MapleMap map = mock(MapleMap.class);
         when(agent.getMapId()).thenReturn(1000);
         when(agent.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMapStateRuntime.setMapTracking(entry, 1000, Collections.emptyMap());
         AtomicInteger teleports = new AtomicInteger();
 
@@ -46,7 +45,7 @@ class AgentMovementOnlyMapChangeServiceTest {
         when(agent.getMapId()).thenReturn(2000);
         when(agent.getMap()).thenReturn(map);
         when(agent.getPosition()).thenReturn(new Point(50, 100));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AtomicInteger teleports = new AtomicInteger();
         AtomicReference<Point> teleportedTo = new AtomicReference<>();
 
@@ -69,7 +68,7 @@ class AgentMovementOnlyMapChangeServiceTest {
         when(agent.getMapId()).thenReturn(3000);
         when(agent.getMap()).thenReturn(map);
         when(agent.getPosition()).thenReturn(current);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AtomicReference<Point> teleportedTo = new AtomicReference<>();
 
         boolean handled = AgentMovementOnlyMapChangeService.handleMapChange(
