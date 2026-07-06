@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.when;
 class AgentStuckDetectionServiceTest {
     @Test
     void resetsProgressWhenNotActivelyNavigating() {
-        BotEntry entry = entryAt(new Point(10, 20));
+        AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentBotMovementStuckStateRuntime.addStuckMs(entry, 250);
         AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(10, 20));
         AtomicInteger unstucks = new AtomicInteger();
@@ -33,7 +32,7 @@ class AgentStuckDetectionServiceTest {
 
     @Test
     void firstActiveNavigationTickRemembersPosition() {
-        BotEntry entry = entryAt(new Point(10, 20));
+        AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AtomicInteger unstucks = new AtomicInteger();
 
@@ -47,7 +46,7 @@ class AgentStuckDetectionServiceTest {
     @Test
     void movingResetsStuckProgressAndUpdatesCheckPosition() {
         Character agent = agentAt(new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(0, 20));
         AgentBotMovementStuckStateRuntime.addStuckMs(entry, 250);
@@ -62,7 +61,7 @@ class AgentStuckDetectionServiceTest {
 
     @Test
     void stationaryNavigationTriggersUnstuckWhenEnabledAndPastThreshold() {
-        BotEntry entry = entryAt(new Point(10, 20));
+        AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(10, 20));
         AtomicInteger unstucks = new AtomicInteger();
@@ -76,7 +75,7 @@ class AgentStuckDetectionServiceTest {
 
     @Test
     void cooldownBlocksUnstuckTrigger() {
-        BotEntry entry = entryAt(new Point(10, 20));
+        AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(10, 20));
         AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(entry, 100);
@@ -90,7 +89,7 @@ class AgentStuckDetectionServiceTest {
 
     @Test
     void inAirResetsProgressDuringNavigation() {
-        BotEntry entry = entryAt(new Point(10, 20));
+        AgentRuntimeEntry entry = entryAt(new Point(10, 20));
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotMovementStuckStateRuntime.addStuckMs(entry, 250);
@@ -115,8 +114,8 @@ class AgentStuckDetectionServiceTest {
                 enableUnstuck);
     }
 
-    private static BotEntry entryAt(Point position) {
-        return new BotEntry(agentAt(position), mock(Character.class), null);
+    private static AgentRuntimeEntry entryAt(Point position) {
+        return new AgentRuntimeEntry(agentAt(position), mock(Character.class), null);
     }
 
     private static Character agentAt(Point position) {

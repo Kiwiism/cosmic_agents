@@ -15,8 +15,12 @@ public final class AgentStuckDetectionRuntime {
                 entry,
                 new AgentStuckDetectionService.StuckDetectionHooks(
                         AgentMovementTimers::tickDown,
-                        AgentMovementRecoveryService::tickUnstuck,
+                        unstuckEntry -> AgentMovementRecoveryService.tickUnstuck(asBotEntry(unstuckEntry)),
                         AgentMovementPhysicsConfig.configuredMovementTickMs(),
                         enableUnstuck));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

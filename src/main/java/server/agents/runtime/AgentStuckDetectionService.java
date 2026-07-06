@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.function.IntUnaryOperator;
@@ -16,7 +15,7 @@ import java.util.function.IntUnaryOperator;
 public final class AgentStuckDetectionService {
     @FunctionalInterface
     public interface UnstuckAction {
-        void tick(BotEntry entry);
+        void tick(AgentRuntimeEntry entry);
     }
 
     public record StuckDetectionHooks(IntUnaryOperator tickDown,
@@ -28,7 +27,7 @@ public final class AgentStuckDetectionService {
     private AgentStuckDetectionService() {
     }
 
-    public static void tickStuckDetection(BotEntry entry, StuckDetectionHooks hooks) {
+    public static void tickStuckDetection(AgentRuntimeEntry entry, StuckDetectionHooks hooks) {
         if (!AgentPerformanceMonitor.enabled()) {
             doStuckDetection(entry, hooks);
             return;
@@ -42,7 +41,7 @@ public final class AgentStuckDetectionService {
         }
     }
 
-    static void doStuckDetection(BotEntry entry, StuckDetectionHooks hooks) {
+    static void doStuckDetection(AgentRuntimeEntry entry, StuckDetectionHooks hooks) {
         AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(
                 entry,
                 hooks.tickDown().applyAsInt(AgentBotMovementStuckStateRuntime.unstuckCooldownMs(entry)));

@@ -5137,6 +5137,9 @@ Current physics correction:
 - Idle-physics service now accepts `AgentRuntimeEntry`; active-mode gating,
   swim/airborne/grounded physics dispatch, idle stance correction, and movement
   broadcast behavior are unchanged.
+- Stuck-detection service now accepts `AgentRuntimeEntry`; cooldown ticking,
+  active-navigation gates, stuck-position tracking, stuck timer accumulation,
+  cooldown blocking, and unstuck trigger behavior are unchanged.
 
 Initial reconstruction order:
 

@@ -111,6 +111,11 @@ Recent map updates:
   gating, swim/airborne/grounded physics dispatch, idle stance correction, and
   movement broadcast behavior remain unchanged while `AgentIdlePhysicsRuntime`
   keeps the temporary `BotEntry` adapter edge.
+- `AgentStuckDetectionService` now accepts `AgentRuntimeEntry`. Cooldown
+  ticking, active-navigation gates, stuck-position tracking, stuck timer
+  accumulation, cooldown blocking, and unstuck trigger behavior remain unchanged
+  while `AgentStuckDetectionRuntime` keeps the temporary `BotEntry` adapter
+  edge.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
