@@ -5129,6 +5129,8 @@ Current physics correction:
   `AgentRuntimeEntry` boundary directly; movement-profile refresh, follow-anchor
   resolution, target snapshot capture, leader observation, map-change cleanup,
   and move-window update ordering are unchanged.
+- Map-environment service tests now exercise the existing `AgentRuntimeEntry`
+  boundary directly; null-map handling and swim-map detection are unchanged.
 
 Initial reconstruction order:
 

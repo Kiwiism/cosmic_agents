@@ -101,6 +101,9 @@ Recent map updates:
   Agent-runtime-entry service boundary directly. Movement-profile refresh,
   follow-anchor resolution, target snapshot capture, leader observation,
   map-change cleanup, and move-window update ordering remain unchanged.
+- `AgentMapEnvironmentServiceTest` now exercises the existing
+  Agent-runtime-entry service boundary directly. Null-map handling and swim-map
+  detection remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
