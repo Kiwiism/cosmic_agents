@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -19,31 +18,31 @@ import java.util.function.Function;
 public final class AgentMapTransitionService {
     @FunctionalInterface
     public interface TeleportAction {
-        void teleport(BotEntry entry, Character agent, Point position);
+        void teleport(AgentRuntimeEntry entry, Character agent, Point position);
     }
 
     public record GroundingHooks(Function<MapleMap, Map<Integer, Foothold>> footholdIndexBuilder,
                                  BiFunction<MapleMap, Point, Point> groundPointFinder,
                                  TeleportAction teleporter,
-                                 Consumer<BotEntry> afterTeleportReset,
+                                 Consumer<AgentRuntimeEntry> afterTeleportReset,
                                  BiConsumer<MapleMap, AgentMovementProfile> graphWarmer,
-                                 Consumer<BotEntry> movementBroadcaster) {
+                                 Consumer<AgentRuntimeEntry> movementBroadcaster) {
     }
 
     public record MapChangeHooks(GroundingHooks groundingHooks,
-                                 BiPredicate<BotEntry, Character> requiresGrind,
-                                 Consumer<BotEntry> issueGrind,
-                                 BiPredicate<BotEntry, Character> requiresFollow,
-                                 Consumer<BotEntry> issueFollow,
-                                 Consumer<BotEntry> resetPartyQuestStage,
-                                 BiConsumer<BotEntry, Character> shopMapChange,
-                                 BiConsumer<BotEntry, Character> statusCheck) {
+                                 BiPredicate<AgentRuntimeEntry, Character> requiresGrind,
+                                 Consumer<AgentRuntimeEntry> issueGrind,
+                                 BiPredicate<AgentRuntimeEntry, Character> requiresFollow,
+                                 Consumer<AgentRuntimeEntry> issueFollow,
+                                 Consumer<AgentRuntimeEntry> resetPartyQuestStage,
+                                 BiConsumer<AgentRuntimeEntry, Character> shopMapChange,
+                                 BiConsumer<AgentRuntimeEntry, Character> statusCheck) {
     }
 
     private AgentMapTransitionService() {
     }
 
-    public static boolean groundAfterMapChange(BotEntry entry, Character agent, GroundingHooks hooks) {
+    public static boolean groundAfterMapChange(AgentRuntimeEntry entry, Character agent, GroundingHooks hooks) {
         if (AgentBotMapStateRuntime.isTrackingMap(entry, agent.getMapId())) {
             return false;
         }
@@ -59,7 +58,7 @@ public final class AgentMapTransitionService {
         return true;
     }
 
-    public static boolean handleTrackedMapChange(BotEntry entry, Character agent, MapChangeHooks hooks) {
+    public static boolean handleTrackedMapChange(AgentRuntimeEntry entry, Character agent, MapChangeHooks hooks) {
         if (!groundAfterMapChange(entry, agent, hooks.groundingHooks())) {
             return false;
         }

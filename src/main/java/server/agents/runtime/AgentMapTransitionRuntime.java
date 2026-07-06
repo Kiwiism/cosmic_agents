@@ -34,22 +34,26 @@ public final class AgentMapTransitionRuntime {
                 agent,
                 new AgentMapTransitionService.MapChangeHooks(
                         groundingHooks(),
-                        AgentPartyQuestHooks::requiresGrind,
-                        issueGrind,
-                        AgentPartyQuestHooks::requiresFollow,
-                        issueFollow,
-                        AgentBotPqRuntime::resetKpqStage5Claimed,
-                        AgentShopService::onMapChange,
-                        AgentBotManagerStatusRuntime::checkManagerStatus));
+                        (hookEntry, hookAgent) -> AgentPartyQuestHooks.requiresGrind(asBotEntry(hookEntry), hookAgent),
+                        hookEntry -> issueGrind.accept(asBotEntry(hookEntry)),
+                        (hookEntry, hookAgent) -> AgentPartyQuestHooks.requiresFollow(asBotEntry(hookEntry), hookAgent),
+                        hookEntry -> issueFollow.accept(asBotEntry(hookEntry)),
+                        hookEntry -> AgentBotPqRuntime.resetKpqStage5Claimed(asBotEntry(hookEntry)),
+                        (hookEntry, hookAgent) -> AgentShopService.onMapChange(asBotEntry(hookEntry), hookAgent),
+                        (hookEntry, hookAgent) -> AgentBotManagerStatusRuntime.checkManagerStatus(asBotEntry(hookEntry), hookAgent)));
     }
 
     private static AgentMapTransitionService.GroundingHooks groundingHooks() {
         return new AgentMapTransitionService.GroundingHooks(
                 AgentFootholdIndexService::buildFhIndex,
                 AgentGroundingService::findGroundPoint,
-                AgentMovementPoseService::teleportTo,
-                AgentMovementStateResetService::resetEntryStateAfterTeleport,
+                (entry, agent, position) -> AgentMovementPoseService.teleportTo(asBotEntry(entry), agent, position),
+                entry -> AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(entry)),
                 AgentNavigationGraphService::warmGraphAsync,
-                AgentMovementBroadcastService::broadcastMovement);
+                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

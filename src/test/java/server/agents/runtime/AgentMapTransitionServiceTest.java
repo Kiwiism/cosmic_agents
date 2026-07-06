@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMapStateRuntime;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -24,7 +23,7 @@ class AgentMapTransitionServiceTest {
     void skipsWhenEntryAlreadyTracksCurrentMap() {
         MapleMap map = map(100000000);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
         Counters counters = new Counters();
 
@@ -38,7 +37,7 @@ class AgentMapTransitionServiceTest {
     void tracksNewMapAndUsesGroundPointWhenAvailable() {
         MapleMap map = map(100000001);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
         Point ground = new Point(11, 19);
 
@@ -59,7 +58,7 @@ class AgentMapTransitionServiceTest {
         MapleMap map = map(100000002);
         Point current = new Point(30, 40);
         Character agent = character(200, map, map.getId(), current);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
 
         boolean grounded = AgentMapTransitionService.groundAfterMapChange(entry, agent, hooks(counters, null));
@@ -72,7 +71,7 @@ class AgentMapTransitionServiceTest {
     void trackedMapChangeRunsGrindBeforeFollowAndCommonSideEffects() {
         MapleMap map = map(100000003);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
 
         boolean handled = AgentMapTransitionService.handleTrackedMapChange(
@@ -90,7 +89,7 @@ class AgentMapTransitionServiceTest {
     void trackedMapChangeRunsFollowWhenGrindIsNotRequired() {
         MapleMap map = map(100000004);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
 
         boolean handled = AgentMapTransitionService.handleTrackedMapChange(
@@ -106,7 +105,7 @@ class AgentMapTransitionServiceTest {
     void trackedMapChangeResetsPartyQuestWhenNoModeIsRequired() {
         MapleMap map = map(100000005);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Counters counters = new Counters();
 
         boolean handled = AgentMapTransitionService.handleTrackedMapChange(
@@ -122,7 +121,7 @@ class AgentMapTransitionServiceTest {
     void trackedMapChangeSkipsSideEffectsWhenMapIsAlreadyTracked() {
         MapleMap map = map(100000006);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
         Counters counters = new Counters();
 

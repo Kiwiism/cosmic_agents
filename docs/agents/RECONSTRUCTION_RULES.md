@@ -5057,6 +5057,10 @@ Current physics correction:
   handler dispatch and consumed/fall-through behavior are unchanged.
   `AgentLiveTickGateRuntime` remains the temporary bridge to BotEntry-shaped
   map-change callbacks.
+- Map transition grounding and tracked-map-change handling now accept
+  `AgentRuntimeEntry`; tracking checks, foothold index capture, grounding
+  teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch,
+  shop map-change, and status-check ordering are unchanged.
 
 Initial reconstruction order:
 
