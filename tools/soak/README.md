@@ -10,6 +10,7 @@ runs without changing server behavior.
 Current tool:
 
 - `New-BaselineSoakEvidencePackage.ps1`
+- `Test-BaselineSoakEvidencePackage.ps1`
 
 ## Baseline Evidence Workflow
 
@@ -89,6 +90,21 @@ Use:
 Do not treat this baseline as proof of Agent scale. Agent stages require the
 reconstructed Agent runtime and the dedicated Agent soak harness.
 
+After the run folder has been filled, verify it:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidencePackage.ps1 `
+  -RunPath .\logs\soak\baseline\<runId>
+```
+
+To write machine-readable output:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidencePackage.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Json > .\logs\soak\baseline\<runId>\verification.json
+```
+
 ## Example With Explicit Run Id
 
 ```powershell
@@ -116,4 +132,11 @@ Execution-policy-safe form:
 powershell -ExecutionPolicy Bypass -File .\tools\soak\New-BaselineSoakEvidencePackage.ps1 `
   -RunId "baseline-test" `
   -OutputRoot $tmp
+```
+
+Then verify the temp package:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidencePackage.ps1 `
+  -RunPath (Join-Path $tmp "baseline-test")
 ```

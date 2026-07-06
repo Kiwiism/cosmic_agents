@@ -122,6 +122,21 @@ Scaffold command:
 The scaffold only creates local evidence files and templates. It does not start
 the server, change config, or modify runtime behavior.
 
+Verification command after filling the run folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidencePackage.ps1 `
+  -RunPath .\logs\soak\baseline\<runId>
+```
+
+Optional JSON report:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidencePackage.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Json > .\logs\soak\baseline\<runId>\verification.json
+```
+
 Recommended `summary.json` fields:
 
 ```json
@@ -193,6 +208,8 @@ Safe actions:
 - run a short baseline server smoke/soak and archive the diagnostics.
 - create the baseline evidence folder with
   `tools/soak/New-BaselineSoakEvidencePackage.ps1`.
+- verify the filled baseline evidence folder with
+  `tools/soak/Test-BaselineSoakEvidencePackage.ps1`.
 - update this audit with real run ids and summary numbers.
 - keep compiling after safe-prep documentation batches.
 - keep Agent implementation deferred until reconstruction boundaries are
