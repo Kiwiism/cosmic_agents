@@ -15,6 +15,7 @@ Current tool:
 - `Update-BaselineSoakSummary.ps1`
 - `New-BaselineSoakAuditEntry.ps1`
 - `Get-BaselineSoakStatus.ps1`
+- `Set-BaselineSoakChecklistItem.ps1`
 
 ## Baseline Evidence Workflow
 
@@ -134,6 +135,23 @@ powershell -ExecutionPolicy Bypass -File .\tools\soak\Update-BaselineSoakSummary
   -RestartClean true `
   -Note "Baseline completed without manual DB cleanup."
 ```
+
+To list and mark checklist items without hand-editing Markdown:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Set-BaselineSoakChecklistItem.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -List
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Set-BaselineSoakChecklistItem.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Pattern "Startup logs"
+```
+
+Use `-Uncheck` to clear matched items, or `-All` to mark all checklist items
+after a completed reviewed run.
 
 ## Pass / Fail Interpretation
 

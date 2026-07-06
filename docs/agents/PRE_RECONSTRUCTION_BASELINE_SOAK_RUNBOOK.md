@@ -31,6 +31,7 @@ this stage also exists.
   - `tools/soak/Add-BaselineSoakSample.ps1`
   - `tools/soak/Update-BaselineSoakSummary.ps1`
   - `tools/soak/Get-BaselineSoakStatus.ps1`
+  - `tools/soak/Set-BaselineSoakChecklistItem.ps1`
 - Prep verifier is available:
   - `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`
 
@@ -123,6 +124,14 @@ Mark the startup checklist item in:
 
 ```text
 evidence-checklist.md
+```
+
+Recommended helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Set-BaselineSoakChecklistItem.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Pattern "Startup logs"
 ```
 
 ## Step 4 - Capture Samples Every Interval
@@ -245,6 +254,14 @@ If login says a character is already logged in after restart, record it as a
 stuck login signal and do not hide it.
 
 ## Step 8 - Verify Evidence
+
+Before final verification, list any remaining checklist items:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Set-BaselineSoakChecklistItem.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -List
+```
 
 Run:
 
