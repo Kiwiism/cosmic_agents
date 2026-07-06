@@ -88,21 +88,17 @@ This baseline should not include live Agent reconstruction changes during the
 run. It is meant to prove the current server baseline before Agent-specific
 runtime work begins.
 
-## Current Compile Caveat
+## Current Compile Status
 
-Latest safe-prep verification found the expected missing baseline evidence, and
-the safe-prep tooling changes themselves do not touch Agent runtime paths.
+Latest safe-prep verification found the expected missing baseline evidence.
+The safe-prep tooling changes themselves do not touch Agent runtime paths.
 
-A compile check currently fails in existing Agent reconstruction code:
+Latest compile check:
 
 ```text
-src/main/java/server/agents/capabilities/navigation/AgentNavigationTargetService.java
-incompatible types: server.agents.runtime.AgentRuntimeEntry cannot be converted
-to server.bots.BotEntry
+.\mvnw.cmd -DskipTests compile
+BUILD SUCCESS
 ```
-
-This is reconstruction-scope work. Do not fix it as part of safe
-pre-reconstruction prep unless explicitly requested.
 
 ## Exact Collection Sequence
 

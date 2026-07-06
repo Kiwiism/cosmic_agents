@@ -277,19 +277,24 @@ recorded. This is expected because the Agent soak stages depend on the
 reconstructed Agent runtime and the server baseline requires an intentional
 operator-run test window.
 
-Current verifier state:
+Current verifier interpretation:
 
 ```text
 Pre-reconstruction prep verification: INCOMPLETE
-Failures: 0
-Warnings: 3
 ```
 
-Current warnings are:
+Expected stable blocker:
+
+- latest baseline evidence scaffold is still incomplete.
+
+Possible transient warnings:
 
 - unstaged Agent reconstruction changes under `src/main/java/server/agents`.
 - unstaged Agent reconstruction test changes under `src/test/java/server/agents`.
-- latest baseline evidence scaffold is still incomplete.
+
+Those transient warnings should be resolved or isolated before claiming
+completion. They should not be folded into safe-prep commits unless explicitly
+requested as reconstruction work.
 
 See `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md` for the exact
 evidence collection sequence and current scaffold path.
