@@ -4990,6 +4990,9 @@ Current physics correction:
 - Agent mode transitions now accept `AgentRuntimeEntry`; follow/grind/stop,
   move-to, farm, patrol, active-mode reset ordering, and navigation clear hooks
   are unchanged.
+- Command-mode preparation now accepts `AgentRuntimeEntry`; null guard,
+  can-start guard, script-task clearing, shop cancellation, and mode-start hook
+  ordering are unchanged.
 
 Initial reconstruction order:
 

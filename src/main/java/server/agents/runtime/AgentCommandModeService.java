@@ -1,21 +1,19 @@
 package server.agents.runtime;
 
-import server.bots.BotEntry;
-
 import java.util.function.BooleanSupplier;
 
 public final class AgentCommandModeService {
     private AgentCommandModeService() {
     }
 
-    public static void runPreparedModeCommand(BotEntry entry,
+    public static void runPreparedModeCommand(AgentRuntimeEntry entry,
                                               Runnable clearScriptTasks,
                                               Runnable cancelShopVisit,
                                               Runnable startMode) {
         runPreparedModeCommand(entry, () -> true, clearScriptTasks, cancelShopVisit, startMode);
     }
 
-    public static void runPreparedModeCommand(BotEntry entry,
+    public static void runPreparedModeCommand(AgentRuntimeEntry entry,
                                               BooleanSupplier canStart,
                                               Runnable clearScriptTasks,
                                               Runnable cancelShopVisit,
