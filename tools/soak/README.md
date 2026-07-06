@@ -11,6 +11,7 @@ Current tool:
 
 - `New-BaselineSoakEvidencePackage.ps1`
 - `Test-BaselineSoakEvidencePackage.ps1`
+- `Add-BaselineSoakSample.ps1`
 - `New-BaselineSoakAuditEntry.ps1`
 
 ## Baseline Evidence Workflow
@@ -80,6 +81,26 @@ Recommended baseline flow:
 8. Shut down cleanly.
 9. Copy shutdown logs into `shutdown.log`.
 10. Update `summary.json` with final numbers and notes.
+
+To append timestamped samples without manually editing the files:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Add-BaselineSoakSample.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Target serverhealth `
+  -FromClipboard
+```
+
+Supported targets:
+
+- `serverhealth`
+- `scale-health`
+- `slow-operations`
+- `startup`
+- `shutdown`
+
+Samples can come from `-Text`, `-InputPath`, `-FromClipboard`, or pipeline
+input.
 
 ## Pass / Fail Interpretation
 

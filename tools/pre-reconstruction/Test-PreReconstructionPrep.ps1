@@ -91,6 +91,7 @@ $requiredArtifacts = @(
     @{ path = "docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md"; description = "server player-scale implementation plan" },
     @{ path = "tools/soak/New-BaselineSoakEvidencePackage.ps1"; description = "baseline soak evidence scaffold" },
     @{ path = "tools/soak/Test-BaselineSoakEvidencePackage.ps1"; description = "baseline soak evidence verifier" },
+    @{ path = "tools/soak/Add-BaselineSoakSample.ps1"; description = "baseline soak sample appender" },
     @{ path = "tools/soak/New-BaselineSoakAuditEntry.ps1"; description = "baseline soak audit-entry generator" }
 )
 

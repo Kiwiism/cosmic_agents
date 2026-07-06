@@ -28,6 +28,7 @@ this stage also exists.
 - Evidence scaffold and verifier are available:
   - `tools/soak/New-BaselineSoakEvidencePackage.ps1`
   - `tools/soak/Test-BaselineSoakEvidencePackage.ps1`
+  - `tools/soak/Add-BaselineSoakSample.ps1`
 - Prep verifier is available:
   - `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`
 
@@ -127,16 +128,39 @@ Paste `!serverhealth` samples into:
 serverhealth-5min-samples.log
 ```
 
+Recommended helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Add-BaselineSoakSample.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Target serverhealth `
+  -FromClipboard
+```
+
 Paste scale-health lines into:
 
 ```text
 scale-health.log
 ```
 
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Add-BaselineSoakSample.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Target scale-health `
+  -FromClipboard
+```
+
 Paste slow warnings into:
 
 ```text
 slow-operations.log
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Add-BaselineSoakSample.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -Target slow-operations `
+  -FromClipboard
 ```
 
 Each sample should include a timestamp.
