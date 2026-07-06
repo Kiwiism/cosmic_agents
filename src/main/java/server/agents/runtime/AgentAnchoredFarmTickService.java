@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -14,7 +13,7 @@ import java.awt.Point;
 public final class AgentAnchoredFarmTickService {
     @FunctionalInterface
     public interface LocalOpportunityAttack {
-        LocalOpportunityResult tryAttack(BotEntry entry,
+        LocalOpportunityResult tryAttack(AgentRuntimeEntry entry,
                                          Character agent,
                                          Point agentPosition,
                                          Point movementTargetPosition,
@@ -25,17 +24,17 @@ public final class AgentAnchoredFarmTickService {
 
     @FunctionalInterface
     public interface IdleTick {
-        void tick(BotEntry entry, Character agent);
+        void tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface GroundIdleTick {
-        void tick(BotEntry entry, Character agent);
+        void tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface MovementCore {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     public record LocalOpportunityResult(boolean consumedTick, Point targetPosition) {
@@ -50,7 +49,7 @@ public final class AgentAnchoredFarmTickService {
     private AgentAnchoredFarmTickService() {
     }
 
-    public static void tickAnchoredFarm(BotEntry entry,
+    public static void tickAnchoredFarm(AgentRuntimeEntry entry,
                                         Character agent,
                                         Point agentPosition,
                                         boolean runAiTick,

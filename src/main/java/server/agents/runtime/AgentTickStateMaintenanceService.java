@@ -25,7 +25,7 @@ public final class AgentTickStateMaintenanceService {
         AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, leaderPosition);
     }
 
-    public static void clearFarmAnchorOnMapChange(BotEntry entry, Character agent) {
+    public static void clearFarmAnchorOnMapChange(AgentRuntimeEntry entry, Character agent) {
         if (entry == null || agent == null || !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return;
         }

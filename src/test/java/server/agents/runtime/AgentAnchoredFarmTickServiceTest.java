@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.when;
 class AgentAnchoredFarmTickServiceTest {
     @Test
     void mapMismatchClearsAnchorAndIdles() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(200);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
         List<String> calls = new ArrayList<>();
@@ -37,7 +36,7 @@ class AgentAnchoredFarmTickServiceTest {
 
     @Test
     void consumedOpportunityAttackStopsTick() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
         List<String> calls = new ArrayList<>();
@@ -54,7 +53,7 @@ class AgentAnchoredFarmTickServiceTest {
 
     @Test
     void alreadyAtAnchorClearsMoveTargetAndGroundIdles() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 300));
@@ -73,7 +72,7 @@ class AgentAnchoredFarmTickServiceTest {
 
     @Test
     void outsideAnchorSetsPreciseTargetAndRunsMovementCore() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100);
         Point anchor = new Point(100, 100);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, anchor, 100);
@@ -111,7 +110,7 @@ class AgentAnchoredFarmTickServiceTest {
         return agent;
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 }

@@ -48,7 +48,7 @@ public final class AgentAnchoredFarmRuntime {
                  allowCombatMovement, allowJumpTowardTarget) -> {
                     AgentLocalOpportunityAttackService.Result result =
                             AgentLocalOpportunityAttackRuntime.tryLocalOpportunityAttack(
-                                    entry,
+                                    asBotEntry(entry),
                                     agent,
                                     agentPosition,
                                     movementTargetPosition,
@@ -58,16 +58,23 @@ public final class AgentAnchoredFarmRuntime {
                     return new AgentAnchoredFarmTickService.LocalOpportunityResult(
                             result.consumedTick(), result.targetPos());
                 },
-                AgentIdlePhysicsRuntime::tickIdleEntry,
+                (entry, agent) -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(entry), agent),
                 (entry, agent) -> {
-                    AgentMovementPoseService.idleOnGround(entry, agent);
-                    AgentMovementBroadcastService.broadcastMovement(entry);
+                    AgentMovementPoseService.idleOnGround(asBotEntry(entry), agent);
+                    AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry));
                 },
                 (entry, targetPosition, runAiTick) -> AgentMovementTickRuntime.stepMovementCore(
-                        entry,
+                        asBotEntry(entry),
                         targetPosition,
                         runAiTick,
                         enableUnstuck,
                         stopDistance));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        if (entry instanceof BotEntry botEntry) {
+            return botEntry;
+        }
+        throw new IllegalArgumentException("Legacy anchored farm runtime requires BotEntry compatibility shell");
     }
 }

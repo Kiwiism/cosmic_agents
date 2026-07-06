@@ -77,6 +77,14 @@ Recent map updates:
   Farm-anchor presence checks, anchored-farm tick delegation, and consumed-tick
   behavior remain unchanged while `AgentLiveModeTickRuntime` keeps the
   temporary `BotEntry` callback adapter.
+- `AgentAnchoredFarmTickService` now accepts `AgentRuntimeEntry`. Anchor
+  map-mismatch cleanup, local opportunity attack delegation, near-anchor idle,
+  precise move-target setting, and movement-core dispatch remain unchanged
+  while `AgentAnchoredFarmRuntime` keeps the temporary `BotEntry` callback
+  adapter.
+- `AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange` now accepts
+  `AgentRuntimeEntry`, preserving same-map retention, map-change anchor
+  clearing, and precise move-target cleanup.
 - `AgentFollowIdleMovementService` now accepts `AgentRuntimeEntry`.
   Eligibility gates, recheck timing, navigation decision marking, and
   stuck-progress reset behavior remain unchanged while runtime wrappers keep

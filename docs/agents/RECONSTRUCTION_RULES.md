@@ -5106,6 +5106,12 @@ Current physics correction:
 - Anchored-farm mode gating now accepts `AgentRuntimeEntry`; farm-anchor
   presence checks, anchored-farm tick delegation, and consumed-tick behavior are
   unchanged.
+- Anchored-farm tick service now accepts `AgentRuntimeEntry`; anchor
+  map-mismatch cleanup, local opportunity attack delegation, near-anchor idle,
+  precise move-target setting, and movement-core dispatch are unchanged.
+- Farm-anchor map-change maintenance now accepts `AgentRuntimeEntry`; same-map
+  retention, map-change anchor clearing, and precise move-target cleanup are
+  unchanged.
 - Follow-idle fast-path evaluation now accepts `AgentRuntimeEntry`; eligibility
   gates, recheck timing, navigation decision marking, and stuck-progress reset
   behavior are unchanged.
