@@ -6,7 +6,6 @@ import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -25,7 +24,7 @@ class AgentRecoveryTeleportServiceTest {
     void recoversWhenTargetIsBeyondTeleportDistance() {
         MapleMap map = map(new Rectangle(0, 0, 1000, 1000));
         Character agent = character(map, new Point(0, 0));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         Counters counters = new Counters(new Point(99, 100));
 
         boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
@@ -41,7 +40,7 @@ class AgentRecoveryTeleportServiceTest {
     void recoversWhenOutOfBoundsPastOutOfBoundsDistance() {
         MapleMap map = map(new Rectangle(0, 0, 100, 100));
         Character agent = character(map, new Point(150, 10));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         Counters counters = new Counters(null);
 
         boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
@@ -56,7 +55,7 @@ class AgentRecoveryTeleportServiceTest {
     void doesNotRecoverWhenWithinDistanceAndInBounds() {
         MapleMap map = map(new Rectangle(0, 0, 1000, 1000));
         Character agent = character(map, new Point(10, 10));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         Counters counters = new Counters(null);
 
         boolean recovered = AgentRecoveryTeleportService.recoverTeleportDistance(
@@ -71,7 +70,7 @@ class AgentRecoveryTeleportServiceTest {
         MapleMap map = map(new Rectangle(0, 0, 1000, 1000));
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         Counters counters = new Counters(null);
 
         boolean recovered = AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
@@ -86,7 +85,7 @@ class AgentRecoveryTeleportServiceTest {
         MapleMap map = map(new Rectangle(0, 0, 1000, 1000));
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.startGrinding(entry);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(5, 5), false);
         Counters counters = new Counters(null);
@@ -106,7 +105,7 @@ class AgentRecoveryTeleportServiceTest {
         MapleMap map = map(new Rectangle(0, 0, 1000, 1000));
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.startGrinding(entry);
         Counters counters = new Counters(null);
 
@@ -123,7 +122,7 @@ class AgentRecoveryTeleportServiceTest {
         MapleMap map = map(new Rectangle(0, 0, 1000, 1000));
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.startGrinding(entry);
         AgentBotShopStateRuntime.startShopVisit(entry, new Point(1, 1), new Point(1, 1), 0, 1L);
         Counters counters = new Counters(null);
@@ -150,8 +149,8 @@ class AgentRecoveryTeleportServiceTest {
                 entry -> counters.broadcasts.incrementAndGet());
     }
 
-    private static BotEntry entry(Character agent) {
-        return new BotEntry(agent, mock(Character.class), null);
+    private static AgentRuntimeEntry entry(Character agent) {
+        return new AgentRuntimeEntry(agent, mock(Character.class), null);
     }
 
     private static Character character(MapleMap map, Point position) {

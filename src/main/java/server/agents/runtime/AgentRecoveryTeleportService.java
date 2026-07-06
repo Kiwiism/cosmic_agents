@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -19,19 +18,19 @@ import java.util.function.Consumer;
 public final class AgentRecoveryTeleportService {
     @FunctionalInterface
     public interface TeleportAction {
-        void teleport(BotEntry entry, Character agent, Point position);
+        void teleport(AgentRuntimeEntry entry, Character agent, Point position);
     }
 
     public record RecoveryHooks(BiFunction<MapleMap, Point, Point> groundPointFinder,
                                 TeleportAction teleporter,
-                                Consumer<BotEntry> afterTeleportReset,
-                                Consumer<BotEntry> movementBroadcaster) {
+                                Consumer<AgentRuntimeEntry> afterTeleportReset,
+                                Consumer<AgentRuntimeEntry> movementBroadcaster) {
     }
 
     private AgentRecoveryTeleportService() {
     }
 
-    public static boolean recoverTeleportDistance(BotEntry entry,
+    public static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
                                                   Character agent,
                                                   Point targetPosition,
                                                   int teleportDistance,
@@ -52,7 +51,7 @@ public final class AgentRecoveryTeleportService {
         return false;
     }
 
-    public static boolean recoverGrindPartyTeleportDistance(BotEntry entry,
+    public static boolean recoverGrindPartyTeleportDistance(AgentRuntimeEntry entry,
                                                             Character agent,
                                                             Character partyAnchor,
                                                             int teleportDistance,
@@ -91,7 +90,7 @@ public final class AgentRecoveryTeleportService {
         return false;
     }
 
-    private static boolean executeRecoveryTeleport(BotEntry entry,
+    private static boolean executeRecoveryTeleport(AgentRuntimeEntry entry,
                                                    Character agent,
                                                    Point targetPosition,
                                                    RecoveryHooks hooks) {

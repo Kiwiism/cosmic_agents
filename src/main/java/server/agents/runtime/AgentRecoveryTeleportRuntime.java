@@ -48,8 +48,12 @@ public final class AgentRecoveryTeleportRuntime {
     private static AgentRecoveryTeleportService.RecoveryHooks hooks() {
         return new AgentRecoveryTeleportService.RecoveryHooks(
                 AgentGroundingService::findGroundPoint,
-                AgentMovementPoseService::teleportTo,
-                AgentMovementStateResetService::resetEntryStateAfterTeleport,
-                AgentMovementBroadcastService::broadcastMovement);
+                (entry, agent, position) -> AgentMovementPoseService.teleportTo(asBotEntry(entry), agent, position),
+                entry -> AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(entry)),
+                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

@@ -5061,6 +5061,10 @@ Current physics correction:
   `AgentRuntimeEntry`; tracking checks, foothold index capture, grounding
   teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch,
   shop map-change, and status-check ordering are unchanged.
+- Recovery teleport distance handling now accepts `AgentRuntimeEntry`; target
+  distance checks, out-of-bounds checks, grind-party constraints, shop-visit
+  suppression, multiplier math, grounding lookup, teleport/reset, and movement
+  broadcast side effects are unchanged.
 
 Initial reconstruction order:
 
