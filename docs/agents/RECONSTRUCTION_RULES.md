@@ -5115,6 +5115,12 @@ Current physics correction:
 - Command-mode service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; null-entry skip behavior, guard evaluation, task clearing,
   shop cancellation, and mode-start ordering are unchanged.
+- Final-movement tail service tests now exercise the existing
+  `AgentRuntimeEntry` boundary directly; target and AI-tick flag delegation to
+  movement-core hooks is unchanged.
+- Live-tick gate service tests now exercise the existing `AgentRuntimeEntry`
+  boundary directly; common, trade-window, idle, recovery, and tracked-map
+  gate ordering and short-circuit behavior are unchanged.
 
 Initial reconstruction order:
 

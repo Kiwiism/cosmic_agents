@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -19,7 +18,7 @@ class AgentLiveTickGateServiceTest {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
         Character followAnchor = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         List<String> calls = new ArrayList<>();
 
         boolean consumed = AgentLiveTickGateService.tickLiveGates(
@@ -60,7 +59,7 @@ class AgentLiveTickGateServiceTest {
     void stopsWhenTradeWindowGateConsumesTick() {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         List<String> calls = new ArrayList<>();
 
         boolean consumed = AgentLiveTickGateService.tickLiveGates(

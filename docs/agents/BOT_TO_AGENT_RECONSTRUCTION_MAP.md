@@ -87,6 +87,12 @@ Recent map updates:
 - `AgentCommandModeServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Null-entry skip behavior, guard evaluation, task
   clearing, shop cancellation, and mode-start ordering remain unchanged.
+- `AgentFinalMovementTailServiceTest` now exercises the existing
+  Agent-runtime-entry service boundary directly. Target and AI-tick flag
+  delegation to movement-core hooks remains unchanged.
+- `AgentLiveTickGateServiceTest` now exercises the existing Agent-runtime-entry
+  service boundary directly. Common, trade-window, idle, recovery, and
+  tracked-map gate ordering and short-circuit behavior remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
