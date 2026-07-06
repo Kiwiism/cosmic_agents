@@ -146,6 +146,11 @@ Recent map updates:
   threat replacement, target-position propagation, and attack-plan invalidation
   remain unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
   ranged-priority adapter.
+- `AgentGrindRangedEngagementService` now accepts `AgentRuntimeEntry`.
+  Degenerate-attack gating, ranged retreat selection, AoE reposition checks,
+  attack execution, cooldown comparison, jump initiation, idle-on-ground, and
+  movement broadcast behavior remain unchanged while `AgentGrindModeRuntime`
+  keeps the temporary `BotEntry` callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

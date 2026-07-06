@@ -6,7 +6,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -57,7 +57,7 @@ public final class AgentGrindRangedEngagementService {
 
     @FunctionalInterface
     public interface CrossRegionRetreatSelector {
-        Point select(BotEntry entry, Point agentPosition, Point targetPosition);
+        Point select(AgentRuntimeEntry entry, Point agentPosition, Point targetPosition);
     }
 
     @FunctionalInterface
@@ -67,7 +67,7 @@ public final class AgentGrindRangedEngagementService {
 
     @FunctionalInterface
     public interface AoeRepositionResolver {
-        Point resolve(BotEntry entry, Character agent, Monster target, AgentAttackPlan attackPlan, Point agentPosition);
+        Point resolve(AgentRuntimeEntry entry, Character agent, Monster target, AgentAttackPlan attackPlan, Point agentPosition);
     }
 
     @FunctionalInterface
@@ -77,7 +77,7 @@ public final class AgentGrindRangedEngagementService {
 
     @FunctionalInterface
     public interface AttackExecutor {
-        void attack(BotEntry entry, Character agent, AgentAttackPlan attackPlan);
+        void attack(AgentRuntimeEntry entry, Character agent, AgentAttackPlan attackPlan);
     }
 
     @FunctionalInterface
@@ -101,20 +101,20 @@ public final class AgentGrindRangedEngagementService {
 
     @FunctionalInterface
     public interface JumpInitiator {
-        void initiate(BotEntry entry, Character agent, int dx);
+        void initiate(AgentRuntimeEntry entry, Character agent, int dx);
     }
 
     @FunctionalInterface
     public interface IdleOnGround {
-        void idle(BotEntry entry, Character agent);
+        void idle(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface MovementBroadcaster {
-        void broadcast(BotEntry entry);
+        void broadcast(AgentRuntimeEntry entry);
     }
 
-    public static Result engage(BotEntry entry,
+    public static Result engage(AgentRuntimeEntry entry,
                                 Character agent,
                                 Point agentPosition,
                                 Point currentMovementTarget,

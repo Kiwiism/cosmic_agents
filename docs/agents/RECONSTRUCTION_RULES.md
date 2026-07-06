@@ -5162,6 +5162,10 @@ Current physics correction:
   commit, wander/patrol cleanup, ranged-priority replacement, closer threat
   replacement, target-position propagation, and attack-plan invalidation are
   unchanged.
+- Grind ranged-engagement service now accepts `AgentRuntimeEntry`;
+  degenerate-attack gating, ranged retreat selection, AoE reposition checks,
+  attack execution, cooldown comparison, jump initiation, idle-on-ground, and
+  movement broadcast behavior are unchanged.
 
 Initial reconstruction order:
 

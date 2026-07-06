@@ -100,17 +100,22 @@ public final class AgentGrindModeRuntime {
                 AgentAttackExecutionProvider::getEquippedWeaponType,
                 AgentAttackExecutionProvider::shouldDegenerateRangedAttack,
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
-                AgentGrindNavigationRuntime::selectCrossRegionRetreatTarget,
+                (entry, agentPosition, targetPosition) ->
+                        AgentGrindNavigationRuntime.selectCrossRegionRetreatTarget(
+                                asBotEntry(entry), agentPosition, targetPosition),
                 AgentCombatRangePolicy::isTargetInAttackRange,
-                AgentGrindCombatRuntime::resolveAoeReposition,
+                (entry, agent, target, attackPlan, agentPosition) ->
+                        AgentGrindCombatRuntime.resolveAoeReposition(
+                                asBotEntry(entry), agent, target, attackPlan, agentPosition),
                 AgentCombatRangePolicy::canUseAttackPlanNow,
-                AgentBotCombatAttackRuntime::attackMonster,
+                (entry, agent, attackPlan) ->
+                        AgentBotCombatAttackRuntime.attackMonster(asBotEntry(entry), agent, attackPlan),
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
                 AgentCombatRangePolicy::isTargetJumpable,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,
-                AgentJumpActionService::initiateJump,
-                AgentMovementPoseService::idleOnGround,
-                AgentMovementBroadcastService::broadcastMovement);
+                (entry, agent, dx) -> AgentJumpActionService.initiateJump(asBotEntry(entry), agent, dx),
+                (entry, agent) -> AgentMovementPoseService.idleOnGround(asBotEntry(entry), agent),
+                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
     }
 
     private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {

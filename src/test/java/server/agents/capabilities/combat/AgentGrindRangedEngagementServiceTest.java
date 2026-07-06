@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -20,7 +20,7 @@ class AgentGrindRangedEngagementServiceTest {
     @Test
     void standsStillWhenInRangeButAttackIsNotUsableAndNoRetreatIsNeeded() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(200, 100);
         AgentAttackPlan plan = plan(target, AgentAttackRoute.RANGED);
         Counters counters = new Counters();
@@ -46,7 +46,7 @@ class AgentGrindRangedEngagementServiceTest {
     @Test
     void jumpsTowardJumpableNonBowTargetWhenNotInRange() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(220, 80);
         AgentAttackPlan plan = plan(target, AgentAttackRoute.CLOSE);
         Counters counters = new Counters();
