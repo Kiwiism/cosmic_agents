@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -19,15 +18,15 @@ public final class AgentShopVisitTickService {
 
     @FunctionalInterface
     public interface ShopVisitTick {
-        boolean tick(BotEntry entry, Character agent);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface MovementCore {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
-    public static Result tickShopVisitIfPending(BotEntry entry,
+    public static Result tickShopVisitIfPending(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick,
                                                 Hooks hooks) {

@@ -5090,6 +5090,9 @@ Current physics correction:
   follow-opportunity, follow-idle, scripted-move combat, anchored farm, grind
   dispatch, target propagation, consumed-tick short-circuits, and final movement
   tail behavior are unchanged.
+- Shop-visit tick gating now accepts `AgentRuntimeEntry`; pending-shop checks,
+  shop tick execution, active target lookup, approach-delay consumption, target
+  movement stepping, and result propagation are unchanged.
 
 Initial reconstruction order:
 

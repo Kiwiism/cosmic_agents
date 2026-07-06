@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +17,7 @@ import static org.mockito.Mockito.mock;
 class AgentShopVisitTickServiceTest {
     @Test
     void fallsThroughWhenShopVisitIsNotPending() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         AtomicInteger shopTicks = new AtomicInteger();
         AtomicInteger movementSteps = new AtomicInteger();
@@ -37,7 +36,7 @@ class AgentShopVisitTickServiceTest {
 
     @Test
     void pendingVisitWithApproachDelayConsumesWithoutMovementWhenShopTickDoesNotConsume() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Point target = new Point(100, 50);
         AgentBotShopStateRuntime.startShopVisit(entry, new Point(120, 50), target, 250, 1_000L);
@@ -60,7 +59,7 @@ class AgentShopVisitTickServiceTest {
 
     @Test
     void pendingVisitStepsTowardActiveTargetWhenDelayIsClear() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Point target = new Point(100, 50);
         AgentBotShopStateRuntime.startShopVisit(entry, new Point(120, 50), target, 0, 1_000L);
