@@ -102,6 +102,9 @@ Recent map updates:
 - `AgentNavigationWarmupService` now accepts `AgentRuntimeEntry`. Leader/map
   throttle checks, walkable-foothold threshold, and fallback notification text
   remain unchanged.
+- `AgentNavigationPortalService` now accepts `AgentRuntimeEntry`. Portal
+  cooldown checks, portal-use success detection, cooldown update, navigation
+  reset, and movement state reset remain unchanged.
 - `AgentAirborneLaunchService` now accepts `AgentRuntimeEntry`, with
   `AgentGroundPhysicsService.stopGroundMotion` lifted to the same boundary.
   Air-state initialization, climb intent, horizontal/vertical velocity setup,

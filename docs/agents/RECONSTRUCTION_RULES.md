@@ -5126,6 +5126,9 @@ Current physics correction:
 - Navigation warmup notification now accepts `AgentRuntimeEntry`; leader/map
   throttle checks, walkable-foothold threshold, and fallback notification text
   are unchanged.
+- Portal navigation execution now accepts `AgentRuntimeEntry`; portal cooldown
+  checks, portal-use success detection, cooldown update, navigation reset, and
+  movement state reset are unchanged.
 - Airborne launch now accepts `AgentRuntimeEntry`, with ground-motion stopping
   lifted to the same boundary; air-state initialization, climb intent,
   horizontal/vertical velocity setup, down-jump clearing, movement velocity

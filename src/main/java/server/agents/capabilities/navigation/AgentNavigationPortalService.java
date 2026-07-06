@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Portal;
 
 import java.awt.Point;
@@ -17,7 +17,7 @@ public final class AgentNavigationPortalService {
     private AgentNavigationPortalService() {
     }
 
-    public static boolean tryExecutePortal(BotEntry entry, Character agent, int portalId) {
+    public static boolean tryExecutePortal(AgentRuntimeEntry entry, Character agent, int portalId) {
         if (AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
             return false;
         }
