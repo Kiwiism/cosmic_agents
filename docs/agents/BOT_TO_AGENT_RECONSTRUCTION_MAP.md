@@ -116,6 +116,9 @@ Recent map updates:
   accumulation, cooldown blocking, and unstuck trigger behavior remain unchanged
   while `AgentStuckDetectionRuntime` keeps the temporary `BotEntry` adapter
   edge.
+- `AgentMovementPhaseServiceTest` now exercises the existing Agent-runtime-entry
+  service boundary directly. Climb priority, swim-map airborne dispatch,
+  non-swim airborne dispatch, and grounded dispatch remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

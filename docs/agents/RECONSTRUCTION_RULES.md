@@ -5140,6 +5140,9 @@ Current physics correction:
 - Stuck-detection service now accepts `AgentRuntimeEntry`; cooldown ticking,
   active-navigation gates, stuck-position tracking, stuck timer accumulation,
   cooldown blocking, and unstuck trigger behavior are unchanged.
+- Movement-phase service tests now exercise the existing `AgentRuntimeEntry`
+  boundary directly; climb priority, swim-map airborne dispatch, non-swim
+  airborne dispatch, and grounded dispatch are unchanged.
 
 Initial reconstruction order:
 

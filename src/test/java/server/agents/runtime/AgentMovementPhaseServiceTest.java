@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -18,7 +17,7 @@ import static org.mockito.Mockito.mock;
 class AgentMovementPhaseServiceTest {
     @Test
     void climbingTakesPriorityOverAirAndSwim() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(10, 0, 100, false));
@@ -31,7 +30,7 @@ class AgentMovementPhaseServiceTest {
 
     @Test
     void swimmingRunsOnlyWhenInAirOnSwimMap() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         List<String> calls = new ArrayList<>();
@@ -43,7 +42,7 @@ class AgentMovementPhaseServiceTest {
 
     @Test
     void airborneRunsWhenInAirOutsideSwimMap() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         List<String> calls = new ArrayList<>();
@@ -55,7 +54,7 @@ class AgentMovementPhaseServiceTest {
 
     @Test
     void groundedRunsWhenNotInAirOrClimbing() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
         List<String> calls = new ArrayList<>();
 
@@ -73,7 +72,7 @@ class AgentMovementPhaseServiceTest {
                 (entry, target) -> calls.add("ground"));
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 }
