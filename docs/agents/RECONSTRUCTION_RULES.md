@@ -5121,6 +5121,10 @@ Current physics correction:
 - Live-tick gate service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; common, trade-window, idle, recovery, and tracked-map
   gate ordering and short-circuit behavior are unchanged.
+- Tick-core service tests now exercise the existing `AgentRuntimeEntry`
+  boundary directly; preflight short-circuiting, leader resolution, inactive,
+  ownerless, dead, live-context, live-gate, and live-mode ordering are
+  unchanged.
 
 Initial reconstruction order:
 

@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import static org.mockito.Mockito.mock;
 class AgentTickCoreServiceTest {
     @Test
     void stopsWhenPreflightConsumesTick() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         List<String> calls = new ArrayList<>();
 
         AgentTickCoreService.tickCore(entry, 1, 2, new AgentTickCoreService.Hooks(
@@ -54,7 +53,7 @@ class AgentTickCoreServiceTest {
     void runsLivePathInLegacyOrder() {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentLiveTickContextService.Context liveContext = liveContext();
         List<String> calls = new ArrayList<>();
 

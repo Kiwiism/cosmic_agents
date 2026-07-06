@@ -93,6 +93,10 @@ Recent map updates:
 - `AgentLiveTickGateServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Common, trade-window, idle, recovery, and
   tracked-map gate ordering and short-circuit behavior remain unchanged.
+- `AgentTickCoreServiceTest` now exercises the existing Agent-runtime-entry
+  service boundary directly. Preflight short-circuiting, leader resolution,
+  inactive, ownerless, dead, live-context, live-gate, and live-mode ordering
+  remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
