@@ -653,9 +653,60 @@ Implementation focus:
 4. add refresh policy tied to simulation tier.
 5. add LLM-safe summarizer and batch row output.
 
+### 16. Background Action Runtime
+
+Status: well defined.
+
+Purpose:
+
+- Execute unobserved Agent movement, combat, loot, NPC/quest, shop, recovery,
+  and plan-slice actions through validated low-fidelity simulation.
+- Keep all player-visible behavior on the normal presentation path.
+- Make 2000 concurrent Agents plausible by skipping invisible packets, map item
+  creation, full physics, and per-action DB writes when safe.
+
+Primary docs:
+
+- `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`
+- `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
+- `docs/agents/background-action-runtime/BACKGROUND_ACTION_RUNTIME_DESIGN_SPECIFICATION.md`
+- `docs/agents/background-action-runtime/BACKGROUND_ACTION_RUNTIME_TECHNICAL_SPECIFICATION.md`
+
+Owns:
+
+- background action routing.
+- background navigation execution.
+- background combat execution.
+- background loot resolution.
+- virtual loot/meso buffers.
+- inventory reconciliation requests.
+- background NPC/quest/shop execution wrappers.
+- fairness budget checks.
+- background action journals.
+- strict debug comparison hooks.
+
+Does not own:
+
+- simulation tier decisions.
+- plan selection.
+- capability validation rules.
+- catalog building.
+- profile storage.
+- economy price modeling.
+- direct unvalidated server mutation.
+
+Implementation focus:
+
+1. add background action router and allowed-shortcut checks.
+2. add route ETA and same-map ETA background navigation.
+3. add abstract combat slices with shared formula calibration.
+4. add virtual loot buffers and inventory reconciliation.
+5. add direct validated NPC/quest/shop wrappers.
+6. add fairness budgets, fail-closed behavior, and strict debug comparison.
+
 ## Partially Defined Packages
 
-### 16. LLM Control Gateway Package
+### 17. LLM Control Gateway Package
 
 Status: contract defined, technical package not fully defined.
 
@@ -695,7 +746,7 @@ Recommended package:
 agent-llm-gateway
 ```
 
-### 17. Quest / Combat Focus Policy Package
+### 18. Quest / Combat Focus Policy Package
 
 Status: policy defined, package not fully defined.
 
@@ -734,7 +785,7 @@ agent-quest-objective-policy
 
 ## Backlog Packages To Promote
 
-### 18. Agent Population Director
+### 19. Agent Population Director
 
 Status: discussed, not yet packaged.
 
@@ -760,7 +811,7 @@ Recommended package:
 agent-population-director
 ```
 
-### 19. Relationship / Social Graph Runtime
+### 20. Relationship / Social Graph Runtime
 
 Status: included inside profile docs, but may deserve its own package later.
 
@@ -785,7 +836,7 @@ Potential package:
 agent-social-relationship-runtime
 ```
 
-### 20. Portable Installer / Patcher
+### 21. Portable Installer / Patcher
 
 Status: contract exists, implementation package not fully specified.
 
@@ -811,58 +862,6 @@ Recommended package:
 
 ```text
 agent-platform-installer
-```
-
-### 21. Background Action Runtime
-
-Status: partially defined; detailed design notes exist in the optimization doc.
-
-Purpose:
-
-- Run unobserved agents through validated low-fidelity movement, combat, loot,
-  NPC/shop actions, and plan progress.
-- Keep visible/player-observed behavior on the normal presentation path.
-- Make 2000 concurrent agents plausible by skipping invisible packets,
-  per-kill map item creation, full physics, and per-action DB writes.
-
-Primary docs:
-
-- `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`
-- `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
-
-Owns:
-
-- background action routing.
-- route ETA and same-map ETA execution.
-- abstract combat resolution.
-- direct loot credit and loot buffers.
-- inventory reconciliation from buffers.
-- background quest progress.
-- materialization from virtual state into visible state.
-- fairness/progress budgets.
-- background action journals.
-
-Does not own:
-
-- normal player-visible combat packets.
-- normal player loot/drop behavior.
-- static catalog generation.
-- profile/economy decisions.
-- core server validation rules.
-
-Implementation focus:
-
-1. Define presentation path versus background path contracts.
-2. Add background action router and simulation-mode gates.
-3. Implement direct loot buffer and reconciliation.
-4. Implement abstract combat resolver using shared formulas.
-5. Implement materialization safety when players enter a map.
-6. Add fairness budgets and strict debug comparison mode.
-
-Recommended package:
-
-```text
-agent-background-action-runtime
 ```
 
 ### 22. Agent Soak Test Harness
@@ -973,17 +972,16 @@ Reasoning:
 
 Highest priority:
 
-1. Background Action Runtime design + technical specs.
-2. Agent Soak Test Harness command/runner spec.
-3. Catalog builder validation/report spec.
-4. LLM Gateway design + technical specs.
-5. Population Director design + technical specs.
+1. Agent Soak Test Harness command/runner spec.
+2. Catalog builder validation/report spec.
+3. LLM Gateway design + technical specs.
+4. Population Director design + technical specs.
+5. Portable Installer technical spec.
 
 Second priority:
 
-1. Portable Installer technical spec.
-2. Quest Objective Policy design + technical specs.
-3. Relationship / Social Graph split-out spec if profile package grows large.
+1. Quest Objective Policy design + technical specs.
+2. Relationship / Social Graph split-out spec if profile package grows large.
 
 Later:
 

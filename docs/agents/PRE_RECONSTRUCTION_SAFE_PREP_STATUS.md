@@ -43,7 +43,7 @@ Allowed before reconstruction is stable:
 | Area | Status | Primary Evidence | Safe Next Work |
 | --- | --- | --- | --- |
 | Server-only hardening and scaling prep | Ready for current phase | `docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md`, `docs/SERVER_SCALE_TODO.md`, `docs/SERVER_HARDENING_DIAGNOSTICS.md` | Run soak tests and use diagnostics to choose later behavior changes. |
-| Agent scaling documentation | Ready as strategy and package specs, implementation waits | `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`, `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`, `docs/agents/simulation-tier-runtime/*` | Promote Background Action Runtime and soak harness details next. |
+| Agent scaling documentation | Ready as strategy and package specs, implementation waits | `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`, `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`, `docs/agents/simulation-tier-runtime/*`, `docs/agents/background-action-runtime/*` | Promote soak harness details next. |
 | Catalog and runtime knowledge prep | Partially ready | `docs/agents/catalog-platform/*`, `docs/agents/llm-autonomy/GAME_KNOWLEDGE_CATALOGS.md`, `tools/game-catalog`, `tools/npc-catalog`, `tools/agent-llm-catalog` | Unify catalog builders into bundle format and add validation reports. |
 | Maple Island MVP documentation | Ready as first gameplay slice | `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`, MVP design/technical/sequence docs, `docs/agents/plans/maple-island-mvp.plan.json` | Implement only after Agent capability boundaries are stable. |
 | Portable Agent architecture prep | Ready as contract | `docs/agents/POST_RECONSTRUCTION_AGENT_PLATFORM_SPECIFICATION.md`, `docs/agents/server-adapter/*` | Build installer/adapter code after reconstruction boundary is stable. |
@@ -145,6 +145,7 @@ Well-defined packages:
 - Interaction Realism Package.
 - Agent Simulation Tier Runtime.
 - Perception Runtime Package.
+- Background Action Runtime.
 
 Partially defined packages that need specs before implementation:
 
@@ -156,7 +157,6 @@ Backlog packages to promote:
 - Agent Population Director.
 - Relationship / Social Graph Runtime.
 - Portable Installer / Patcher.
-- Background Action Runtime.
 - Agent Soak Test Harness.
 
 ## Verification Rules For Every Safe-Prep Batch
@@ -182,13 +182,12 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write Background Action Runtime design and technical specs.
-2. Write Agent Soak Test Harness command/runner spec.
-3. Write LLM Gateway design and technical specs.
-4. Unify catalog builder output shape in documentation before touching runtime.
-5. Add catalog validation report requirements for dangling NPC, quest, shop,
+1. Write Agent Soak Test Harness command/runner spec.
+2. Write LLM Gateway design and technical specs.
+3. Unify catalog builder output shape in documentation before touching runtime.
+4. Add catalog validation report requirements for dangling NPC, quest, shop,
    item, reactor, portal, and reward references.
-6. Keep server-only diagnostics stable and collect soak evidence.
+5. Keep server-only diagnostics stable and collect soak evidence.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.

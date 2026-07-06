@@ -38,6 +38,8 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Agent Simulation Tier technical specification.
 - [x] Perception Runtime design specification.
 - [x] Perception Runtime technical specification.
+- [x] Background Action Runtime design specification.
+- [x] Background Action Runtime technical specification.
 
 ## Builder Work
 
