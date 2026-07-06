@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +14,7 @@ import static org.mockito.Mockito.mock;
 class AgentStandaloneMoveTargetTickServiceTest {
     @Test
     void skipsRefreshAndMovementWhenMapChangeGroundingConsumesTick() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         AtomicInteger refreshes = new AtomicInteger();
         AtomicInteger movementSteps = new AtomicInteger();
@@ -35,7 +34,7 @@ class AgentStandaloneMoveTargetTickServiceTest {
 
     @Test
     void refreshesProfileAndStepsTowardStoredMoveTarget() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Point moveTarget = new Point(120, 45);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, moveTarget, false);

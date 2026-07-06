@@ -60,6 +60,10 @@ Recent map updates:
   `AgentPotionDonorPlan<E extends AgentRuntimeHandle>` in the supplies
   capability. Existing potion donor selection and tests now use the Agent-owned
   value object while `AgentPotionService` still adapts with `BotEntry`.
+- `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
+  Map-change grounding, movement-profile refresh, stored-target lookup, and
+  movement-step dispatch remain unchanged while the temporary `BotEntry`
+  adapter edge shrinks.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

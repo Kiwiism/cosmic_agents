@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -17,20 +16,20 @@ public final class AgentStandaloneMoveTargetTickService {
 
     @FunctionalInterface
     public interface MapChangeGrounder {
-        boolean ground(BotEntry entry, Character agent);
+        boolean ground(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface MovementProfileRefresher {
-        void refresh(BotEntry entry);
+        void refresh(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface MovementCore {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
-    public static void tickStandaloneMoveTarget(BotEntry entry,
+    public static void tickStandaloneMoveTarget(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick,
                                                 Hooks hooks) {

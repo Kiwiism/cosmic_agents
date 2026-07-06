@@ -31,13 +31,17 @@ public final class AgentStandaloneMoveTargetRuntime {
                 agent,
                 runAiTick,
                 new AgentStandaloneMoveTargetTickService.Hooks(
-                        AgentMapTransitionRuntime::groundAfterMapChange,
-                        AgentMovementProfileService::refreshMovementProfile,
+                        (moveEntry, moveAgent) -> AgentMapTransitionRuntime.groundAfterMapChange(asBotEntry(moveEntry), moveAgent),
+                        moveEntry -> AgentMovementProfileService.refreshMovementProfile(asBotEntry(moveEntry)),
                         (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
-                                moveEntry,
+                                asBotEntry(moveEntry),
                                 targetPosition,
                                 moveRunAiTick,
                                 enableUnstuck,
                                 stopDistance)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

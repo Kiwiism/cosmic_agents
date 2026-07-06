@@ -5093,6 +5093,9 @@ Current physics correction:
 - Shop-visit tick gating now accepts `AgentRuntimeEntry`; pending-shop checks,
   shop tick execution, active target lookup, approach-delay consumption, target
   movement stepping, and result propagation are unchanged.
+- Standalone move-target ticking now accepts `AgentRuntimeEntry`; map-change
+  grounding, movement-profile refresh, stored-target lookup, and movement-step
+  dispatch are unchanged.
 
 Initial reconstruction order:
 
