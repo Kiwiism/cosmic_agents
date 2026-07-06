@@ -105,6 +105,24 @@ powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidenceP
   -Json > .\logs\soak\baseline\<runId>\verification.json
 ```
 
+The verifier reports:
+
+- `PASS` when required files exist and summary/log signals look complete.
+- `INCOMPLETE` when the folder is structurally valid but still missing run
+  evidence.
+- `FAIL` when required files, JSON, or baseline invariants are wrong.
+
+Important checks:
+
+- required files exist.
+- `summary.json` has required fields.
+- `onlineAgentPeak` is zero for the server baseline.
+- `threadRejectedDelta` and `stuckLoginCount` are zero.
+- `serverhealth-5min-samples.log` has enough samples for the declared
+  duration and interval.
+- `startup.log` and `shutdown.log` are filled.
+- `evidence-checklist.md` has checked items, ideally all checked.
+
 ## Example With Explicit Run Id
 
 ```powershell

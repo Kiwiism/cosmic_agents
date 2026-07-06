@@ -173,6 +173,15 @@ if ($serverHealthSamples -gt 0) {
     Add-Check $checks "evidence:serverhealth" "WARN" "serverhealth samples are empty or template-only."
 }
 
+if ($summary -and $summary.durationMinutes -gt 0 -and $summary.sampleIntervalMinutes -gt 0) {
+    $expectedSamples = [Math]::Max(1, [Math]::Ceiling([double]$summary.durationMinutes / [double]$summary.sampleIntervalMinutes))
+    if ($serverHealthSamples -ge $expectedSamples) {
+        Add-Check $checks "evidence:serverhealth-sample-count" "PASS" "serverhealth sample count $serverHealthSamples meets expected minimum $expectedSamples."
+    } else {
+        Add-Check $checks "evidence:serverhealth-sample-count" "WARN" "serverhealth sample count $serverHealthSamples is below expected minimum $expectedSamples."
+    }
+}
+
 $startupPath = Join-Path $resolvedRunPath "startup.log"
 $startupLines = Get-NonCommentLineCount $startupPath
 if ($startupLines -gt 0) {
@@ -187,6 +196,21 @@ if ($shutdownLines -gt 0) {
     Add-Check $checks "evidence:shutdown" "PASS" "shutdown.log has non-comment content."
 } else {
     Add-Check $checks "evidence:shutdown" "WARN" "shutdown.log is empty or template-only."
+}
+
+$checklistPath = Join-Path $resolvedRunPath "evidence-checklist.md"
+if (Test-Path -LiteralPath $checklistPath) {
+    $checklistLines = Get-Content -LiteralPath $checklistPath
+    $uncheckedItems = @($checklistLines | Where-Object { $_ -match '^\s*-\s+\[\s\]' }).Count
+    $checkedItems = @($checklistLines | Where-Object { $_ -match '^\s*-\s+\[[xX]\]' }).Count
+
+    if ($checkedItems -gt 0 -and $uncheckedItems -eq 0) {
+        Add-Check $checks "evidence:checklist" "PASS" "All checklist items are checked."
+    } elseif ($checkedItems -gt 0) {
+        Add-Check $checks "evidence:checklist" "WARN" "$uncheckedItems checklist items remain unchecked."
+    } else {
+        Add-Check $checks "evidence:checklist" "WARN" "Checklist has no checked items yet."
+    }
 }
 
 $failCount = @($checks | Where-Object { $_.status -eq "FAIL" }).Count
