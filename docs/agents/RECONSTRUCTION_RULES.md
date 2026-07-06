@@ -5118,6 +5118,8 @@ Current physics correction:
 - Action-lock physics service tests now exercise the existing
   `AgentRuntimeEntry` boundary directly; attack-cooldown gating and swim,
   airborne, grounded, and legacy climbing branches are unchanged.
+- Action-lock physics runtime now accepts `AgentRuntimeEntry`; attack-lock
+  physics gating and swim/airborne/grounded dispatch are unchanged.
 - Command-mode service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; null-entry skip behavior, guard evaluation, task clearing,
   shop cancellation, and mode-start ordering are unchanged.

@@ -92,6 +92,10 @@ Recent map updates:
 - `AgentActionLockPhysicsServiceTest` now exercises the existing
   Agent-runtime-entry service boundary directly. Attack-cooldown gating and
   swim, airborne, grounded, and legacy climbing branches remain unchanged.
+- `AgentActionLockPhysicsRuntime` now accepts `AgentRuntimeEntry`.
+  Attack-lock physics gating and swim/airborne/grounded dispatch remain
+  unchanged while the runtime wrapper keeps the temporary `BotEntry` movement
+  phase adapter.
 - `AgentCommandModeServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Null-entry skip behavior, guard evaluation, task
   clearing, shop cancellation, and mode-start ordering remain unchanged.
