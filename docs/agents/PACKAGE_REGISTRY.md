@@ -754,47 +754,59 @@ Implementation focus:
 5. add periodic snapshot collector and report writers.
 6. add pass/fail evaluator and cleanup verification.
 
-## Partially Defined Packages
-
 ### 18. LLM Control Gateway Package
 
-Status: contract defined, technical package not fully defined.
+Status: well defined.
 
-Existing docs:
+Purpose:
+
+- Let an LLM safely inspect, plan for, and direct Agents through typed tools,
+  proposal paths, and validated command queues.
+- Keep read-only tools, proposal tools, and command tools separated.
+- Enforce permissions, rate limits, idempotency, budgets, manual-review gates,
+  schema validation, and audit logging.
+
+Primary docs:
 
 - `docs/agents/llm-autonomy/LLM_CONTROL_CONTRACT.md`
 - `docs/agents/llm-autonomy/README.md`
 - `docs/agents/llm-autonomy/PERCEPTION_MEMORY_SCHEMA.md`
+- `docs/agents/llm-gateway/LLM_GATEWAY_DESIGN_SPECIFICATION.md`
+- `docs/agents/llm-gateway/LLM_GATEWAY_TECHNICAL_SPECIFICATION.md`
 
-What is already clear:
+Owns:
 
-- LLM gives intents and typed commands.
-- Agent engine executes validated behavior.
-- LLM should not spoof packets or directly mutate server state.
-- Direct navigation-to-point should be exposed as a controlled command.
+- tool schema registry.
+- tool request validation.
+- permission/rate-limit enforcement.
+- read-only query dispatch.
+- proposal submission.
+- command envelope creation.
+- batch command handling.
+- command status/result summaries.
+- audit event emission.
 
-Missing package docs:
+Does not own:
 
-- `LLM_GATEWAY_DESIGN_SPECIFICATION.md`
-- `LLM_GATEWAY_TECHNICAL_SPECIFICATION.md`
+- Agent runtime execution.
+- capability validators.
+- plan scheduler internals.
+- profile storage.
+- catalog building.
+- economy valuation.
+- direct server mutation.
+- LLM provider/client implementation.
 
-Needs definition:
+Implementation focus:
 
-- tool schemas.
-- permission model.
-- rate limits.
-- command queue.
-- plan proposal API.
-- profile patch API.
-- perception summary API.
-- multi-agent assignment model.
-- audit logs.
+1. add transport-neutral tool request/response model.
+2. add read-only/proposal/command tool registry.
+3. add permission, budget, rate-limit, and manual-review policy.
+4. add bounded command queue and idempotency store.
+5. add batch command dry-run and partial-acceptance flow.
+6. add audit events and result summaries.
 
-Recommended package:
-
-```text
-agent-llm-gateway
-```
+## Partially Defined Packages
 
 ### 19. Quest / Combat Focus Policy Package
 
@@ -970,15 +982,11 @@ Reasoning:
 Highest priority:
 
 1. Catalog builder validation/report spec.
-2. LLM Gateway design + technical specs.
-3. Population Director design + technical specs.
-4. Portable Installer technical spec.
-5. Quest Objective Policy design + technical specs.
+2. Population Director design + technical specs.
+3. Portable Installer technical spec.
+4. Quest Objective Policy design + technical specs.
+5. Relationship / Social Graph split-out spec if profile package grows large.
 
 Second priority:
-
-1. Relationship / Social Graph split-out spec if profile package grows large.
-
-Later:
 
 1. Advanced full-game quest objective policy specs after Maple Island MVP.

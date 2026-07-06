@@ -147,10 +147,10 @@ Well-defined packages:
 - Perception Runtime Package.
 - Background Action Runtime.
 - Agent Soak Test Harness.
+- LLM Control Gateway Package.
 
 Partially defined packages that need specs before implementation:
 
-- LLM Control Gateway Package.
 - Quest / Combat Focus Policy Package.
 
 Backlog packages to promote:
@@ -182,11 +182,12 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write LLM Gateway design and technical specs.
-2. Unify catalog builder output shape in documentation before touching runtime.
-3. Add catalog validation report requirements for dangling NPC, quest, shop,
+1. Unify catalog builder output shape in documentation before touching runtime.
+2. Add catalog validation report requirements for dangling NPC, quest, shop,
    item, reactor, portal, and reward references.
-4. Keep server-only diagnostics stable and collect soak evidence.
+3. Write Population Director design and technical specs.
+4. Write Portable Installer technical spec.
+5. Keep server-only diagnostics stable and collect soak evidence.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.

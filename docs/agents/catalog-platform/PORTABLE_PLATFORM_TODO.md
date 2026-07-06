@@ -42,6 +42,8 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Background Action Runtime technical specification.
 - [x] Agent Soak Test Harness design specification.
 - [x] Agent Soak Test Harness technical specification.
+- [x] LLM Gateway design specification.
+- [x] LLM Gateway technical specification.
 
 ## Builder Work
 
