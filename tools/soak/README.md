@@ -12,6 +12,7 @@ Current tool:
 - `New-BaselineSoakEvidencePackage.ps1`
 - `Test-BaselineSoakEvidencePackage.ps1`
 - `Add-BaselineSoakSample.ps1`
+- `Update-BaselineSoakSummary.ps1`
 - `New-BaselineSoakAuditEntry.ps1`
 
 ## Baseline Evidence Workflow
@@ -101,6 +102,20 @@ Supported targets:
 
 Samples can come from `-Text`, `-InputPath`, `-FromClipboard`, or pipeline
 input.
+
+To update `summary.json` without hand-editing JSON:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Update-BaselineSoakSummary.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -OnlinePlayerPeak 1 `
+  -OnlineAgentPeak 0 `
+  -ThreadRejectedDelta 0 `
+  -StuckLoginCount 0 `
+  -ShutdownClean true `
+  -RestartClean true `
+  -Note "Baseline completed without manual DB cleanup."
+```
 
 ## Pass / Fail Interpretation
 

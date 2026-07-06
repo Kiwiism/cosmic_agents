@@ -29,6 +29,7 @@ this stage also exists.
   - `tools/soak/New-BaselineSoakEvidencePackage.ps1`
   - `tools/soak/Test-BaselineSoakEvidencePackage.ps1`
   - `tools/soak/Add-BaselineSoakSample.ps1`
+  - `tools/soak/Update-BaselineSoakSummary.ps1`
 - Prep verifier is available:
   - `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`
 
@@ -204,6 +205,20 @@ Update `summary.json` with final values:
 - notes.
 
 If a value is unknown, keep it conservative and add a note explaining why.
+
+Recommended helper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Update-BaselineSoakSummary.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -OnlinePlayerPeak 1 `
+  -OnlineAgentPeak 0 `
+  -ThreadRejectedDelta 0 `
+  -StuckLoginCount 0 `
+  -ShutdownClean true `
+  -RestartClean true `
+  -Note "Baseline completed without manual DB cleanup."
+```
 
 ## Step 7 - Shutdown And Restart Check
 

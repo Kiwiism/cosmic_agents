@@ -92,6 +92,7 @@ $requiredArtifacts = @(
     @{ path = "tools/soak/New-BaselineSoakEvidencePackage.ps1"; description = "baseline soak evidence scaffold" },
     @{ path = "tools/soak/Test-BaselineSoakEvidencePackage.ps1"; description = "baseline soak evidence verifier" },
     @{ path = "tools/soak/Add-BaselineSoakSample.ps1"; description = "baseline soak sample appender" },
+    @{ path = "tools/soak/Update-BaselineSoakSummary.ps1"; description = "baseline soak summary updater" },
     @{ path = "tools/soak/New-BaselineSoakAuditEntry.ps1"; description = "baseline soak audit-entry generator" }
 )
 
