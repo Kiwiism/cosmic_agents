@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.InventoryType;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -12,29 +11,29 @@ public final class AgentScriptTaskQueueService {
     private AgentScriptTaskQueueService() {
     }
 
-    public static void clearTasks(BotEntry entry) {
+    public static void clearTasks(AgentRuntimeEntry entry) {
         if (entry == null) {
             return;
         }
         AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
     }
 
-    public static void queueTask(BotEntry entry, AgentTask task) {
+    public static void queueTask(AgentRuntimeEntry entry, AgentTask task) {
         if (entry == null || task == null) {
             return;
         }
         AgentBotScriptTaskStateRuntime.queueTask(entry, task);
     }
 
-    public static void queueMoveTo(BotEntry entry, Point point, boolean precise) {
+    public static void queueMoveTo(AgentRuntimeEntry entry, Point point, boolean precise) {
         queueTask(entry, AgentTask.moveTo(point, precise));
     }
 
-    public static void queueMoveTo(BotEntry entry, Point point, boolean precise, AgentTask.MoveCombatMode moveCombatMode) {
+    public static void queueMoveTo(AgentRuntimeEntry entry, Point point, boolean precise, AgentTask.MoveCombatMode moveCombatMode) {
         queueTask(entry, AgentTask.moveTo(point, precise, moveCombatMode));
     }
 
-    public static void queueMoveThenDropItem(BotEntry entry,
+    public static void queueMoveThenDropItem(AgentRuntimeEntry entry,
                                              Point point,
                                              boolean precise,
                                              InventoryType type,
@@ -44,7 +43,7 @@ public final class AgentScriptTaskQueueService {
         queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
-    public static void queueFollowThenDropItem(BotEntry entry,
+    public static void queueFollowThenDropItem(AgentRuntimeEntry entry,
                                                Character target,
                                                int nearPx,
                                                InventoryType type,
@@ -54,7 +53,7 @@ public final class AgentScriptTaskQueueService {
         queueTask(entry, AgentTask.dropItem(type, itemId, quantity));
     }
 
-    public static boolean hasQueuedTasks(BotEntry entry) {
+    public static boolean hasQueuedTasks(AgentRuntimeEntry entry) {
         return AgentBotScriptTaskStateRuntime.hasQueuedTasks(entry);
     }
 }

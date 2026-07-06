@@ -4993,6 +4993,9 @@ Current physics correction:
 - Command-mode preparation now accepts `AgentRuntimeEntry`; null guard,
   can-start guard, script-task clearing, shop cancellation, and mode-start hook
   ordering are unchanged.
+- Script task queue operations now accept `AgentRuntimeEntry`; null guards,
+  activity-epoch bumps, queue ordering, move/drop/follow task construction, and
+  queued-task checks are unchanged.
 
 Initial reconstruction order:
 
