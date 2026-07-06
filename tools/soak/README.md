@@ -14,6 +14,7 @@ Current tool:
 - `Add-BaselineSoakSample.ps1`
 - `Update-BaselineSoakSummary.ps1`
 - `New-BaselineSoakAuditEntry.ps1`
+- `Get-BaselineSoakStatus.ps1`
 
 ## Baseline Evidence Workflow
 
@@ -66,6 +67,19 @@ It does not:
 - modify server runtime behavior.
 - modify Agent or bot code.
 - generate Agent load.
+
+To quickly inspect whether baseline evidence exists and what the next operator
+step should be:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Get-BaselineSoakStatus.ps1
+```
+
+Machine-readable form:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Get-BaselineSoakStatus.ps1 -Json
+```
 
 ## During The Run
 

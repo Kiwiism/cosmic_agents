@@ -30,6 +30,7 @@ this stage also exists.
   - `tools/soak/Test-BaselineSoakEvidencePackage.ps1`
   - `tools/soak/Add-BaselineSoakSample.ps1`
   - `tools/soak/Update-BaselineSoakSummary.ps1`
+  - `tools/soak/Get-BaselineSoakStatus.ps1`
 - Prep verifier is available:
   - `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`
 
@@ -55,11 +56,18 @@ Run:
 powershell -ExecutionPolicy Bypass -File .\tools\pre-reconstruction\Test-PreReconstructionPrep.ps1
 ```
 
+Then check the current baseline evidence state:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Get-BaselineSoakStatus.ps1
+```
+
 Expected before the first run:
 
 - `FAIL`: should be `0`.
 - `WARN`: likely `1` because baseline evidence does not exist yet.
 - no forbidden Agent/bot/config staged paths.
+- baseline status should point to creating or filling a run folder.
 
 Record the output in the run folder after the scaffold is created.
 
