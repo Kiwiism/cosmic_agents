@@ -177,8 +177,8 @@ public final class AgentLiveModeTickRuntime {
                         moveEntry,
                         moveTargetPos,
                         moveRunAiTick,
-                        new AgentFinalMovementTailService.Hooks((tailEntry, tailTargetPos, tailRunAiTick) ->
-                                timedMovementCoreStep(tailEntry, tailTargetPos, tailRunAiTick, perf, movementCoreStep))));
+                        new AgentFinalMovementTailService.Hooks((ignored, tailTargetPos, tailRunAiTick) ->
+                                timedMovementCoreStep(moveEntry, tailTargetPos, tailRunAiTick, perf, movementCoreStep))));
     }
 
     private static boolean tickShopVisit(BotEntry entry, Character agent, boolean perf) {

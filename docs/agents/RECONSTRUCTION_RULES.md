@@ -5010,6 +5010,9 @@ Current physics correction:
   are unchanged.
 - Target snapshot steering helpers now accept `AgentRuntimeEntry`; navigation
   waypoint override lookup and primary-target fallback behavior are unchanged.
+- Final movement tail dispatch now accepts `AgentRuntimeEntry`; the live-mode
+  wrapper still calls the same movement core with the same target and AI-tick
+  flag.
 
 Initial reconstruction order:
 

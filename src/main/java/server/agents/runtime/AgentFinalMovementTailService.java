@@ -1,7 +1,5 @@
 package server.agents.runtime;
 
-import server.bots.BotEntry;
-
 import java.awt.Point;
 
 public final class AgentFinalMovementTailService {
@@ -13,10 +11,10 @@ public final class AgentFinalMovementTailService {
 
     @FunctionalInterface
     public interface MovementCore {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
-    public static void stepFinalMovement(BotEntry entry,
+    public static void stepFinalMovement(AgentRuntimeEntry entry,
                                          Point targetPosition,
                                          boolean runAiTick,
                                          Hooks hooks) {
