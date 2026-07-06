@@ -5024,6 +5024,10 @@ Current physics correction:
   are unchanged.
 - Precise navigation target marking now accepts `AgentRuntimeEntry`; precise
   move-target checks and active-edge suppression are unchanged.
+- Live tick gate ordering now accepts `AgentRuntimeEntry`; common, trade,
+  idle, recovery, and tracked-map-change gate order and short-circuit behavior
+  are unchanged. `AgentLiveTickGateRuntime` remains the temporary compatibility
+  bridge to BotEntry-shaped downstream tick callbacks.
 
 Initial reconstruction order:
 

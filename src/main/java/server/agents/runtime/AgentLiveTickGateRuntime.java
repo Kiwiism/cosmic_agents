@@ -37,18 +37,18 @@ public final class AgentLiveTickGateRuntime {
                                                         int grindPartyTeleportDistanceMultiplier) {
         return new AgentLiveTickGateService.Hooks(
                 (entry, agent, leader, runAiTick) ->
-                        AgentCommonTickRuntime.runCommonTickSystems(entry, agent, leader, runAiTick, tickScriptTasks),
+                        AgentCommonTickRuntime.runCommonTickSystems(asBotEntry(entry), agent, leader, runAiTick, tickScriptTasks),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
-                        tradeEntry,
+                        asBotEntry(tradeEntry),
                         tradeAgent,
-                        (physicsEntry, physicsAgent) -> tickTradePhysics(physicsEntry, physicsAgent, perf)),
+                        (physicsEntry, physicsAgent) -> tickTradePhysics(asBotEntry(physicsEntry), physicsAgent, perf)),
                 (idleEntry, idleAgent) -> AgentIdleModeTickService.tickIdleMode(
                         idleEntry,
                         idleAgent,
                         new AgentIdleModeTickService.Hooks((ignored, physicsAgent) ->
-                                tickIdleEntry(idleEntry, physicsAgent, perf))),
+                                tickIdleEntry(asBotEntry(idleEntry), physicsAgent, perf))),
                 (recoveryEntry, recoveryAgent, recoveryFollowAnchor, recoveryTargetPos) -> AgentRecoveryTickService.tickRecovery(
-                        recoveryEntry,
+                        asBotEntry(recoveryEntry),
                         recoveryAgent,
                         recoveryFollowAnchor,
                         recoveryTargetPos,
@@ -68,10 +68,14 @@ public final class AgentLiveTickGateRuntime {
                                         teleportDistance,
                                         outOfBoundsTeleportDistance))),
                 (mapEntry, mapAgent) -> AgentTrackedMapChangeTickService.tickTrackedMapChange(
-                        mapEntry,
+                        asBotEntry(mapEntry),
                         mapAgent,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedAgent) ->
                                 tickTrackedMapChange(trackedEntry, trackedAgent, issueGrind, issueFollow, perf))));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 
     private static void tickTradePhysics(BotEntry entry, Character agent, boolean perf) {

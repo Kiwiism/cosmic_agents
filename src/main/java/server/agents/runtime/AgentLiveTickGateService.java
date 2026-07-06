@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -9,7 +8,7 @@ public final class AgentLiveTickGateService {
     private AgentLiveTickGateService() {
     }
 
-    public record Context(BotEntry entry,
+    public record Context(AgentRuntimeEntry entry,
                           Character agent,
                           Character leader,
                           Character followAnchor,
@@ -26,27 +25,27 @@ public final class AgentLiveTickGateService {
 
     @FunctionalInterface
     public interface CommonTickSystems {
-        boolean run(BotEntry entry, Character agent, Character leader, boolean runAiTick);
+        boolean run(AgentRuntimeEntry entry, Character agent, Character leader, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface TradeWindowTick {
-        boolean tick(BotEntry entry, Character agent);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface IdleModeTick {
-        boolean tick(BotEntry entry, Character agent);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface RecoveryTick {
-        boolean tick(BotEntry entry, Character agent, Character followAnchor, Point targetPosition);
+        boolean tick(AgentRuntimeEntry entry, Character agent, Character followAnchor, Point targetPosition);
     }
 
     @FunctionalInterface
     public interface TrackedMapChangeTick {
-        boolean tick(BotEntry entry, Character agent);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     public static boolean tickLiveGates(Context context, Hooks hooks) {
