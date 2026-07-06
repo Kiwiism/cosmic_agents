@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,7 +15,7 @@ import static org.mockito.Mockito.mock;
 class AgentActionLockPhysicsServiceTest {
     @Test
     void returnsFalseWhenAttackCooldownIsNotActive() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Counters counters = new Counters();
 
         boolean locked = AgentActionLockPhysicsService.tickActionLocked(
@@ -29,7 +28,7 @@ class AgentActionLockPhysicsServiceTest {
 
     @Test
     void swimsWhenLockedInAirOnSwimMap() {
-        BotEntry entry = lockedEntry();
+        AgentRuntimeEntry entry = lockedEntry();
         AgentBotMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
@@ -45,7 +44,7 @@ class AgentActionLockPhysicsServiceTest {
 
     @Test
     void ticksAirborneWhenLockedInAirOutsideSwimMap() {
-        BotEntry entry = lockedEntry();
+        AgentRuntimeEntry entry = lockedEntry();
         AgentBotMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
@@ -61,7 +60,7 @@ class AgentActionLockPhysicsServiceTest {
 
     @Test
     void ticksGroundedWhenLockedOnGround() {
-        BotEntry entry = lockedEntry();
+        AgentRuntimeEntry entry = lockedEntry();
         Counters counters = new Counters();
 
         boolean locked = AgentActionLockPhysicsService.tickActionLocked(
@@ -76,7 +75,7 @@ class AgentActionLockPhysicsServiceTest {
 
     @Test
     void lockedClimbingAgentStillUsesLegacyAirborneBranch() {
-        BotEntry entry = lockedEntry();
+        AgentRuntimeEntry entry = lockedEntry();
         entry.setScriptedMovementFrame(new java.awt.Point(0, 0), 0, 0, 1, true, true);
         Counters counters = new Counters();
 
@@ -90,8 +89,8 @@ class AgentActionLockPhysicsServiceTest {
         assertEquals(0, counters.grounded.get());
     }
 
-    private static BotEntry lockedEntry() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry lockedEntry() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, 500);
         return entry;
     }

@@ -5109,6 +5109,9 @@ Current physics correction:
 - Follow-idle fast-path evaluation now accepts `AgentRuntimeEntry`; eligibility
   gates, recheck timing, navigation decision marking, and stuck-progress reset
   behavior are unchanged.
+- Action-lock physics service tests now exercise the existing
+  `AgentRuntimeEntry` boundary directly; attack-cooldown gating and swim,
+  airborne, grounded, and legacy climbing branches are unchanged.
 
 Initial reconstruction order:
 
