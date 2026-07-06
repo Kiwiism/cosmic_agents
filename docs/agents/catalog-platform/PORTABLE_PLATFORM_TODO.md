@@ -28,6 +28,10 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] NPC Quest Capability technical specification.
 - [x] Agent Event Bus design specification.
 - [x] Agent Event Bus technical specification.
+- [x] Recovery Policy design specification.
+- [x] Recovery Policy technical specification.
+- [x] Agent Observability design specification.
+- [x] Agent Observability technical specification.
 
 ## Builder Work
 

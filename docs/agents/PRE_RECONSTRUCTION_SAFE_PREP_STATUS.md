@@ -140,6 +140,8 @@ Well-defined packages:
 - Capability Runtime Package.
 - NPC / Quest Interaction Capability Package.
 - Runtime Event Bus.
+- Recovery / Survival Policy.
+- Agent Observability / Diagnostics.
 
 Partially defined packages that need specs before implementation:
 
@@ -153,8 +155,6 @@ Backlog packages to promote:
 
 - Agent Population Director.
 - Relationship / Social Graph Runtime.
-- Recovery / Survival Policy.
-- Agent Observability / Diagnostics.
 - Portable Installer / Patcher.
 - Background Action Runtime.
 - Agent Soak Test Harness.
@@ -182,14 +182,13 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write Recovery Policy design and technical specs.
-2. Write Agent Observability design and technical specs.
-3. Write Interaction Realism design and technical specs.
-4. Write Simulation Tier Runtime design and technical specs.
-5. Unify catalog builder output shape in documentation before touching runtime.
-6. Add catalog validation report requirements for dangling NPC, quest, shop,
+1. Write Interaction Realism design and technical specs.
+2. Write Simulation Tier Runtime design and technical specs.
+3. Write Perception Runtime design and technical specs.
+4. Unify catalog builder output shape in documentation before touching runtime.
+5. Add catalog validation report requirements for dangling NPC, quest, shop,
    item, reactor, portal, and reward references.
-7. Keep server-only diagnostics stable and collect soak evidence.
+6. Keep server-only diagnostics stable and collect soak evidence.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.

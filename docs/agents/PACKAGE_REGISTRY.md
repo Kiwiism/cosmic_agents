@@ -434,9 +434,93 @@ Implementation focus:
 5. diagnostics snapshot.
 6. integration with Plan Runtime and Capability Runtime.
 
+### 11. Recovery / Survival Policy
+
+Status: well defined.
+
+Primary docs:
+
+- `docs/agents/recovery-policy/AGENT_RECOVERY_POLICY_DESIGN_SPECIFICATION.md`
+- `docs/agents/recovery-policy/AGENT_RECOVERY_POLICY_TECHNICAL_SPECIFICATION.md`
+
+Purpose:
+
+- Decide how Agents recover from danger, death, low HP/MP, no potions, no
+  mesos, stuck movement, blocked objectives, full inventory, and repeated plan
+  failures.
+- Return bounded retry, rest, resupply, sidetrack, postpone, fail, or review
+  recommendations without directly mutating server state.
+
+Owns:
+
+- blocker classification.
+- recovery decision model.
+- bounded recovery memory.
+- recovery action proposals.
+- recovery events and evidence.
+
+Does not own:
+
+- direct capability execution.
+- server mutation.
+- plan completion state.
+- profile preference storage.
+- economy valuation.
+
+Implementation focus:
+
+1. common recovery request/decision DTOs.
+2. Maple Island MVP deterministic fallback rules.
+3. death/low HP/no potion/navigation stuck policies.
+4. inventory full and NPC/quest blocker policies.
+5. bounded failure memory.
+6. Plan Runtime and Capability Runtime integration.
+
+### 12. Agent Observability / Diagnostics
+
+Status: well defined.
+
+Primary docs:
+
+- `docs/agents/observability/AGENT_OBSERVABILITY_DESIGN_SPECIFICATION.md`
+- `docs/agents/observability/AGENT_OBSERVABILITY_TECHNICAL_SPECIFICATION.md`
+
+Purpose:
+
+- Explain what Agents are doing, why, where they are blocked, and how much
+  runtime cost they create.
+- Provide per-Agent, per-map, scheduler, capability, plan, Event Bus, and
+  memory snapshots for 2000-Agent scaling and future Agent Console pages.
+
+Owns:
+
+- metric counters.
+- rolling latency/count windows.
+- compact snapshots.
+- top-N reports.
+- incident records.
+- soak exports.
+
+Does not own:
+
+- plan execution.
+- capability execution.
+- profile adaptation.
+- economy decisions.
+- LLM calls.
+
+Implementation focus:
+
+1. event-driven counters and snapshots.
+2. per-Agent and per-map read models.
+3. capability and plan latency/blocker metrics.
+4. scheduler/Event Bus/memory snapshots.
+5. soak JSONL/CSV export.
+6. Agent Console query API.
+
 ## Partially Defined Packages
 
-### 11. Interaction Realism Package
+### 13. Interaction Realism Package
 
 Status: policy defined, package not yet defined.
 
@@ -472,7 +556,7 @@ Recommended package:
 agent-interaction-realism
 ```
 
-### 12. Agent Engine Optimization Package
+### 14. Agent Engine Optimization Package
 
 Status: strategy defined, package not yet defined.
 
@@ -509,7 +593,7 @@ Recommended package:
 agent-simulation-tier-runtime
 ```
 
-### 13. LLM Control Gateway Package
+### 15. LLM Control Gateway Package
 
 Status: contract defined, technical package not fully defined.
 
@@ -549,7 +633,7 @@ Recommended package:
 agent-llm-gateway
 ```
 
-### 14. Perception / Memory Package
+### 16. Perception / Memory Package
 
 Status: schema exists, package not fully defined.
 
@@ -583,7 +667,7 @@ Recommended package:
 agent-perception-runtime
 ```
 
-### 15. Quest / Combat Focus Policy Package
+### 17. Quest / Combat Focus Policy Package
 
 Status: policy defined, package not fully defined.
 
@@ -622,7 +706,7 @@ agent-quest-objective-policy
 
 ## Backlog Packages To Promote
 
-### 16. Agent Population Director
+### 18. Agent Population Director
 
 Status: discussed, not yet packaged.
 
@@ -648,7 +732,7 @@ Recommended package:
 agent-population-director
 ```
 
-### 17. Relationship / Social Graph Runtime
+### 19. Relationship / Social Graph Runtime
 
 Status: included inside profile docs, but may deserve its own package later.
 
@@ -671,56 +755,6 @@ Potential package:
 
 ```text
 agent-social-relationship-runtime
-```
-
-### 18. Recovery / Survival Policy
-
-Status: mentioned in Maple Island and capability docs, not packaged.
-
-Purpose:
-
-- Decide what to do when an agent is dying, out of potions, out of mesos, stuck,
-  or repeatedly failing.
-
-Why useful:
-
-- Needed for long uptime and autonomous agents.
-- Avoids every capability inventing its own recovery logic.
-
-Suggested docs:
-
-- `AGENT_RECOVERY_POLICY_DESIGN_SPECIFICATION.md`
-- `AGENT_RECOVERY_POLICY_TECHNICAL_SPECIFICATION.md`
-
-Recommended package:
-
-```text
-agent-recovery-policy
-```
-
-### 19. Agent Observability / Diagnostics
-
-Status: scattered across docs, not packaged.
-
-Purpose:
-
-- Explain what agents are doing, why, current plan/objective, profile influence,
-  last failures, and performance.
-
-Why useful:
-
-- Essential for debugging 2000 agents.
-- Essential for LLM/agent behavior review.
-
-Suggested docs:
-
-- `AGENT_OBSERVABILITY_DESIGN_SPECIFICATION.md`
-- `AGENT_OBSERVABILITY_TECHNICAL_SPECIFICATION.md`
-
-Recommended package:
-
-```text
-agent-observability
 ```
 
 ### 20. Portable Installer / Patcher
@@ -911,19 +945,19 @@ Reasoning:
 
 Highest priority:
 
-1. Recovery Policy design + technical specs.
-2. Agent Observability design + technical specs.
-3. Interaction Realism design + technical specs.
-4. Simulation Tier Runtime design + technical specs.
-5. Perception Runtime design + technical specs.
+1. Interaction Realism design + technical specs.
+2. Simulation Tier Runtime design + technical specs.
+3. Perception Runtime design + technical specs.
+4. Background Action Runtime design + technical specs.
+5. Agent Soak Test Harness command/runner spec.
 
 Second priority:
 
-1. Background Action Runtime design + technical specs.
-2. Agent Soak Test Harness command/runner spec.
-3. LLM Gateway design + technical specs.
-4. Population Director design + technical specs.
-5. Portable Installer technical spec.
+1. LLM Gateway design + technical specs.
+2. Population Director design + technical specs.
+3. Portable Installer technical spec.
+4. Quest Objective Policy design + technical specs.
+5. Catalog builder validation/report spec.
 
 Later:
 
