@@ -14,6 +14,15 @@ These items were implemented as diagnostics-first changes because enabling full 
   - migrate more call sites once timer ownership is fully audited.
   - add per-lane slow-task counters, not only queue/active/completed stats.
   - decide whether future agent work gets a separate executor outside `TimerManager`.
+- 2026-07-07 update:
+  - Timer diagnostics include configured thread counts per lane.
+  - Optional runtime overrides exist for soak tests while preserving existing
+    defaults:
+    - `-Dcosmic.timer.coreThreads` or `COSMIC_TIMER_CORE_THREADS`
+    - `-Dcosmic.timer.saveThreads` or `COSMIC_TIMER_SAVE_THREADS`
+    - `-Dcosmic.timer.mapThreads` or `COSMIC_TIMER_MAP_THREADS`
+    - `-Dcosmic.timer.eventThreads` or `COSMIC_TIMER_EVENT_THREADS`
+    - `-Dcosmic.timer.lowPriorityThreads` or `COSMIC_TIMER_LOW_PRIORITY_THREADS`
 
 ## Server Metrics And Load
 
@@ -34,6 +43,58 @@ These items were implemented as diagnostics-first changes because enabling full 
   - include DB wait/timeout counters if Hikari exposes them cleanly.
   - expose metrics through a command or admin endpoint, not only logs.
   - wire `ServerLoadMonitor.allowNonCriticalWork()` into optional debug work after soak testing.
+- 2026-07-07 update:
+  - `!serverhealth` and scale-health logs include aggregate character save
+    pressure.
+  - `!serverhealth` and scale-health logs include aggregate map broadcast
+    pressure.
+  - DB pool diagnostics include configured max pool size and connection timeout.
+  - `!serverhealth` includes the current slow-operation warning thresholds for
+    login, login-state, character load/save/delete, startup DB work,
+    map-update, and map-broadcast paths.
+  - Optional DB runtime overrides exist for soak tests while preserving existing
+    defaults:
+    - `-Dcosmic.db.maxPoolSize` or `COSMIC_DB_MAX_POOL_SIZE`
+    - `-Dcosmic.db.connectionTimeoutSeconds` or
+      `COSMIC_DB_CONNECTION_TIMEOUT_SECONDS`
+
+## Character Save Diagnostics
+
+- Added diagnostics-only save pressure tracking:
+  - total saves.
+  - failed saves.
+  - autosave versus manual/full save counts.
+  - average, last, and max save duration.
+  - last and slowest character identity.
+- Added save reason labels for major non-Agent save paths:
+  - autosave.
+  - logout.
+  - channel/server transition.
+  - Cash Shop.
+  - MTS.
+  - hired merchant.
+  - GM save-all.
+  - GM world-warp.
+- Added section timing around the existing save chunks:
+  - character row.
+  - pets.
+  - keymap.
+  - skill macros.
+  - inventory.
+  - skills.
+  - locations.
+  - buddies.
+  - area/event data.
+  - quests.
+  - family/cash storage.
+- Behavior unchanged:
+  - no save section is skipped.
+  - no dirty-save behavior is enabled.
+  - no Agent save queue or Agent persistence route is installed.
+- Revisit later:
+  - split real-player and Agent save routing after Agent reconstruction.
+  - use soak evidence to decide whether inventory, quest, pet, or storage saves
+    need targeted optimization.
 
 ## Map Lifecycle
 
@@ -49,6 +110,17 @@ These items were implemented as diagnostics-first changes because enabling full 
 
 - Map broadcast monitoring now avoids packet byte copies unless monitored-character logging is active.
 - Map broadcasts now warn when they exceed the slow-operation threshold.
+- 2026-07-07 update:
+  - Added aggregate broadcast pressure diagnostics:
+    - total broadcasts.
+    - ranged broadcasts.
+    - slow broadcasts.
+    - average recipients.
+    - average, last, and max broadcast duration.
+    - last/max map id and recipient count.
+  - Broadcast packet semantics are unchanged.
+  - No packet suppression, recipient filtering, or Agent-visible broadcast
+    policy was added.
 - Revisit later:
   - audit specialized broadcast methods that generate per-recipient packets.
   - keep player packet semantics unchanged until agent perception is decoupled.

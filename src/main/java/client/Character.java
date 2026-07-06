@@ -146,6 +146,8 @@ import server.maps.Portal;
 import server.maps.SavedLocation;
 import server.maps.SavedLocationType;
 import server.maps.Summon;
+import server.monitoring.CharacterSaveDiagnostics;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import server.monitoring.SlowOperationLogger;
 import server.minigame.RockPaperScissor;
 import server.partyquest.AriantColiseum;
@@ -8506,27 +8508,37 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void saveCharToDB() {
+        saveCharToDB(SaveReason.FULL_SAVE);
+    }
+
+    public void saveCharToDB(SaveReason saveReason) {
         if (YamlConfig.config.server.USE_AUTOSAVE) {
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
-                    saveCharToDB(true);
+                    saveCharToDB(true, saveReason);
                 }
             };
 
             CharacterSaveService service = (CharacterSaveService) getWorldServer().getServiceAccess(WorldServices.SAVE_CHARACTER);
             service.registerSaveCharacter(this.getId(), r);
         } else {
-            saveCharToDB(true);
+            saveCharToDB(true, saveReason);
         }
     }
 
     //ItemFactory saveItems and monsterbook.saveCards are the most time consuming here.
-    public synchronized void saveCharToDB(boolean notAutosave) {
+    public void saveCharToDB(boolean notAutosave) {
+        saveCharToDB(notAutosave, notAutosave ? SaveReason.FULL_SAVE : SaveReason.AUTO_SAVE);
+    }
+
+    //ItemFactory saveItems and monsterbook.saveCards are the most time consuming here.
+    public synchronized void saveCharToDB(boolean notAutosave, SaveReason saveReason) {
         if (!loggedIn) {
             return;
         }
 
+        long saveStartedNs = SlowOperationLogger.start();
         Calendar c = Calendar.getInstance();
         log.debug("Attempting to {} chr {}", notAutosave ? "save" : "autosave", name);
 
@@ -8537,6 +8549,7 @@ public class Character extends AbstractCharacterObject {
             con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 
             try {
+                long sectionStartedNs = SlowOperationLogger.start();
                 try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, level);    // thanks CanIGetaPR for noticing an unnecessary "level" limitation when persisting DB data
                     ps.setInt(2, fame);
@@ -8658,7 +8671,9 @@ public class Character extends AbstractCharacterObject {
                         throw new RuntimeException("Character not in database (" + id + ")");
                     }
                 }
+                CharacterSaveDiagnostics.recordSection("character-row", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 List<Pet> petList = new LinkedList<>();
                 petLock.lock();
                 try {
@@ -8690,7 +8705,9 @@ public class Character extends AbstractCharacterObject {
                         psIgnore.executeBatch();
                     }
                 }
+                CharacterSaveDiagnostics.recordSection("pets", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 // Key config
                 deleteWhereCharacterId(con, "DELETE FROM keymap WHERE characterid = ?");
                 try (PreparedStatement psKey = con.prepareStatement("INSERT INTO keymap (characterid, `key`, `type`, `action`) VALUES (?, ?, ?, ?)")) {
@@ -8718,7 +8735,9 @@ public class Character extends AbstractCharacterObject {
                         psQuick.executeUpdate();
                     }
                 }
+                CharacterSaveDiagnostics.recordSection("keymap", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 // Skill macros
                 deleteWhereCharacterId(con, "DELETE FROM skillmacros WHERE characterid = ?");
                 try (PreparedStatement psMacro = con.prepareStatement("INSERT INTO skillmacros (characterid, skill1, skill2, skill3, name, shout, position) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
@@ -8737,7 +8756,9 @@ public class Character extends AbstractCharacterObject {
                     }
                     psMacro.executeBatch();
                 }
+                CharacterSaveDiagnostics.recordSection("skill-macros", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 List<Pair<Item, InventoryType>> itemsWithType = new ArrayList<>();
                 for (Inventory iv : inventory) {
                     for (Item item : iv.list()) {
@@ -8747,7 +8768,9 @@ public class Character extends AbstractCharacterObject {
 
                 // Items
                 ItemFactory.INVENTORY.saveItems(itemsWithType, id, con);
+                CharacterSaveDiagnostics.recordSection("inventory", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 // Skills
                 try (PreparedStatement psSkill = con.prepareStatement("REPLACE INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) VALUES (?, ?, ?, ?, ?)")) {
                     psSkill.setInt(1, id);
@@ -8760,7 +8783,9 @@ public class Character extends AbstractCharacterObject {
                     }
                     psSkill.executeBatch();
                 }
+                CharacterSaveDiagnostics.recordSection("skills", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 // Saved locations
                 deleteWhereCharacterId(con, "DELETE FROM savedlocations WHERE characterid = ?");
                 try (PreparedStatement psLoc = con.prepareStatement("INSERT INTO savedlocations (characterid, `locationtype`, `map`, `portal`) VALUES (?, ?, ?, ?)")) {
@@ -8801,7 +8826,9 @@ public class Character extends AbstractCharacterObject {
                     }
                     psReg.executeBatch();
                 }
+                CharacterSaveDiagnostics.recordSection("locations", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 // Buddy
                 deleteWhereCharacterId(con, "DELETE FROM buddies WHERE characterid = ? AND pending = 0");
                 try (PreparedStatement psBuddy = con.prepareStatement("INSERT INTO buddies (characterid, `buddyid`, `pending`, `group`) VALUES (?, ?, 0, ?)")) {
@@ -8816,7 +8843,9 @@ public class Character extends AbstractCharacterObject {
                     }
                     psBuddy.executeBatch();
                 }
+                CharacterSaveDiagnostics.recordSection("buddies", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 // Area info
                 deleteWhereCharacterId(con, "DELETE FROM area_info WHERE charid = ?");
                 try (PreparedStatement psArea = con.prepareStatement("INSERT INTO area_info (id, charid, area, info) VALUES (DEFAULT, ?, ?, ?)")) {
@@ -8843,7 +8872,9 @@ public class Character extends AbstractCharacterObject {
 
                     psEvent.executeBatch();
                 }
+                CharacterSaveDiagnostics.recordSection("area-event", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 deleteQuestProgressWhereCharacterId(con, id);
 
                 // Quests and medals
@@ -8882,7 +8913,9 @@ public class Character extends AbstractCharacterObject {
                         }
                     }
                 }
+                CharacterSaveDiagnostics.recordSection("quests", sectionStartedNs);
 
+                sectionStartedNs = SlowOperationLogger.start();
                 FamilyEntry familyEntry = getFamilyEntry(); //save family rep
                 if (familyEntry != null) {
                     if (familyEntry.saveReputation(con)) {
@@ -8911,8 +8944,10 @@ public class Character extends AbstractCharacterObject {
                     storage.saveToDB(con);
                     usedStorage = false;
                 }
+                CharacterSaveDiagnostics.recordSection("family-cash-storage", sectionStartedNs);
 
                 con.commit();
+                CharacterSaveDiagnostics.recordSuccess(id, name, notAutosave, saveReason, saveStartedNs);
             } catch (Exception e) {
                 con.rollback();
                 throw e;
@@ -8921,7 +8956,10 @@ public class Character extends AbstractCharacterObject {
                 con.setAutoCommit(true);
             }
         } catch (Exception e) {
+            CharacterSaveDiagnostics.recordFailure(id, name, notAutosave, saveReason, saveStartedNs);
             log.error("Error saving chr {}, level: {}, job: {}", name, level, job.getId(), e);
+        } finally {
+            SlowOperationLogger.warnIfSlow("character-save chr=" + id + " reason=" + saveReason + " autosave=" + !notAutosave, saveStartedNs, 1000);
         }
     }
 

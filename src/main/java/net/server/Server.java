@@ -71,6 +71,8 @@ import server.ThreadManager;
 import server.TimerManager;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
+import server.monitoring.CharacterSaveDiagnostics;
+import server.monitoring.MapBroadcastDiagnostics;
 import server.monitoring.ServerLoadMonitor;
 import server.monitoring.ServerMetricsSnapshot;
 import server.monitoring.SlowOperationLogger;
@@ -1057,7 +1059,7 @@ public class Server {
         loadedMapHighWatermark = Math.max(loadedMapHighWatermark, snapshot.loadedMaps());
 
         SessionCoordinator sessionCoordinator = SessionCoordinator.getInstance();
-        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loginAttemptAccounts={} loginBypass={} newYearCards={} inLoginState={} loadedMapHighWatermark={}",
+        log.info("Scale health {} expDebugCleaned={} expDebugActive={} monitoredChr={} npcPendingRuntime={} npcConversations={} npcScripts={} questActions={} questScripts={} loginAttemptAccounts={} loginBypass={} newYearCards={} inLoginState={} loadedMapHighWatermark={} {} {}",
                 snapshot.compact(),
                 cleanedExpDebugSessions,
                 ExpDebugTracker.activeSessionCount(),
@@ -1071,7 +1073,9 @@ public class Server {
                 sessionCoordinator.activeLoginBypassCount(),
                 newYearCardRuntimeCount(),
                 loginStateCount(),
-                loadedMapHighWatermark);
+                loadedMapHighWatermark,
+                CharacterSaveDiagnostics.diagnostics(),
+                MapBroadcastDiagnostics.diagnostics());
 
         if (snapshot.idleMapCandidates() > 0 || snapshot.loadedMaps() >= previousHighWatermark + 100) {
             log.warn("Scale health map growth watch loaded={} active={} idleCandidates={} previousHighWatermark={} highWatermark={}",
@@ -1100,9 +1104,14 @@ public class Server {
                 + " active=" + snapshot.activeMaps()
                 + " idleCandidates=" + snapshot.idleMapCandidates()
                 + " highWatermark=" + loadedMapHighWatermark);
+        lines.add("Save pressure: " + CharacterSaveDiagnostics.diagnostics());
+        lines.add("Save reasons: " + CharacterSaveDiagnostics.reasonDiagnostics());
+        lines.add("Save sections: " + CharacterSaveDiagnostics.sectionDiagnostics());
+        lines.add("Broadcast pressure: " + MapBroadcastDiagnostics.diagnostics());
         lines.add("DB: " + DatabaseConnection.poolStats());
         lines.add("Threads: " + ThreadManager.getInstance().diagnostics());
         lines.add("Timers: " + TimerManager.getInstance().diagnostics());
+        lines.add("Slow operations: " + SlowOperationLogger.diagnostics());
         lines.add("Load level: " + ServerLoadMonitor.currentLevel());
 
         return lines;

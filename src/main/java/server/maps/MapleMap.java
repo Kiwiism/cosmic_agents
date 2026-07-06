@@ -69,6 +69,7 @@ import server.life.NPC;
 import server.life.PlayerNPC;
 import server.life.SpawnPoint;
 import server.integration.AgentPresence;
+import server.monitoring.MapBroadcastDiagnostics;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
 import server.partyquest.GuardianSpawnPoint;
@@ -2733,10 +2734,12 @@ public class MapleMap {
     }
 
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
+        final long slowThresholdMs = 100;
         long broadcastStartedNs = server.monitoring.SlowOperationLogger.start();
         if (net.packet.logging.MonitoredChrLogger.hasMonitoredCharacters()) {
             net.packet.logging.MonitoredChrLogger.logBroadcastIfMonitored(source, packet.getBytes());
         }
+        int recipients = 0;
         chrRLock.lock();
         try {
             for (Character chr : characters) {
@@ -2744,16 +2747,19 @@ public class MapleMap {
                     if (rangeSq < Double.POSITIVE_INFINITY) {
                         if (rangedFrom.distanceSq(chr.getPosition()) <= rangeSq) {
                             chr.sendPacket(packet);
+                            recipients++;
                         }
                     } else {
                         chr.sendPacket(packet);
+                        recipients++;
                     }
                 }
             }
         } finally {
             chrRLock.unlock();
+            MapBroadcastDiagnostics.record(mapid, recipients, rangeSq < Double.POSITIVE_INFINITY, broadcastStartedNs, slowThresholdMs);
             server.monitoring.SlowOperationLogger.warnIfSlow("map-broadcast map=" + mapid + " chars=" + characters.size(),
-                    broadcastStartedNs, 100);
+                    broadcastStartedNs, slowThresholdMs);
         }
     }
 

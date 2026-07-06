@@ -21,6 +21,7 @@ import net.packet.InPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.Marriage;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.PacketCreator;
 import tools.packets.WeddingPackets;
 
@@ -88,7 +89,7 @@ public final class WeddingHandler extends AbstractPacketHandler {
 
                                         if (newItem != null) {
                                             if (YamlConfig.config.server.USE_ENFORCE_MERCHANT_SAVE) {
-                                                chr.saveCharToDB(false);
+                                                chr.saveCharToDB(false, SaveReason.MERCHANT);
                                             }
                                             marriage.saveGiftItemsToDb(c, groomWishlist, cid);
                                         }

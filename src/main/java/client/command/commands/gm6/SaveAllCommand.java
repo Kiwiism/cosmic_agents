@@ -28,6 +28,7 @@ import client.Client;
 import client.command.Command;
 import net.server.Server;
 import net.server.world.World;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.PacketCreator;
 
 public class SaveAllCommand extends Command {
@@ -40,7 +41,7 @@ public class SaveAllCommand extends Command {
         Character player = c.getPlayer();
         for (World world : Server.getInstance().getWorlds()) {
             for (Character chr : world.getPlayerStorage().getAllCharacters()) {
-                chr.saveCharToDB();
+                chr.saveCharToDB(true, SaveReason.SAVE_ALL);
             }
         }
         String message = player.getName() + " used !saveall.";

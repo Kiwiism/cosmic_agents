@@ -23,6 +23,11 @@ public final class SlowOperationLogger {
         }
     }
 
+    public static String diagnostics() {
+        return "thresholds login=1000ms loginState=1000ms characterLoad=5000ms characterSave=1000ms"
+                + " characterDelete=1000/5000ms startupDb=5000ms mapUpdate=250ms mapBroadcast=100ms";
+    }
+
     public static void run(String label, long thresholdMs, Runnable action) {
         long startedNs = start();
         try {

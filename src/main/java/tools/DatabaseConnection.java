@@ -42,7 +42,9 @@ public class DatabaseConnection {
         return "dbPool active=" + dataSource.getHikariPoolMXBean().getActiveConnections()
                 + " idle=" + dataSource.getHikariPoolMXBean().getIdleConnections()
                 + " total=" + dataSource.getHikariPoolMXBean().getTotalConnections()
-                + " waiting=" + dataSource.getHikariPoolMXBean().getThreadsAwaitingConnection();
+                + " waiting=" + dataSource.getHikariPoolMXBean().getThreadsAwaitingConnection()
+                + " max=" + dataSource.getMaximumPoolSize()
+                + " connTimeoutMs=" + dataSource.getConnectionTimeout();
     }
 
     public static Handle getHandle() {
@@ -71,14 +73,32 @@ public class DatabaseConnection {
 
         final int initFailTimeoutSeconds = YamlConfig.config.server.INIT_CONNECTION_POOL_TIMEOUT;
         config.setInitializationFailTimeout(SECONDS.toMillis(initFailTimeoutSeconds));
-        config.setConnectionTimeout(SECONDS.toMillis(30)); // Hikari default
-        config.setMaximumPoolSize(10); // Hikari default
+        config.setConnectionTimeout(SECONDS.toMillis(intSetting("cosmic.db.connectionTimeoutSeconds", "COSMIC_DB_CONNECTION_TIMEOUT_SECONDS", 30))); // Hikari default
+        config.setMaximumPoolSize(intSetting("cosmic.db.maxPoolSize", "COSMIC_DB_MAX_POOL_SIZE", 10)); // Hikari default
 
         config.addDataSourceProperty("cachePrepStmts", true);
         config.addDataSourceProperty("prepStmtCacheSize", 25);
         config.addDataSourceProperty("prepStmtCacheSqlLimit", 2048);
 
         return config;
+    }
+
+    private static int intSetting(String propertyName, String environmentName, int defaultValue) {
+        String propertyValue = System.getProperty(propertyName);
+        String rawValue = propertyValue != null ? propertyValue : System.getenv(environmentName);
+        if (rawValue == null || rawValue.isBlank()) {
+            return defaultValue;
+        }
+
+        try {
+            int parsed = Integer.parseInt(rawValue.trim());
+            if (parsed > 0) {
+                return parsed;
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Ignoring invalid integer setting {} / {}='{}'", propertyName, environmentName, rawValue);
+        }
+        return defaultValue;
     }
 
     /**

@@ -27,6 +27,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
 import server.maps.MiniDungeonInfo;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.PacketCreator;
 
 /**
@@ -87,7 +88,7 @@ public class EnterCashShopHandler extends AbstractPacketHandler {
             c.getChannelServer().removePlayer(mc);
             mc.getMap().removePlayer(mc);
             mc.getCashShop().open(true);
-            mc.saveCharToDB();
+            mc.saveCharToDB(true, SaveReason.CASHSHOP);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -48,6 +48,7 @@ import server.maps.MiniGame.MiniGameType;
 import server.maps.PlayerShop;
 import server.maps.PlayerShopItem;
 import server.maps.Portal;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.PacketCreator;
 
 import java.awt.*;
@@ -669,7 +670,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     c.sendPacket(PacketCreator.updateHiredMerchant(merchant, chr));
 
                     if (YamlConfig.config.server.USE_ENFORCE_MERCHANT_SAVE) {
-                        chr.saveCharToDB(false);
+                        chr.saveCharToDB(false, SaveReason.MERCHANT);
                     }
 
                     try {

@@ -11,6 +11,7 @@ Related design notes:
 - `docs/SOAK_TEST_CHECKLIST.md`.
 - `docs/SERVER_DB_INDEX_REVIEW.md`.
 - `docs/SERVER_DEFERRED_SAFE_CHANGES.md`.
+- `docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md`.
 - Agent-only bottleneck work moved to `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`.
 
 ## Server-Only Tweaks While Waiting For Agent Reconstruction
@@ -19,6 +20,17 @@ These items can be prepared before the reconstructed Agent engine is ready.
 They should not change Agent gameplay behavior yet. The goal is to make the
 server ready to host the later 2000-Agent scaling model with minimal risk to
 players.
+
+Status note:
+
+- The 2026-07-07 server-only batch implemented diagnostics and
+  default-preserving visibility only.
+- Save routing, Agent save queues, Agent detection, packet suppression, and
+  simulation-tier behavior are still deferred until Agent reconstruction
+  stabilizes.
+- The only persistence taxonomy added in code so far is `SaveReason` for
+  existing non-Agent save call sites; `SaveActorType`, `SaveProfile`, and a
+  `CharacterPersistenceService` remain future design items.
 
 ### 1. Player/Agent Save Routing Shell
 
@@ -683,6 +695,44 @@ post-reconstruction Agent scaling track:
 ## Additional Server-Only Review Candidates - 2026-07-02
 
 These are server-side hardening or low-risk optimization candidates found during a light scan. They should avoid changing bot/agent runtime behavior before reconstruction.
+
+## Server Player Scale Foundation - 2026-07-07
+
+- [x] Add diagnostics-only character save pressure counters.
+  - Category: server hardening.
+  - Tracks total saves, failures, autosave/manual counts, average/max/last save
+    duration, and last/slowest character identity.
+  - Behavior unchanged: no dirty saves, skipped sections, save throttling, or
+    new persistence routing.
+- [x] Add diagnostics-only character save section timing.
+  - Category: server hardening.
+  - Tracks major existing save chunks so soak logs can identify whether
+    inventory, quests, pets, keymap, locations, buddies, or other sections are
+    the real bottleneck.
+  - Behavior unchanged.
+- [x] Add diagnostics-only map broadcast pressure counters.
+  - Category: server hardening.
+  - Tracks total broadcasts, slow broadcasts, ranged broadcasts, recipients,
+    max duration, and last/max map ids.
+  - Behavior unchanged: no packet suppression, packet caching, or recipient
+    filtering change.
+- [x] Surface save and broadcast pressure in `!serverhealth` and scale-health
+  logs.
+  - Category: server hardening.
+  - Lets operator choose next optimization from evidence instead of guessing.
+- [x] Track save reasons for major non-Agent save paths.
+  - Category: server hardening.
+  - Tracks autosave, logout, channel/server transition, cash shop, MTS,
+    merchant, save-all, and world-warp saves.
+  - Behavior unchanged; existing save methods remain compatible for Agent and
+    legacy callers.
+- [x] Add default-preserving DB and timer tuning visibility.
+  - Category: server hardening.
+  - DB diagnostics include max pool size and connection timeout.
+  - Timer diagnostics include lane thread counts.
+  - Optional system-property/environment knobs exist for future soak tests, but
+    defaults preserve current behavior and `config.yaml` values were not
+    changed.
 
 ### Low-Risk Diagnostics / Logging Cleanup
 

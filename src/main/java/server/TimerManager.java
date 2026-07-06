@@ -72,11 +72,29 @@ public class TimerManager implements TimerManagerMBean {
             return;
         }
 
-        coreExecutor = newExecutor("TimerManager-Core", 4);
-        saveExecutor = newExecutor("TimerManager-Save", 2);
-        mapExecutor = newExecutor("TimerManager-Map", 2);
-        eventExecutor = newExecutor("TimerManager-Event", 2);
-        lowPriorityExecutor = newExecutor("TimerManager-Low", 1);
+        coreExecutor = newExecutor("TimerManager-Core", threadCount("cosmic.timer.coreThreads", "COSMIC_TIMER_CORE_THREADS", 4));
+        saveExecutor = newExecutor("TimerManager-Save", threadCount("cosmic.timer.saveThreads", "COSMIC_TIMER_SAVE_THREADS", 2));
+        mapExecutor = newExecutor("TimerManager-Map", threadCount("cosmic.timer.mapThreads", "COSMIC_TIMER_MAP_THREADS", 2));
+        eventExecutor = newExecutor("TimerManager-Event", threadCount("cosmic.timer.eventThreads", "COSMIC_TIMER_EVENT_THREADS", 2));
+        lowPriorityExecutor = newExecutor("TimerManager-Low", threadCount("cosmic.timer.lowPriorityThreads", "COSMIC_TIMER_LOW_PRIORITY_THREADS", 1));
+    }
+
+    private int threadCount(String propertyName, String environmentName, int defaultValue) {
+        String propertyValue = System.getProperty(propertyName);
+        String rawValue = propertyValue != null ? propertyValue : System.getenv(environmentName);
+        if (rawValue == null || rawValue.isBlank()) {
+            return defaultValue;
+        }
+
+        try {
+            int parsed = Integer.parseInt(rawValue.trim());
+            if (parsed > 0) {
+                return parsed;
+            }
+        } catch (NumberFormatException e) {
+            log.warn("Ignoring invalid timer thread setting {} / {}='{}'", propertyName, environmentName, rawValue);
+        }
+        return defaultValue;
     }
 
     private ScheduledThreadPoolExecutor newExecutor(String name, int threads) {
@@ -236,7 +254,8 @@ public class TimerManager implements TimerManagerMBean {
         }
         return "active:" + executor.getActiveCount()
                 + ",queued:" + executor.getQueue().size()
-                + ",completed:" + executor.getCompletedTaskCount();
+                + ",completed:" + executor.getCompletedTaskCount()
+                + ",threads:" + executor.getCorePoolSize();
     }
 
     private static class LoggingSaveRunnable implements Runnable {

@@ -27,6 +27,7 @@ import client.Character;
 import client.Client;
 import client.command.Command;
 import net.server.Server;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.PacketCreator;
 
 import java.net.InetAddress;
@@ -54,7 +55,7 @@ public class WarpWorldCommand extends Command {
                 player.getMap().removePlayer(player);//LOL FORGOT THIS ><
                 player.setSessionTransitionState();
                 player.setWorld(worldb);
-                player.saveCharToDB();//To set the new world :O (true because else 2 player instances are created, one in both worlds)
+                player.saveCharToDB(true, SaveReason.WARP_WORLD);//To set the new world :O (true because else 2 player instances are created, one in both worlds)
                 c.sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
             } catch (UnknownHostException | NumberFormatException ex) {
                 ex.printStackTrace();

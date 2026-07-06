@@ -32,6 +32,7 @@ import net.server.Server;
 import server.MTSItemInfo;
 import server.maps.FieldLimit;
 import server.maps.MiniDungeonInfo;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 
@@ -101,7 +102,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         chr.forfeitExpirableQuests();
         chr.cancelQuestExpirationTask();
 
-        chr.saveCharToDB();
+        chr.saveCharToDB(true, SaveReason.MTS);
 
         c.getChannelServer().removePlayer(chr);
         chr.getMap().removePlayer(c.getPlayer());

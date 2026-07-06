@@ -35,6 +35,7 @@ import net.packet.Packet;
 import net.server.Server;
 import server.ItemInformationProvider;
 import server.Trade;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 import tools.Pair;
@@ -259,7 +260,7 @@ public class HiredMerchant extends AbstractMapObject {
             }
 
             if (YamlConfig.config.server.USE_ENFORCE_MERCHANT_SAVE) {
-                chr.saveCharToDB(false);
+                chr.saveCharToDB(false, SaveReason.MERCHANT);
             }
         }
     }
@@ -467,7 +468,7 @@ public class HiredMerchant extends AbstractMapObject {
             }
 
             if (YamlConfig.config.server.USE_ENFORCE_MERCHANT_SAVE) {
-                c.getPlayer().saveCharToDB(false);
+                c.getPlayer().saveCharToDB(false, SaveReason.MERCHANT);
             }
 
             synchronized (items) {

@@ -66,6 +66,7 @@ import server.life.Monster;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 import server.maps.MiniDungeonInfo;
+import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import server.monitoring.SlowOperationLogger;
 import tools.BCrypt;
 import tools.DatabaseConnection;
@@ -1056,7 +1057,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
                     player.saveCooldowns();
                     player.cancelAllDebuffs();
-                    player.saveCharToDB(true);
+                    player.saveCharToDB(true, SaveReason.LOGOUT);
 
                     player.logOff();
                     if (YamlConfig.config.server.INSTANT_NAME_CHANGE) {
@@ -1068,7 +1069,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
                     player.saveCooldowns();
                     player.cancelAllDebuffs();
-                    player.saveCharToDB();
+                    player.saveCharToDB(true, SaveReason.SERVER_TRANSITION);
                 }
             }
         }
@@ -1539,7 +1540,7 @@ public class Client extends ChannelInboundHandlerAdapter {
         player.getMap().removePlayer(player);
         player.getClient().getChannelServer().removePlayer(player);
 
-        player.saveCharToDB();
+        player.saveCharToDB(SaveReason.SERVER_TRANSITION);
 
         player.setSessionTransitionState();
         try {
