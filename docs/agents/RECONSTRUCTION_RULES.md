@@ -5149,6 +5149,9 @@ Current physics correction:
 - Grind-mode dispatch service now accepts `AgentRuntimeEntry`; non-grinding
   fall-through, grind tick delegation, run-AI flag propagation, and target
   result propagation are unchanged.
+- Grind no-target fallback service now accepts `AgentRuntimeEntry`; target
+  clearing, swim/airborne fall-through, wander-direction side effects,
+  patrol/no-grind target resolution, and movement-step dispatch are unchanged.
 
 Initial reconstruction order:
 

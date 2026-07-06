@@ -126,6 +126,11 @@ Recent map updates:
   Non-grinding fall-through, grind tick delegation, run-AI flag propagation, and
   target result propagation remain unchanged while `AgentLiveModeTickRuntime`
   keeps the temporary `BotEntry` callback adapter.
+- `AgentGrindNoTargetFallbackService` now accepts `AgentRuntimeEntry`.
+  Target clearing, swim/airborne fall-through, wander-direction side effects,
+  patrol/no-grind target resolution, and movement-step dispatch remain
+  unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

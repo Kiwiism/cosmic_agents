@@ -76,11 +76,13 @@ public final class AgentGrindModeRuntime {
     private static AgentGrindNoTargetFallbackService.Hooks grindNoTargetFallbackHooks(
             AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep) {
         return new AgentGrindNoTargetFallbackService.Hooks(
-                AgentMovementPhaseDispatchService::tickSwimming,
-                AgentMovementPhaseDispatchService::tickAirborne,
-                AgentGrindTargetRuntime::resolvePatrolWanderTarget,
-                AgentGrindTargetRuntime::resolveNoGrindTargetPosition,
-                movementCoreStep::step);
+                (entry, targetPos) -> AgentMovementPhaseDispatchService.tickSwimming(asBotEntry(entry), targetPos),
+                (entry, targetPos) -> AgentMovementPhaseDispatchService.tickAirborne(asBotEntry(entry), targetPos),
+                (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolvePatrolWanderTarget(
+                        asBotEntry(entry), agentPosition, map),
+                (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolveNoGrindTargetPosition(
+                        asBotEntry(entry), agentPosition, map),
+                (entry, targetPos, runAiTick) -> movementCoreStep.step(asBotEntry(entry), targetPos, runAiTick));
     }
 
     private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {
@@ -112,5 +114,12 @@ public final class AgentGrindModeRuntime {
                 AgentGrindNavigationRuntime::selectGrindNavigationTarget,
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 AgentGrindTargetRuntime::convenientLootTarget);
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        if (entry instanceof BotEntry botEntry) {
+            return botEntry;
+        }
+        throw new IllegalArgumentException("Legacy grind runtime requires BotEntry compatibility shell");
     }
 }

@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -24,7 +23,7 @@ class AgentGrindNoTargetFallbackServiceTest {
         MapleMap map = mock(MapleMap.class);
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster staleTarget = mock(Monster.class);
         AgentBotGrindTargetStateRuntime.setTarget(entry, staleTarget);
         Point resolved = new Point(300, 100);
@@ -60,7 +59,7 @@ class AgentGrindNoTargetFallbackServiceTest {
     @Test
     void airborneFallbackTicksAirborneAndDoesNotStepMovement() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         Point currentTarget = new Point(150, 100);
         AtomicInteger airborneTicks = new AtomicInteger();

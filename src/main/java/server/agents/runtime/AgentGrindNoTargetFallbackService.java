@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -26,25 +25,25 @@ public final class AgentGrindNoTargetFallbackService {
 
     @FunctionalInterface
     public interface AirMovementTick {
-        void tick(BotEntry entry, Point targetPos);
+        void tick(AgentRuntimeEntry entry, Point targetPos);
     }
 
     @FunctionalInterface
     public interface PatrolWanderTargetResolver {
-        Point resolve(BotEntry entry, Point agentPosition, MapleMap map);
+        Point resolve(AgentRuntimeEntry entry, Point agentPosition, MapleMap map);
     }
 
     @FunctionalInterface
     public interface NoGrindTargetResolver {
-        Point resolve(BotEntry entry, Point agentPosition, MapleMap map);
+        Point resolve(AgentRuntimeEntry entry, Point agentPosition, MapleMap map);
     }
 
     @FunctionalInterface
     public interface MovementStep {
-        void step(BotEntry entry, Point targetPos, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPos, boolean runAiTick);
     }
 
-    public static Result handleNoTarget(BotEntry entry,
+    public static Result handleNoTarget(AgentRuntimeEntry entry,
                                         Character agent,
                                         Point agentPosition,
                                         Point currentTargetPos,
