@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -11,22 +10,22 @@ import java.awt.Point;
 public final class AgentMovementTickService {
     @FunctionalInterface
     public interface NavigationResolver {
-        NavigationResult resolve(BotEntry entry, Point targetPosition, boolean runAiTick);
+        NavigationResult resolve(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface FidgetTick {
-        boolean tryHandle(BotEntry entry, Point targetPosition, boolean runAiTick);
+        boolean tryHandle(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface MovementPhaseTick {
-        void tick(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void tick(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface CommittedEdgeExecutor {
-        void tryExecute(BotEntry entry, Point targetPosition);
+        void tryExecute(AgentRuntimeEntry entry, Point targetPosition);
     }
 
     public record NavigationResult(boolean consumedTick, Point targetPosition) {
@@ -42,13 +41,13 @@ public final class AgentMovementTickService {
 
     @FunctionalInterface
     public interface RunnableTick {
-        void run(BotEntry entry);
+        void run(AgentRuntimeEntry entry);
     }
 
     private AgentMovementTickService() {
     }
 
-    public static void stepMovementCore(BotEntry entry,
+    public static void stepMovementCore(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick,
                                         MovementTickHooks hooks) {

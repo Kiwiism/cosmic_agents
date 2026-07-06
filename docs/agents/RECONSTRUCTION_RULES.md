@@ -5018,6 +5018,12 @@ Current physics correction:
   and performance flag.
 - Movement phase dispatch now accepts `AgentRuntimeEntry`; climb, swim,
   airborne, and grounded branch ordering and callbacks are unchanged.
+- Movement core tick orchestration now accepts `AgentRuntimeEntry`; navigation
+  resolution, precise-target marking, fidget short-circuiting, phase dispatch,
+  committed-edge execution, stuck detection, and move-target cleanup ordering
+  are unchanged.
+- Precise navigation target marking now accepts `AgentRuntimeEntry`; precise
+  move-target checks and active-edge suppression are unchanged.
 
 Initial reconstruction order:
 

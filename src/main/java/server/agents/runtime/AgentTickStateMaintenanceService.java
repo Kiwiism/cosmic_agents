@@ -53,7 +53,7 @@ public final class AgentTickStateMaintenanceService {
         AgentBotPatrolStateRuntime.clearPatrolIfMapChanged(entry, agent.getMapId());
     }
 
-    public static void markPreciseNavigationTargetIfNeeded(BotEntry entry) {
+    public static void markPreciseNavigationTargetIfNeeded(AgentRuntimeEntry entry) {
         if (AgentBotMoveTargetStateRuntime.isPrecise(entry)
                 && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);

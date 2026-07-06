@@ -32,20 +32,20 @@ public final class AgentMovementTickRuntime {
                 entry,
                 targetPosition,
                 runAiTick,
-                hooks(enableUnstuck, stopDistance));
+                hooks(entry, enableUnstuck, stopDistance));
     }
 
-    private static AgentMovementTickService.MovementTickHooks hooks(boolean enableUnstuck, int stopDistance) {
+    private static AgentMovementTickService.MovementTickHooks hooks(BotEntry entry, boolean enableUnstuck, int stopDistance) {
         return new AgentMovementTickService.MovementTickHooks(
-                (entry, targetPosition, runAiTick) -> {
+                (ignored, targetPosition, runAiTick) -> {
                     AgentNavigationTargetService.NavigationDirective directive =
                             AgentNavigationTargetService.resolveTarget(entry, targetPosition, runAiTick);
                     return new AgentMovementTickService.NavigationResult(directive.consumedTick(), directive.targetPos());
                 },
-                AgentFidgetService::tryHandleTick,
-                AgentMovementPhaseRuntime::tickMovementPhase,
-                AgentNavigationTargetService::tryExecuteCommittedEdgeAfterGroundMovement,
-                entry -> AgentStuckDetectionRuntime.tickStuckDetection(entry, enableUnstuck),
-                entry -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
+                (ignored, targetPosition, runAiTick) -> AgentFidgetService.tryHandleTick(entry, targetPosition, runAiTick),
+                (ignored, targetPosition, runAiTick) -> AgentMovementPhaseRuntime.tickMovementPhase(entry, targetPosition, runAiTick),
+                (ignored, targetPosition) -> AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPosition),
+                ignored -> AgentStuckDetectionRuntime.tickStuckDetection(entry, enableUnstuck),
+                ignored -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
     }
 }
