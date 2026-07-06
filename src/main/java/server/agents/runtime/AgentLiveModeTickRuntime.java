@@ -141,7 +141,7 @@ public final class AgentLiveModeTickRuntime {
                             scriptedMoveCombat.targetPos());
                 },
                 (farmEntry, farmAgent, farmAgentPos, farmRunAiTick) -> AgentAnchoredFarmModeTickService.tickIfAnchoredFarm(
-                        asBotEntry(farmEntry),
+                        farmEntry,
                         farmAgent,
                         farmAgentPos,
                         farmRunAiTick,

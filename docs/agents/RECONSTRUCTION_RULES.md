@@ -5103,6 +5103,9 @@ Current physics correction:
 - Follow-opportunity ticking now accepts `AgentRuntimeEntry`; following/climbing
   gates, same-map and distance checks, local opportunity attack delegation, and
   target propagation are unchanged.
+- Anchored-farm mode gating now accepts `AgentRuntimeEntry`; farm-anchor
+  presence checks, anchored-farm tick delegation, and consumed-tick behavior are
+  unchanged.
 
 Initial reconstruction order:
 

@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -15,10 +14,10 @@ public final class AgentAnchoredFarmModeTickService {
 
     @FunctionalInterface
     public interface AnchoredFarmTick {
-        void tick(BotEntry entry, Character agent, Point agentPosition, boolean runAiTick);
+        void tick(AgentRuntimeEntry entry, Character agent, Point agentPosition, boolean runAiTick);
     }
 
-    public static boolean tickIfAnchoredFarm(BotEntry entry,
+    public static boolean tickIfAnchoredFarm(AgentRuntimeEntry entry,
                                              Character agent,
                                              Point agentPosition,
                                              boolean runAiTick,

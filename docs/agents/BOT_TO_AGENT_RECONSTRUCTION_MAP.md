@@ -73,6 +73,10 @@ Recent map updates:
   Following/climbing gates, same-map and distance checks, local opportunity
   attack delegation, and target propagation remain unchanged while
   `AgentLiveModeTickRuntime` keeps the temporary `BotEntry` callback adapter.
+- `AgentAnchoredFarmModeTickService` now accepts `AgentRuntimeEntry`.
+  Farm-anchor presence checks, anchored-farm tick delegation, and consumed-tick
+  behavior remain unchanged while `AgentLiveModeTickRuntime` keeps the
+  temporary `BotEntry` callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
