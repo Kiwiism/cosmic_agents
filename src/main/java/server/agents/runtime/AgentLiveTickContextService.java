@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -27,40 +26,40 @@ public final class AgentLiveTickContextService {
 
     @FunctionalInterface
     public interface MovementProfileRefresher {
-        void refresh(BotEntry entry);
+        void refresh(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface FollowAnchorResolver {
-        Character resolve(BotEntry entry, Character leader);
+        Character resolve(AgentRuntimeEntry entry, Character leader);
     }
 
     @FunctionalInterface
     public interface TargetSnapshotCapture {
-        AgentTargetSnapshot capture(BotEntry entry);
+        AgentTargetSnapshot capture(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface LeaderMotionObserver {
-        void update(BotEntry entry, Point rawLeaderPosition);
+        void update(AgentRuntimeEntry entry, Point rawLeaderPosition);
     }
 
     @FunctionalInterface
     public interface LeaderPositionRememberer {
-        void remember(BotEntry entry, Point rawLeaderPosition);
+        void remember(AgentRuntimeEntry entry, Point rawLeaderPosition);
     }
 
     @FunctionalInterface
     public interface MapChangeCleanup {
-        void clear(BotEntry entry, Character agent);
+        void clear(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface FollowActionWindowCleanup {
-        void clearIfSettled(BotEntry entry, Point agentPosition, AgentTargetSnapshot targetSnapshot);
+        void clearIfSettled(AgentRuntimeEntry entry, Point agentPosition, AgentTargetSnapshot targetSnapshot);
     }
 
-    public static Context prepareLiveTickContext(BotEntry entry,
+    public static Context prepareLiveTickContext(AgentRuntimeEntry entry,
                                                  Character agent,
                                                  Character leader,
                                                  Hooks hooks) {

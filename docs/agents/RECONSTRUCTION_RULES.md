@@ -5028,6 +5028,10 @@ Current physics correction:
   idle, recovery, and tracked-map-change gate order and short-circuit behavior
   are unchanged. `AgentLiveTickGateRuntime` remains the temporary compatibility
   bridge to BotEntry-shaped downstream tick callbacks.
+- Live tick context preparation now accepts `AgentRuntimeEntry`; movement
+  profile refresh, follow-anchor resolution, target snapshot capture, observed
+  leader motion updates, map-change cleanup, and follow-action cleanup ordering
+  are unchanged.
 
 Initial reconstruction order:
 

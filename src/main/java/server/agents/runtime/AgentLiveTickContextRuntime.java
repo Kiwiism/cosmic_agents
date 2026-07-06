@@ -20,13 +20,21 @@ public final class AgentLiveTickContextRuntime {
                 agent,
                 leader,
                 new AgentLiveTickContextService.Hooks(
-                        AgentMovementProfileService::refreshMovementProfile,
-                        followAnchorResolver,
-                        targetSnapshotCapture,
+                        runtimeEntry -> AgentMovementProfileService.refreshMovementProfile(asBotEntry(runtimeEntry)),
+                        (runtimeEntry, runtimeLeader) -> followAnchorResolver.resolve(asBotEntry(runtimeEntry), runtimeLeader),
+                        runtimeEntry -> targetSnapshotCapture.capture(asBotEntry(runtimeEntry)),
                         AgentTickStateMaintenanceService::updateObservedLeaderMotion,
                         AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
-                        AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
-                        AgentTickStateMaintenanceService::clearPatrolOnMapChange,
-                        AgentLocalAttackMoveWindowRuntime::clearFollowActionMoveWindowIfSettled));
+                        (runtimeEntry, runtimeAgent) -> AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(asBotEntry(runtimeEntry), runtimeAgent),
+                        (runtimeEntry, runtimeAgent) -> AgentTickStateMaintenanceService.clearPatrolOnMapChange(asBotEntry(runtimeEntry), runtimeAgent),
+                        (runtimeEntry, agentPosition, targetSnapshot) ->
+                                AgentLocalAttackMoveWindowRuntime.clearFollowActionMoveWindowIfSettled(
+                                        asBotEntry(runtimeEntry),
+                                        agentPosition,
+                                        targetSnapshot)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

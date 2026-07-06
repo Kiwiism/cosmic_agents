@@ -18,7 +18,7 @@ public final class AgentTickStateMaintenanceService {
     private AgentTickStateMaintenanceService() {
     }
 
-    public static void updateObservedLeaderMotion(BotEntry entry, Point leaderPosition) {
+    public static void updateObservedLeaderMotion(AgentRuntimeEntry entry, Point leaderPosition) {
         if (entry == null || leaderPosition == null) {
             return;
         }
