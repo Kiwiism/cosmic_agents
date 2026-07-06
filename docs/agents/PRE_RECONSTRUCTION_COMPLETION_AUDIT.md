@@ -100,14 +100,27 @@ Minimum baseline evidence package:
 
 ```text
 logs/soak/baseline/
-  README.md
-  serverhealth-5min-samples.log
-  scale-health.log
-  slow-operations.log
-  startup.log
-  shutdown.log
-  summary.json
+  <runId>/
+    README.md
+    evidence-checklist.md
+    serverhealth-5min-samples.log
+    scale-health.log
+    slow-operations.log
+    startup.log
+    shutdown.log
+    summary.json
 ```
+
+Scaffold command:
+
+```powershell
+.\tools\soak\New-BaselineSoakEvidencePackage.ps1 `
+  -DurationMinutes 60 `
+  -SampleIntervalMinutes 5
+```
+
+The scaffold only creates local evidence files and templates. It does not start
+the server, change config, or modify runtime behavior.
 
 Recommended `summary.json` fields:
 
@@ -178,6 +191,8 @@ package-definition work.
 Safe actions:
 
 - run a short baseline server smoke/soak and archive the diagnostics.
+- create the baseline evidence folder with
+  `tools/soak/New-BaselineSoakEvidencePackage.ps1`.
 - update this audit with real run ids and summary numbers.
 - keep compiling after safe-prep documentation batches.
 - keep Agent implementation deferred until reconstruction boundaries are

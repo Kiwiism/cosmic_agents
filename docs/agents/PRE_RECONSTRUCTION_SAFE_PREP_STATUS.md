@@ -190,7 +190,9 @@ Highest value before reconstruction finishes:
 
 1. Run a baseline server smoke/soak and archive diagnostics using
    `docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md`.
-2. Keep server-only diagnostics stable and repeat compile/scope checks after
+2. Use `tools/soak/New-BaselineSoakEvidencePackage.ps1` to create the run
+   folder and summary template before starting the baseline.
+3. Keep server-only diagnostics stable and repeat compile/scope checks after
    every safe-prep batch.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
