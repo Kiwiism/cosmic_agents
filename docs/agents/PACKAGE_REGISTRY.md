@@ -518,80 +518,95 @@ Implementation focus:
 5. soak JSONL/CSV export.
 6. Agent Console query API.
 
-## Partially Defined Packages
-
 ### 13. Interaction Realism Package
 
-Status: policy defined, package not yet defined.
+Status: well defined.
 
-Existing docs:
+Purpose:
+
+- Make Agent NPC/shop/quest interactions less identical without putting
+  exact timing and exact stop points inside Plan Cards.
+- Provide optional random approach points, dialogue-length delays, profile
+  variance, and anti-clustering.
+- Keep deterministic mode available for fast Maple Island MVP testing.
+
+Primary docs:
 
 - `docs/agents/INTERACTION_REALISM_POLICY.md`
-- NPC catalog timing/approach docs.
+- `docs/agents/interaction-realism/INTERACTION_REALISM_DESIGN_SPECIFICATION.md`
+- `docs/agents/interaction-realism/INTERACTION_REALISM_TECHNICAL_SPECIFICATION.md`
 
-What is already clear:
+Owns:
 
-- NPC delay can be based on dialogue length and profile reading speed.
-- NPC approach can use random valid points/boxes.
-- Realism should be toggleable for fast tests.
+- realism mode.
+- approach point selection.
+- dialogue delay calculation.
+- point reservations.
+- repeat-dialogue memory.
+- profile timing samples.
+- realism audit payloads.
 
-Missing package docs:
+Does not own:
 
-- `INTERACTION_REALISM_DESIGN_SPECIFICATION.md`
-- `INTERACTION_REALISM_TECHNICAL_SPECIFICATION.md`
+- navigation pathfinding.
+- NPC/quest/shop execution.
+- plan objective state.
+- server validation.
+- profile storage.
 
-Needs definition:
+Implementation focus:
 
-- runtime mode: off/test/realistic.
-- delay formula API.
-- approach spot reservation.
-- anti-clustering.
-- profile integration.
-- catalog integration.
-- deterministic randomness.
+1. implement `OFF`, `LIGHT`, and `FULL` modes.
+2. add seeded approach point selection.
+3. add dialogue-length delay calculation.
+4. add bounded point reservations and repeat-dialogue memory.
+5. integrate with NPC Quest and Shop capabilities after reconstruction.
 
-Recommended package:
+### 14. Agent Simulation Tier Runtime
 
-```text
-agent-interaction-realism
-```
+Status: well defined for simulation tier selection.
 
-### 14. Agent Engine Optimization Package
+Purpose:
 
-Status: strategy defined, package not yet defined.
+- Choose Agent simulation fidelity based on real-player map presence, map
+  sensitivity, server load, and current capability needs.
+- Keep visible Agents on a presentation path while allowing safe unobserved
+  Agents to use cheaper background paths.
+- Define materialization rules when an Agent becomes visible again.
 
-Existing docs:
+Primary docs:
 
 - `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`
+- `docs/agents/simulation-tier-runtime/AGENT_SIMULATION_TIER_DESIGN_SPECIFICATION.md`
+- `docs/agents/simulation-tier-runtime/AGENT_SIMULATION_TIER_TECHNICAL_SPECIFICATION.md`
 
-What is already clear:
+Owns:
 
-- Visible agents should run full simulation.
-- Non-visible agents can use abstract simulation.
-- Portal-to-portal ETA and route heuristics can avoid full physics.
-- Same-map target ETA can use distance, gradient, and map heuristics.
+- simulation mode selection.
+- map sensitivity classification.
+- allowed background shortcut declaration.
+- materialization policy.
+- per-Agent mode transition auditing.
+- cost budget hints for scheduler/capabilities.
 
-Missing package docs:
+Does not own:
 
-- `AGENT_SIMULATION_TIER_DESIGN_SPECIFICATION.md`
-- `AGENT_SIMULATION_TIER_TECHNICAL_SPECIFICATION.md`
+- Agent intent or plan selection.
+- direct movement/combat/loot/NPC/shop execution.
+- server validation rules.
+- profile/economy/LLM decisions.
+- packet generation.
 
-Needs definition:
+Implementation focus:
 
-- simulation tier manager.
-- visibility/live-player policy.
-- abstract movement model.
-- abstract combat/farming model.
-- route ETA catalog dependency.
-- transition back to full simulation.
-- correctness guarantees.
-- performance metrics.
+1. implement `PRESENTATION`, `BACKGROUND_ACTIVE`,
+   `BACKGROUND_ABSTRACT`, and `STRATEGIC_OFFLINE` decisions.
+2. force presentation when real players are in the Agent map.
+3. classify sensitive maps from live state and catalog metadata.
+4. expose allowed shortcuts to capabilities.
+5. add materialization planner and observability events.
 
-Recommended package:
-
-```text
-agent-simulation-tier-runtime
-```
+## Partially Defined Packages
 
 ### 15. LLM Control Gateway Package
 
@@ -945,21 +960,19 @@ Reasoning:
 
 Highest priority:
 
-1. Interaction Realism design + technical specs.
-2. Simulation Tier Runtime design + technical specs.
-3. Perception Runtime design + technical specs.
-4. Background Action Runtime design + technical specs.
-5. Agent Soak Test Harness command/runner spec.
+1. Perception Runtime design + technical specs.
+2. Background Action Runtime design + technical specs.
+3. Agent Soak Test Harness command/runner spec.
+4. Catalog builder validation/report spec.
+5. LLM Gateway design + technical specs.
 
 Second priority:
 
-1. LLM Gateway design + technical specs.
-2. Population Director design + technical specs.
-3. Portable Installer technical spec.
-4. Quest Objective Policy design + technical specs.
-5. Catalog builder validation/report spec.
+1. Population Director design + technical specs.
+2. Portable Installer technical spec.
+3. Quest Objective Policy design + technical specs.
+4. Relationship / Social Graph split-out spec if profile package grows large.
 
 Later:
 
-1. Relationship / Social Graph split-out spec if profile package grows large.
-2. Advanced full-game quest objective policy specs after Maple Island MVP.
+1. Advanced full-game quest objective policy specs after Maple Island MVP.

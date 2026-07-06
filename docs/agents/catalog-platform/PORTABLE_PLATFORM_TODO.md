@@ -32,6 +32,10 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Recovery Policy technical specification.
 - [x] Agent Observability design specification.
 - [x] Agent Observability technical specification.
+- [x] Interaction Realism design specification.
+- [x] Interaction Realism technical specification.
+- [x] Agent Simulation Tier design specification.
+- [x] Agent Simulation Tier technical specification.
 
 ## Builder Work
 
