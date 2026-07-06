@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +41,7 @@ class AgentFormationCommandServiceTest {
     @Test
     void reportsSnapStatusToFirstEntry() {
         Character leader = leader(1);
-        BotEntry first = new BotEntry(mock(Character.class), leader, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), leader, null);
         List<String> calls = new ArrayList<>();
         AtomicReference<AgentFormationService.FormationState> state =
                 new AtomicReference<>(new AgentFormationService.FormationState(AgentFormationService.FormationType.STAGGER, 50, 75));
@@ -59,7 +58,7 @@ class AgentFormationCommandServiceTest {
     @Test
     void updatesSnapOnUsingConfiguredDefaultWhenCurrentlyOff() {
         Character leader = leader(1);
-        BotEntry first = new BotEntry(mock(Character.class), leader, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), leader, null);
         List<String> calls = new ArrayList<>();
         AtomicReference<AgentFormationService.FormationState> state =
                 new AtomicReference<>(new AgentFormationService.FormationState(AgentFormationService.FormationType.STAGGER, 50, 0));
@@ -77,7 +76,7 @@ class AgentFormationCommandServiceTest {
     @Test
     void appliesSpreadFormationWithExplicitPixels() {
         Character leader = leader(1);
-        BotEntry first = new BotEntry(mock(Character.class), leader, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), leader, null);
         List<String> calls = new ArrayList<>();
         AtomicReference<AgentFormationService.FormationState> state =
                 new AtomicReference<>(defaultFormation());
@@ -93,7 +92,7 @@ class AgentFormationCommandServiceTest {
         assertEquals(List.of("apply:SPREAD:90", "entry:formation: spread 90px"), calls);
     }
 
-    private static AgentFormationCommandService.Hooks hooks(List<BotEntry> entries,
+    private static AgentFormationCommandService.Hooks hooks(List<? extends AgentRuntimeEntry> entries,
                                                             List<String> calls,
                                                             AtomicReference<AgentFormationService.FormationState> state) {
         return new AgentFormationCommandService.Hooks(

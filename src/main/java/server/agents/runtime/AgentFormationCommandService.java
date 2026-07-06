@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,7 +28,7 @@ public final class AgentFormationCommandService {
 
     @FunctionalInterface
     public interface EntriesByLeader {
-        List<BotEntry> entries(int leaderCharId);
+        List<? extends AgentRuntimeEntry> entries(int leaderCharId);
     }
 
     @FunctionalInterface
@@ -44,12 +43,12 @@ public final class AgentFormationCommandService {
 
     @FunctionalInterface
     public interface FormationOffsetApplier {
-        void apply(List<BotEntry> entries, AgentFormationService.FormationState formation);
+        void apply(List<? extends AgentRuntimeEntry> entries, AgentFormationService.FormationState formation);
     }
 
     @FunctionalInterface
     public interface EntryReply {
-        void reply(BotEntry entry, String message);
+        void reply(AgentRuntimeEntry entry, String message);
     }
 
     @FunctionalInterface
@@ -65,7 +64,7 @@ public final class AgentFormationCommandService {
 
         int leaderId = leader.getId();
         String typeToken = matcher.group(1);
-        List<BotEntry> entries = hooks.entriesByLeader().entries(leaderId);
+        List<? extends AgentRuntimeEntry> entries = hooks.entriesByLeader().entries(leaderId);
         if (typeToken == null) {
             replyFirstOrLeader(leader, entries, HELP, hooks);
             return true;
@@ -102,7 +101,7 @@ public final class AgentFormationCommandService {
     }
 
     private static void handleSnapCommand(Character leader,
-                                          List<BotEntry> entries,
+                                          List<? extends AgentRuntimeEntry> entries,
                                           String qualifier,
                                           AgentFormationService.FormationState current,
                                           Hooks hooks) {
@@ -157,7 +156,10 @@ public final class AgentFormationCommandService {
         };
     }
 
-    private static void replyFirstOrLeader(Character leader, List<BotEntry> entries, String message, Hooks hooks) {
+    private static void replyFirstOrLeader(Character leader,
+                                           List<? extends AgentRuntimeEntry> entries,
+                                           String message,
+                                           Hooks hooks) {
         if (entries != null && !entries.isEmpty()) {
             hooks.entryReply().reply(entries.get(0), message);
         } else {

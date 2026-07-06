@@ -5078,6 +5078,9 @@ Current physics correction:
 - Formation state lookup and offset application now accept Agent runtime
   entries; formation store access, leader/default resolution, and offset
   assignment patterns are unchanged.
+- Formation command handling now accepts Agent runtime entries; formation
+  command matching, help/status replies, snap range updates, formation writes,
+  offset application, and first-entry/leader reply routing are unchanged.
 
 Initial reconstruction order:
 
