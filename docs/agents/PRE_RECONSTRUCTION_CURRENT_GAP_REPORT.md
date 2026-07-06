@@ -96,7 +96,7 @@ the safe-prep tooling changes themselves do not touch Agent runtime paths.
 A compile check currently fails in existing Agent reconstruction code:
 
 ```text
-src/main/java/server/agents/runtime/AgentIdlePhysicsRuntime.java
+src/main/java/server/agents/capabilities/navigation/AgentNavigationTargetService.java
 incompatible types: server.agents.runtime.AgentRuntimeEntry cannot be converted
 to server.bots.BotEntry
 ```

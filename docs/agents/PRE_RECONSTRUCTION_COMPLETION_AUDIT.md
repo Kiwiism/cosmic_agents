@@ -116,6 +116,8 @@ logs/soak/baseline/
     slow-operations.log
     startup.log
     shutdown.log
+    prep-verifier-before-run.log
+    baseline-status-before-run.log
     summary.json
 ```
 
@@ -129,6 +131,25 @@ Scaffold command:
 
 The scaffold only creates local evidence files and templates. It does not start
 the server, change config, or modify runtime behavior.
+
+Current local scaffold:
+
+```text
+logs/soak/baseline/baseline-20260707-0512
+```
+
+Current scaffold status:
+
+```text
+Baseline evidence verification: INCOMPLETE
+Failures: 0
+Warnings: 7
+```
+
+The scaffold is structurally valid and includes provenance logs. The remaining
+warnings are expected until a real server run fills startup, interval
+serverhealth, scale-health, slow-operation, shutdown, checklist, and final
+summary evidence.
 
 Operator runbook:
 
@@ -261,10 +282,14 @@ Current verifier state:
 ```text
 Pre-reconstruction prep verification: INCOMPLETE
 Failures: 0
-Warnings: 1
+Warnings: 3
 ```
 
-The remaining warning is the missing baseline run folder under
-`logs/soak/baseline`. See
-`docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md` for the exact evidence
-collection sequence.
+Current warnings are:
+
+- unstaged Agent reconstruction changes under `src/main/java/server/agents`.
+- unstaged Agent reconstruction test changes under `src/test/java/server/agents`.
+- latest baseline evidence scaffold is still incomplete.
+
+See `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md` for the exact
+evidence collection sequence and current scaffold path.
