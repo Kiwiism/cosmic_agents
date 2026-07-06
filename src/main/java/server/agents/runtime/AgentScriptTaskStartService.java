@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.InventoryType;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.function.BiConsumer;
@@ -28,7 +27,7 @@ public final class AgentScriptTaskStartService {
     private AgentScriptTaskStartService() {
     }
 
-    public static void start(BotEntry entry, AgentTask task, StartHooks hooks) {
+    public static void start(AgentRuntimeEntry entry, AgentTask task, StartHooks hooks) {
         switch (task.type()) {
             case MOVE_TO -> hooks.startMoveTo().accept(task.point(), task.precise());
             case FOLLOW_OWNER -> hooks.startFollow().accept(AgentBotRuntimeIdentityRuntime.owner(entry));

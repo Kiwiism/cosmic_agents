@@ -4977,6 +4977,8 @@ Current physics correction:
   still writes the same navigation waypoint/debug state.
 - Map environment swim-map detection now accepts `AgentRuntimeEntry`; it still
   resolves the Agent map through the same runtime identity adapter.
+- Script task start dispatch now accepts `AgentRuntimeEntry`; MOVE_TO, follow,
+  grind, stop, and drop-item hook dispatch remains unchanged.
 
 Initial reconstruction order:
 
