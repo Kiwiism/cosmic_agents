@@ -93,11 +93,14 @@ logs/soak/baseline/<runId>/
   slow-operations.log
   startup.log
   shutdown.log
+  prep-verifier-before-run.log
+  baseline-status-before-run.log
   summary.json
 ```
 
-Copy the pre-run prep verifier output into the run `README.md` or a note inside
-`summary.json`.
+The scaffold captures the pre-run prep verifier and baseline evidence status
+into the two provenance logs. Add a note to `summary.json` only if either
+snapshot has an unexpected failure or warning.
 
 ## Step 3 - Start Server
 

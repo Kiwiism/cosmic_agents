@@ -46,6 +46,8 @@ logs/soak/baseline/<runId>/
   slow-operations.log
   startup.log
   shutdown.log
+  prep-verifier-before-run.log
+  baseline-status-before-run.log
   summary.json
 ```
 
@@ -58,6 +60,8 @@ The script records:
 - `config.yaml` SHA-256 hash.
 - Java version.
 - OS/user/machine metadata.
+- pre-run prep verifier output.
+- pre-run baseline evidence status output.
 
 It does not:
 

@@ -38,6 +38,36 @@ function Get-FileSha256 {
     return $null
 }
 
+function Invoke-RepoScriptSnapshot {
+    param(
+        [Parameter(Mandatory = $true)] [string] $ScriptPath,
+        [Parameter(Mandatory = $true)] [string] $OutputPath
+    )
+
+    if (Test-Path -LiteralPath $OutputPath) {
+        return
+    }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = & powershell -ExecutionPolicy Bypass -File $ScriptPath 2>&1
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    $content = @(
+        "# Command: powershell -ExecutionPolicy Bypass -File $ScriptPath",
+        "# Captured: $((Get-Date).ToString("o"))",
+        "# ExitCode: $exitCode",
+        "",
+        $output
+    )
+
+    Set-Content -LiteralPath $OutputPath -Value $content -Encoding UTF8
+}
+
 $repoRoot = Resolve-RepoRoot
 Set-Location -LiteralPath $repoRoot
 
@@ -184,6 +214,14 @@ $checklist = @"
 - [ ] Any failure has notes and root-cause status.
 "@
 New-TextFileIfMissing -Path (Join-Path $runDir "evidence-checklist.md") -Content $checklist
+
+Invoke-RepoScriptSnapshot `
+    -ScriptPath (Join-Path $repoRoot "tools/pre-reconstruction/Test-PreReconstructionPrep.ps1") `
+    -OutputPath (Join-Path $runDir "prep-verifier-before-run.log")
+
+Invoke-RepoScriptSnapshot `
+    -ScriptPath (Join-Path $repoRoot "tools/soak/Get-BaselineSoakStatus.ps1") `
+    -OutputPath (Join-Path $runDir "baseline-status-before-run.log")
 
 Write-Host "Created baseline evidence package:"
 Write-Host "  $runDir"

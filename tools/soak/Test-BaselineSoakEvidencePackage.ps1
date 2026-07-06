@@ -67,6 +67,20 @@ foreach ($file in $requiredFiles) {
     }
 }
 
+$optionalProvenanceFiles = @(
+    "prep-verifier-before-run.log",
+    "baseline-status-before-run.log"
+)
+
+foreach ($file in $optionalProvenanceFiles) {
+    $path = Join-Path $resolvedRunPath $file
+    if (Test-Path -LiteralPath $path) {
+        Add-Check $checks "provenance:$file" "PASS" "Found $file."
+    } else {
+        Add-Check $checks "provenance:$file" "WARN" "Missing optional provenance file $file."
+    }
+}
+
 $summaryPath = Join-Path $resolvedRunPath "summary.json"
 $summary = $null
 
