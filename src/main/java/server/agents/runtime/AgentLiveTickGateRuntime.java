@@ -45,8 +45,8 @@ public final class AgentLiveTickGateRuntime {
                 (idleEntry, idleAgent) -> AgentIdleModeTickService.tickIdleMode(
                         idleEntry,
                         idleAgent,
-                        new AgentIdleModeTickService.Hooks((physicsEntry, physicsAgent) ->
-                                tickIdleEntry(physicsEntry, physicsAgent, perf))),
+                        new AgentIdleModeTickService.Hooks((ignored, physicsAgent) ->
+                                tickIdleEntry(idleEntry, physicsAgent, perf))),
                 (recoveryEntry, recoveryAgent, recoveryFollowAnchor, recoveryTargetPos) -> AgentRecoveryTickService.tickRecovery(
                         recoveryEntry,
                         recoveryAgent,

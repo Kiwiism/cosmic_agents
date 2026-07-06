@@ -5013,6 +5013,9 @@ Current physics correction:
 - Final movement tail dispatch now accepts `AgentRuntimeEntry`; the live-mode
   wrapper still calls the same movement core with the same target and AI-tick
   flag.
+- Idle-mode tick dispatch now accepts `AgentRuntimeEntry`; the live-gate
+  wrapper still calls the same idle physics path with the same Agent character
+  and performance flag.
 
 Initial reconstruction order:
 
