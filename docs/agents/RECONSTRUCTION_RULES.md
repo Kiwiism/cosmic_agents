@@ -5008,6 +5008,8 @@ Current physics correction:
 - Action-lock physics dispatch now accepts `AgentRuntimeEntry`; attack-cooldown
   gating, swim/airborne/grounded branch selection, and movement-phase callbacks
   are unchanged.
+- Target snapshot steering helpers now accept `AgentRuntimeEntry`; navigation
+  waypoint override lookup and primary-target fallback behavior are unchanged.
 
 Initial reconstruction order:
 

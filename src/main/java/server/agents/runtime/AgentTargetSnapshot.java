@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -20,12 +19,12 @@ public record AgentTargetSnapshot(AgentFormationService.FormationState formation
                                   Point grindTargetPos,
                                   Point primaryTargetPos,
                                   String primaryTargetSource) {
-    public Point steeringTargetPos(BotEntry entry) {
+    public Point steeringTargetPos(AgentRuntimeEntry entry) {
         Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
         return navTargetPos != null ? navTargetPos : new Point(primaryTargetPos);
     }
 
-    public String steeringTargetSource(BotEntry entry) {
+    public String steeringTargetSource(AgentRuntimeEntry entry) {
         return AgentBotNavigationDebugStateRuntime.hasNavTargetPosition(entry) ? "nav-waypoint" : primaryTargetSource;
     }
 }
