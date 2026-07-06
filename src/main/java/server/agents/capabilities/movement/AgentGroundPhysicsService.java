@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -66,7 +67,7 @@ public final class AgentGroundPhysicsService {
         return new AgentGroundMotion(step.stepX(), false);
     }
 
-    public static void stopGroundMotion(BotEntry entry) {
+    public static void stopGroundMotion(AgentRuntimeEntry entry) {
         AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0.0);
     }
 

@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -11,7 +11,7 @@ public final class AgentAirborneLaunchService {
     private AgentAirborneLaunchService() {
     }
 
-    public static void launchAirborne(BotEntry entry,
+    public static void launchAirborne(AgentRuntimeEntry entry,
                                       Point position,
                                       float initialVelocityY,
                                       int airVelocityX,

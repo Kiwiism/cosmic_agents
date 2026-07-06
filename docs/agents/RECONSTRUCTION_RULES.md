@@ -5126,6 +5126,10 @@ Current physics correction:
 - Navigation warmup notification now accepts `AgentRuntimeEntry`; leader/map
   throttle checks, walkable-foothold threshold, and fallback notification text
   are unchanged.
+- Airborne launch now accepts `AgentRuntimeEntry`, with ground-motion stopping
+  lifted to the same boundary; air-state initialization, climb intent,
+  horizontal/vertical velocity setup, down-jump clearing, movement velocity
+  projection, and character state sync are unchanged.
 - Command-mode service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; null-entry skip behavior, guard evaluation, task clearing,
   shop cancellation, and mode-start ordering are unchanged.

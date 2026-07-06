@@ -102,6 +102,11 @@ Recent map updates:
 - `AgentNavigationWarmupService` now accepts `AgentRuntimeEntry`. Leader/map
   throttle checks, walkable-foothold threshold, and fallback notification text
   remain unchanged.
+- `AgentAirborneLaunchService` now accepts `AgentRuntimeEntry`, with
+  `AgentGroundPhysicsService.stopGroundMotion` lifted to the same boundary.
+  Air-state initialization, climb intent, horizontal/vertical velocity setup,
+  down-jump clearing, movement velocity projection, and character state sync
+  remain unchanged.
 - `AgentCommandModeServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Null-entry skip behavior, guard evaluation, task
   clearing, shop cancellation, and mode-start ordering remain unchanged.
