@@ -43,8 +43,8 @@ Allowed before reconstruction is stable:
 | Area | Status | Primary Evidence | Safe Next Work |
 | --- | --- | --- | --- |
 | Server-only hardening and scaling prep | Ready for current phase | `docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md`, `docs/SERVER_SCALE_TODO.md`, `docs/SERVER_HARDENING_DIAGNOSTICS.md` | Run soak tests and use diagnostics to choose later behavior changes. |
-| Agent scaling documentation | Ready as strategy and package specs, implementation waits | `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`, `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`, `docs/agents/simulation-tier-runtime/*`, `docs/agents/background-action-runtime/*` | Promote soak harness details next. |
-| Catalog and runtime knowledge prep | Partially ready | `docs/agents/catalog-platform/*`, `docs/agents/llm-autonomy/GAME_KNOWLEDGE_CATALOGS.md`, `tools/game-catalog`, `tools/npc-catalog`, `tools/agent-llm-catalog` | Unify catalog builders into bundle format and add validation reports. |
+| Agent scaling documentation | Ready as strategy and package specs, implementation waits | `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`, `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`, `docs/agents/simulation-tier-runtime/*`, `docs/agents/background-action-runtime/*`, `docs/agents/soak-test-harness/*` | Implement only after reconstruction and collect soak evidence. |
+| Catalog and runtime knowledge prep | Ready as contract, implementation waits | `docs/agents/catalog-platform/*`, `docs/agents/llm-autonomy/GAME_KNOWLEDGE_CATALOGS.md`, `tools/game-catalog`, `tools/npc-catalog`, `tools/agent-llm-catalog` | Implement unified bundle builder and report generator after choosing builder entry point. |
 | Maple Island MVP documentation | Ready as first gameplay slice | `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`, MVP design/technical/sequence docs, `docs/agents/plans/maple-island-mvp.plan.json` | Implement only after Agent capability boundaries are stable. |
 | Portable Agent architecture prep | Ready as contract | `docs/agents/POST_RECONSTRUCTION_AGENT_PLATFORM_SPECIFICATION.md`, `docs/agents/server-adapter/*` | Build installer/adapter code after reconstruction boundary is stable. |
 | Plan Card system prep | Ready as contract | `docs/agents/llm-autonomy/PLAN_CARD_SYSTEM.md`, `docs/agents/plan-runtime/*`, `docs/agents/plans/maple-island-mvp.plan.json` | Add JSON schema files before coding. |
@@ -95,9 +95,9 @@ Allowed before reconstruction is stable:
 These are intentionally not live runtime features yet:
 
 - catalog runtime loader.
-- unified catalog bundle builder.
-- manifest and source hashing.
-- catalog validation report generator.
+- unified catalog bundle builder implementation.
+- manifest and source hashing implementation.
+- catalog validation report generator implementation.
 - Plan Runtime.
 - Capability Runtime.
 - NPC/Quest interaction capability.
@@ -182,12 +182,10 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Unify catalog builder output shape in documentation before touching runtime.
-2. Add catalog validation report requirements for dangling NPC, quest, shop,
-   item, reactor, portal, and reward references.
-3. Write Population Director design and technical specs.
-4. Write Portable Installer technical spec.
-5. Keep server-only diagnostics stable and collect soak evidence.
+1. Write Population Director design and technical specs.
+2. Write Portable Installer technical spec.
+3. Write Quest Objective Policy design and technical specs.
+4. Keep server-only diagnostics stable and collect soak evidence.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.

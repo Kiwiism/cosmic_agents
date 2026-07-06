@@ -74,6 +74,10 @@ Responsibilities:
 - Write manifest and source hashes.
 - Produce validation reports.
 
+Detailed validation/reporting rules:
+
+- `docs/agents/catalog-platform/CATALOG_BUILDER_VALIDATION_REPORT_SPEC.md`
+
 ### Catalog Bundle
 
 Answers:

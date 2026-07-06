@@ -8,6 +8,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Catalog platform architecture.
 - [x] Catalog bundle spec.
 - [x] Catalog query API.
+- [x] Catalog builder validation/report specification.
 - [x] Profile runtime architecture.
 - [x] Profile decision API.
 - [x] Profile adaptation system.
@@ -47,12 +48,13 @@ This TODO tracks the future portable Agent Knowledge Platform.
 
 ## Builder Work
 
+- [x] Document unified catalog bundle output and validation/report requirements.
 - [ ] Move current `tools/game-catalog` and `tools/npc-catalog` outputs toward a unified catalog bundle layout.
 - [ ] Add `manifest.json` generation.
 - [ ] Add source hashing for WZ, SQL, scripts, and overrides.
 - [ ] Add derived index generation.
 - [ ] Add override merge step.
-- [ ] Add validation report for dangling references.
+- [x] Define validation report requirements for dangling references.
 - [ ] Add bundle compatibility checks.
 - [ ] Add extended full-game catalogs:
   - reactor/field object catalog.

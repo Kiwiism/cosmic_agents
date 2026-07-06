@@ -103,6 +103,11 @@ catalog-bundle/
     summary.md
     validation.md
     gaps.md
+    validation.json
+    gaps.json
+    source_hashes.json
+    compatibility.json
+    index_coverage.json
   overrides/
     applied_overrides.json
 ```
@@ -242,6 +247,10 @@ Every build should emit:
 - indexes with dangling keys
 
 Reports are not runtime contracts, but they are required for review.
+
+Detailed validation/reporting requirements are defined in:
+
+- `docs/agents/catalog-platform/CATALOG_BUILDER_VALIDATION_REPORT_SPEC.md`
 
 ## Compatibility Rules
 

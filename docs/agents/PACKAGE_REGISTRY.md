@@ -49,6 +49,7 @@ Primary docs:
 - `docs/agents/catalog-platform/CATALOG_PLATFORM_ARCHITECTURE.md`
 - `docs/agents/catalog-platform/CATALOG_BUNDLE_SPEC.md`
 - `docs/agents/catalog-platform/CATALOG_QUERY_API.md`
+- `docs/agents/catalog-platform/CATALOG_BUILDER_VALIDATION_REPORT_SPEC.md`
 - `docs/agents/catalog-platform/PORTABLE_PLATFORM_TODO.md`
 - `docs/agents/llm-autonomy/GAME_KNOWLEDGE_CATALOGS.md`
 
@@ -70,9 +71,10 @@ Does not own:
 Implementation focus:
 
 1. Normalize current exporters into one bundle.
-2. Add manifest/hash/override merge.
-3. Add read-only runtime.
-4. Add fast query APIs and zero-scan rule.
+2. Implement manifest/hash/override merge.
+3. Implement validation report generator and accepted-gap workflow.
+4. Add read-only runtime.
+5. Add fast query APIs and zero-scan rule.
 
 ### 2. NPC Catalog Package
 
@@ -981,11 +983,10 @@ Reasoning:
 
 Highest priority:
 
-1. Catalog builder validation/report spec.
-2. Population Director design + technical specs.
-3. Portable Installer technical spec.
-4. Quest Objective Policy design + technical specs.
-5. Relationship / Social Graph split-out spec if profile package grows large.
+1. Population Director design + technical specs.
+2. Portable Installer technical spec.
+3. Quest Objective Policy design + technical specs.
+4. Relationship / Social Graph split-out spec if profile package grows large.
 
 Second priority:
 
