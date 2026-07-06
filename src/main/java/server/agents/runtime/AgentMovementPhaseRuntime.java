@@ -10,15 +10,15 @@ public final class AgentMovementPhaseRuntime {
     }
 
     public static void tickMovementPhase(BotEntry entry, Point targetPosition, boolean runAiTick) {
-        AgentMovementPhaseService.tickMovementPhase(entry, targetPosition, runAiTick, hooks());
+        AgentMovementPhaseService.tickMovementPhase(entry, targetPosition, runAiTick, hooks(entry));
     }
 
-    private static AgentMovementPhaseService.MovementPhaseHooks hooks() {
+    private static AgentMovementPhaseService.MovementPhaseHooks hooks(BotEntry entry) {
         return new AgentMovementPhaseService.MovementPhaseHooks(
-                (entry, target) -> AgentMapEnvironmentService.isSwimMap(entry),
-                AgentMovementPhaseDispatchService::tickClimbing,
-                AgentMovementPhaseDispatchService::tickSwimming,
-                AgentMovementPhaseDispatchService::tickAirborne,
-                AgentMovementPhaseDispatchService::tickGrounded);
+                (candidate, target) -> AgentMapEnvironmentService.isSwimMap(candidate),
+                (ignored, target, runAiTick) -> AgentMovementPhaseDispatchService.tickClimbing(entry, target, runAiTick),
+                (ignored, target) -> AgentMovementPhaseDispatchService.tickSwimming(entry, target),
+                (ignored, target) -> AgentMovementPhaseDispatchService.tickAirborne(entry, target),
+                (ignored, target) -> AgentMovementPhaseDispatchService.tickGrounded(entry, target));
     }
 }

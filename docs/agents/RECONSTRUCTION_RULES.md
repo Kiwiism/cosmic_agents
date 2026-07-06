@@ -5016,6 +5016,8 @@ Current physics correction:
 - Idle-mode tick dispatch now accepts `AgentRuntimeEntry`; the live-gate
   wrapper still calls the same idle physics path with the same Agent character
   and performance flag.
+- Movement phase dispatch now accepts `AgentRuntimeEntry`; climb, swim,
+  airborne, and grounded branch ordering and callbacks are unchanged.
 
 Initial reconstruction order:
 

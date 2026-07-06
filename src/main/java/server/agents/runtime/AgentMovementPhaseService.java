@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.function.BiPredicate;
@@ -12,15 +11,15 @@ import java.util.function.BiPredicate;
 public final class AgentMovementPhaseService {
     @FunctionalInterface
     public interface ClimbTick {
-        void tick(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void tick(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface MoveTick {
-        void tick(BotEntry entry, Point targetPosition);
+        void tick(AgentRuntimeEntry entry, Point targetPosition);
     }
 
-    public record MovementPhaseHooks(BiPredicate<BotEntry, Point> swimMap,
+    public record MovementPhaseHooks(BiPredicate<AgentRuntimeEntry, Point> swimMap,
                                      ClimbTick climbingTick,
                                      MoveTick swimmingTick,
                                      MoveTick airborneTick,
@@ -30,7 +29,7 @@ public final class AgentMovementPhaseService {
     private AgentMovementPhaseService() {
     }
 
-    public static void tickMovementPhase(BotEntry entry,
+    public static void tickMovementPhase(AgentRuntimeEntry entry,
                                          Point targetPosition,
                                          boolean runAiTick,
                                          MovementPhaseHooks hooks) {
