@@ -50,6 +50,8 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Portable Installer technical specification.
 - [x] Quest Objective Policy design specification.
 - [x] Quest Objective Policy technical specification.
+- [x] Social Relationship Runtime design specification.
+- [x] Social Relationship Runtime technical specification.
 
 ## Builder Work
 
@@ -116,6 +118,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
   acquisition preferences.
 - [ ] Create relationship memory model for agent/player trust, affinity, trade
   reliability, party compatibility, and avoidance.
+- [x] Document Social Relationship Runtime design and technical specifications.
 - [ ] Create behavior sampler.
 - [ ] Create policy engine.
 - [ ] Add event feedback model.

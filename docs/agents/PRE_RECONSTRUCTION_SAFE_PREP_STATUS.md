@@ -151,6 +151,7 @@ Well-defined packages:
 - Agent Population Director.
 - Portable Installer / Patcher.
 - Quest / Combat Focus Policy Package.
+- Social Relationship Runtime.
 
 Partially defined packages that need specs before implementation:
 
@@ -158,7 +159,7 @@ Partially defined packages that need specs before implementation:
 
 Backlog packages to promote:
 
-- Relationship / Social Graph Runtime.
+- None currently identified.
 
 ## Verification Rules For Every Safe-Prep Batch
 
@@ -184,8 +185,6 @@ Required result:
 Highest value before reconstruction finishes:
 
 1. Keep server-only diagnostics stable and collect soak evidence.
-2. Split Relationship / Social Graph into a dedicated package if Profile
-   Platform grows large enough to need it.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.

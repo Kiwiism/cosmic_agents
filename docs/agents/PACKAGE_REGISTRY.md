@@ -953,36 +953,63 @@ Implementation focus:
 6. add filler mob scorer and burst limit.
 7. add reason codes and audit events.
 
+### 22. Social Relationship Runtime
+
+Status: well defined.
+
+Purpose:
+
+- Maintain directional relationship memories between Agents, players, parties,
+  shops, and future social groups.
+- Provide trust, affinity, trade reliability, party compatibility, annoyance,
+  avoidance, and helpfulness debt summaries for Profile Platform decisions.
+- Support compact social graph views for Agent Console, LLM summaries, economy
+  risk checks, and future social behavior.
+
+Primary docs:
+
+- `docs/agents/social-relationship-runtime/SOCIAL_RELATIONSHIP_RUNTIME_DESIGN_SPECIFICATION.md`
+- `docs/agents/social-relationship-runtime/SOCIAL_RELATIONSHIP_RUNTIME_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/profile-platform/AGENT_PROFILE_SYSTEM_DESIGN_SPECIFICATION.md`
+- `docs/agents/profile-platform/AGENT_PROFILE_SYSTEM_TECHNICAL_SPECIFICATION.md`
+
+Owns:
+
+- relationship memory records.
+- relationship event and patch models.
+- trust/affinity/trade/party/avoidance dimensions.
+- relationship decay and compaction.
+- top-N relationship caches.
+- social graph summaries.
+- privacy-safe counterparty references.
+- relationship influence objects for decisions.
+
+Does not own:
+
+- profile hard constraints.
+- party, trade, chat, or help execution.
+- social sidetrack execution.
+- market pricing.
+- LLM command execution.
+- anti-abuse bypasses.
+
+Implementation focus:
+
+1. add relationship target and memory schema.
+2. add relationship event and patch reducers.
+3. add bounded validators and clamping.
+4. add decay engine.
+5. add direct lookup and top-N caches.
+6. add decision influence summaries.
+7. add privacy-safe LLM and Agent Console summaries.
+
 ## Partially Defined Packages
 
 No dedicated packages currently remain in this bucket.
 
 ## Backlog Packages To Promote
 
-### 22. Relationship / Social Graph Runtime
-
-Status: included inside profile docs, but may deserve its own package later.
-
-Purpose:
-
-- Maintain relationship memories, social groups, trust, party compatibility,
-  trade reputation, and repeated interaction summaries.
-
-Why useful:
-
-- Makes social behavior and party/trade decisions more believable.
-- Enables LLM or dashboards to inspect community dynamics.
-
-Initial recommendation:
-
-- Keep inside Profile Platform for MVP.
-- Split into package only when relationship logic becomes large.
-
-Potential package:
-
-```text
-agent-social-relationship-runtime
-```
+No backlog packages are currently waiting for split-out specs.
 
 ## Recommended Implementation Order
 
@@ -1039,7 +1066,7 @@ Reasoning:
 
 Highest priority:
 
-1. Relationship / Social Graph split-out spec if profile package grows large.
+1. Keep server-only diagnostics stable and collect soak evidence.
 
 Second priority:
 
