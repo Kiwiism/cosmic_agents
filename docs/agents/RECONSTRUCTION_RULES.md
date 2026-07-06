@@ -4973,6 +4973,8 @@ Current physics correction:
   state, optional death dialogue, and attack-facing stance sync are unchanged.
 - Movement motion-timer countdown now accepts `AgentRuntimeEntry`; down-jump
   grace-period countdown math is unchanged.
+- Navigation edge execution target state now accepts `AgentRuntimeEntry`; it
+  still writes the same navigation waypoint/debug state.
 
 Initial reconstruction order:
 
