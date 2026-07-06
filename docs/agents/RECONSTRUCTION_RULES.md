@@ -5002,6 +5002,9 @@ Current physics correction:
 - Script item drop execution now accepts `AgentRuntimeEntry`; runtime identity
   lookup, inventory lookup, quantity clamping, and the final
   `InventoryManipulator.drop` call are unchanged.
+- Scheduled-task cancellation now accepts `AgentRuntimeEntry`; null guards,
+  scheduled-task presence checks, and `ScheduledFuture.cancel(false)` behavior
+  are unchanged.
 
 Initial reconstruction order:
 

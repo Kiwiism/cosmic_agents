@@ -1,20 +1,17 @@
 package server.agents.runtime;
 
-import server.bots.BotEntry;
-
 /**
- * Temporary scheduled-task state bridge while BotEntry remains the live session
- * shell.
+ * Scheduled-task state bridge for the live Agent runtime session.
  */
 public final class AgentScheduledTaskRuntime {
     private AgentScheduledTaskRuntime() {
     }
 
-    public static boolean hasScheduledTask(BotEntry entry) {
+    public static boolean hasScheduledTask(AgentRuntimeEntry entry) {
         return entry != null && entry.scheduledTaskState().hasScheduledTask();
     }
 
-    public static void cancelScheduledTask(BotEntry entry) {
+    public static void cancelScheduledTask(AgentRuntimeEntry entry) {
         if (entry != null) {
             entry.scheduledTaskState().cancelScheduledTask();
         }
