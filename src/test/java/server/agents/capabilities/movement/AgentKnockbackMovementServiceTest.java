@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -19,7 +19,7 @@ class AgentKnockbackMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
 
         AgentKnockbackMovementService.beginKnockback(entry, agent, new Point(10, 20), -4.0f, 3);
@@ -34,7 +34,7 @@ class AgentKnockbackMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
         AgentBotMovementStateRuntime.setInAir(entry, true);
 

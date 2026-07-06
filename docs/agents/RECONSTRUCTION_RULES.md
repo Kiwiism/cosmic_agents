@@ -5130,6 +5130,9 @@ Current physics correction:
   lifted to the same boundary; air-state initialization, climb intent,
   horizontal/vertical velocity setup, down-jump clearing, movement velocity
   projection, and character state sync are unchanged.
+- Knockback movement now accepts `AgentRuntimeEntry`; facing preservation,
+  blocked-rope clearing, airborne launch reuse, air knockback velocity setup,
+  and character state sync are unchanged.
 - Command-mode service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; null-entry skip behavior, guard evaluation, task clearing,
   shop cancellation, and mode-start ordering are unchanged.

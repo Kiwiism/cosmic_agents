@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -15,7 +15,7 @@ public final class AgentKnockbackMovementService {
     private AgentKnockbackMovementService() {
     }
 
-    public static void beginKnockback(BotEntry entry, Character agent, Point position, float initialVelocityY, int airVelocityX) {
+    public static void beginKnockback(AgentRuntimeEntry entry, Character agent, Point position, float initialVelocityY, int airVelocityX) {
         int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
         agent.setPosition(position);
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
@@ -24,7 +24,7 @@ public final class AgentKnockbackMovementService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    public static void applyAirKnockback(BotEntry entry, Character agent, int airVelocityX) {
+    public static void applyAirKnockback(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         int preservedFacingDir = AgentBotMovementStateRuntime.facingDirection(entry);
         Point position = agent.getPosition();
         AgentBotMovementStateRuntime.setInAir(entry, true);
