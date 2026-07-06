@@ -69,6 +69,10 @@ Recent map updates:
   movement broadcast, shop map-change hook, and status check ordering remain
   unchanged while the temporary `BotEntry` adapter edge stays in
   `AgentMovementOnlyMapChangeRuntime`.
+- `AgentFollowOpportunityTickService` now accepts `AgentRuntimeEntry`.
+  Following/climbing gates, same-map and distance checks, local opportunity
+  attack delegation, and target propagation remain unchanged while
+  `AgentLiveModeTickRuntime` keeps the temporary `BotEntry` callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

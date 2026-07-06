@@ -5100,6 +5100,9 @@ Current physics correction:
   tracking, foothold index rebuild, ground-point resolution, teleport/reset,
   movement broadcast, shop map-change hook, and status check ordering are
   unchanged.
+- Follow-opportunity ticking now accepts `AgentRuntimeEntry`; following/climbing
+  gates, same-map and distance checks, local opportunity attack delegation, and
+  target propagation are unchanged.
 
 Initial reconstruction order:
 

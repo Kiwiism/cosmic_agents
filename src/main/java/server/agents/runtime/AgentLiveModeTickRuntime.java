@@ -81,7 +81,7 @@ public final class AgentLiveModeTickRuntime {
                 (attackEntry, attackAgent, attackAgentPos, attackTargetPos, attackFollowTargetPos, attackFollowAnchor, attackRunAiTick) -> {
                     AgentFollowOpportunityTickService.Result followOpportunity =
                             AgentFollowOpportunityTickService.tickFollowOpportunity(
-                                    asBotEntry(attackEntry),
+                                    attackEntry,
                                     attackAgent,
                                     attackAgentPos,
                                     attackTargetPos,

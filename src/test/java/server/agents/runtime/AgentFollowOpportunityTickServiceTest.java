@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +19,7 @@ class AgentFollowOpportunityTickServiceTest {
     void fallsThroughWhenAgentIsNotFollowing() {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point target = new Point(10, 20);
         AtomicInteger attacks = new AtomicInteger();
 
@@ -43,7 +42,7 @@ class AgentFollowOpportunityTickServiceTest {
     void fallsThroughWhenAgentIsClimbing() {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, mock(server.maps.Rope.class));
         AtomicInteger attacks = new AtomicInteger();
@@ -69,7 +68,7 @@ class AgentFollowOpportunityTickServiceTest {
         when(agent.getMapId()).thenReturn(100);
         when(leader.getMapId()).thenReturn(100);
         when(leader.getPosition()).thenReturn(new Point(40, 0));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         Point newTarget = new Point(80, 0);
         AtomicInteger attacks = new AtomicInteger();

@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -20,14 +19,14 @@ public final class AgentFollowOpportunityTickService {
 
     @FunctionalInterface
     public interface LocalOpportunityAttack {
-        Result attack(BotEntry entry,
+        Result attack(AgentRuntimeEntry entry,
                       Character agent,
                       Point agentPosition,
                       Point currentTargetPosition,
                       Point followTargetPosition);
     }
 
-    public static Result tickFollowOpportunity(BotEntry entry,
+    public static Result tickFollowOpportunity(AgentRuntimeEntry entry,
                                                Character agent,
                                                Point agentPosition,
                                                Point currentTargetPosition,
