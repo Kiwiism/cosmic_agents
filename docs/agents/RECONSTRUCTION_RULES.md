@@ -5053,6 +5053,10 @@ Current physics correction:
   suppression, follow-map sync, party recovery, target recovery ordering, and
   short-circuit behavior are unchanged. `AgentLiveTickGateRuntime` remains the
   temporary bridge to BotEntry-shaped recovery callbacks.
+- Tracked map-change tick handling now accepts `AgentRuntimeEntry`; map-change
+  handler dispatch and consumed/fall-through behavior are unchanged.
+  `AgentLiveTickGateRuntime` remains the temporary bridge to BotEntry-shaped
+  map-change callbacks.
 
 Initial reconstruction order:
 

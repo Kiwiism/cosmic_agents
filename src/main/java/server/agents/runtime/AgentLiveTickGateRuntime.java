@@ -71,10 +71,10 @@ public final class AgentLiveTickGateRuntime {
                                         teleportDistance,
                                         outOfBoundsTeleportDistance))),
                 (mapEntry, mapAgent) -> AgentTrackedMapChangeTickService.tickTrackedMapChange(
-                        asBotEntry(mapEntry),
+                        mapEntry,
                         mapAgent,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedAgent) ->
-                                tickTrackedMapChange(trackedEntry, trackedAgent, issueGrind, issueFollow, perf))));
+                                tickTrackedMapChange(asBotEntry(trackedEntry), trackedAgent, issueGrind, issueFollow, perf))));
     }
 
     private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
