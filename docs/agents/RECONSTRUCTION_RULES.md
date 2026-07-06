@@ -5042,6 +5042,9 @@ Current physics correction:
 - Trade-window tick gating now accepts `AgentRuntimeEntry`; open-trade
   detection, physics-only tick dispatch, and consumed-tick behavior are
   unchanged.
+- Ownerless tick handling now accepts `AgentRuntimeEntry`; follow-mode clearing,
+  map-change grounding short-circuit, standalone move-target ticking, and idle
+  fallback behavior are unchanged.
 
 Initial reconstruction order:
 

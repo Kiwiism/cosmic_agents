@@ -31,7 +31,11 @@ public final class AgentTickCoreRuntime {
                                 nowMs,
                                 runtimeLeaderCharId),
                 AgentMapTransitionRuntime::groundAfterMapChange,
-                AgentStandaloneMoveTargetRuntime::tickStandaloneMoveTarget,
+                (runtimeEntry, agent, runAiTick) ->
+                        AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(
+                                asBotEntry(runtimeEntry),
+                                agent,
+                                runAiTick),
                 (runtimeEntry, agent, leader) ->
                         AgentDeathTickRuntime.handleDeadTick(asBotEntry(runtimeEntry), agent, leader),
                 (runtimeEntry, leader) -> AgentTargetSnapshotRuntime.resolveFollowAnchor((BotEntry) runtimeEntry, leader),
@@ -166,8 +170,8 @@ public final class AgentTickCoreRuntime {
                         asBotEntry(ownerlessEntry),
                         ownerlessAgent,
                         ownerlessRunAiTick,
-                        groundAfterMapChange,
-                        standaloneMoveTargetTick,
+                        (runtimeEntry, agent) -> groundAfterMapChange.test(asBotEntry(runtimeEntry), agent),
+                        (runtimeEntry, agent, runAiTick) -> standaloneMoveTargetTick.tick(asBotEntry(runtimeEntry), agent, runAiTick),
                         () -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(ownerlessEntry), ownerlessAgent)),
                 deadTick,
                 (liveEntry, liveAgent, liveLeader) -> AgentLiveTickContextRuntime.prepareLiveTickContext(

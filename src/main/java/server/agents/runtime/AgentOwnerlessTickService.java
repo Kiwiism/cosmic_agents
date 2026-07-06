@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
@@ -15,10 +14,10 @@ public final class AgentOwnerlessTickService {
     private AgentOwnerlessTickService() {
     }
 
-    public static void tickOwnerless(BotEntry entry,
+    public static void tickOwnerless(AgentRuntimeEntry entry,
                                      Character agent,
                                      boolean runAiTick,
-                                     BiPredicate<BotEntry, Character> groundAfterMapChange,
+                                     BiPredicate<AgentRuntimeEntry, Character> groundAfterMapChange,
                                      OwnerlessMoveTick standaloneMoveTick,
                                      BooleanSupplier idleTick) {
         AgentBotModeStateRuntime.setFollowing(entry, false);
@@ -34,6 +33,6 @@ public final class AgentOwnerlessTickService {
 
     @FunctionalInterface
     public interface OwnerlessMoveTick {
-        void tick(BotEntry entry, Character agent, boolean runAiTick);
+        void tick(AgentRuntimeEntry entry, Character agent, boolean runAiTick);
     }
 }
