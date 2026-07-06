@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ public final class AgentFollowTargetCandidateService {
 
     @FunctionalInterface
     public interface SiblingEntries {
-        List<BotEntry> entries(int leaderCharId);
+        List<? extends AgentRuntimeEntry> entries(int leaderCharId);
     }
 
     public static List<Character> candidates(Character leader, Hooks hooks) {
@@ -32,7 +31,7 @@ public final class AgentFollowTargetCandidateService {
                 candidates.add(member);
             }
         }
-        for (BotEntry sibling : hooks.siblingEntries().entries(leader.getId())) {
+        for (AgentRuntimeEntry sibling : hooks.siblingEntries().entries(leader.getId())) {
             Character siblingAgent = AgentBotRuntimeIdentityRuntime.bot(sibling);
             if (siblingAgent == null || !siblingAgent.isLoggedinWorld()) {
                 continue;

@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import net.server.world.Party;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.util.List;
 
@@ -31,9 +30,9 @@ class AgentFollowTargetCandidateServiceTest {
                 leader,
                 new AgentFollowTargetCandidateService.Hooks(
                         leaderCharId -> List.of(
-                                new BotEntry(partyMember, leader, null),
-                                new BotEntry(offlineSiblingAgent, leader, null),
-                                new BotEntry(siblingAgent, leader, null))));
+                                new AgentRuntimeEntry(partyMember, leader, null),
+                                new AgentRuntimeEntry(offlineSiblingAgent, leader, null),
+                                new AgentRuntimeEntry(siblingAgent, leader, null))));
 
         assertEquals(List.of(leader, partyMember, siblingAgent), candidates);
     }
@@ -46,7 +45,7 @@ class AgentFollowTargetCandidateServiceTest {
         List<Character> candidates = AgentFollowTargetCandidateService.candidates(
                 leader,
                 new AgentFollowTargetCandidateService.Hooks(
-                        leaderCharId -> List.of(new BotEntry(siblingAgent, leader, null))));
+                        leaderCharId -> List.of(new AgentRuntimeEntry(siblingAgent, leader, null))));
 
         assertEquals(List.of(siblingAgent), candidates);
     }

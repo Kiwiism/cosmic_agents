@@ -5072,6 +5072,9 @@ Current physics correction:
   target resolution, null/missing/self-target filtering, reply queuing, delay
   scheduling, auto-equip, potion sharing, and follow-start ordering are
   unchanged.
+- Follow-target candidate selection now accepts Agent runtime sibling entries;
+  leader inclusion, party-member filtering, sibling-agent filtering, and
+  duplicate suppression are unchanged.
 
 Initial reconstruction order:
 
