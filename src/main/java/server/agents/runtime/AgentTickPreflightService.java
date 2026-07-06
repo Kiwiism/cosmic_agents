@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 public final class AgentTickPreflightService {
     private AgentTickPreflightService() {
@@ -24,12 +23,12 @@ public final class AgentTickPreflightService {
 
     @FunctionalInterface
     public interface AirshowState {
-        boolean active(BotEntry entry);
+        boolean active(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface SkipDelayConsumer {
-        boolean consume(BotEntry entry, int movementTickMs);
+        boolean consume(AgentRuntimeEntry entry, int movementTickMs);
     }
 
     @FunctionalInterface
@@ -39,20 +38,20 @@ public final class AgentTickPreflightService {
 
     @FunctionalInterface
     public interface HeartbeatTick {
-        void tick(BotEntry entry, Character agent, long nowMs, long intervalMs);
+        void tick(AgentRuntimeEntry entry, Character agent, long nowMs, long intervalMs);
     }
 
     @FunctionalInterface
     public interface PendingOfferExpiry {
-        void expire(BotEntry entry);
+        void expire(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface AiTickPreparation {
-        boolean prepare(BotEntry entry, int movementTickMs, int aiTickMs, long tickAtMs);
+        boolean prepare(AgentRuntimeEntry entry, int movementTickMs, int aiTickMs, long tickAtMs);
     }
 
-    public static Result runPreflight(BotEntry entry,
+    public static Result runPreflight(AgentRuntimeEntry entry,
                                       int agentCharId,
                                       long nowMs,
                                       Hooks hooks) {

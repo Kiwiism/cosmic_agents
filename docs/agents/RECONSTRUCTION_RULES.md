@@ -5036,6 +5036,9 @@ Current physics correction:
   leader-resolution, inactive-leader, ownerless, death, live-context, live-gate,
   and live-mode ordering are unchanged. `AgentTickCoreRuntime` remains the
   temporary compatibility bridge to BotEntry-shaped downstream callbacks.
+- Tick preflight now accepts `AgentRuntimeEntry`; null handling, airshow
+  skip, movement-delay skip, missing-map cleanup, heartbeat, offer expiry, and
+  AI tick preparation ordering are unchanged.
 
 Initial reconstruction order:
 

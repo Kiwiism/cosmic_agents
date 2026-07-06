@@ -26,7 +26,7 @@ public final class AgentTickPreflightRuntime {
 
     private static AgentTickPreflightService.Hooks hooks() {
         return new AgentTickPreflightService.Hooks(
-                AgentBotManagerStatusRuntime::airshowActive,
+                entry -> AgentBotManagerStatusRuntime.airshowActive(asBotEntry(entry)),
                 AgentBotTickCadenceStateRuntime::consumeSkipDelay,
                 AgentRuntimeCleanupService::removeAgentByCharacterId,
                 (entry, agent, nowMs, heartbeatIntervalMs) -> AgentHeartbeatService.tickHeartbeat(
@@ -36,10 +36,15 @@ public final class AgentTickPreflightRuntime {
                         heartbeatIntervalMs,
                         heartbeatAgent -> heartbeatAgent.getClient().updateLastPacket(),
                         AgentMovementBroadcastService::broadcastMovement),
-                AgentOfferService::expirePendingOffer,
-                AgentTickOrchestrator::prepareTick,
+                entry -> AgentOfferService.expirePendingOffer(asBotEntry(entry)),
+                (entry, movementTickMs, aiTickMs, tickAtMs) ->
+                        AgentTickOrchestrator.prepareTick(asBotEntry(entry), movementTickMs, aiTickMs, tickAtMs),
                 AgentMovementPhysicsConfig.configuredMovementTickMs(),
                 AgentRuntimeConfig.cfg.AI_TICK_MS,
                 HEARTBEAT_INTERVAL_MS);
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }
