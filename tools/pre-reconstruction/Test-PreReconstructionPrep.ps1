@@ -77,6 +77,7 @@ $requiredArtifacts = @(
     @{ path = "docs/agents/PRE_RECONSTRUCTION_SAFE_PREP_STATUS.md"; description = "safe-prep status map" },
     @{ path = "docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md"; description = "completion/evidence audit" },
     @{ path = "docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md"; description = "baseline soak runbook" },
+    @{ path = "docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md"; description = "current pre-reconstruction proof-gap report" },
     @{ path = "docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md"; description = "reusable goal prompt" },
     @{ path = "docs/agents/PACKAGE_REGISTRY.md"; description = "Agent package registry" },
     @{ path = "docs/agents/POST_RECONSTRUCTION_AGENT_PLATFORM_SPECIFICATION.md"; description = "post-reconstruction platform specification" },

@@ -16,6 +16,7 @@ Completion/evidence audit:
 
 - `docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md`
 - `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md`
+- `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md`
 
 Reusable goal prompt:
 
@@ -63,7 +64,7 @@ Allowed before reconstruction is stable:
 | Database Console / Server Console planning | Ready as planning docs | `docs/consoles/DATABASE_CONSOLE_*`, `docs/consoles/SERVER_CONSOLE_SCOPE.md` | Keep console work modular and separate from Agent runtime. |
 | NuTNNuT over Cosmic review records | Ready as decision log | `docs/NUTNNUT_OVER_COSMIC_REVIEW.md`, `docs/COSMIC_REVERT_REVIEW.md` | Apply only explicit approved reversions; leave bot-related items to reconstruction. |
 | Reusable pre-reconstruction prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse when starting or resuming a broad safe-prep thread. |
-| Verification | Ready for current server batch | `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md`, `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`, `tools/soak/*`, recent clean compile and scope checks | Repeat after every safe-prep batch. |
+| Verification | Ready for current server batch, runtime evidence pending | `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md`, `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md`, `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`, `tools/soak/*`, recent clean compile and scope checks | Collect and archive baseline soak evidence, then repeat after every safe-prep batch. |
 
 ## Current Safe-Prep Completion State
 
@@ -201,7 +202,10 @@ Highest value before reconstruction finishes:
    `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md`.
 2. Use `tools/soak/New-BaselineSoakEvidencePackage.ps1` to create the run
    folder and summary template before starting the baseline.
-3. Keep server-only diagnostics stable and repeat compile/scope checks after
+3. Use `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md` as the current
+   proof-gap checklist before claiming the broad pre-reconstruction goal is
+   complete.
+4. Keep server-only diagnostics stable and repeat compile/scope checks after
    every safe-prep batch.
 
 Do not start implementation of Agent gameplay packages until the reconstruction

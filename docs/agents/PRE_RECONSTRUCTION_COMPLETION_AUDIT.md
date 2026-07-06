@@ -13,6 +13,10 @@ is implemented, scaled, or soak-tested. It records that the safe work which can
 be done before Nutnnut bot-to-Agent reconstruction is stable has been
 documented, specified, or implemented as default-preserving server diagnostics.
 
+Current proof-gap snapshot:
+
+- `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md`
+
 ## Boundary
 
 Before reconstruction is stable:
@@ -41,6 +45,7 @@ Before reconstruction is stable:
 | Reusable goal prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse for future safe-prep continuation threads. |
 | Prep artifact verifier | Ready as local tooling | `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1` | Run after safe-prep batches and before claiming artifact readiness. |
 | Baseline soak runbook | Ready as operator guide | `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md` | Use to collect the missing server-baseline runtime evidence. |
+| Current gap report | Ready as current-state handoff | `docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md` | Replace the gap with real baseline evidence before marking the broad goal complete. |
 
 ## Package Evidence
 
@@ -250,3 +255,16 @@ Runtime evidence is not yet complete until actual soak runs are performed and
 recorded. This is expected because the Agent soak stages depend on the
 reconstructed Agent runtime and the server baseline requires an intentional
 operator-run test window.
+
+Current verifier state:
+
+```text
+Pre-reconstruction prep verification: INCOMPLETE
+Failures: 0
+Warnings: 1
+```
+
+The remaining warning is the missing baseline run folder under
+`logs/soak/baseline`. See
+`docs/agents/PRE_RECONSTRUCTION_CURRENT_GAP_REPORT.md` for the exact evidence
+collection sequence.
