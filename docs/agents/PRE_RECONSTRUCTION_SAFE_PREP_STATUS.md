@@ -12,6 +12,10 @@ ties together server hardening, catalogs, Maple Island MVP, portable platform
 contracts, plan cards, profiles, economy, consoles, and NuTNNuT-over-Cosmic
 review records.
 
+Completion/evidence audit:
+
+- `docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md`
+
 ## Hard Boundaries
 
 Before reconstruction is stable:
@@ -184,7 +188,10 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Keep server-only diagnostics stable and collect soak evidence.
+1. Run a baseline server smoke/soak and archive diagnostics using
+   `docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md`.
+2. Keep server-only diagnostics stable and repeat compile/scope checks after
+   every safe-prep batch.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.
