@@ -4979,6 +4979,8 @@ Current physics correction:
   resolves the Agent map through the same runtime identity adapter.
 - Script task start dispatch now accepts `AgentRuntimeEntry`; MOVE_TO, follow,
   grind, stop, and drop-item hook dispatch remains unchanged.
+- Live leader session refresh now accepts `AgentRuntimeEntry`; cached leader
+  reuse, offline/mismatch refresh, and null caching behavior are unchanged.
 
 Initial reconstruction order:
 
