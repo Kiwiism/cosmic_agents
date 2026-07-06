@@ -4999,6 +4999,9 @@ Current physics correction:
 - Heartbeat ticking now accepts `AgentRuntimeEntry`; heartbeat due checks,
   timestamp marking, client last-packet updates, and movement broadcast side
   effects are unchanged.
+- Script item drop execution now accepts `AgentRuntimeEntry`; runtime identity
+  lookup, inventory lookup, quantity clamping, and the final
+  `InventoryManipulator.drop` call are unchanged.
 
 Initial reconstruction order:
 

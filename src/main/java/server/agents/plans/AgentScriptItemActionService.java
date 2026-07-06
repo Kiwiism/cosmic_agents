@@ -5,13 +5,13 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentScriptItemActionService {
     private AgentScriptItemActionService() {
     }
 
-    public static boolean dropItem(BotEntry entry, InventoryType type, int itemId, short quantity) {
+    public static boolean dropItem(AgentRuntimeEntry entry, InventoryType type, int itemId, short quantity) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (agent == null || type == null) {
             return false;
