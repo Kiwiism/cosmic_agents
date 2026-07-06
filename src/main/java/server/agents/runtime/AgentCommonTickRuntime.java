@@ -41,28 +41,32 @@ public final class AgentCommonTickRuntime {
     private static AgentCommonTickService.CommonTickHooks hooks(Consumer<BotEntry> tickScriptTasks) {
         return new AgentCommonTickService.CommonTickHooks(
                 (entry, agent) -> AgentBotCombatDamageRuntime.tickMobDamage(
-                        entry, agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
-                (entry, agent) -> AgentBotDeathStateRuntime.isDead(entry),
+                        asBotEntry(entry), agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
+                (entry, agent) -> AgentBotDeathStateRuntime.isDead(asBotEntry(entry)),
                 (entry, agent) -> AgentBotCombatDeathRuntime.enterDeadState(
-                        entry, agent, false, AgentCombatConfig.cfg),
+                        asBotEntry(entry), agent, false, AgentCombatConfig.cfg),
                 AgentMonsterControlService::releaseControlledMonsters,
-                AgentInventoryTickRuntime::tickPassiveLoot,
-                AgentPotionService::tickPotionCheck,
-                AgentPotionService::tickPassiveRecovery,
-                AgentBuildService::checkLevelUp,
-                (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(entry, leader),
-                AgentInventoryTickRuntime::tickTrade,
-                AgentInventoryTickRuntime::tickManualTrade,
-                AgentPartyQuestHooks::tick,
-                tickScriptTasks,
-                AgentPartyQuestHooks::isNpcLocked,
-                AgentBotCombatActionLockRuntime::tickActionLock,
-                AgentBotCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,
+                (entry, agent) -> AgentInventoryTickRuntime.tickPassiveLoot(asBotEntry(entry), agent),
+                (entry, agent) -> AgentPotionService.tickPotionCheck(asBotEntry(entry), agent),
+                (entry, agent) -> AgentPotionService.tickPassiveRecovery(asBotEntry(entry), agent),
+                (entry, agent) -> AgentBuildService.checkLevelUp(asBotEntry(entry), agent),
+                (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(asBotEntry(entry), leader),
+                (entry, agent) -> AgentInventoryTickRuntime.tickTrade(asBotEntry(entry), agent),
+                (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(asBotEntry(entry), agent),
+                (entry, agent, leader) -> AgentPartyQuestHooks.tick(asBotEntry(entry), agent, leader),
+                entry -> tickScriptTasks.accept(asBotEntry(entry)),
+                entry -> AgentPartyQuestHooks.isNpcLocked(asBotEntry(entry)),
+                entry -> AgentBotCombatActionLockRuntime.tickActionLock(asBotEntry(entry)),
+                (entry, agent) -> AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(asBotEntry(entry), agent),
                 (entry, agent) -> AgentBotCombatHealRuntime.tickSupportHealing(
-                        entry, agent, AgentCombatConfig.cfg),
+                        asBotEntry(entry), agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBotCombatBuffRuntime.tickBuffs(
-                        entry, agent, AgentCombatConfig.cfg),
-                AgentBuffService::tick,
-                AgentActionLockPhysicsRuntime::tickActionLocked);
+                        asBotEntry(entry), agent, AgentCombatConfig.cfg),
+                (entry, agent) -> AgentBuffService.tick(asBotEntry(entry), agent),
+                entry -> AgentActionLockPhysicsRuntime.tickActionLocked(asBotEntry(entry)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

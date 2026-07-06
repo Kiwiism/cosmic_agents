@@ -5081,6 +5081,11 @@ Current physics correction:
 - Formation command handling now accepts Agent runtime entries; formation
   command matching, help/status replies, snap range updates, formation writes,
   offset application, and first-entry/leader reply routing are unchanged.
+- Common per-tick system ordering now accepts `AgentRuntimeEntry`; mob damage,
+  death short-circuiting, monster release, passive loot/trade gating, potion and
+  recovery ticks, build level-up checks, AFK/status checks, trade/manual-trade,
+  PQ/script/NPC-lock gates, action-lock handling, AI-gated combat systems, and
+  final action-lock return behavior are unchanged.
 
 Initial reconstruction order:
 

@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 import server.Trade;
 
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ class AgentCommonTickServiceTest {
     private static final class Scenario {
         private final Character agent = mock(Character.class);
         private final Character leader = mock(Character.class);
-        private final BotEntry entry = new BotEntry(agent, leader, null);
+        private final AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         private final List<String> calls = new ArrayList<>();
         private boolean dead;
         private boolean npcLocked;

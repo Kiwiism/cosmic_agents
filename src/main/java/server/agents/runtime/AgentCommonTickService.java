@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
@@ -12,26 +11,26 @@ import java.util.function.Predicate;
  * Agent-owned ordering for common per-tick systems.
  */
 public final class AgentCommonTickService {
-    public record CommonTickHooks(BiConsumer<BotEntry, Character> tickMobDamage,
-                                  BiPredicate<BotEntry, Character> isDead,
-                                  BiConsumer<BotEntry, Character> enterDeadState,
+    public record CommonTickHooks(BiConsumer<AgentRuntimeEntry, Character> tickMobDamage,
+                                  BiPredicate<AgentRuntimeEntry, Character> isDead,
+                                  BiConsumer<AgentRuntimeEntry, Character> enterDeadState,
                                   Consumer<Character> releaseControlledMonsters,
-                                  BiConsumer<BotEntry, Character> tickPassiveLoot,
-                                  BiConsumer<BotEntry, Character> tickPotionCheck,
-                                  BiConsumer<BotEntry, Character> tickPassiveRecovery,
-                                  BiConsumer<BotEntry, Character> checkLevelUp,
-                                  TriConsumer<BotEntry, Character, Character> tickAfkCheck,
-                                  BiConsumer<BotEntry, Character> tickTrade,
-                                  BiConsumer<BotEntry, Character> tickManualTrade,
-                                  TriConsumer<BotEntry, Character, Character> tickPartyQuest,
-                                  Consumer<BotEntry> tickScriptTasks,
-                                  Predicate<BotEntry> isNpcLocked,
-                                  Consumer<BotEntry> tickActionLock,
-                                  BiConsumer<BotEntry, Character> rebuildSkillCache,
-                                  BiConsumer<BotEntry, Character> tickSupportHealing,
-                                  BiConsumer<BotEntry, Character> tickCombatBuffs,
-                                  BiConsumer<BotEntry, Character> tickBuffPots,
-                                  Predicate<BotEntry> tickActionLocked) {
+                                  BiConsumer<AgentRuntimeEntry, Character> tickPassiveLoot,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickPotionCheck,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickPassiveRecovery,
+                                  BiConsumer<AgentRuntimeEntry, Character> checkLevelUp,
+                                  TriConsumer<AgentRuntimeEntry, Character, Character> tickAfkCheck,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickTrade,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickManualTrade,
+                                  TriConsumer<AgentRuntimeEntry, Character, Character> tickPartyQuest,
+                                  Consumer<AgentRuntimeEntry> tickScriptTasks,
+                                  Predicate<AgentRuntimeEntry> isNpcLocked,
+                                  Consumer<AgentRuntimeEntry> tickActionLock,
+                                  BiConsumer<AgentRuntimeEntry, Character> rebuildSkillCache,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickSupportHealing,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickCombatBuffs,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickBuffPots,
+                                  Predicate<AgentRuntimeEntry> tickActionLocked) {
     }
 
     @FunctionalInterface
@@ -42,7 +41,7 @@ public final class AgentCommonTickService {
     private AgentCommonTickService() {
     }
 
-    public static boolean runCommonTickSystems(BotEntry entry,
+    public static boolean runCommonTickSystems(AgentRuntimeEntry entry,
                                                Character agent,
                                                Character leader,
                                                boolean runAiTick,
