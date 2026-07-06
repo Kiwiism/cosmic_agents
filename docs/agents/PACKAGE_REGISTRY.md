@@ -606,9 +606,56 @@ Implementation focus:
 4. expose allowed shortcuts to capabilities.
 5. add materialization planner and observability events.
 
+### 15. Perception Runtime Package
+
+Status: well defined.
+
+Purpose:
+
+- Convert live server state, catalog context, plan context, profile hints, and
+  bounded memory into compact Agent/LLM perception snapshots.
+- Provide urgent, active, strategic, and batch views without exposing raw
+  server internals.
+- Rank nearby entities by objective relevance, danger, market value, distance,
+  and profile/social interest.
+
+Primary docs:
+
+- `docs/agents/llm-autonomy/PERCEPTION_MEMORY_SCHEMA.md`
+- `docs/agents/perception-runtime/PERCEPTION_RUNTIME_DESIGN_SPECIFICATION.md`
+- `docs/agents/perception-runtime/PERCEPTION_RUNTIME_TECHNICAL_SPECIFICATION.md`
+
+Owns:
+
+- snapshot assembly.
+- snapshot detail levels.
+- nearby entity summarization.
+- relevance scoring.
+- bounded snapshot caches.
+- LLM-safe summaries.
+- batch status rows.
+- perception audit events.
+
+Does not own:
+
+- action execution.
+- plan scheduling.
+- profile storage.
+- economy valuation.
+- catalog building.
+- server mutation.
+
+Implementation focus:
+
+1. implement bounded `URGENT`, `ACTIVE`, `STRATEGIC`, and `BATCH` snapshots.
+2. add live-state plus catalog-context summary assembly.
+3. add nearby entity relevance ranking.
+4. add refresh policy tied to simulation tier.
+5. add LLM-safe summarizer and batch row output.
+
 ## Partially Defined Packages
 
-### 15. LLM Control Gateway Package
+### 16. LLM Control Gateway Package
 
 Status: contract defined, technical package not fully defined.
 
@@ -646,40 +693,6 @@ Recommended package:
 
 ```text
 agent-llm-gateway
-```
-
-### 16. Perception / Memory Package
-
-Status: schema exists, package not fully defined.
-
-Existing docs:
-
-- `docs/agents/llm-autonomy/PERCEPTION_MEMORY_SCHEMA.md`
-- profile memory docs.
-
-What is already clear:
-
-- LLM and agents need compact surrounding-state summaries.
-- Perception must not be raw server internals.
-
-Missing package docs:
-
-- `PERCEPTION_RUNTIME_DESIGN_SPECIFICATION.md`
-- `PERCEPTION_RUNTIME_TECHNICAL_SPECIFICATION.md`
-
-Needs definition:
-
-- live perception snapshot schema.
-- nearby entities.
-- map/objective context.
-- memory compaction.
-- LLM-safe summaries.
-- what belongs in profile memory versus perception memory.
-
-Recommended package:
-
-```text
-agent-perception-runtime
 ```
 
 ### 17. Quest / Combat Focus Policy Package
@@ -960,18 +973,17 @@ Reasoning:
 
 Highest priority:
 
-1. Perception Runtime design + technical specs.
-2. Background Action Runtime design + technical specs.
-3. Agent Soak Test Harness command/runner spec.
-4. Catalog builder validation/report spec.
-5. LLM Gateway design + technical specs.
+1. Background Action Runtime design + technical specs.
+2. Agent Soak Test Harness command/runner spec.
+3. Catalog builder validation/report spec.
+4. LLM Gateway design + technical specs.
+5. Population Director design + technical specs.
 
 Second priority:
 
-1. Population Director design + technical specs.
-2. Portable Installer technical spec.
-3. Quest Objective Policy design + technical specs.
-4. Relationship / Social Graph split-out spec if profile package grows large.
+1. Portable Installer technical spec.
+2. Quest Objective Policy design + technical specs.
+3. Relationship / Social Graph split-out spec if profile package grows large.
 
 Later:
 

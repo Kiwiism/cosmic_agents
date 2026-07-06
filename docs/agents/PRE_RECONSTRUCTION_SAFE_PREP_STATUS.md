@@ -144,11 +144,11 @@ Well-defined packages:
 - Agent Observability / Diagnostics.
 - Interaction Realism Package.
 - Agent Simulation Tier Runtime.
+- Perception Runtime Package.
 
 Partially defined packages that need specs before implementation:
 
 - LLM Control Gateway Package.
-- Perception / Memory Package.
 - Quest / Combat Focus Policy Package.
 
 Backlog packages to promote:
@@ -182,9 +182,9 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write Perception Runtime design and technical specs.
-2. Write Background Action Runtime design and technical specs.
-3. Write Agent Soak Test Harness command/runner spec.
+1. Write Background Action Runtime design and technical specs.
+2. Write Agent Soak Test Harness command/runner spec.
+3. Write LLM Gateway design and technical specs.
 4. Unify catalog builder output shape in documentation before touching runtime.
 5. Add catalog validation report requirements for dangling NPC, quest, shop,
    item, reactor, portal, and reward references.
