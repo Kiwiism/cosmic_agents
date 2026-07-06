@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +16,7 @@ public final class AgentNavigationWarmupService {
     private AgentNavigationWarmupService() {
     }
 
-    public static void notifyWarmup(BotEntry entry, Character agent) {
+    public static void notifyWarmup(AgentRuntimeEntry entry, Character agent) {
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (leader == null) {
             return;

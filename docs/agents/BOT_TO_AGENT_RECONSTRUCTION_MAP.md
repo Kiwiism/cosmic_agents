@@ -99,6 +99,9 @@ Recent map updates:
 - `AgentGroundTargetService` now accepts `AgentRuntimeEntry`. Grind-mode gates,
   active-navigation bypass, graph warmup, same-region detection, rope-region
   bypass, and safe edge-margin clamping remain unchanged.
+- `AgentNavigationWarmupService` now accepts `AgentRuntimeEntry`. Leader/map
+  throttle checks, walkable-foothold threshold, and fallback notification text
+  remain unchanged.
 - `AgentCommandModeServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Null-entry skip behavior, guard evaluation, task
   clearing, shop cancellation, and mode-start ordering remain unchanged.
