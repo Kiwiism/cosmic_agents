@@ -96,6 +96,9 @@ Recent map updates:
   Attack-lock physics gating and swim/airborne/grounded dispatch remain
   unchanged while the runtime wrapper keeps the temporary `BotEntry` movement
   phase adapter.
+- `AgentGroundTargetService` now accepts `AgentRuntimeEntry`. Grind-mode gates,
+  active-navigation bypass, graph warmup, same-region detection, rope-region
+  bypass, and safe edge-margin clamping remain unchanged.
 - `AgentCommandModeServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Null-entry skip behavior, guard evaluation, task
   clearing, shop cancellation, and mode-start ordering remain unchanged.

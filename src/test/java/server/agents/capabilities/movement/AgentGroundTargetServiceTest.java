@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapleMap;
@@ -25,7 +25,7 @@ class AgentGroundTargetServiceTest {
         map.setFootholds(footholds);
         AgentNavigationGraphService.rebuildGraph(map);
 
-        BotEntry entry = grindingEntry(new Point(100, 100), map);
+        AgentRuntimeEntry entry = grindingEntry(new Point(100, 100), map);
 
         Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, foothold, new Point(190, 100));
 
@@ -43,7 +43,7 @@ class AgentGroundTargetServiceTest {
         map.setFootholds(footholds);
         AgentNavigationGraphService.rebuildGraph(map);
 
-        BotEntry entry = grindingEntry(new Point(-100, 100), map);
+        AgentRuntimeEntry entry = grindingEntry(new Point(-100, 100), map);
         Point target = new Point(190, 100);
 
         Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, leftFoothold, target);
@@ -51,11 +51,11 @@ class AgentGroundTargetServiceTest {
         assertEquals(target, adjusted);
     }
 
-    private static BotEntry grindingEntry(Point position, MapleMap map) {
+    private static AgentRuntimeEntry grindingEntry(Point position, MapleMap map) {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(position);
         when(agent.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotModeStateRuntime.setGrinding(entry, true);
         return entry;
     }

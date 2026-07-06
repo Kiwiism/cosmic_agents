@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -17,7 +17,7 @@ public final class AgentGroundTargetService {
     private AgentGroundTargetService() {
     }
 
-    public static Point adjustGrindingTargetPosition(BotEntry entry, Foothold currentFoothold, Point targetPos) {
+    public static Point adjustGrindingTargetPosition(AgentRuntimeEntry entry, Foothold currentFoothold, Point targetPos) {
         if (!AgentBotModeStateRuntime.grinding(entry)
                 || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 || currentFoothold == null

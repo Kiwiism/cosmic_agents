@@ -5120,6 +5120,9 @@ Current physics correction:
   airborne, grounded, and legacy climbing branches are unchanged.
 - Action-lock physics runtime now accepts `AgentRuntimeEntry`; attack-lock
   physics gating and swim/airborne/grounded dispatch are unchanged.
+- Ground grind-target adjustment now accepts `AgentRuntimeEntry`; grind-mode
+  gates, active-navigation bypass, graph warmup, same-region detection,
+  rope-region bypass, and safe edge-margin clamping are unchanged.
 - Command-mode service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; null-entry skip behavior, guard evaluation, task clearing,
   shop cancellation, and mode-start ordering are unchanged.
