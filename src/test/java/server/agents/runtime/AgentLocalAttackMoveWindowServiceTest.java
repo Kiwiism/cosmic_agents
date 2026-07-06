@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -18,7 +17,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void nullPositionsClearMoveWindow() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 500);
 
         AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
@@ -29,7 +28,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void farReferenceSetsLongMoveWindow() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
 
         AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
                 entry, new Point(0, 100), new Point(250, 100), FOLLOW_DISTANCE, STOP_DISTANCE, FOLLOW_Y_CAP);
@@ -39,7 +38,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void mediumReferenceSetsShortMoveWindow() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
 
         AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
                 entry, new Point(0, 100), new Point(100, 100), FOLLOW_DISTANCE, STOP_DISTANCE, FOLLOW_Y_CAP);
@@ -49,7 +48,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void nearReferenceSettlesImmediately() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
 
         AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
                 entry, new Point(0, 100), new Point(30, 100), FOLLOW_DISTANCE, STOP_DISTANCE, FOLLOW_Y_CAP);
@@ -59,7 +58,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void clearActionMoveWindowIfSettledUsesFollowStopBandAndVerticalCap() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 200);
 
         AgentLocalAttackMoveWindowService.clearActionMoveWindowIfSettled(
@@ -70,7 +69,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void clearActionMoveWindowIfSettledKeepsWindowWhenOutsideBand() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 200);
 
         AgentLocalAttackMoveWindowService.clearActionMoveWindowIfSettled(
@@ -81,7 +80,7 @@ class AgentLocalAttackMoveWindowServiceTest {
 
     @Test
     void followSnapshotClearRequiresFollowMode() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentTargetSnapshot snapshot = snapshot(new Point(50, 100));
         AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 200);
 
@@ -112,7 +111,7 @@ class AgentLocalAttackMoveWindowServiceTest {
                 "follow-target");
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 }

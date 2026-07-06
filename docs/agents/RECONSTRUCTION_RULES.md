@@ -5143,6 +5143,9 @@ Current physics correction:
 - Movement-phase service tests now exercise the existing `AgentRuntimeEntry`
   boundary directly; climb priority, swim-map airborne dispatch, non-swim
   airborne dispatch, and grounded dispatch are unchanged.
+- Local attack move-window service now accepts `AgentRuntimeEntry`; null-position
+  clearing, long/short/settled window timing, follow-mode gating, and settle
+  band checks are unchanged.
 
 Initial reconstruction order:
 

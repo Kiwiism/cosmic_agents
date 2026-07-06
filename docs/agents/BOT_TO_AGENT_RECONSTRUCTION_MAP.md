@@ -119,6 +119,9 @@ Recent map updates:
 - `AgentMovementPhaseServiceTest` now exercises the existing Agent-runtime-entry
   service boundary directly. Climb priority, swim-map airborne dispatch,
   non-swim airborne dispatch, and grounded dispatch remain unchanged.
+- `AgentLocalAttackMoveWindowService` now accepts `AgentRuntimeEntry`.
+  Null-position clearing, long/short/settled window timing, follow-mode gating,
+  and settle-band checks remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

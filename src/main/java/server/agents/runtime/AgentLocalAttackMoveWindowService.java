@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -13,7 +12,7 @@ public final class AgentLocalAttackMoveWindowService {
     private AgentLocalAttackMoveWindowService() {
     }
 
-    public static void setLocalAttackMoveWindow(BotEntry entry,
+    public static void setLocalAttackMoveWindow(AgentRuntimeEntry entry,
                                                 Point agentPosition,
                                                 Point referencePosition,
                                                 int followDistance,
@@ -32,7 +31,7 @@ public final class AgentLocalAttackMoveWindowService {
         clearActionMoveWindowIfSettled(entry, agentPosition, referencePosition, followDistance, stopDistance, followYCap);
     }
 
-    public static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
+    public static void clearFollowActionMoveWindowIfSettled(AgentRuntimeEntry entry,
                                                             Point agentPosition,
                                                             AgentTargetSnapshot targetSnapshot,
                                                             int followDistance,
@@ -50,7 +49,7 @@ public final class AgentLocalAttackMoveWindowService {
                 followYCap);
     }
 
-    public static void clearActionMoveWindowIfSettled(BotEntry entry,
+    public static void clearActionMoveWindowIfSettled(AgentRuntimeEntry entry,
                                                       Point agentPosition,
                                                       Point targetPosition,
                                                       int followDistance,
