@@ -44,6 +44,25 @@ function Test-PathEntry {
     }
 }
 
+function Invoke-BaselineEvidenceVerifier {
+    param([string] $RunPath)
+
+    $verifierPath = Join-Path $repoRoot "tools/soak/Test-BaselineSoakEvidencePackage.ps1"
+    $json = & powershell -ExecutionPolicy Bypass -File $verifierPath -RunPath $RunPath -Json 2>&1
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -ne 0) {
+        return [ordered]@{
+            status = "FAIL"
+            failCount = 1
+            warnCount = 0
+            message = ($json -join "`n")
+        }
+    }
+
+    return ($json | ConvertFrom-Json)
+}
+
 $repoRootText = (& git rev-parse --show-toplevel 2>&1)
 if ($LASTEXITCODE -ne 0) {
     throw "git rev-parse --show-toplevel failed: $repoRootText"
@@ -139,6 +158,17 @@ if (Test-Path -LiteralPath $baselineRoot) {
     $runFolders = @(Get-ChildItem -LiteralPath $baselineRoot -Directory -ErrorAction SilentlyContinue)
     if ($runFolders.Count -gt 0) {
         Add-Check $checks "soak:baseline-folder" "PASS" "Found $($runFolders.Count) baseline evidence folder(s)."
+
+        $latestRun = $runFolders | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+        $baselineReport = Invoke-BaselineEvidenceVerifier $latestRun.FullName
+
+        if ($baselineReport.status -eq "PASS") {
+            Add-Check $checks "soak:latest-baseline-evidence" "PASS" "Latest baseline evidence run $($latestRun.Name) verifies as PASS."
+        } elseif ($baselineReport.status -eq "FAIL") {
+            Add-Check $checks "soak:latest-baseline-evidence" "FAIL" "Latest baseline evidence run $($latestRun.Name) verifies as FAIL."
+        } else {
+            Add-Check $checks "soak:latest-baseline-evidence" "WARN" "Latest baseline evidence run $($latestRun.Name) is $($baselineReport.status) with $($baselineReport.warnCount) warning(s)."
+        }
     } else {
         Add-Check $checks "soak:baseline-folder" "WARN" "Baseline evidence root exists but has no run folders."
     }

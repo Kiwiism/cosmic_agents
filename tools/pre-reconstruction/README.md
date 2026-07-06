@@ -32,10 +32,12 @@ powershell -ExecutionPolicy Bypass -File .\tools\pre-reconstruction\Test-PreReco
 - catalog, profile, economy, scaling, server adapter, console, and review docs
   exist.
 - soak evidence scaffold/verifier scripts exist.
+- newest baseline evidence run verifies as complete when a run folder exists.
 - no forbidden Agent/bot/config paths are staged.
 - no unstaged production Agent/bot/config changes are present without a
   warning.
 - whether baseline soak evidence has been collected.
+- whether the newest baseline soak folder is complete or still only scaffolded.
 
 ## Status Meaning
 
