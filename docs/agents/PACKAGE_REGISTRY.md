@@ -704,9 +704,59 @@ Implementation focus:
 5. add direct validated NPC/quest/shop wrappers.
 6. add fairness budgets, fail-closed behavior, and strict debug comparison.
 
+### 17. Agent Soak Test Harness
+
+Status: well defined.
+
+Purpose:
+
+- Run repeatable Agent scale scenarios for 50, 250, 500, 1000, and
+  2000-Agent stages.
+- Capture evidence for server responsiveness, Agent runtime cost,
+  persistence pressure, materialization safety, and gameplay validity.
+- Provide a gated command surface, scenario runner, seeded population presets,
+  spawn waves, pass/fail evaluator, and stable CSV/JSONL/JSON outputs.
+
+Primary docs:
+
+- `docs/agents/AGENT_SOAK_TEST_IMPLEMENTATION_SPEC.md`
+- `docs/SOAK_TEST_CHECKLIST.md`
+- `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
+- `docs/agents/soak-test-harness/AGENT_SOAK_TEST_HARNESS_DESIGN_SPECIFICATION.md`
+- `docs/agents/soak-test-harness/AGENT_SOAK_TEST_HARNESS_TECHNICAL_SPECIFICATION.md`
+
+Owns:
+
+- soak command handling.
+- run lifecycle state.
+- scenario runner.
+- population preset loading for tests.
+- spawn wave runner.
+- snapshot collection.
+- CSV/JSONL/JSON output.
+- pass/fail evaluation.
+- cleanup verification.
+
+Does not own:
+
+- normal Agent runtime behavior.
+- Agent gameplay capability implementation.
+- LLM/economy behavior.
+- player 500-concurrency testing.
+- production monitoring outside explicit soak mode.
+
+Implementation focus:
+
+1. add `!soak agents ...` command parser and permission gates.
+2. add run lifecycle state machine.
+3. add scenario manifests and population preset loader.
+4. add spawn wave runner.
+5. add periodic snapshot collector and report writers.
+6. add pass/fail evaluator and cleanup verification.
+
 ## Partially Defined Packages
 
-### 17. LLM Control Gateway Package
+### 18. LLM Control Gateway Package
 
 Status: contract defined, technical package not fully defined.
 
@@ -746,7 +796,7 @@ Recommended package:
 agent-llm-gateway
 ```
 
-### 18. Quest / Combat Focus Policy Package
+### 19. Quest / Combat Focus Policy Package
 
 Status: policy defined, package not fully defined.
 
@@ -785,7 +835,7 @@ agent-quest-objective-policy
 
 ## Backlog Packages To Promote
 
-### 19. Agent Population Director
+### 20. Agent Population Director
 
 Status: discussed, not yet packaged.
 
@@ -811,7 +861,7 @@ Recommended package:
 agent-population-director
 ```
 
-### 20. Relationship / Social Graph Runtime
+### 21. Relationship / Social Graph Runtime
 
 Status: included inside profile docs, but may deserve its own package later.
 
@@ -836,7 +886,7 @@ Potential package:
 agent-social-relationship-runtime
 ```
 
-### 21. Portable Installer / Patcher
+### 22. Portable Installer / Patcher
 
 Status: contract exists, implementation package not fully specified.
 
@@ -862,59 +912,6 @@ Recommended package:
 
 ```text
 agent-platform-installer
-```
-
-### 22. Agent Soak Test Harness
-
-Status: partially defined; implementation specification exists.
-
-Purpose:
-
-- Provide repeatable long-running scale tests for the reconstructed Agent
-  runtime.
-- Validate 50, 250, 500, 1000, and 2000-agent stages.
-- Capture server, Agent, persistence, map, and gameplay-validity metrics.
-- Test population spread, hidden simulation, materialization, DB pressure, and
-  shutdown/restart behavior.
-
-Primary docs:
-
-- `docs/agents/AGENT_SOAK_TEST_IMPLEMENTATION_SPEC.md`
-- `docs/SOAK_TEST_CHECKLIST.md`
-- `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
-
-Owns:
-
-- soak command surface.
-- scenario runner.
-- population preset loading for tests.
-- spawn wave runner.
-- periodic snapshot collector.
-- CSV/JSON output.
-- materialization storm tests.
-- DB pressure tests.
-- stage pass/fail reporting.
-
-Does not own:
-
-- Agent gameplay capability implementation.
-- player 500-concurrency testing.
-- LLM/economy validation.
-- server production monitoring outside soak runs.
-
-Implementation focus:
-
-1. Add snapshot collector and log writer.
-2. Add population preset runner.
-3. Add `!soak agents ...` command surface.
-4. Add scenario runner.
-5. Add materialization and DB pressure tests.
-6. Add long-run stage reports.
-
-Recommended package:
-
-```text
-agent-soak-test-harness
 ```
 
 ## Recommended Implementation Order
@@ -972,16 +969,15 @@ Reasoning:
 
 Highest priority:
 
-1. Agent Soak Test Harness command/runner spec.
-2. Catalog builder validation/report spec.
-3. LLM Gateway design + technical specs.
-4. Population Director design + technical specs.
-5. Portable Installer technical spec.
+1. Catalog builder validation/report spec.
+2. LLM Gateway design + technical specs.
+3. Population Director design + technical specs.
+4. Portable Installer technical spec.
+5. Quest Objective Policy design + technical specs.
 
 Second priority:
 
-1. Quest Objective Policy design + technical specs.
-2. Relationship / Social Graph split-out spec if profile package grows large.
+1. Relationship / Social Graph split-out spec if profile package grows large.
 
 Later:
 

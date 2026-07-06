@@ -40,6 +40,8 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Perception Runtime technical specification.
 - [x] Background Action Runtime design specification.
 - [x] Background Action Runtime technical specification.
+- [x] Agent Soak Test Harness design specification.
+- [x] Agent Soak Test Harness technical specification.
 
 ## Builder Work
 

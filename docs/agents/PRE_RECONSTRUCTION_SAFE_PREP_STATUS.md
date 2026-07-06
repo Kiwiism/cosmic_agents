@@ -146,6 +146,7 @@ Well-defined packages:
 - Agent Simulation Tier Runtime.
 - Perception Runtime Package.
 - Background Action Runtime.
+- Agent Soak Test Harness.
 
 Partially defined packages that need specs before implementation:
 
@@ -157,7 +158,6 @@ Backlog packages to promote:
 - Agent Population Director.
 - Relationship / Social Graph Runtime.
 - Portable Installer / Patcher.
-- Agent Soak Test Harness.
 
 ## Verification Rules For Every Safe-Prep Batch
 
@@ -182,12 +182,11 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write Agent Soak Test Harness command/runner spec.
-2. Write LLM Gateway design and technical specs.
-3. Unify catalog builder output shape in documentation before touching runtime.
-4. Add catalog validation report requirements for dangling NPC, quest, shop,
+1. Write LLM Gateway design and technical specs.
+2. Unify catalog builder output shape in documentation before touching runtime.
+3. Add catalog validation report requirements for dangling NPC, quest, shop,
    item, reactor, portal, and reward references.
-5. Keep server-only diagnostics stable and collect soak evidence.
+4. Keep server-only diagnostics stable and collect soak evidence.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.
