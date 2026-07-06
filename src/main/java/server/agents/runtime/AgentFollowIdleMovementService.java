@@ -10,7 +10,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -23,7 +22,7 @@ public final class AgentFollowIdleMovementService {
     private AgentFollowIdleMovementService() {
     }
 
-    public static boolean tryFollowIdleMovementFastPath(BotEntry entry,
+    public static boolean tryFollowIdleMovementFastPath(AgentRuntimeEntry entry,
                                                         Character agent,
                                                         Point targetPosition,
                                                         long nowMs,
@@ -45,7 +44,7 @@ public final class AgentFollowIdleMovementService {
         return true;
     }
 
-    private static boolean isFollowIdleMovementFastPathEligible(BotEntry entry,
+    private static boolean isFollowIdleMovementFastPathEligible(AgentRuntimeEntry entry,
                                                                 Character agent,
                                                                 Point targetPosition,
                                                                 int followDistance,

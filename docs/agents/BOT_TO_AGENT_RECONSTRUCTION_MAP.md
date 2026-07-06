@@ -77,6 +77,10 @@ Recent map updates:
   Farm-anchor presence checks, anchored-farm tick delegation, and consumed-tick
   behavior remain unchanged while `AgentLiveModeTickRuntime` keeps the
   temporary `BotEntry` callback adapter.
+- `AgentFollowIdleMovementService` now accepts `AgentRuntimeEntry`.
+  Eligibility gates, recheck timing, navigation decision marking, and
+  stuck-progress reset behavior remain unchanged while runtime wrappers keep
+  temporary `BotEntry` public signatures.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

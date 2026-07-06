@@ -9,7 +9,6 @@ import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -23,7 +22,7 @@ class AgentFollowIdleMovementServiceTest {
     @Test
     void parksFollowMovementBetweenPeriodicChecks() {
         Character agent = agentAt(new Point(80, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMovementStuckStateRuntime.addStuckMs(entry, 500);
         AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(70, 100));
@@ -44,7 +43,7 @@ class AgentFollowIdleMovementServiceTest {
     @Test
     void rejectsWhenNotParkedNearTarget() {
         Character agent = agentAt(new Point(0, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertFalse(AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
@@ -54,7 +53,7 @@ class AgentFollowIdleMovementServiceTest {
     @Test
     void rejectsWhenMovementOrOwnerMotionRequiresNormalResolution() {
         Character agent = agentAt(new Point(80, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 1, 0);
 
@@ -72,7 +71,7 @@ class AgentFollowIdleMovementServiceTest {
     @Test
     void rejectsWhenOtherModesOrTargetsAreActive() {
         Character agent = agentAt(new Point(80, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotModeStateRuntime.setGrinding(entry, true);
 
@@ -86,8 +85,8 @@ class AgentFollowIdleMovementServiceTest {
                 entry, agent, new Point(100, 100), 1_000L, 50, 10));
     }
 
-    private static BotEntry entry(Character agent) {
-        return new BotEntry(agent, mock(Character.class), null);
+    private static AgentRuntimeEntry entry(Character agent) {
+        return new AgentRuntimeEntry(agent, mock(Character.class), null);
     }
 
     private static Character agentAt(Point position) {

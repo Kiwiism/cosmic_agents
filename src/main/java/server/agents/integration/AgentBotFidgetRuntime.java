@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 /**
@@ -14,7 +15,7 @@ public final class AgentBotFidgetRuntime {
         return AgentBotChatStatusRuntime.isOwnerIdle(entry);
     }
 
-    public static boolean hasActiveFidgetMode(BotEntry entry) {
+    public static boolean hasActiveFidgetMode(AgentRuntimeEntry entry) {
         return AgentBotFidgetStateRuntime.active(entry);
     }
 }
