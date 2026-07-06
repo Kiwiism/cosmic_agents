@@ -11,8 +11,8 @@ public final class AgentActionLockPhysicsRuntime {
         return AgentActionLockPhysicsService.tickActionLocked(
                 entry,
                 AgentMapEnvironmentService::isSwimMap,
-                locked -> AgentMovementPhaseDispatchService.tickSwimming(locked, null),
-                locked -> AgentMovementPhaseDispatchService.tickAirborne(locked, null),
-                locked -> AgentMovementPhaseDispatchService.tickGrounded(locked, null));
+                ignored -> AgentMovementPhaseDispatchService.tickSwimming(entry, null),
+                ignored -> AgentMovementPhaseDispatchService.tickAirborne(entry, null),
+                ignored -> AgentMovementPhaseDispatchService.tickGrounded(entry, null));
     }
 }

@@ -5005,6 +5005,9 @@ Current physics correction:
 - Scheduled-task cancellation now accepts `AgentRuntimeEntry`; null guards,
   scheduled-task presence checks, and `ScheduledFuture.cancel(false)` behavior
   are unchanged.
+- Action-lock physics dispatch now accepts `AgentRuntimeEntry`; attack-cooldown
+  gating, swim/airborne/grounded branch selection, and movement-phase callbacks
+  are unchanged.
 
 Initial reconstruction order:
 

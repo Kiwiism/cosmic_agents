@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -11,11 +10,11 @@ public final class AgentActionLockPhysicsService {
     private AgentActionLockPhysicsService() {
     }
 
-    public static boolean tickActionLocked(BotEntry entry,
-                                           Predicate<BotEntry> swimMap,
-                                           Consumer<BotEntry> swimmingTick,
-                                           Consumer<BotEntry> airborneTick,
-                                           Consumer<BotEntry> groundedTick) {
+    public static boolean tickActionLocked(AgentRuntimeEntry entry,
+                                           Predicate<AgentRuntimeEntry> swimMap,
+                                           Consumer<AgentRuntimeEntry> swimmingTick,
+                                           Consumer<AgentRuntimeEntry> airborneTick,
+                                           Consumer<AgentRuntimeEntry> groundedTick) {
         if (!AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return false;
         }
