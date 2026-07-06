@@ -4981,6 +4981,9 @@ Current physics correction:
   grind, stop, and drop-item hook dispatch remains unchanged.
 - Live leader session refresh now accepts `AgentRuntimeEntry`; cached leader
   reuse, offline/mismatch refresh, and null caching behavior are unchanged.
+- Script move-target cheapness checks now accept `AgentRuntimeEntry`; bot
+  position, map, graph lookup, fallback range, and path-cost behavior are
+  unchanged.
 
 Initial reconstruction order:
 

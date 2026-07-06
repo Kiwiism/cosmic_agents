@@ -8,7 +8,7 @@ import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ public final class AgentScriptMoveTargetService {
     private AgentScriptMoveTargetService() {
     }
 
-    public static boolean isCheapMoveTarget(BotEntry entry,
+    public static boolean isCheapMoveTarget(AgentRuntimeEntry entry,
                                             Point targetPos,
                                             int maxPathCost,
                                             int fallbackRangeX,
@@ -32,7 +32,7 @@ public final class AgentScriptMoveTargetService {
                 AgentRuntimeConfig.cfg.LOOT_RADIUS);
     }
 
-    public static boolean isCheapMoveTarget(BotEntry entry,
+    public static boolean isCheapMoveTarget(AgentRuntimeEntry entry,
                                             Point targetPos,
                                             int maxPathCost,
                                             int fallbackRangeX,
