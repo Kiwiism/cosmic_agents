@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -17,20 +16,20 @@ public final class AgentRecoveryTickService {
 
     @FunctionalInterface
     public interface FollowMapSync {
-        boolean sync(BotEntry entry, Character agent, Character followAnchor);
+        boolean sync(AgentRuntimeEntry entry, Character agent, Character followAnchor);
     }
 
     @FunctionalInterface
     public interface PartyRecovery {
-        boolean recover(BotEntry entry, Character agent, Character followAnchor);
+        boolean recover(AgentRuntimeEntry entry, Character agent, Character followAnchor);
     }
 
     @FunctionalInterface
     public interface TargetRecovery {
-        boolean recover(BotEntry entry, Character agent, Point targetPosition);
+        boolean recover(AgentRuntimeEntry entry, Character agent, Point targetPosition);
     }
 
-    public static boolean tickRecovery(BotEntry entry,
+    public static boolean tickRecovery(AgentRuntimeEntry entry,
                                        Character agent,
                                        Character followAnchor,
                                        Point targetPosition,

@@ -48,21 +48,24 @@ public final class AgentLiveTickGateRuntime {
                         new AgentIdleModeTickService.Hooks((ignored, physicsAgent) ->
                                 tickIdleEntry(asBotEntry(idleEntry), physicsAgent, perf))),
                 (recoveryEntry, recoveryAgent, recoveryFollowAnchor, recoveryTargetPos) -> AgentRecoveryTickService.tickRecovery(
-                        asBotEntry(recoveryEntry),
+                        recoveryEntry,
                         recoveryAgent,
                         recoveryFollowAnchor,
                         recoveryTargetPos,
                         new AgentRecoveryTickService.Hooks(
-                                AgentFollowMapSyncRuntime::syncFollowMap,
+                                (entry, agent, anchor) -> AgentFollowMapSyncRuntime.syncFollowMap(
+                                        asBotEntry(entry),
+                                        agent,
+                                        anchor),
                                 (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
-                                        entry,
+                                        asBotEntry(entry),
                                         agent,
                                         anchor,
                                         teleportDistance,
                                         outOfBoundsTeleportDistance,
                                         grindPartyTeleportDistanceMultiplier),
                                 (entry, agent, targetPos) -> AgentRecoveryTeleportRuntime.recoverTeleportDistance(
-                                        entry,
+                                        asBotEntry(entry),
                                         agent,
                                         targetPos,
                                         teleportDistance,

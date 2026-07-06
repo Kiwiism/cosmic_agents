@@ -5049,6 +5049,10 @@ Current physics correction:
   dead-state entry checks, respawn timing, HP restore, map-change, grounding,
   teleport, reset, movement broadcast, map speech, and glare emote behavior are
   unchanged.
+- Recovery tick handling now accepts `AgentRuntimeEntry`; shop-visit follow-sync
+  suppression, follow-map sync, party recovery, target recovery ordering, and
+  short-circuit behavior are unchanged. `AgentLiveTickGateRuntime` remains the
+  temporary bridge to BotEntry-shaped recovery callbacks.
 
 Initial reconstruction order:
 
