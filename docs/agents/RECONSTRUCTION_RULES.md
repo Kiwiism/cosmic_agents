@@ -4987,6 +4987,9 @@ Current physics correction:
 - Combat skill-cache rebuild and attack planning wrappers now accept
   `AgentRuntimeEntry`; cache signatures, skill classification, candidate
   planning, attack scoring, and performance recording are unchanged.
+- Agent mode transitions now accept `AgentRuntimeEntry`; follow/grind/stop,
+  move-to, farm, patrol, active-mode reset ordering, and navigation clear hooks
+  are unchanged.
 
 Initial reconstruction order:
 

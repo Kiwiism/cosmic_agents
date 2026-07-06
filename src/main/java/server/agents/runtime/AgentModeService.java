@@ -13,7 +13,6 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.function.Consumer;
@@ -22,7 +21,7 @@ public final class AgentModeService {
     private AgentModeService() {
     }
 
-    public static void startFollow(BotEntry entry, Character target) {
+    public static void startFollow(AgentRuntimeEntry entry, Character target) {
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentBotModeStateRuntime.setFollowTargetId(entry,
                 leader != null && target != null && leader.getId() != target.getId()
@@ -34,32 +33,32 @@ public final class AgentModeService {
         AgentBotModeStateRuntime.setFollowing(entry, true);
     }
 
-    public static void startGrind(BotEntry entry, Consumer<BotEntry> navigationClearer) {
+    public static void startGrind(AgentRuntimeEntry entry, Consumer<AgentRuntimeEntry> navigationClearer) {
         enterActiveMode(entry, navigationClearer);
     }
 
-    public static void startStop(BotEntry entry) {
+    public static void startStop(AgentRuntimeEntry entry) {
         clearMode(entry);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
-    public static void startMoveTo(BotEntry entry, Point destination, boolean precise) {
+    public static void startMoveTo(AgentRuntimeEntry entry, Point destination, boolean precise) {
         clearMode(entry);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, destination, precise);
     }
 
-    public static void startFarmHere(BotEntry entry, Point destination, Consumer<BotEntry> navigationClearer) {
+    public static void startFarmHere(AgentRuntimeEntry entry, Point destination, Consumer<AgentRuntimeEntry> navigationClearer) {
         enterActiveMode(entry, navigationClearer);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, destination, AgentBotRuntimeIdentityRuntime.botMapId(entry));
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, destination);
     }
 
-    public static void startPatrol(BotEntry entry, int regionId, Consumer<BotEntry> navigationClearer) {
+    public static void startPatrol(AgentRuntimeEntry entry, int regionId, Consumer<AgentRuntimeEntry> navigationClearer) {
         enterActiveMode(entry, navigationClearer);
         AgentBotPatrolStateRuntime.startPatrol(entry, regionId, AgentBotRuntimeIdentityRuntime.botMapId(entry));
     }
 
-    public static void enterActiveMode(BotEntry entry, Consumer<BotEntry> navigationClearer) {
+    public static void enterActiveMode(AgentRuntimeEntry entry, Consumer<AgentRuntimeEntry> navigationClearer) {
         AgentBotModeStateRuntime.stopFollowing(entry);
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
@@ -75,7 +74,7 @@ public final class AgentModeService {
         AgentBotModeStateRuntime.startGrinding(entry);
     }
 
-    public static void clearMode(BotEntry entry) {
+    public static void clearMode(AgentRuntimeEntry entry) {
         AgentBotModeStateRuntime.stopMovementModes(entry);
         AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
         AgentBotPatrolStateRuntime.clearPatrol(entry);
