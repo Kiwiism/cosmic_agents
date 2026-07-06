@@ -5,13 +5,13 @@ import client.Skill;
 import server.StatEffect;
 import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBotCombatSkillCacheRuntime {
     private AgentBotCombatSkillCacheRuntime() {
     }
 
-    public static void rebuildSkillCacheIfNeeded(BotEntry entry, Character bot) {
+    public static void rebuildSkillCacheIfNeeded(AgentRuntimeEntry entry, Character bot) {
         int skillSignature = AgentCombatSkillClassifier.skillCacheSignature(bot);
         if (AgentBotCombatSkillCacheStateRuntime.matches(
                 entry, bot.getJob().getId(), bot.getLevel(), skillSignature)) {

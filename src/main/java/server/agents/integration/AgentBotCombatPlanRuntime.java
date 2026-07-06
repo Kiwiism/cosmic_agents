@@ -8,7 +8,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public final class AgentBotCombatPlanRuntime {
     private AgentBotCombatPlanRuntime() {
     }
 
-    public static AgentAttackPlan planAttack(BotEntry entry, Character bot, Monster target,
+    public static AgentAttackPlan planAttack(AgentRuntimeEntry entry, Character bot, Monster target,
                                              AgentCombatConfig.Config config) {
         long startedAt = System.nanoTime();
         try {

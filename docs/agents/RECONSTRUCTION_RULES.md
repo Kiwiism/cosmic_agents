@@ -4984,6 +4984,9 @@ Current physics correction:
 - Script move-target cheapness checks now accept `AgentRuntimeEntry`; bot
   position, map, graph lookup, fallback range, and path-cost behavior are
   unchanged.
+- Combat skill-cache rebuild and attack planning wrappers now accept
+  `AgentRuntimeEntry`; cache signatures, skill classification, candidate
+  planning, attack scoring, and performance recording are unchanged.
 
 Initial reconstruction order:
 
