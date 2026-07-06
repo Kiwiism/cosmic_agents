@@ -84,6 +84,9 @@ Recent map updates:
 - `AgentActionLockPhysicsServiceTest` now exercises the existing
   Agent-runtime-entry service boundary directly. Attack-cooldown gating and
   swim, airborne, grounded, and legacy climbing branches remain unchanged.
+- `AgentCommandModeServiceTest` now exercises the existing Agent-runtime-entry
+  service boundary directly. Null-entry skip behavior, guard evaluation, task
+  clearing, shop cancellation, and mode-start ordering remain unchanged.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

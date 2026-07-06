@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,7 +21,7 @@ class AgentCommandModeServiceTest {
 
     @Test
     void clearsTasksCancelsShopThenStartsMode() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger order = new AtomicInteger();
 
         AgentCommandModeService.runPreparedModeCommand(
@@ -36,7 +35,7 @@ class AgentCommandModeServiceTest {
 
     @Test
     void skipsWhenGuardFails() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger calls = new AtomicInteger();
 
         AgentCommandModeService.runPreparedModeCommand(
@@ -51,7 +50,7 @@ class AgentCommandModeServiceTest {
 
     @Test
     void evaluatesGuardBeforeClearingTasks() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger order = new AtomicInteger();
 
         AgentCommandModeService.runPreparedModeCommand(
