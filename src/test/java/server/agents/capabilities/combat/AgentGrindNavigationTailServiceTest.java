@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.mock;
 class AgentGrindNavigationTailServiceTest {
     @Test
     void crossRegionRetreatPositionWinsWithoutCallingNavigationSelector() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger navigationCalls = new AtomicInteger();
         Point retreat = new Point(500, 100);
 
@@ -36,7 +36,7 @@ class AgentGrindNavigationTailServiceTest {
 
     @Test
     void aoeRepositionUsesNavigationSelectorWithoutRetreatFlag() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger navigationCalls = new AtomicInteger();
         Point aoe = new Point(300, 100);
 
@@ -56,7 +56,7 @@ class AgentGrindNavigationTailServiceTest {
 
     @Test
     void convenientLootCanOverrideNormalNavigationWhenNotRetreating() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Point loot = new Point(150, 100);
 
         Point result = AgentGrindNavigationTailService.resolveNavigationTarget(
@@ -74,7 +74,7 @@ class AgentGrindNavigationTailServiceTest {
 
     @Test
     void clearsDegenerateLatchAfterLeavingRetreatBand() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
 
         AgentGrindNavigationTailService.resolveNavigationTarget(

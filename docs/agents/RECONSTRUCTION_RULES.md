@@ -5155,6 +5155,9 @@ Current physics correction:
 - Grind target-search service and policy now accept `AgentRuntimeEntry`;
   AI-tick gating, retarget cooldown checks, patrol/grind target selection, AoE
   cluster switch hysteresis, and next-search scheduling are unchanged.
+- Grind navigation-tail service now accepts `AgentRuntimeEntry`; cross-region
+  retreat precedence, AoE reposition navigation, degenerate-attack latch
+  clearing, patrol gating, and convenient-loot override behavior are unchanged.
 
 Initial reconstruction order:
 

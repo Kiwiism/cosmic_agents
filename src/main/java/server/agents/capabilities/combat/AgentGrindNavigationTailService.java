@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.inventory.WeaponType;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -18,7 +18,7 @@ public final class AgentGrindNavigationTailService {
 
     @FunctionalInterface
     public interface NavigationTargetSelector {
-        Point select(BotEntry entry, Point agentPosition, Point combatTargetPosition, boolean retreatChecked);
+        Point select(AgentRuntimeEntry entry, Point agentPosition, Point combatTargetPosition, boolean retreatChecked);
     }
 
     @FunctionalInterface
@@ -28,10 +28,10 @@ public final class AgentGrindNavigationTailService {
 
     @FunctionalInterface
     public interface ConvenientLootTargetSelector {
-        Point select(BotEntry entry, Point agentPosition, Point mobPosition);
+        Point select(AgentRuntimeEntry entry, Point agentPosition, Point mobPosition);
     }
 
-    public static Point resolveNavigationTarget(BotEntry entry,
+    public static Point resolveNavigationTarget(AgentRuntimeEntry entry,
                                                 Point agentPosition,
                                                 Point mobPosition,
                                                 WeaponType weaponType,

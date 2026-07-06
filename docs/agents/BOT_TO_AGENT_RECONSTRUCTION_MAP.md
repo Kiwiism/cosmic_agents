@@ -136,6 +136,11 @@ Recent map updates:
   target selection, AoE cluster switch hysteresis, and next-search scheduling
   remain unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
   target-finder adapter.
+- `AgentGrindNavigationTailService` now accepts `AgentRuntimeEntry`.
+  Cross-region retreat precedence, AoE reposition navigation, degenerate-attack
+  latch clearing, patrol gating, and convenient-loot override behavior remain
+  unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  selector adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

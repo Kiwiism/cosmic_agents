@@ -113,9 +113,12 @@ public final class AgentGrindModeRuntime {
 
     private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {
         return new AgentGrindNavigationTailService.Hooks(
-                AgentGrindNavigationRuntime::selectGrindNavigationTarget,
+                (entry, agentPosition, combatTargetPosition, retreatChecked) ->
+                        AgentGrindNavigationRuntime.selectGrindNavigationTarget(
+                                asBotEntry(entry), agentPosition, combatTargetPosition, retreatChecked),
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
-                AgentGrindTargetRuntime::convenientLootTarget);
+                (entry, agentPosition, mobPosition) ->
+                        AgentGrindTargetRuntime.convenientLootTarget(asBotEntry(entry), agentPosition, mobPosition));
     }
 
     private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
