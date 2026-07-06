@@ -155,7 +155,7 @@ public final class AgentLiveModeTickRuntime {
                                         anchoredFarmTick))),
                 (grindEntry, grindAgent, grindAgentPos, grindTargetPos, grindRunAiTick) -> {
                     AgentGrindModeDispatchService.Result grindDispatch = AgentGrindModeDispatchService.tickIfGrinding(
-                            asBotEntry(grindEntry),
+                            grindEntry,
                             grindAgent,
                             grindAgentPos,
                             grindTargetPos,

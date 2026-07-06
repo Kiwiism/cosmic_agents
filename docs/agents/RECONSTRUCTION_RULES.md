@@ -5146,6 +5146,9 @@ Current physics correction:
 - Local attack move-window service now accepts `AgentRuntimeEntry`; null-position
   clearing, long/short/settled window timing, follow-mode gating, and settle
   band checks are unchanged.
+- Grind-mode dispatch service now accepts `AgentRuntimeEntry`; non-grinding
+  fall-through, grind tick delegation, run-AI flag propagation, and target
+  result propagation are unchanged.
 
 Initial reconstruction order:
 

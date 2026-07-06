@@ -122,6 +122,10 @@ Recent map updates:
 - `AgentLocalAttackMoveWindowService` now accepts `AgentRuntimeEntry`.
   Null-position clearing, long/short/settled window timing, follow-mode gating,
   and settle-band checks remain unchanged.
+- `AgentGrindModeDispatchService` now accepts `AgentRuntimeEntry`.
+  Non-grinding fall-through, grind tick delegation, run-AI flag propagation, and
+  target result propagation remain unchanged while `AgentLiveModeTickRuntime`
+  keeps the temporary `BotEntry` callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.

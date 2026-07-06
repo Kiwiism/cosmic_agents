@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -18,10 +17,10 @@ public final class AgentGrindModeDispatchService {
 
     @FunctionalInterface
     public interface GrindTick {
-        Result tick(BotEntry entry, Character agent, Point agentPosition, Point targetPosition, boolean runAiTick);
+        Result tick(AgentRuntimeEntry entry, Character agent, Point agentPosition, Point targetPosition, boolean runAiTick);
     }
 
-    public static Result tickIfGrinding(BotEntry entry,
+    public static Result tickIfGrinding(AgentRuntimeEntry entry,
                                         Character agent,
                                         Point agentPosition,
                                         Point targetPosition,

@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,7 +15,7 @@ import static org.mockito.Mockito.mock;
 class AgentGrindModeDispatchServiceTest {
     @Test
     void fallsThroughWhenNotGrinding() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Point target = new Point(10, 20);
         AtomicInteger grindTicks = new AtomicInteger();
 
@@ -38,7 +37,7 @@ class AgentGrindModeDispatchServiceTest {
 
     @Test
     void delegatesWhenGrindingAndReturnsResult() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotModeStateRuntime.setGrinding(entry, true);
         Point updatedTarget = new Point(80, 10);
         AtomicInteger grindTicks = new AtomicInteger();
