@@ -67,13 +67,13 @@ public final class AgentLiveModeTickRuntime {
         return new AgentLiveModeTickService.Hooks(
                 (shopEntry, shopAgent, shopRunAiTick) -> {
                     AgentShopVisitTickService.Result shopVisitResult = AgentShopVisitTickService.tickShopVisitIfPending(
-                            shopEntry,
+                            asBotEntry(shopEntry),
                             shopAgent,
                             shopRunAiTick,
                             new AgentShopVisitTickService.Hooks(
-                                    (visitEntry, visitAgent) -> tickShopVisit(visitEntry, visitAgent, perf),
+                                    (visitEntry, visitAgent) -> tickShopVisit(asBotEntry(visitEntry), visitAgent, perf),
                                     (moveEntry, moveTargetPos, moveRunAiTick) ->
-                                            timedMovementCoreStep(moveEntry, moveTargetPos, moveRunAiTick, perf, movementCoreStep)));
+                                            timedMovementCoreStep(asBotEntry(moveEntry), moveTargetPos, moveRunAiTick, perf, movementCoreStep)));
                     return new AgentLiveModeTickService.PhaseResult(
                             shopVisitResult.consumedTick(),
                             shopVisitResult.targetPos());
@@ -81,7 +81,7 @@ public final class AgentLiveModeTickRuntime {
                 (attackEntry, attackAgent, attackAgentPos, attackTargetPos, attackFollowTargetPos, attackFollowAnchor, attackRunAiTick) -> {
                     AgentFollowOpportunityTickService.Result followOpportunity =
                             AgentFollowOpportunityTickService.tickFollowOpportunity(
-                                    attackEntry,
+                                    asBotEntry(attackEntry),
                                     attackAgent,
                                     attackAgentPos,
                                     attackTargetPos,
@@ -91,7 +91,7 @@ public final class AgentLiveModeTickRuntime {
                                     new AgentFollowOpportunityTickService.Hooks(
                                             (localEntry, localAgent, localAgentPos, localTargetPos, localFollowTargetPos) -> {
                                                 LocalAttackResult result = timedLocalOpportunityAttack(
-                                                        localEntry,
+                                                        asBotEntry(localEntry),
                                                         localAgent,
                                                         localAgentPos,
                                                         localTargetPos,
@@ -107,20 +107,24 @@ public final class AgentLiveModeTickRuntime {
                             followOpportunity.consumedTick(),
                             followOpportunity.targetPos());
                 },
-                AgentFollowIdleMovementRuntime::tryFollowIdleMovementFastPath,
+                (idleEntry, idleAgent, idleTargetPos, idleNowMs) ->
+                        AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(
+                                asBotEntry(idleEntry), idleAgent, idleTargetPos, idleNowMs),
                 (scriptEntry, scriptAgent, scriptAgentPos, scriptTargetPos, scriptRunAiTick) -> {
                     AgentScriptedMoveCombatTickService.Result scriptedMoveCombat =
                             AgentScriptedMoveCombatTickService.tickScriptedMoveCombat(
-                                    scriptEntry,
+                                    asBotEntry(scriptEntry),
                                     scriptAgent,
                                     scriptAgentPos,
                                     scriptTargetPos,
                                     scriptRunAiTick,
                                     new AgentScriptedMoveCombatTickService.Hooks(
-                                            AgentLocalAttackMoveWindowRuntime::clearActionMoveWindowIfSettled,
+                                            (entry, agentPosition, targetPosition) ->
+                                                    AgentLocalAttackMoveWindowRuntime.clearActionMoveWindowIfSettled(
+                                                            asBotEntry(entry), agentPosition, targetPosition),
                                             (attackEntry, attackAgent, attackAgentPos, attackTargetPos) -> {
                                                 LocalAttackResult result = timedScriptedOpportunityAttack(
-                                                        attackEntry,
+                                                        asBotEntry(attackEntry),
                                                         attackAgent,
                                                         attackAgentPos,
                                                         attackTargetPos,
@@ -131,19 +135,19 @@ public final class AgentLiveModeTickRuntime {
                                                         result.targetPos());
                                             },
                                             (moveEntry, moveTargetPos, moveRunAiTick) ->
-                                                    timedMovementCoreStep(moveEntry, moveTargetPos, moveRunAiTick, perf, movementCoreStep)));
+                                                    timedMovementCoreStep(asBotEntry(moveEntry), moveTargetPos, moveRunAiTick, perf, movementCoreStep)));
                     return new AgentLiveModeTickService.PhaseResult(
                             scriptedMoveCombat.consumedTick(),
                             scriptedMoveCombat.targetPos());
                 },
                 (farmEntry, farmAgent, farmAgentPos, farmRunAiTick) -> AgentAnchoredFarmModeTickService.tickIfAnchoredFarm(
-                        farmEntry,
+                        asBotEntry(farmEntry),
                         farmAgent,
                         farmAgentPos,
                         farmRunAiTick,
                         new AgentAnchoredFarmModeTickService.Hooks((anchoredEntry, anchoredAgent, anchoredAgentPos, anchoredRunAiTick) ->
                                 timedAnchoredFarmTick(
-                                        anchoredEntry,
+                                        asBotEntry(anchoredEntry),
                                         anchoredAgent,
                                         anchoredAgentPos,
                                         anchoredRunAiTick,
@@ -151,14 +155,14 @@ public final class AgentLiveModeTickRuntime {
                                         anchoredFarmTick))),
                 (grindEntry, grindAgent, grindAgentPos, grindTargetPos, grindRunAiTick) -> {
                     AgentGrindModeDispatchService.Result grindDispatch = AgentGrindModeDispatchService.tickIfGrinding(
-                            grindEntry,
+                            asBotEntry(grindEntry),
                             grindAgent,
                             grindAgentPos,
                             grindTargetPos,
                             grindRunAiTick,
                             new AgentGrindModeDispatchService.Hooks((dispatchEntry, dispatchAgent, dispatchAgentPos, dispatchTargetPos, dispatchRunAiTick) -> {
                                 LocalAttackResult grindResult = timedGrindModeTick(
-                                        dispatchEntry,
+                                        asBotEntry(dispatchEntry),
                                         dispatchAgent,
                                         dispatchAgentPos,
                                         dispatchTargetPos,
@@ -174,11 +178,11 @@ public final class AgentLiveModeTickRuntime {
                             grindDispatch.targetPos());
                 },
                 (moveEntry, moveTargetPos, moveRunAiTick) -> AgentFinalMovementTailService.stepFinalMovement(
-                        moveEntry,
+                        asBotEntry(moveEntry),
                         moveTargetPos,
                         moveRunAiTick,
                         new AgentFinalMovementTailService.Hooks((ignored, tailTargetPos, tailRunAiTick) ->
-                                timedMovementCoreStep(moveEntry, tailTargetPos, tailRunAiTick, perf, movementCoreStep))));
+                                timedMovementCoreStep(asBotEntry(moveEntry), tailTargetPos, tailRunAiTick, perf, movementCoreStep))));
     }
 
     private static boolean tickShopVisit(BotEntry entry, Character agent, boolean perf) {
@@ -281,5 +285,9 @@ public final class AgentLiveModeTickRuntime {
         } finally {
             AgentPerformanceMonitor.record("step-movement-core", System.nanoTime() - startedAt);
         }
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

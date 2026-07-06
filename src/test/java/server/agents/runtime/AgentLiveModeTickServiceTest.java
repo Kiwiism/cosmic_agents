@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ class AgentLiveModeTickServiceTest {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
         Character followAnchor = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point agentPosition = new Point(10, 20);
         Point initialTarget = new Point(30, 40);
         Point shopTarget = new Point(50, 60);
@@ -77,7 +76,7 @@ class AgentLiveModeTickServiceTest {
     void stopsBeforeLaterPhasesWhenFollowOpportunityConsumesTick() {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point initialTarget = new Point(30, 40);
         Point consumedTarget = new Point(70, 80);
         List<String> calls = new ArrayList<>();

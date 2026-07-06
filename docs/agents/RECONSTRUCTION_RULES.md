@@ -5086,6 +5086,10 @@ Current physics correction:
   recovery ticks, build level-up checks, AFK/status checks, trade/manual-trade,
   PQ/script/NPC-lock gates, action-lock handling, AI-gated combat systems, and
   final action-lock return behavior are unchanged.
+- Live-mode tick phase ordering now accepts `AgentRuntimeEntry`; shop-visit,
+  follow-opportunity, follow-idle, scripted-move combat, anchored farm, grind
+  dispatch, target propagation, consumed-tick short-circuits, and final movement
+  tail behavior are unchanged.
 
 Initial reconstruction order:
 

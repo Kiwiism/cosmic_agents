@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -9,7 +8,7 @@ public final class AgentLiveModeTickService {
     private AgentLiveModeTickService() {
     }
 
-    public record Context(BotEntry entry,
+    public record Context(AgentRuntimeEntry entry,
                           Character agent,
                           Point agentPosition,
                           Point targetPosition,
@@ -39,12 +38,12 @@ public final class AgentLiveModeTickService {
 
     @FunctionalInterface
     public interface ShopVisitTick {
-        PhaseResult tick(BotEntry entry, Character agent, boolean runAiTick);
+        PhaseResult tick(AgentRuntimeEntry entry, Character agent, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface FollowOpportunityTick {
-        PhaseResult tick(BotEntry entry,
+        PhaseResult tick(AgentRuntimeEntry entry,
                          Character agent,
                          Point agentPosition,
                          Point targetPosition,
@@ -55,12 +54,12 @@ public final class AgentLiveModeTickService {
 
     @FunctionalInterface
     public interface FollowIdleFastPath {
-        boolean tick(BotEntry entry, Character agent, Point targetPosition, long nowMs);
+        boolean tick(AgentRuntimeEntry entry, Character agent, Point targetPosition, long nowMs);
     }
 
     @FunctionalInterface
     public interface ScriptedMoveCombatTick {
-        PhaseResult tick(BotEntry entry,
+        PhaseResult tick(AgentRuntimeEntry entry,
                          Character agent,
                          Point agentPosition,
                          Point targetPosition,
@@ -69,12 +68,12 @@ public final class AgentLiveModeTickService {
 
     @FunctionalInterface
     public interface AnchoredFarmTick {
-        boolean tick(BotEntry entry, Character agent, Point agentPosition, boolean runAiTick);
+        boolean tick(AgentRuntimeEntry entry, Character agent, Point agentPosition, boolean runAiTick);
     }
 
     @FunctionalInterface
     public interface GrindModeTick {
-        PhaseResult tick(BotEntry entry,
+        PhaseResult tick(AgentRuntimeEntry entry,
                          Character agent,
                          Point agentPosition,
                          Point targetPosition,
@@ -83,7 +82,7 @@ public final class AgentLiveModeTickService {
 
     @FunctionalInterface
     public interface FinalMovementTail {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     public static Result tickLiveModes(Context context, Hooks hooks) {
