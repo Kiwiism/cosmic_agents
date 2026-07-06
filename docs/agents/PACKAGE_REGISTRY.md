@@ -12,6 +12,10 @@ Top-level post-reconstruction platform specification:
 
 - `docs/agents/POST_RECONSTRUCTION_AGENT_PLATFORM_SPECIFICATION.md`
 
+Pre-reconstruction readiness and safety status:
+
+- `docs/agents/PRE_RECONSTRUCTION_SAFE_PREP_STATUS.md`
+
 ## Package Classification
 
 ```text
@@ -279,14 +283,14 @@ Implementation focus:
 5. recovery fallback.
 6. full-run integration test.
 
-## Partially Defined Packages
-
 ### 7. Plan Runtime Package
 
-Status: partially defined.
+Status: well defined.
 
 Existing docs:
 
+- `docs/agents/plan-runtime/PLAN_RUNTIME_DESIGN_SPECIFICATION.md`
+- `docs/agents/plan-runtime/PLAN_RUNTIME_TECHNICAL_SPECIFICATION.md`
 - `docs/agents/llm-autonomy/PLAN_CARD_SYSTEM.md`
 - `docs/agents/llm-autonomy/PROFILE_PLAN_SET_SYSTEM.md`
 - `docs/agents/plans/maple-island-mvp.plan.json`
@@ -299,12 +303,7 @@ What is already clear:
   allowed sidetracks.
 - Plan selection is influenced by profile, economy, catalog, and live state.
 
-Missing package docs:
-
-- `PLAN_RUNTIME_DESIGN_SPECIFICATION.md`
-- `PLAN_RUNTIME_TECHNICAL_SPECIFICATION.md`
-
-Needs definition:
+Defined:
 
 - plan loader.
 - objective dependency graph.
@@ -323,10 +322,12 @@ agent-plan-runtime
 
 ### 8. Capability Runtime Package
 
-Status: partially defined through reconstruction docs and Maple Island needs.
+Status: well defined.
 
 Existing docs:
 
+- `docs/agents/capability-runtime/CAPABILITY_RUNTIME_DESIGN_SPECIFICATION.md`
+- `docs/agents/capability-runtime/CAPABILITY_RUNTIME_TECHNICAL_SPECIFICATION.md`
 - `docs/agents/BOT_TO_AGENT_RECONSTRUCTION_MAP.md`
 - `docs/agents/RECONSTRUCTION_RULES.md`
 - `docs/agents/AGENT_FIX_TODO.md`
@@ -338,12 +339,7 @@ What is already clear:
   supplies, and runtime state are being split from legacy bot code.
 - Capabilities should expose safe commands/results.
 
-Missing package docs:
-
-- `CAPABILITY_RUNTIME_DESIGN_SPECIFICATION.md`
-- `CAPABILITY_RUNTIME_TECHNICAL_SPECIFICATION.md`
-
-Needs definition:
+Defined:
 
 - common command/result model.
 - capability lifecycle.
@@ -361,10 +357,12 @@ agent-capability-runtime
 
 ### 9. NPC / Quest Interaction Capability Package
 
-Status: partially defined.
+Status: well defined.
 
 Existing docs:
 
+- `docs/agents/npc-quest-capability/NPC_QUEST_CAPABILITY_DESIGN_SPECIFICATION.md`
+- `docs/agents/npc-quest-capability/NPC_QUEST_CAPABILITY_TECHNICAL_SPECIFICATION.md`
 - `docs/agents/NPC_CAPABILITY_PLAN.md`
 - `docs/agents/NPC_CATALOG_INTEGRATION_CONTRACT.md`
 - `docs/agents/MAPLE_ISLAND_CAPABILITY_COMPLETION_PLAN.md`
@@ -375,12 +373,7 @@ What is already clear:
 - Runtime must validate level, prequests, items, NPC range, and map.
 - NPC realism should be optional for fast tests.
 
-Missing package docs:
-
-- `NPC_QUEST_CAPABILITY_DESIGN_SPECIFICATION.md`
-- `NPC_QUEST_CAPABILITY_TECHNICAL_SPECIFICATION.md`
-
-Needs definition:
+Defined:
 
 - quest start/complete API.
 - validation-only dry run.
@@ -397,7 +390,53 @@ Recommended package:
 agent-npc-quest-capability
 ```
 
-### 10. Interaction Realism Package
+### 10. Runtime Event Bus
+
+Status: well defined.
+
+Primary docs:
+
+- `docs/agents/event-bus/AGENT_EVENT_BUS_DESIGN_SPECIFICATION.md`
+- `docs/agents/event-bus/AGENT_EVENT_BUS_TECHNICAL_SPECIFICATION.md`
+
+Purpose:
+
+- Decouple plan runtime, capability runtime, profile adaptation, economy,
+  observability, LLM summaries, soak tests, and server adapter events.
+- Provide bounded queues, priority classes, backpressure, durable append, and
+  replay without storing raw Cosmic object references.
+
+Owns:
+
+- event envelope.
+- publish/subscribe API.
+- bounded queues.
+- consumer budgets.
+- drop/compact policy.
+- durable append and replay contract.
+- event bus diagnostics.
+
+Does not own:
+
+- plan state.
+- capability execution.
+- profile adaptation rules.
+- economy valuation.
+- LLM calls.
+- server mutation.
+
+Implementation focus:
+
+1. event envelope and priority queues.
+2. bounded subscriptions and consumer budgets.
+3. durable append interface.
+4. replay query API.
+5. diagnostics snapshot.
+6. integration with Plan Runtime and Capability Runtime.
+
+## Partially Defined Packages
+
+### 11. Interaction Realism Package
 
 Status: policy defined, package not yet defined.
 
@@ -433,7 +472,7 @@ Recommended package:
 agent-interaction-realism
 ```
 
-### 11. Agent Engine Optimization Package
+### 12. Agent Engine Optimization Package
 
 Status: strategy defined, package not yet defined.
 
@@ -470,7 +509,7 @@ Recommended package:
 agent-simulation-tier-runtime
 ```
 
-### 12. LLM Control Gateway Package
+### 13. LLM Control Gateway Package
 
 Status: contract defined, technical package not fully defined.
 
@@ -510,7 +549,7 @@ Recommended package:
 agent-llm-gateway
 ```
 
-### 13. Perception / Memory Package
+### 14. Perception / Memory Package
 
 Status: schema exists, package not fully defined.
 
@@ -544,7 +583,7 @@ Recommended package:
 agent-perception-runtime
 ```
 
-### 14. Quest / Combat Focus Policy Package
+### 15. Quest / Combat Focus Policy Package
 
 Status: policy defined, package not fully defined.
 
@@ -583,7 +622,7 @@ agent-quest-objective-policy
 
 ## Backlog Packages To Promote
 
-### 15. Agent Population Director
+### 16. Agent Population Director
 
 Status: discussed, not yet packaged.
 
@@ -609,7 +648,7 @@ Recommended package:
 agent-population-director
 ```
 
-### 16. Relationship / Social Graph Runtime
+### 17. Relationship / Social Graph Runtime
 
 Status: included inside profile docs, but may deserve its own package later.
 
@@ -634,7 +673,7 @@ Potential package:
 agent-social-relationship-runtime
 ```
 
-### 17. Recovery / Survival Policy
+### 18. Recovery / Survival Policy
 
 Status: mentioned in Maple Island and capability docs, not packaged.
 
@@ -659,7 +698,7 @@ Recommended package:
 agent-recovery-policy
 ```
 
-### 18. Agent Observability / Diagnostics
+### 19. Agent Observability / Diagnostics
 
 Status: scattered across docs, not packaged.
 
@@ -682,31 +721,6 @@ Recommended package:
 
 ```text
 agent-observability
-```
-
-### 19. Runtime Event Bus
-
-Status: implied by profile adaptation, economy, plan, and capability docs.
-
-Purpose:
-
-- Provide a portable event channel between capabilities, plan runtime,
-  profile adaptation, economy, diagnostics, and server adapter.
-
-Why useful:
-
-- Avoids coupling packages directly to each other.
-- Makes replay, audit, and learning possible.
-
-Suggested docs:
-
-- `AGENT_EVENT_BUS_DESIGN_SPECIFICATION.md`
-- `AGENT_EVENT_BUS_TECHNICAL_SPECIFICATION.md`
-
-Recommended package:
-
-```text
-agent-event-bus
 ```
 
 ### 20. Portable Installer / Patcher
@@ -897,23 +911,21 @@ Reasoning:
 
 Highest priority:
 
-1. Plan Runtime design + technical specs.
-2. Capability Runtime design + technical specs.
-3. NPC Quest Capability design + technical specs.
-4. Runtime Event Bus design + technical specs.
-5. Recovery Policy design + technical specs.
+1. Recovery Policy design + technical specs.
+2. Agent Observability design + technical specs.
+3. Interaction Realism design + technical specs.
+4. Simulation Tier Runtime design + technical specs.
+5. Perception Runtime design + technical specs.
 
 Second priority:
 
-1. Interaction Realism design + technical specs.
-2. Agent Observability design + technical specs.
-3. Simulation Tier Runtime design + technical specs.
-4. Perception Runtime design + technical specs.
-5. Background Action Runtime design + technical specs.
-6. Agent Soak Test Harness command/runner spec.
+1. Background Action Runtime design + technical specs.
+2. Agent Soak Test Harness command/runner spec.
+3. LLM Gateway design + technical specs.
+4. Population Director design + technical specs.
+5. Portable Installer technical spec.
 
 Later:
 
-1. LLM Gateway design + technical specs.
-2. Population Director design + technical specs.
-3. Portable Installer technical spec.
+1. Relationship / Social Graph split-out spec if profile package grows large.
+2. Advanced full-game quest objective policy specs after Maple Island MVP.

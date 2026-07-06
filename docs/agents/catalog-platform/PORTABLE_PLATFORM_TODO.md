@@ -4,6 +4,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
 
 ## Documentation Contracts
 
+- [x] Pre-reconstruction safe prep readiness map.
 - [x] Catalog platform architecture.
 - [x] Catalog bundle spec.
 - [x] Catalog query API.
@@ -19,6 +20,14 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Layman Agent engine vision and reconstruction overview.
 - [x] Server adapter contract.
 - [x] Minimal Cosmic edit install target.
+- [x] Plan Runtime design specification.
+- [x] Plan Runtime technical specification.
+- [x] Capability Runtime design specification.
+- [x] Capability Runtime technical specification.
+- [x] NPC Quest Capability design specification.
+- [x] NPC Quest Capability technical specification.
+- [x] Agent Event Bus design specification.
+- [x] Agent Event Bus technical specification.
 
 ## Builder Work
 
@@ -108,6 +117,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Document Plan Card system contract.
 - [x] Document Maple Island MVP implementation plan.
 - [x] Document Maple Island capability 100% completion plan.
+- [x] Define Plan Runtime design and technical specifications.
 - [ ] Define Plan Card JSON schema files.
 - [ ] Add plan bundle format for reusable plans.
 - [ ] Add plan objective dependency graph model.
