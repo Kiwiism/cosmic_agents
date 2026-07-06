@@ -191,7 +191,7 @@ class AgentDeathTickServiceTest {
         private final AtomicInteger deadEntries = new AtomicInteger();
         private final AtomicInteger respawns = new AtomicInteger();
 
-        private void enterDead(BotEntry entry, Character agent) {
+        private void enterDead(AgentRuntimeEntry entry, Character agent) {
             deadEntries.incrementAndGet();
             AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         }

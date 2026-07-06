@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotDeathStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -14,8 +13,8 @@ public final class AgentDeathTickService {
     public record RespawnHooks(ChangeMapNearLeader changeMapNearLeader,
                                GroundPointResolver groundPointResolver,
                                TeleportToPoint teleportToPoint,
-                               BiConsumer<BotEntry, Character> resetEntryStateAfterTeleport,
-                               BiConsumer<BotEntry, Character> broadcastMovement,
+                               BiConsumer<AgentRuntimeEntry, Character> resetEntryStateAfterTeleport,
+                               BiConsumer<AgentRuntimeEntry, Character> broadcastMovement,
                                BiConsumer<Character, String> mapSpeaker) {
     }
 
@@ -31,16 +30,16 @@ public final class AgentDeathTickService {
 
     @FunctionalInterface
     public interface TeleportToPoint {
-        void teleport(BotEntry entry, Character agent, Point point);
+        void teleport(AgentRuntimeEntry entry, Character agent, Point point);
     }
 
     private AgentDeathTickService() {
     }
 
-    public static boolean handleDeadTick(BotEntry entry,
+    public static boolean handleDeadTick(AgentRuntimeEntry entry,
                                          Character agent,
                                          BooleanSupplier shouldEnterDeadState,
-                                         BiConsumer<BotEntry, Character> enterDeadState,
+                                         BiConsumer<AgentRuntimeEntry, Character> enterDeadState,
                                          Runnable respawnAction,
                                          long nowMs) {
         if (shouldEnterDeadState.getAsBoolean()) {
@@ -55,7 +54,7 @@ public final class AgentDeathTickService {
         return true;
     }
 
-    public static void respawnNearLeader(BotEntry entry, Character agent, Character leader, RespawnHooks hooks) {
+    public static void respawnNearLeader(AgentRuntimeEntry entry, Character agent, Character leader, RespawnHooks hooks) {
         AgentBotDeathStateRuntime.clear(entry);
         agent.updateHp(agent.getMaxHp());
 

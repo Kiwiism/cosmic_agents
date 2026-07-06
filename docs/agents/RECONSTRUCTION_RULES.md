@@ -5045,6 +5045,10 @@ Current physics correction:
 - Ownerless tick handling now accepts `AgentRuntimeEntry`; follow-mode clearing,
   map-change grounding short-circuit, standalone move-target ticking, and idle
   fallback behavior are unchanged.
+- Death tick and respawn-near-leader handling now accept `AgentRuntimeEntry`;
+  dead-state entry checks, respawn timing, HP restore, map-change, grounding,
+  teleport, reset, movement broadcast, map speech, and glare emote behavior are
+  unchanged.
 
 Initial reconstruction order:
 

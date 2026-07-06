@@ -23,9 +23,16 @@ public final class AgentRespawnRuntime {
                         (respawnAgent, leaderMap, leaderPosition) ->
                                 respawnAgent.forceChangeMap(leaderMap, leaderMap.findClosestPortal(leaderPosition)),
                         MapleMap::getPointBelow,
-                        AgentMovementPoseService::teleportTo,
-                        (respawnEntry, ignoredAgent) -> AgentMovementStateResetService.resetEntryStateAfterTeleport(respawnEntry),
-                        (respawnEntry, ignoredAgent) -> AgentMovementBroadcastService.broadcastMovement(respawnEntry),
+                        (respawnEntry, respawnAgent, point) ->
+                                AgentMovementPoseService.teleportTo(asBotEntry(respawnEntry), respawnAgent, point),
+                        (respawnEntry, ignoredAgent) ->
+                                AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(respawnEntry)),
+                        (respawnEntry, ignoredAgent) ->
+                                AgentMovementBroadcastService.broadcastMovement(respawnEntry),
                         AgentBotReplyRuntime::sayMapNow));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

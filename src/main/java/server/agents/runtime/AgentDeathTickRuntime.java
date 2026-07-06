@@ -23,7 +23,7 @@ public final class AgentDeathTickRuntime {
                 agent,
                 () -> AgentBotDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
                 (deadEntry, deadAgent) -> AgentBotCombatDeathRuntime.enterDeadState(
-                        deadEntry, deadAgent, false, AgentCombatConfig.cfg),
+                        asBotEntry(deadEntry), deadAgent, false, AgentCombatConfig.cfg),
                 () -> AgentRespawnRuntime.respawnNearLeader(entry, agent, leader),
                 System::currentTimeMillis);
     }
@@ -31,7 +31,7 @@ public final class AgentDeathTickRuntime {
     static boolean handleDeadTick(BotEntry entry,
                                   Character agent,
                                   BooleanSupplier shouldEnterDeadState,
-                                  BiConsumer<BotEntry, Character> enterDeadState,
+                                  BiConsumer<AgentRuntimeEntry, Character> enterDeadState,
                                   Runnable respawnAction,
                                   LongSupplier nowMs) {
         return AgentDeathTickService.handleDeadTick(
@@ -41,5 +41,9 @@ public final class AgentDeathTickRuntime {
                 enterDeadState,
                 respawnAction,
                 nowMs.getAsLong());
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }
