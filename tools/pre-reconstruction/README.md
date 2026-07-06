@@ -26,6 +26,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\pre-reconstruction\Test-PreReco
 ## What It Checks
 
 - required safe-prep docs exist.
+- baseline soak runbook exists.
 - required package specs exist.
 - Maple Island MVP handoff, sequence, and plan card exist.
 - catalog, profile, economy, scaling, server adapter, console, and review docs

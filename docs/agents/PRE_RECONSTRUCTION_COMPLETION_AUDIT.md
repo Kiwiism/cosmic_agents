@@ -40,6 +40,7 @@ Before reconstruction is stable:
 | Nutnnut-over-Cosmic review | Ready as decision record | `docs/NUTNNUT_OVER_COSMIC_REVIEW.md`, `docs/COSMIC_REVERT_REVIEW.md` | Apply only explicit approved reversions. |
 | Reusable goal prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse for future safe-prep continuation threads. |
 | Prep artifact verifier | Ready as local tooling | `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1` | Run after safe-prep batches and before claiming artifact readiness. |
+| Baseline soak runbook | Ready as operator guide | `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md` | Use to collect the missing server-baseline runtime evidence. |
 
 ## Package Evidence
 
@@ -123,6 +124,10 @@ Scaffold command:
 
 The scaffold only creates local evidence files and templates. It does not start
 the server, change config, or modify runtime behavior.
+
+Operator runbook:
+
+- `docs/agents/PRE_RECONSTRUCTION_BASELINE_SOAK_RUNBOOK.md`
 
 Verification command after filling the run folder:
 
