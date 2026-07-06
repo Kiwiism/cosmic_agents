@@ -5039,6 +5039,9 @@ Current physics correction:
 - Tick preflight now accepts `AgentRuntimeEntry`; null handling, airshow
   skip, movement-delay skip, missing-map cleanup, heartbeat, offer expiry, and
   AI tick preparation ordering are unchanged.
+- Trade-window tick gating now accepts `AgentRuntimeEntry`; open-trade
+  detection, physics-only tick dispatch, and consumed-tick behavior are
+  unchanged.
 
 Initial reconstruction order:
 
