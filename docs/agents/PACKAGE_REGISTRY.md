@@ -903,44 +903,59 @@ Implementation focus:
 6. add uninstall/update flows.
 7. add golden file tests and clean-clone compile verification.
 
-## Partially Defined Packages
-
 ### 21. Quest / Combat Focus Policy Package
 
-Status: policy defined, package not fully defined.
+Status: well defined.
+
+Purpose:
+
+- Keep Agents focused on active quest objectives while allowing bounded,
+  explainable tactical choices in mixed-mob maps.
+- Define deterministic first-run behavior for Maple Island MVP.
+- Define adaptive spawn-pressure and future-loot policies for later
+  production-like behavior.
 
 Existing docs:
 
 - `docs/agents/QUEST_FOCUS_AND_COMBAT_POLICY.md`
 - `docs/agents/MAPLE_ISLAND_CAPABILITY_COMPLETION_PLAN.md`
+- `docs/agents/quest-objective-policy/QUEST_OBJECTIVE_POLICY_DESIGN_SPECIFICATION.md`
+- `docs/agents/quest-objective-policy/QUEST_OBJECTIVE_POLICY_TECHNICAL_SPECIFICATION.md`
 
-What is already clear:
+Owns:
 
-- Agents may focus on objective mobs but should kill other mobs when target
-  spawn is depleted.
-- Other mobs with relevant future quest loot can be prioritized.
-- Recovery and postpone logic should be profile-aware.
+- objective focus policy.
+- objective exit criteria evaluation.
+- spawn-pressure detection.
+- bounded filler target recommendations.
+- future quest loot policy.
+- tactical target scoring.
+- quest objective reason codes.
+- tactical audit events.
 
-Missing package docs:
+Does not own:
 
-- `QUEST_OBJECTIVE_POLICY_DESIGN_SPECIFICATION.md`
-- `QUEST_OBJECTIVE_POLICY_TECHNICAL_SPECIFICATION.md`
+- combat execution.
+- loot execution.
+- navigation execution.
+- quest start/complete execution.
+- global plan selection.
+- recovery execution.
+- live Agent runtime mutation.
 
-Needs definition:
+Implementation focus:
 
-- objective focus state.
-- mob spawn-pressure policy.
-- preloot policy.
-- quest item target policy.
-- combat target scoring.
-- fallback/postpone reasons.
-- catalog dependencies.
+1. add objective focus state model.
+2. add deterministic policy mode for Maple Island MVP.
+3. add exit criteria evaluator using live state.
+4. add spawn-pressure evaluator.
+5. add future quest loot evaluator.
+6. add filler mob scorer and burst limit.
+7. add reason codes and audit events.
 
-Recommended package:
+## Partially Defined Packages
 
-```text
-agent-quest-objective-policy
-```
+No dedicated packages currently remain in this bucket.
 
 ## Backlog Packages To Promote
 
@@ -1024,8 +1039,7 @@ Reasoning:
 
 Highest priority:
 
-1. Quest Objective Policy design + technical specs.
-2. Relationship / Social Graph split-out spec if profile package grows large.
+1. Relationship / Social Graph split-out spec if profile package grows large.
 
 Second priority:
 

@@ -48,6 +48,8 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [x] Agent Population Director design specification.
 - [x] Agent Population Director technical specification.
 - [x] Portable Installer technical specification.
+- [x] Quest Objective Policy design specification.
+- [x] Quest Objective Policy technical specification.
 
 ## Builder Work
 
@@ -189,6 +191,7 @@ This TODO tracks the future portable Agent Knowledge Platform.
 - [ ] Add objective focus state and exit criteria model.
 - [ ] Add quest combat spawn-pressure target policy.
 - [ ] Add future quest loot/preloot policy.
+- [x] Document Quest Objective Policy design and technical specifications.
 - [ ] Add reactor objective capability and catalog lookup.
 - [ ] Add jump-quest navigation graph support.
 - [ ] Add basic RecoveryCapability retry/block policy.

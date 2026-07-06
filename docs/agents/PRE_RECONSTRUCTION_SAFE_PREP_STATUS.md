@@ -150,10 +150,11 @@ Well-defined packages:
 - LLM Control Gateway Package.
 - Agent Population Director.
 - Portable Installer / Patcher.
+- Quest / Combat Focus Policy Package.
 
 Partially defined packages that need specs before implementation:
 
-- Quest / Combat Focus Policy Package.
+- None currently identified.
 
 Backlog packages to promote:
 
@@ -182,8 +183,9 @@ Required result:
 
 Highest value before reconstruction finishes:
 
-1. Write Quest Objective Policy design and technical specs.
-2. Keep server-only diagnostics stable and collect soak evidence.
+1. Keep server-only diagnostics stable and collect soak evidence.
+2. Split Relationship / Social Graph into a dedicated package if Profile
+   Platform grows large enough to need it.
 
 Do not start implementation of Agent gameplay packages until the reconstruction
 has stable entry points and the relevant package spec exists.
