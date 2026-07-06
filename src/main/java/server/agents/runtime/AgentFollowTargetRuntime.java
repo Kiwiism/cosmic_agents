@@ -43,12 +43,12 @@ public final class AgentFollowTargetRuntime {
                 new AgentFollowTargetCommandService.Hooks(
                         AgentFollowTargetRuntime::resolveFollowTarget,
                         AgentFollowTargetRuntime::followTargetReply,
-                        AgentBotReplyRuntime::queueReply,
+                        (entry, reply) -> AgentBotReplyRuntime.queueReply(asBotEntry(entry), reply),
                         () -> AgentRandom.randMs(250, 750),
                         AgentBotSchedulerRuntime::afterDelay,
                         AgentFollowTargetRuntime::autoEquipForFollow,
                         AgentFollowTargetRuntime::checkPotShareForFollow,
-                        AgentBotMovementCommandRuntime::follow));
+                        (entry, target) -> AgentBotMovementCommandRuntime.follow(asBotEntry(entry), target)));
     }
 
     private static String followTargetReply(Character target) {
@@ -62,16 +62,20 @@ public final class AgentFollowTargetRuntime {
                 "ok, following " + target.getName()));
     }
 
-    private static void autoEquipForFollow(BotEntry entry) {
+    private static void autoEquipForFollow(AgentRuntimeEntry entry) {
         AgentEquipmentService.autoEquip(
                 AgentBotRuntimeIdentityRuntime.bot(entry),
                 AgentBotRuntimeIdentityRuntime.owner(entry),
                 AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
-    private static void checkPotShareForFollow(BotEntry entry) {
+    private static void checkPotShareForFollow(AgentRuntimeEntry entry) {
         AgentPotionService.checkPotShareOnModeStart(
-                entry,
+                asBotEntry(entry),
                 AgentBotRuntimeIdentityRuntime.bot(entry));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

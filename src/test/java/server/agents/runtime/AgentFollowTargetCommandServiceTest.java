@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,8 @@ class AgentFollowTargetCommandServiceTest {
         Character leader = character(1, "Leader");
         Character target = character(2, "Target");
         Character agent = character(3, "Agent");
-        BotEntry selfTarget = entry(target, leader);
-        BotEntry valid = entry(agent, leader);
+        AgentRuntimeEntry selfTarget = entry(target, leader);
+        AgentRuntimeEntry valid = entry(agent, leader);
         List<String> calls = new ArrayList<>();
 
         boolean handled = AgentFollowTargetCommandService.applyFollowTargetCommand(
@@ -56,8 +55,8 @@ class AgentFollowTargetCommandServiceTest {
     void appliesLegacyOrderToEachValidEntry() {
         Character leader = character(1, "Leader");
         Character target = character(2, "Target");
-        BotEntry first = entry(character(3, "Alpha"), leader);
-        BotEntry second = entry(character(4, "Beta"), leader);
+        AgentRuntimeEntry first = entry(character(3, "Alpha"), leader);
+        AgentRuntimeEntry second = entry(character(4, "Beta"), leader);
         List<String> calls = new ArrayList<>();
 
         boolean handled = AgentFollowTargetCommandService.applyFollowTargetCommand(
@@ -99,8 +98,8 @@ class AgentFollowTargetCommandServiceTest {
                 (entry, followTarget) -> calls.add("follow:" + entry.bot().getName() + ":" + followTarget.getName()));
     }
 
-    private static BotEntry entry(Character bot, Character leader) {
-        return new BotEntry(bot, leader, null);
+    private static AgentRuntimeEntry entry(Character bot, Character leader) {
+        return new AgentRuntimeEntry(bot, leader, null);
     }
 
     private static Character character(int id, String name) {

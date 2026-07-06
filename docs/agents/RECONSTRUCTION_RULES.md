@@ -5068,6 +5068,10 @@ Current physics correction:
 - Cross-map follow synchronization now accepts `AgentRuntimeEntry`; follow-mode
   gating, same-map/null-anchor skip behavior, grounded anchor spawn selection,
   idle-on-ground, map change, and movement reset side effects are unchanged.
+- Follow-target command application now accepts `AgentRuntimeEntry` collections;
+  target resolution, null/missing/self-target filtering, reply queuing, delay
+  scheduling, auto-equip, potion sharing, and follow-start ordering are
+  unchanged.
 
 Initial reconstruction order:
 

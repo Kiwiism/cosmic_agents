@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.function.LongSupplier;
@@ -33,7 +32,7 @@ public final class AgentFollowTargetCommandService {
 
     @FunctionalInterface
     public interface AgentReplyQueue {
-        void queue(BotEntry entry, String reply);
+        void queue(AgentRuntimeEntry entry, String reply);
     }
 
     @FunctionalInterface
@@ -43,21 +42,21 @@ public final class AgentFollowTargetCommandService {
 
     @FunctionalInterface
     public interface AgentAutoEquip {
-        void autoEquip(BotEntry entry);
+        void autoEquip(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface PotionShareCheck {
-        void check(BotEntry entry);
+        void check(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface FollowStarter {
-        void start(BotEntry entry, Character target);
+        void start(AgentRuntimeEntry entry, Character target);
     }
 
     public static boolean applyFollowTargetCommand(Character leader,
-                                                   List<BotEntry> entries,
+                                                   List<? extends AgentRuntimeEntry> entries,
                                                    String targetToken,
                                                    Hooks hooks) {
         Character target = hooks.followTargetResolver().resolve(leader, targetToken);
@@ -65,7 +64,7 @@ public final class AgentFollowTargetCommandService {
             return true;
         }
 
-        for (BotEntry entry : entries) {
+        for (AgentRuntimeEntry entry : entries) {
             if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
                     || AgentBotRuntimeIdentityRuntime.botIs(entry, target.getId())) {
                 continue;
