@@ -181,6 +181,7 @@ Before committing:
 powershell -ExecutionPolicy Bypass -File .\tools\pre-reconstruction\Test-PreReconstructionPrep.ps1
 git status --short
 git diff --check
+git diff --name-only -- src/main/java/server/agents src/main/java/server/bots src/test/java/server/agents src/test/java/server/bots config.yaml src/main/resources/config.yaml
 git diff --cached --name-only -- src/main/java/server/agents src/main/java/server/bots src/test/java/server/agents src/test/java/server/bots
 git diff --cached --name-only -- config.yaml src/main/resources/config.yaml
 .\mvnw.cmd -DskipTests clean compile

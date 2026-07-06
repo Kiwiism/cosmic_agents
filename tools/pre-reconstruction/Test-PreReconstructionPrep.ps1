@@ -22,8 +22,16 @@ function Add-Check {
 function Get-GitOutput {
     param([string[]] $Arguments)
 
-    $output = & git @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = & git @Arguments 2>&1
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+
+    if ($exitCode -ne 0) {
         throw "git $($Arguments -join ' ') failed: $output"
     }
 
@@ -141,6 +149,8 @@ foreach ($path in $stagedForbiddenPaths) {
 $unstagedForbiddenPaths = @(
     "src/main/java/server/agents",
     "src/main/java/server/bots",
+    "src/test/java/server/agents",
+    "src/test/java/server/bots",
     "config.yaml",
     "src/main/resources/config.yaml"
 )

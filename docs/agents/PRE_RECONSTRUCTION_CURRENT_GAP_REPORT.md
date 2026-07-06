@@ -13,9 +13,9 @@ Snapshot time:
 2026-07-07 05:00:03 +08:00
 ```
 
-## Current Result
+## Baseline Safe-Prep Result
 
-The safe-prep artifact and scope verifier currently reports:
+At the last clean safe-prep snapshot, the artifact and scope verifier reported:
 
 ```text
 Pre-reconstruction prep verification: INCOMPLETE
@@ -23,16 +23,20 @@ Failures: 0
 Warnings: 1
 ```
 
-The warning is expected at this stage:
+That warning is expected at this stage:
 
 ```text
 Baseline evidence root exists but has no run folders.
 ```
 
 This means the documentation, package specs, guardrails, and verifier tooling
-are present, and there are no verifier-detected forbidden staged or unstaged
-changes under live Agent/Bot source paths or config files. The remaining proof
-gap is actual runtime evidence from an intentional baseline server soak run.
+are present. The remaining proof gap is actual runtime evidence from an
+intentional baseline server soak run.
+
+Future verifier runs may report additional warnings if unrelated reconstruction
+work is dirty in the worktree, especially under `src/test/java/server/agents`
+or other Agent/Bot paths. Those warnings should be resolved, isolated, or
+explicitly excluded from any safe-prep commit before claiming completion.
 
 ## What Is Complete Enough For Handoff
 
