@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -10,12 +9,12 @@ public final class AgentHeartbeatService {
     private AgentHeartbeatService() {
     }
 
-    public static boolean tickHeartbeat(BotEntry entry,
+    public static boolean tickHeartbeat(AgentRuntimeEntry entry,
                                         Character agent,
                                         long nowMs,
                                         long intervalMs,
                                         Consumer<Character> lastPacketUpdater,
-                                        Consumer<BotEntry> movementBroadcaster) {
+                                        Consumer<AgentRuntimeEntry> movementBroadcaster) {
         if (!AgentBotTickStateRuntime.heartbeatDue(entry, nowMs, intervalMs)) {
             return false;
         }

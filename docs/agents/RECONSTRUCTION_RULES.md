@@ -4996,6 +4996,9 @@ Current physics correction:
 - Script task queue operations now accept `AgentRuntimeEntry`; null guards,
   activity-epoch bumps, queue ordering, move/drop/follow task construction, and
   queued-task checks are unchanged.
+- Heartbeat ticking now accepts `AgentRuntimeEntry`; heartbeat due checks,
+  timestamp marking, client last-packet updates, and movement broadcast side
+  effects are unchanged.
 
 Initial reconstruction order:
 
