@@ -5065,6 +5065,9 @@ Current physics correction:
   distance checks, out-of-bounds checks, grind-party constraints, shop-visit
   suppression, multiplier math, grounding lookup, teleport/reset, and movement
   broadcast side effects are unchanged.
+- Cross-map follow synchronization now accepts `AgentRuntimeEntry`; follow-mode
+  gating, same-map/null-anchor skip behavior, grounded anchor spawn selection,
+  idle-on-ground, map change, and movement reset side effects are unchanged.
 
 Initial reconstruction order:
 

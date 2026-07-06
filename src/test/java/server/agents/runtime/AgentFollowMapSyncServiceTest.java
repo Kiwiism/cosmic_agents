@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -24,7 +23,7 @@ class AgentFollowMapSyncServiceTest {
         MapleMap anchorMap = map(200000000);
         Character agent = character(agentMap, 100000000, new Point(10, 10));
         Character anchor = character(anchorMap, 200000000, new Point(20, 30));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         Counters counters = new Counters(null);
 
         boolean synced = AgentFollowMapSyncService.syncFollowMap(entry, agent, anchor, hooks(counters));
@@ -38,7 +37,7 @@ class AgentFollowMapSyncServiceTest {
         MapleMap map = map(100000000);
         Character agent = character(map, 100000000, new Point(10, 10));
         Character anchor = character(map, 100000000, new Point(20, 30));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         Counters counters = new Counters(null);
 
@@ -53,7 +52,7 @@ class AgentFollowMapSyncServiceTest {
         MapleMap anchorMap = map(200000000);
         Character agent = character(agentMap, 100000000, new Point(10, 10));
         Character anchor = character(anchorMap, 200000000, new Point(20, 30));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         Point ground = new Point(21, 29);
         Counters counters = new Counters(ground);
@@ -74,7 +73,7 @@ class AgentFollowMapSyncServiceTest {
         Character agent = character(agentMap, 100000000, new Point(10, 10));
         Point anchorPosition = new Point(20, 30);
         Character anchor = character(anchorMap, 200000000, anchorPosition);
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         Counters counters = new Counters(null);
 
@@ -101,8 +100,8 @@ class AgentFollowMapSyncServiceTest {
                 entry -> counters.resets.incrementAndGet());
     }
 
-    private static BotEntry entry(Character agent) {
-        return new BotEntry(agent, mock(Character.class), null);
+    private static AgentRuntimeEntry entry(Character agent) {
+        return new AgentRuntimeEntry(agent, mock(Character.class), null);
     }
 
     private static Character character(MapleMap map, int mapId, Point position) {

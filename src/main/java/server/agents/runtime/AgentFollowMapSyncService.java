@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -20,15 +19,15 @@ public final class AgentFollowMapSyncService {
     }
 
     public record FollowMapSyncHooks(BiFunction<MapleMap, Point, Point> groundPointFinder,
-                                     BiConsumer<BotEntry, Character> idleOnGround,
+                                     BiConsumer<AgentRuntimeEntry, Character> idleOnGround,
                                      ChangeMapAction changeMap,
-                                     Consumer<BotEntry> resetEntryState) {
+                                     Consumer<AgentRuntimeEntry> resetEntryState) {
     }
 
     private AgentFollowMapSyncService() {
     }
 
-    public static boolean syncFollowMap(BotEntry entry,
+    public static boolean syncFollowMap(AgentRuntimeEntry entry,
                                         Character agent,
                                         Character followAnchor,
                                         FollowMapSyncHooks hooks) {

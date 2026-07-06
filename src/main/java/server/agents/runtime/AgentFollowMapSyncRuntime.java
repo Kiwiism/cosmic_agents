@@ -18,8 +18,12 @@ public final class AgentFollowMapSyncRuntime {
                 followAnchor,
                 new AgentFollowMapSyncService.FollowMapSyncHooks(
                         AgentGroundingService::findGroundPoint,
-                        AgentMovementPoseService::idleOnGround,
+                        (hookEntry, hookAgent) -> AgentMovementPoseService.idleOnGround(asBotEntry(hookEntry), hookAgent),
                         Character::changeMap,
-                        AgentMovementStateResetService::resetEntryState));
+                        hookEntry -> AgentMovementStateResetService.resetEntryState(asBotEntry(hookEntry))));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }
