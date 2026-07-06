@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -25,7 +25,7 @@ public final class AgentGrindTargetCommitmentService {
 
     @FunctionalInterface
     public interface RangedPriorityTargetSelector {
-        Monster select(BotEntry entry, Character agent, Point agentPosition, Monster preferredTarget);
+        Monster select(AgentRuntimeEntry entry, Character agent, Point agentPosition, Monster preferredTarget);
     }
 
     @FunctionalInterface
@@ -33,7 +33,7 @@ public final class AgentGrindTargetCommitmentService {
         Monster find(Character agent, Point agentPosition, Point targetPosition);
     }
 
-    public static Result commitTarget(BotEntry entry,
+    public static Result commitTarget(AgentRuntimeEntry entry,
                                       Character agent,
                                       Point agentPosition,
                                       Monster target,

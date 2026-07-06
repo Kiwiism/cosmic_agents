@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -17,7 +17,7 @@ class AgentGrindTargetCommitmentServiceTest {
     @Test
     void commitsInitialTargetWhenNoReplacementExists() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(100, 100);
         AgentAttackPlan plan = mock(AgentAttackPlan.class);
 
@@ -40,7 +40,7 @@ class AgentGrindTargetCommitmentServiceTest {
     @Test
     void rangedPriorityTargetReplacesTargetAndInvalidatesPlan() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(100, 100);
         Monster priority = monsterAt(200, 100);
         AgentAttackPlan plan = mock(AgentAttackPlan.class);
@@ -64,7 +64,7 @@ class AgentGrindTargetCommitmentServiceTest {
     @Test
     void closerThreatReplacesTargetOnlyWhenNoRangedPriorityWasSelected() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster target = monsterAt(100, 100);
         Monster closerThreat = monsterAt(50, 100);
         AgentAttackPlan plan = mock(AgentAttackPlan.class);

@@ -5158,6 +5158,10 @@ Current physics correction:
 - Grind navigation-tail service now accepts `AgentRuntimeEntry`; cross-region
   retreat precedence, AoE reposition navigation, degenerate-attack latch
   clearing, patrol gating, and convenient-loot override behavior are unchanged.
+- Grind target-commitment service now accepts `AgentRuntimeEntry`; target
+  commit, wander/patrol cleanup, ranged-priority replacement, closer threat
+  replacement, target-position propagation, and attack-plan invalidation are
+  unchanged.
 
 Initial reconstruction order:
 

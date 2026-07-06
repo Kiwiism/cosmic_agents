@@ -141,6 +141,11 @@ Recent map updates:
   latch clearing, patrol gating, and convenient-loot override behavior remain
   unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
   selector adapter.
+- `AgentGrindTargetCommitmentService` now accepts `AgentRuntimeEntry`.
+  Target commit, wander/patrol cleanup, ranged-priority replacement, closer
+  threat replacement, target-position propagation, and attack-plan invalidation
+  remain unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  ranged-priority adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
