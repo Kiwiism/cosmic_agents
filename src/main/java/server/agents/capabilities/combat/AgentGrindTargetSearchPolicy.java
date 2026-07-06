@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 /**
@@ -13,7 +13,7 @@ public final class AgentGrindTargetSearchPolicy {
     private AgentGrindTargetSearchPolicy() {
     }
 
-    public static boolean shouldSearchForGrindTarget(BotEntry entry,
+    public static boolean shouldSearchForGrindTarget(AgentRuntimeEntry entry,
                                                      Character agent,
                                                      Monster currentTarget,
                                                      AgentAttackPlan currentAttackPlan,
@@ -49,7 +49,7 @@ public final class AgentGrindTargetSearchPolicy {
      * an in-range target, only switches if the searched target anchors a strictly larger AoE cluster
      * to prevent flip-flop between near-equal targets.
      */
-    public static boolean shouldSwitchToSearchedTarget(BotEntry entry,
+    public static boolean shouldSwitchToSearchedTarget(AgentRuntimeEntry entry,
                                                        Character agent,
                                                        Monster current,
                                                        Monster searched,

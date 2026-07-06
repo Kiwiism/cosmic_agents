@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 public final class AgentGrindTargetSearchService {
@@ -20,10 +20,10 @@ public final class AgentGrindTargetSearchService {
 
     @FunctionalInterface
     public interface TargetFinder {
-        Monster find(BotEntry entry, Character agent);
+        Monster find(AgentRuntimeEntry entry, Character agent);
     }
 
-    public static SearchResult searchIfDue(BotEntry entry,
+    public static SearchResult searchIfDue(AgentRuntimeEntry entry,
                                            Character agent,
                                            Monster currentTarget,
                                            AgentAttackPlan currentAttackPlan,

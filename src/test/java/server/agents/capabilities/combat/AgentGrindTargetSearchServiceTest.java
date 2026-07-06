@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotGrindSearchStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.mock;
 class AgentGrindTargetSearchServiceTest {
     @Test
     void keepsCurrentTargetAndPlanWhenAiTickIsNotDue() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Monster current = mock(Monster.class);
         AgentAttackPlan plan = mock(AgentAttackPlan.class);
@@ -39,7 +39,7 @@ class AgentGrindTargetSearchServiceTest {
 
     @Test
     void adoptsSearchedTargetAndInvalidatesPlanWhenCurrentTargetIsMissing() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Monster searched = mock(Monster.class);
         AtomicInteger searches = new AtomicInteger();

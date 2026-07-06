@@ -68,8 +68,10 @@ public final class AgentGrindModeRuntime {
 
     private static AgentGrindTargetSearchService.SearchHooks grindTargetSearchHooks() {
         return new AgentGrindTargetSearchService.SearchHooks(
-                (entry, agent) -> AgentBotCombatTargetRuntime.findPatrolTarget(entry, agent, AgentCombatConfig.cfg),
-                (entry, agent) -> AgentBotCombatTargetRuntime.findGrindTarget(entry, agent, AgentCombatConfig.cfg),
+                (entry, agent) -> AgentBotCombatTargetRuntime.findPatrolTarget(
+                        asBotEntry(entry), agent, AgentCombatConfig.cfg),
+                (entry, agent) -> AgentBotCombatTargetRuntime.findGrindTarget(
+                        asBotEntry(entry), agent, AgentCombatConfig.cfg),
                 AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
     }
 

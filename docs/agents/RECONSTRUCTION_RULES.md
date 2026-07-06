@@ -5152,6 +5152,9 @@ Current physics correction:
 - Grind no-target fallback service now accepts `AgentRuntimeEntry`; target
   clearing, swim/airborne fall-through, wander-direction side effects,
   patrol/no-grind target resolution, and movement-step dispatch are unchanged.
+- Grind target-search service and policy now accept `AgentRuntimeEntry`;
+  AI-tick gating, retarget cooldown checks, patrol/grind target selection, AoE
+  cluster switch hysteresis, and next-search scheduling are unchanged.
 
 Initial reconstruction order:
 

@@ -131,6 +131,11 @@ Recent map updates:
   patrol/no-grind target resolution, and movement-step dispatch remain
   unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
   callback adapter.
+- `AgentGrindTargetSearchService` and `AgentGrindTargetSearchPolicy` now accept
+  `AgentRuntimeEntry`. AI-tick gating, retarget cooldown checks, patrol/grind
+  target selection, AoE cluster switch hysteresis, and next-search scheduling
+  remain unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  target-finder adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
   runtimes directly through `AgentBotCombatRuntime`.
