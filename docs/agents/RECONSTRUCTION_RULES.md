@@ -4975,6 +4975,8 @@ Current physics correction:
   grace-period countdown math is unchanged.
 - Navigation edge execution target state now accepts `AgentRuntimeEntry`; it
   still writes the same navigation waypoint/debug state.
+- Map environment swim-map detection now accepts `AgentRuntimeEntry`; it still
+  resolves the Agent map through the same runtime identity adapter.
 
 Initial reconstruction order:
 
