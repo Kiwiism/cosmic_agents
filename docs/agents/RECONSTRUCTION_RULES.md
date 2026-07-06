@@ -5190,6 +5190,9 @@ Current physics correction:
   degenerate-attack gating, ranged retreat selection, AoE reposition checks,
   attack execution, cooldown comparison, jump initiation, idle-on-ground, and
   movement broadcast behavior are unchanged.
+- Navigation precise-target service now accepts `AgentRuntimeEntry`; airborne
+  suppression, walk precision policy, jump/drop/climb readiness gating, and
+  portal readiness behavior are unchanged.
 
 Initial reconstruction order:
 

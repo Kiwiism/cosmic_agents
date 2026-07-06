@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AgentNavigationPreciseTargetServiceTest {
     @Test
     void airborneNeverUsesPreciseTarget() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
 
         assertFalse(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
@@ -22,7 +22,7 @@ class AgentNavigationPreciseTargetServiceTest {
 
     @Test
     void walkUsesPreciseOnlyForMovementConsumingWalkEdges() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         assertTrue(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
                 null, entry, new Point(0, 0),
@@ -38,7 +38,7 @@ class AgentNavigationPreciseTargetServiceTest {
 
     @Test
     void jumpDropAndClimbUsePreciseUntilTheirExecutionPredicateIsReady() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         assertTrue(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
                 null, entry, new Point(0, 0), edge(AgentNavigationGraph.EdgeType.JUMP, 0), readiness(false)));
@@ -60,7 +60,7 @@ class AgentNavigationPreciseTargetServiceTest {
 
     @Test
     void climbingJumpExitUsesPreciseUntilExitReady() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, new server.maps.Rope(100, 0, 100, false));
 
         assertTrue(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
@@ -73,7 +73,7 @@ class AgentNavigationPreciseTargetServiceTest {
 
     @Test
     void portalUsesPreciseUntilAtEdgeStart() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge portal = edge(AgentNavigationGraph.EdgeType.PORTAL, 0);
 
         assertFalse(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
@@ -90,25 +90,25 @@ class AgentNavigationPreciseTargetServiceTest {
     private static AgentNavigationPreciseTargetService.EdgeReadiness readiness(boolean ready) {
         return new AgentNavigationPreciseTargetService.EdgeReadiness() {
             @Override
-            public boolean canExecuteSelectedJump(AgentNavigationGraph graph, BotEntry entry, Point botPos,
+            public boolean canExecuteSelectedJump(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos,
                                                   AgentNavigationGraph.Edge edge) {
                 return ready;
             }
 
             @Override
-            public boolean canExecuteDrop(AgentNavigationGraph graph, BotEntry entry, Point botPos,
+            public boolean canExecuteDrop(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos,
                                           AgentNavigationGraph.Edge edge) {
                 return ready;
             }
 
             @Override
-            public boolean canExecuteClimbExit(AgentNavigationGraph graph, BotEntry entry, Point botPos,
+            public boolean canExecuteClimbExit(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos,
                                                AgentNavigationGraph.Edge edge) {
                 return ready;
             }
 
             @Override
-            public boolean canExecuteClimbEntry(AgentNavigationGraph graph, BotEntry entry, Point botPos,
+            public boolean canExecuteClimbEntry(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos,
                                                 AgentNavigationGraph.Edge edge) {
                 return ready;
             }

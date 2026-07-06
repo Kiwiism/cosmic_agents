@@ -9,6 +9,7 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -127,7 +128,7 @@ public final class AgentNavigationWaypointService {
                 && Math.abs(outcome.landing().point().y - edge.endPoint.y) <= yTolerance;
     }
 
-    public static int selectJumpLaunchX(BotEntry entry,
+    public static int selectJumpLaunchX(AgentRuntimeEntry entry,
                                         AgentNavigationGraph graph,
                                         AgentNavigationGraph.Edge edge) {
         if (entry == null || graph == null || edge == null || edge.type != AgentNavigationGraph.EdgeType.JUMP) {

@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -15,7 +15,7 @@ public final class AgentNavigationPreciseTargetService {
     }
 
     public static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,
-                                                 BotEntry entry,
+                                                 AgentRuntimeEntry entry,
                                                  Point botPos,
                                                  AgentNavigationGraph.Edge edge,
                                                  EdgeReadiness readiness) {
@@ -34,12 +34,12 @@ public final class AgentNavigationPreciseTargetService {
     }
 
     public interface EdgeReadiness {
-        boolean canExecuteSelectedJump(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
+        boolean canExecuteSelectedJump(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
 
-        boolean canExecuteDrop(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
+        boolean canExecuteDrop(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
 
-        boolean canExecuteClimbExit(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
+        boolean canExecuteClimbExit(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
 
-        boolean canExecuteClimbEntry(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
+        boolean canExecuteClimbEntry(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
     }
 }

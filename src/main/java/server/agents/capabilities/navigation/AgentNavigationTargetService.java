@@ -10,6 +10,7 @@ import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -242,7 +243,7 @@ public final class AgentNavigationTargetService {
                 new AgentNavigationPreciseTargetService.EdgeReadiness() {
                     @Override
                     public boolean canExecuteSelectedJump(AgentNavigationGraph readinessGraph,
-                                                          BotEntry readinessEntry,
+                                                          AgentRuntimeEntry readinessEntry,
                                                           Point readinessBotPos,
                                                           AgentNavigationGraph.Edge readinessEdge) {
                         return canExecuteSelectedJumpFromCurrentPosition(
@@ -255,7 +256,7 @@ public final class AgentNavigationTargetService {
 
                     @Override
                     public boolean canExecuteDrop(AgentNavigationGraph readinessGraph,
-                                                  BotEntry readinessEntry,
+                                                  AgentRuntimeEntry readinessEntry,
                                                   Point readinessBotPos,
                                                   AgentNavigationGraph.Edge readinessEdge) {
                         return AgentNavigationEdgeReadinessService.canExecuteDropFromCurrentPosition(
@@ -266,7 +267,7 @@ public final class AgentNavigationTargetService {
 
                     @Override
                     public boolean canExecuteClimbExit(AgentNavigationGraph readinessGraph,
-                                                       BotEntry readinessEntry,
+                                                       AgentRuntimeEntry readinessEntry,
                                                        Point readinessBotPos,
                                                        AgentNavigationGraph.Edge readinessEdge) {
                         return canExecuteClimbExitFromCurrentPosition(
@@ -278,7 +279,7 @@ public final class AgentNavigationTargetService {
 
                     @Override
                     public boolean canExecuteClimbEntry(AgentNavigationGraph readinessGraph,
-                                                        BotEntry readinessEntry,
+                                                        AgentRuntimeEntry readinessEntry,
                                                         Point readinessBotPos,
                                                         AgentNavigationGraph.Edge readinessEdge) {
                         return AgentNavigationRopeEdgeService.canExecuteClimbEntryFromCurrentPosition(
@@ -323,7 +324,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static boolean canExecuteSelectedJumpFromCurrentPosition(AgentNavigationGraph graph,
-                                                                     BotEntry entry,
+                                                                     AgentRuntimeEntry entry,
                                                                      MapleMap map,
                                                                      Point botPos,
                                                                      AgentNavigationGraph.Edge edge) {
