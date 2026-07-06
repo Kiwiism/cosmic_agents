@@ -11,6 +11,7 @@ Current tool:
 
 - `New-BaselineSoakEvidencePackage.ps1`
 - `Test-BaselineSoakEvidencePackage.ps1`
+- `New-BaselineSoakAuditEntry.ps1`
 
 ## Baseline Evidence Workflow
 
@@ -104,6 +105,18 @@ powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidenceP
   -RunPath .\logs\soak\baseline\<runId> `
   -Json > .\logs\soak\baseline\<runId>\verification.json
 ```
+
+To generate an audit-ready Markdown entry from a filled run folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\New-BaselineSoakAuditEntry.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -OutputPath .\logs\soak\baseline\<runId>\audit-entry.md
+```
+
+Copy the generated entry into:
+
+- `docs/agents/PRE_RECONSTRUCTION_COMPLETION_AUDIT.md`
 
 The verifier reports:
 

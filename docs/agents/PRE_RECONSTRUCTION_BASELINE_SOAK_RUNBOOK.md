@@ -211,6 +211,14 @@ powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidenceP
   -Json > .\logs\soak\baseline\<runId>\verification.json
 ```
 
+Generate an audit-ready Markdown entry:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\New-BaselineSoakAuditEntry.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -OutputPath .\logs\soak\baseline\<runId>\audit-entry.md
+```
+
 Expected:
 
 - `PASS` for a complete run.
@@ -237,6 +245,9 @@ Record:
 - shutdown/restart result.
 - verifier result.
 - any follow-up server-only TODOs.
+
+Use `audit-entry.md` as the starting point for the audit update, then add any
+human context that the generated summary cannot know.
 
 ## Pass Criteria
 

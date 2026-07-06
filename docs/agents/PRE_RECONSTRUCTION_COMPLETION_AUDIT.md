@@ -144,6 +144,14 @@ powershell -ExecutionPolicy Bypass -File .\tools\soak\Test-BaselineSoakEvidenceP
   -Json > .\logs\soak\baseline\<runId>\verification.json
 ```
 
+Audit-entry generator after verification:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\New-BaselineSoakAuditEntry.ps1 `
+  -RunPath .\logs\soak\baseline\<runId> `
+  -OutputPath .\logs\soak\baseline\<runId>\audit-entry.md
+```
+
 Recommended `summary.json` fields:
 
 ```json
@@ -217,6 +225,8 @@ Safe actions:
   `tools/soak/New-BaselineSoakEvidencePackage.ps1`.
 - verify the filled baseline evidence folder with
   `tools/soak/Test-BaselineSoakEvidencePackage.ps1`.
+- generate an audit-entry snippet with
+  `tools/soak/New-BaselineSoakAuditEntry.ps1`.
 - verify safe-prep artifact presence and scope guardrails with
   `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`.
 - update this audit with real run ids and summary numbers.
