@@ -39,6 +39,7 @@ Before reconstruction is stable:
 | Console planning | Ready as planning docs | `docs/consoles/DATABASE_CONSOLE_*`, `docs/consoles/SERVER_CONSOLE_SCOPE.md` | Keep console implementation modular. |
 | Nutnnut-over-Cosmic review | Ready as decision record | `docs/NUTNNUT_OVER_COSMIC_REVIEW.md`, `docs/COSMIC_REVERT_REVIEW.md` | Apply only explicit approved reversions. |
 | Reusable goal prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse for future safe-prep continuation threads. |
+| Prep artifact verifier | Ready as local tooling | `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1` | Run after safe-prep batches and before claiming artifact readiness. |
 
 ## Package Evidence
 
@@ -211,6 +212,8 @@ Safe actions:
   `tools/soak/New-BaselineSoakEvidencePackage.ps1`.
 - verify the filled baseline evidence folder with
   `tools/soak/Test-BaselineSoakEvidencePackage.ps1`.
+- verify safe-prep artifact presence and scope guardrails with
+  `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`.
 - update this audit with real run ids and summary numbers.
 - keep compiling after safe-prep documentation batches.
 - keep Agent implementation deferred until reconstruction boundaries are

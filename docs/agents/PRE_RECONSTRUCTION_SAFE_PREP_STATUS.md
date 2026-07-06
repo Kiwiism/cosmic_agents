@@ -45,6 +45,7 @@ Allowed before reconstruction is stable:
 - implementation plans.
 - review records.
 - test/soak plans that do not alter live Agent behavior.
+- verification tools that only inspect docs, git state, or evidence folders.
 
 ## Readiness Matrix
 
@@ -61,7 +62,7 @@ Allowed before reconstruction is stable:
 | Database Console / Server Console planning | Ready as planning docs | `docs/consoles/DATABASE_CONSOLE_*`, `docs/consoles/SERVER_CONSOLE_SCOPE.md` | Keep console work modular and separate from Agent runtime. |
 | NuTNNuT over Cosmic review records | Ready as decision log | `docs/NUTNNUT_OVER_COSMIC_REVIEW.md`, `docs/COSMIC_REVERT_REVIEW.md` | Apply only explicit approved reversions; leave bot-related items to reconstruction. |
 | Reusable pre-reconstruction prompt | Ready as handoff artifact | `docs/agents/PRE_RECONSTRUCTION_GOAL_PROMPT.md` | Reuse when starting or resuming a broad safe-prep thread. |
-| Verification | Ready for current server batch | recent clean compile and scope checks from server diagnostics commit | Repeat after every safe-prep batch. |
+| Verification | Ready for current server batch | `tools/pre-reconstruction/Test-PreReconstructionPrep.ps1`, `tools/soak/*`, recent clean compile and scope checks | Repeat after every safe-prep batch. |
 
 ## Current Safe-Prep Completion State
 
@@ -175,6 +176,7 @@ Backlog packages to promote:
 Before committing:
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\pre-reconstruction\Test-PreReconstructionPrep.ps1
 git status --short
 git diff --check
 git diff --cached --name-only -- src/main/java/server/agents src/main/java/server/bots src/test/java/server/agents src/test/java/server/bots
@@ -186,6 +188,7 @@ Required result:
 
 - no Agent/bot source files staged unless explicitly requested.
 - no config YAML staged unless explicitly requested.
+- required safe-prep docs and package specs still exist.
 - compile passes, or a known unrelated reconstruction blocker is documented.
 - docs state what was completed and what remains deferred.
 
