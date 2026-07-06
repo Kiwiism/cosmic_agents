@@ -52,7 +52,7 @@ $head = (git rev-parse HEAD).Trim()
 $branch = (git branch --show-current).Trim()
 $status = git status --short
 $configHash = Get-FileSha256 "config.yaml"
-$javaVersion = (& java -version 2>&1) -join "`n"
+$javaVersion = (& cmd /c "java -version 2>&1") -join "`n"
 $createdAt = (Get-Date).ToString("o")
 
 $summary = [ordered]@{
