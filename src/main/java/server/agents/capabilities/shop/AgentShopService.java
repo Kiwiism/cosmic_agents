@@ -160,6 +160,10 @@ public final class AgentShopService {
                 System.currentTimeMillis());
     }
 
+    public static boolean tickShopVisit(AgentRuntimeEntry entry, Character bot) {
+        return tickShopVisit(asBotEntry(entry), bot);
+    }
+
     public static boolean tickShopVisit(BotEntry entry, Character bot) {
         if (!AgentBotShopStateRuntime.shopVisitPending(entry)) {
             return false;

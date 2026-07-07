@@ -48,7 +48,7 @@ public final class AgentMovementOnlyRuntime {
                         config.teleportDistance(),
                         config.outOfBoundsTeleportDistance()),
                 AgentMovementOnlyMapChangeRuntime::handleMapChange,
-                (entry, agent) -> AgentShopService.tickShopVisit(asBotEntry(entry), agent),
+                AgentShopService::tickShopVisit,
                 AgentBotShopStateRuntime::activeShopTargetPosition,
                 AgentBotShopStateRuntime::shopApproachDelayMs,
                 (entry, agent, target, nowMs) -> AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
@@ -59,7 +59,7 @@ public final class AgentMovementOnlyRuntime {
                         config.followDistance(),
                         config.stopDistance()),
                 (entry, target, coreRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
-                        asBotEntry(entry),
+                        entry,
                         target,
                         coreRunAiTick,
                         config.enableUnstuck(),
