@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Common tick runtime and the live-gate common tick hook now use
+  `AgentRuntimeEntry` directly. Per-tick mob damage, death handling, passive
+  loot, potion checks, level-up/build checks, AFK checks, trade ticks, PQ hooks,
+  script-task ticks, combat locks, skill cache rebuilds, support healing, buff
+  logic, and action-locked physics preserve the same ordering and behavior.
 - Tick runtime now accepts `AgentRuntimeEntry` and Agent-entry movement command
   callbacks at its public boundary. The deeper tick core and failure handler
   still use explicit temporary BotEntry casts until those runtime slices are

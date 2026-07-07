@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentLiveTickGateRuntimeTest {
     @Test
     void commonTickConsumptionShortCircuitsRemainingLiveGates() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
         Character followAnchor = mock(Character.class);
@@ -27,7 +26,7 @@ class AgentLiveTickGateRuntimeTest {
 
         try (MockedStatic<AgentCommonTickRuntime> commonTick = mockStatic(AgentCommonTickRuntime.class)) {
             commonTick.when(() -> AgentCommonTickRuntime.runCommonTickSystems(
-                            any(BotEntry.class),
+                            any(AgentRuntimeEntry.class),
                             any(Character.class),
                             any(Character.class),
                             anyBoolean(),

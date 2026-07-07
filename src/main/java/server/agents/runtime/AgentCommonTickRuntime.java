@@ -17,7 +17,6 @@ import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotManagerStatusRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -25,7 +24,7 @@ public final class AgentCommonTickRuntime {
     private AgentCommonTickRuntime() {
     }
 
-    public static boolean runCommonTickSystems(BotEntry entry,
+    public static boolean runCommonTickSystems(AgentRuntimeEntry entry,
                                                Character agent,
                                                Character leader,
                                                boolean runAiTick,
@@ -49,7 +48,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentInventoryTickRuntime.tickPassiveLoot(entry, agent),
                 (entry, agent) -> AgentPotionService.tickPotionCheck(entry, agent),
                 (entry, agent) -> AgentPotionService.tickPassiveRecovery(entry, agent),
-                (entry, agent) -> AgentBuildService.checkLevelUp(asBotEntry(entry), agent),
+                (entry, agent) -> AgentBuildService.checkLevelUp(entry, agent),
                 (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(entry, leader),
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(entry, agent),
                 (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(entry, agent),
@@ -64,9 +63,5 @@ public final class AgentCommonTickRuntime {
                         entry, agent, AgentCombatConfig.cfg),
                 AgentBuffService::tick,
                 AgentActionLockPhysicsRuntime::tickActionLocked);
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

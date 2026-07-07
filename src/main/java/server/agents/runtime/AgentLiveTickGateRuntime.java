@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 import java.util.function.Consumer;
 
 public final class AgentLiveTickGateRuntime {
@@ -37,7 +36,7 @@ public final class AgentLiveTickGateRuntime {
                                                         int grindPartyTeleportDistanceMultiplier) {
         return new AgentLiveTickGateService.Hooks(
                 (entry, agent, leader, runAiTick) ->
-                        AgentCommonTickRuntime.runCommonTickSystems(asBotEntry(entry), agent, leader, runAiTick, tickScriptTasks),
+                        AgentCommonTickRuntime.runCommonTickSystems(entry, agent, leader, runAiTick, tickScriptTasks),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
                         tradeEntry,
                         tradeAgent,
@@ -72,10 +71,6 @@ public final class AgentLiveTickGateRuntime {
                         mapAgent,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedAgent) ->
                                 tickTrackedMapChange(trackedEntry, trackedAgent, issueGrind, issueFollow, perf))));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 
     private static void tickTradePhysics(AgentRuntimeEntry entry, Character agent, boolean perf) {
