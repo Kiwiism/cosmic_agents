@@ -5461,6 +5461,13 @@ Current physics correction:
   tick-core and live-gate dispatch; script task cadence, common tick ordering,
   PQ lock handling, action-lock gating, and script task execution behavior are
   unchanged.
+- Movement phase dispatch now accepts `AgentRuntimeEntry`; action-lock
+  physics, idle physics, and grind no-target fallback callers no longer own
+  BotEntry compatibility casts. Climb/swim dispatch remains directly
+  Agent-entry based, while airborne/ground movement still adapt inside the
+  movement capability until those lower movement services are reconstructed.
+  Action-lock, idle, swim, airborne, grounded, and grind fallback behavior are
+  unchanged.
 
 Initial reconstruction order:
 

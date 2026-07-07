@@ -78,8 +78,8 @@ public final class AgentGrindModeRuntime {
     private static AgentGrindNoTargetFallbackService.Hooks grindNoTargetFallbackHooks(
             AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep) {
         return new AgentGrindNoTargetFallbackService.Hooks(
-                (entry, targetPos) -> AgentMovementPhaseDispatchService.tickSwimming(asBotEntry(entry), targetPos),
-                (entry, targetPos) -> AgentMovementPhaseDispatchService.tickAirborne(asBotEntry(entry), targetPos),
+                AgentMovementPhaseDispatchService::tickSwimming,
+                AgentMovementPhaseDispatchService::tickAirborne,
                 (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolvePatrolWanderTarget(
                         asBotEntry(entry), agentPosition, map),
                 (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolveNoGrindTargetPosition(

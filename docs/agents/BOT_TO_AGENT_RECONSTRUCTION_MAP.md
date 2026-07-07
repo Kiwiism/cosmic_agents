@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentMovementPhaseDispatchService` now exposes `AgentRuntimeEntry` methods.
+  Action-lock physics, idle physics, and grind no-target fallback use this
+  Agent-owned movement boundary directly; the temporary BotEntry cast is
+  isolated inside movement dispatch only for lower airborne/ground services
+  that have not yet been reconstructed.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
