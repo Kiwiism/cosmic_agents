@@ -5750,6 +5750,10 @@ Current physics correction:
   target commitment, ranged engagement, navigation-tail target resolution, and
   loot radius/seek range hook wiring remain unchanged. A few downstream grind
   callbacks still adapt to the temporary `BotEntry` compatibility shell.
+- Grind combat helper callbacks now accept `AgentRuntimeEntry` for AoE
+  reposition resolution and priority ranged target selection. Existing AoE
+  anchor, target-priority, and ranged-threat selection behavior remains
+  unchanged.
 
 Initial reconstruction order:
 

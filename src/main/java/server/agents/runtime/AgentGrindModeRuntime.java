@@ -105,7 +105,7 @@ public final class AgentGrindModeRuntime {
                 AgentCombatRangePolicy::isTargetInAttackRange,
                 (entry, agent, target, attackPlan, agentPosition) ->
                         AgentGrindCombatRuntime.resolveAoeReposition(
-                                asBotEntry(entry), agent, target, attackPlan, agentPosition),
+                                entry, agent, target, attackPlan, agentPosition),
                 AgentCombatRangePolicy::canUseAttackPlanNow,
                 (entry, agent, attackPlan) ->
                         AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan),
