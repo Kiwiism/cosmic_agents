@@ -5479,6 +5479,10 @@ Current physics correction:
 - Formation runtime now accepts `AgentRuntimeEntry` and
   `List<? extends AgentRuntimeEntry>`; formation lookup, stored leader
   formation state, and offset application behavior are unchanged.
+- Fidget social/greeting entry points now accept `AgentRuntimeEntry`; the
+  temporary fidget side-effect bridge no longer imports the bot package while
+  social fidget eligibility, random mode selection, and start-state behavior
+  remain unchanged.
 
 Initial reconstruction order:
 

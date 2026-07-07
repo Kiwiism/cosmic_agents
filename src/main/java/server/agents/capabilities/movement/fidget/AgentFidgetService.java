@@ -109,11 +109,11 @@ public final class AgentFidgetService {
         return Math.abs(botPos.x - origin.x) > 8 || Math.abs(botPos.y - origin.y) > 8;
     }
 
-    public static void startFidget(BotEntry entry, AgentFidgetMode mode, long now, int durationMs) {
+    public static void startFidget(AgentRuntimeEntry entry, AgentFidgetMode mode, long now, int durationMs) {
         startFidget(entry, mode, now, durationMs, AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
-    public static void startFidget(BotEntry entry,
+    public static void startFidget(AgentRuntimeEntry entry,
                            AgentFidgetMode mode,
                            long now,
                            int durationMs,
@@ -139,14 +139,14 @@ public final class AgentFidgetService {
                 now + AgentRandom.randMs(4000, 8000));
     }
 
-    public static boolean maybeStartGreetingFidget(BotEntry entry, int roll) {
+    public static boolean maybeStartGreetingFidget(AgentRuntimeEntry entry, int roll) {
         if (roll >= 50) {
             return false;
         }
         return maybeStartSocialFidget(entry);
     }
 
-    public static boolean maybeStartSocialFidget(BotEntry entry) {
+    public static boolean maybeStartSocialFidget(AgentRuntimeEntry entry) {
         if (entry == null
                 || AgentBotFidgetStateRuntime.active(entry)
                 || !AgentBotModeStateRuntime.following(entry)
@@ -265,11 +265,11 @@ public final class AgentFidgetService {
         return AgentBotOwnerMotionStateRuntime.ownerMostlyIdle(entry);
     }
 
-    public static void startRandomFidget(BotEntry entry, long now, int durationMs) {
+    public static void startRandomFidget(AgentRuntimeEntry entry, long now, int durationMs) {
         startRandomFidget(entry, now, durationMs, AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
-    public static void startRandomFidget(BotEntry entry, long now, int durationMs, AgentFidgetTrigger trigger) {
+    public static void startRandomFidget(AgentRuntimeEntry entry, long now, int durationMs, AgentFidgetTrigger trigger) {
         AgentFidgetMode mode = switch (ThreadLocalRandom.current().nextInt(6)) {
             case 0 -> AgentFidgetMode.WAIT;
             case 1 -> AgentFidgetMode.JUMP;

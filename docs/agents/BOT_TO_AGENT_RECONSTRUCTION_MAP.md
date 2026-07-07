@@ -28,6 +28,9 @@ Recent map updates:
 - `AgentFormationRuntime` now accepts Agent runtime entries and generic Agent
   entry lists, preserving formation state lookup and offset application while
   removing another runtime dependency on the legacy bot entry type.
+- `AgentFidgetService` social/greeting start helpers and
+  `AgentBotFidgetSideEffects` now use `AgentRuntimeEntry`, keeping deeper
+  active fidget movement execution for a later movement reconstruction slice.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
