@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
+  action state, pending action callbacks, and skill-tree choice handling.
+  Item-choice execution/cancel paths, owner-away routing, relog/logout
+  confirmations, skill-report decisions, and queued replies remain unchanged.
 - `AgentBotSessionRuntime` now accepts `AgentRuntimeEntry` for session request
   callbacks, relog/logout confirmation, and owner-away choices. Relog/logout
   prompts, owner-away stay/town/logout decisions, delayed replies,

@@ -7,20 +7,19 @@ import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * Agent-owned pending-action facade over temporary bot-side state and side
+ * Agent-owned pending-action facade over temporary live Agent state and side
  * effects.
  */
 public final class AgentBotPendingActionRuntime {
     private AgentBotPendingActionRuntime() {
     }
 
-    public static AgentPendingChatActionFlow.PendingActionState pendingActionState(BotEntry entry) {
+    public static AgentPendingChatActionFlow.PendingActionState pendingActionState(AgentRuntimeEntry entry) {
         return new AgentPendingChatActionFlow.PendingActionState() {
             @Override
             public String pendingAction() {
@@ -44,7 +43,7 @@ public final class AgentBotPendingActionRuntime {
         };
     }
 
-    public static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(BotEntry entry) {
+    public static AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks(AgentRuntimeEntry entry) {
         return new AgentPendingChatActionFlow.PendingActionCallbacks() {
             @Override
             public void handleOwnerAwayChoice(String message) {
@@ -91,7 +90,7 @@ public final class AgentBotPendingActionRuntime {
         };
     }
 
-    public static void handleSkillTreeChoice(BotEntry entry, Character bot, String message) {
+    public static void handleSkillTreeChoice(AgentRuntimeEntry entry, Character bot, String message) {
         Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees =
                 AgentSkillDialogueReporter.collectLearnedSkillTrees(bot);
         applySkillReportDecision(entry, AgentSkillReportFlow.resolveSkillTreeChoice(skillTrees, message));

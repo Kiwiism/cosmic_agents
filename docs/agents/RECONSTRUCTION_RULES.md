@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Pending-action dialogue callbacks now use `AgentRuntimeEntry` instead of
+  `BotEntry`. Pending action/drop-category reads, item-choice execution,
+  item-choice cancellation, owner-away choice routing, relog/logout
+  confirmation, skill-tree choice handling, and queued skill-report replies
+  are unchanged.
 - Session dialogue callbacks now use `AgentRuntimeEntry` instead of `BotEntry`.
   Relog/logout prompts, owner-away prompts, stay/town/logout decisions,
   delayed replies, save/disconnect scheduling, and temporary lifecycle lookup
