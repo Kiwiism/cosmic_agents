@@ -5754,6 +5754,10 @@ Current physics correction:
   reposition resolution and priority ranged target selection. Existing AoE
   anchor, target-priority, and ranged-threat selection behavior remains
   unchanged.
+- Movement command runtime now exposes one `AgentRuntimeEntry` API for follow,
+  stop, move-to, farm-here, patrol, and grind commands. Script-task clearing,
+  shop-visit cancellation, navigation-state clearing, patrol-region lookup,
+  missing-region reply text, and mode state transitions remain unchanged.
 
 Initial reconstruction order:
 

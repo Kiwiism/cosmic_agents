@@ -6,7 +6,6 @@ import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
@@ -23,14 +22,10 @@ public final class AgentBotMovementCommandRuntime {
     }
 
     public static void followOwner(AgentRuntimeEntry entry) {
-        follow(asBotEntry(entry), AgentBotRuntimeIdentityRuntime.owner(entry));
+        follow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
     public static void follow(AgentRuntimeEntry entry, Character target) {
-        follow(asBotEntry(entry), target);
-    }
-
-    public static void follow(BotEntry entry, Character target) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
@@ -38,7 +33,7 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startFollow(entry, target));
     }
 
-    public static void stop(BotEntry entry) {
+    public static void stop(AgentRuntimeEntry entry) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
@@ -46,11 +41,7 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startStop(entry));
     }
 
-    public static void stop(AgentRuntimeEntry entry) {
-        stop(asBotEntry(entry));
-    }
-
-    public static void moveTo(BotEntry entry, Point dest, boolean precise) {
+    public static void moveTo(AgentRuntimeEntry entry, Point dest, boolean precise) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> dest != null,
@@ -59,11 +50,7 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startMoveTo(entry, dest, precise));
     }
 
-    public static void moveTo(AgentRuntimeEntry entry, Point dest, boolean precise) {
-        moveTo(asBotEntry(entry), dest, precise);
-    }
-
-    public static void farmHere(BotEntry entry, Point dest) {
+    public static void farmHere(AgentRuntimeEntry entry, Point dest) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> dest != null && AgentBotRuntimeIdentityRuntime.hasBot(entry),
@@ -72,11 +59,7 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startFarmHere(entry, dest, AgentMovementStateResetService::clearNavigationState));
     }
 
-    public static void farmHere(AgentRuntimeEntry entry, Point dest) {
-        farmHere(asBotEntry(entry), dest);
-    }
-
-    public static void patrol(BotEntry entry, Point ownerPos) {
+    public static void patrol(AgentRuntimeEntry entry, Point ownerPos) {
         if (entry == null || ownerPos == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
@@ -95,23 +78,11 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startPatrol(entry, regionId, AgentMovementStateResetService::clearNavigationState));
     }
 
-    public static void patrol(AgentRuntimeEntry entry, Point ownerPos) {
-        patrol(asBotEntry(entry), ownerPos);
-    }
-
-    public static void grind(BotEntry entry) {
+    public static void grind(AgentRuntimeEntry entry) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
                 () -> AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState));
-    }
-
-    public static void grind(AgentRuntimeEntry entry) {
-        grind(asBotEntry(entry));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

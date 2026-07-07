@@ -668,7 +668,7 @@ public final class AgentShopService {
                 && findNpcNear(bot, npcPos) != null;
     }
 
-    public static void cancelShopVisit(BotEntry entry) {
+    public static void cancelShopVisit(AgentRuntimeEntry entry) {
         clearShopState(entry);
     }
 
@@ -682,7 +682,7 @@ public final class AgentShopService {
         clearShopState(entry);
     }
 
-    private static void clearShopState(BotEntry entry) {
+    private static void clearShopState(AgentRuntimeEntry entry) {
         AgentBotShopStateRuntime.clearShopState(entry);
     }
 
