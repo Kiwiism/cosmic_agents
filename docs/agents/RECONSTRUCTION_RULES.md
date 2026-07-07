@@ -5316,6 +5316,10 @@ Current physics correction:
   pending drop-category clearing, pending-offer clearing, and gear-prompt
   clearing behavior are unchanged, and tick preflight no longer casts for
   offer expiration.
+- Owner upgrade-request entry in `AgentOfferService` now accepts
+  `AgentRuntimeEntry`; owner lookup, busy/no-upgrade replies, recommendation
+  selection, requested-item memory, and upgrade-request prompt creation are
+  unchanged.
 
 Initial reconstruction order:
 

@@ -82,7 +82,7 @@ public final class AgentOfferService {
         createOwnerUpgradeRequest(entry, bot, owner, item);
     }
 
-    public static void requestBestUpgradeFromOwner(BotEntry entry, Character bot) {
+    public static void requestBestUpgradeFromOwner(AgentRuntimeEntry entry, Character bot) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
