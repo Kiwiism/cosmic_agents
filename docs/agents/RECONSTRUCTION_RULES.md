@@ -5540,9 +5540,9 @@ Current physics correction:
 - Map transition runtime now accepts `AgentRuntimeEntry` across grounding and
   tracked map-change hooks; grind/follow reissue, KPQ reset, shop refresh, and
   manager status behavior remain unchanged.
-- Movement-only runtime now uses Agent entry overloads for shop visit ticking
-  and movement-core dispatch. The remaining BotEntry dependency is limited to
-  the follow-anchor resolver callback until the follow/leader slice migrates.
+- Movement-only runtime now uses Agent entry overloads for follow-anchor
+  resolution, shop visit ticking, and movement-core dispatch. Movement-only tick
+  ordering and target selection behavior remain unchanged.
 
 Initial reconstruction order:
 

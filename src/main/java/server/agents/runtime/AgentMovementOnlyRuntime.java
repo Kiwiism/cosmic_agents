@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.function.BiFunction;
@@ -16,7 +15,7 @@ public final class AgentMovementOnlyRuntime {
                                         Point targetPosition,
                                         boolean runAiTick,
                                         long nowMs,
-                                        BiFunction<BotEntry, Character, Character> followAnchorResolver,
+                                        BiFunction<AgentRuntimeEntry, Character, Character> followAnchorResolver,
                                         MovementOnlyConfig config) {
         AgentMovementOnlyTickService.stepMovementOnly(
                 entry,
@@ -27,13 +26,13 @@ public final class AgentMovementOnlyRuntime {
     }
 
     private static AgentMovementOnlyTickService.MovementOnlyHooks hooks(
-            BiFunction<BotEntry, Character, Character> followAnchorResolver,
+            BiFunction<AgentRuntimeEntry, Character, Character> followAnchorResolver,
             MovementOnlyConfig config) {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
                 AgentIdlePhysicsRuntime::tickIdleEntry,
                 (entry, agent) -> AgentBotShopStateRuntime.shopVisitPending(entry),
                 AgentFollowMapSyncRuntime::syncFollowMap,
-                (entry, leader) -> followAnchorResolver.apply(asBotEntry(entry), leader),
+                followAnchorResolver::apply,
                 (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
                         entry,
                         agent,
@@ -64,10 +63,6 @@ public final class AgentMovementOnlyRuntime {
                         coreRunAiTick,
                         config.enableUnstuck(),
                         config.stopDistance()));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 
     public record MovementOnlyConfig(int teleportDistance,

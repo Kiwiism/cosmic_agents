@@ -12,10 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
-- `AgentMovementOnlyRuntime` now uses Agent entry overloads for shop visit
-  ticks and movement-core dispatch. Its remaining BotEntry dependency is the
-  follow-anchor resolver callback contract, queued for a later leader/follow
-  slice.
+- `AgentMovementOnlyRuntime` now uses Agent entry overloads for follow-anchor
+  resolution, shop visit ticks, and movement-core dispatch, removing its direct
+  BotEntry dependency while preserving movement-only tick ordering.
 - `AgentMapTransitionRuntime` now stays on `AgentRuntimeEntry` for grounding
   and tracked map-change hooks. Movement pose/reset/broadcast and shop
   map-change side effects use Agent entry overloads without BotEntry casts.
