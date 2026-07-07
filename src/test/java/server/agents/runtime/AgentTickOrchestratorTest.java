@@ -64,7 +64,7 @@ class AgentTickOrchestratorTest {
 
     @Test
     void prepareTickRecordsNonAiTickUntilCadenceIsDue() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 
         boolean runAiTick = AgentTickOrchestrator.prepareTick(entry, 100, 250, 1_000L);
 
@@ -76,7 +76,7 @@ class AgentTickOrchestratorTest {
 
     @Test
     void prepareTickRecordsAiTickAndCarriesCadenceRemainder() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry, 200);
 
         boolean runAiTick = AgentTickOrchestrator.prepareTick(entry, 100, 250, 2_000L);

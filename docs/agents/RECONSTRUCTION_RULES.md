@@ -5252,6 +5252,8 @@ Current physics correction:
 - Movement-only tick ordering service now accepts `AgentRuntimeEntry`; no-agent
   and null-target guards, idle/follow-map/recovery/map-change/shop/follow-idle
   short-circuit order, and final movement-core dispatch behavior are unchanged.
+- Tick cadence preparation now accepts `AgentRuntimeEntry`; AI-tick accumulator
+  carry, last-tick timestamp, and last-tick-AI recording behavior are unchanged.
 
 Initial reconstruction order:
 

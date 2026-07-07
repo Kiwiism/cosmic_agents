@@ -41,7 +41,7 @@ public final class AgentTickOrchestrator {
         }
     }
 
-    public static boolean prepareTick(BotEntry entry, int movementTickMs, int aiTickMs, long tickAtMs) {
+    public static boolean prepareTick(AgentRuntimeEntry entry, int movementTickMs, int aiTickMs, long tickAtMs) {
         boolean runAiTick = AgentBotTickCadenceStateRuntime.consumeAiTick(entry, movementTickMs, aiTickMs);
         AgentBotTickStateRuntime.recordTick(entry, runAiTick, tickAtMs);
         return runAiTick;
