@@ -9,7 +9,6 @@ import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptContext;
 import server.agents.plans.AgentScriptStep;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.life.NPC;
 
 import java.awt.*;
@@ -76,7 +75,7 @@ public final class AgentKpqStage1 {
         }
 
         @Override
-        public boolean applies(BotEntry entry, Character bot, Character owner) {
+        public boolean applies(AgentRuntimeEntry entry, Character bot, Character owner) {
             if (bot.getMapId() != KPQ_STAGE1_MAP) {
                 if (!AgentBotPqRuntime.kpqStageStateIs(entry, IDLE)) {
                     reset(entry);
@@ -187,7 +186,7 @@ public final class AgentKpqStage1 {
         ctx.queueDrop(InventoryType.ETC, ITEM_PASS, (short) 1);
     }
 
-    private static void reset(BotEntry entry) {
+    private static void reset(AgentRuntimeEntry entry) {
         AgentBotPqRuntime.resetKpqStage1(entry, IDLE);
     }
 

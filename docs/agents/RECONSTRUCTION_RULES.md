@@ -5425,6 +5425,11 @@ Current physics correction:
   item counts, equipped-slot checks, recommended-item collection, owner lookup,
   and count-vs-availability behavior are unchanged while inventory tick/runtime
   adapters continue to pass the temporary compatibility entry.
+- Script plan interfaces, script context, script runner, and party-quest script
+  hooks now use `AgentRuntimeEntry`; KPQ Stage 1 applicability, script state
+  reset, queued movement/combat/drop tasks, cheap-move checks, and Stage 5 tick
+  dispatch behavior are unchanged while lower runtime adapters remain
+  compatibility-bound where needed.
 
 Initial reconstruction order:
 

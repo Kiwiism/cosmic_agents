@@ -4,14 +4,14 @@ import client.Character;
 import server.agents.integration.AgentBotScriptMoveTargetRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
 public final class AgentScriptRunner {
     private AgentScriptRunner() {}
 
-    public static void tick(BotEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
+    public static void tick(AgentRuntimeEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
         AgentScript script = findScript(entry, bot, owner, scripts);
         if (script == null) {
             if (AgentBotScriptTaskStateRuntime.hasScriptId(entry)) {
@@ -48,7 +48,7 @@ public final class AgentScriptRunner {
         }
     }
 
-    private static AgentScript findScript(BotEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
+    private static AgentScript findScript(AgentRuntimeEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
         for (AgentScript script : scripts) {
             if (script.applies(entry, bot, owner)) {
                 return script;

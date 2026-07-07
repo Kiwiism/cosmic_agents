@@ -115,6 +115,11 @@ Recent map updates:
   owner-based recommended-item collection, and item-count behavior are
   unchanged while inventory runtime adapters keep the temporary compatibility
   entry.
+- `AgentScript`, `AgentScriptContext`, `AgentScriptRunner`,
+  `AgentPartyQuestHooks`, and KPQ Stage 1 script applicability now use
+  `AgentRuntimeEntry`; script queueing, wait/int state, cheap-target checks,
+  item-drop actions, KPQ Stage 1 reset/applicability, and KPQ Stage 5 dispatch
+  behavior are unchanged.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

@@ -4,28 +4,28 @@ import client.Character;
 import client.inventory.InventoryType;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.*;
 
 public final class AgentScriptContext {
     @FunctionalInterface
     public interface CheapMoveTargetCheck {
-        boolean isCheap(BotEntry entry, Point point, int maxPathCost, int fallbackRangeX, int fallbackRangeY);
+        boolean isCheap(AgentRuntimeEntry entry, Point point, int maxPathCost, int fallbackRangeX, int fallbackRangeY);
     }
 
     @FunctionalInterface
     public interface DropItemAction {
-        boolean drop(BotEntry entry, InventoryType type, int itemId, short quantity);
+        boolean drop(AgentRuntimeEntry entry, InventoryType type, int itemId, short quantity);
     }
 
-    private final BotEntry entry;
+    private final AgentRuntimeEntry entry;
     private final Character bot;
     private final Character owner;
     private final CheapMoveTargetCheck cheapMoveTargetCheck;
     private final DropItemAction dropItemAction;
 
-    public AgentScriptContext(BotEntry entry,
+    public AgentScriptContext(AgentRuntimeEntry entry,
                               Character bot,
                               Character owner,
                               CheapMoveTargetCheck cheapMoveTargetCheck,
@@ -37,7 +37,7 @@ public final class AgentScriptContext {
         this.dropItemAction = dropItemAction;
     }
 
-    public BotEntry entry() {
+    public AgentRuntimeEntry entry() {
         return entry;
     }
 

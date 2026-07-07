@@ -7,7 +7,6 @@ import server.agents.integration.AgentBotPqRuntime;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptRunner;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 import java.util.List;
 
@@ -21,7 +20,7 @@ public final class AgentPartyQuestHooks {
 
     private AgentPartyQuestHooks() {}
 
-    public static void tick(BotEntry entry, Character bot, Character owner) {
+    public static void tick(AgentRuntimeEntry entry, Character bot, Character owner) {
         AgentScriptRunner.tick(entry, bot, owner, SCRIPTS);
         AgentKpqStage5.tick(entry, bot);
     }

@@ -53,7 +53,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(entry, leader),
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(asBotEntry(entry), agent),
                 (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(asBotEntry(entry), agent),
-                (entry, agent, leader) -> AgentPartyQuestHooks.tick(asBotEntry(entry), agent, leader),
+                AgentPartyQuestHooks::tick,
                 entry -> tickScriptTasks.accept(asBotEntry(entry)),
                 AgentPartyQuestHooks::isNpcLocked,
                 AgentBotCombatActionLockRuntime::tickActionLock,

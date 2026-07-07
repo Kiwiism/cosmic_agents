@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 import java.awt.Point;
@@ -71,7 +72,7 @@ class AgentScriptContextTest {
     @Test
     void cheapMoveTargetUsesInjectedCheck() {
         AgentScriptContext context = context();
-        AtomicReference<BotEntry> checkedEntry = new AtomicReference<>();
+        AtomicReference<AgentRuntimeEntry> checkedEntry = new AtomicReference<>();
         AgentScriptContext checkedContext = new AgentScriptContext(
                 context.entry(),
                 context.bot(),
@@ -93,7 +94,7 @@ class AgentScriptContextTest {
     @Test
     void dropItemUsesInjectedAction() {
         AgentScriptContext context = context();
-        AtomicReference<BotEntry> droppedEntry = new AtomicReference<>();
+        AtomicReference<AgentRuntimeEntry> droppedEntry = new AtomicReference<>();
         AgentScriptContext dropContext = new AgentScriptContext(
                 context.entry(),
                 context.bot(),
