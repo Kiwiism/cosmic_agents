@@ -32,7 +32,7 @@ public final class AgentMovementOnlyRuntime {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
                 AgentIdlePhysicsRuntime::tickIdleEntry,
                 (entry, agent) -> AgentBotShopStateRuntime.shopVisitPending(entry),
-                (entry, agent, leader) -> AgentFollowMapSyncRuntime.syncFollowMap(asBotEntry(entry), agent, leader),
+                AgentFollowMapSyncRuntime::syncFollowMap,
                 (entry, leader) -> followAnchorResolver.apply(asBotEntry(entry), leader),
                 (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
                         asBotEntry(entry),

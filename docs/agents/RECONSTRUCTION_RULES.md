@@ -5472,6 +5472,10 @@ Current physics correction:
   phase service and dispatch hooks. The movement tick runtime may still supply
   the temporary compatibility entry, but phase selection no longer depends on
   the bot package type.
+- Follow-map sync runtime now accepts `AgentRuntimeEntry`; cross-map follow
+  grounding, idle stance, map-change, and movement-state reset behavior remain
+  unchanged while movement-only and recovery live-gate callers no longer cast
+  for this hook.
 
 Initial reconstruction order:
 

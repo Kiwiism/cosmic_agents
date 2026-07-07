@@ -53,10 +53,7 @@ public final class AgentLiveTickGateRuntime {
                         recoveryFollowAnchor,
                         recoveryTargetPos,
                         new AgentRecoveryTickService.Hooks(
-                                (entry, agent, anchor) -> AgentFollowMapSyncRuntime.syncFollowMap(
-                                        asBotEntry(entry),
-                                        agent,
-                                        anchor),
+                                AgentFollowMapSyncRuntime::syncFollowMap,
                                 (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
                                         asBotEntry(entry),
                                         agent,

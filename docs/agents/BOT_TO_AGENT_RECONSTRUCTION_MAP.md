@@ -21,6 +21,10 @@ Recent map updates:
   movement phase service. Phase selection and hook wiring no longer import the
   legacy bot entry type; lower movement implementation slices remain to be
   reconstructed.
+- `AgentFollowMapSyncRuntime` now accepts `AgentRuntimeEntry`; movement-only
+  and recovery live-gate paths call the Agent follow-map sync boundary without
+  BotEntry casts, preserving the existing cross-map follow synchronization
+  behavior.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
