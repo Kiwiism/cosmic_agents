@@ -5410,6 +5410,12 @@ Current physics correction:
 - Potion-check request runtime now uses `AgentRuntimeEntry` for the generic
   potion-check request service hook; BotClient detection, active-leader lookup,
   character-id registry lookup, and retry-soon delay behavior are unchanged.
+- Shop purchase sequencing now uses
+  `AgentShopPurchaseSequence<E extends AgentRuntimeHandle>` and generic
+  purchase actions. The current shop service still binds the sequence to the
+  temporary `BotEntry` compatibility edge, preserving recharge, fixed-ammo,
+  HP/MP potion purchase, shortfall reporting, sell-trash continuation, and
+  delayed step scheduling behavior.
 
 Initial reconstruction order:
 

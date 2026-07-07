@@ -1,7 +1,7 @@
 package server.agents.capabilities.shop;
 
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeHandle;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -14,10 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class AgentShopPurchaseSequenceTest {
     @Test
     void recordsOnlyTheFirstPurchaseShortfall() {
-        BotEntry entry = new BotEntry(null, null, null);
+        TestAgentRuntimeHandle entry = new TestAgentRuntimeHandle();
         List<String> bought = new ArrayList<>();
-        AgentShopPurchaseSequence sequence =
-                new AgentShopPurchaseSequence(entry, null, new Point(10, 20), List.of(), bought, null);
+        AgentShopPurchaseSequence<TestAgentRuntimeHandle> sequence =
+                new AgentShopPurchaseSequence<>(entry, null, new Point(10, 20), List.of(), bought, null);
 
         AgentShopBuyReport fullPurchase =
                 new AgentShopBuyReport(2000000, 10, 10, AgentShopShortfallReason.NONE);
@@ -26,7 +26,7 @@ class AgentShopPurchaseSequenceTest {
 
         AgentShopBuyReport firstShortfall =
                 new AgentShopBuyReport(2000001, 2, 5, AgentShopShortfallReason.NO_MESO);
-        AgentShopPurchaseSequence withShortfall = sequence.withFirstShortfall(firstShortfall);
+        AgentShopPurchaseSequence<TestAgentRuntimeHandle> withShortfall = sequence.withFirstShortfall(firstShortfall);
 
         assertEquals(firstShortfall, withShortfall.firstShortfall());
         assertSame(entry, withShortfall.entry());
@@ -35,5 +35,8 @@ class AgentShopPurchaseSequenceTest {
         AgentShopBuyReport laterShortfall =
                 new AgentShopBuyReport(2000002, 1, 3, AgentShopShortfallReason.NO_SPACE);
         assertEquals(firstShortfall, withShortfall.withFirstShortfall(laterShortfall).firstShortfall());
+    }
+
+    private static final class TestAgentRuntimeHandle implements AgentRuntimeHandle {
     }
 }

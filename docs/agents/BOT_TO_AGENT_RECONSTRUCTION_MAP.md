@@ -100,6 +100,11 @@ Recent map updates:
 - `AgentPotionCheckRequestRuntime` now uses `AgentRuntimeEntry` for the generic
   potion-check request hook. BotClient detection, active-leader lookup,
   character-id registry lookup, and retry-soon delay behavior are unchanged.
+- `AgentShopPurchaseSequence` and `AgentShopPurchaseAction` now use the
+  Agent-owned `AgentRuntimeHandle` boundary. `AgentShopService` remains the
+  temporary `BotEntry` adapter for the current shop purchase/sell-trash flow,
+  with recharge, ammo, potion, shortfall, bought-summary, and delayed-step
+  behavior unchanged.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

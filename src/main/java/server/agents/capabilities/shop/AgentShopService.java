@@ -250,7 +250,7 @@ public final class AgentShopService {
         }
 
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        List<AgentShopPurchaseAction> actions = new ArrayList<>();
+        List<AgentShopPurchaseAction<BotEntry>> actions = new ArrayList<>();
 
         if (shouldRechargeWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> {
@@ -282,10 +282,10 @@ public final class AgentShopService {
             return sequence;
         });
 
-        runPurchaseStep(new AgentShopPurchaseSequence(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
+        runPurchaseStep(new AgentShopPurchaseSequence<>(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
     }
 
-    private static void runPurchaseStep(AgentShopPurchaseSequence sequence, int index) {
+    private static void runPurchaseStep(AgentShopPurchaseSequence<BotEntry> sequence, int index) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopBuyInterruptedReply());
             return;
@@ -310,11 +310,11 @@ public final class AgentShopService {
             return;
         }
 
-        AgentShopPurchaseSequence next = sequence.actions().get(index).run(sequence, shop);
+        AgentShopPurchaseSequence<BotEntry> next = sequence.actions().get(index).run(sequence, shop);
         scheduleShopStep(sequence.entry(), () -> runPurchaseStep(next, index + 1));
     }
 
-    private static void finishPurchaseSequence(AgentShopPurchaseSequence sequence, boolean announceIfEmpty) {
+    private static void finishPurchaseSequence(AgentShopPurchaseSequence<BotEntry> sequence, boolean announceIfEmpty) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopFinishFailedReply());
             return;
@@ -346,7 +346,7 @@ public final class AgentShopService {
         finish.run();
     }
 
-    private static void startSellTrashSequence(AgentShopPurchaseSequence sequence) {
+    private static void startSellTrashSequence(AgentShopPurchaseSequence<BotEntry> sequence) {
         List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
@@ -389,7 +389,7 @@ public final class AgentShopService {
             } else if (soldCount == 0) {
                 AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
             }
-            finishPurchaseSequence(new AgentShopPurchaseSequence(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
+            finishPurchaseSequence(new AgentShopPurchaseSequence<>(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
         }
 
@@ -424,7 +424,10 @@ public final class AgentShopService {
                 () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall));
     }
 
-    private static AgentShopPurchaseSequence appendBuyReport(AgentShopPurchaseSequence sequence, AgentShopBuyReport report, String fallbackName) {
+    private static AgentShopPurchaseSequence<BotEntry> appendBuyReport(
+            AgentShopPurchaseSequence<BotEntry> sequence,
+            AgentShopBuyReport report,
+            String fallbackName) {
         if (report.quantity() > 0) {
             sequence.bought().add(report.quantity() + " " + resolveItemName(report.itemId(), fallbackName));
         }
