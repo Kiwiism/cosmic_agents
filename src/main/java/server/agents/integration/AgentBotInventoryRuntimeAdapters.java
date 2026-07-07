@@ -27,6 +27,7 @@ import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeSer
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -57,7 +58,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 Character::pickupItem);
     }
 
-    public static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(BotEntry entry) {
+    public static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(AgentRuntimeEntry entry) {
         return AgentManualTradeRuntimeService.RuntimeCallbacks.of(
                 () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
                 AgentMovementTimers::tickDown,
@@ -83,7 +84,7 @@ public final class AgentBotInventoryRuntimeAdapters {
     public static AgentTradeLifecycleRuntimeService.RuntimeCallbacks tradeLifecycleRuntimeCallbacks() {
         return AgentTradeLifecycleRuntimeService.RuntimeCallbacks.of(
                 AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
-                (entry, agent) -> AgentManualTradeService.clearState((BotEntry) entry, agent),
+                AgentManualTradeService::clearState,
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentRandom::randMs,
@@ -98,7 +99,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName));
     }
 
-    public static AgentInventoryTradeRuntimeService.RuntimeCallbacks tradeRuntimeCallbacks(BotEntry entry, Character agent) {
+    public static AgentInventoryTradeRuntimeService.RuntimeCallbacks tradeRuntimeCallbacks(AgentRuntimeEntry entry, Character agent) {
         return AgentInventoryTradeRuntimeService.RuntimeCallbacks.of(
                 (owner, holder) -> new ArrayList<>(AgentEquipmentService.findRecommendedEquips(owner, holder).stream()
                         .map(AgentEquipRecommendation::candidate)

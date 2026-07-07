@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
@@ -12,26 +12,26 @@ public final class AgentTradeLifecycleRuntimeService {
     private AgentTradeLifecycleRuntimeService() {
     }
 
-    public static void cancelTradeSequence(BotEntry entry,
+    public static void cancelTradeSequence(AgentRuntimeEntry entry,
                                            Character agent,
                                            String message,
                                            RuntimeCallbacks callbacks) {
         AgentTradeLifecycleService.cancelTradeSequence(entry, agent, message, lifecycleCallbacks(callbacks));
     }
 
-    public static void clearManualTradeState(BotEntry entry,
+    public static void clearManualTradeState(AgentRuntimeEntry entry,
                                              Character agent,
                                              RuntimeCallbacks callbacks) {
         AgentTradeLifecycleService.clearManualTradeState(entry, agent, lifecycleCallbacks(callbacks));
     }
 
-    public static void resetTradeState(BotEntry entry,
+    public static void resetTradeState(AgentRuntimeEntry entry,
                                        Character agent,
                                        RuntimeCallbacks callbacks) {
         AgentTradeLifecycleService.resetTradeState(entry, agent, lifecycleCallbacks(callbacks));
     }
 
-    public static void completeTradeAndReact(BotEntry entry,
+    public static void completeTradeAndReact(AgentRuntimeEntry entry,
                                              Character agent,
                                              Trade trade,
                                              RuntimeCallbacks callbacks) {
@@ -40,9 +40,9 @@ public final class AgentTradeLifecycleRuntimeService {
 
     public static AgentTradeLifecycleService.LifecycleCallbacks lifecycleCallbacks(RuntimeCallbacks callbacks) {
         return AgentTradeLifecycleCallbackService.lifecycleCallbacks(
-                (entry, agent) -> callbacks.restoreTemporarilyUnequippedItems((BotEntry) entry, agent),
-                (entry, agent) -> callbacks.clearManualTradeState((BotEntry) entry, agent),
-                entry -> callbacks.owner((BotEntry) entry),
+                callbacks::restoreTemporarilyUnequippedItems,
+                callbacks::clearManualTradeState,
+                callbacks::owner,
                 callbacks::refillEquipmentSlots,
                 callbacks::randomReplyDelayMs,
                 callbacks::tradeThanksReply,
@@ -52,11 +52,11 @@ public final class AgentTradeLifecycleRuntimeService {
     }
 
     public interface RuntimeCallbacks {
-        void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent);
+        void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent);
 
-        void clearManualTradeState(BotEntry entry, Character agent);
+        void clearManualTradeState(AgentRuntimeEntry entry, Character agent);
 
-        Character owner(BotEntry entry);
+        Character owner(AgentRuntimeEntry entry);
 
         void refillEquipmentSlots(Character agent, Character owner);
 
@@ -75,17 +75,17 @@ public final class AgentTradeLifecycleRuntimeService {
                                    Supplier<String> tradeFreebieReply) {
             return new RuntimeCallbacks() {
                 @Override
-                public void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent) {
+                public void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent) {
                     restoreTemporarilyUnequippedItems.restore(entry, agent);
                 }
 
                 @Override
-                public void clearManualTradeState(BotEntry entry, Character agent) {
+                public void clearManualTradeState(AgentRuntimeEntry entry, Character agent) {
                     clearManualTradeState.clear(entry, agent);
                 }
 
                 @Override
-                public Character owner(BotEntry entry) {
+                public Character owner(AgentRuntimeEntry entry) {
                     return owner.owner(entry);
                 }
 

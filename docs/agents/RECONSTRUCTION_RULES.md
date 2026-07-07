@@ -5584,6 +5584,13 @@ Current physics correction:
   and drop helper replies. Drop-limit handling, safe-drop filtering,
   InventoryManipulator calls, named-item lookup, category ordering, and legacy
   reply strings remain unchanged.
+- Inventory/trade facade routing now accepts `AgentRuntimeEntry` through
+  `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
+  `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
+  `AgentTradeLifecycleRuntimeService`. Passive loot, manual trade, transfer
+  category routing, grouped trade batches, retry handling, invite waits,
+  item-add ticks, trade confirmation, lifecycle reset, and completion reactions
+  remain unchanged.
 
 Initial reconstruction order:
 

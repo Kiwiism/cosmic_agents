@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
@@ -17,7 +17,7 @@ public final class AgentManualTradeRuntimeService {
     private AgentManualTradeRuntimeService() {
     }
 
-    public static void tickManualTrade(BotEntry entry,
+    public static void tickManualTrade(AgentRuntimeEntry entry,
                                        Character agent,
                                        Character owner,
                                        RuntimeCallbacks callbacks,
@@ -81,7 +81,7 @@ public final class AgentManualTradeRuntimeService {
     }
 
     public interface RuntimeCallbacks {
-        boolean hasActiveSequence(BotEntry entry);
+        boolean hasActiveSequence(AgentRuntimeEntry entry);
 
         int tickDown(int delayMs);
 
@@ -104,7 +104,7 @@ public final class AgentManualTradeRuntimeService {
                                    BiConsumer<Character, Character> refillEquipment) {
             return new RuntimeCallbacks() {
                 @Override
-                public boolean hasActiveSequence(BotEntry entry) {
+                public boolean hasActiveSequence(AgentRuntimeEntry entry) {
                     return hasActiveSequence.getAsBoolean();
                 }
 

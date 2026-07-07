@@ -12,6 +12,13 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
+  `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
+  `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across
+  inventory/drop/trade facade routing. Passive-loot dispatch, manual-trade
+  timeout handling, transfer category routing, trade batching, closed-window
+  handling, invite waits, item-add ticks, confirmation waits, lifecycle reset,
+  and trade reaction behavior remain unchanged.
 - `AgentInventoryDropService` now accepts `AgentRuntimeEntry` for drop-category
   routing and focused drop helpers. Drop-limit checks, category dispatch,
   safe-to-drop filtering, named-item lookup, inventory drop calls, and legacy

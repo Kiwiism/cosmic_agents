@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,7 +17,7 @@ class AgentInventoryTickRuntimeTest {
     @Test
     void shouldCancelUnmanagedAgentTradeWhenManualTimeoutExpires() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Trade trade = mock(Trade.class);
 
         when(agent.getId()).thenReturn(99);

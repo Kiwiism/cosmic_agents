@@ -28,7 +28,6 @@ import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -47,7 +46,7 @@ public final class AgentInventoryTransferService {
     private AgentInventoryTransferService() {
     }
 
-    public static void executeChoice(String category, boolean tradeToOwner, BotEntry entry, Character agent) {
+    public static void executeChoice(String category, boolean tradeToOwner, AgentRuntimeEntry entry, Character agent) {
         if (tradeToOwner) {
             startTradeTransfer(category, entry, agent);
             return;
@@ -62,7 +61,7 @@ public final class AgentInventoryTransferService {
                 AgentMovementTimers.delayAfterCurrentTick(20_000));
     }
 
-    public static void startTradeTransfer(String category, BotEntry entry, Character agent) {
+    public static void startTradeTransfer(String category, AgentRuntimeEntry entry, Character agent) {
         long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
 
@@ -122,7 +121,7 @@ public final class AgentInventoryTransferService {
                 reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
-    public static boolean hasTransferableItems(String category, BotEntry entry, Character agent) {
+    public static boolean hasTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentInventoryTradeCollectionService.hasTransferableItems(
                 category,
                 agent,
@@ -130,7 +129,7 @@ public final class AgentInventoryTransferService {
                 () -> collectItems(category, entry, agent));
     }
 
-    public static int countTransferableItems(String category, BotEntry entry, Character agent) {
+    public static int countTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentInventoryTradeCollectionService.countTransferableItems(
                 category,
                 agent,
@@ -139,7 +138,7 @@ public final class AgentInventoryTransferService {
                 () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, agent)));
     }
 
-    private static List<Item> collectItems(String category, BotEntry entry, Character agent) {
+    private static List<Item> collectItems(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentTradeItemCollectionService.collectItems(
                 category,
                 agent,
@@ -190,7 +189,7 @@ public final class AgentInventoryTransferService {
                 message -> AgentBotInventoryRuntime.replyNow(entry, message));
     }
 
-    private static void startTradeMesoTransfer(String category, BotEntry entry, Character agent) {
+    private static void startTradeMesoTransfer(String category, AgentRuntimeEntry entry, Character agent) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentMesoTradeService.MesoTradeStartDecision decision = AgentMesoTradeService.decideStart(
                 category,
@@ -204,7 +203,7 @@ public final class AgentInventoryTransferService {
                 reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
-    private static PreparedTradeItems prepareTradeItems(String category, BotEntry entry, Character agent) {
+    private static PreparedTradeItems prepareTradeItems(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentInventoryTradeCollectionService.prepareTradeItems(
                 category,
                 agent,
@@ -225,11 +224,11 @@ public final class AgentInventoryTransferService {
                 AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
-    private static List<Item> collectReservedEquipTradePage(String category, BotEntry entry, Character agent) {
+    private static List<Item> collectReservedEquipTradePage(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentEquipTradeGroupService.reservedEquipTradePage(category, classifyEquipTradeGroups(entry, agent));
     }
 
-    private static String reservedEquipsPageMessage(String category, BotEntry entry, Character agent) {
+    private static String reservedEquipsPageMessage(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentEquipTradeGroupService.reservedEquipsPageMessage(category, classifyEquipTradeGroups(entry, agent));
     }
 
@@ -237,7 +236,7 @@ public final class AgentInventoryTransferService {
         return AgentTradeDialogueService.equipsGroupMessage(category);
     }
 
-    private static void startEquipsGroupTradeTransfer(Character owner, BotEntry entry, Character agent) {
+    private static void startEquipsGroupTradeTransfer(Character owner, AgentRuntimeEntry entry, Character agent) {
         AgentGroupedTradeTransferService.startEquipsGroupTradeTransfer(
                 classifyEquipTradeGroups(entry, agent),
                 (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, agent),
@@ -246,14 +245,14 @@ public final class AgentInventoryTransferService {
                 reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
-    private static void startAmmoGroupTradeTransfer(Character owner, BotEntry entry, Character agent) {
+    private static void startAmmoGroupTradeTransfer(Character owner, AgentRuntimeEntry entry, Character agent) {
         AgentGroupedTradeTransferService.startAmmoGroupTradeTransfer(
                 classifyAmmoTradeGroups(agent),
                 (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, agent),
                 reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
     }
 
-    private static List<Item> recommendedItems(BotEntry entry, Character agent) {
+    private static List<Item> recommendedItems(AgentRuntimeEntry entry, Character agent) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return List.of();
@@ -263,7 +262,7 @@ public final class AgentInventoryTransferService {
                 .toList());
     }
 
-    private static AgentEquipTradeGroups classifyEquipTradeGroups(BotEntry entry, Character agent) {
+    private static AgentEquipTradeGroups classifyEquipTradeGroups(AgentRuntimeEntry entry, Character agent) {
         return AgentEquipTradeClassificationService.classifyEquipTradeGroups(
                 agent,
                 AgentEquipTradeClassificationService.ClassificationCallbacks.of(

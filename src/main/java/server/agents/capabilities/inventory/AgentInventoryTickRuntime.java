@@ -10,7 +10,7 @@ import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService;
 import server.agents.integration.AgentBotInventoryRuntimeAdapters;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned entry points for inventory, loot, and trade tick behavior.
@@ -19,14 +19,14 @@ public final class AgentInventoryTickRuntime {
     private AgentInventoryTickRuntime() {
     }
 
-    public static void tickPassiveLoot(BotEntry entry, Character agent) {
+    public static void tickPassiveLoot(AgentRuntimeEntry entry, Character agent) {
         AgentPassiveLootRuntimeService.tickPassiveLoot(
                 entry,
                 agent,
                 AgentBotInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
     }
 
-    public static void tickManualTrade(BotEntry entry, Character agent) {
+    public static void tickManualTrade(AgentRuntimeEntry entry, Character agent) {
         AgentManualTradeRuntimeService.tickManualTrade(
                 entry,
                 agent,
@@ -36,19 +36,19 @@ public final class AgentInventoryTickRuntime {
                         AgentBotInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks()));
     }
 
-    public static void executeChoice(String category, boolean tradeToLeader, BotEntry entry, Character agent) {
+    public static void executeChoice(String category, boolean tradeToLeader, AgentRuntimeEntry entry, Character agent) {
         AgentInventoryTransferService.executeChoice(category, tradeToLeader, entry, agent);
     }
 
-    public static void startTradeTransfer(String category, BotEntry entry, Character agent) {
+    public static void startTradeTransfer(String category, AgentRuntimeEntry entry, Character agent) {
         AgentInventoryTransferService.startTradeTransfer(category, entry, agent);
     }
 
-    public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character agent) {
+    public static void startTradeTransfer(Item item, Character recipient, AgentRuntimeEntry entry, Character agent) {
         AgentInventoryTransferService.startTradeTransfer(item, recipient, entry, agent);
     }
 
-    public static boolean hasTransferableItems(String category, BotEntry entry, Character agent) {
+    public static boolean hasTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentTradeTransferAvailabilityRuntimeService.hasTransferableItems(
                 category,
                 entry,
@@ -57,7 +57,7 @@ public final class AgentInventoryTickRuntime {
                 AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
     }
 
-    public static int countTransferableItems(String category, BotEntry entry, Character agent) {
+    public static int countTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
         return AgentTradeTransferAvailabilityRuntimeService.countTransferableItems(
                 category,
                 entry,
@@ -66,7 +66,7 @@ public final class AgentInventoryTickRuntime {
                 AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
     }
 
-    public static void tickTrade(BotEntry entry, Character agent) {
+    public static void tickTrade(AgentRuntimeEntry entry, Character agent) {
         AgentTradeTickRuntimeService.tickTrade(
                 entry,
                 agent,

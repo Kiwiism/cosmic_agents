@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -14,7 +14,7 @@ public final class AgentTradeTickRuntimeService {
     private AgentTradeTickRuntimeService() {
     }
 
-    public static void tickTrade(BotEntry entry,
+    public static void tickTrade(AgentRuntimeEntry entry,
                                  Character agent,
                                  RuntimeCallbacks callbacks,
                                  AgentInventoryTradeRuntimeService.RuntimeCallbacks inventoryCallbacks,
@@ -93,7 +93,7 @@ public final class AgentTradeTickRuntimeService {
     }
 
     private static List<Item> collectItems(String category,
-                                           BotEntry entry,
+                                           AgentRuntimeEntry entry,
                                            Character agent,
                                            RuntimeCallbacks callbacks,
                                            AgentInventoryTradeRuntimeService.RuntimeCallbacks inventoryCallbacks) {
@@ -113,11 +113,11 @@ public final class AgentTradeTickRuntimeService {
 
         int tickMs();
 
-        Character owner(BotEntry entry);
+        Character owner(AgentRuntimeEntry entry);
 
         void refillEquipment(Character agent, Character owner);
 
-        Character resolveTradeRecipient(BotEntry entry, Character agent);
+        Character resolveTradeRecipient(AgentRuntimeEntry entry, Character agent);
 
         boolean isBotRecipient(Character recipient);
 
@@ -125,7 +125,7 @@ public final class AgentTradeTickRuntimeService {
                                    Function<Character, Trade> currentTrade,
                                    IntUnaryOperator delayAfterCurrentTick,
                                    java.util.function.IntSupplier tickMs,
-                                   Function<BotEntry, Character> owner,
+                                   Function<AgentRuntimeEntry, Character> owner,
                                    BiConsumer<Character, Character> refillEquipment,
                                    TradeRecipientResolver resolveTradeRecipient,
                                    java.util.function.Predicate<Character> isBotRecipient) {
@@ -151,7 +151,7 @@ public final class AgentTradeTickRuntimeService {
                 }
 
                 @Override
-                public Character owner(BotEntry entry) {
+                public Character owner(AgentRuntimeEntry entry) {
                     return owner.apply(entry);
                 }
 
@@ -161,7 +161,7 @@ public final class AgentTradeTickRuntimeService {
                 }
 
                 @Override
-                public Character resolveTradeRecipient(BotEntry entry, Character agent) {
+                public Character resolveTradeRecipient(AgentRuntimeEntry entry, Character agent) {
                     return resolveTradeRecipient.resolve(entry, agent);
                 }
 
@@ -175,6 +175,6 @@ public final class AgentTradeTickRuntimeService {
 
     @FunctionalInterface
     public interface TradeRecipientResolver {
-        Character resolve(BotEntry entry, Character agent);
+        Character resolve(AgentRuntimeEntry entry, Character agent);
     }
 }
