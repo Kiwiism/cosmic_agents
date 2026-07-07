@@ -10,7 +10,7 @@ import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -30,7 +30,7 @@ public final class AgentLocalOpportunityAttackService {
 
     @FunctionalInterface
     public interface GrindNavigationTargetSelector {
-        Point select(BotEntry entry, Point botPos, Point combatTargetPos);
+        Point select(AgentRuntimeEntry entry, Point botPos, Point combatTargetPos);
     }
 
     @FunctionalInterface
@@ -40,15 +40,15 @@ public final class AgentLocalOpportunityAttackService {
 
     @FunctionalInterface
     public interface JumpInitiator {
-        void initiate(BotEntry entry, Character agent, int dx);
+        void initiate(AgentRuntimeEntry entry, Character agent, int dx);
     }
 
     @FunctionalInterface
     public interface LocalAttackMoveWindowSetter {
-        void set(BotEntry entry, Point agentPos, Point referencePos);
+        void set(AgentRuntimeEntry entry, Point agentPos, Point referencePos);
     }
 
-    public static Result tryLocalOpportunityAttack(BotEntry entry,
+    public static Result tryLocalOpportunityAttack(AgentRuntimeEntry entry,
                                                    Character agent,
                                                    Point agentPos,
                                                    Point movementTargetPos,
@@ -122,7 +122,7 @@ public final class AgentLocalOpportunityAttackService {
         return new Result(false, targetPos);
     }
 
-    private static AgentMovementProfile movementProfile(BotEntry entry) {
+    private static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {
         return AgentBotMovementStateRuntime.movementProfile(entry);
     }
 }

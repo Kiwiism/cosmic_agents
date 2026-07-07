@@ -8,7 +8,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 
@@ -18,7 +18,7 @@ public final class AgentBotCombatAttackRuntime {
     private AgentBotCombatAttackRuntime() {
     }
 
-    public static void attackMonster(BotEntry entry, Character bot, AgentAttackPlan attackPlan) {
+    public static void attackMonster(AgentRuntimeEntry entry, Character bot, AgentAttackPlan attackPlan) {
         AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
                 AgentCombatAttackExecutionPolicy.attackExecutionReadiness(
                         AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),

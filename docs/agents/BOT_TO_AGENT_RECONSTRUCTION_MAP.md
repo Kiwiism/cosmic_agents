@@ -2181,6 +2181,7 @@ Recent map updates:
 | `src/main/java/server/bots/combat/BotDefenseDataProvider.java` | `server.agents.capabilities.combat.data.AgentDefenseDataProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotMobHitboxProvider.java` | `server.agents.capabilities.combat.data.AgentMobHitboxProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotWzXml.java` | `server.agents.capabilities.combat.data.AgentWzXml` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.runtime.AgentLocalOpportunityAttackRuntime`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.integration.AgentBotCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
 | `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotLlmReplyManager.java` | `server.agents.capabilities.dialogue.llm.AgentLlmReplyService` | `MIGRATED_TO_AGENT`; LLM reply bridge now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/llm/BotMemoryStore.java` | `server.agents.capabilities.dialogue.llm.AgentMemoryStore` | `MIGRATED_TO_AGENT` |

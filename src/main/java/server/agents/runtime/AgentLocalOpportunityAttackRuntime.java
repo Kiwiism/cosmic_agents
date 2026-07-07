@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -12,7 +11,7 @@ public final class AgentLocalOpportunityAttackRuntime {
     private AgentLocalOpportunityAttackRuntime() {
     }
 
-    public static AgentLocalOpportunityAttackService.Result tryLocalOpportunityAttack(BotEntry entry,
+    public static AgentLocalOpportunityAttackService.Result tryLocalOpportunityAttack(AgentRuntimeEntry entry,
                                                                                       Character agent,
                                                                                       Point agentPosition,
                                                                                       Point movementTargetPosition,
@@ -31,7 +30,7 @@ public final class AgentLocalOpportunityAttackRuntime {
     }
 
     public static AgentLiveModeTickRuntime.LocalAttackResult tryLocalOpportunityAttackForLiveMode(
-            BotEntry entry,
+            AgentRuntimeEntry entry,
             Character agent,
             Point agentPosition,
             Point movementTargetPosition,
@@ -57,7 +56,7 @@ public final class AgentLocalOpportunityAttackRuntime {
                 AgentLocalOpportunityAttackRuntime::setLocalAttackMoveWindow);
     }
 
-    private static void setLocalAttackMoveWindow(BotEntry entry, Point agentPosition, Point referencePosition) {
+    private static void setLocalAttackMoveWindow(AgentRuntimeEntry entry, Point agentPosition, Point referencePosition) {
         AgentLocalAttackMoveWindowRuntime.setLocalAttackMoveWindow(entry, agentPosition, referencePosition);
     }
 }

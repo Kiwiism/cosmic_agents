@@ -5740,6 +5740,11 @@ Current physics correction:
   fallback steering, rope/drop/swim/jump immediate actions, ground-action
   execution, packet-visible velocity writes, and performance timing remain
   unchanged.
+- Local opportunity attack and combat attack execution now accept
+  `AgentRuntimeEntry`. Follow-opportunity target selection, retreat decisions,
+  jump-to-target gating, attack-plan readiness, damage packet construction,
+  cooldown updates, facing memory, alert marking, and move-window writes remain
+  unchanged.
 
 Initial reconstruction order:
 
