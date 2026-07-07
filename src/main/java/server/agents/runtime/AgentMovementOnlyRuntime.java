@@ -12,7 +12,7 @@ public final class AgentMovementOnlyRuntime {
     private AgentMovementOnlyRuntime() {
     }
 
-    public static void stepMovementOnly(BotEntry entry,
+    public static void stepMovementOnly(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick,
                                         long nowMs,

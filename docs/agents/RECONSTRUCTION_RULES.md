@@ -5254,6 +5254,9 @@ Current physics correction:
   short-circuit order, and final movement-core dispatch behavior are unchanged.
 - Tick cadence preparation now accepts `AgentRuntimeEntry`; AI-tick accumulator
   carry, last-tick timestamp, and last-tick-AI recording behavior are unchanged.
+- Movement-only runtime boundary now accepts `AgentRuntimeEntry`; the remaining
+  BotEntry casts are limited to downstream movement/shop/recovery adapters, and
+  movement-only tick ordering plus config propagation are unchanged.
 
 Initial reconstruction order:
 
