@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -18,7 +18,7 @@ public final class AgentNavigationEdgeExecutor {
     }
 
     public static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
-                                                     BotEntry entry,
+                                                     AgentRuntimeEntry entry,
                                                      Character agent,
                                                      Point agentPos,
                                                      Point rawTargetPos,
@@ -42,7 +42,7 @@ public final class AgentNavigationEdgeExecutor {
     }
 
     private static NavigationDirective tryExecuteClimb(AgentNavigationGraph graph,
-                                                       BotEntry entry,
+                                                       AgentRuntimeEntry entry,
                                                        Character agent,
                                                        Point agentPos,
                                                        Point rawTargetPos,

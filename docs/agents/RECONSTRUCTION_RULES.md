@@ -5228,6 +5228,9 @@ Current physics correction:
 - Navigation jump execution now accepts `AgentRuntimeEntry`; in-air/climbing
   gates, selected-launch readiness, rope fallback attach, block reasons, edge
   target marking, and jump initiation behavior are unchanged.
+- Navigation edge execution dispatch now accepts `AgentRuntimeEntry`; run-AI
+  gating, jump/drop/climb/portal branch selection, consumed-tick directives,
+  and climb entry/exit dispatch behavior are unchanged.
 
 Initial reconstruction order:
 
