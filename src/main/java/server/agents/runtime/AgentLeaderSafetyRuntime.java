@@ -49,12 +49,12 @@ public final class AgentLeaderSafetyRuntime {
                 nowMs,
                 new AgentLeaderSafetyService.InactiveLeaderTickHooks(
                         activeEntry -> AgentLeaderSafetyService.handleActiveLeaderReturn(
-                                activeEntry,
+                                (BotEntry) activeEntry,
                                 () -> AgentBotMoveTargetStateRuntime.clearMoveTarget(activeEntry),
                                 () -> AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderCharId),
-                                () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(activeEntry)),
-                        AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
-                        (inactiveEntry, town) -> enterInactiveSafeMode(inactiveEntry, agent, leaderCharId, town),
+                                () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline((BotEntry) activeEntry)),
+                        inactiveEntry -> shouldTownWarpForInactiveEntry((BotEntry) inactiveEntry),
+                        (inactiveEntry, town) -> enterInactiveSafeMode((BotEntry) inactiveEntry, agent, leaderCharId, town),
                         inactiveTownReturnMs));
     }
 
@@ -68,9 +68,9 @@ public final class AgentLeaderSafetyRuntime {
                 AgentRuntimeRegistry.entriesForLeader(leaderCharId),
                 town,
                 AgentBotRuntimeIdentityRuntime::botHasMap,
-                AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
+                entry -> shouldTownWarpForInactiveEntry((BotEntry) entry),
                 (entry, shouldTown) -> enterInactiveSafeMode(
-                        entry,
+                        (BotEntry) entry,
                         AgentBotRuntimeIdentityRuntime.bot(entry),
                         leaderCharId,
                         shouldTown));

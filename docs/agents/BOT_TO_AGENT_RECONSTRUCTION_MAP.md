@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentLeaderSafetyService` now owns inactive-leader safe-mode logic over
+  `AgentRuntimeEntry` instead of `BotEntry`. The outer
+  `AgentLeaderSafetyRuntime` remains the temporary BotEntry compatibility edge,
+  preserving inactive timer handling, town-return decisions, cluster formation
+  targets, return-scroll fallback, and active-leader return announcements.
 - `AgentMovementOnlyStepRuntime` now accepts `AgentRuntimeEntry` for
   ownerless movement-only tick preparation, removing another BotEntry runtime
   wrapper while preserving AI cadence preparation and target snapshot capture.

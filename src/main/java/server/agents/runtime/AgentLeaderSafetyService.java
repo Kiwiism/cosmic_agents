@@ -10,7 +10,6 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 import server.life.Monster;
 
@@ -51,17 +50,17 @@ public final class AgentLeaderSafetyService {
 
     @FunctionalInterface
     public interface ActiveLeaderReturnHandler {
-        void handle(BotEntry entry);
+        void handle(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface InactiveTownWarpPolicy {
-        boolean shouldTownWarp(BotEntry entry);
+        boolean shouldTownWarp(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface InactiveSafeModeEntry {
-        boolean enter(BotEntry entry, boolean town);
+        boolean enter(AgentRuntimeEntry entry, boolean town);
     }
 
     private AgentLeaderSafetyService() {
@@ -85,7 +84,7 @@ public final class AgentLeaderSafetyService {
         return returnMap != null && returnMap.getId() != currentMap.getId();
     }
 
-    public static void prepareInactiveIdle(BotEntry entry,
+    public static void prepareInactiveIdle(AgentRuntimeEntry entry,
                                            Runnable clearScriptTasks,
                                            Runnable cancelShopVisit,
                                            Runnable clearMode) {
@@ -99,7 +98,7 @@ public final class AgentLeaderSafetyService {
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
     }
 
-    public static void handleActiveLeaderReturn(BotEntry entry,
+    public static void handleActiveLeaderReturn(AgentRuntimeEntry entry,
                                                 Runnable clearMoveTarget,
                                                 Supplier<Point> removeTownClusterAnchor,
                                                 Runnable announceReturnedFromTown) {
@@ -121,7 +120,7 @@ public final class AgentLeaderSafetyService {
         }
     }
 
-    public static boolean shouldEnterInactiveSafeMode(BotEntry entry, long nowMs, long inactiveTownReturnMs) {
+    public static boolean shouldEnterInactiveSafeMode(AgentRuntimeEntry entry, long nowMs, long inactiveTownReturnMs) {
         if (AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
             if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
                     && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
@@ -138,7 +137,7 @@ public final class AgentLeaderSafetyService {
         return nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry) >= inactiveTownReturnMs;
     }
 
-    public static boolean handleInactiveLeaderTick(BotEntry entry,
+    public static boolean handleInactiveLeaderTick(AgentRuntimeEntry entry,
                                                    Character leader,
                                                    long nowMs,
                                                    InactiveLeaderTickHooks hooks) {
@@ -156,7 +155,7 @@ public final class AgentLeaderSafetyService {
         return hooks.inactiveSafeModeEntry().enter(entry, hooks.inactiveTownWarpPolicy().shouldTownWarp(entry));
     }
 
-    public static void idleInactiveAgentInPlace(BotEntry entry,
+    public static void idleInactiveAgentInPlace(AgentRuntimeEntry entry,
                                                 Runnable idleOnGround,
                                                 Runnable broadcastMovement) {
         idleOnGround.run();
@@ -164,10 +163,10 @@ public final class AgentLeaderSafetyService {
         AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
     }
 
-    public static Point resolveTownClusterTarget(BotEntry entry,
+    public static Point resolveTownClusterTarget(AgentRuntimeEntry entry,
                                                  MapleMap map,
                                                  Point anchor,
-                                                 List<BotEntry> leaderEntries,
+                                                 List<? extends AgentRuntimeEntry> leaderEntries,
                                                  AgentFormationService.FormationState formation,
                                                  int platformEdgeInsetPx,
                                                  BiFunction<MapleMap, Point, Point> groundPointResolver) {
@@ -222,11 +221,11 @@ public final class AgentLeaderSafetyService {
         return anchorGround != null ? anchorGround : base;
     }
 
-    public static void markInactiveTownReturnHandled(BotEntry entry) {
+    public static void markInactiveTownReturnHandled(AgentRuntimeEntry entry) {
         AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
     }
 
-    public static void startInactiveTownClusterMove(BotEntry entry,
+    public static void startInactiveTownClusterMove(AgentRuntimeEntry entry,
                                                     Runnable resetEntryState,
                                                     Runnable startPreciseMoveToClusterTarget) {
         resetEntryState.run();
@@ -247,7 +246,7 @@ public final class AgentLeaderSafetyService {
         return false;
     }
 
-    public static boolean scrollInactiveAgentToTown(BotEntry entry, TownScrollHooks hooks) {
+    public static boolean scrollInactiveAgentToTown(AgentRuntimeEntry entry, TownScrollHooks hooks) {
         MapleMap currentMap = hooks.currentMap().get();
         if (currentMap == null) {
             return false;
@@ -279,12 +278,12 @@ public final class AgentLeaderSafetyService {
         return true;
     }
 
-    public static void issueInactiveSafeModeForLeader(List<BotEntry> entries,
+    public static void issueInactiveSafeModeForLeader(List<? extends AgentRuntimeEntry> entries,
                                                       boolean town,
-                                                      Predicate<BotEntry> hasMap,
-                                                      Predicate<BotEntry> shouldTownWarp,
-                                                      BiConsumer<BotEntry, Boolean> enterSafeMode) {
-        for (BotEntry entry : entries) {
+                                                      Predicate<AgentRuntimeEntry> hasMap,
+                                                      Predicate<AgentRuntimeEntry> shouldTownWarp,
+                                                      BiConsumer<AgentRuntimeEntry, Boolean> enterSafeMode) {
+        for (AgentRuntimeEntry entry : entries) {
             if (!hasMap.test(entry)) {
                 continue;
             }

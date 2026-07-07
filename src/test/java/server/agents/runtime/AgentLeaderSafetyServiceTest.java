@@ -9,7 +9,6 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -81,7 +80,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void preparesInactiveIdleWithLegacyResetOrderAndState() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
         AgentBotGrindTargetStateRuntime.setTarget(entry, livingMonster());
         AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
@@ -109,7 +108,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void activeLeaderReturnDoesNothingForAwaySafeModeWithoutTimer() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
         Counters counters = new Counters();
 
@@ -122,7 +121,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void activeLeaderReturnClearsTimerAndMoveTargetWithoutAnnouncementWhenNotReturnedToTown() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
         Counters counters = new Counters();
@@ -137,7 +136,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void activeLeaderReturnAnnouncesOnlyWhenReturnedToTownAnchorWasRemoved() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
         Counters counters = new Counters();
@@ -153,7 +152,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void inactiveLeaderStartsTimerAndDoesNotEnterSafeModeImmediately() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 
         boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 1_000L, 5_000L);
 
@@ -163,7 +162,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void inactiveLeaderWaitsUntilConfiguredDelayElapses() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
 
         assertFalse(AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 5_999L, 5_000L));
@@ -172,7 +171,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void activeLeaderTickRunsReturnHandlerAndDoesNotConsumeTick() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character leader = mock(Character.class);
         when(leader.getHp()).thenReturn(100);
         AtomicInteger returns = new AtomicInteger();
@@ -200,7 +199,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void inactiveLeaderTickStartsTimerAndWaits() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger safeModes = new AtomicInteger();
 
         boolean consumed = AgentLeaderSafetyService.handleInactiveLeaderTick(
@@ -225,7 +224,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void inactiveLeaderTickEntersSafeModeAfterDelayWithTownDecision() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character leader = mock(Character.class);
         when(leader.getHp()).thenReturn(0);
         AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
@@ -252,7 +251,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void returnedToTownAwaySafeModeStartsTimerButDoesNotReenterSafeMode() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
         AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
 
@@ -264,7 +263,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void returnedToTownWithoutAwaySafeModeDoesNotStartTimer() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
 
         boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 2_000L, 5_000L);
@@ -275,7 +274,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void inactiveAgentIdleInPlaceRunsPhysicsThenBroadcastAndMarksReturnedToTown() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger order = new AtomicInteger();
 
         AgentLeaderSafetyService.idleInactiveAgentInPlace(
@@ -307,8 +306,8 @@ class AgentLeaderSafetyServiceTest {
     @Test
     void townClusterTargetAppliesFormationAndClampsToMapAreaBeforeGroundLookup() {
         MapleMap map = mapWithArea(100, new java.awt.Rectangle(0, 0, 100, 200));
-        BotEntry other = entryAt(new Point(10, 80), map, 100);
-        BotEntry entry = entryAt(new Point(20, 80), map, 100);
+        AgentRuntimeEntry other = entryAt(new Point(10, 80), map, 100);
+        AgentRuntimeEntry entry = entryAt(new Point(20, 80), map, 100);
         AtomicReference<Point> query = new AtomicReference<>();
 
         Point target = AgentLeaderSafetyService.resolveTownClusterTarget(
@@ -330,7 +329,7 @@ class AgentLeaderSafetyServiceTest {
     @Test
     void townClusterTargetFallsBackToAnchorGroundThenBase() {
         MapleMap map = mapWithArea(100, new java.awt.Rectangle(0, 0, 100, 200));
-        BotEntry entry = entryAt(new Point(20, 80), map, 100);
+        AgentRuntimeEntry entry = entryAt(new Point(20, 80), map, 100);
         AtomicInteger calls = new AtomicInteger();
 
         Point target = AgentLeaderSafetyService.resolveTownClusterTarget(
@@ -348,7 +347,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void markInactiveTownReturnHandledSetsReturnedToTown() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 
         AgentLeaderSafetyService.markInactiveTownReturnHandled(entry);
 
@@ -357,7 +356,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void startInactiveTownClusterMoveResetsThenStartsMoveThenMarksReturnedToTown() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger order = new AtomicInteger();
 
         AgentLeaderSafetyService.startInactiveTownClusterMove(
@@ -406,7 +405,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void scrollInactiveAgentToTownReturnsFalseWhenCurrentMapIsMissing() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         TownScrollCounters counters = new TownScrollCounters();
 
         boolean consumed = AgentLeaderSafetyService.scrollInactiveAgentToTown(entry, new AgentLeaderSafetyService.TownScrollHooks(
@@ -428,7 +427,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void scrollInactiveAgentToTownMarksHandledWhenReturnMapIsMissing() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         MapleMap map = map(100, null);
         TownScrollCounters counters = new TownScrollCounters();
 
@@ -440,7 +439,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void scrollInactiveAgentToTownUsesReturnScrollWhenAvailableAndStartsClusterMove() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         MapleMap returnMap = map(200, null);
         MapleMap map = map(100, returnMap);
         TownScrollCounters counters = new TownScrollCounters();
@@ -454,7 +453,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void scrollInactiveAgentToTownChangesMapWhenReturnScrollIsUnavailable() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         MapleMap returnMap = map(200, null);
         MapleMap map = map(100, returnMap);
         TownScrollCounters counters = new TownScrollCounters();
@@ -467,8 +466,8 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void issueInactiveSafeModeForLeaderSkipsEntriesWithoutMaps() {
-        BotEntry skipped = new BotEntry(mock(Character.class), mock(Character.class), null);
-        BotEntry handled = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry skipped = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry handled = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger handledCount = new AtomicInteger();
 
         AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
@@ -487,9 +486,9 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void issueInactiveSafeModeForLeaderCombinesTownRequestWithEligibility() {
-        BotEntry eligible = new BotEntry(mock(Character.class), mock(Character.class), null);
-        BotEntry ineligible = new BotEntry(mock(Character.class), mock(Character.class), null);
-        Map<BotEntry, Boolean> eligibility = Map.of(eligible, true, ineligible, false);
+        AgentRuntimeEntry eligible = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry ineligible = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
+        Map<AgentRuntimeEntry, Boolean> eligibility = Map.of(eligible, true, ineligible, false);
         AtomicInteger townEntries = new AtomicInteger();
         AtomicInteger idleEntries = new AtomicInteger();
 
@@ -512,7 +511,7 @@ class AgentLeaderSafetyServiceTest {
 
     @Test
     void issueInactiveSafeModeForLeaderNeverTownsWhenTownWasNotRequested() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger idleEntries = new AtomicInteger();
 
         AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
@@ -546,12 +545,12 @@ class AgentLeaderSafetyServiceTest {
         return map;
     }
 
-    private static BotEntry entryAt(Point position, MapleMap map, int mapId) {
+    private static AgentRuntimeEntry entryAt(Point position, MapleMap map, int mapId) {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(position));
         when(agent.getMap()).thenReturn(map);
         when(agent.getMapId()).thenReturn(mapId);
-        return new BotEntry(agent, mock(Character.class), null);
+        return new AgentRuntimeEntry(agent, mock(Character.class), null);
     }
 
     private static AgentLeaderSafetyService.TownScrollHooks townHooks(
@@ -582,7 +581,7 @@ class AgentLeaderSafetyServiceTest {
         return monster;
     }
 
-    private static void clearMoveTarget(BotEntry entry, Counters counters) {
+    private static void clearMoveTarget(AgentRuntimeEntry entry, Counters counters) {
         counters.clearMoveTarget();
         AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
     }
@@ -674,3 +673,4 @@ class AgentLeaderSafetyServiceTest {
         }
     }
 }
+

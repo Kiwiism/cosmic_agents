@@ -5546,6 +5546,11 @@ Current physics correction:
 - Movement-only step runtime now accepts `AgentRuntimeEntry` for ownerless
   movement tick preparation; bot existence checks, AI cadence, target snapshot
   capture, leader motion memory, and movement-only dispatch remain unchanged.
+- Leader safety service now accepts `AgentRuntimeEntry` for inactive-leader
+  timers, active-leader return cleanup, town-return eligibility, idle-safe-mode
+  state, town cluster target resolution, and batch safe-mode issuance. The
+  BotEntry dependency remains isolated in `AgentLeaderSafetyRuntime` while
+  behavior stays unchanged.
 
 Initial reconstruction order:
 
