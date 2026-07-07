@@ -78,6 +78,11 @@ Recent map updates:
   action-lock and combat skill-cache callbacks directly. Cooldown decay,
   skill-cache signature checks, cache reset, attack/AOE/heal/summon/support
   bucket selection, and rebuff scheduling are unchanged.
+- `AgentBotCombatDamageRuntime` now accepts `AgentRuntimeEntry` for mob-hit and
+  mob-damage ticking. Touch-damage rolling, sweep detection, damage broadcast,
+  HP/MP mutation, mob-hit cooldowns, alert marking, death entry, knockback
+  gating, and movement broadcast are unchanged; common tick also invokes the
+  existing Agent-entry death callbacks directly.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

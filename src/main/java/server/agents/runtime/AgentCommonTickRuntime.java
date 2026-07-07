@@ -41,10 +41,10 @@ public final class AgentCommonTickRuntime {
     private static AgentCommonTickService.CommonTickHooks hooks(Consumer<BotEntry> tickScriptTasks) {
         return new AgentCommonTickService.CommonTickHooks(
                 (entry, agent) -> AgentBotCombatDamageRuntime.tickMobDamage(
-                        asBotEntry(entry), agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
-                (entry, agent) -> AgentBotDeathStateRuntime.isDead(asBotEntry(entry)),
+                        entry, agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
+                (entry, agent) -> AgentBotDeathStateRuntime.isDead(entry),
                 (entry, agent) -> AgentBotCombatDeathRuntime.enterDeadState(
-                        asBotEntry(entry), agent, false, AgentCombatConfig.cfg),
+                        entry, agent, false, AgentCombatConfig.cfg),
                 AgentMonsterControlService::releaseControlledMonsters,
                 (entry, agent) -> AgentInventoryTickRuntime.tickPassiveLoot(asBotEntry(entry), agent),
                 (entry, agent) -> AgentPotionService.tickPotionCheck(asBotEntry(entry), agent),

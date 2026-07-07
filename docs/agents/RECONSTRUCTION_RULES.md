@@ -5388,6 +5388,11 @@ Current physics correction:
   combat skill-cache rebuild callbacks directly; cooldown decay, skill-cache
   signature checks, cache reset, attack/AOE/heal/summon/support bucket
   selection, and rebuff scheduling remain unchanged.
+- Mob damage runtime now accepts `AgentRuntimeEntry`; touch-damage rolling,
+  mob-touch sweep, damage broadcast, HP/MP mutation, mob-hit cooldowns, alert
+  marking, death entry, stance/knockback gating, and movement broadcast remain
+  unchanged. Common tick also calls the existing Agent-entry death-state/death
+  entry callbacks without redundant casts.
 
 Initial reconstruction order:
 

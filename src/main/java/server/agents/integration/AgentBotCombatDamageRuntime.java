@@ -14,7 +14,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.life.Monster;
 import tools.PacketCreator;
 
@@ -26,7 +25,7 @@ public final class AgentBotCombatDamageRuntime {
     private AgentBotCombatDamageRuntime() {
     }
 
-    public static void applyMobHit(BotEntry entry, Character bot, Monster mob, AgentCombatConfig.Config config) {
+    public static void applyMobHit(AgentRuntimeEntry entry, Character bot, Monster mob, AgentCombatConfig.Config config) {
         int dmg = AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
         AgentMobKnockbackPolicy.MobHitKnockback kb =
                 AgentMobKnockbackPolicy.resolveMobHitKnockback(
@@ -34,7 +33,7 @@ public final class AgentBotCombatDamageRuntime {
         applyDamage(entry, bot, dmg, -1, mob.getId(), kb.direction(), kb.airVelX(), config);
     }
 
-    public static void tickMobDamage(BotEntry entry, Character bot, AgentCombatConfig.Config config,
+    public static void tickMobDamage(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
                                      IntUnaryOperator cooldownTickDown) {
         Point botPos = bot.getPosition();
         try {
