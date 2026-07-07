@@ -1,16 +1,16 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.bots.BotEntry;
 
 public final class AgentLiveTickContextRuntime {
     private AgentLiveTickContextRuntime() {
     }
 
     public static AgentLiveTickContextService.Context prepareLiveTickContext(
-            BotEntry entry,
+            AgentRuntimeEntry entry,
             Character agent,
             Character leader,
             AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
@@ -20,21 +20,20 @@ public final class AgentLiveTickContextRuntime {
                 agent,
                 leader,
                 new AgentLiveTickContextService.Hooks(
-                        runtimeEntry -> AgentMovementProfileService.refreshMovementProfile(asBotEntry(runtimeEntry)),
-                        (runtimeEntry, runtimeLeader) -> followAnchorResolver.resolve(asBotEntry(runtimeEntry), runtimeLeader),
-                        runtimeEntry -> targetSnapshotCapture.capture(asBotEntry(runtimeEntry)),
+                        AgentMovementProfileService::refreshMovementProfile,
+                        followAnchorResolver,
+                        targetSnapshotCapture,
                         AgentTickStateMaintenanceService::updateObservedLeaderMotion,
                         AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
                         AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
                         AgentTickStateMaintenanceService::clearPatrolOnMapChange,
                         (runtimeEntry, agentPosition, targetSnapshot) ->
-                                AgentLocalAttackMoveWindowRuntime.clearFollowActionMoveWindowIfSettled(
-                                        asBotEntry(runtimeEntry),
+                                AgentLocalAttackMoveWindowService.clearFollowActionMoveWindowIfSettled(
+                                        runtimeEntry,
                                         agentPosition,
-                                        targetSnapshot)));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+                                        targetSnapshot,
+                                        AgentMovementPhysicsConfig.configuredFollowDist(),
+                                        AgentMovementPhysicsConfig.configuredStopDist(),
+                                        AgentMovementPhysicsConfig.configuredFollowYCap())));
     }
 }

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentLiveTickContextRuntime` now accepts `AgentRuntimeEntry` directly and
+  uses Agent-owned movement profile and follow-action-window services without
+  BotEntry casts. Follow-anchor resolution, target snapshot capture, leader
+  motion tracking, and map-change cleanup behavior remain unchanged.
 - `AgentTickPreflightRuntime` now accepts `AgentRuntimeEntry` directly and
   calls tick preparation without a BotEntry cast. The preflight service tests
   also use Agent runtime entries while heartbeat, offer expiry, map-missing

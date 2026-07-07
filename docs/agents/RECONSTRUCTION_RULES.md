@@ -5515,6 +5515,10 @@ Current physics correction:
 - Tick preflight runtime now accepts `AgentRuntimeEntry`; null-entry short
   circuiting, airshow skip, delay skip, missing-map cleanup, heartbeat, pending
   offer expiry, and AI tick preparation behavior remain unchanged.
+- Live tick context runtime now accepts `AgentRuntimeEntry`; movement profile
+  refresh, follow-anchor resolution, target snapshot capture, leader motion
+  observation, owner-position memory, map-change cleanup, and follow action
+  window cleanup behavior remain unchanged.
 
 Initial reconstruction order:
 

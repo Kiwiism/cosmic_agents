@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementProfileService;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -24,7 +23,7 @@ class AgentLiveTickContextRuntimeTest {
         Point rawLeaderPosition = new Point(30, 40);
         Point targetPosition = new Point(50, 60);
         when(agent.getPosition()).thenReturn(agentPosition);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentTargetSnapshot snapshot = new AgentTargetSnapshot(
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.STAGGER, 0, 0),
                 rawLeaderPosition,
