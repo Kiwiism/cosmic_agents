@@ -8,7 +8,6 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
-import server.bots.BotEntry;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -25,8 +24,8 @@ public final class AgentTargetSnapshotService {
     private AgentTargetSnapshotService() {
     }
 
-    public static AgentTargetSnapshot capture(BotEntry entry,
-                                              List<BotEntry> siblingEntries,
+    public static AgentTargetSnapshot capture(AgentRuntimeEntry entry,
+                                              List<? extends AgentRuntimeEntry> siblingEntries,
                                               Map<Integer, AgentFormationService.FormationState> formationsByLeaderId,
                                               AgentFormationService.FormationState defaultFormation,
                                               FollowTargetResolver followTargetResolver) {
@@ -37,7 +36,7 @@ public final class AgentTargetSnapshotService {
         return capture(entry, followAnchor, formation, followTargetResolver);
     }
 
-    public static AgentTargetSnapshot capture(BotEntry entry,
+    public static AgentTargetSnapshot capture(AgentRuntimeEntry entry,
                                               Character followAnchor,
                                               AgentFormationService.FormationState formation,
                                               FollowTargetResolver followTargetResolver) {

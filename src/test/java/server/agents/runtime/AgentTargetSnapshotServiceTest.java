@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -21,7 +20,7 @@ class AgentTargetSnapshotServiceTest {
     void capturesOwnerRawWhenNoOtherTargetExists() {
         Character owner = character(100, "Leader", new Point(10, 20));
         Character bot = character(200, "Agent", new Point(1, 2));
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentBotFormationStateRuntime.setFollowOffsetX(entry, 60);
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotService.capture(
@@ -40,7 +39,7 @@ class AgentTargetSnapshotServiceTest {
     void moveTargetTakesPrecedenceOverFollowTarget() {
         Character owner = character(100, "Leader", new Point(10, 20));
         Character bot = character(200, "Agent", new Point(1, 2));
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotFormationStateRuntime.setFollowOffsetX(entry, -60);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(300, 400), false);
@@ -61,8 +60,8 @@ class AgentTargetSnapshotServiceTest {
         Character owner = character(100, "Leader", new Point(10, 20));
         Character bot = character(200, "Agent", new Point(1, 2));
         Character sibling = character(300, "Sibling", new Point(50, 60));
-        BotEntry entry = new BotEntry(bot, owner, null);
-        BotEntry siblingEntry = new BotEntry(sibling, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
+        AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, owner, null);
         AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());
         AgentFormationService.FormationState customFormation =
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 40, 120);

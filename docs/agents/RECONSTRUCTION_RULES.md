@@ -5262,6 +5262,9 @@ Current physics correction:
   wiring, and movement-only runtime dispatch behavior are unchanged. The
   snapshot-taking overload remains BotEntry-backed until target snapshot runtime
   is migrated.
+- Target snapshot service now accepts `AgentRuntimeEntry`; follow-anchor
+  resolution, formation lookup, shop/move/farm/grind target precedence, primary
+  target source labels, and copied point behavior are unchanged.
 
 Initial reconstruction order:
 
