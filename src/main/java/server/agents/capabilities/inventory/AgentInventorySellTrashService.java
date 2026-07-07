@@ -8,7 +8,7 @@ import config.YamlConfig;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public final class AgentInventorySellTrashService {
     private AgentInventorySellTrashService() {
     }
 
-    public static List<Item> collectSellTrashEquips(BotEntry entry, Character agent) {
+    public static List<Item> collectSellTrashEquips(AgentRuntimeEntry entry, Character agent) {
         List<Item> normalTradeEquips = collectNormalTradeEquips(entry, agent);
         return collectSellTrashEquips(normalTradeEquips, ItemInformationProvider.getInstance());
     }
@@ -37,7 +37,7 @@ public final class AgentInventorySellTrashService {
         return result;
     }
 
-    private static List<Item> collectNormalTradeEquips(BotEntry entry, Character agent) {
+    private static List<Item> collectNormalTradeEquips(AgentRuntimeEntry entry, Character agent) {
         List<Item> all = AgentInventoryItemPolicy.collectSafeItems(agent, InventoryType.EQUIP, item -> true,
                 ItemInformationProvider.getInstance()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);

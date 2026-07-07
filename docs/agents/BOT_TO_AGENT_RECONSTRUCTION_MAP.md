@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentInventorySellTrashService` now accepts `AgentRuntimeEntry` when
+  collecting sell-trash equipment. Safe-item collection, self-upgrade reserves,
+  other-recipient offer reservations, equip sorting, and trash classification
+  remain unchanged.
 - `AgentEquippedSlotTradeService` now accepts `AgentRuntimeEntry` for equipped
   slot trade preparation and temporary restore-slot cleanup. Counting,
   cash-item filtering, bag-slot checks, item move order, restore-slot memory,

@@ -5576,6 +5576,10 @@ Current physics correction:
   equipped-slot trade items and restoring temporarily moved equipment. Cash
   filtering, bag-capacity checks, move ordering, restore-slot memory, and
   cleanup behavior remain unchanged.
+- Inventory sell-trash service now accepts `AgentRuntimeEntry` while collecting
+  sell-trash equipment. Safe item selection, self-upgrade reserve filtering,
+  offer-reservation filtering, equip sorting, and trash classification remain
+  unchanged.
 
 Initial reconstruction order:
 
