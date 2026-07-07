@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import server.agents.runtime.AgentLeaderSafetyService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned session control boundary over temporary BotEntry-backed session
@@ -11,7 +11,7 @@ public final class AgentBotSessionControlRuntime {
     private AgentBotSessionControlRuntime() {
     }
 
-    public static boolean isPrimarySession(BotEntry entry) {
+    public static boolean isPrimarySession(AgentRuntimeEntry entry) {
         if (entry == null || AgentBotRuntimeIdentityRuntime.owner(entry) == null) {
             return false;
         }
@@ -22,7 +22,7 @@ public final class AgentBotSessionControlRuntime {
                 .isPresent();
     }
 
-    public static boolean shouldOfferTownForAwayCommand(BotEntry entry) {
+    public static boolean shouldOfferTownForAwayCommand(AgentRuntimeEntry entry) {
         return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(AgentBotRuntimeIdentityRuntime.botMap(entry));
     }
 

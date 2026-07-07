@@ -5348,6 +5348,9 @@ Current physics correction:
   auto-equip, gear-suggestion cooldown reset, sibling gear suggestions,
   autopot setup, and mode-start potion sharing still route through the same
   active-mode backend.
+- Session-control primary-session and away-town checks now accept
+  `AgentRuntimeEntry`; primary entry detection, leader entry lookup, and town
+  offer map checks are unchanged.
 
 Initial reconstruction order:
 
