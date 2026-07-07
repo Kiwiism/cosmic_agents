@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentLlmReplyRuntime` now accepts `AgentRuntimeEntry` and creates
+  `AgentLlmReplyRequest<AgentRuntimeEntry>`. Sender relation, reply channel,
+  prompt context, mode/farm-anchor flags, owner-command context, and reply
+  delivery are unchanged.
 - `AgentBotInventoryRuntimeAdapters` no longer imports `BotEntry`. Passive
   loot, manual trade, trade tick, lifecycle, transfer availability, and trade
   runtime callback wiring remain unchanged.

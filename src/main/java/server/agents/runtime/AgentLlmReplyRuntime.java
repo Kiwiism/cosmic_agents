@@ -11,14 +11,13 @@ import server.agents.integration.AgentBotLlmRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 public final class AgentLlmReplyRuntime {
     private AgentLlmReplyRuntime() {
     }
 
-    public static void maybeRespond(BotEntry entry, Character sender, String message) {
+    public static void maybeRespond(AgentRuntimeEntry entry, Character sender, String message) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) {
             return;
         }
@@ -26,7 +25,7 @@ public final class AgentLlmReplyRuntime {
         AgentLlmReplyService.maybeRespond(replyRequest(entry, agent, sender), sender, message, AgentBotLlmRuntime::replyNow);
     }
 
-    private static AgentLlmReplyRequest<BotEntry> replyRequest(BotEntry entry, Character agent, Character sender) {
+    private static AgentLlmReplyRequest<AgentRuntimeEntry> replyRequest(AgentRuntimeEntry entry, Character agent, Character sender) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         return new AgentLlmReplyRequest<>(
                 entry,

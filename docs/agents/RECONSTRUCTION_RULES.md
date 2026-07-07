@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- LLM reply runtime now accepts `AgentRuntimeEntry` instead of `BotEntry`.
+  Sender relation, reply channel, prompt context, mode/farm-anchor flags,
+  owner-command context, and asynchronous reply delivery are unchanged.
 - Inventory runtime adapter callbacks no longer import `BotEntry`. Passive
   loot, manual trade, trade tick, lifecycle, transfer availability, and trade
   runtime callback wiring are unchanged.
