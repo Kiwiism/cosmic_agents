@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.integration.AgentBotClimbStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -17,7 +17,7 @@ public final class AgentNavigationClimbExitExecutionService {
     }
 
     public static boolean tryExecuteClimbExit(AgentNavigationGraph graph,
-                                              BotEntry entry,
+                                              AgentRuntimeEntry entry,
                                               Character agent,
                                               Point agentPos,
                                               AgentNavigationGraph.Edge edge) {
