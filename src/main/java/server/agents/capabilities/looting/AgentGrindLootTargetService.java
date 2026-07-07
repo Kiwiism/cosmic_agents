@@ -3,14 +3,14 @@ package server.agents.capabilities.looting;
 import client.Character;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 
 public final class AgentGrindLootTargetService {
     private AgentGrindLootTargetService() {
     }
 
-    public static void validateCachedGrindLootTarget(BotEntry entry, Character agent) {
+    public static void validateCachedGrindLootTarget(AgentRuntimeEntry entry, Character agent) {
         if (!AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             return;
         }
@@ -21,7 +21,7 @@ public final class AgentGrindLootTargetService {
         }
     }
 
-    public static void refreshGrindLootTarget(BotEntry entry,
+    public static void refreshGrindLootTarget(AgentRuntimeEntry entry,
                                               Character agent,
                                               boolean runAiTick,
                                               int lootRadius) {

@@ -5281,6 +5281,10 @@ Current physics correction:
   quest-item gating, inventory-full gating, KPQ pass/rice-cake exclusions,
   KPQ coupon target/skip behavior, and bot-inventory-drop age delays are
   unchanged.
+- Loot target selection now accepts `AgentRuntimeEntry`; nearest grind-loot
+  target selection, retry suppression callbacks, passive-radius exclusion,
+  seek-range filtering, patrol-region adjacency checks, and inventory-full
+  guards are unchanged.
 
 Initial reconstruction order:
 

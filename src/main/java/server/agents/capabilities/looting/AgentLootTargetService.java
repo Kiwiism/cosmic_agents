@@ -8,7 +8,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -19,7 +19,7 @@ import java.util.Set;
 public final class AgentLootTargetService {
     @FunctionalInterface
     public interface GrindLootRetrySuppression {
-        boolean isSuppressed(BotEntry entry, MapItem drop, long now);
+        boolean isSuppressed(AgentRuntimeEntry entry, MapItem drop, long now);
     }
 
     private AgentLootTargetService() {
@@ -29,7 +29,7 @@ public final class AgentLootTargetService {
      * Returns the nearest lootable drop within grind seek range, excluding drops
      * already inside passive-pickup radius.
      */
-    public static MapItem findNearestGrindLootTarget(BotEntry entry,
+    public static MapItem findNearestGrindLootTarget(AgentRuntimeEntry entry,
                                                      Character agent,
                                                      int passiveLootRadius,
                                                      GrindLootRetrySuppression retrySuppression) {
@@ -73,7 +73,7 @@ public final class AgentLootTargetService {
      * Returns the position of the nearest lootable drop within the patrol region
      * and its immediate neighbours.
      */
-    public static Point findNearestPatrolLootTarget(BotEntry entry, int patrolRegionId) {
+    public static Point findNearestPatrolLootTarget(AgentRuntimeEntry entry, int patrolRegionId) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (agent == null) return null;
         if (hasAnyInventoryFull(agent)) return null;
