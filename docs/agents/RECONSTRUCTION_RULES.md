@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Chat orchestrator context now adapts from `AgentRuntimeEntry` instead of
+  `BotEntry`. Pending actions, session/supply/social/control/equipment/
+  movement/build/utility/transfer/report callbacks, current job/level, and
+  job-advancement routing preserve the same behavior.
 - Pending-action dialogue callbacks now use `AgentRuntimeEntry` instead of
   `BotEntry`. Pending action/drop-category reads, item-choice execution,
   item-choice cancellation, owner-away choice routing, relog/logout

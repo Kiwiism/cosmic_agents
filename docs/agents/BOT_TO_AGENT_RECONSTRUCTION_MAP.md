@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotChatOrchestratorContext` now accepts `AgentRuntimeEntry` for the
+  generic Agent dialogue context adapter. Pending action, session, supply,
+  social, control, equipment, movement, build, utility, transfer, report, and
+  job advancement callback wiring remains unchanged.
 - `AgentBotPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout

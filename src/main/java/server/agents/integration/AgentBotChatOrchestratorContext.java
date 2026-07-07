@@ -16,16 +16,16 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter from the temporary bot runtime entry to the generic
+ * Agent-owned adapter from the live Agent runtime entry to the generic
  * dialogue orchestrator context.
  */
 public final class AgentBotChatOrchestratorContext implements AgentChatOrchestrator.Context {
-    private final BotEntry entry;
+    private final AgentRuntimeEntry entry;
 
-    public AgentBotChatOrchestratorContext(BotEntry entry) {
+    public AgentBotChatOrchestratorContext(AgentRuntimeEntry entry) {
         this.entry = entry;
     }
 
