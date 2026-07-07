@@ -11,7 +11,6 @@ import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -23,7 +22,7 @@ public final class AgentLeaderSafetyRuntime {
     private AgentLeaderSafetyRuntime() {
     }
 
-    public static boolean handleInactiveLeaderTick(BotEntry entry,
+    public static boolean handleInactiveLeaderTick(AgentRuntimeEntry entry,
                                                    Character agent,
                                                    Character leader,
                                                    long nowMs,
@@ -37,7 +36,7 @@ public final class AgentLeaderSafetyRuntime {
                 AgentRuntimeConfig.cfg.OWNER_INACTIVE_TOWN_RETURN_MS);
     }
 
-    public static boolean handleInactiveLeaderTick(BotEntry entry,
+    public static boolean handleInactiveLeaderTick(AgentRuntimeEntry entry,
                                                    Character agent,
                                                    Character leader,
                                                    long nowMs,
@@ -49,34 +48,34 @@ public final class AgentLeaderSafetyRuntime {
                 nowMs,
                 new AgentLeaderSafetyService.InactiveLeaderTickHooks(
                         activeEntry -> AgentLeaderSafetyService.handleActiveLeaderReturn(
-                                (BotEntry) activeEntry,
+                                activeEntry,
                                 () -> AgentBotMoveTargetStateRuntime.clearMoveTarget(activeEntry),
                                 () -> AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderCharId),
-                                () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline((BotEntry) activeEntry)),
-                        inactiveEntry -> shouldTownWarpForInactiveEntry((BotEntry) inactiveEntry),
-                        (inactiveEntry, town) -> enterInactiveSafeMode((BotEntry) inactiveEntry, agent, leaderCharId, town),
+                                () -> AgentBotManagerStatusRuntime.announceOwnerReturnedFromOffline(activeEntry)),
+                        AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
+                        (inactiveEntry, town) -> enterInactiveSafeMode(inactiveEntry, agent, leaderCharId, town),
                         inactiveTownReturnMs));
     }
 
-    public static boolean shouldTownWarpForInactiveEntry(BotEntry entry) {
+    public static boolean shouldTownWarpForInactiveEntry(AgentRuntimeEntry entry) {
         MapleMap currentMap = AgentBotRuntimeIdentityRuntime.botMap(entry);
         return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(currentMap);
     }
 
     public static void issueInactiveSafeModeForLeader(int leaderCharId, boolean town) {
         AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
-                AgentRuntimeRegistry.entriesForLeader(leaderCharId),
+                AgentRuntimeRegistry.agentEntriesForLeader(leaderCharId),
                 town,
                 AgentBotRuntimeIdentityRuntime::botHasMap,
-                entry -> shouldTownWarpForInactiveEntry((BotEntry) entry),
+                AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
                 (entry, shouldTown) -> enterInactiveSafeMode(
-                        (BotEntry) entry,
+                        entry,
                         AgentBotRuntimeIdentityRuntime.bot(entry),
                         leaderCharId,
                         shouldTown));
     }
 
-    private static boolean enterInactiveSafeMode(BotEntry entry, Character agent, int leaderCharId, boolean town) {
+    private static boolean enterInactiveSafeMode(AgentRuntimeEntry entry, Character agent, int leaderCharId, boolean town) {
         return AgentLeaderSafetyService.enterInactiveSafeMode(
                 () -> prepareInactiveIdle(entry),
                 town,
@@ -87,7 +86,7 @@ public final class AgentLeaderSafetyRuntime {
                         () -> AgentMovementBroadcastService.broadcastMovement(entry)));
     }
 
-    private static void prepareInactiveIdle(BotEntry entry) {
+    private static void prepareInactiveIdle(AgentRuntimeEntry entry) {
         AgentLeaderSafetyService.prepareInactiveIdle(
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
@@ -95,7 +94,7 @@ public final class AgentLeaderSafetyRuntime {
                 () -> AgentModeService.clearMode(entry));
     }
 
-    private static boolean scrollAgentToTown(BotEntry entry, Character agent, int leaderCharId) {
+    private static boolean scrollAgentToTown(AgentRuntimeEntry entry, Character agent, int leaderCharId) {
         return AgentLeaderSafetyService.scrollInactiveAgentToTown(
                 entry,
                 new AgentLeaderSafetyService.TownScrollHooks(
@@ -113,8 +112,8 @@ public final class AgentLeaderSafetyRuntime {
                         target -> AgentModeService.startMoveTo(entry, target, true)));
     }
 
-    private static Point resolveTownClusterTarget(BotEntry entry, int leaderCharId, MapleMap map, Point anchor) {
-        List<BotEntry> entries = AgentRuntimeRegistry.entriesForLeader(leaderCharId);
+    private static Point resolveTownClusterTarget(AgentRuntimeEntry entry, int leaderCharId, MapleMap map, Point anchor) {
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.agentEntriesForLeader(leaderCharId);
         AgentFormationService.FormationState formation =
                 AgentFormationService.stateForLeader(
                         AgentFormationService.formationsByLeaderId(),

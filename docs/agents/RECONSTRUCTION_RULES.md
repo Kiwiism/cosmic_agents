@@ -5770,6 +5770,10 @@ Current physics correction:
   reuse/refresh, path logging, waypoint/precise-target selection, post-ground
   edge execution, fidget short-circuiting, phase dispatch, stuck detection, and
   move-target cleanup remain unchanged.
+- Leader safety runtime now accepts `AgentRuntimeEntry`. Active-leader return
+  cleanup, inactive town eligibility, safe-mode entry, town-scroll fallback,
+  town-cluster formation target selection, map-change grounding, movement reset,
+  and return announcements remain unchanged.
 
 Initial reconstruction order:
 
