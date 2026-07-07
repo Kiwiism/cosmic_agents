@@ -5,7 +5,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -17,7 +17,7 @@ public final class AgentNavigationDropExecutionService {
     }
 
     public static boolean tryExecuteDrop(AgentNavigationGraph graph,
-                                         BotEntry entry,
+                                         AgentRuntimeEntry entry,
                                          Character agent,
                                          Point agentPos,
                                          AgentNavigationGraph.Edge edge) {

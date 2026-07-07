@@ -5213,6 +5213,9 @@ Current physics correction:
 - Queued movement actions now accept `AgentRuntimeEntry`; down-jump queueing,
   top-rope entry queueing, invalid down-jump clearing, valid down-jump launch,
   grace-period setting, and queued rope attach behavior are unchanged.
+- Navigation drop execution now accepts `AgentRuntimeEntry`; airborne, climbing,
+  pending down-jump, launch-step, readiness, edge-target, queued down-jump, and
+  broadcast behavior are unchanged.
 
 Initial reconstruction order:
 
