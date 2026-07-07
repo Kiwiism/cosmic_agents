@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Whisper command runtime now uses `AgentRuntimeEntry` as its Agent-facing hook
+  type instead of importing `BotEntry`. The temporary registry still returns the
+  compatibility shell internally, but whisper target resolution, reply-channel
+  selection, and chat routing are unchanged.
 - Chat route runtime now uses generic `AgentRuntimeEntry` handles instead of
   importing `BotEntry`. Pending-offer routing, lifecycle chat commands,
   formation commands, targeted/untargeted routing, typo suggestions, reply

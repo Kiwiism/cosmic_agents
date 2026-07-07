@@ -6,7 +6,6 @@ import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
-import server.bots.BotEntry;
 
 public final class AgentWhisperCommandRuntime {
     private AgentWhisperCommandRuntime() {
@@ -20,7 +19,7 @@ public final class AgentWhisperCommandRuntime {
                 hooks());
     }
 
-    private static AgentWhisperCommandService.Hooks<BotEntry> hooks() {
+    private static AgentWhisperCommandService.Hooks<AgentRuntimeEntry> hooks() {
         return new AgentWhisperCommandService.Hooks<>(
                 (leader, target) -> AgentRuntimeRegistry.findByCharacterId(
                         AgentRuntimeRegistry.entriesByLeaderId(),
