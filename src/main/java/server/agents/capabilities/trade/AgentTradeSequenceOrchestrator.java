@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -18,7 +18,7 @@ public final class AgentTradeSequenceOrchestrator {
                                           List<Item> items,
                                           int mesos,
                                           boolean singleBatch,
-                                          BotEntry entry,
+                                          AgentRuntimeEntry entry,
                                           Character agent,
                                           SequenceCallbacks callbacks) {
         AgentTradeSequenceService.startSequence(
@@ -31,7 +31,7 @@ public final class AgentTradeSequenceOrchestrator {
                 (batchItems, batchMesos) -> openTradeBatch(entry, agent, batchItems, batchMesos, callbacks));
     }
 
-    public static void openTradeBatch(BotEntry entry,
+    public static void openTradeBatch(AgentRuntimeEntry entry,
                                       Character agent,
                                       List<Item> items,
                                       int mesos,

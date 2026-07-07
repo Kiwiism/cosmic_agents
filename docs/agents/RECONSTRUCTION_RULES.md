@@ -5416,6 +5416,11 @@ Current physics correction:
   temporary `BotEntry` compatibility edge, preserving recharge, fixed-ammo,
   HP/MP potion purchase, shortfall reporting, sell-trash continuation, and
   delayed step scheduling behavior.
+- Trade sequence orchestration now accepts `AgentRuntimeEntry`; recipient
+  missing replies, sequence initialization, batch initialization, busy-recipient
+  cancellation, trade invite side effects, invitation reply gating, and pending
+  trade state behavior are unchanged while the runtime service remains the
+  temporary `BotEntry` adapter.
 
 Initial reconstruction order:
 

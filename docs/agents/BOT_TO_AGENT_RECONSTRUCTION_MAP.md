@@ -105,6 +105,11 @@ Recent map updates:
   temporary `BotEntry` adapter for the current shop purchase/sell-trash flow,
   with recharge, ammo, potion, shortfall, bought-summary, and delayed-step
   behavior unchanged.
+- `AgentTradeSequenceOrchestrator` now accepts `AgentRuntimeEntry`; the
+  current `AgentTradeSequenceRuntimeService` still supplies the temporary
+  `BotEntry` shell. Missing-recipient replies, sequence/batch state setup,
+  busy-recipient cancellation, trade start/invite callbacks, and invitation
+  announcement behavior are unchanged.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`
