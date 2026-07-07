@@ -41,6 +41,7 @@ import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotRuntime;
@@ -1343,7 +1344,7 @@ class BotManagerTest {
             return WeaponType.SWORD1H;
         })) {
 
-            AgentAmmoDonorPlan<BotEntry> plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentAmmoDonorPlan<AgentRuntimeEntry> plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(nonBow800Entry, plan.entry());
@@ -1371,7 +1372,7 @@ class BotManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class,
                 invocation -> WeaponType.BOW)) {
-            AgentAmmoDonorPlan<BotEntry> plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
+            AgentAmmoDonorPlan<AgentRuntimeEntry> plan = AgentAmmoService.selectAmmoDonor(needyEntry, needy, WeaponType.BOW);
 
             assertNotNull(plan);
             assertEquals(bow3000Entry, plan.entry());

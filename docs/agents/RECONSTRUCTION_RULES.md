@@ -5591,6 +5591,11 @@ Current physics correction:
   category routing, grouped trade batches, retry handling, invite waits,
   item-add ticks, trade confirmation, lifecycle reset, and completion reactions
   remain unchanged.
+- Ammo share service now accepts `AgentRuntimeEntry` for low-ammo checks,
+  request routing, donor selection, owner-share offers, and scheduled ammo
+  share execution. Thresholds, cooldown/backoff behavior, donor scoring,
+  same-ammo surplus limits, reply timing, and supply-share transfer behavior
+  remain unchanged.
 
 Initial reconstruction order:
 

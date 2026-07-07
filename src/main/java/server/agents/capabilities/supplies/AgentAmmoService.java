@@ -18,7 +18,7 @@ import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -31,11 +31,11 @@ public final class AgentAmmoService {
 
     private AgentAmmoService() {}
 
-    public static void tickAmmoShareCheck(BotEntry entry, Character bot) {
+    public static void tickAmmoShareCheck(AgentRuntimeEntry entry, Character bot) {
         requestLowAmmoShare(entry, bot, false);
     }
 
-    public static boolean requestLowAmmoShare(BotEntry entry, Character bot, boolean bypassShareLimits) {
+    public static boolean requestLowAmmoShare(AgentRuntimeEntry entry, Character bot, boolean bypassShareLimits) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
             AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
@@ -56,16 +56,16 @@ public final class AgentAmmoService {
         return false;
     }
 
-    public static void checkAmmoShareOnModeStart(BotEntry entry, Character bot) {
+    public static void checkAmmoShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
         AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
         requestLowAmmoShare(entry, bot, false);
     }
 
-    public static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo) {
+    public static boolean requestAmmoShare(AgentRuntimeEntry entry, Character bot, WeaponType weaponType, int currentAmmo) {
         return requestAmmoShare(entry, bot, weaponType, currentAmmo, false);
     }
 
-    public static boolean requestAmmoShare(BotEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
+    public static boolean requestAmmoShare(AgentRuntimeEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
@@ -91,7 +91,7 @@ public final class AgentAmmoService {
                         ? AgentDialogueCatalog.arrowRequestReplies()
                         : AgentDialogueCatalog.boltRequestReplies()));
 
-        AgentAmmoDonorPlan<BotEntry> plan = selectAmmoDonor(entry, bot, weaponType);
+        AgentAmmoDonorPlan<AgentRuntimeEntry> plan = selectAmmoDonor(entry, bot, weaponType);
         if (plan == null) {
             if (!bypassShareLimits) {
                 ammoShareBackoffUntil.put(backoffKey, now + 10 * 60_000L);
@@ -109,13 +109,13 @@ public final class AgentAmmoService {
         BLOCKED
     }
 
-    public static OwnerAmmoShareResult offerAmmoShareToOwner(BotEntry entry, WeaponType weaponType) {
+    public static OwnerAmmoShareResult offerAmmoShareToOwner(AgentRuntimeEntry entry, WeaponType weaponType) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || owner.getTrade() != null || !canRequestShare(weaponType)) {
             return OwnerAmmoShareResult.BLOCKED;
         }
 
-        AgentAmmoDonorPlan<BotEntry> plan = selectAmmoDonorForRecipient(owner, weaponType);
+        AgentAmmoDonorPlan<AgentRuntimeEntry> plan = selectAmmoDonorForRecipient(owner, weaponType);
         if (plan == null) {
             return OwnerAmmoShareResult.NO_DONOR;
         }
@@ -124,7 +124,7 @@ public final class AgentAmmoService {
         return OwnerAmmoShareResult.OFFERED;
     }
 
-    public static AgentAmmoDonorPlan<BotEntry> selectAmmoDonor(BotEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
+    public static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonor(AgentRuntimeEntry needyEntry, Character needyBot, WeaponType needyWeaponType) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(needyEntry);
         if (owner == null || !canRequestShare(needyWeaponType)) {
             return null;
@@ -132,16 +132,16 @@ public final class AgentAmmoService {
         return selectAmmoDonor(owner.getId(), needyBot.getMapId(), needyEntry, needyWeaponType);
     }
 
-    public static AgentAmmoDonorPlan<BotEntry> selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
+    public static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonorForRecipient(Character recipient, WeaponType needyWeaponType) {
         if (recipient == null || !canRequestShare(needyWeaponType)) {
             return null;
         }
         return selectAmmoDonor(recipient.getId(), recipient.getMapId(), null, needyWeaponType);
     }
 
-    private static AgentAmmoDonorPlan<BotEntry> selectAmmoDonor(int ownerId, int mapId, BotEntry excludedEntry, WeaponType needyWeaponType) {
-        AgentAmmoDonorPlan<BotEntry> best = null;
-        for (BotEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(ownerId)) {
+    private static AgentAmmoDonorPlan<AgentRuntimeEntry> selectAmmoDonor(int ownerId, int mapId, AgentRuntimeEntry excludedEntry, WeaponType needyWeaponType) {
+        AgentAmmoDonorPlan<AgentRuntimeEntry> best = null;
+        for (AgentRuntimeEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(ownerId)) {
             Character donorBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || donorBot == null || donorBot.getMapId() != mapId) {
                 continue;
@@ -159,7 +159,7 @@ public final class AgentAmmoService {
             if (donationQty <= 0) {
                 continue;
             }
-            AgentAmmoDonorPlan<BotEntry> candidate = new AgentAmmoDonorPlan<>(sibling, count, donorNeedsSameAmmo, donationQty);
+            AgentAmmoDonorPlan<AgentRuntimeEntry> candidate = new AgentAmmoDonorPlan<>(sibling, count, donorNeedsSameAmmo, donationQty);
             if (isBetterDonor(candidate, best)) {
                 best = candidate;
             }
@@ -167,8 +167,8 @@ public final class AgentAmmoService {
         return best;
     }
 
-    private static void scheduleAmmoShare(AgentAmmoDonorPlan<BotEntry> plan, Character recipient, WeaponType weaponType, long initialDelayMs) {
-        BotEntry donorEntry = plan.entry();
+    private static void scheduleAmmoShare(AgentAmmoDonorPlan<AgentRuntimeEntry> plan, Character recipient, WeaponType weaponType, long initialDelayMs) {
+        AgentRuntimeEntry donorEntry = plan.entry();
         Character donorBot = AgentBotRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentBotAmmoRuntime.afterDelay(initialDelayMs, () -> {
@@ -190,7 +190,7 @@ public final class AgentAmmoService {
                 ItemInformationProvider.getInstance()::getWatkForProjectile);
     }
 
-    private static boolean isBetterDonor(AgentAmmoDonorPlan<BotEntry> candidate, AgentAmmoDonorPlan<BotEntry> best) {
+    private static boolean isBetterDonor(AgentAmmoDonorPlan<AgentRuntimeEntry> candidate, AgentAmmoDonorPlan<AgentRuntimeEntry> best) {
         return AgentAmmoSharePolicy.isBetterDonor(
                 new DonorScore(candidate.donorNeedsSameAmmo(), candidate.matchingAmmoCount()),
                 best == null ? null : new DonorScore(best.donorNeedsSameAmmo(), best.matchingAmmoCount()));

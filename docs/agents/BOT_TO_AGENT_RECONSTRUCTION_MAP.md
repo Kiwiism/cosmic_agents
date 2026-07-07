@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentAmmoService` now accepts `AgentRuntimeEntry` across ammo-share checks,
+  request routing, donor selection, owner-share offering, donor plans, and
+  scheduled share execution. Low-ammo thresholds, cooldown/backoff keys, donor
+  scoring, same-ammo surplus donation, random delays, offer dialogue, and
+  supply-share transfer behavior remain unchanged.
 - `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
   `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
   `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across
