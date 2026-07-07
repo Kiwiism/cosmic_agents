@@ -55,7 +55,7 @@ public final class AgentFollowAnchorService {
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
-                : AgentRuntimeRegistry.entriesForLeader(leader.getId());
+                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
         return resolveTarget(entry, leader, targetId, siblingEntries);
     }
 }

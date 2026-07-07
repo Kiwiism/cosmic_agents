@@ -6,6 +6,7 @@ import net.server.Server;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -140,6 +141,19 @@ public final class AgentRuntimeRegistry {
 
     public static List<BotEntry> entriesForLeader(int leaderCharId) {
         return entriesForLeader(entriesByLeaderId, leaderCharId);
+    }
+
+    public static List<AgentRuntimeEntry> agentEntriesForLeader(Map<Integer, List<BotEntry>> entriesByLeaderId,
+                                                                int leaderCharId) {
+        List<BotEntry> entries = entriesByLeaderId.get(leaderCharId);
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(new ArrayList<AgentRuntimeEntry>(entries));
+    }
+
+    public static List<AgentRuntimeEntry> agentEntriesForLeader(int leaderCharId) {
+        return agentEntriesForLeader(entriesByLeaderId, leaderCharId);
     }
 
     public static int activeAgentCountForLeader(int leaderCharId) {

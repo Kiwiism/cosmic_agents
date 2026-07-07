@@ -5269,6 +5269,10 @@ Current physics correction:
   sibling lookup, formation map lookup, follow-anchor resolution, and target
   snapshot capture behavior are unchanged while registry storage remains a
   temporary BotEntry-backed compatibility seam.
+- Runtime registry now exposes a read-only `AgentRuntimeEntry` view for
+  leader-scoped entries. The mutable registry storage remains BotEntry-backed,
+  while follow-anchor and target-snapshot read paths no longer request
+  BotEntry-shaped lists.
 
 Initial reconstruction order:
 

@@ -18,7 +18,7 @@ public final class AgentTargetSnapshotRuntime {
     public static Character resolveFollowAnchor(AgentRuntimeEntry entry, Character leader) {
         List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
-                : AgentRuntimeRegistry.entriesForLeader(leader.getId());
+                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
         return AgentFollowAnchorService.resolve(entry, leader, siblingEntries);
     }
 
@@ -26,7 +26,7 @@ public final class AgentTargetSnapshotRuntime {
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
-                : AgentRuntimeRegistry.entriesForLeader(leader.getId());
+                : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());
         return AgentTargetSnapshotService.capture(
                 entry,
                 siblingEntries,

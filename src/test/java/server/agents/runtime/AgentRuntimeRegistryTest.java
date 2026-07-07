@@ -68,6 +68,20 @@ class AgentRuntimeRegistryTest {
     }
 
     @Test
+    void returnsDefensiveAgentEntryReadView() {
+        Character leader = character(100, "Leader");
+        BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
+        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
+
+        List<AgentRuntimeEntry> snapshot = AgentRuntimeRegistry.agentEntriesForLeader(entries, leader.getId());
+
+        assertEquals(List.of(entry), snapshot);
+        assertThrows(UnsupportedOperationException.class, () ->
+                snapshot.add(new AgentRuntimeEntry(character(201, "Beta"), leader, null)));
+    }
+
+    @Test
     void ownsMutableLiveEntryStore() {
         Character leader = character(100, "Leader");
         Character alpha = character(200, "Alpha");
