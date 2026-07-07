@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -28,7 +28,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(100, 40));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Rope rope = new Rope(100, 0, 80, false);
 
         AgentRopeMovementService.attachToRope(entry, agent, rope, 30);
@@ -44,7 +44,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(100, 30));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Rope rope = new Rope(100, 0, 80, false);
         AgentRopeMovementService.attachToRope(entry, agent, rope, 30);
 
@@ -59,7 +59,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(100, 30));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Rope rope = new Rope(100, 0, 80, false);
         AgentRopeMovementService.attachToRope(entry, agent, rope, 30);
         AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 1);
@@ -76,7 +76,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         AgentRopeMovementService.beginGroundJump(entry, agent, 4);
 
@@ -92,7 +92,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         AgentRopeMovementService.beginClimbUpJump(entry, agent, -3);
 
@@ -106,7 +106,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         AgentRopeMovementService.beginJumpOffRope(entry, agent, 2);
 
@@ -122,7 +122,7 @@ class AgentRopeMovementServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Rope sourceRope = new Rope(100, 0, 80, false);
 
         AgentRopeMovementService.beginRopeTransferJump(entry, agent, sourceRope, 1);
@@ -140,7 +140,7 @@ class AgentRopeMovementServiceTest {
         when(agent.getMap()).thenReturn(map);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         AgentRopeMovementService.beginGroundJump(entry, agent, 9);
 

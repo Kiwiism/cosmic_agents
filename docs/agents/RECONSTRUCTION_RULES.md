@@ -5201,6 +5201,10 @@ Current physics correction:
   stale-edge rejection behavior are unchanged.
 - Navigation edge-execution state tests now exercise `AgentRuntimeEntry`;
   non-precise end-point waypoint writes remain unchanged.
+- Rope movement actions now accept `AgentRuntimeEntry`; rope attach, climb hold,
+  climb advance, ground jump, climb-up jump, rope jump, rope-transfer jump,
+  swim jump fallback, top landing, and fall-damage handoff behavior are
+  unchanged.
 
 Initial reconstruction order:
 

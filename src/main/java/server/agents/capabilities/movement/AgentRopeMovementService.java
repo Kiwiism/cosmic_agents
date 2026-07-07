@@ -8,7 +8,7 @@ import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -21,13 +21,13 @@ public final class AgentRopeMovementService {
     private AgentRopeMovementService() {
     }
 
-    public static void attachToRope(BotEntry entry, Character agent, Rope rope, int y) {
+    public static void attachToRope(AgentRuntimeEntry entry, Character agent, Rope rope, int y) {
         int ropeY = Math.clamp(y, AgentNavigationPhysicsService.firstClimbableY(rope), rope.bottomY());
         AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 0);
         setClimbPosition(entry, agent, rope, ropeY);
     }
 
-    public static void holdClimb(BotEntry entry, Character agent) {
+    public static void holdClimb(AgentRuntimeEntry entry, Character agent) {
         Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
         if (rope == null) {
             beginFall(entry, agent, 0);
@@ -41,7 +41,7 @@ public final class AgentRopeMovementService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    public static void advanceClimb(BotEntry entry, Character agent) {
+    public static void advanceClimb(AgentRuntimeEntry entry, Character agent) {
         Rope rope = AgentBotClimbStateRuntime.climbRope(entry);
         if (rope == null) {
             beginFall(entry, agent, 0);
@@ -62,7 +62,7 @@ public final class AgentRopeMovementService {
         setClimbPosition(entry, agent, rope, nextY);
     }
 
-    public static void beginGroundJump(BotEntry entry, Character agent, int airVelocityX) {
+    public static void beginGroundJump(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         if (agent.getMap() != null && agent.getMap().isSwim()) {
             beginSwimGroundJump(entry, agent);
@@ -76,7 +76,7 @@ public final class AgentRopeMovementService {
                 false);
     }
 
-    public static void beginClimbUpJump(BotEntry entry, Character agent, int airVelocityX) {
+    public static void beginClimbUpJump(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         AgentAirborneLaunchService.launchAirborne(
                 entry,
@@ -86,7 +86,7 @@ public final class AgentRopeMovementService {
                 true);
     }
 
-    public static void beginJumpOffRope(BotEntry entry, Character agent, int airVelocityX) {
+    public static void beginJumpOffRope(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         AgentAirborneLaunchService.launchAirborne(
                 entry,
@@ -96,7 +96,7 @@ public final class AgentRopeMovementService {
                 false);
     }
 
-    public static void beginRopeTransferJump(BotEntry entry, Character agent, Rope sourceRope, int airVelocityX) {
+    public static void beginRopeTransferJump(AgentRuntimeEntry entry, Character agent, Rope sourceRope, int airVelocityX) {
         AgentBotClimbStateRuntime.setBlockedRopeGrab(entry, sourceRope);
         AgentAirborneLaunchService.launchAirborne(
                 entry,
@@ -106,7 +106,7 @@ public final class AgentRopeMovementService {
                 true);
     }
 
-    private static void setClimbPosition(BotEntry entry, Character agent, Rope rope, int y) {
+    private static void setClimbPosition(AgentRuntimeEntry entry, Character agent, Rope rope, int y) {
         Point position = new Point(rope.x(), y);
         agent.setPosition(position);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
@@ -125,7 +125,7 @@ public final class AgentRopeMovementService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    private static void beginSwimGroundJump(BotEntry entry, Character agent) {
+    private static void beginSwimGroundJump(AgentRuntimeEntry entry, Character agent) {
         Point position = agent.getPosition();
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
@@ -148,7 +148,7 @@ public final class AgentRopeMovementService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    private static boolean resolveClimbBoundary(BotEntry entry, Character agent, Rope rope, int candidateY) {
+    private static boolean resolveClimbBoundary(AgentRuntimeEntry entry, Character agent, Rope rope, int candidateY) {
         if (candidateY <= rope.topY()) {
             Point landing = findTopLandingPoint(agent, rope, candidateY);
             if (landing != null) {
@@ -184,14 +184,14 @@ public final class AgentRopeMovementService {
         return below;
     }
 
-    private static void beginFall(BotEntry entry, Character agent, int airVelocityX) {
+    private static void beginFall(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         Point position = agent.getPosition();
         agent.setPosition(new Point(position));
         AgentAirborneLaunchService.launchAirborne(entry, position, 0f, airVelocityX, false);
     }
 
-    private static void landOnTopGround(BotEntry entry, Character agent, Point position) {
+    private static void landOnTopGround(AgentRuntimeEntry entry, Character agent, Point position) {
         agent.setPosition(position);
         AgentBotMovementStateRuntime.setInAir(entry, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);

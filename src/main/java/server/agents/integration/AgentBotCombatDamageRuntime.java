@@ -13,6 +13,7 @@ import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.life.Monster;
 import tools.PacketCreator;
@@ -55,7 +56,7 @@ public final class AgentBotCombatDamageRuntime {
         }
     }
 
-    public static void applyFallDamage(BotEntry entry, Character bot,
+    public static void applyFallDamage(AgentRuntimeEntry entry, Character bot,
                                        float fallDistancePx,
                                        AgentCombatConfig.Config config) {
         if (bot.getHp() <= 0) return;
@@ -68,7 +69,7 @@ public final class AgentBotCombatDamageRuntime {
         applyDamage(entry, bot, dmg, -3, 0, 0, airVelX, config);
     }
 
-    private static void applyDamage(BotEntry entry, Character bot, int dmg,
+    private static void applyDamage(AgentRuntimeEntry entry, Character bot, int dmg,
                                     int damageFrom, int monsterId,
                                     int broadcastDirection, int knockbackAirVelX,
                                     AgentCombatConfig.Config config) {

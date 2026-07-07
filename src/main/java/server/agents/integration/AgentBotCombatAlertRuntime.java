@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBotCombatAlertRuntime {
     private static final long ALERT_DURATION_MS = 5000L;
@@ -9,12 +9,12 @@ public final class AgentBotCombatAlertRuntime {
     private AgentBotCombatAlertRuntime() {
     }
 
-    public static void markAlerted(BotEntry entry) {
+    public static void markAlerted(AgentRuntimeEntry entry) {
         AgentBotCombatCooldownStateRuntime.setAlertedUntilMs(entry, System.currentTimeMillis() + ALERT_DURATION_MS);
         scheduleAlertReset(entry);
     }
 
-    private static void scheduleAlertReset(BotEntry entry) {
+    private static void scheduleAlertReset(AgentRuntimeEntry entry) {
         if (AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry)) {
             return;
         }
