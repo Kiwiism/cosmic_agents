@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentPotionService` now accepts `AgentRuntimeEntry` for potion checks,
+  passive recovery, low-pot share requests, owner-share offers, donor
+  selection, donor plans, and scheduled pot share execution. Autopot setup,
+  HP/MP thresholds, cooldown/backoff behavior, donor selection, low-donor
+  replies, passive recovery math, stop-grind low-pot behavior, and
+  supply-share transfer behavior remain unchanged.
 - `AgentAmmoService` now accepts `AgentRuntimeEntry` across ammo-share checks,
   request routing, donor selection, owner-share offering, donor plans, and
   scheduled share execution. Low-ammo thresholds, cooldown/backoff keys, donor

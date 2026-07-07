@@ -5596,6 +5596,12 @@ Current physics correction:
   share execution. Thresholds, cooldown/backoff behavior, donor scoring,
   same-ammo surplus limits, reply timing, and supply-share transfer behavior
   remain unchanged.
+- Potion share service now accepts `AgentRuntimeEntry` for potion checks,
+  passive recovery, low-pot share requests, owner-share offers, donor
+  selection, donor plans, and scheduled pot share execution. Autopot setup,
+  HP/MP thresholds, cooldown/backoff behavior, low-donor replies, passive
+  recovery math, low-pot grind stop behavior, and supply-share transfer
+  behavior remain unchanged.
 
 Initial reconstruction order:
 

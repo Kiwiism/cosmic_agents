@@ -31,7 +31,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.StatEffect;
 
 import java.util.List;
@@ -168,7 +167,7 @@ public final class AgentPotionService {
                 AgentRuntimeConfig.cfg.POT_LOW_WARN);
     }
 
-    public static void tickPotionCheck(BotEntry entry, Character bot) {
+    public static void tickPotionCheck(AgentRuntimeEntry entry, Character bot) {
         if (AgentBotPotionStateRuntime.hasPotCheckDelay(entry)) {
             AgentBotPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
             return;
@@ -217,33 +216,29 @@ public final class AgentPotionService {
         AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
     }
 
-    public static void checkPotShareOnModeStart(BotEntry entry, Character bot) {
+    public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
         AgentBotPotionStateRuntime.clearAllPotShareRequests(entry);
         AgentAmmoService.checkAmmoShareOnModeStart(entry, bot);
         requestLowPotShares(entry, bot, false);
     }
 
-    public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
-        checkPotShareOnModeStart((BotEntry) entry, bot);
-    }
-
-    public static boolean requestLowSuppliesFromOwnerAsk(BotEntry entry, Character bot) {
+    public static boolean requestLowSuppliesFromOwnerAsk(AgentRuntimeEntry entry, Character bot) {
         boolean requestedPots = requestLowPotShares(entry, bot, true);
         boolean requestedAmmo = AgentAmmoService.requestLowAmmoShare(entry, bot, true);
         return requestedPots || requestedAmmo;
     }
 
-    private static boolean requestLowPotShares(BotEntry entry, Character bot, boolean bypassShareLimits) {
+    private static boolean requestLowPotShares(AgentRuntimeEntry entry, Character bot, boolean bypassShareLimits) {
         return requestLowPotShares(entry, bot, countPotions(bot), bypassShareLimits);
     }
 
-    private static boolean requestLowPotShares(BotEntry entry, Character bot, int[] pots, boolean bypassShareLimits) {
+    private static boolean requestLowPotShares(AgentRuntimeEntry entry, Character bot, int[] pots, boolean bypassShareLimits) {
         boolean requestedHp = requestLowPotShare(entry, bot, pots[0], true, bypassShareLimits);
         boolean requestedMp = requestLowPotShare(entry, bot, pots[1], false, bypassShareLimits);
         return requestedHp || requestedMp;
     }
 
-    private static boolean requestLowPotShare(BotEntry entry,
+    private static boolean requestLowPotShare(AgentRuntimeEntry entry,
                                               Character bot,
                                               int count,
                                               boolean forHp,
@@ -262,7 +257,7 @@ public final class AgentPotionService {
         return true;
     }
 
-    public static void tickPassiveRecovery(BotEntry entry, Character bot) {
+    public static void tickPassiveRecovery(AgentRuntimeEntry entry, Character bot) {
         boolean hpFull = bot.getHp() >= bot.getCurrentMaxHp();
         boolean mpFull = bot.getMp() >= bot.getCurrentMaxMp();
         if (hpFull && mpFull) {
@@ -287,11 +282,11 @@ public final class AgentPotionService {
         bot.addMPHP(hpRecovery, mpRecovery);
     }
 
-    public static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp) {
+    public static boolean requestPotShare(AgentRuntimeEntry entry, Character bot, boolean forHp) {
         return requestPotShare(entry, bot, forHp, false);
     }
 
-    public static boolean requestPotShare(BotEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
+    public static boolean requestPotShare(AgentRuntimeEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = AgentPerformanceMonitor.start();
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
@@ -316,7 +311,7 @@ public final class AgentPotionService {
         AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 forHp ? AgentDialogueCatalog.potRequestHpReplies() : AgentDialogueCatalog.potRequestMpReplies()));
 
-        AgentPotionDonorPlan<BotEntry> plan = selectPotDonor(owner, bot, entry, forHp);
+        AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(owner, bot, entry, forHp);
         if (plan == null) {
             if (!bypassShareLimits) {
                 categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
@@ -349,13 +344,13 @@ public final class AgentPotionService {
         BLOCKED
     }
 
-    public static OwnerPotShareResult offerPotShareToOwner(BotEntry entry, boolean forHp) {
+    public static OwnerPotShareResult offerPotShareToOwner(AgentRuntimeEntry entry, boolean forHp) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null || owner.getTrade() != null) {
             return OwnerPotShareResult.BLOCKED;
         }
 
-        AgentPotionDonorPlan<BotEntry> plan = selectPotDonor(owner, owner, null, forHp);
+        AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(owner, owner, null, forHp);
         if (plan == null || !plan.qualifies()) {
             return OwnerPotShareResult.NO_DONOR;
         }
@@ -364,11 +359,11 @@ public final class AgentPotionService {
         return OwnerPotShareResult.OFFERED;
     }
 
-    private static AgentPotionDonorPlan<BotEntry> selectPotDonor(Character owner, Character recipient, BotEntry excludedEntry, boolean forHp) {
+    private static AgentPotionDonorPlan<AgentRuntimeEntry> selectPotDonor(Character owner, Character recipient, AgentRuntimeEntry excludedEntry, boolean forHp) {
         long startedAt = AgentPerformanceMonitor.start();
-        BotEntry bestEntry = null;
+        AgentRuntimeEntry bestEntry = null;
         int bestCount = 0;
-        for (BotEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
                 continue;
@@ -384,8 +379,8 @@ public final class AgentPotionService {
         return bestEntry != null ? new AgentPotionDonorPlan<>(bestEntry, bestCount) : null;
     }
 
-    private static void schedulePotShare(AgentPotionDonorPlan<BotEntry> plan, Character recipient, boolean forHp, long initialDelayMs) {
-        BotEntry donorEntry = plan.entry();
+    private static void schedulePotShare(AgentPotionDonorPlan<AgentRuntimeEntry> plan, Character recipient, boolean forHp, long initialDelayMs) {
+        AgentRuntimeEntry donorEntry = plan.entry();
         Character donorBot = AgentBotRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentBotPotionRuntime.afterDelay(initialDelayMs, () -> {
@@ -409,21 +404,21 @@ public final class AgentPotionService {
                 AgentUseItemClassificationPolicy::itemEffect);
     }
 
-    private static int calculatePassiveHpRecovery(BotEntry entry, Character bot) {
+    private static int calculatePassiveHpRecovery(AgentRuntimeEntry entry, Character bot) {
         return AgentPassiveRecoveryPolicy.hpRecovery(
                 bot,
                 AgentRuntimeConfig.cfg.BASE_HP_RECOVERY,
                 isStandingStillForRecovery(entry));
     }
 
-    private static int calculatePassiveMpRecovery(BotEntry entry, Character bot) {
+    private static int calculatePassiveMpRecovery(AgentRuntimeEntry entry, Character bot) {
         return AgentPassiveRecoveryPolicy.mpRecovery(
                 bot,
                 AgentRuntimeConfig.cfg.BASE_MP_RECOVERY,
                 isStandingStillForRecovery(entry));
     }
 
-    private static boolean isStandingStillForRecovery(BotEntry entry) {
+    private static boolean isStandingStillForRecovery(AgentRuntimeEntry entry) {
         if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry)) {
             return false;
         }
