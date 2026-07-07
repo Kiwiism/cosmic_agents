@@ -5359,6 +5359,9 @@ Current physics correction:
 - Social/fame chat callbacks now accept `AgentRuntimeEntry`; target resolution,
   self-fame handling, fame eligibility checks, fame mutation, and reply behavior
   are unchanged.
+- Chat status facade no longer imports `BotEntry`; build-status and active-mode
+  backend seams now accept `AgentRuntimeEntry` while preserving the same
+  build, equipment, offer, autopot, and potion-share side effects.
 
 Initial reconstruction order:
 
