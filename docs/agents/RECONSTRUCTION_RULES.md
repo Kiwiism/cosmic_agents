@@ -5468,6 +5468,10 @@ Current physics correction:
   movement capability until those lower movement services are reconstructed.
   Action-lock, idle, swim, airborne, grounded, and grind fallback behavior are
   unchanged.
+- Movement phase runtime now exposes an `AgentRuntimeEntry` boundary above the
+  phase service and dispatch hooks. The movement tick runtime may still supply
+  the temporary compatibility entry, but phase selection no longer depends on
+  the bot package type.
 
 Initial reconstruction order:
 

@@ -17,6 +17,10 @@ Recent map updates:
   Agent-owned movement boundary directly; the temporary BotEntry cast is
   isolated inside movement dispatch only for lower airborne/ground services
   that have not yet been reconstructed.
+- `AgentMovementPhaseRuntime` now accepts `AgentRuntimeEntry` above the
+  movement phase service. Phase selection and hook wiring no longer import the
+  legacy bot entry type; lower movement implementation slices remain to be
+  reconstructed.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
