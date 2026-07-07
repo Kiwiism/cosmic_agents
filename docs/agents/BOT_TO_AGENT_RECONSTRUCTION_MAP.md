@@ -150,6 +150,10 @@ Recent map updates:
   physics, idle-mode physics, ownerless idle physics, anchored-farm idle, and
   movement-only idle call sites no longer cast for this boundary. The runtime
   still adapts to BotEntry for lower movement phase dispatch services.
+- Common-tick script task callbacks now use `AgentRuntimeEntry` through
+  `AgentCommonTickRuntime`, `AgentLiveTickGateRuntime`, and
+  `AgentTickCoreRuntime`; common tick order, PQ locking, action-lock behavior,
+  and script task execution are unchanged.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

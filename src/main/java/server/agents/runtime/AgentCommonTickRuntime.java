@@ -29,7 +29,7 @@ public final class AgentCommonTickRuntime {
                                                Character agent,
                                                Character leader,
                                                boolean runAiTick,
-                                               Consumer<BotEntry> tickScriptTasks) {
+                                               Consumer<AgentRuntimeEntry> tickScriptTasks) {
         return AgentCommonTickService.runCommonTickSystems(
                 entry,
                 agent,
@@ -38,7 +38,7 @@ public final class AgentCommonTickRuntime {
                 hooks(tickScriptTasks));
     }
 
-    private static AgentCommonTickService.CommonTickHooks hooks(Consumer<BotEntry> tickScriptTasks) {
+    private static AgentCommonTickService.CommonTickHooks hooks(Consumer<AgentRuntimeEntry> tickScriptTasks) {
         return new AgentCommonTickService.CommonTickHooks(
                 (entry, agent) -> AgentBotCombatDamageRuntime.tickMobDamage(
                         entry, agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
@@ -54,7 +54,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(asBotEntry(entry), agent),
                 (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(asBotEntry(entry), agent),
                 AgentPartyQuestHooks::tick,
-                entry -> tickScriptTasks.accept(asBotEntry(entry)),
+                tickScriptTasks,
                 AgentPartyQuestHooks::isNpcLocked,
                 AgentBotCombatActionLockRuntime::tickActionLock,
                 AgentBotCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,

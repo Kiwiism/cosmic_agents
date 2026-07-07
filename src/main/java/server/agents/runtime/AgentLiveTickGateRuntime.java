@@ -10,7 +10,7 @@ public final class AgentLiveTickGateRuntime {
 
     public static boolean tickLiveGates(AgentLiveTickGateService.Context context,
                                         boolean perf,
-                                        Consumer<BotEntry> tickScriptTasks,
+                                        Consumer<AgentRuntimeEntry> tickScriptTasks,
                                         Consumer<AgentRuntimeEntry> issueGrind,
                                         Consumer<AgentRuntimeEntry> issueFollow,
                                         int teleportDistance,
@@ -29,7 +29,7 @@ public final class AgentLiveTickGateRuntime {
     }
 
     private static AgentLiveTickGateService.Hooks hooks(boolean perf,
-                                                        Consumer<BotEntry> tickScriptTasks,
+                                                        Consumer<AgentRuntimeEntry> tickScriptTasks,
                                                         Consumer<AgentRuntimeEntry> issueGrind,
                                                         Consumer<AgentRuntimeEntry> issueFollow,
                                                         int teleportDistance,

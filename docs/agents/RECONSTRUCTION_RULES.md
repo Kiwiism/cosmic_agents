@@ -5457,6 +5457,10 @@ Current physics correction:
   idle-mode physics, ownerless idle physics, anchored-farm idle, and
   movement-only idle dispatch behavior are unchanged. Movement phase dispatch
   remains a later BotEntry-backed movement capability slice.
+- Common-tick script task callbacks now pass `AgentRuntimeEntry` through
+  tick-core and live-gate dispatch; script task cadence, common tick ordering,
+  PQ lock handling, action-lock gating, and script task execution behavior are
+  unchanged.
 
 Initial reconstruction order:
 
