@@ -5299,6 +5299,10 @@ Current physics correction:
   coupon target, coupon progress, stage-5 claimed state, queued PQ dialogue,
   and stage-1 reset behavior now accept `AgentRuntimeEntry` while preserving
   the same state bag and script-reset side effect.
+- Party-quest gate checks now accept `AgentRuntimeEntry`; NPC-lock, KPQ
+  grind-required, and PQ follow-required decisions no longer require runtime
+  casts in common tick or map-transition gates, and their map/state predicates
+  are unchanged.
 
 Initial reconstruction order:
 

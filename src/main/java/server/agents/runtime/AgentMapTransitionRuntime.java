@@ -34,9 +34,9 @@ public final class AgentMapTransitionRuntime {
                 agent,
                 new AgentMapTransitionService.MapChangeHooks(
                         groundingHooks(),
-                        (hookEntry, hookAgent) -> AgentPartyQuestHooks.requiresGrind(asBotEntry(hookEntry), hookAgent),
+                        AgentPartyQuestHooks::requiresGrind,
                         hookEntry -> issueGrind.accept(asBotEntry(hookEntry)),
-                        (hookEntry, hookAgent) -> AgentPartyQuestHooks.requiresFollow(asBotEntry(hookEntry), hookAgent),
+                        AgentPartyQuestHooks::requiresFollow,
                         hookEntry -> issueFollow.accept(asBotEntry(hookEntry)),
                         hookEntry -> AgentBotPqRuntime.resetKpqStage5Claimed(asBotEntry(hookEntry)),
                         (hookEntry, hookAgent) -> AgentShopService.onMapChange(asBotEntry(hookEntry), hookAgent),

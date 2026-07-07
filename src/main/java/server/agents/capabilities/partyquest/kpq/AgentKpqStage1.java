@@ -100,7 +100,7 @@ public final class AgentKpqStage1 {
         return AgentBotPqRuntime.kpqStageStateAtLeast(entry, SECOND_WALK);
     }
 
-    public static boolean isNpcLocked(BotEntry entry) {
+    public static boolean isNpcLocked(AgentRuntimeEntry entry) {
         return AgentBotPqRuntime.kpqStageStateIs(entry, FIRST_WAIT)
                 || AgentBotPqRuntime.kpqStageStateIs(entry, SECOND_WAIT);
     }
