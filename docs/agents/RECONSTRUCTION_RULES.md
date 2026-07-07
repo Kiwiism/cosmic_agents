@@ -5498,6 +5498,9 @@ Current physics correction:
   move-here, follow, grind, stop, fidget, greeting, delayed replies, active-mode
   preparation, and pot-share checks remain unchanged through Agent-entry
   overloads on the movement command and potion adapters.
+- Follow-target runtime now accepts lists of `AgentRuntimeEntry`; target
+  resolution, sibling/leader candidate lookup, queued follow replies, delayed
+  auto-equip, pot-share checks, and follow command dispatch remain unchanged.
 
 Initial reconstruction order:
 

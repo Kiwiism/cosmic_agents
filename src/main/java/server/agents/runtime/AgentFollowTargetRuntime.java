@@ -8,7 +8,6 @@ import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
@@ -35,7 +34,9 @@ public final class AgentFollowTargetRuntime {
                 new AgentFollowTargetCandidateService.Hooks(AgentRuntimeRegistry::entriesForLeader));
     }
 
-    public static boolean applyFollowTargetCommand(Character leader, List<BotEntry> entries, String targetToken) {
+    public static boolean applyFollowTargetCommand(Character leader,
+                                                   List<? extends AgentRuntimeEntry> entries,
+                                                   String targetToken) {
         return AgentFollowTargetCommandService.applyFollowTargetCommand(
                 leader,
                 entries,
@@ -43,12 +44,12 @@ public final class AgentFollowTargetRuntime {
                 new AgentFollowTargetCommandService.Hooks(
                         AgentFollowTargetRuntime::resolveFollowTarget,
                         AgentFollowTargetRuntime::followTargetReply,
-                        (entry, reply) -> AgentBotReplyRuntime.queueReply(asBotEntry(entry), reply),
+                        AgentBotReplyRuntime::queueReply,
                         () -> AgentRandom.randMs(250, 750),
                         AgentBotSchedulerRuntime::afterDelay,
                         AgentFollowTargetRuntime::autoEquipForFollow,
                         AgentFollowTargetRuntime::checkPotShareForFollow,
-                        (entry, target) -> AgentBotMovementCommandRuntime.follow(asBotEntry(entry), target)));
+                        AgentBotMovementCommandRuntime::follow));
     }
 
     private static String followTargetReply(Character target) {
@@ -71,11 +72,7 @@ public final class AgentFollowTargetRuntime {
 
     private static void checkPotShareForFollow(AgentRuntimeEntry entry) {
         AgentPotionService.checkPotShareOnModeStart(
-                asBotEntry(entry),
+                entry,
                 AgentBotRuntimeIdentityRuntime.bot(entry));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

@@ -44,6 +44,9 @@ Recent map updates:
 - `AgentBotMovementRuntime` movement chat callbacks now use
   `AgentRuntimeEntry`; lower movement command and potion adapters keep the
   temporary BotEntry compatibility casts for their own side effects.
+- `AgentFollowTargetRuntime` now accepts Agent runtime entry lists and no
+  longer owns BotEntry casts; lower reply, potion, and movement-command
+  adapters keep their compatibility edges.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
