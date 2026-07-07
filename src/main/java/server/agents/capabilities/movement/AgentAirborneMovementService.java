@@ -9,7 +9,7 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ public final class AgentAirborneMovementService {
     private AgentAirborneMovementService() {
     }
 
-    public static void tickAirborne(BotEntry entry, Point targetPos) {
+    public static void tickAirborne(AgentRuntimeEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
@@ -65,7 +65,7 @@ public final class AgentAirborneMovementService {
         }
     }
 
-    static boolean successfullyGrabbedRope(BotEntry entry, Character agent, Point agentPosition) {
+    static boolean successfullyGrabbedRope(AgentRuntimeEntry entry, Character agent, Point agentPosition) {
         if (!AgentBotClimbStateRuntime.climbUpIntent(entry)) {
             return false;
         }
@@ -89,7 +89,7 @@ public final class AgentAirborneMovementService {
         return false;
     }
 
-    static boolean shouldApplyAirSteering(BotEntry entry) {
+    static boolean shouldApplyAirSteering(AgentRuntimeEntry entry) {
         if (AgentBotMovementPhysicsStateRuntime.fixedAirArc(entry)) {
             return false;
         }

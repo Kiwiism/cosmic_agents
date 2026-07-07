@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Airborne movement and physics services now take `AgentRuntimeEntry` directly.
+  Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
+  grace, fall damage, motion state sync, and movement broadcasts are unchanged.
 - Ground movement step resolution and mob avoidance now take
   `AgentRuntimeEntry` directly. Warmup fallback stepping, hysteresis,
   was-moving state updates, walk-lane mob detection, region checks, and jump

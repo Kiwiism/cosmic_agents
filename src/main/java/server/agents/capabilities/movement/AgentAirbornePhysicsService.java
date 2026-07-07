@@ -7,7 +7,6 @@ import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -29,7 +28,7 @@ public final class AgentAirbornePhysicsService {
     private AgentAirbornePhysicsService() {
     }
 
-    public static AgentAirborneStepResult stepAirborne(BotEntry entry, Character agent) {
+    public static AgentAirborneStepResult stepAirborne(AgentRuntimeEntry entry, Character agent) {
         if (AgentBotMovementStateRuntime.hasMoveDirection(entry)) {
             applyAirSteering(entry, AgentBotMovementStateRuntime.moveDirection(entry));
         }
@@ -55,7 +54,7 @@ public final class AgentAirbornePhysicsService {
         return AgentAirborneStepResult.CONTINUE;
     }
 
-    public static boolean canLand(BotEntry entry) {
+    public static boolean canLand(AgentRuntimeEntry entry) {
         return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
     }
 
@@ -100,7 +99,7 @@ public final class AgentAirbornePhysicsService {
         AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 
-    private static void applyAirSteering(BotEntry entry, int steerDirection) {
+    private static void applyAirSteering(AgentRuntimeEntry entry, int steerDirection) {
         if (steerDirection == 0) {
             return;
         }
@@ -109,7 +108,7 @@ public final class AgentAirbornePhysicsService {
         AgentBotMovementStateRuntime.setFacingDirection(entry, steerDirection > 0 ? 1 : -1);
     }
 
-    private static Point advanceAirbornePosition(BotEntry entry) {
+    private static Point advanceAirbornePosition(AgentRuntimeEntry entry) {
         double deltaX = AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
                 + AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry);
         float gravity = AgentMovementKinematicsService.gravityPerTick();
@@ -123,7 +122,7 @@ public final class AgentAirbornePhysicsService {
         return roundedAirPosition(entry);
     }
 
-    private static void applyAirbornePosition(BotEntry entry, Character agent, Point position) {
+    private static void applyAirbornePosition(AgentRuntimeEntry entry, Character agent, Point position) {
         agent.setPosition(position);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
@@ -137,7 +136,7 @@ public final class AgentAirbornePhysicsService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    private static void collideWithAirWall(BotEntry entry, Character agent, Point collisionPoint) {
+    private static void collideWithAirWall(AgentRuntimeEntry entry, Character agent, Point collisionPoint) {
         AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
@@ -151,7 +150,7 @@ public final class AgentAirbornePhysicsService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    private static void collideWithAirCeiling(BotEntry entry, Character agent, Point collisionPoint) {
+    private static void collideWithAirCeiling(AgentRuntimeEntry entry, Character agent, Point collisionPoint) {
         AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
         AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
         AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
@@ -166,7 +165,7 @@ public final class AgentAirbornePhysicsService {
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
-    private static Point roundedAirPosition(BotEntry entry) {
+    private static Point roundedAirPosition(AgentRuntimeEntry entry) {
         return AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
     }
 
