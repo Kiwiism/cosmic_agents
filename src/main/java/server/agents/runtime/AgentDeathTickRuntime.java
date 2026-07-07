@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotDeathStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -17,18 +16,18 @@ public final class AgentDeathTickRuntime {
     private AgentDeathTickRuntime() {
     }
 
-    public static boolean handleDeadTick(BotEntry entry, Character agent, Character leader) {
+    public static boolean handleDeadTick(AgentRuntimeEntry entry, Character agent, Character leader) {
         return handleDeadTick(
                 entry,
                 agent,
                 () -> AgentBotDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
                 (deadEntry, deadAgent) -> AgentBotCombatDeathRuntime.enterDeadState(
-                        asBotEntry(deadEntry), deadAgent, false, AgentCombatConfig.cfg),
+                        deadEntry, deadAgent, false, AgentCombatConfig.cfg),
                 () -> AgentRespawnRuntime.respawnNearLeader(entry, agent, leader),
                 System::currentTimeMillis);
     }
 
-    static boolean handleDeadTick(BotEntry entry,
+    static boolean handleDeadTick(AgentRuntimeEntry entry,
                                   Character agent,
                                   BooleanSupplier shouldEnterDeadState,
                                   BiConsumer<AgentRuntimeEntry, Character> enterDeadState,
@@ -41,9 +40,5 @@ public final class AgentDeathTickRuntime {
                 enterDeadState,
                 respawnAction,
                 nowMs.getAsLong());
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

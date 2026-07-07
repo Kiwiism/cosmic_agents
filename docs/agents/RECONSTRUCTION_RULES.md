@@ -5235,6 +5235,10 @@ Current physics correction:
   clearing, attack-cooldown gating, arrival/up/down intent selection, swim
   velocity integration, collision landing, and airborne landing handoff behavior
   are unchanged.
+- Death tick and respawn runtime no longer cast through `BotEntry`; dead-state
+  entry, respawn timing, HP restore, leader-map change, grounding, teleport,
+  movement reset, movement broadcast, map speech, and glare emote behavior are
+  unchanged.
 
 Initial reconstruction order:
 

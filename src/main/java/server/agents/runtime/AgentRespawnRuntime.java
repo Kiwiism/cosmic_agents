@@ -7,14 +7,13 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.integration.AgentBotReplyRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 public final class AgentRespawnRuntime {
     private AgentRespawnRuntime() {
     }
 
-    public static void respawnNearLeader(BotEntry entry, Character agent, Character leader) {
+    public static void respawnNearLeader(AgentRuntimeEntry entry, Character agent, Character leader) {
         AgentDeathTickService.respawnNearLeader(
                 entry,
                 agent,
@@ -24,15 +23,11 @@ public final class AgentRespawnRuntime {
                                 respawnAgent.forceChangeMap(leaderMap, leaderMap.findClosestPortal(leaderPosition)),
                         MapleMap::getPointBelow,
                         (respawnEntry, respawnAgent, point) ->
-                                AgentMovementPoseService.teleportTo(asBotEntry(respawnEntry), respawnAgent, point),
+                                AgentMovementPoseService.teleportTo(respawnEntry, respawnAgent, point),
                         (respawnEntry, ignoredAgent) ->
-                                AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(respawnEntry)),
+                                AgentMovementStateResetService.resetEntryStateAfterTeleport(respawnEntry),
                         (respawnEntry, ignoredAgent) ->
                                 AgentMovementBroadcastService.broadcastMovement(respawnEntry),
                         AgentBotReplyRuntime::sayMapNow));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

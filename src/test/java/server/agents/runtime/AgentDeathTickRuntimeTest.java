@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotDeathStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,7 +14,7 @@ import static org.mockito.Mockito.mock;
 class AgentDeathTickRuntimeTest {
     @Test
     void returnsFalseWhenAgentIsAliveAndDoesNotNeedDeadState() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger deadEntries = new AtomicInteger();
         AtomicInteger respawns = new AtomicInteger();
 
@@ -34,7 +33,7 @@ class AgentDeathTickRuntimeTest {
 
     @Test
     void delegatesDeadStateEntryAndRespawnActionThroughService() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger deadEntries = new AtomicInteger();
         AtomicInteger respawns = new AtomicInteger();
 

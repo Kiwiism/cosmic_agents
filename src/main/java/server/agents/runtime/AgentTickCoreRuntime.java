@@ -37,7 +37,7 @@ public final class AgentTickCoreRuntime {
                                 agent,
                                 runAiTick),
                 (runtimeEntry, agent, leader) ->
-                        AgentDeathTickRuntime.handleDeadTick(asBotEntry(runtimeEntry), agent, leader),
+                        AgentDeathTickRuntime.handleDeadTick(runtimeEntry, agent, leader),
                 (runtimeEntry, leader) -> AgentTargetSnapshotRuntime.resolveFollowAnchor((BotEntry) runtimeEntry, leader),
                 runtimeEntry -> AgentTargetSnapshotRuntime.captureTargetSnapshot((BotEntry) runtimeEntry),
                 runtimeEntry -> AgentScriptTaskRuntime.tick(asBotEntry(runtimeEntry)),
