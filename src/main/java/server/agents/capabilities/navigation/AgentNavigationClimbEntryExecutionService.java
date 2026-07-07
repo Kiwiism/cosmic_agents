@@ -5,7 +5,7 @@ import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ public final class AgentNavigationClimbEntryExecutionService {
     }
 
     public static boolean tryExecuteClimbEntry(AgentNavigationGraph graph,
-                                               BotEntry entry,
+                                               AgentRuntimeEntry entry,
                                                Character agent,
                                                Point agentPos,
                                                AgentNavigationGraph.Edge edge) {

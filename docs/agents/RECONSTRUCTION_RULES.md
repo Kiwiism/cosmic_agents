@@ -5216,6 +5216,9 @@ Current physics correction:
 - Navigation drop execution now accepts `AgentRuntimeEntry`; airborne, climbing,
   pending down-jump, launch-step, readiness, edge-target, queued down-jump, and
   broadcast behavior are unchanged.
+- Navigation climb-entry execution now accepts `AgentRuntimeEntry`; rope lookup,
+  position gating, block reasons, direct attach, top-platform queueing, rope
+  jump entry, and broadcast behavior are unchanged.
 
 Initial reconstruction order:
 
