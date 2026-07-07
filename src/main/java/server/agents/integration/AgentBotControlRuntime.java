@@ -6,17 +6,17 @@ import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.build.AgentBuildService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Temporary Agent-owned bridge for control callbacks while toggle/respec side
- * effects still write into the bot runtime entry.
+ * effects still write into the live Agent runtime entry.
  */
 public final class AgentBotControlRuntime {
     private AgentBotControlRuntime() {
     }
 
-    public static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(BotEntry entry) {
+    public static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatToggleFlow.ToggleCallbacks() {
             @Override
             public void setSupport(boolean enabled) {
@@ -63,7 +63,7 @@ public final class AgentBotControlRuntime {
         };
     }
 
-    public static AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks(BotEntry entry) {
+    public static AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatBuffQueryFlow.BuffQueryCallbacks() {
             @Override
             public void reportBuffList() {
@@ -90,7 +90,7 @@ public final class AgentBotControlRuntime {
         };
     }
 
-    public static AgentChatRespecFlow.RespecCallbacks respecCallbacks(BotEntry entry) {
+    public static AgentChatRespecFlow.RespecCallbacks respecCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatRespecFlow.RespecCallbacks() {
             @Override
             public void respecAp() {
@@ -106,7 +106,7 @@ public final class AgentBotControlRuntime {
         };
     }
 
-    private static Character bot(BotEntry entry) {
+    private static Character bot(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

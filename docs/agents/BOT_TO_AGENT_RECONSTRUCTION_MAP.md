@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotControlRuntime` now accepts `AgentRuntimeEntry` for toggle, buff
+  query, and respec callback wiring. Support/heal toggles, consumable buff
+  toggles, proactive-offer toggles, buff debug reporting, and AP/SP respec
+  behavior keep the same delayed scheduling and reply text.
 - `AgentAirshowService` now uses `AgentRuntimeEntry` internally. The command
   still resolves through the temporary session lifecycle lookup, but timed
   flight frames, trail effects, restoration, movement packet emission, and

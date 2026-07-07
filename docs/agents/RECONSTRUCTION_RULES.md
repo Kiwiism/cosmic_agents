@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Control dialogue callbacks now use `AgentRuntimeEntry` instead of `BotEntry`.
+  Support/heal toggles, consumable buff toggles, proactive-offer toggles,
+  buff debug reports, and AP/SP respec replies preserve the same delayed
+  side effects and reply text.
 - Airshow service internals now use `AgentRuntimeEntry` instead of `BotEntry`.
   Named-session lookup, map validation, active-state checks, timed horizontal
   and vertical frames, trail spawning, restoration, movement packets, and
