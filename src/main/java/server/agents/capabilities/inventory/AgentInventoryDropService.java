@@ -10,7 +10,7 @@ import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.FieldLimit;
 
 import java.util.HashSet;
@@ -27,9 +27,9 @@ public final class AgentInventoryDropService {
     }
 
     public static void dropCategory(String category,
-                                    BotEntry entry,
+                                    AgentRuntimeEntry entry,
                                     Character agent,
-                                    BiFunction<BotEntry, Character, List<Item>> trashEquipCollector) {
+                                    BiFunction<AgentRuntimeEntry, Character, List<Item>> trashEquipCollector) {
         if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
                 && FieldLimit.DROP_LIMIT.check(agent.getMap().getFieldLimit())) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.dropLimitedMapReply());
@@ -50,26 +50,26 @@ public final class AgentInventoryDropService {
         }
     }
 
-    static void dropScrolls(BotEntry entry, Character agent) {
+    static void dropScrolls(AgentRuntimeEntry entry, Character agent) {
         int count = dropFromBag(agent, InventoryType.USE,
                 item -> ItemConstants.isEquipScroll(item.getItemId()));
         reply(entry, count, "scroll");
     }
 
-    static void dropPotions(BotEntry entry, Character agent) {
+    static void dropPotions(AgentRuntimeEntry entry, Character agent) {
         int count = dropFromBag(agent, InventoryType.USE,
                 item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()));
         reply(entry, count, "potion");
     }
 
-    static void dropEquips(BotEntry entry, Character agent) {
+    static void dropEquips(AgentRuntimeEntry entry, Character agent) {
         int count = dropFromBag(agent, InventoryType.EQUIP, item -> true);
         AgentBotInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " equip" + (count != 1 ? "s" : "") + "!"
                           : "equip bag is already empty");
     }
 
-    static void dropTrashEquips(BotEntry entry, Character agent, List<Item> trashEquips) {
+    static void dropTrashEquips(AgentRuntimeEntry entry, Character agent, List<Item> trashEquips) {
         Set<Item> trash = new HashSet<>(trashEquips);
         int count = dropFromBag(agent, InventoryType.EQUIP, trash::contains);
         AgentBotInventoryRuntime.replyNow(entry,
@@ -77,18 +77,18 @@ public final class AgentInventoryDropService {
                           : "no trash equips to drop");
     }
 
-    static void dropBuffPots(BotEntry entry, Character agent) {
+    static void dropBuffPots(AgentRuntimeEntry entry, Character agent) {
         int count = dropFromBag(agent, InventoryType.USE,
                 item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()));
         reply(entry, count, "buff pot");
     }
 
-    static void dropEtc(BotEntry entry, Character agent) {
+    static void dropEtc(AgentRuntimeEntry entry, Character agent) {
         int count = dropFromBag(agent, InventoryType.ETC, item -> true);
         reply(entry, count, "etc item");
     }
 
-    static void dropByName(BotEntry entry, Character agent, String nameFragment) {
+    static void dropByName(AgentRuntimeEntry entry, Character agent, String nameFragment) {
         String normalizedFragment = AgentInventoryNamedItemService.normalizeQuery(nameFragment);
         int total = 0;
         for (InventoryType type : List.of(
@@ -119,7 +119,7 @@ public final class AgentInventoryDropService {
         return count;
     }
 
-    private static void reply(BotEntry entry, int count, String noun) {
+    private static void reply(AgentRuntimeEntry entry, int count, String noun) {
         AgentBotInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " " + noun + (count != 1 ? "s" : "") + "!"
                           : "no " + noun + "s to drop");

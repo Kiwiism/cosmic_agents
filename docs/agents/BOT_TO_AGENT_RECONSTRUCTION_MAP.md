@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentInventoryDropService` now accepts `AgentRuntimeEntry` for drop-category
+  routing and focused drop helpers. Drop-limit checks, category dispatch,
+  safe-to-drop filtering, named-item lookup, inventory drop calls, and legacy
+  reply text remain unchanged.
 - `AgentInventorySellTrashService` now accepts `AgentRuntimeEntry` when
   collecting sell-trash equipment. Safe-item collection, self-upgrade reserves,
   other-recipient offer reservations, equip sorting, and trash classification

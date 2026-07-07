@@ -5580,6 +5580,10 @@ Current physics correction:
   sell-trash equipment. Safe item selection, self-upgrade reserve filtering,
   offer-reservation filtering, equip sorting, and trash classification remain
   unchanged.
+- Inventory drop service now accepts `AgentRuntimeEntry` for category routing
+  and drop helper replies. Drop-limit handling, safe-drop filtering,
+  InventoryManipulator calls, named-item lookup, category ordering, and legacy
+  reply strings remain unchanged.
 
 Initial reconstruction order:
 

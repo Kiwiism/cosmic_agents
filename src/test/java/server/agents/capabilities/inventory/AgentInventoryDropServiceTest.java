@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.IntPredicate;
@@ -26,7 +26,7 @@ class AgentInventoryDropServiceTest {
         Client client = mock(Client.class);
         Inventory etc = mock(Inventory.class);
         Item item = mock(Item.class);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         IntPredicate oldQuestItemLookup = AgentInventoryDropService.questItemLookup;
 
         when(agent.getClient()).thenReturn(client);
@@ -52,7 +52,7 @@ class AgentInventoryDropServiceTest {
     @Test
     void dropByNameRepliesWhenNoMatchingItemExists() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         for (InventoryType type : List.of(InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
             Inventory inventory = mock(Inventory.class);
             when(inventory.getSlotLimit()).thenReturn((byte) 0);
