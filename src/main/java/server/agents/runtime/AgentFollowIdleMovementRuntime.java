@@ -3,7 +3,6 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -14,7 +13,7 @@ public final class AgentFollowIdleMovementRuntime {
     private AgentFollowIdleMovementRuntime() {
     }
 
-    public static boolean tryFollowIdleMovementFastPath(BotEntry entry,
+    public static boolean tryFollowIdleMovementFastPath(AgentRuntimeEntry entry,
                                                         Character agent,
                                                         Point targetPosition,
                                                         long nowMs) {

@@ -5242,6 +5242,9 @@ Current physics correction:
 - Formation command runtime now queues replies with `AgentRuntimeEntry`
   directly; formation parsing, leader fallback help, formation state writes,
   offset application, and visible reply text are unchanged.
+- Follow-idle movement runtime now accepts `AgentRuntimeEntry`; configured
+  follow/stop distance lookup, fast-path eligibility, recheck cadence, decision
+  label, and stuck-progress reset behavior are unchanged.
 
 Initial reconstruction order:
 
