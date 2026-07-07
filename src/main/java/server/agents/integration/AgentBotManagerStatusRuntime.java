@@ -2,7 +2,6 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 /**
  * Agent-owned bridge for status callbacks from tick and lifecycle services.
@@ -11,11 +10,11 @@ public final class AgentBotManagerStatusRuntime {
     private AgentBotManagerStatusRuntime() {
     }
 
-    public static void scheduleSpawnStatusCheck(BotEntry entry, Character bot, long delayMs) {
+    public static void scheduleSpawnStatusCheck(AgentRuntimeEntry entry, Character bot, long delayMs) {
         AgentBotSchedulerRuntime.afterDelay(delayMs, () -> checkManagerStatus(entry, bot));
     }
 
-    public static void checkManagerStatus(BotEntry entry, Character bot) {
+    public static void checkManagerStatus(AgentRuntimeEntry entry, Character bot) {
         AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
     }
 

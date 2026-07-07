@@ -5340,6 +5340,10 @@ Current physics correction:
 - Status-check, gear-suggestion, and recommended-gear report state adapters now
   accept `AgentRuntimeEntry`; spawn-upgrade flags and gear-suggestion cooldowns
   still read/write the same Agent upgrade-offer state.
+- Manager and movement status-check bridge methods now accept
+  `AgentRuntimeEntry`; spawn delayed status checks, tracked-map status checks,
+  movement-only map-change status checks, and movement-triggered status checks
+  still invoke the same build-status backend.
 
 Initial reconstruction order:
 

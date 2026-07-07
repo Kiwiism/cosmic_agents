@@ -40,7 +40,7 @@ public final class AgentMapTransitionRuntime {
                         hookEntry -> issueFollow.accept(asBotEntry(hookEntry)),
                         AgentBotPqRuntime::resetKpqStage5Claimed,
                         (hookEntry, hookAgent) -> AgentShopService.onMapChange(asBotEntry(hookEntry), hookAgent),
-                        (hookEntry, hookAgent) -> AgentBotManagerStatusRuntime.checkManagerStatus(asBotEntry(hookEntry), hookAgent)));
+                        AgentBotManagerStatusRuntime::checkManagerStatus));
     }
 
     private static AgentMapTransitionService.GroundingHooks groundingHooks() {

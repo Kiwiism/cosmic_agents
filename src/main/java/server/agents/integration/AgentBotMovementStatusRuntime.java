@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 /**
@@ -14,7 +15,7 @@ public final class AgentBotMovementStatusRuntime {
         AgentBotChatStatusRuntime.prepareActiveModeEntry(entry);
     }
 
-    public static void checkMovementStatus(BotEntry entry, Character bot) {
+    public static void checkMovementStatus(AgentRuntimeEntry entry, Character bot) {
         AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
     }
 

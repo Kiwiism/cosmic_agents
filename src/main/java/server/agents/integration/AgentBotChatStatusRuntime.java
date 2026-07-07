@@ -22,8 +22,8 @@ public final class AgentBotChatStatusRuntime {
                 System.currentTimeMillis());
     }
 
-    public static void checkBotStatus(BotEntry entry, Character bot) {
-        AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
+    public static void checkBotStatus(AgentRuntimeEntry entry, Character bot) {
+        AgentBotBuildStatusRuntime.checkBuildStatus(asBotEntry(entry), bot);
     }
 
     public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
@@ -49,5 +49,9 @@ public final class AgentBotChatStatusRuntime {
 
     public static int randomFidgetExpression() {
         return AgentChatStatusRuntime.randomFidgetExpression();
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

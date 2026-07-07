@@ -27,7 +27,7 @@ public final class AgentMovementOnlyMapChangeRuntime {
                         mapEntry -> AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(mapEntry)),
                         mapEntry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(mapEntry)),
                         (mapEntry, mapAgent) -> AgentShopService.onMapChange(asBotEntry(mapEntry), mapAgent),
-                        (mapEntry, mapAgent) -> AgentBotManagerStatusRuntime.checkManagerStatus(asBotEntry(mapEntry), mapAgent)));
+                        AgentBotManagerStatusRuntime::checkManagerStatus));
     }
 
     private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
