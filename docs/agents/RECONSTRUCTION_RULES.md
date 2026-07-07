@@ -5501,6 +5501,9 @@ Current physics correction:
 - Follow-target runtime now accepts lists of `AgentRuntimeEntry`; target
   resolution, sibling/leader candidate lookup, queued follow replies, delayed
   auto-equip, pot-share checks, and follow command dispatch remain unchanged.
+- Dismiss runtime and lifecycle chat command dismiss wiring now accept
+  `AgentRuntimeEntry` stoppers; removal, scheduled-task cancellation, delayed
+  farewell replies, and stop-command behavior remain unchanged.
 
 Initial reconstruction order:
 

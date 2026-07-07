@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -30,7 +29,7 @@ public final class AgentLifecycleChatCommandRuntime {
 
     public static boolean dismissAgent(int leaderCharId,
                                        String agentName,
-                                       Consumer<BotEntry> stopAgent) {
+                                       Consumer<AgentRuntimeEntry> stopAgent) {
         return AgentDismissRuntime.dismissAgentByName(leaderCharId, agentName, stopAgent);
     }
 

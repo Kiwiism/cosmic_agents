@@ -47,6 +47,9 @@ Recent map updates:
 - `AgentFollowTargetRuntime` now accepts Agent runtime entry lists and no
   longer owns BotEntry casts; lower reply, potion, and movement-command
   adapters keep their compatibility edges.
+- `AgentDismissRuntime` and lifecycle chat dismiss wiring now use
+  `AgentRuntimeEntry` stopper callbacks; the outer interaction runtime remains
+  the compatibility edge for the current stop command.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
