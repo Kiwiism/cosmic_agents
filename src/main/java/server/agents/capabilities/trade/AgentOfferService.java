@@ -514,7 +514,7 @@ public final class AgentOfferService {
         return AgentEquipmentService.isWeaponCompatible(recipient, weaponType);
     }
 
-    public static boolean isReservedForOtherRecipients(BotEntry entry, Character donor, Item item) {
+    public static boolean isReservedForOtherRecipients(AgentRuntimeEntry entry, Character donor, Item item) {
         if (entry == null || donor == null || item == null) {
             return false;
         }

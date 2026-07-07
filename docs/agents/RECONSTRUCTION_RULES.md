@@ -5320,6 +5320,9 @@ Current physics correction:
   `AgentRuntimeEntry`; owner lookup, busy/no-upgrade replies, recommendation
   selection, requested-item memory, and upgrade-request prompt creation are
   unchanged.
+- Offer reservation classification now accepts `AgentRuntimeEntry`; owner
+  lookup, throwing-star recipient checks, equipment-only gating, future-reserve
+  checks, and eligible bot-recipient filtering are unchanged.
 
 Initial reconstruction order:
 
