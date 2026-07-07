@@ -2,8 +2,6 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
-import server.bots.BotEntry;
-
 import java.awt.Point;
 
 /**
@@ -13,7 +11,7 @@ public final class AgentLocalAttackMoveWindowRuntime {
     private AgentLocalAttackMoveWindowRuntime() {
     }
 
-    public static void setLocalAttackMoveWindow(BotEntry entry, Point agentPosition, Point referencePosition) {
+    public static void setLocalAttackMoveWindow(AgentRuntimeEntry entry, Point agentPosition, Point referencePosition) {
         AgentLocalAttackMoveWindowService.setLocalAttackMoveWindow(
                 entry,
                 agentPosition,
@@ -23,7 +21,7 @@ public final class AgentLocalAttackMoveWindowRuntime {
                 AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
-    public static void clearFollowActionMoveWindowIfSettled(BotEntry entry,
+    public static void clearFollowActionMoveWindowIfSettled(AgentRuntimeEntry entry,
                                                             Point agentPosition,
                                                             AgentTargetSnapshot targetSnapshot) {
         AgentLocalAttackMoveWindowService.clearFollowActionMoveWindowIfSettled(
@@ -35,7 +33,7 @@ public final class AgentLocalAttackMoveWindowRuntime {
                 AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
-    public static void clearActionMoveWindowIfSettled(BotEntry entry,
+    public static void clearActionMoveWindowIfSettled(AgentRuntimeEntry entry,
                                                       Point agentPosition,
                                                       Point targetPosition) {
         AgentLocalAttackMoveWindowService.clearActionMoveWindowIfSettled(

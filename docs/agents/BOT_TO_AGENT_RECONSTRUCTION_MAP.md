@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentLocalAttackMoveWindowRuntime` now exposes AgentRuntimeEntry-based
+  configured-distance wrappers around `AgentLocalAttackMoveWindowService`;
+  legacy BotEntry callers still pass through by inheritance while the wrapper
+  no longer imports `server.bots`.
 - `AgentLiveTickContextRuntime` now accepts `AgentRuntimeEntry` directly and
   uses Agent-owned movement profile and follow-action-window services without
   BotEntry casts. Follow-anchor resolution, target snapshot capture, leader

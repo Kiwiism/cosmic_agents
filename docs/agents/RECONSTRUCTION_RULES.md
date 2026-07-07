@@ -5519,6 +5519,9 @@ Current physics correction:
   refresh, follow-anchor resolution, target snapshot capture, leader motion
   observation, owner-position memory, map-change cleanup, and follow action
   window cleanup behavior remain unchanged.
+- Local attack move-window runtime now accepts `AgentRuntimeEntry` for its
+  configured-distance wrappers; set and clear behavior still delegates to
+  `AgentLocalAttackMoveWindowService` with the same movement config values.
 
 Initial reconstruction order:
 

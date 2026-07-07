@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -13,7 +12,7 @@ import static org.mockito.Mockito.mock;
 class AgentLocalAttackMoveWindowRuntimeTest {
     @Test
     void clearsSettledMoveWindowUsingRuntimeMovementConfig() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 200);
 
         AgentLocalAttackMoveWindowRuntime.clearActionMoveWindowIfSettled(
