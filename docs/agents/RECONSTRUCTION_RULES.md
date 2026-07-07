@@ -5344,6 +5344,10 @@ Current physics correction:
   `AgentRuntimeEntry`; spawn delayed status checks, tracked-map status checks,
   movement-only map-change status checks, and movement-triggered status checks
   still invoke the same build-status backend.
+- Movement active-mode status preparation now accepts `AgentRuntimeEntry`;
+  auto-equip, gear-suggestion cooldown reset, sibling gear suggestions,
+  autopot setup, and mode-start potion sharing still route through the same
+  active-mode backend.
 
 Initial reconstruction order:
 

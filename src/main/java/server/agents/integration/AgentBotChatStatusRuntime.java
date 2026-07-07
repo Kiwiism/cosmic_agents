@@ -39,8 +39,8 @@ public final class AgentBotChatStatusRuntime {
                 AgentBotStatusRuntime.afkReturnActions(entry));
     }
 
-    public static void prepareActiveModeEntry(BotEntry entry) {
-        AgentChatStatusRuntime.prepareActiveMode(AgentBotActiveModeRuntime.activeModeActions(entry));
+    public static void prepareActiveModeEntry(AgentRuntimeEntry entry) {
+        AgentChatStatusRuntime.prepareActiveMode(AgentBotActiveModeRuntime.activeModeActions(asBotEntry(entry)));
     }
 
     public static boolean isOwnerIdle(AgentRuntimeEntry entry) {

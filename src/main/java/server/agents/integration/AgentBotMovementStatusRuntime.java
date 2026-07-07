@@ -2,7 +2,6 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 /**
  * Temporary Agent-owned bridge for movement-triggered status side effects.
@@ -11,7 +10,7 @@ public final class AgentBotMovementStatusRuntime {
     private AgentBotMovementStatusRuntime() {
     }
 
-    public static void prepareMovementActiveMode(BotEntry entry) {
+    public static void prepareMovementActiveMode(AgentRuntimeEntry entry) {
         AgentBotChatStatusRuntime.prepareActiveModeEntry(entry);
     }
 
