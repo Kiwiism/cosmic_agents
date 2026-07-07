@@ -5370,6 +5370,11 @@ Current physics correction:
   warnings, mage MP-pot detection, warning-state clearing, follow fallback, and
   map dialogue replies are unchanged. The movement command backend remains a
   temporary BotEntry seam beyond its widened follow-owner entrypoint.
+- Combat support-heal runtime now accepts `AgentRuntimeEntry`; heal skill
+  selection, party/self heal gating, undead target collection, jump-heal
+  positioning, cooldowns, attack packet emission, and movement broadcast remain
+  unchanged. Sibling-anchor lookup still uses the temporary session lifecycle
+  bridge and is left as a later runtime-registry slice.
 
 Initial reconstruction order:
 

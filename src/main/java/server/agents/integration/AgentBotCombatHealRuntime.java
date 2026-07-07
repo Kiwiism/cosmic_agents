@@ -14,7 +14,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.runtime.AgentFollowAnchorService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 
@@ -26,7 +26,7 @@ public final class AgentBotCombatHealRuntime {
     private AgentBotCombatHealRuntime() {
     }
 
-    public static boolean tickSupportHealing(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+    public static boolean tickSupportHealing(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
         if (!AgentCombatSupportPolicy.shouldTickSupportHealing(
                 AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentBotMovementStateRuntime.inAir(entry)),

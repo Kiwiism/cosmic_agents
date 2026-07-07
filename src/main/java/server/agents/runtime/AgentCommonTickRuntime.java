@@ -59,7 +59,7 @@ public final class AgentCommonTickRuntime {
                 entry -> AgentBotCombatActionLockRuntime.tickActionLock(asBotEntry(entry)),
                 (entry, agent) -> AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(asBotEntry(entry), agent),
                 (entry, agent) -> AgentBotCombatHealRuntime.tickSupportHealing(
-                        asBotEntry(entry), agent, AgentCombatConfig.cfg),
+                        entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBotCombatBuffRuntime.tickBuffs(
                         asBotEntry(entry), agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBuffService.tick(asBotEntry(entry), agent),
