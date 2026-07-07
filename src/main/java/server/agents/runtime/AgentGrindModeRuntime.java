@@ -18,7 +18,6 @@ import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -26,7 +25,7 @@ public final class AgentGrindModeRuntime {
     private AgentGrindModeRuntime() {
     }
 
-    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(BotEntry entry,
+    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(AgentRuntimeEntry entry,
                                                                            Character agent,
                                                                            Point agentPosition,
                                                                            Point targetPosition,
@@ -42,7 +41,7 @@ public final class AgentGrindModeRuntime {
                 AgentRuntimeConfig.cfg.LOOT_RADIUS);
     }
 
-    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(BotEntry entry,
+    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(AgentRuntimeEntry entry,
                                                                            Character agent,
                                                                            Point agentPosition,
                                                                            Point targetPosition,
@@ -109,7 +108,7 @@ public final class AgentGrindModeRuntime {
                                 asBotEntry(entry), agent, target, attackPlan, agentPosition),
                 AgentCombatRangePolicy::canUseAttackPlanNow,
                 (entry, agent, attackPlan) ->
-                        AgentBotCombatAttackRuntime.attackMonster(asBotEntry(entry), agent, attackPlan),
+                        AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan),
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
                 AgentCombatRangePolicy::isTargetJumpable,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,
@@ -128,8 +127,8 @@ public final class AgentGrindModeRuntime {
                         AgentGrindTargetRuntime.convenientLootTarget(entry, agentPosition, mobPosition));
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        if (entry instanceof BotEntry botEntry) {
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        if (entry instanceof server.bots.BotEntry botEntry) {
             return botEntry;
         }
         throw new IllegalArgumentException("Legacy grind runtime requires BotEntry compatibility shell");

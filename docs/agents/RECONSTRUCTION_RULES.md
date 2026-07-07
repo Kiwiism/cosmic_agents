@@ -5745,6 +5745,11 @@ Current physics correction:
   jump-to-target gating, attack-plan readiness, damage packet construction,
   cooldown updates, facing memory, alert marking, and move-window writes remain
   unchanged.
+- Grind-mode tick service and runtime entry points now accept
+  `AgentRuntimeEntry`. Target seek, cached loot validation, no-target fallback,
+  target commitment, ranged engagement, navigation-tail target resolution, and
+  loot radius/seek range hook wiring remain unchanged. A few downstream grind
+  callbacks still adapt to the temporary `BotEntry` compatibility shell.
 
 Initial reconstruction order:
 

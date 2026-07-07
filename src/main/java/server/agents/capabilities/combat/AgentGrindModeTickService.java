@@ -6,7 +6,7 @@ import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -27,7 +27,7 @@ public final class AgentGrindModeTickService {
                         int lootRadius) {
     }
 
-    public static Result tickGrindMode(BotEntry entry,
+    public static Result tickGrindMode(AgentRuntimeEntry entry,
                                        Character agent,
                                        Point agentPosition,
                                        Point currentTargetPos,
