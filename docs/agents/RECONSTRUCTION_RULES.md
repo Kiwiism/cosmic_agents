@@ -5563,6 +5563,10 @@ Current physics correction:
   trade sequences and opening trade batches. Recipient resolution, trade start,
   invite, cancel-unavailable handling, and first-batch invitation replies still
   flow through the same sequence callbacks.
+- Supply share trade service now accepts `AgentRuntimeEntry` for potion/ammo
+  share orchestration. Empty-item skips, retry queueing when a trade is active,
+  share budget setup, trade sequence initialization, and trade invitation
+  replies remain unchanged.
 
 Initial reconstruction order:
 

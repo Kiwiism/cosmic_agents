@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.mock;
 class AgentSupplyShareTradeServiceTest {
     @Test
     void shouldIgnoreEmptyPotionShareTransfer() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 
         AgentSupplyShareTradeService.startPotShareTransfer(
                 List.of(), mock(Character.class), entry, mock(Character.class), 10);
@@ -29,7 +29,7 @@ class AgentSupplyShareTradeServiceTest {
     void shouldQueueRetryWhenShareTransferIsAlreadyActive() {
         Character recipient = mock(Character.class);
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, recipient, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, recipient, null);
         AgentBotPendingTradeStateRuntime.setCategory(entry, "pot_share");
 
         AgentSupplyShareTradeService.startAmmoShareTransfer(
@@ -39,3 +39,4 @@ class AgentSupplyShareTradeServiceTest {
         assertNotNull(AgentBotPendingTradeStateRuntime.takeRetry(entry));
     }
 }
+

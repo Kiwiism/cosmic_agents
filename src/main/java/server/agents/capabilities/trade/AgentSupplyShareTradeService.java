@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ public final class AgentSupplyShareTradeService {
 
     public static void startPotShareTransfer(List<Item> items,
                                              Character recipient,
-                                             BotEntry entry,
+                                             AgentRuntimeEntry entry,
                                              Character agent,
                                              int maxQty) {
         startSupplyShareTransfer("pot_share", items, recipient, entry, agent, maxQty);
@@ -26,7 +26,7 @@ public final class AgentSupplyShareTradeService {
 
     public static void startAmmoShareTransfer(List<Item> items,
                                               Character recipient,
-                                              BotEntry entry,
+                                              AgentRuntimeEntry entry,
                                               Character agent,
                                               int maxQty) {
         startSupplyShareTransfer("ammo_share", items, recipient, entry, agent, maxQty);
@@ -35,7 +35,7 @@ public final class AgentSupplyShareTradeService {
     private static void startSupplyShareTransfer(String category,
                                                  List<Item> items,
                                                  Character recipient,
-                                                 BotEntry entry,
+                                                 AgentRuntimeEntry entry,
                                                  Character agent,
                                                  int maxQty) {
         if (items.isEmpty()) return;
@@ -55,7 +55,7 @@ public final class AgentSupplyShareTradeService {
     private static void startTradeSequence(String category,
                                            Character recipient,
                                            List<Item> items,
-                                           BotEntry entry,
+                                           AgentRuntimeEntry entry,
                                            Character agent) {
         if (recipient == null) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
@@ -65,7 +65,7 @@ public final class AgentSupplyShareTradeService {
         openTradeBatch(entry, agent, recipient, items);
     }
 
-    private static void openTradeBatch(BotEntry entry, Character agent, Character recipient, List<Item> items) {
+    private static void openTradeBatch(AgentRuntimeEntry entry, Character agent, Character recipient, List<Item> items) {
         AgentTradeBatchService.openBatch(
                 entry,
                 agent,
@@ -83,3 +83,4 @@ public final class AgentSupplyShareTradeService {
     }
 
 }
+

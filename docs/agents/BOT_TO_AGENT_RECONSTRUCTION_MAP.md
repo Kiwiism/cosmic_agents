@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentSupplyShareTradeService` now accepts `AgentRuntimeEntry` for potion
+  and ammo share transfer orchestration. Empty-transfer skips, active-trade
+  retry queueing, share budget setup, trade sequence initialization, and
+  invitation reply behavior remain unchanged.
 - `AgentTradeSequenceRuntimeService` now accepts `AgentRuntimeEntry` for trade
   sequence start/open-batch orchestration. It delegates to the already
   Agent-owned sequence/batch services while preserving recipient resolution,
