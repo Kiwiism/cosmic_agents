@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Anchored farm runtime now exposes `AgentRuntimeEntry` at its public boundary.
+  Local opportunity attack, idle physics, idle-on-ground broadcast, and
+  movement-core stepping still route through explicit temporary compatibility
+  casts where those deeper modules remain BotEntry-backed; anchored farm
+  behavior is unchanged.
 - Grind target runtime and target-position service now use `AgentRuntimeEntry`
   for fallback wander, patrol wander, active loot targeting, retry suppression,
   convenient-loot selection, and navigation region resolution. Existing random

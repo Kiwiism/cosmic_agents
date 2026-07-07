@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -15,7 +14,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentAnchoredFarmRuntimeTest {
     @Test
     void configBoundOverloadDelegatesToAnchoredFarmService() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Point position = new Point(10, 20);
 
