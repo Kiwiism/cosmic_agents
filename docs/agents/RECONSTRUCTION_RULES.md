@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Navigation debug overlay selection/path helpers now use `AgentRuntimeEntry`
+  locally instead of importing `BotEntry`. The temporary session lookup still
+  supplies compatibility-shell instances, while graph/path overlay messages,
+  active-edge display, path logging, and clear behavior are unchanged.
 - Script task execution no longer imports `BotEntry`; movement command calls are
   now explicit temporary compatibility casts at the Agent movement-command
   boundary. Script task start routing, follow-target resolution, grind/stop

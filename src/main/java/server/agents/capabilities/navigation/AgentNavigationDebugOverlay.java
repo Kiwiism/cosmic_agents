@@ -12,7 +12,7 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
 import server.TimerManager;
 import server.maps.MapleMap;
@@ -87,7 +87,7 @@ public final class AgentNavigationDebugOverlay {
         if (selection.errorMessage != null) {
             return selection.errorMessage;
         }
-        BotEntry entry = selection.entry;
+        AgentRuntimeEntry entry = selection.entry;
 
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot.getMapId() != viewer.getMapId()) {
@@ -142,7 +142,7 @@ public final class AgentNavigationDebugOverlay {
         if (selection.errorMessage != null) {
             return selection.errorMessage;
         }
-        BotEntry entry = selection.entry;
+        AgentRuntimeEntry entry = selection.entry;
 
         if (!AgentBotNavigationDebugStateRuntime.isPathLogging(entry)) {
             AgentBotNavigationDebugStateRuntime.startPathLogging(entry);
@@ -163,7 +163,7 @@ public final class AgentNavigationDebugOverlay {
 
     private static BotSelection selectBotEntry(Character viewer, String botName) {
         if (botName == null || botName.isBlank()) {
-            List<BotEntry> entries = AgentBotSessionLifecycleSideEffects.getBotEntries(viewer.getId());
+            var entries = AgentBotSessionLifecycleSideEffects.getBotEntries(viewer.getId());
             if (entries.isEmpty()) {
                 return new BotSelection(null, "No owned bot found. Spawn one first or use !botnav path <botName>.");
             }
@@ -177,7 +177,7 @@ public final class AgentNavigationDebugOverlay {
             }
             return new BotSelection(entries.getFirst(), null);
         }
-        BotEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(viewer.getId(), botName);
+        AgentRuntimeEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(viewer.getId(), botName);
         if (entry == null) {
             return new BotSelection(null, "No owned bot named '" + botName + "' found.");
         }
@@ -195,7 +195,7 @@ public final class AgentNavigationDebugOverlay {
                                            int startRegionId,
                                            int targetRegionId,
                                            List<AgentNavigationGraph.Edge> path,
-                                           BotEntry entry,
+                                           AgentRuntimeEntry entry,
                                            OverlayBuilder overlay) {
         AgentNavigationGraph.Edge activeEdge = activeNavigationEdge(entry);
         String currentEdge = activeEdge == null ? "none" : activeEdge.type.name();
@@ -218,7 +218,7 @@ public final class AgentNavigationDebugOverlay {
                 + ", auto-clear " + (AUTO_CLEAR_MS / 1000) + "s.";
     }
 
-    private static AgentNavigationGraph.Edge activeNavigationEdge(BotEntry entry) {
+    private static AgentNavigationGraph.Edge activeNavigationEdge(AgentRuntimeEntry entry) {
         Object edge = AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         return edge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
     }
@@ -294,7 +294,7 @@ public final class AgentNavigationDebugOverlay {
         }
     }
 
-    private record BotSelection(BotEntry entry, String errorMessage) {
+    private record BotSelection(AgentRuntimeEntry entry, String errorMessage) {
     }
 
     private static final class OverlayBuilder {
