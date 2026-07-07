@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Recommended-gear offer report actions now call `AgentOfferService` with
+  `AgentRuntimeEntry` directly. Owner-present checks, best-gear offering, and
+  queued report replies are unchanged while the offer adapter no longer casts
+  through `BotEntry`.
 - Chat orchestrator context now adapts from `AgentRuntimeEntry` instead of
   `BotEntry`. Pending actions, session/supply/social/control/equipment/
   movement/build/utility/transfer/report callbacks, current job/level, and

@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotOfferRuntime` no longer imports `BotEntry` for recommended-gear
+  report actions. It now calls `AgentOfferService.offerBestRecommendedGear`
+  with the existing `AgentRuntimeEntry`; owner checks, offer execution, and
+  queued report replies remain unchanged.
 - `AgentBotChatOrchestratorContext` now accepts `AgentRuntimeEntry` for the
   generic Agent dialogue context adapter. Pending action, session, supply,
   social, control, equipment, movement, build, utility, transfer, report, and

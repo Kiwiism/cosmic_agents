@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.agents.capabilities.trade.AgentOfferService;
 
 /**
@@ -70,7 +69,6 @@ public final class AgentBotOfferRuntime {
             AgentRuntimeEntry entry,
             Character bot,
             Character owner) {
-        BotEntry botEntry = asBotEntry(entry);
         return new AgentChatReportRuntime.RecommendedGearActions() {
             @Override
             public boolean hasOwner() {
@@ -79,7 +77,7 @@ public final class AgentBotOfferRuntime {
 
             @Override
             public boolean offerBestRecommendedGear() {
-                return AgentOfferService.offerBestRecommendedGear(botEntry, bot, owner);
+                return AgentOfferService.offerBestRecommendedGear(entry, bot, owner);
             }
 
             @Override
@@ -87,9 +85,5 @@ public final class AgentBotOfferRuntime {
                 AgentBotReplyRuntime.queueReply(entry, line);
             }
         };
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }
