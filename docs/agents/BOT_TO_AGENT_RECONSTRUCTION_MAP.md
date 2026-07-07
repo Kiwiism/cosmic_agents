@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentStuckDetectionRuntime` now accepts `AgentRuntimeEntry` and uses the
+  Agent entry overload on `AgentMovementRecoveryService`; the temporary recovery
+  cast is isolated inside movement recovery while stuck timers, cooldowns, and
+  recovery jumps remain unchanged.
 - `AgentStandaloneMoveTargetRuntime` now uses AgentRuntimeEntry all the way to
   movement-core dispatch. `AgentMovementTickRuntime` gained an Agent entry
   overload that isolates the temporary BotEntry cast while lower movement

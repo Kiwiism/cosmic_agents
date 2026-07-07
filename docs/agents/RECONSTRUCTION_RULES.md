@@ -5527,6 +5527,10 @@ Current physics correction:
   `AgentMovementTickRuntime` while map-change grounding, movement profile
   refresh, move-target lookup, unstuck config, and stop-distance behavior remain
   unchanged.
+- Stuck detection runtime now accepts `AgentRuntimeEntry`; movement timers,
+  stuck progress checks, cooldown updates, and recovery jump behavior remain
+  unchanged while the temporary recovery cast is isolated in
+  `AgentMovementRecoveryService`.
 
 Initial reconstruction order:
 
