@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentAirshowService` now uses `AgentRuntimeEntry` internally. The command
+  still resolves through the temporary session lifecycle lookup, but timed
+  flight frames, trail effects, restoration, movement packet emission, and
+  state cleanup no longer require an Agent service-level `BotEntry` import.
 - `AgentScrollReactionService` now accepts `AgentRuntimeEntry` on its Agent
   service API. Scroll-event range filtering, delayed reaction scheduling,
   streak/load tracking, emotes, chat queueing, fidget triggering, and cooldowns

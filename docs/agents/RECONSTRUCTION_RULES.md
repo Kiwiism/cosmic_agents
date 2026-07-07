@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Airshow service internals now use `AgentRuntimeEntry` instead of `BotEntry`.
+  Named-session lookup, map validation, active-state checks, timed horizontal
+  and vertical frames, trail spawning, restoration, movement packets, and
+  transient-state cleanup are unchanged.
 - Scroll reaction service entry handling now uses `AgentRuntimeEntry` instead
   of `BotEntry` on the Agent-owned public surface. Range filtering, delayed
   reaction scheduling, streak/load tracking, emotes, chat queueing, fidget

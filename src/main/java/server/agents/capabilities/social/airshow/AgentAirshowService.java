@@ -18,7 +18,7 @@ import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import tools.PacketCreator;
 
@@ -45,7 +45,7 @@ public final class AgentAirshowService {
             return "Syntax: !airshow <botname>";
         }
 
-        BotEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(owner.getId(), botName);
+        AgentRuntimeEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(owner.getId(), botName);
         if (entry == null) {
             return "No active owned bot named '" + botName + "'.";
         }
@@ -91,7 +91,7 @@ public final class AgentAirshowService {
         return "Airshow started for " + bot.getName() + ".";
     }
 
-    private static void flyHorizontal(BotEntry entry,
+    private static void flyHorizontal(AgentRuntimeEntry entry,
                                       MapleMap map,
                                       Point start,
                                       int targetX,
@@ -102,7 +102,7 @@ public final class AgentAirshowService {
         scheduleHorizontalFrame(entry, map, targetX, velocityX, stance, done);
     }
 
-    private static void scheduleHorizontalFrame(BotEntry entry,
+    private static void scheduleHorizontalFrame(AgentRuntimeEntry entry,
                                                 MapleMap map,
                                                 int targetX,
                                                 int velocityX,
@@ -131,7 +131,7 @@ public final class AgentAirshowService {
         }, FRAME_MS);
     }
 
-    private static void flyVertical(BotEntry entry,
+    private static void flyVertical(AgentRuntimeEntry entry,
                                     MapleMap map,
                                     Point start,
                                     int targetY,
@@ -142,7 +142,7 @@ public final class AgentAirshowService {
         scheduleVerticalFrame(entry, map, targetY, velocityY, stance, done);
     }
 
-    private static void scheduleVerticalFrame(BotEntry entry,
+    private static void scheduleVerticalFrame(AgentRuntimeEntry entry,
                                               MapleMap map,
                                               int targetY,
                                               int velocityY,
@@ -171,7 +171,7 @@ public final class AgentAirshowService {
         }, FRAME_MS);
     }
 
-    private static void restore(BotEntry entry, Point previousPosition, int previousStance) {
+    private static void restore(AgentRuntimeEntry entry, Point previousPosition, int previousStance) {
         if (!AgentBotAirshowStateRuntime.active(entry)) {
             return;
         }
@@ -188,7 +188,7 @@ public final class AgentAirshowService {
         AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
     }
 
-    private static void moveFrame(BotEntry entry, MapleMap map, Point position, int velocityX, int velocityY, int stance) {
+    private static void moveFrame(AgentRuntimeEntry entry, MapleMap map, Point position, int velocityX, int velocityY, int stance) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return;
@@ -208,7 +208,7 @@ public final class AgentAirshowService {
         bot.updatePartyMemberHP();
     }
 
-    private static void maybeChemTrail(BotEntry entry, MapleMap map, Point position) {
+    private static void maybeChemTrail(AgentRuntimeEntry entry, MapleMap map, Point position) {
         long now = System.currentTimeMillis();
         if (!AgentBotAirshowStateRuntime.trailDue(entry, now, TRAIL_INTERVAL_MS)) {
             return;
