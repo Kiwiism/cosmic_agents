@@ -5486,6 +5486,11 @@ Current physics correction:
 - Equipment chat callbacks now accept `AgentRuntimeEntry`; unequip-slot,
   unequip-all, auto-equip debug, auto-equip, reply timing, and stop-before-
   unequip-all behavior remain unchanged through the movement command adapter.
+- Chat report runtime now accepts `AgentRuntimeEntry`; report callback
+  orchestration, help delivery, stats/range/build/inventory/meso/exp/slot/
+  scroll/potion/debug reporting, skill report pending-action behavior, and
+  recommended gear reporting remain unchanged while remaining BotEntry
+  adaptation moves into supply, offer, and pending-action adapters.
 
 Initial reconstruction order:
 

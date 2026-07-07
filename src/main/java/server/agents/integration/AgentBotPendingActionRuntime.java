@@ -6,6 +6,7 @@ import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -96,7 +97,7 @@ public final class AgentBotPendingActionRuntime {
         applySkillReportDecision(entry, AgentSkillReportFlow.resolveSkillTreeChoice(skillTrees, message));
     }
 
-    public static void applySkillReportDecision(BotEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
+    public static void applySkillReportDecision(AgentRuntimeEntry entry, AgentSkillReportFlow.SkillReportDecision decision) {
         if (decision.clearPendingAction()) {
             AgentBotPendingActionStateRuntime.clearPendingAction(entry);
         }

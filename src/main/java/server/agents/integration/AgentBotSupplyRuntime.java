@@ -7,6 +7,7 @@ import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.supplies.AgentAmmoService;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -38,12 +39,13 @@ public final class AgentBotSupplyRuntime {
         };
     }
 
-    public static void handleRequestUpgradeCommand(BotEntry entry, Character bot) {
-        AgentOfferService.clearPendingOfferForOwnerAsk(entry);
-        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)) {
+    public static void handleRequestUpgradeCommand(AgentRuntimeEntry entry, Character bot) {
+        BotEntry botEntry = asBotEntry(entry);
+        AgentOfferService.clearPendingOfferForOwnerAsk(botEntry);
+        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(botEntry, bot)) {
             return;
         }
-        AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
+        AgentOfferService.requestBestUpgradeFromOwner(botEntry, bot);
     }
 
     public static void handleNeedAnyPotionCommand(BotEntry entry) {
@@ -81,5 +83,9 @@ public final class AgentBotSupplyRuntime {
         if (reply != null) {
             AgentBotReplyRuntime.queueReply(entry, reply);
         }
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

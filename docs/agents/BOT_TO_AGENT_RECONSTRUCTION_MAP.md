@@ -34,6 +34,10 @@ Recent map updates:
 - `AgentBotEquipmentRuntime` now exposes equipment chat callbacks over
   `AgentRuntimeEntry`; the temporary movement-command adapter supplies the
   legacy stop command where unequip-all still needs it.
+- `AgentBotChatReportRuntime` now exposes report callbacks and direct report
+  methods over `AgentRuntimeEntry`; lower supply, offer, and pending-action
+  adapters keep the remaining compatibility casts for their own BotEntry-shaped
+  side effects.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving

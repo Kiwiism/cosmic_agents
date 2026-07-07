@@ -67,9 +67,10 @@ public final class AgentBotOfferRuntime {
     }
 
     public static AgentChatReportRuntime.RecommendedGearActions recommendedGearActions(
-            BotEntry entry,
+            AgentRuntimeEntry entry,
             Character bot,
             Character owner) {
+        BotEntry botEntry = asBotEntry(entry);
         return new AgentChatReportRuntime.RecommendedGearActions() {
             @Override
             public boolean hasOwner() {
@@ -78,7 +79,7 @@ public final class AgentBotOfferRuntime {
 
             @Override
             public boolean offerBestRecommendedGear() {
-                return AgentOfferService.offerBestRecommendedGear(entry, bot, owner);
+                return AgentOfferService.offerBestRecommendedGear(botEntry, bot, owner);
             }
 
             @Override
@@ -86,5 +87,9 @@ public final class AgentBotOfferRuntime {
                 AgentBotReplyRuntime.queueReply(entry, line);
             }
         };
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

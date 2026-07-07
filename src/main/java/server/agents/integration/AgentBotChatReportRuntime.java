@@ -12,8 +12,8 @@ import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.capabilities.dialogue.AgentSkillReportDecisionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -26,13 +26,13 @@ public final class AgentBotChatReportRuntime {
     private AgentBotChatReportRuntime() {
     }
 
-    public static AgentChatReportFlow.ReportCallbacks reportCallbacks(BotEntry entry) {
+    public static AgentChatReportFlow.ReportCallbacks reportCallbacks(AgentRuntimeEntry entry) {
         return AgentChatReportRuntime.reportCallbacks(
                 AgentBotSchedulerRuntime::afterRandomDelay,
                 reportOperations(entry));
     }
 
-    public static AgentChatReportRuntime.ReportOperations reportOperations(BotEntry entry) {
+    public static AgentChatReportRuntime.ReportOperations reportOperations(AgentRuntimeEntry entry) {
         return new AgentChatReportRuntime.ReportOperations() {
             @Override
             public void help() {
@@ -121,11 +121,11 @@ public final class AgentBotChatReportRuntime {
         };
     }
 
-    public static void reportStats(BotEntry entry, Character bot) {
+    public static void reportStats(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentCharacterDialogueReporter.statsReport(bot));
     }
 
-    public static void reportRange(BotEntry entry, Character bot) {
+    public static void reportRange(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, buildRangeReport(bot));
     }
 
@@ -137,7 +137,7 @@ public final class AgentBotChatReportRuntime {
         return AgentRangeReportService.rangeReport(bot, mobProfile);
     }
 
-    public static void reportMovementStats(BotEntry entry, Character bot) {
+    public static void reportMovementStats(AgentRuntimeEntry entry, Character bot) {
         reportLines(entry, buildMovementStatsReport(bot));
     }
 
@@ -145,67 +145,67 @@ public final class AgentBotChatReportRuntime {
         return AgentMovementDialogueReporter.movementStatsReport(AgentBotMovementKinematicsRuntime.snapshot(bot));
     }
 
-    public static void reportBuild(BotEntry entry, Character bot) {
+    public static void reportBuild(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentCharacterDialogueReporter.buildReport(bot));
     }
 
-    public static void reportSkills(BotEntry entry, Character bot) {
+    public static void reportSkills(AgentRuntimeEntry entry, Character bot) {
         AgentBotPendingActionRuntime.applySkillReportDecision(
                 entry,
                 AgentSkillReportDecisionService.skillReportDecision(bot));
     }
 
-    public static void reportInventory(BotEntry entry, Character bot) {
+    public static void reportInventory(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
     }
 
-    public static void reportMesos(BotEntry entry, Character bot) {
+    public static void reportMesos(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentCharacterDialogueReporter.mesoReport(bot));
     }
 
-    public static void reportExp(BotEntry entry, Character bot) {
+    public static void reportExp(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentCharacterDialogueReporter.expReport(bot));
     }
 
-    public static void reportInventorySlots(BotEntry entry, Character bot) {
+    public static void reportInventorySlots(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentInventoryDialogueReporter.slotsReport(bot));
     }
 
-    public static void reportScrolls(BotEntry entry, Character bot) {
+    public static void reportScrolls(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentInventoryDialogueReporter.scrollReport(bot));
     }
 
-    public static void reportPotions(BotEntry entry, Character bot) {
+    public static void reportPotions(AgentRuntimeEntry entry, Character bot) {
         reportLine(
                 entry,
                 AgentSupplyDialogueReporter.potionReport(AgentPotionService.countPotions(bot)));
     }
 
-    public static void reportPotDebug(BotEntry entry, Character bot) {
+    public static void reportPotDebug(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentPotionService.autopotDebugReport(bot));
     }
 
-    public static void reportDebugStats(BotEntry entry, Character bot) {
+    public static void reportDebugStats(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
     }
 
-    public static void reportCritDebug(BotEntry entry, Character bot) {
+    public static void reportCritDebug(AgentRuntimeEntry entry, Character bot) {
         reportLine(entry, AgentBotCombatReportRuntime.critDebugReport(bot));
     }
 
-    public static void reportBuffDebug(BotEntry entry, Character bot) {
+    public static void reportBuffDebug(AgentRuntimeEntry entry, Character bot) {
         reportLines(entry, AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
     }
 
-    public static void reportSkillBuffDebug(BotEntry entry, Character bot) {
+    public static void reportSkillBuffDebug(AgentRuntimeEntry entry, Character bot) {
         reportLines(entry, AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot));
     }
 
-    public static void reportHelp(BotEntry entry) {
+    public static void reportHelp(AgentRuntimeEntry entry) {
         AgentChatReportRuntime.reportHelp(line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 
-    public static void reportRecommendedGear(BotEntry entry, Character bot) {
+    public static void reportRecommendedGear(AgentRuntimeEntry entry, Character bot) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentChatReportRuntime.reportRecommendedGear(
                 AgentBotStatusRuntime.recommendedGearReportState(entry),
@@ -213,11 +213,11 @@ public final class AgentBotChatReportRuntime {
                 System.currentTimeMillis());
     }
 
-    private static void reportLine(BotEntry entry, String line) {
+    private static void reportLine(AgentRuntimeEntry entry, String line) {
         AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReplyRuntime.queueReply(entry, replyLine));
     }
 
-    private static void reportLines(BotEntry entry, Iterable<String> lines) {
+    private static void reportLines(AgentRuntimeEntry entry, Iterable<String> lines) {
         AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
     }
 }
