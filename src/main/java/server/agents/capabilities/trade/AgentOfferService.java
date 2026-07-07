@@ -26,7 +26,6 @@ import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.bots.BotEntry;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -101,7 +100,7 @@ public final class AgentOfferService {
         createOwnerUpgradeRequest(entry, bot, owner, candidate);
     }
 
-    public static boolean offerBestRecommendedGear(BotEntry entry, Character bot, Character owner) {
+    public static boolean offerBestRecommendedGear(AgentRuntimeEntry entry, Character bot, Character owner) {
         if (owner == null) {
             return false;
         }
@@ -119,7 +118,7 @@ public final class AgentOfferService {
         return throwingStar != null && offerGearItem(entry, bot, owner, throwingStar, GearOfferNeed.CURRENT);
     }
 
-    public static boolean offerBestGearToSibling(BotEntry entry, Character bot) {
+    public static boolean offerBestGearToSibling(AgentRuntimeEntry entry, Character bot) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return false;
@@ -129,8 +128,8 @@ public final class AgentOfferService {
         // to a sibling if this bot could actually wear it.
         AgentEquipmentService.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
 
-        List<BotEntry> siblings = AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
-        for (BotEntry sibling : siblings) {
+        List<? extends AgentRuntimeEntry> siblings = AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
+        for (AgentRuntimeEntry sibling : siblings) {
             if (sibling == entry) {
                 continue;
             }
@@ -153,7 +152,7 @@ public final class AgentOfferService {
                 && offerGearItem(entry, bot, starRecipient, throwingStar, GearOfferNeed.CURRENT);
     }
 
-    public static void scheduleLootOfferPrompt(BotEntry entry, Character bot, Item item, long delayMs) {
+    public static void scheduleLootOfferPrompt(AgentRuntimeEntry entry, Character bot, Item item, long delayMs) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         long now = System.currentTimeMillis();
         if (owner == null
@@ -243,7 +242,7 @@ public final class AgentOfferService {
         AgentBotOfferRuntime.queueSay(entry, AgentDialogueCatalog.formatOwnerUpgradeRequestPrompt(promptTemplate, itemDesc));
     }
 
-    private static boolean offerGearItem(BotEntry entry, Character bot, Character recipient, Item item,
+    private static boolean offerGearItem(AgentRuntimeEntry entry, Character bot, Character recipient, Item item,
                                          GearOfferNeed need) {
         if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)
                 || !AgentInventoryItemPolicy.hasItem(bot, item)) {
@@ -257,7 +256,7 @@ public final class AgentOfferService {
         return true;
     }
 
-    private static void promptLootOfferAfterLoot(BotEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
+    private static void promptLootOfferAfterLoot(AgentRuntimeEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
         if (!AgentBotOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt)) {
             return;
         }
@@ -296,7 +295,7 @@ public final class AgentOfferService {
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
     }
 
-    private static void scheduleBotLootOfferAutoAccept(BotEntry entry, Character recipient, long promptDelayMs) {
+    private static void scheduleBotLootOfferAutoAccept(AgentRuntimeEntry entry, Character recipient, long promptDelayMs) {
         if (!(recipient.getClient() instanceof BotClient)) {
             return;
         }
@@ -304,7 +303,7 @@ public final class AgentOfferService {
         AgentBotOfferRuntime.afterDelay(replyDelayMs, () -> autoAcceptLootOffer(entry, recipient));
     }
 
-    private static void autoAcceptLootOffer(BotEntry entry, Character recipientBot) {
+    private static void autoAcceptLootOffer(AgentRuntimeEntry entry, Character recipientBot) {
         if (!hasPendingOffer(entry) || !AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, recipientBot)) {
             return;
         }
@@ -420,7 +419,7 @@ public final class AgentOfferService {
         };
     }
 
-    private static Character findLootOfferRecipient(BotEntry entry, Character bot, Item item) {
+    private static Character findLootOfferRecipient(AgentRuntimeEntry entry, Character bot, Item item) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return null;
@@ -447,7 +446,7 @@ public final class AgentOfferService {
         return null;
     }
 
-    private static GearOfferChoice findBestGearOffer(BotEntry entry, Character recipient, Character donor) {
+    private static GearOfferChoice findBestGearOffer(AgentRuntimeEntry entry, Character recipient, Character donor) {
         List<Equip> offerable = collectOfferableEquips(donor);
         offerable.removeIf(equip -> !isWeaponOfferCompatible(recipient, equip));
         List<AgentEquipRecommendation> current =
@@ -484,7 +483,7 @@ public final class AgentOfferService {
         }
         return offerable;
     }
-    private static GearOfferNeed gearOfferNeed(BotEntry entry, Character recipient, Character donor, Item item) {
+    private static GearOfferNeed gearOfferNeed(AgentRuntimeEntry entry, Character recipient, Character donor, Item item) {
         if (!isWeaponOfferCompatible(recipient, item)) {
             return null;
         }
@@ -657,7 +656,7 @@ public final class AgentOfferService {
         return ItemInformationProvider.getInstance().getWatkForProjectile(item.getItemId());
     }
 
-    private static Character resolveReservedOfferRecipient(BotEntry entry, Character bot, int recipientId) {
+    private static Character resolveReservedOfferRecipient(AgentRuntimeEntry entry, Character bot, int recipientId) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner != null && owner.getId() == recipientId) {
             return owner;

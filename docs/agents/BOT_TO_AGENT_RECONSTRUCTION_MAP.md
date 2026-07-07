@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentOfferService` now accepts `AgentRuntimeEntry` for recommended gear
+  offers, sibling offers, loot-offer scheduling, prompt auto-accept, recipient
+  resolution, and gear-offer need checks. Offer reservations, owner-idle gates,
+  pending-action/trade gates, sibling same-map filtering, prompt timing,
+  positive/negative response handling, gear scoring, and throwing-star
+  recipient behavior remain unchanged.
 - `AgentPotionService` now accepts `AgentRuntimeEntry` for potion checks,
   passive recovery, low-pot share requests, owner-share offers, donor
   selection, donor plans, and scheduled pot share execution. Autopot setup,

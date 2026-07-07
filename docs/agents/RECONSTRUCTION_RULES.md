@@ -5602,6 +5602,11 @@ Current physics correction:
   HP/MP thresholds, cooldown/backoff behavior, low-donor replies, passive
   recovery math, low-pot grind stop behavior, and supply-share transfer
   behavior remain unchanged.
+- Offer service now accepts `AgentRuntimeEntry` for recommended gear offers,
+  sibling offers, loot-offer scheduling, prompt auto-accept, recipient
+  resolution, and gear-offer need checks. Offer reservations, idle/busy gates,
+  same-map sibling filtering, prompt timing, confirmation handling, gear
+  scoring, and throwing-star recipient behavior remain unchanged.
 
 Initial reconstruction order:
 
