@@ -65,6 +65,10 @@ Recent map updates:
   jump-heal positioning, cooldown application, attack packet emission, and
   movement broadcast are unchanged while sibling lookup remains behind the
   temporary session lifecycle bridge.
+- `AgentBotCombatBuffRuntime.tickBuffs` now accepts `AgentRuntimeEntry`.
+  Skill-buff readiness, living-mob checks, support rebuff detection, support
+  skill execution, cooldown updates, alert marking, and legacy debug summaries
+  are unchanged while common tick no longer casts for this buff callback.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

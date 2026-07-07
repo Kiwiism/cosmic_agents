@@ -10,14 +10,14 @@ import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentSupportSpecialMoveExecutor;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 public final class AgentBotCombatBuffRuntime {
     private AgentBotCombatBuffRuntime() {
     }
 
-    public static void tickBuffs(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+    public static void tickBuffs(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         AgentCombatSupportPolicy.SkillBuffTickDecision tickDecision =
                 AgentCombatSupportPolicy.skillBuffTickDecision(
                         AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
@@ -61,7 +61,7 @@ public final class AgentBotCombatBuffRuntime {
                 entry, System.currentTimeMillis(), AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
-    private static boolean trySupportBuff(BotEntry entry, Character bot, AgentCombatConfig.Config config, long now) {
+    private static boolean trySupportBuff(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config, long now) {
         for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (!AgentCombatSupportPolicy.shouldConsiderSupportBuff(
                     AgentCombatSkillClassifier.isPartySupportSkill(skillId),
@@ -92,7 +92,7 @@ public final class AgentBotCombatBuffRuntime {
         return false;
     }
 
-    private static boolean castSupportSkill(BotEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
+    private static boolean castSupportSkill(AgentRuntimeEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
         int skillLevel = bot.getSkillLevel(skill);
         AgentCombatSupportPolicy.SupportCastReadiness readiness =
                 AgentCombatSupportPolicy.supportCastReadiness(skillLevel, bot.isAlive(), () -> fx.canPaySkillCost(bot));

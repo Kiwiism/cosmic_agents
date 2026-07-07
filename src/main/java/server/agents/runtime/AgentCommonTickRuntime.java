@@ -61,7 +61,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentBotCombatHealRuntime.tickSupportHealing(
                         entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBotCombatBuffRuntime.tickBuffs(
-                        asBotEntry(entry), agent, AgentCombatConfig.cfg),
+                        entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBuffService.tick(asBotEntry(entry), agent),
                 AgentActionLockPhysicsRuntime::tickActionLocked);
     }

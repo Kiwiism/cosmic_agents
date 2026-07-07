@@ -5375,6 +5375,10 @@ Current physics correction:
   positioning, cooldowns, attack packet emission, and movement broadcast remain
   unchanged. Sibling-anchor lookup still uses the temporary session lifecycle
   bridge and is left as a later runtime-registry slice.
+- Combat support-buff runtime now accepts `AgentRuntimeEntry`; skill-buff
+  readiness gates, living-mob checks, party support rebuff detection, support
+  skill execution, cooldown updates, alert marking, and legacy debug summaries
+  remain unchanged while common tick no longer casts for this buff callback.
 
 Initial reconstruction order:
 
