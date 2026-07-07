@@ -5613,6 +5613,11 @@ Current physics correction:
   build status refresh, and AP confirmation replies. Prompt text, stat
   allocation order, SP variant gating, job-prompt thresholds, starter-kit
   contents, auto-equip refresh, and reply timing remain unchanged.
+- Maker service now accepts `AgentRuntimeEntry` for monster-crystal and
+  trash-equip disassembly batches. Maker skill gating, active-batch guard,
+  leftover scanning, trash-equip selection, client-lock retry behavior,
+  activity-epoch interruption, step timing, abort reasons, and completion
+  replies remain unchanged.
 
 Initial reconstruction order:
 

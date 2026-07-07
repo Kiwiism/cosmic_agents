@@ -12,7 +12,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentBotMakerRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,7 +28,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * etc stacks) and "disassemble trash" (break down trash equips). Both run through the shared
  * {@link MakerProcessor} player path, one operation per {@link #STEP_INTERVAL_MS} ms, and
  * self-interrupt when the player issues a new directive (follow/stop/move/...): see
- * {@link AgentBotScriptTaskStateRuntime#activityEpoch(BotEntry)}.
+ * {@link AgentBotScriptTaskStateRuntime#activityEpoch(AgentRuntimeEntry)}.
  */
 public final class AgentMakerService {
     private static final int LEFTOVERS_PER_CRYSTAL = 100;   // Maker type-3 recipe req count
@@ -50,7 +50,7 @@ public final class AgentMakerService {
     private AgentMakerService() {
     }
 
-    public static void handleMakeCrystals(BotEntry entry) {
+    public static void handleMakeCrystals(AgentRuntimeEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
@@ -70,7 +70,7 @@ public final class AgentMakerService {
                 });
     }
 
-    public static void handleDisassembleTrash(BotEntry entry) {
+    public static void handleDisassembleTrash(AgentRuntimeEntry entry) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
@@ -93,7 +93,7 @@ public final class AgentMakerService {
 
     /** Trash equips (SSOT: {@link AgentInventorySellTrashService#collectSellTrashEquips}) that actually
      *  have a Maker disassembly recipe — others would just abort the batch. */
-    private static List<Equip> collectDisassemblableTrash(BotEntry entry, Character bot) {
+    private static List<Equip> collectDisassemblableTrash(AgentRuntimeEntry entry, Character bot) {
         List<Equip> out = new ArrayList<>();
         for (Item item : AgentInventorySellTrashService.collectSellTrashEquips(entry, bot)) {
             if (item instanceof Equip equip && MakerProcessor.canDisassemble(equip.getItemId())) {
@@ -103,7 +103,7 @@ public final class AgentMakerService {
         return out;
     }
 
-    private static boolean guardStart(BotEntry entry, Character bot) {
+    private static boolean guardStart(AgentRuntimeEntry entry, Character bot) {
         if (ACTIVE.contains(bot.getId())) {
             AgentBotMakerRuntime.replyNow(entry, "still working on the last batch, hang on");
             return false;
@@ -140,7 +140,7 @@ public final class AgentMakerService {
         return queue;
     }
 
-    private static void startBatch(BotEntry entry, int total, String[] verbs, String noun, BatchStep step) {
+    private static void startBatch(AgentRuntimeEntry entry, int total, String[] verbs, String noun, BatchStep step) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         String verb = verbs[ThreadLocalRandom.current().nextInt(verbs.length)];
         String msg = "ok " + verb + " " + total + " " + plural(noun, total);
@@ -154,7 +154,7 @@ public final class AgentMakerService {
         AgentBotMakerRuntime.afterRandomDelay(900, 1100, () -> runStep(entry, step, noun, epoch, 0));
     }
 
-    private static void runStep(BotEntry entry, BatchStep step, String noun, int epoch, int done) {
+    private static void runStep(AgentRuntimeEntry entry, BatchStep step, String noun, int epoch, int done) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !bot.isLoggedin()) {
             if (bot != null) {
