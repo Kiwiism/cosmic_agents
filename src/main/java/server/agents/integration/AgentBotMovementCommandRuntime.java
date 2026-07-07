@@ -5,6 +5,7 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.runtime.AgentCommandModeService;
@@ -21,8 +22,8 @@ public final class AgentBotMovementCommandRuntime {
     private AgentBotMovementCommandRuntime() {
     }
 
-    public static void followOwner(BotEntry entry) {
-        follow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
+    public static void followOwner(AgentRuntimeEntry entry) {
+        follow(asBotEntry(entry), AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
     public static void follow(BotEntry entry, Character target) {
@@ -84,5 +85,9 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
                 () -> AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

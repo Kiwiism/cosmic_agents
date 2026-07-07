@@ -11,13 +11,13 @@ import server.agents.capabilities.combat.AgentCombatAmmoPolicy;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBotCombatAmmoCheckRuntime {
     private AgentBotCombatAmmoCheckRuntime() {
     }
 
-    public static void tickAmmoCheck(BotEntry entry, Character bot, int ammoLowWarn, int potLowWarn) {
+    public static void tickAmmoCheck(AgentRuntimeEntry entry, Character bot, int ammoLowWarn, int potLowWarn) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         boolean mage = weaponType == WeaponType.WAND || weaponType == WeaponType.STAFF;
         boolean rangedAmmoWeapon = AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType);

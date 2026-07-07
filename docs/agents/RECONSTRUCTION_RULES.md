@@ -5366,6 +5366,10 @@ Current physics correction:
   `AgentRuntimeEntry`; target capture, sibling follow-anchor resolution,
   navigation waypoint steering override, and defensive snapshot copying are
   unchanged.
+- Combat ammo-check runtime now accepts `AgentRuntimeEntry`; projectile low/out
+  warnings, mage MP-pot detection, warning-state clearing, follow fallback, and
+  map dialogue replies are unchanged. The movement command backend remains a
+  temporary BotEntry seam beyond its widened follow-owner entrypoint.
 
 Initial reconstruction order:
 
