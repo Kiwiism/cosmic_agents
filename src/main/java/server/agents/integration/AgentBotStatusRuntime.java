@@ -4,7 +4,6 @@ import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import client.Character;
 
 import java.awt.Point;
@@ -75,7 +74,7 @@ public final class AgentBotStatusRuntime {
         };
     }
 
-    public static AgentChatStatusRuntime.StatusCheckState statusCheckState(BotEntry entry) {
+    public static AgentChatStatusRuntime.StatusCheckState statusCheckState(AgentRuntimeEntry entry) {
         return new AgentChatStatusRuntime.StatusCheckState() {
             @Override
             public boolean spawnUpgradeCheckDone() {
@@ -89,7 +88,7 @@ public final class AgentBotStatusRuntime {
         };
     }
 
-    public static AgentChatStatusRuntime.GearSuggestionState gearSuggestionState(BotEntry entry) {
+    public static AgentChatStatusRuntime.GearSuggestionState gearSuggestionState(AgentRuntimeEntry entry) {
         return new AgentChatStatusRuntime.GearSuggestionState() {
             @Override
             public long nextGearSuggestionAt() {
@@ -103,7 +102,7 @@ public final class AgentBotStatusRuntime {
         };
     }
 
-    public static AgentChatReportRuntime.RecommendedGearState recommendedGearReportState(BotEntry entry) {
+    public static AgentChatReportRuntime.RecommendedGearState recommendedGearReportState(AgentRuntimeEntry entry) {
         return nextGearSuggestionAt -> AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
     }
 

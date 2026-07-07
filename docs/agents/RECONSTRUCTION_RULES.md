@@ -5337,6 +5337,9 @@ Current physics correction:
 - Manager-status offline-return announcement now accepts `AgentRuntimeEntry`;
   inactive-leader recovery still invokes the same chat-status announcement path
   with unchanged delayed party message and expression behavior.
+- Status-check, gear-suggestion, and recommended-gear report state adapters now
+  accept `AgentRuntimeEntry`; spawn-upgrade flags and gear-suggestion cooldowns
+  still read/write the same Agent upgrade-offer state.
 
 Initial reconstruction order:
 
