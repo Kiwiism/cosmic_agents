@@ -35,14 +35,14 @@ public final class AgentMovementOnlyRuntime {
                 AgentFollowMapSyncRuntime::syncFollowMap,
                 (entry, leader) -> followAnchorResolver.apply(asBotEntry(entry), leader),
                 (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
-                        asBotEntry(entry),
+                        entry,
                         agent,
                         anchor,
                         config.teleportDistance(),
                         config.outOfBoundsTeleportDistance(),
                         config.grindPartyTeleportDistanceMultiplier()),
                 (entry, agent, target) -> AgentRecoveryTeleportRuntime.recoverTeleportDistance(
-                        asBotEntry(entry),
+                        entry,
                         agent,
                         target,
                         config.teleportDistance(),

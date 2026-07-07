@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentRecoveryTeleportRuntime` now accepts `AgentRuntimeEntry` and delegates
+  directly to Agent movement pose/reset/broadcast services. Live tick gates and
+  movement-only recovery call it without BotEntry casts, preserving the same
+  teleport-distance recovery thresholds.
 - `AgentStuckDetectionRuntime` now accepts `AgentRuntimeEntry` and uses the
   Agent entry overload on `AgentMovementRecoveryService`; the temporary recovery
   cast is isolated inside movement recovery while stuck timers, cooldowns, and

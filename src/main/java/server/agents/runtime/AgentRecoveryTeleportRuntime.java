@@ -7,7 +7,6 @@ import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -15,7 +14,7 @@ public final class AgentRecoveryTeleportRuntime {
     private AgentRecoveryTeleportRuntime() {
     }
 
-    public static boolean recoverTeleportDistance(BotEntry entry,
+    public static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
                                                   Character agent,
                                                   Point targetPosition,
                                                   int teleportDistance,
@@ -29,7 +28,7 @@ public final class AgentRecoveryTeleportRuntime {
                 hooks());
     }
 
-    public static boolean recoverGrindPartyTeleportDistance(BotEntry entry,
+    public static boolean recoverGrindPartyTeleportDistance(AgentRuntimeEntry entry,
                                                             Character agent,
                                                             Character partyAnchor,
                                                             int teleportDistance,
@@ -48,12 +47,8 @@ public final class AgentRecoveryTeleportRuntime {
     private static AgentRecoveryTeleportService.RecoveryHooks hooks() {
         return new AgentRecoveryTeleportService.RecoveryHooks(
                 AgentGroundingService::findGroundPoint,
-                (entry, agent, position) -> AgentMovementPoseService.teleportTo(asBotEntry(entry), agent, position),
-                entry -> AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(entry)),
-                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+                AgentMovementPoseService::teleportTo,
+                AgentMovementStateResetService::resetEntryStateAfterTeleport,
+                AgentMovementBroadcastService::broadcastMovement);
     }
 }
