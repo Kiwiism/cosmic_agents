@@ -5507,6 +5507,11 @@ Current physics correction:
 - Leader session runtime now accepts `AgentRuntimeEntry`; cached leader refresh,
   world storage lookup, and tick-core leader resolution behavior remain
   unchanged while tick-core no longer casts for this resolver.
+- Spawn placement service now accepts generic `AgentRuntimeHandle` hooks. The
+  BotEntry-specific agent/leader identity lookup is isolated in
+  `AgentSpawnPlacementRuntime`, while teleport, movement reset, death clear,
+  map tracking, navigation warmup, cadence reset, broadcast invalidation, and
+  party HP update order remain unchanged.
 
 Initial reconstruction order:
 

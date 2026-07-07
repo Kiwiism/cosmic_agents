@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentSpawnPlacementService` now uses generic `AgentRuntimeHandle` hooks for
+  spawn placement and normalization. The BotEntry identity lookup remains only
+  in `AgentSpawnPlacementRuntime`, preserving the current spawn reset order.
 - `AgentMovementPhaseDispatchService` now exposes `AgentRuntimeEntry` methods.
   Action-lock physics, idle physics, and grind no-target fallback use this
   Agent-owned movement boundary directly; the temporary BotEntry cast is

@@ -1,8 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -11,18 +9,30 @@ public final class AgentSpawnPlacementService {
     private AgentSpawnPlacementService() {
     }
 
-    public record Hooks(SpawnPositionResolver spawnPositionResolver,
-                        Teleporter teleporter,
-                        MovementReset movementReset,
-                        DeathStateClear deathStateClear,
-                        MapTrackingUpdater mapTrackingUpdater,
-                        NavigationWarmup navigationWarmup,
-                        TickCadenceReset tickCadenceReset,
-                        MovementDirectionClear movementDirectionClear,
-                        MovementBroadcastInvalidation movementBroadcastInvalidation,
-                        MovementBroadcaster movementBroadcaster,
-                        PartyHpUpdater partyHpUpdater,
-                        LeaderPartyJoiner leaderPartyJoiner) {
+    public record Hooks<E extends AgentRuntimeHandle>(AgentResolver<E> agentResolver,
+                                                      LeaderResolver<E> leaderResolver,
+                                                      SpawnPositionResolver spawnPositionResolver,
+                                                      Teleporter<E> teleporter,
+                                                      MovementReset<E> movementReset,
+                                                      DeathStateClear<E> deathStateClear,
+                                                      MapTrackingUpdater<E> mapTrackingUpdater,
+                                                      NavigationWarmup<E> navigationWarmup,
+                                                      TickCadenceReset<E> tickCadenceReset,
+                                                      MovementDirectionClear<E> movementDirectionClear,
+                                                      MovementBroadcastInvalidation<E> movementBroadcastInvalidation,
+                                                      MovementBroadcaster<E> movementBroadcaster,
+                                                      PartyHpUpdater partyHpUpdater,
+                                                      LeaderPartyJoiner leaderPartyJoiner) {
+    }
+
+    @FunctionalInterface
+    public interface AgentResolver<E extends AgentRuntimeHandle> {
+        Character agent(E entry);
+    }
+
+    @FunctionalInterface
+    public interface LeaderResolver<E extends AgentRuntimeHandle> {
+        Character leader(E entry);
     }
 
     @FunctionalInterface
@@ -31,48 +41,48 @@ public final class AgentSpawnPlacementService {
     }
 
     @FunctionalInterface
-    public interface Teleporter {
-        void teleport(BotEntry entry, Character agent, Point position);
+    public interface Teleporter<E extends AgentRuntimeHandle> {
+        void teleport(E entry, Character agent, Point position);
     }
 
     @FunctionalInterface
-    public interface MovementReset {
-        void reset(BotEntry entry);
+    public interface MovementReset<E extends AgentRuntimeHandle> {
+        void reset(E entry);
     }
 
     @FunctionalInterface
-    public interface DeathStateClear {
-        void clear(BotEntry entry);
+    public interface DeathStateClear<E extends AgentRuntimeHandle> {
+        void clear(E entry);
     }
 
     @FunctionalInterface
-    public interface MapTrackingUpdater {
-        void update(BotEntry entry, MapleMap map, int mapId);
+    public interface MapTrackingUpdater<E extends AgentRuntimeHandle> {
+        void update(E entry, MapleMap map, int mapId);
     }
 
     @FunctionalInterface
-    public interface NavigationWarmup {
-        void warm(BotEntry entry, MapleMap map);
+    public interface NavigationWarmup<E extends AgentRuntimeHandle> {
+        void warm(E entry, MapleMap map);
     }
 
     @FunctionalInterface
-    public interface TickCadenceReset {
-        void reset(BotEntry entry);
+    public interface TickCadenceReset<E extends AgentRuntimeHandle> {
+        void reset(E entry);
     }
 
     @FunctionalInterface
-    public interface MovementDirectionClear {
-        void clear(BotEntry entry);
+    public interface MovementDirectionClear<E extends AgentRuntimeHandle> {
+        void clear(E entry);
     }
 
     @FunctionalInterface
-    public interface MovementBroadcastInvalidation {
-        void invalidate(BotEntry entry);
+    public interface MovementBroadcastInvalidation<E extends AgentRuntimeHandle> {
+        void invalidate(E entry);
     }
 
     @FunctionalInterface
-    public interface MovementBroadcaster {
-        void broadcast(BotEntry entry);
+    public interface MovementBroadcaster<E extends AgentRuntimeHandle> {
+        void broadcast(E entry);
     }
 
     @FunctionalInterface
@@ -85,11 +95,11 @@ public final class AgentSpawnPlacementService {
         void join(Character leader, Character agent);
     }
 
-    public static void placeSpawnedOnlineAgent(BotEntry entry,
+    public static <E extends AgentRuntimeHandle> void placeSpawnedOnlineAgent(E entry,
                                                Character agent,
                                                MapleMap spawnMap,
                                                Point spawnPosition,
-                                               Hooks hooks) {
+                                               Hooks<E> hooks) {
         if (entry == null) {
             agent.setPosition(spawnPosition);
             agent.broadcastStance();
@@ -101,25 +111,25 @@ public final class AgentSpawnPlacementService {
         hooks.partyHpUpdater().update(agent);
     }
 
-    public static void normalizeSpawnedAgent(BotEntry entry, Hooks hooks) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+    public static <E extends AgentRuntimeHandle> void normalizeSpawnedAgent(E entry, Hooks<E> hooks) {
+        Character agent = hooks.agentResolver().agent(entry);
         Point spawnPosition = hooks.spawnPositionResolver().resolve(agent.getMap(), agent.getPosition());
         if (agent.getHp() <= 0) {
             agent.updateHp(Math.max(1, agent.getCurrentMaxHp()));
         }
 
         resetSpawnRuntime(entry, agent, agent.getMap(), spawnPosition != null ? spawnPosition : agent.getPosition(), hooks);
-        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character leader = hooks.leaderResolver().leader(entry);
         if (leader != null) {
             hooks.leaderPartyJoiner().join(leader, agent);
         }
     }
 
-    private static void resetSpawnRuntime(BotEntry entry,
+    private static <E extends AgentRuntimeHandle> void resetSpawnRuntime(E entry,
                                           Character agent,
                                           MapleMap spawnMap,
                                           Point spawnPosition,
-                                          Hooks hooks) {
+                                          Hooks<E> hooks) {
         hooks.teleporter().teleport(entry, agent, spawnPosition);
         hooks.movementReset().reset(entry);
         hooks.deathStateClear().clear(entry);

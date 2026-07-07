@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -41,7 +40,7 @@ class AgentSpawnPlacementServiceTest {
         MapleMap map = mock(MapleMap.class);
         when(map.getId()).thenReturn(1000);
         when(map.getFootholds()).thenReturn(mock(server.maps.FootholdTree.class));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        TestRuntimeEntry entry = new TestRuntimeEntry(agent, leader);
         Point spawnPosition = new Point(10, 20);
         List<String> calls = new ArrayList<>();
 
@@ -65,8 +64,10 @@ class AgentSpawnPlacementServiceTest {
                 "partyHp"), calls);
     }
 
-    private static AgentSpawnPlacementService.Hooks hooks(List<String> calls) {
-        return new AgentSpawnPlacementService.Hooks(
+    private static AgentSpawnPlacementService.Hooks<TestRuntimeEntry> hooks(List<String> calls) {
+        return new AgentSpawnPlacementService.Hooks<TestRuntimeEntry>(
+                TestRuntimeEntry::agent,
+                TestRuntimeEntry::leader,
                 (map, desiredPosition) -> desiredPosition,
                 (entry, agent, position) -> calls.add("teleport"),
                 entry -> calls.add("movementReset"),
@@ -79,5 +80,8 @@ class AgentSpawnPlacementServiceTest {
                 entry -> calls.add("broadcast"),
                 agent -> calls.add("partyHp"),
                 (leader, agent) -> calls.add("partyJoin"));
+    }
+
+    private record TestRuntimeEntry(Character agent, Character leader) implements AgentRuntimeHandle {
     }
 }
