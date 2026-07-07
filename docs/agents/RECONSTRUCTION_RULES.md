@@ -5207,6 +5207,9 @@ Current physics correction:
   unchanged.
 - Navigation climb execution now accepts `AgentRuntimeEntry`; rope attach and
   movement-broadcast side effects are unchanged.
+- Jump action initiation now accepts `AgentRuntimeEntry`; signed air velocity,
+  ground jump, fixed-arc jump, rope jump, and movement broadcast behavior are
+  unchanged.
 
 Initial reconstruction order:
 
