@@ -5205,6 +5205,8 @@ Current physics correction:
   climb advance, ground jump, climb-up jump, rope jump, rope-transfer jump,
   swim jump fallback, top landing, and fall-damage handoff behavior are
   unchanged.
+- Navigation climb execution now accepts `AgentRuntimeEntry`; rope attach and
+  movement-broadcast side effects are unchanged.
 
 Initial reconstruction order:
 
