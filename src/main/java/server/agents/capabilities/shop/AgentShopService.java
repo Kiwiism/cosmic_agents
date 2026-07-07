@@ -126,6 +126,10 @@ public final class AgentShopService {
         return (BotEntry) entry;
     }
 
+    public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot) {
+        requestSellTrashVisit(asBotEntry(entry), bot);
+    }
+
     public static void requestSellTrashVisit(BotEntry entry, Character bot) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;

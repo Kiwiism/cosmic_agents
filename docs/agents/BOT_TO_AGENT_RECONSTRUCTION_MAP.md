@@ -12,6 +12,14 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotUtilityRuntime`, `AgentBotSupplyRuntime`, and
+  `AgentBotTransferRuntime` now accept `AgentRuntimeEntry` for chat utility,
+  supply request, upgrade request, item query, and transfer command callbacks.
+  Trade-invite timing, sell-trash shop visit scheduling, Maker command delays,
+  potion/ammo request replies, upgrade request routing, async transfer
+  evaluation, request-id superseding, and transfer result decisions remain
+  unchanged. `AgentShopService` has an Agent-entry sell-trash overload while
+  deeper shop internals remain a later staged migration.
 - `AgentBotBuildStatusRuntime` now stays on `AgentRuntimeEntry` when building
   status-check actions. Job/AP/SP prompt lookup, auto-assignment callbacks,
   gear suggestion gates, spawn-upgrade offering, pending-offer checks, and

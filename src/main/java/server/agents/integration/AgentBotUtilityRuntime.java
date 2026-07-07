@@ -3,7 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.build.AgentMakerService;
 import server.agents.capabilities.shop.AgentShopService;
 
@@ -15,7 +15,7 @@ public final class AgentBotUtilityRuntime {
     private AgentBotUtilityRuntime() {
     }
 
-    public static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(BotEntry entry) {
+    public static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatUtilityFlow.UtilityCallbacks() {
             @Override
             public void tradeInvite() {

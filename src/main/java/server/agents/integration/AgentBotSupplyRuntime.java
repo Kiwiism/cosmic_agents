@@ -8,7 +8,6 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
 
@@ -20,7 +19,7 @@ public final class AgentBotSupplyRuntime {
     private AgentBotSupplyRuntime() {
     }
 
-    public static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(BotEntry entry) {
+    public static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
             @Override
             public void requestPotion(boolean hpPotion) {
@@ -40,15 +39,14 @@ public final class AgentBotSupplyRuntime {
     }
 
     public static void handleRequestUpgradeCommand(AgentRuntimeEntry entry, Character bot) {
-        BotEntry botEntry = asBotEntry(entry);
-        AgentOfferService.clearPendingOfferForOwnerAsk(botEntry);
-        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(botEntry, bot)) {
+        AgentOfferService.clearPendingOfferForOwnerAsk(entry);
+        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)) {
             return;
         }
-        AgentOfferService.requestBestUpgradeFromOwner(botEntry, bot);
+        AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
     }
 
-    public static void handleNeedAnyPotionCommand(BotEntry entry) {
+    public static void handleNeedAnyPotionCommand(AgentRuntimeEntry entry) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
@@ -57,7 +55,7 @@ public final class AgentBotSupplyRuntime {
         handleNeedPotionCommand(entry, pots[0] <= pots[1]);
     }
 
-    public static void handleNeedPotionCommand(BotEntry entry, boolean forHp) {
+    public static void handleNeedPotionCommand(AgentRuntimeEntry entry, boolean forHp) {
         AgentPotionService.OwnerPotShareResult result = AgentPotionService.offerPotShareToOwner(entry, forHp);
         String reply = AgentSupplyRequestOutcomeFlow.potionShareReply(
                 result == AgentPotionService.OwnerPotShareResult.NO_DONOR,
@@ -67,7 +65,7 @@ public final class AgentBotSupplyRuntime {
         }
     }
 
-    public static void handleNeedAmmoCommand(BotEntry entry) {
+    public static void handleNeedAmmoCommand(AgentRuntimeEntry entry) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
@@ -85,7 +83,4 @@ public final class AgentBotSupplyRuntime {
         }
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
-    }
 }

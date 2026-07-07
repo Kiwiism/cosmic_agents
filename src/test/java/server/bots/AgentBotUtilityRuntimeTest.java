@@ -8,6 +8,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotUtilityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,7 +32,7 @@ class AgentBotUtilityRuntimeTest {
 
             AgentBotUtilityRuntime.utilityCallbacks(entry).sellTrash();
 
-            shops.verify(() -> AgentShopService.requestSellTrashVisit(entry, bot));
+            shops.verify(() -> AgentShopService.requestSellTrashVisit((AgentRuntimeEntry) entry, bot));
         }
     }
 

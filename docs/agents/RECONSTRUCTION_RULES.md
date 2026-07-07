@@ -5622,6 +5622,12 @@ Current physics correction:
   status-check actions. Job/AP/SP prompt lookup, auto-assignment callbacks,
   gear suggestion gates, spawn-upgrade offering, pending-offer checks, and
   queued build replies remain unchanged.
+- Utility, supply, and transfer chat runtimes now accept `AgentRuntimeEntry`.
+  Trade-invite timing, sell-trash shop visit scheduling, Maker command delays,
+  potion/ammo request replies, upgrade request routing, async transfer
+  evaluation, request-id superseding, and transfer result decisions remain
+  unchanged. `AgentShopService` now exposes an Agent-entry sell-trash overload
+  while deeper shop internals remain staged.
 
 Initial reconstruction order:
 

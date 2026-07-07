@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -35,11 +35,11 @@ public final class AgentBotTransferRuntime {
     private AgentBotTransferRuntime() {
     }
 
-    public static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(BotEntry entry) {
+    public static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(AgentRuntimeEntry entry) {
         return itemName -> handleItemQuery(entry, itemName);
     }
 
-    public static void handleTransferCommand(BotEntry entry,
+    public static void handleTransferCommand(AgentRuntimeEntry entry,
                                              AgentChatTransferFlow.TransferCommand transferCommand,
                                              String message) {
         String category = transferCommand.category();
@@ -57,7 +57,7 @@ public final class AgentBotTransferRuntime {
         scheduleTransferCommandEvaluation(entry, transferCommand, category);
     }
 
-    private static void scheduleTransferCommandEvaluation(BotEntry entry,
+    private static void scheduleTransferCommandEvaluation(AgentRuntimeEntry entry,
                                                           AgentChatTransferFlow.TransferCommand transferCommand,
                                                           String category) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -78,7 +78,7 @@ public final class AgentBotTransferRuntime {
                 });
     }
 
-    private static TransferCommandResult evaluateTransferCommand(BotEntry entry,
+    private static TransferCommandResult evaluateTransferCommand(AgentRuntimeEntry entry,
                                                                  AgentChatTransferFlow.TransferCommand transferCommand,
                                                                  String category,
                                                                  Character bot) {
@@ -100,7 +100,7 @@ public final class AgentBotTransferRuntime {
         return new TransferCommandResult(hasItems, count);
     }
 
-    private static void applyTransferCommandResult(BotEntry entry,
+    private static void applyTransferCommandResult(AgentRuntimeEntry entry,
                                                    AgentChatTransferFlow.TransferCommand transferCommand,
                                                    String category,
                                                    Character bot,
@@ -124,7 +124,7 @@ public final class AgentBotTransferRuntime {
         return current != null && current.get() == requestId;
     }
 
-    private static void handleItemQuery(BotEntry entry, String itemName) {
+    private static void handleItemQuery(AgentRuntimeEntry entry, String itemName) {
         String category = AgentTradeDialogueClassifier.namedItemCategory(itemName);
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
@@ -145,7 +145,7 @@ public final class AgentBotTransferRuntime {
                 });
     }
 
-    private static void applyItemQueryResult(BotEntry entry,
+    private static void applyItemQueryResult(AgentRuntimeEntry entry,
                                              String category,
                                              Character bot,
                                              int requestId,
@@ -156,7 +156,7 @@ public final class AgentBotTransferRuntime {
         applyTransferResultDecision(entry, bot, category, AgentChatTransferFlow.itemQueryResult(category, result.count()));
     }
 
-    private static void applyTransferResultDecision(BotEntry entry,
+    private static void applyTransferResultDecision(AgentRuntimeEntry entry,
                                                     Character bot,
                                                     String category,
                                                     AgentChatTransferFlow.TransferResultDecision decision) {
