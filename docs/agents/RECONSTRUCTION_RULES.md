@@ -5434,6 +5434,10 @@ Current physics correction:
   volatile action cleanup, warning/idle/disable escalation, failure-context
   reporting, missing-entry logging, and reset behavior are unchanged while the
   runtime hook keeps the temporary `BotEntry` stop-command adapter.
+- Tick orchestration now accepts `AgentRuntimeEntry`; guarded tick execution,
+  failure reset, failure handler dispatch, and performance timing behavior are
+  unchanged while `AgentTickRuntime` remains the temporary adapter for
+  BotEntry-shaped movement command callbacks.
 
 Initial reconstruction order:
 

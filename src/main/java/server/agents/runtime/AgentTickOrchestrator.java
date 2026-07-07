@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
 
 /**
  * Agent-owned tick orchestration helpers over temporary BotEntry-backed state.
@@ -12,18 +11,18 @@ import server.bots.BotEntry;
 public final class AgentTickOrchestrator {
     @FunctionalInterface
     public interface TickCore {
-        void run(BotEntry entry, int leaderCharId, int agentCharId);
+        void run(AgentRuntimeEntry entry, int leaderCharId, int agentCharId);
     }
 
     @FunctionalInterface
     public interface TickFailureHandler {
-        void handle(BotEntry entry, int leaderCharId, int agentCharId, Throwable failure);
+        void handle(AgentRuntimeEntry entry, int leaderCharId, int agentCharId, Throwable failure);
     }
 
     private AgentTickOrchestrator() {
     }
 
-    public static void runGuardedTick(BotEntry entry,
+    public static void runGuardedTick(AgentRuntimeEntry entry,
                                       int leaderCharId,
                                       int agentCharId,
                                       TickCore tickCore,

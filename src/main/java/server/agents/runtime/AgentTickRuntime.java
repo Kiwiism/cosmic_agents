@@ -18,11 +18,19 @@ public final class AgentTickRuntime {
                 leaderCharId,
                 agentCharId,
                 (tickEntry, tickLeaderId, tickAgentId) -> AgentTickCoreRuntime.tickCore(
-                        tickEntry,
+                        asBotEntry(tickEntry),
                         tickLeaderId,
                         tickAgentId,
                         issueGrind,
                         issueFollow),
-                AgentTickFailureRuntime::handleFailure);
+                (failedEntry, failedLeaderId, failedAgentId, failure) -> AgentTickFailureRuntime.handleFailure(
+                        asBotEntry(failedEntry),
+                        failedLeaderId,
+                        failedAgentId,
+                        failure));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

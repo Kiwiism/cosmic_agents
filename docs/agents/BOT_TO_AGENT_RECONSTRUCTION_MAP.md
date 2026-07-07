@@ -124,6 +124,10 @@ Recent map updates:
   counting, volatile action cleanup, forced-idle escalation, disable escalation,
   and warning/disable context reporting are unchanged. `AgentTickFailureRuntime`
   remains the temporary adapter for the legacy stop-command callback.
+- `AgentTickOrchestrator` now accepts `AgentRuntimeEntry`; guarded tick
+  execution, failure reset, failure handler dispatch, and performance timing
+  behavior are unchanged. `AgentTickRuntime` keeps the temporary BotEntry
+  adapter for movement command callbacks and tick-core entrypoints.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`
