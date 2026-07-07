@@ -97,6 +97,9 @@ Recent map updates:
   cross-region retreat scoring, projectile retreat probes, local retreat
   validation, path lookup, and region resolution are unchanged while grind-mode
   navigation hooks no longer cast for this selector.
+- `AgentPotionCheckRequestRuntime` now uses `AgentRuntimeEntry` for the generic
+  potion-check request hook. BotClient detection, active-leader lookup,
+  character-id registry lookup, and retry-soon delay behavior are unchanged.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

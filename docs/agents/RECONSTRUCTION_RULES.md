@@ -5407,6 +5407,9 @@ Current physics correction:
   projectile retreat probes, local retreat validation, path lookup, and region
   resolution remain unchanged. Grind-mode navigation hooks now call the
   Agent-entry selector directly.
+- Potion-check request runtime now uses `AgentRuntimeEntry` for the generic
+  potion-check request service hook; BotClient detection, active-leader lookup,
+  character-id registry lookup, and retry-soon delay behavior are unchanged.
 
 Initial reconstruction order:
 

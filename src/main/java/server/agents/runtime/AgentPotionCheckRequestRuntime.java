@@ -4,7 +4,6 @@ import client.BotClient;
 import client.Character;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.integration.AgentBotPotionStateRuntime;
-import server.bots.BotEntry;
 
 public final class AgentPotionCheckRequestRuntime {
     private AgentPotionCheckRequestRuntime() {
@@ -14,13 +13,13 @@ public final class AgentPotionCheckRequestRuntime {
         AgentPotionCheckRequestService.requestPotionCheckSoon(agent, hooks());
     }
 
-    private static AgentPotionCheckRequestService.Hooks<BotEntry> hooks() {
+    private static AgentPotionCheckRequestService.Hooks<AgentRuntimeEntry> hooks() {
         return new AgentPotionCheckRequestService.Hooks<>(
                 AgentPotionCheckRequestRuntime::resolveAgentEntry,
                 AgentBotPotionStateRuntime::requestPotionCheckSoon);
     }
 
-    private static BotEntry resolveAgentEntry(Character agent) {
+    private static AgentRuntimeEntry resolveAgentEntry(Character agent) {
         if (agent == null || !(agent.getClient() instanceof BotClient)) {
             return null;
         }
