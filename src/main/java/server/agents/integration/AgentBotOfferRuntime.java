@@ -18,7 +18,7 @@ public final class AgentBotOfferRuntime {
         return AgentBotChatStatusRuntime.isOwnerIdle(entry);
     }
 
-    public static void replyNow(BotEntry entry, String message) {
+    public static void replyNow(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.replyNow(entry, message);
     }
 
@@ -34,7 +34,7 @@ public final class AgentBotOfferRuntime {
         AgentBotReplyRuntime.sayNow(bot, channel, message);
     }
 
-    public static long queueSayWithEstimatedDelay(BotEntry entry, String message) {
+    public static long queueSayWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
         return AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry, message);
     }
 
@@ -50,19 +50,19 @@ public final class AgentBotOfferRuntime {
         return AgentBotSchedulerRuntime.randomDelayMs(minMs, maxMs);
     }
 
-    public static boolean hasPendingGearPromptAfter(BotEntry entry, long nowMs) {
+    public static boolean hasPendingGearPromptAfter(AgentRuntimeEntry entry, long nowMs) {
         return AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, nowMs);
     }
 
-    public static void reserveGearPrompt(BotEntry entry, long scheduledAt) {
+    public static void reserveGearPrompt(AgentRuntimeEntry entry, long scheduledAt) {
         AgentBotOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
     }
 
-    public static boolean isReservedGearPrompt(BotEntry entry, long scheduledAt) {
+    public static boolean isReservedGearPrompt(AgentRuntimeEntry entry, long scheduledAt) {
         return AgentBotOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt);
     }
 
-    public static void clearGearPrompt(BotEntry entry) {
+    public static void clearGearPrompt(AgentRuntimeEntry entry) {
         AgentBotOfferStateRuntime.clearGearPrompt(entry);
     }
 

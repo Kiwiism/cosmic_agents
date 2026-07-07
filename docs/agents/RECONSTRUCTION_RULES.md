@@ -5305,6 +5305,12 @@ Current physics correction:
   are unchanged.
 - KPQ Stage 5 map-change reset now routes through the Agent-entry PQ bridge
   directly, preserving the existing reset timing during tracked map changes.
+- Offer runtime reply and gear-prompt helper methods now accept
+  `AgentRuntimeEntry`; immediate replies, queued-say delay estimation,
+  pending-prompt checks, prompt reservation, reserved-prompt checks, and
+  prompt clearing still delegate to the same reply/state runtimes. The
+  recommended-gear action callback remains BotEntry-shaped until the offer
+  service itself is widened.
 
 Initial reconstruction order:
 
