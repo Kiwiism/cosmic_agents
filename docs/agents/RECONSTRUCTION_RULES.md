@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Scripted move-combat tick service now uses `AgentRuntimeEntry` for its public
+  service and hook signatures. The live-mode bridge still adapts to legacy
+  movement/combat callbacks where required, but local-opportunity move gating,
+  action-window cleanup, attack fall-through, and movement-core stepping are
+  unchanged.
 - Tick failure runtime now accepts `AgentRuntimeEntry` and Agent-entry stop
   hooks. Failure-window counting, movement-state reset, cleanup on disable,
   forced idle, failure reply text, and logging behavior are unchanged while the

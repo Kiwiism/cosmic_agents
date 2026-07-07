@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -20,12 +19,12 @@ public final class AgentScriptedMoveCombatTickService {
 
     @FunctionalInterface
     public interface ActionMoveWindowCleanup {
-        void clearIfSettled(BotEntry entry, Point agentPosition, Point targetPosition);
+        void clearIfSettled(AgentRuntimeEntry entry, Point agentPosition, Point targetPosition);
     }
 
     @FunctionalInterface
     public interface LocalOpportunityAttack {
-        Result attack(BotEntry entry,
+        Result attack(AgentRuntimeEntry entry,
                       Character agent,
                       Point agentPosition,
                       Point currentTargetPosition);
@@ -33,14 +32,14 @@ public final class AgentScriptedMoveCombatTickService {
 
     @FunctionalInterface
     public interface MovementCore {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
-    public static boolean shouldUseScriptedMoveLocalCombat(BotEntry entry, Point targetPos) {
+    public static boolean shouldUseScriptedMoveLocalCombat(AgentRuntimeEntry entry, Point targetPos) {
         return AgentBotScriptTaskStateRuntime.isActiveLocalOpportunityMoveTo(entry, targetPos);
     }
 
-    public static Result tickScriptedMoveCombat(BotEntry entry,
+    public static Result tickScriptedMoveCombat(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 Point agentPosition,
                                                 Point currentTargetPosition,

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.mock;
 class AgentScriptedMoveCombatTickServiceTest {
     @Test
     void fallsThroughWhenNoActiveLocalOpportunityMoveTaskExists() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         AtomicInteger attacks = new AtomicInteger();
         AtomicInteger movementSteps = new AtomicInteger();
@@ -40,7 +39,7 @@ class AgentScriptedMoveCombatTickServiceTest {
 
     @Test
     void consumesWhenLocalOpportunityAttackConsumes() {
-        BotEntry entry = localOpportunityMoveEntry(new Point(100, 0));
+        AgentRuntimeEntry entry = localOpportunityMoveEntry(new Point(100, 0));
         Character agent = mock(Character.class);
         AtomicInteger attacks = new AtomicInteger();
         AtomicInteger movementSteps = new AtomicInteger();
@@ -62,7 +61,7 @@ class AgentScriptedMoveCombatTickServiceTest {
 
     @Test
     void stepsMovementCoreAfterAttackFallsThrough() {
-        BotEntry entry = localOpportunityMoveEntry(new Point(100, 0));
+        AgentRuntimeEntry entry = localOpportunityMoveEntry(new Point(100, 0));
         Character agent = mock(Character.class);
         AtomicInteger attacks = new AtomicInteger();
         AtomicInteger movementSteps = new AtomicInteger();
@@ -84,8 +83,8 @@ class AgentScriptedMoveCombatTickServiceTest {
         assertEquals(attackTarget, movedTo.get());
     }
 
-    private static BotEntry localOpportunityMoveEntry(Point target) {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry localOpportunityMoveEntry(Point target) {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotScriptTaskStateRuntime.queueTask(entry, AgentTask.moveTo(
                 target,
                 true,
