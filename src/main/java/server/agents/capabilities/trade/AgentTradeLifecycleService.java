@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
@@ -13,7 +13,7 @@ public final class AgentTradeLifecycleService {
     private AgentTradeLifecycleService() {
     }
 
-    public static void cancelTradeSequence(BotEntry entry,
+    public static void cancelTradeSequence(AgentRuntimeEntry entry,
                                            Character agent,
                                            String message,
                                            LifecycleCallbacks callbacks) {
@@ -24,13 +24,13 @@ public final class AgentTradeLifecycleService {
                 () -> resetTradeState(entry, agent, callbacks));
     }
 
-    public static void clearManualTradeState(BotEntry entry,
+    public static void clearManualTradeState(AgentRuntimeEntry entry,
                                              Character agent,
                                              LifecycleCallbacks callbacks) {
         callbacks.clearManualTradeState(entry, agent);
     }
 
-    public static void resetTradeState(BotEntry entry,
+    public static void resetTradeState(AgentRuntimeEntry entry,
                                        Character agent,
                                        LifecycleCallbacks callbacks) {
         AgentTradeResetService.reset(
@@ -41,7 +41,7 @@ public final class AgentTradeLifecycleService {
                 () -> callbacks.refillEquipmentSlots(agent, callbacks.owner(entry)));
     }
 
-    public static void completeTradeAndReact(BotEntry entry,
+    public static void completeTradeAndReact(AgentRuntimeEntry entry,
                                              Character agent,
                                              Trade trade,
                                              LifecycleCallbacks callbacks) {
@@ -57,9 +57,9 @@ public final class AgentTradeLifecycleService {
     }
 
     public interface LifecycleCallbacks {
-        void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent);
-        void clearManualTradeState(BotEntry entry, Character agent);
-        Character owner(BotEntry entry);
+        void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent);
+        void clearManualTradeState(AgentRuntimeEntry entry, Character agent);
+        Character owner(AgentRuntimeEntry entry);
         void refillEquipmentSlots(Character agent, Character owner);
         long randomReplyDelayMs(int minMs, int maxMs);
         String tradeThanksReply();
@@ -78,17 +78,17 @@ public final class AgentTradeLifecycleService {
                                      BooleanSupplier glareExpression) {
             return new LifecycleCallbacks() {
                 @Override
-                public void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent) {
+                public void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent) {
                     restoreTemporarilyUnequippedItems.restore(entry, agent);
                 }
 
                 @Override
-                public void clearManualTradeState(BotEntry entry, Character agent) {
+                public void clearManualTradeState(AgentRuntimeEntry entry, Character agent) {
                     clearManualTradeState.clear(entry, agent);
                 }
 
                 @Override
-                public Character owner(BotEntry entry) {
+                public Character owner(AgentRuntimeEntry entry) {
                     return owner.owner(entry);
                 }
 
@@ -127,17 +127,17 @@ public final class AgentTradeLifecycleService {
 
     @FunctionalInterface
     public interface RestoreSlots {
-        void restore(BotEntry entry, Character agent);
+        void restore(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface ClearManualTrade {
-        void clear(BotEntry entry, Character agent);
+        void clear(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface OwnerLookup {
-        Character owner(BotEntry entry);
+        Character owner(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface

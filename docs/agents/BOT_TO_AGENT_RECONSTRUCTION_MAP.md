@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentTradeLifecycleService` now accepts `AgentRuntimeEntry` for trade
+  cancellation, manual-trade clearing, reset, completion reactions, and
+  lifecycle callbacks. `AgentTradeLifecycleRuntimeService` remains the
+  BotEntry compatibility edge for current inventory/trade runtime callers.
 - `AgentLeaderSafetyService` now owns inactive-leader safe-mode logic over
   `AgentRuntimeEntry` instead of `BotEntry`. The outer
   `AgentLeaderSafetyRuntime` remains the temporary BotEntry compatibility edge,

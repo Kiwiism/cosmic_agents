@@ -40,9 +40,9 @@ public final class AgentTradeLifecycleRuntimeService {
 
     public static AgentTradeLifecycleService.LifecycleCallbacks lifecycleCallbacks(RuntimeCallbacks callbacks) {
         return AgentTradeLifecycleCallbackService.lifecycleCallbacks(
-                callbacks::restoreTemporarilyUnequippedItems,
-                callbacks::clearManualTradeState,
-                callbacks::owner,
+                (entry, agent) -> callbacks.restoreTemporarilyUnequippedItems((BotEntry) entry, agent),
+                (entry, agent) -> callbacks.clearManualTradeState((BotEntry) entry, agent),
+                entry -> callbacks.owner((BotEntry) entry),
                 callbacks::refillEquipmentSlots,
                 callbacks::randomReplyDelayMs,
                 callbacks::tradeThanksReply,

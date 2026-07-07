@@ -82,8 +82,8 @@ public final class AgentBotInventoryRuntimeAdapters {
 
     public static AgentTradeLifecycleRuntimeService.RuntimeCallbacks tradeLifecycleRuntimeCallbacks() {
         return AgentTradeLifecycleRuntimeService.RuntimeCallbacks.of(
-                AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
-                AgentManualTradeService::clearState,
+                (entry, agent) -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems((BotEntry) entry, agent),
+                (entry, agent) -> AgentManualTradeService.clearState((BotEntry) entry, agent),
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentRandom::randMs,

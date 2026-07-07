@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,7 +23,7 @@ class AgentTradeLifecycleServiceTest {
     void resetRestoresClearsAndRefillsThroughCallbacks() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.owner.set(owner);
 
@@ -46,7 +46,7 @@ class AgentTradeLifecycleServiceTest {
     void cancelSequenceDelegatesCancelAndReset() {
         Character agent = mock(Character.class);
         when(agent.getTrade()).thenReturn(null);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         try (MockedStatic<AgentTradeCancellationService> cancellations = mockStatic(AgentTradeCancellationService.class)) {
@@ -64,7 +64,7 @@ class AgentTradeLifecycleServiceTest {
     void completeTradeAndReactUsesLegacyReplyCallbacks() {
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.delay = 900;
         callbacks.thanks = "thanks";
@@ -91,7 +91,7 @@ class AgentTradeLifecycleServiceTest {
     void callbackFactoryPreservesSuppliedOperations() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         AtomicBoolean restored = new AtomicBoolean();
         AtomicBoolean cleared = new AtomicBoolean();
         AtomicBoolean refilled = new AtomicBoolean();
@@ -122,9 +122,9 @@ class AgentTradeLifecycleServiceTest {
     }
 
     private static final class TraceCallbacks implements AgentTradeLifecycleService.LifecycleCallbacks {
-        final AtomicReference<BotEntry> restoreEntry = new AtomicReference<>();
+        final AtomicReference<AgentRuntimeEntry> restoreEntry = new AtomicReference<>();
         final AtomicReference<Character> restoreAgent = new AtomicReference<>();
-        final AtomicReference<BotEntry> clearEntry = new AtomicReference<>();
+        final AtomicReference<AgentRuntimeEntry> clearEntry = new AtomicReference<>();
         final AtomicReference<Character> clearAgent = new AtomicReference<>();
         final AtomicReference<Character> owner = new AtomicReference<>();
         final AtomicBoolean refilled = new AtomicBoolean();
@@ -135,15 +135,15 @@ class AgentTradeLifecycleServiceTest {
         int roll;
         boolean glare;
 
-        @Override public void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent) {
+        @Override public void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent) {
             restoreEntry.set(entry);
             restoreAgent.set(agent);
         }
-        @Override public void clearManualTradeState(BotEntry entry, Character agent) {
+        @Override public void clearManualTradeState(AgentRuntimeEntry entry, Character agent) {
             clearEntry.set(entry);
             clearAgent.set(agent);
         }
-        @Override public Character owner(BotEntry entry) { return owner.get(); }
+        @Override public Character owner(AgentRuntimeEntry entry) { return owner.get(); }
         @Override public void refillEquipmentSlots(Character agent, Character owner) {
             refilled.set(true);
             refillOwner.set(owner);
@@ -155,3 +155,4 @@ class AgentTradeLifecycleServiceTest {
         @Override public boolean glareExpression() { return glare; }
     }
 }
+

@@ -5551,6 +5551,10 @@ Current physics correction:
   state, town cluster target resolution, and batch safe-mode issuance. The
   BotEntry dependency remains isolated in `AgentLeaderSafetyRuntime` while
   behavior stays unchanged.
+- Trade lifecycle service now accepts `AgentRuntimeEntry` for trade sequence
+  cancellation, manual-trade clearing, reset, completion reactions, and
+  callback construction. `AgentTradeLifecycleRuntimeService` keeps the
+  temporary BotEntry callback adaptation for existing trade runtime callers.
 
 Initial reconstruction order:
 
