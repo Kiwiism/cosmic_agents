@@ -4,7 +4,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -15,11 +14,11 @@ public final class AgentMovementOnlyStepRuntime {
     private AgentMovementOnlyStepRuntime() {
     }
 
-    public static boolean stepMovementOnly(BotEntry entry, long tickAtMs) {
+    public static boolean stepMovementOnly(AgentRuntimeEntry entry, long tickAtMs) {
         return stepMovementOnly(entry, tickAtMs, defaultConfig());
     }
 
-    public static boolean stepMovementOnly(BotEntry entry, long tickAtMs, MovementOnlyStepConfig config) {
+    public static boolean stepMovementOnly(AgentRuntimeEntry entry, long tickAtMs, MovementOnlyStepConfig config) {
         if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return false;
         }

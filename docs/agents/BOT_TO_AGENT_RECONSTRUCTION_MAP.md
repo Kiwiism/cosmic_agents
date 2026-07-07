@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentMovementOnlyStepRuntime` now accepts `AgentRuntimeEntry` for
+  ownerless movement-only tick preparation, removing another BotEntry runtime
+  wrapper while preserving AI cadence preparation and target snapshot capture.
 - `AgentMovementOnlyRuntime` now uses Agent entry overloads for follow-anchor
   resolution, shop visit ticks, and movement-core dispatch, removing its direct
   BotEntry dependency while preserving movement-only tick ordering.

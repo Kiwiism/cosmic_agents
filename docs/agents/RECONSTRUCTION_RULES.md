@@ -5543,6 +5543,9 @@ Current physics correction:
 - Movement-only runtime now uses Agent entry overloads for follow-anchor
   resolution, shop visit ticking, and movement-core dispatch. Movement-only tick
   ordering and target selection behavior remain unchanged.
+- Movement-only step runtime now accepts `AgentRuntimeEntry` for ownerless
+  movement tick preparation; bot existence checks, AI cadence, target snapshot
+  capture, leader motion memory, and movement-only dispatch remain unchanged.
 
 Initial reconstruction order:
 
