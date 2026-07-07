@@ -5311,6 +5311,11 @@ Current physics correction:
   prompt clearing still delegate to the same reply/state runtimes. The
   recommended-gear action callback remains BotEntry-shaped until the offer
   service itself is widened.
+- Pending-offer state cleanup in `AgentOfferService` now accepts
+  `AgentRuntimeEntry`; pending-offer checks, expiration, owner-request cleanup,
+  pending drop-category clearing, pending-offer clearing, and gear-prompt
+  clearing behavior are unchanged, and tick preflight no longer casts for
+  offer expiration.
 
 Initial reconstruction order:
 

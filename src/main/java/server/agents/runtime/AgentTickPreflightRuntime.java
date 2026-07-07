@@ -36,7 +36,7 @@ public final class AgentTickPreflightRuntime {
                         heartbeatIntervalMs,
                         heartbeatAgent -> heartbeatAgent.getClient().updateLastPacket(),
                         AgentMovementBroadcastService::broadcastMovement),
-                entry -> AgentOfferService.expirePendingOffer(asBotEntry(entry)),
+                AgentOfferService::expirePendingOffer,
                 (entry, movementTickMs, aiTickMs, tickAtMs) ->
                         AgentTickOrchestrator.prepareTick(asBotEntry(entry), movementTickMs, aiTickMs, tickAtMs),
                 AgentMovementPhysicsConfig.configuredMovementTickMs(),

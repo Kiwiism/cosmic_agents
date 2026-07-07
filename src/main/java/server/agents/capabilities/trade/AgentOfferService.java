@@ -55,7 +55,7 @@ public final class AgentOfferService {
         return AgentBotOfferStateRuntime.hasOfferReservation(entry);
     }
 
-    public static boolean hasPendingOffer(BotEntry entry) {
+    public static boolean hasPendingOffer(AgentRuntimeEntry entry) {
         return AgentBotOfferStateRuntime.hasPendingOffer(entry);
     }
 
@@ -221,13 +221,13 @@ public final class AgentOfferService {
         return false;
     }
 
-    public static void expirePendingOffer(BotEntry entry) {
+    public static void expirePendingOffer(AgentRuntimeEntry entry) {
         if (AgentBotOfferStateRuntime.pendingOfferExpired(entry, System.currentTimeMillis())) {
             clearPendingOffer(entry);
         }
     }
 
-    public static void clearPendingOfferForOwnerAsk(BotEntry entry) {
+    public static void clearPendingOfferForOwnerAsk(AgentRuntimeEntry entry) {
         clearPendingOffer(entry);
     }
 
@@ -678,7 +678,7 @@ public final class AgentOfferService {
         return null;
     }
 
-    private static void clearPendingOffer(BotEntry entry) {
+    private static void clearPendingOffer(AgentRuntimeEntry entry) {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         AgentBotOfferStateRuntime.clearPendingOffer(entry);
         AgentBotOfferStateRuntime.clearGearPrompt(entry);
