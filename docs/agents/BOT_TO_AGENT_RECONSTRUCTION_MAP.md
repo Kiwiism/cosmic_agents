@@ -135,6 +135,12 @@ Recent map updates:
   shop map-change hooks, tracked-map-change issue callbacks, and standalone
   move-target behavior are unchanged; script/physics/live-mode callback
   adapters remain as later slices.
+- `AgentScriptTaskRuntime`, `AgentScriptTaskTickService`, and the public
+  start/complete boundary of `AgentScriptTaskExecutionService` now accept
+  `AgentRuntimeEntry`; task activation, task completion, configured stop
+  distance, and move/follow/grind/stop/drop dispatch behavior are unchanged.
+  The execution service keeps the temporary BotEntry adapter for legacy
+  movement commands.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

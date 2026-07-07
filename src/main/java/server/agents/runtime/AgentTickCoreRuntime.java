@@ -36,7 +36,7 @@ public final class AgentTickCoreRuntime {
                         AgentDeathTickRuntime.handleDeadTick(runtimeEntry, agent, leader),
                 AgentTargetSnapshotRuntime::resolveFollowAnchor,
                 AgentTargetSnapshotRuntime::captureTargetSnapshot,
-                runtimeEntry -> AgentScriptTaskRuntime.tick(asBotEntry(runtimeEntry)),
+                AgentScriptTaskRuntime::tick,
                 issueGrind,
                 issueFollow,
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,

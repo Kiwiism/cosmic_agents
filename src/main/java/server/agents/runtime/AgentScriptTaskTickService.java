@@ -3,7 +3,6 @@ package server.agents.runtime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
@@ -12,9 +11,9 @@ public final class AgentScriptTaskTickService {
     private AgentScriptTaskTickService() {
     }
 
-    public static void tick(BotEntry entry,
-                            BiConsumer<BotEntry, AgentTask> startTask,
-                            BiPredicate<BotEntry, AgentTask> isTaskComplete) {
+    public static void tick(AgentRuntimeEntry entry,
+                            BiConsumer<AgentRuntimeEntry, AgentTask> startTask,
+                            BiPredicate<AgentRuntimeEntry, AgentTask> isTaskComplete) {
         if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }

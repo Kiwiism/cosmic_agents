@@ -5444,6 +5444,11 @@ Current physics correction:
   standalone move-target ticking, and legacy movement-command issue callbacks
   are unchanged while remaining physics/script/live-mode adapters still cast at
   their compatibility edges.
+- Script-task ticking now uses `AgentRuntimeEntry` through the task runtime,
+  tick loop, and execution start/complete boundary; queued task activation,
+  completion checks, movement/follow/grind/stop/drop dispatch, and configured
+  stop-distance behavior are unchanged while movement command execution remains
+  the temporary BotEntry adapter.
 
 Initial reconstruction order:
 

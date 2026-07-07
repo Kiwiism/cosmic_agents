@@ -13,20 +13,20 @@ public final class AgentScriptTaskExecutionService {
     private AgentScriptTaskExecutionService() {
     }
 
-    public static void start(BotEntry entry, AgentTask task) {
+    public static void start(AgentRuntimeEntry entry, AgentTask task) {
         AgentScriptTaskStartService.start(
                 entry,
                 task,
                 new AgentScriptTaskStartService.StartHooks(
-                        (point, precise) -> AgentBotMovementCommandRuntime.moveTo(entry, point, precise),
-                        target -> AgentBotMovementCommandRuntime.follow(entry, target),
+                        (point, precise) -> AgentBotMovementCommandRuntime.moveTo(asBotEntry(entry), point, precise),
+                        target -> AgentBotMovementCommandRuntime.follow(asBotEntry(entry), target),
                         targetResolver(entry),
-                        () -> AgentBotMovementCommandRuntime.grind(entry),
-                        () -> AgentBotMovementCommandRuntime.stop(entry),
+                        () -> AgentBotMovementCommandRuntime.grind(asBotEntry(entry)),
+                        () -> AgentBotMovementCommandRuntime.stop(asBotEntry(entry)),
                         (type, itemId, quantity) -> dropItem(entry, type, itemId, quantity)));
     }
 
-    public static boolean isComplete(BotEntry entry, AgentTask task, int normalMoveArrivalDistance) {
+    public static boolean isComplete(AgentRuntimeEntry entry, AgentTask task, int normalMoveArrivalDistance) {
         return AgentScriptTaskCompletionService.isComplete(
                 entry,
                 task,
@@ -34,12 +34,16 @@ public final class AgentScriptTaskExecutionService {
                 targetResolver(entry));
     }
 
-    private static IntFunction<Character> targetResolver(BotEntry entry) {
+    private static IntFunction<Character> targetResolver(AgentRuntimeEntry entry) {
         return targetCharacterId ->
                 AgentFollowAnchorService.resolveTargetFromRuntimeRegistry(entry, targetCharacterId);
     }
 
-    private static boolean dropItem(BotEntry entry, InventoryType type, int itemId, short quantity) {
+    private static boolean dropItem(AgentRuntimeEntry entry, InventoryType type, int itemId, short quantity) {
         return AgentScriptItemActionService.dropItem(entry, type, itemId, quantity);
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }
