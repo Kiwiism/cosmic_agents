@@ -27,7 +27,7 @@ public final class AgentGroundActionExecutor {
             return;
         }
 
-        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(asBotEntry(entry), bot, currentFoothold);
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, currentFoothold);
         if (motion.lostGround()) {
             AgentMovementBroadcastService.broadcastMovement(entry);
             return;
@@ -49,9 +49,5 @@ public final class AgentGroundActionExecutor {
             AgentMovementPoseService.idleOnGround(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         }
         AgentMovementBroadcastService.broadcastMovement(entry);
-    }
-
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (server.bots.BotEntry) entry;
     }
 }

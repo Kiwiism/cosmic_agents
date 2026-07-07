@@ -21,7 +21,7 @@ public final class AgentMovementPhaseDispatchService {
     }
 
     public static void tickGrounded(AgentRuntimeEntry entry, Point targetPos) {
-        AgentGroundMovementRuntimeService.tickGrounded(asBotEntry(entry), targetPos);
+        AgentGroundMovementRuntimeService.tickGrounded(entry, targetPos);
     }
 
     private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {

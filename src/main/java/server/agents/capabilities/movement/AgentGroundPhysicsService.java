@@ -5,7 +5,6 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -24,7 +23,7 @@ public final class AgentGroundPhysicsService {
     private AgentGroundPhysicsService() {
     }
 
-    public static Foothold syncAndDetectGround(BotEntry entry, Character agent) {
+    public static Foothold syncAndDetectGround(AgentRuntimeEntry entry, Character agent) {
         syncGroundPosition(entry, agent.getPosition().x);
         Foothold foothold = AgentGroundingService.findGroundFoothold(agent.getMap(), agent.getPosition());
         if (foothold == null) {
@@ -33,7 +32,7 @@ public final class AgentGroundPhysicsService {
         return foothold;
     }
 
-    public static AgentGroundMotion applyGroundMotion(BotEntry entry, Character agent, Foothold foothold) {
+    public static AgentGroundMotion applyGroundMotion(AgentRuntimeEntry entry, Character agent, Foothold foothold) {
         MapleMap map = agent.getMap();
         Point currentPosition = agent.getPosition();
         int desiredDirection = AgentBotMovementStateRuntime.moveDirection(entry);
@@ -75,7 +74,7 @@ public final class AgentGroundPhysicsService {
         return AgentMovementKinematicsService.velocityFromDeltaX(deltaX);
     }
 
-    private static void syncGroundPosition(BotEntry entry, int x) {
+    private static void syncGroundPosition(AgentRuntimeEntry entry, int x) {
         if (AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry) == 0.0
                 && AgentBotMovementPhysicsStateRuntime.roundedPhysicsX(entry) != x) {
             AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, x);
@@ -183,11 +182,11 @@ public final class AgentGroundPhysicsService {
         return profile != null ? profile : AgentMovementProfile.base();
     }
 
-    private static void beginFall(BotEntry entry, Character agent, int airVelocityX) {
+    private static void beginFall(AgentRuntimeEntry entry, Character agent, int airVelocityX) {
         beginFall(entry, agent, agent.getPosition(), airVelocityX);
     }
 
-    private static void beginFall(BotEntry entry, Character agent, Point position, int airVelocityX) {
+    private static void beginFall(AgentRuntimeEntry entry, Character agent, Point position, int airVelocityX) {
         AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
         agent.setPosition(new Point(position));
         AgentAirborneLaunchService.launchAirborne(entry, position, 0f, airVelocityX, false);

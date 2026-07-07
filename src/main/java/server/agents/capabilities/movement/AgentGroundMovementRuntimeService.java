@@ -8,14 +8,14 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 
 public final class AgentGroundMovementRuntimeService {
     private AgentGroundMovementRuntimeService() {
     }
 
-    public static void tickGrounded(BotEntry entry, Point targetPos) {
+    public static void tickGrounded(AgentRuntimeEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
@@ -53,12 +53,12 @@ public final class AgentGroundMovementRuntimeService {
         }
     }
 
-    private static void performDownJump(BotEntry entry) {
+    private static void performDownJump(AgentRuntimeEntry entry) {
         AgentQueuedMovementActionService.beginDownJump(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    private static void performTopRopeEntry(BotEntry entry) {
+    private static void performTopRopeEntry(AgentRuntimeEntry entry) {
         AgentQueuedMovementActionService.beginTopRopeEntry(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }

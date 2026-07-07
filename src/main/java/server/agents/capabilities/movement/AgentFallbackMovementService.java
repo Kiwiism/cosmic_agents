@@ -5,7 +5,7 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -16,7 +16,7 @@ public final class AgentFallbackMovementService {
     private AgentFallbackMovementService() {
     }
 
-    public static Point resolveSteeringTarget(BotEntry entry, Point botPos, Point targetPos) {
+    public static Point resolveSteeringTarget(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
         Point ledgeTarget = resolveFallbackLedgeTarget(entry, botPos, targetPos, rope);
         if (ledgeTarget != null) {
@@ -28,7 +28,7 @@ public final class AgentFallbackMovementService {
         return new Point(rope.x(), botPos.y);
     }
 
-    public static boolean tryImmediateAction(BotEntry entry, Point botPos, Point targetPos) {
+    public static boolean tryImmediateAction(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         Character bot = bot(entry);
         MapleMap map = map(entry);
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
@@ -81,7 +81,7 @@ public final class AgentFallbackMovementService {
         return false;
     }
 
-    private static boolean shouldJumpUpIntoSwim(BotEntry entry, Point botPos, Point targetPos) {
+    private static boolean shouldJumpUpIntoSwim(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return false;
         }
@@ -100,7 +100,7 @@ public final class AgentFallbackMovementService {
         return dy < -Math.max(AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2, 60);
     }
 
-    public static boolean shouldWalkOffLedge(BotEntry entry, Point botPos, Point targetPos, int stepX) {
+    public static boolean shouldWalkOffLedge(AgentRuntimeEntry entry, Point botPos, Point targetPos, int stepX) {
         if (entry == null || !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
             return false;
         }
@@ -111,7 +111,7 @@ public final class AgentFallbackMovementService {
         return AgentGroundCollisionService.isGroundFarBelow(map(entry), ahead);
     }
 
-    private static Rope selectNearbyRope(BotEntry entry, Point botPos, Point targetPos) {
+    private static Rope selectNearbyRope(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return null;
         }
@@ -179,7 +179,7 @@ public final class AgentFallbackMovementService {
                 && botPos.y <= rope.bottomY() + AgentMovementPhysicsConfig.configuredMaxSnapDrop();
     }
 
-    private static Point resolveFallbackLedgeTarget(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
+    private static Point resolveFallbackLedgeTarget(AgentRuntimeEntry entry, Point botPos, Point targetPos, Rope rope) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null || rope != null) {
             return null;
         }
@@ -202,7 +202,7 @@ public final class AgentFallbackMovementService {
         return new Point(best.x, targetPos.y);
     }
 
-    private static boolean shouldUseDownJump(BotEntry entry, Point botPos, Point targetPos, Rope rope) {
+    private static boolean shouldUseDownJump(AgentRuntimeEntry entry, Point botPos, Point targetPos, Rope rope) {
         if (entry == null || botPos == null || targetPos == null || rope != null) {
             return false;
         }
@@ -215,7 +215,7 @@ public final class AgentFallbackMovementService {
                 AgentMovementKinematicsService.walkStep(map, movementProfile(entry)) * 4);
     }
 
-    private static boolean shouldConsiderFallbackDrop(BotEntry entry, MapleMap map, Point botPos, Point targetPos) {
+    private static boolean shouldConsiderFallbackDrop(AgentRuntimeEntry entry, MapleMap map, Point botPos, Point targetPos) {
         if (entry == null || map == null || botPos == null || targetPos == null) {
             return false;
         }
@@ -264,7 +264,7 @@ public final class AgentFallbackMovementService {
         return leftScore <= rightScore ? left : right;
     }
 
-    private static boolean shouldUseJump(BotEntry entry, Point botPos, Point steeringTarget, int stepX) {
+    private static boolean shouldUseJump(AgentRuntimeEntry entry, Point botPos, Point steeringTarget, int stepX) {
         if (entry == null || botPos == null || steeringTarget == null || stepX == 0) {
             return false;
         }
@@ -280,15 +280,15 @@ public final class AgentFallbackMovementService {
         return isUsefulJumpProbeLanding(botPos, steeringTarget, direction, landing);
     }
 
-    private static Character bot(BotEntry entry) {
+    private static Character bot(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 
-    private static MapleMap map(BotEntry entry) {
+    private static MapleMap map(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.botMap(entry);
     }
 
-    private static AgentMovementProfile movementProfile(BotEntry entry) {
+    private static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {
         return AgentBotMovementStateRuntime.movementProfile(entry);
     }
 

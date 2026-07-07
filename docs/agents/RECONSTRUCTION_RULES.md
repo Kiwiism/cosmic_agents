@@ -5735,6 +5735,11 @@ Current physics correction:
   callbacks. Auto-equip, gear suggestion cooldown reset, sibling gear
   suggestion, autopot setup, and mode-start potion-share checks remain
   unchanged.
+- Grounded physics, grounded movement runtime, and fallback movement now accept
+  `AgentRuntimeEntry`. Ground position sync, no-ground fall launch, graph-warmup
+  fallback steering, rope/drop/swim/jump immediate actions, ground-action
+  execution, packet-visible velocity writes, and performance timing remain
+  unchanged.
 
 Initial reconstruction order:
 
