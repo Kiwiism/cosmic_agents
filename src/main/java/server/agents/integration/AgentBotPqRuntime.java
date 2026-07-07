@@ -2,7 +2,6 @@ package server.agents.integration;
 
 import server.agents.capabilities.partyquest.kpq.AgentKpqState;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 /**
  * Temporary Agent-owned bridge for party-quest dialogue while PQ automation
@@ -32,15 +31,15 @@ public final class AgentBotPqRuntime {
         return state(entry).couponTarget();
     }
 
-    public static int kpqStageState(BotEntry entry) {
+    public static int kpqStageState(AgentRuntimeEntry entry) {
         return state(entry).state();
     }
 
-    public static void setKpqStageState(BotEntry entry, int state) {
+    public static void setKpqStageState(AgentRuntimeEntry entry, int state) {
         state(entry).setState(state);
     }
 
-    public static boolean kpqStageStateIs(BotEntry entry, int state) {
+    public static boolean kpqStageStateIs(AgentRuntimeEntry entry, int state) {
         return state(entry).stateIs(state);
     }
 
@@ -48,19 +47,19 @@ public final class AgentBotPqRuntime {
         return state(entry).stateAtLeast(state);
     }
 
-    public static void setKpqCouponTarget(BotEntry entry, int target) {
+    public static void setKpqCouponTarget(AgentRuntimeEntry entry, int target) {
         state(entry).setCouponTarget(target);
     }
 
-    public static int kpqLastReportedCoupons(BotEntry entry) {
+    public static int kpqLastReportedCoupons(AgentRuntimeEntry entry) {
         return state(entry).lastReportedCoupons();
     }
 
-    public static void setKpqLastReportedCoupons(BotEntry entry, int coupons) {
+    public static void setKpqLastReportedCoupons(AgentRuntimeEntry entry, int coupons) {
         state(entry).setLastReportedCoupons(coupons);
     }
 
-    public static void resetKpqStage1(BotEntry entry, int idleState) {
+    public static void resetKpqStage1(AgentRuntimeEntry entry, int idleState) {
         state(entry).resetStage1(idleState);
         AgentBotScriptTaskStateRuntime.resetScript(entry, null);
     }

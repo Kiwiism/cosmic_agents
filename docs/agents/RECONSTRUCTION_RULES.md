@@ -5295,6 +5295,10 @@ Current physics correction:
   already-claimed gating, event clear detection, reward grant, inventory
   snapshot comparison, claimed-state marking, and reward announcement behavior
   are unchanged.
+- Party-quest runtime state bridge no longer imports `BotEntry`; KPQ state,
+  coupon target, coupon progress, stage-5 claimed state, queued PQ dialogue,
+  and stage-1 reset behavior now accept `AgentRuntimeEntry` while preserving
+  the same state bag and script-reset side effect.
 
 Initial reconstruction order:
 
