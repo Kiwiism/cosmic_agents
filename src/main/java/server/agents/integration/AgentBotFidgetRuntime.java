@@ -1,7 +1,6 @@
 package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 /**
  * Temporary Agent-owned bridge for fidget status decisions while fidget
@@ -11,7 +10,7 @@ public final class AgentBotFidgetRuntime {
     private AgentBotFidgetRuntime() {
     }
 
-    public static boolean isLeaderIdleForFidget(BotEntry entry) {
+    public static boolean isLeaderIdleForFidget(AgentRuntimeEntry entry) {
         return AgentBotChatStatusRuntime.isOwnerIdle(entry);
     }
 

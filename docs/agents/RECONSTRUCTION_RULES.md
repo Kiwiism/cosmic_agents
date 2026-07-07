@@ -5351,6 +5351,8 @@ Current physics correction:
 - Session-control primary-session and away-town checks now accept
   `AgentRuntimeEntry`; primary entry detection, leader entry lookup, and town
   offer map checks are unchanged.
+- Fidget leader-idle status checks now accept `AgentRuntimeEntry`; fidget
+  eligibility still reads the same chat owner-idle state.
 
 Initial reconstruction order:
 
