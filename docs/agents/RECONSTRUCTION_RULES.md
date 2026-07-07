@@ -5449,6 +5449,10 @@ Current physics correction:
   completion checks, movement/follow/grind/stop/drop dispatch, and configured
   stop-distance behavior are unchanged while movement command execution remains
   the temporary BotEntry adapter.
+- Dismiss lifecycle hooks now accept `AgentRuntimeEntry`; entry removal,
+  scheduled-task cancellation, stop-command dispatch, delayed farewell timing,
+  and farewell reply behavior are unchanged while spawn/register lifecycle
+  hooks remain temporary BotEntry-backed boundaries.
 
 Initial reconstruction order:
 

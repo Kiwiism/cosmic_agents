@@ -26,10 +26,14 @@ public final class AgentDismissRuntime {
                 agentName,
                 new AgentLifecycleService.DismissHooks(
                         AgentScheduledTaskRuntime::cancelScheduledTask,
-                        stopAgent,
+                        entry -> stopAgent.accept(asBotEntry(entry)),
                         AgentBotSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(400, 600),
                         AgentBotReplyRuntime::replyNow,
                         () -> AgentDialogueSelector.randomReply(FAREWELL_MESSAGES)));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

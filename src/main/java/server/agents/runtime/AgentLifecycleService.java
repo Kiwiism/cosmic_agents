@@ -118,8 +118,8 @@ public final class AgentLifecycleService {
         void log(int agentCharId, SQLException exception);
     }
 
-    public record DismissHooks(Consumer<BotEntry> cancelTask,
-                               Consumer<BotEntry> stopAgent,
+    public record DismissHooks(Consumer<AgentRuntimeEntry> cancelTask,
+                               Consumer<AgentRuntimeEntry> stopAgent,
                                DelayedActionScheduler delayedActionScheduler,
                                LongSupplier farewellDelayMs,
                                AgentEntrySpeaker entrySpeaker,
@@ -128,7 +128,7 @@ public final class AgentLifecycleService {
 
     @FunctionalInterface
     public interface AgentEntrySpeaker {
-        void say(BotEntry entry, String text);
+        void say(AgentRuntimeEntry entry, String text);
     }
 
     @FunctionalInterface

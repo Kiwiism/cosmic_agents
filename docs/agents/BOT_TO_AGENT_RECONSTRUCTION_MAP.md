@@ -141,6 +141,11 @@ Recent map updates:
   distance, and move/follow/grind/stop/drop dispatch behavior are unchanged.
   The execution service keeps the temporary BotEntry adapter for legacy
   movement commands.
+- `AgentLifecycleService.DismissHooks` and the dismiss entry speaker now accept
+  `AgentRuntimeEntry`; dismiss lookup/removal, scheduled-task cancellation,
+  stop dispatch, farewell delay, and farewell reply behavior are unchanged.
+  Spawn/register/relogin lifecycle hooks remain separate BotEntry-backed
+  migration targets.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`
