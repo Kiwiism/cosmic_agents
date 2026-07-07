@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import net.server.Server;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.IntFunction;
 
@@ -14,14 +13,14 @@ public final class AgentLeaderSessionRuntime {
     private AgentLeaderSessionRuntime() {
     }
 
-    public static Character resolveTickLeader(BotEntry entry, int leaderCharId) {
+    public static Character resolveTickLeader(AgentRuntimeEntry entry, int leaderCharId) {
         return resolveTickLeader(entry, leaderCharId, id -> Server.getInstance()
                 .getWorld(AgentBotRuntimeIdentityRuntime.bot(entry).getWorld())
                 .getPlayerStorage()
                 .getCharacterById(id));
     }
 
-    static Character resolveTickLeader(BotEntry entry,
+    static Character resolveTickLeader(AgentRuntimeEntry entry,
                                        int leaderCharId,
                                        IntFunction<Character> leaderLookup) {
         return AgentLeaderSessionService.resolveTickLeader(entry, leaderCharId, leaderLookup);

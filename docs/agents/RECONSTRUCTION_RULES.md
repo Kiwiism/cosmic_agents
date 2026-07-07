@@ -5504,6 +5504,9 @@ Current physics correction:
 - Dismiss runtime and lifecycle chat command dismiss wiring now accept
   `AgentRuntimeEntry` stoppers; removal, scheduled-task cancellation, delayed
   farewell replies, and stop-command behavior remain unchanged.
+- Leader session runtime now accepts `AgentRuntimeEntry`; cached leader refresh,
+  world storage lookup, and tick-core leader resolution behavior remain
+  unchanged while tick-core no longer casts for this resolver.
 
 Initial reconstruction order:
 

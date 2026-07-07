@@ -50,6 +50,9 @@ Recent map updates:
 - `AgentDismissRuntime` and lifecycle chat dismiss wiring now use
   `AgentRuntimeEntry` stopper callbacks; the outer interaction runtime remains
   the compatibility edge for the current stop command.
+- `AgentLeaderSessionRuntime` now resolves tick leaders from
+  `AgentRuntimeEntry`; tick-core invokes it without a BotEntry cast while other
+  tick-core hooks remain staged for later reconstruction.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
