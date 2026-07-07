@@ -3,7 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.combat.AgentMobTouchPolicy;
 import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -13,7 +13,7 @@ public final class AgentBotMobTouchRuntime {
     private AgentBotMobTouchRuntime() {
     }
 
-    public static boolean isMobTouchingAgent(BotEntry entry, Character agent, Monster mob, int sweepHeight) {
+    public static boolean isMobTouchingAgent(AgentRuntimeEntry entry, Character agent, Monster mob, int sweepHeight) {
         Rectangle agentBounds = agentTouchBounds(entry, agent, sweepHeight);
         Rectangle mobBounds = AgentMobHitboxProvider.getInstance().getMobBounds(mob);
         if (mobBounds == null) {
@@ -22,7 +22,7 @@ public final class AgentBotMobTouchRuntime {
         return AgentMobTouchPolicy.lowerHalfIntersects(mobBounds, agentBounds);
     }
 
-    public static Rectangle agentTouchBounds(BotEntry entry, Character agent, int sweepHeight) {
+    public static Rectangle agentTouchBounds(AgentRuntimeEntry entry, Character agent, int sweepHeight) {
         Point currentPos = agent.getPosition();
         Point previousPos = currentPos;
         Point rememberedPos = AgentBotMobTouchStateRuntime.previousCheckPositionOnMap(entry, agent.getMapId());
@@ -33,7 +33,7 @@ public final class AgentBotMobTouchRuntime {
         return AgentMobTouchPolicy.botTouchSweepBounds(previousPos, currentPos, sweepHeight);
     }
 
-    public static void rememberMobTouchCheck(BotEntry entry, Character agent, Point position) {
+    public static void rememberMobTouchCheck(AgentRuntimeEntry entry, Character agent, Point position) {
         if (entry == null || agent == null || position == null) {
             return;
         }

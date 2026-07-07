@@ -5353,6 +5353,9 @@ Current physics correction:
   offer map checks are unchanged.
 - Fidget leader-idle status checks now accept `AgentRuntimeEntry`; fidget
   eligibility still reads the same chat owner-idle state.
+- Mob-touch sweep runtime now accepts `AgentRuntimeEntry`; previous-position
+  lookup, sweep bounds, lower-half intersection, and remembered touch position
+  behavior are unchanged.
 
 Initial reconstruction order:
 
