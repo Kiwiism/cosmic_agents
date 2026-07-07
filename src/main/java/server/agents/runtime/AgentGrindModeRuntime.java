@@ -91,7 +91,7 @@ public final class AgentGrindModeRuntime {
         return new AgentGrindTargetCommitmentService.Hooks(
                 (entry, agent, agentPosition, preferredTarget) ->
                         AgentGrindCombatRuntime.selectPriorityRangedAttackTarget(
-                                asBotEntry(entry), agent, agentPosition, preferredTarget),
+                                entry, agent, agentPosition, preferredTarget),
                 AgentAttackExecutionProvider::findCloserThreatMob);
     }
 

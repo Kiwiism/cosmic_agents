@@ -88,6 +88,10 @@ Recent map updates:
   selection, graph scoring, region occupancy penalties, debug stats, consumable
   buff debug lines, and skill-buff debug lines are unchanged. Grind-mode target
   search now uses these Agent-entry selectors without redundant casts.
+- `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
+  gating, ranged weapon checks, degenerate-target replacement, attack-plan
+  routing, attack range checks, and grounded-use gating are unchanged while
+  grind-mode priority-target hooks no longer cast for this selector.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

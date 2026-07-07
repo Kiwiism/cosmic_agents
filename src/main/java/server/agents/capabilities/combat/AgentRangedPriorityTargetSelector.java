@@ -5,7 +5,7 @@ import client.inventory.WeaponType;
 import server.agents.integration.AgentBotAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -17,7 +17,7 @@ public final class AgentRangedPriorityTargetSelector {
     private AgentRangedPriorityTargetSelector() {
     }
 
-    public static Monster selectPriorityRangedAttackTarget(BotEntry entry,
+    public static Monster selectPriorityRangedAttackTarget(AgentRuntimeEntry entry,
                                                           Character agent,
                                                           Point agentPosition,
                                                           Monster preferredTarget) {
@@ -51,7 +51,7 @@ public final class AgentRangedPriorityTargetSelector {
         return best;
     }
 
-    private static boolean isNonDegenerateRangedAttackTarget(BotEntry entry,
+    private static boolean isNonDegenerateRangedAttackTarget(AgentRuntimeEntry entry,
                                                             Character agent,
                                                             Point agentPosition,
                                                             WeaponType weaponType,

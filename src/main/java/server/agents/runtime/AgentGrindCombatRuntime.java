@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.combat.AgentAoeRepositionService;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.life.Monster;
 
@@ -24,7 +25,7 @@ public final class AgentGrindCombatRuntime {
         return AgentAoeRepositionService.resolveAoeReposition(entry, agent, target, attackPlan, agentPosition);
     }
 
-    public static Monster selectPriorityRangedAttackTarget(BotEntry entry,
+    public static Monster selectPriorityRangedAttackTarget(AgentRuntimeEntry entry,
                                                            Character agent,
                                                            Point agentPosition,
                                                            Monster preferredTarget) {

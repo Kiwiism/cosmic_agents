@@ -5398,6 +5398,10 @@ Current physics correction:
   immediate projectile target checks, region occupancy penalties, debug stats,
   consumable-buff debug lines, and skill-buff debug lines remain unchanged.
   Grind-mode target-search hooks now call the Agent-entry selectors directly.
+- Ranged priority target selection now accepts `AgentRuntimeEntry`; no-ammo
+  gating, ranged weapon checks, degenerate-target replacement, attack-plan
+  routing, range checks, and grounded-use gating remain unchanged. Grind-mode
+  priority-target hooks now call the Agent-entry selector directly.
 
 Initial reconstruction order:
 
