@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned social chat callback facade over temporary bot-side fame side
@@ -14,12 +14,12 @@ public final class AgentBotSocialRuntime {
     private AgentBotSocialRuntime() {
     }
 
-    public static AgentChatSocialFlow.SocialCallbacks socialCallbacks(BotEntry entry) {
+    public static AgentChatSocialFlow.SocialCallbacks socialCallbacks(AgentRuntimeEntry entry) {
         return targetName -> AgentBotSchedulerRuntime.afterRandomDelay(
                 500, 900, () -> handleFameCommand(entry, targetName));
     }
 
-    public static void handleFameCommand(BotEntry entry, String targetName) {
+    public static void handleFameCommand(AgentRuntimeEntry entry, String targetName) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character target;
         if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {

@@ -5356,6 +5356,9 @@ Current physics correction:
 - Mob-touch sweep runtime now accepts `AgentRuntimeEntry`; previous-position
   lookup, sweep bounds, lower-half intersection, and remembered touch position
   behavior are unchanged.
+- Social/fame chat callbacks now accept `AgentRuntimeEntry`; target resolution,
+  self-fame handling, fame eligibility checks, fame mutation, and reply behavior
+  are unchanged.
 
 Initial reconstruction order:
 
