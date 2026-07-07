@@ -5402,6 +5402,11 @@ Current physics correction:
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, range checks, and grounded-use gating remain unchanged. Grind-mode
   priority-target hooks now call the Agent-entry selector directly.
+- Grind navigation retreat target selection now accepts `AgentRuntimeEntry`;
+  retreat holds, breakout direction selection, cross-region retreat scoring,
+  projectile retreat probes, local retreat validation, path lookup, and region
+  resolution remain unchanged. Grind-mode navigation hooks now call the
+  Agent-entry selector directly.
 
 Initial reconstruction order:
 

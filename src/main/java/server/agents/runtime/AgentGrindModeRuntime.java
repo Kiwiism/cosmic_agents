@@ -102,7 +102,7 @@ public final class AgentGrindModeRuntime {
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, targetPosition) ->
                         AgentGrindNavigationRuntime.selectCrossRegionRetreatTarget(
-                                asBotEntry(entry), agentPosition, targetPosition),
+                                entry, agentPosition, targetPosition),
                 AgentCombatRangePolicy::isTargetInAttackRange,
                 (entry, agent, target, attackPlan, agentPosition) ->
                         AgentGrindCombatRuntime.resolveAoeReposition(
@@ -122,7 +122,7 @@ public final class AgentGrindModeRuntime {
         return new AgentGrindNavigationTailService.Hooks(
                 (entry, agentPosition, combatTargetPosition, retreatChecked) ->
                         AgentGrindNavigationRuntime.selectGrindNavigationTarget(
-                                asBotEntry(entry), agentPosition, combatTargetPosition, retreatChecked),
+                                entry, agentPosition, combatTargetPosition, retreatChecked),
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, mobPosition) ->
                         AgentGrindTargetRuntime.convenientLootTarget(asBotEntry(entry), agentPosition, mobPosition));

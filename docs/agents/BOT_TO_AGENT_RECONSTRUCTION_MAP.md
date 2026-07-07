@@ -92,6 +92,11 @@ Recent map updates:
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while
   grind-mode priority-target hooks no longer cast for this selector.
+- `AgentGrindNavigationTargetSelector` and `AgentGrindNavigationRuntime` now
+  accept `AgentRuntimeEntry`. Retreat holds, breakout direction selection,
+  cross-region retreat scoring, projectile retreat probes, local retreat
+  validation, path lookup, and region resolution are unchanged while grind-mode
+  navigation hooks no longer cast for this selector.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

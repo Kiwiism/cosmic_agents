@@ -5,7 +5,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -16,12 +15,12 @@ public final class AgentGrindNavigationRuntime {
     private AgentGrindNavigationRuntime() {
     }
 
-    public static Point selectGrindNavigationTarget(BotEntry entry, Point agentPosition, Point combatTargetPosition) {
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry, Point agentPosition, Point combatTargetPosition) {
         return AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
                 entry, agentPosition, combatTargetPosition, hooks());
     }
 
-    public static Point selectGrindNavigationTarget(BotEntry entry,
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
                                                     Point agentPosition,
                                                     Point combatTargetPosition,
                                                     boolean crossRegionRetreatChecked) {
@@ -29,14 +28,14 @@ public final class AgentGrindNavigationRuntime {
                 entry, agentPosition, combatTargetPosition, crossRegionRetreatChecked, hooks());
     }
 
-    public static Point selectCrossRegionRetreatTarget(BotEntry entry,
+    public static Point selectCrossRegionRetreatTarget(AgentRuntimeEntry entry,
                                                        Point agentPosition,
                                                        Point combatTargetPosition) {
         return AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
                 entry, agentPosition, combatTargetPosition, hooks());
     }
 
-    public static boolean shouldUseLocalCombatRetreatTarget(BotEntry entry,
+    public static boolean shouldUseLocalCombatRetreatTarget(AgentRuntimeEntry entry,
                                                             Point agentPosition,
                                                             Point combatTargetPosition,
                                                             Point retreatPosition) {

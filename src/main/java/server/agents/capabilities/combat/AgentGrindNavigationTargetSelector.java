@@ -8,7 +8,7 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -20,7 +20,7 @@ import java.util.List;
 public final class AgentGrindNavigationTargetSelector {
     @FunctionalInterface
     public interface RegionResolver {
-        int resolve(AgentNavigationGraph graph, BotEntry entry, MapleMap map, Point position);
+        int resolve(AgentNavigationGraph graph, AgentRuntimeEntry entry, MapleMap map, Point position);
     }
 
     @FunctionalInterface
@@ -46,14 +46,14 @@ public final class AgentGrindNavigationTargetSelector {
     private AgentGrindNavigationTargetSelector() {
     }
 
-    public static Point selectGrindNavigationTarget(BotEntry entry,
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
                                                     Point agentPosition,
                                                     Point combatTargetPosition,
                                                     NavigationHooks hooks) {
         return selectGrindNavigationTarget(entry, agentPosition, combatTargetPosition, false, hooks);
     }
 
-    public static Point selectGrindNavigationTarget(BotEntry entry,
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
                                                     Point agentPosition,
                                                     Point combatTargetPosition,
                                                     boolean crossRegionRetreatChecked,
@@ -124,7 +124,7 @@ public final class AgentGrindNavigationTargetSelector {
         return new Point(agentPosition.x + dir * AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X, agentPosition.y);
     }
 
-    private static int pickBreakoutDirection(BotEntry entry,
+    private static int pickBreakoutDirection(AgentRuntimeEntry entry,
                                              Point agentPosition,
                                              Point combatTargetPosition,
                                              NavigationHooks hooks) {
@@ -166,7 +166,7 @@ public final class AgentGrindNavigationTargetSelector {
         return leftBestMobs < rightBestMobs ? -1 : 1;
     }
 
-    public static Point selectCrossRegionRetreatTarget(BotEntry entry,
+    public static Point selectCrossRegionRetreatTarget(AgentRuntimeEntry entry,
                                                        Point agentPosition,
                                                        Point combatTargetPosition,
                                                        NavigationHooks hooks) {
@@ -393,7 +393,7 @@ public final class AgentGrindNavigationTargetSelector {
         return count;
     }
 
-    public static boolean shouldUseLocalCombatRetreatTarget(BotEntry entry,
+    public static boolean shouldUseLocalCombatRetreatTarget(AgentRuntimeEntry entry,
                                                             Point agentPosition,
                                                             Point combatTargetPosition,
                                                             Point retreatPosition,
