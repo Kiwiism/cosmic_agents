@@ -83,6 +83,11 @@ Recent map updates:
   HP/MP mutation, mob-hit cooldowns, alert marking, death entry, knockback
   gating, and movement broadcast are unchanged; common tick also invokes the
   existing Agent-entry death callbacks directly.
+- `AgentBotCombatTargetRuntime` and `AgentBotCombatReportRuntime` now accept
+  `AgentRuntimeEntry`. Grind, patrol, follow-attack, and reachable-target
+  selection, graph scoring, region occupancy penalties, debug stats, consumable
+  buff debug lines, and skill-buff debug lines are unchanged. Grind-mode target
+  search now uses these Agent-entry selectors without redundant casts.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

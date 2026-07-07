@@ -5393,6 +5393,11 @@ Current physics correction:
   marking, death entry, stance/knockback gating, and movement broadcast remain
   unchanged. Common tick also calls the existing Agent-entry death-state/death
   entry callbacks without redundant casts.
+- Combat target selection and combat debug reporting now accept
+  `AgentRuntimeEntry`; grind/patrol/follow target search, graph scoring,
+  immediate projectile target checks, region occupancy penalties, debug stats,
+  consumable-buff debug lines, and skill-buff debug lines remain unchanged.
+  Grind-mode target-search hooks now call the Agent-entry selectors directly.
 
 Initial reconstruction order:
 

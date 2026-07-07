@@ -11,7 +11,7 @@ import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
@@ -31,7 +31,7 @@ public final class AgentBotCombatTargetRuntime {
     private AgentBotCombatTargetRuntime() {
     }
 
-    public static Monster findGrindTarget(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+    public static Monster findGrindTarget(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
@@ -52,7 +52,7 @@ public final class AgentBotCombatTargetRuntime {
         }
     }
 
-    public static Monster findPatrolTarget(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+    public static Monster findPatrolTarget(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         long startedAt = System.nanoTime();
         try {
             if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
@@ -102,7 +102,7 @@ public final class AgentBotCombatTargetRuntime {
         }
     }
 
-    public static Monster findFollowAttackTarget(BotEntry entry, Character bot, AgentCombatConfig.Config config) {
+    public static Monster findFollowAttackTarget(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         long startedAt = System.nanoTime();
         try {
             Point botPos = bot.getPosition();
@@ -138,7 +138,7 @@ public final class AgentBotCombatTargetRuntime {
         }
     }
 
-    public static boolean isReachableGrindTarget(BotEntry entry, Character bot, Monster target) {
+    public static boolean isReachableGrindTarget(AgentRuntimeEntry entry, Character bot, Monster target) {
         boolean targetPresentAndAlive = target != null && target.isAlive();
         boolean hasRuntimeContext = entry != null && bot != null;
         GrindGraphContext graphContext = targetPresentAndAlive && hasRuntimeContext
@@ -176,7 +176,7 @@ public final class AgentBotCombatTargetRuntime {
                 UNREACHABLE_GRAPH_COST);
     }
 
-    private static List<AgentScoredGrindTarget> scoreGrindTargets(BotEntry entry,
+    private static List<AgentScoredGrindTarget> scoreGrindTargets(AgentRuntimeEntry entry,
                                                                   Character bot,
                                                                   Point botPos,
                                                                   Foothold botFoothold,
@@ -205,7 +205,7 @@ public final class AgentBotCombatTargetRuntime {
                 context.startRegionId());
     }
 
-    private static List<AgentScoredGrindTarget> scoreLocalTargets(BotEntry entry,
+    private static List<AgentScoredGrindTarget> scoreLocalTargets(AgentRuntimeEntry entry,
                                                                   Character bot,
                                                                   Point botPos,
                                                                   Foothold botFoothold,
@@ -222,7 +222,7 @@ public final class AgentBotCombatTargetRuntime {
                         entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
     }
 
-    private static List<AgentScoredGrindTarget> scoreTargetRegions(BotEntry entry,
+    private static List<AgentScoredGrindTarget> scoreTargetRegions(AgentRuntimeEntry entry,
                                                                    GrindGraphContext context,
                                                                    Character bot,
                                                                    Point botPos,
@@ -289,7 +289,7 @@ public final class AgentBotCombatTargetRuntime {
         }
 
         int occupiedCount = 0;
-        for (BotEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
                 continue;
             }
@@ -320,13 +320,13 @@ public final class AgentBotCombatTargetRuntime {
                 config.GRIND_REGION_OCCUPANCY_PENALTY, config.GRIND_REGION_OCCUPANCY_PENALTY_CAP);
     }
 
-    private record GrindGraphContext(BotEntry entry,
+    private record GrindGraphContext(AgentRuntimeEntry entry,
                                      MapleMap map,
                                      AgentNavigationGraph graph,
                                      AgentMovementProfile profile,
                                      Point startPos,
                                      int startRegionId) {
-        static GrindGraphContext resolve(BotEntry entry, Character bot, Point botPos) {
+        static GrindGraphContext resolve(AgentRuntimeEntry entry, Character bot, Point botPos) {
             if (entry == null || bot == null || bot.getMap() == null || bot.getMap().getFootholds() == null) {
                 return unavailable(entry, bot, botPos);
             }
@@ -348,7 +348,7 @@ public final class AgentBotCombatTargetRuntime {
             return new GrindGraphContext(entry, bot.getMap(), graph, profile, new Point(botPos), startRegionId);
         }
 
-        private static GrindGraphContext unavailable(BotEntry entry, Character bot, Point botPos) {
+        private static GrindGraphContext unavailable(AgentRuntimeEntry entry, Character bot, Point botPos) {
             MapleMap map = bot == null ? null : bot.getMap();
             AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             Point startPos = botPos == null ? null : new Point(botPos);

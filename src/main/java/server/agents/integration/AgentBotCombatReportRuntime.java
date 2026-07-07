@@ -9,7 +9,7 @@ import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.runtime.AgentRuntimeConfig;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -25,7 +25,7 @@ public final class AgentBotCombatReportRuntime {
     private AgentBotCombatReportRuntime() {
     }
 
-    public static String debugStatsReport(BotEntry entry, Character bot) {
+    public static String debugStatsReport(AgentRuntimeEntry entry, Character bot) {
         Monster target = AgentBotGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
             target = AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
@@ -56,11 +56,11 @@ public final class AgentBotCombatReportRuntime {
         return AgentCombatDialogueReporter.critReport(crit, dmg);
     }
 
-    public static List<String> buffDebugLines(BotEntry entry, Character bot) {
+    public static List<String> buffDebugLines(AgentRuntimeEntry entry, Character bot) {
         return AgentBuffService.getDebugLines(entry, bot);
     }
 
-    public static List<String> skillBuffDebugLines(BotEntry entry, Character bot) {
+    public static List<String> skillBuffDebugLines(AgentRuntimeEntry entry, Character bot) {
         long now = System.currentTimeMillis();
 
         long lastActionAgeMs = AgentBotSkillBuffDebugStateRuntime.lastActionAgeMs(entry, now);
