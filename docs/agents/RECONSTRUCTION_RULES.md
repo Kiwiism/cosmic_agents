@@ -5555,6 +5555,10 @@ Current physics correction:
   cancellation, manual-trade clearing, reset, completion reactions, and
   callback construction. `AgentTradeLifecycleRuntimeService` keeps the
   temporary BotEntry callback adaptation for existing trade runtime callers.
+- Manual trade service now accepts `AgentRuntimeEntry` for trade-window timeout
+  bookkeeping, greeting cleanup, state clearing, and delayed invite acceptance.
+  Existing manual owner/peer trade flow still enters through
+  `AgentManualTradeRuntimeService`, preserving behavior.
 
 Initial reconstruction order:
 

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -23,7 +23,7 @@ class AgentManualTradeServiceTest {
     void beginsManualTradeStateForNewTradeWindow() {
         Character bot = mock(Character.class);
         Trade trade = mock(Trade.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, 60_000, value -> value);
 
@@ -36,7 +36,7 @@ class AgentManualTradeServiceTest {
     void defaultManualTradeTimeoutMatchesLegacyDuration() {
         Character bot = mock(Character.class);
         Trade trade = mock(Trade.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, value -> value);
 
@@ -50,7 +50,7 @@ class AgentManualTradeServiceTest {
         Character bot = mock(Character.class);
         when(bot.getId()).thenReturn(88);
         Trade trade = mock(Trade.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentBotManualTradeStateRuntime.beginTrade(entry, trade, 100);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
@@ -86,7 +86,7 @@ class AgentManualTradeServiceTest {
         Character bot = mock(Character.class);
         Character inviter = mock(Character.class);
         Trade trade = mock(Trade.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         when(trade.getNumber()).thenReturn((byte) 1);
 
         Trade result = AgentManualTradeService.acceptInviteWhenReady(entry, bot, inviter, trade, 600, value -> 100);
@@ -101,7 +101,7 @@ class AgentManualTradeServiceTest {
         Character inviter = mock(Character.class);
         Trade trade = mock(Trade.class);
         Trade joinedTrade = mock(Trade.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         when(trade.getNumber()).thenReturn((byte) 1);
         when(bot.getTrade()).thenReturn(joinedTrade);
         when(joinedTrade.isFullTrade()).thenReturn(true);
@@ -114,3 +114,4 @@ class AgentManualTradeServiceTest {
         }
     }
 }
+

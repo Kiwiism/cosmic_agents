@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentManualTradeService` now accepts `AgentRuntimeEntry` for manual-trade
+  timeout tracking, greeting cleanup, state clearing, and delayed invite
+  acceptance. `AgentManualTradeRuntimeService` remains the temporary BotEntry
+  runtime caller while manual trade behavior stays unchanged.
 - `AgentTradeLifecycleService` now accepts `AgentRuntimeEntry` for trade
   cancellation, manual-trade clearing, reset, completion reactions, and
   lifecycle callbacks. `AgentTradeLifecycleRuntimeService` remains the

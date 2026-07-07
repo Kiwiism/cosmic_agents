@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.Trade;
 import server.agents.integration.AgentBotManualTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,14 +21,14 @@ public final class AgentManualTradeService {
     private AgentManualTradeService() {
     }
 
-    public static boolean beginOrTickTimeout(BotEntry entry,
+    public static boolean beginOrTickTimeout(AgentRuntimeEntry entry,
                                              Character agent,
                                              Trade trade,
                                              IntUnaryOperator tickDown) {
         return beginOrTickTimeout(entry, agent, trade, DEFAULT_MANUAL_TRADE_TIMEOUT_MS, tickDown);
     }
 
-    public static boolean beginOrTickTimeout(BotEntry entry,
+    public static boolean beginOrTickTimeout(AgentRuntimeEntry entry,
                                              Character agent,
                                              Trade trade,
                                              int timeoutMs,
@@ -55,7 +55,7 @@ public final class AgentManualTradeService {
         return true;
     }
 
-    public static void clearState(BotEntry entry, Character agent) {
+    public static void clearState(AgentRuntimeEntry entry, Character agent) {
         clearGreeting(agent);
         AgentBotManualTradeStateRuntime.clear(entry);
     }
@@ -72,7 +72,7 @@ public final class AgentManualTradeService {
         }
     }
 
-    public static Trade acceptInviteWhenReady(BotEntry entry,
+    public static Trade acceptInviteWhenReady(AgentRuntimeEntry entry,
                                               Character agent,
                                               Character inviter,
                                               Trade trade,
