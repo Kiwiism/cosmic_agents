@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
+  is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
+  commands, formation commands, targeted/untargeted routing, typo suggestions,
+  reply-channel updates, LLM fallback, and owner-command activity tracking are
+  unchanged.
 - `AgentLlmReplyRuntime` now accepts `AgentRuntimeEntry` and creates
   `AgentLlmReplyRequest<AgentRuntimeEntry>`. Sender relation, reply channel,
   prompt context, mode/farm-anchor flags, owner-command context, and reply

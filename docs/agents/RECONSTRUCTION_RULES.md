@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Chat route runtime now uses generic `AgentRuntimeEntry` handles instead of
+  importing `BotEntry`. Pending-offer routing, lifecycle chat commands,
+  formation commands, targeted/untargeted routing, typo suggestions, reply
+  channel updates, LLM fallback, and owner command activity tracking are
+  unchanged.
 - LLM reply runtime now accepts `AgentRuntimeEntry` instead of `BotEntry`.
   Sender relation, reply channel, prompt context, mode/farm-anchor flags,
   owner-command context, and asynchronous reply delivery are unchanged.

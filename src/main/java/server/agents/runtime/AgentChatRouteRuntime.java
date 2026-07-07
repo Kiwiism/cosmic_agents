@@ -20,7 +20,6 @@ import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -48,10 +47,10 @@ public final class AgentChatRouteRuntime {
                 AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
-    public static void handleChat(Character leader,
+    public static <E extends AgentRuntimeEntry> void handleChat(Character leader,
                                   String message,
                                   AgentReplyChannel channel,
-                                  Map<Integer, List<BotEntry>> entriesByLeader,
+                                  Map<Integer, List<E>> entriesByLeader,
                                   AgentRecruitCommandService.RecruitAction recruitAction,
                                   AgentTransferCommandService.TransferAction transferAction,
                                   AgentDismissCommandService.DismissAction dismissAction,
@@ -72,8 +71,8 @@ public final class AgentChatRouteRuntime {
                         defaultSnapRangePx));
     }
 
-    private static AgentChatIngressService.Hooks<BotEntry> chatIngressHooks(
-            Map<Integer, List<BotEntry>> entriesByLeader,
+    private static <E extends AgentRuntimeEntry> AgentChatIngressService.Hooks<E> chatIngressHooks(
+            Map<Integer, List<E>> entriesByLeader,
             AgentRecruitCommandService.RecruitAction recruitAction,
             AgentTransferCommandService.TransferAction transferAction,
             AgentDismissCommandService.DismissAction dismissAction,
@@ -119,7 +118,7 @@ public final class AgentChatRouteRuntime {
                         untargetedChatHooks()));
     }
 
-    private static AgentTargetedChatRouteService.Hooks<BotEntry> targetedChatHooks() {
+    private static <E extends AgentRuntimeEntry> AgentTargetedChatRouteService.Hooks<E> targetedChatHooks() {
         return new AgentTargetedChatRouteService.Hooks<>(
                 (entries, message) -> {
                     var match = AgentBotCommandParser.resolveTargetedBot(entries, message);
@@ -141,7 +140,7 @@ public final class AgentChatRouteRuntime {
                 Character::yellowMessage);
     }
 
-    private static AgentUntargetedChatRouteService.Hooks<BotEntry> untargetedChatHooks() {
+    private static <E extends AgentRuntimeEntry> AgentUntargetedChatRouteService.Hooks<E> untargetedChatHooks() {
         return new AgentUntargetedChatRouteService.Hooks<>(
                 AgentChatCommandClassifier::matchFollowTarget,
                 AgentFollowTargetRuntime::applyFollowTargetCommand,
@@ -157,7 +156,7 @@ public final class AgentChatRouteRuntime {
                 AgentBotReplyRuntime::queueReply);
     }
 
-    private static void handleAgentChat(BotEntry entry, String message) {
+    private static void handleAgentChat(AgentRuntimeEntry entry, String message) {
         AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry));
     }
 }
