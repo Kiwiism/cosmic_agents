@@ -5,7 +5,7 @@ import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotScrollReactionRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -31,7 +31,7 @@ class AgentScrollReactionServiceTest {
         when(bot.getId()).thenReturn(20);
         when(bot.getMapId()).thenReturn(100000000);
         when(bot.getPosition()).thenReturn(new Point(60, 60));
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         try (MockedStatic<AgentBotScrollReactionRuntime> scheduler = mockStatic(AgentBotScrollReactionRuntime.class)) {
             scheduler.when(() -> AgentBotScrollReactionRuntime.randomDelayMs(0, 2001)).thenReturn(123L);

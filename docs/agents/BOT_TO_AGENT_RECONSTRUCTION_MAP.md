@@ -12,6 +12,11 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentScrollReactionService` now accepts `AgentRuntimeEntry` on its Agent
+  service API. Scroll-event range filtering, delayed reaction scheduling,
+  streak/load tracking, emotes, chat queueing, fidget triggering, and cooldowns
+  remain unchanged while the remaining registry source is still a temporary
+  `BotEntry`-backed shell.
 - `AgentBotActiveModeRuntime` now stays on `AgentRuntimeEntry` for active-mode
   preparation callbacks. Auto-equip, gear suggestion cooldown reset, sibling
   gear suggestion, autopot setup, and mode-start potion-share checks remain

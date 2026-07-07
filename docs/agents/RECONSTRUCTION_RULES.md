@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Scroll reaction service entry handling now uses `AgentRuntimeEntry` instead
+  of `BotEntry` on the Agent-owned public surface. Range filtering, delayed
+  reaction scheduling, streak/load tracking, emotes, chat queueing, fidget
+  triggering, and cooldown behavior are unchanged.
 - Combat cooldown compatibility wrappers were removed from `BotEntry`.
   Combat, movement-lock, damage, and alert callers already use
   `AgentBotCombatCooldownStateRuntime` over `AgentCombatCooldownState`.

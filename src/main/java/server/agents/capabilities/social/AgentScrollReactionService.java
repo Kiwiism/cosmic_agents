@@ -11,8 +11,8 @@ import server.agents.integration.AgentBotScrollReactionStateRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
-import server.bots.BotEntry;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.*;
 import java.util.Collection;
@@ -75,7 +75,7 @@ public final class AgentScrollReactionService {
     public static void handleScrollEvent(Character source,
                                          Equip.ScrollResult result,
                                          int scrollItemId,
-                                         Collection<List<BotEntry>> allEntries) {
+                                         Collection<? extends List<? extends AgentRuntimeEntry>> allEntries) {
         if (source == null || source.getMap() == null || result == null || allEntries == null) {
             return;
         }
@@ -97,8 +97,8 @@ public final class AgentScrollReactionService {
         int mapId = source.getMapId();
         int scrollSuccessRate = resolveScrollSuccessRate(scrollItemId);
 
-        for (List<BotEntry> entries : allEntries) {
-            for (BotEntry entry : entries) {
+        for (List<? extends AgentRuntimeEntry> entries : allEntries) {
+            for (AgentRuntimeEntry entry : entries) {
                 Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
                 if (bot == null || bot.getId() == source.getId() || bot.getMapId() != mapId) {
                     continue;
@@ -120,7 +120,7 @@ public final class AgentScrollReactionService {
         }
     }
 
-    public static void maybeReact(BotEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
+    public static void maybeReact(AgentRuntimeEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null) {
             return;
@@ -160,7 +160,7 @@ public final class AgentScrollReactionService {
         }
     }
 
-    public static double recordReactionLoad(BotEntry entry, long now) {
+    public static double recordReactionLoad(AgentRuntimeEntry entry, long now) {
         return AgentBotScrollReactionStateRuntime.recordReactionLoad(entry, now, LOAD_DECAY_MS);
     }
 
@@ -193,7 +193,7 @@ public final class AgentScrollReactionService {
         return 0.25;
     }
 
-    public static int updateReactionStreak(BotEntry entry, int scrollerId, boolean success, long now) {
+    public static int updateReactionStreak(AgentRuntimeEntry entry, int scrollerId, boolean success, long now) {
         if (entry == null || scrollerId <= 0) {
             return 0;
         }
@@ -246,7 +246,7 @@ public final class AgentScrollReactionService {
         return chance > 0 && ThreadLocalRandom.current().nextInt(100) < chance;
     }
 
-    private static boolean shouldQueueChat(BotEntry entry) {
+    private static boolean shouldQueueChat(AgentRuntimeEntry entry) {
         return AgentBotMessageQueueStateRuntime.isIdle(entry);
     }
 
