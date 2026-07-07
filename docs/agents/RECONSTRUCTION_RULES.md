@@ -5245,6 +5245,10 @@ Current physics correction:
 - Follow-idle movement runtime now accepts `AgentRuntimeEntry`; configured
   follow/stop distance lookup, fast-path eligibility, recheck cadence, decision
   label, and stuck-progress reset behavior are unchanged.
+- Tick state maintenance now clears reached move targets and patrol-on-map-change
+  through `AgentRuntimeEntry`; arrival-distance handling, precise target
+  preservation, patrol map matching, and live tick context ordering are
+  unchanged.
 
 Initial reconstruction order:
 

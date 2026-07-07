@@ -25,8 +25,8 @@ public final class AgentLiveTickContextRuntime {
                         runtimeEntry -> targetSnapshotCapture.capture(asBotEntry(runtimeEntry)),
                         AgentTickStateMaintenanceService::updateObservedLeaderMotion,
                         AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
-                        (runtimeEntry, runtimeAgent) -> AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(asBotEntry(runtimeEntry), runtimeAgent),
-                        (runtimeEntry, runtimeAgent) -> AgentTickStateMaintenanceService.clearPatrolOnMapChange(asBotEntry(runtimeEntry), runtimeAgent),
+                        AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
+                        AgentTickStateMaintenanceService::clearPatrolOnMapChange,
                         (runtimeEntry, agentPosition, targetSnapshot) ->
                                 AgentLocalAttackMoveWindowRuntime.clearFollowActionMoveWindowIfSettled(
                                         asBotEntry(runtimeEntry),

@@ -7,7 +7,6 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -20,7 +19,7 @@ import static org.mockito.Mockito.when;
 class AgentTickStateMaintenanceServiceTest {
     @Test
     void updatesObservedLeaderMotionFromPreviousLeaderPosition() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(10, 20));
 
         AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, new Point(13, 18));
@@ -31,7 +30,7 @@ class AgentTickStateMaintenanceServiceTest {
 
     @Test
     void ignoresMissingLeaderMotionInputs() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
 
         AgentTickStateMaintenanceService.updateObservedLeaderMotion(null, new Point(13, 18));
         AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, null);
@@ -42,7 +41,7 @@ class AgentTickStateMaintenanceServiceTest {
 
     @Test
     void keepsFarmAnchorOnSameMap() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100000000);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(50, 60), 100000000);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(50, 60));
@@ -55,7 +54,7 @@ class AgentTickStateMaintenanceServiceTest {
 
     @Test
     void clearsFarmAnchorAndPreciseMoveTargetOnMapChange() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(200000000);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(50, 60), 100000000);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(50, 60));
@@ -69,7 +68,7 @@ class AgentTickStateMaintenanceServiceTest {
     @Test
     void clearsReachedNormalMoveTargetUsingConfiguredDistance() {
         Character agent = agentAt(new Point(95, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
         AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
@@ -80,7 +79,7 @@ class AgentTickStateMaintenanceServiceTest {
     @Test
     void keepsUnreachedMoveTarget() {
         Character agent = agentAt(new Point(80, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
         AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
@@ -91,7 +90,7 @@ class AgentTickStateMaintenanceServiceTest {
     @Test
     void preciseMoveTargetUsesPreciseArrivalDistance() {
         Character agent = agentAt(new Point(91, 100));
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 100));
 
         AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
@@ -102,7 +101,7 @@ class AgentTickStateMaintenanceServiceTest {
     @Test
     void keepsPatrolOnSameMap() {
         Character agent = agentOnMap(100000000);
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotPatrolStateRuntime.startPatrol(entry, 7, 100000000);
 
         AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
@@ -113,7 +112,7 @@ class AgentTickStateMaintenanceServiceTest {
     @Test
     void clearsPatrolOnMapChange() {
         Character agent = agentOnMap(200000000);
-        BotEntry entry = entry(agent);
+        AgentRuntimeEntry entry = entry(agent);
         AgentBotPatrolStateRuntime.startPatrol(entry, 7, 100000000);
 
         AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
@@ -123,7 +122,7 @@ class AgentTickStateMaintenanceServiceTest {
 
     @Test
     void marksPreciseNavigationTargetForPreciseMoveTarget() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 100));
 
         AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
@@ -133,7 +132,7 @@ class AgentTickStateMaintenanceServiceTest {
 
     @Test
     void doesNotMarkPreciseNavigationTargetForNormalMoveTarget() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
         AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
@@ -153,11 +152,11 @@ class AgentTickStateMaintenanceServiceTest {
         return agent;
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 
-    private static BotEntry entry(Character agent) {
-        return new BotEntry(agent, mock(Character.class), null);
+    private static AgentRuntimeEntry entry(Character agent) {
+        return new AgentRuntimeEntry(agent, mock(Character.class), null);
     }
 }

@@ -7,7 +7,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -36,7 +35,7 @@ public final class AgentTickStateMaintenanceService {
         }
     }
 
-    public static void clearReachedMoveTarget(BotEntry entry, int normalArrivalDistance) {
+    public static void clearReachedMoveTarget(AgentRuntimeEntry entry, int normalArrivalDistance) {
         if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return;
         }
@@ -46,7 +45,7 @@ public final class AgentTickStateMaintenanceService {
         }
     }
 
-    public static void clearPatrolOnMapChange(BotEntry entry, Character agent) {
+    public static void clearPatrolOnMapChange(AgentRuntimeEntry entry, Character agent) {
         if (entry == null || agent == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }
