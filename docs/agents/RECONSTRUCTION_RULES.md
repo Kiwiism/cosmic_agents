@@ -5384,6 +5384,10 @@ Current physics correction:
   need checks, use-item application, last-action notes, chat summaries, and
   debug formatting remain unchanged while common tick no longer casts for this
   buff-pot callback.
+- Common tick now calls the already Agent-entry-based action-lock cooldown and
+  combat skill-cache rebuild callbacks directly; cooldown decay, skill-cache
+  signature checks, cache reset, attack/AOE/heal/summon/support bucket
+  selection, and rebuff scheduling remain unchanged.
 
 Initial reconstruction order:
 

@@ -74,6 +74,10 @@ Recent map updates:
   inventory selection, ACC-hit checks, use-item application, last-action notes,
   chat summaries, and debug formatting are unchanged while common tick no
   longer casts for this buff-pot callback.
+- `AgentCommonTickRuntime` now invokes the already Agent-entry-based
+  action-lock and combat skill-cache callbacks directly. Cooldown decay,
+  skill-cache signature checks, cache reset, attack/AOE/heal/summon/support
+  bucket selection, and rebuff scheduling are unchanged.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

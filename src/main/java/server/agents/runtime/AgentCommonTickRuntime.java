@@ -56,8 +56,8 @@ public final class AgentCommonTickRuntime {
                 (entry, agent, leader) -> AgentPartyQuestHooks.tick(asBotEntry(entry), agent, leader),
                 entry -> tickScriptTasks.accept(asBotEntry(entry)),
                 AgentPartyQuestHooks::isNpcLocked,
-                entry -> AgentBotCombatActionLockRuntime.tickActionLock(asBotEntry(entry)),
-                (entry, agent) -> AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(asBotEntry(entry), agent),
+                AgentBotCombatActionLockRuntime::tickActionLock,
+                AgentBotCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,
                 (entry, agent) -> AgentBotCombatHealRuntime.tickSupportHealing(
                         entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBotCombatBuffRuntime.tickBuffs(
