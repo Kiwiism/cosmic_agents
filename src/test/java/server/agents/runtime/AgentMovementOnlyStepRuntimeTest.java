@@ -78,7 +78,7 @@ class AgentMovementOnlyStepRuntimeTest {
     void defaultPointStepUsesRuntimeConfigAndRunsMovementOnlyStep() {
         Character leader = character(100, "Leader", new Point(10, 20));
         Character agent = character(200, "Agent", new Point(1, 2));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point target = new Point(30, 40);
 
         try (MockedStatic<AgentMovementOnlyRuntime> movementOnly = mockStatic(AgentMovementOnlyRuntime.class)) {

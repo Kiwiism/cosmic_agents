@@ -38,13 +38,13 @@ public final class AgentMovementOnlyStepRuntime {
         return runAiTick;
     }
 
-    public static void stepMovementOnly(BotEntry entry,
+    public static void stepMovementOnly(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick) {
         stepMovementOnly(entry, targetPosition, runAiTick, defaultConfig());
     }
 
-    public static void stepMovementOnly(BotEntry entry,
+    public static void stepMovementOnly(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick,
                                         MovementOnlyStepConfig config) {

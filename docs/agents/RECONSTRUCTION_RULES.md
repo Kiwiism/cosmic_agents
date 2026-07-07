@@ -5257,6 +5257,11 @@ Current physics correction:
 - Movement-only runtime boundary now accepts `AgentRuntimeEntry`; the remaining
   BotEntry casts are limited to downstream movement/shop/recovery adapters, and
   movement-only tick ordering plus config propagation are unchanged.
+- Movement-only direct point-step runtime now accepts `AgentRuntimeEntry`;
+  default config lookup, last-tick timestamp usage, follow-anchor resolver
+  wiring, and movement-only runtime dispatch behavior are unchanged. The
+  snapshot-taking overload remains BotEntry-backed until target snapshot runtime
+  is migrated.
 
 Initial reconstruction order:
 
