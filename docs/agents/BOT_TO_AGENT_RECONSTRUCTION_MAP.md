@@ -12,6 +12,12 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBuildService`, `AgentStarterKitService`, and `AgentBotBuildRuntime`
+  now accept `AgentRuntimeEntry` for AP build selection, AP/SP auto-assignment,
+  respec prompts, level-up checks, job advancement callbacks, starter-kit
+  grants, build status refresh, and AP confirmation replies. Build prompts,
+  stat allocation order, SP variant gating, job-prompt thresholds, starter-kit
+  contents, auto-equip refresh, and reply timing remain unchanged.
 - `AgentOfferService` now accepts `AgentRuntimeEntry` for recommended gear
   offers, sibling offers, loot-offer scheduling, prompt auto-accept, recipient
   resolution, and gear-offer need checks. Offer reservations, owner-idle gates,

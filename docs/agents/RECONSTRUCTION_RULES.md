@@ -5607,6 +5607,12 @@ Current physics correction:
   resolution, and gear-offer need checks. Offer reservations, idle/busy gates,
   same-map sibling filtering, prompt timing, confirmation handling, gear
   scoring, and throwing-star recipient behavior remain unchanged.
+- Build service, starter-kit service, and build chat runtime now accept
+  `AgentRuntimeEntry` for AP build selection, AP/SP auto-assignment, respec
+  prompts, level-up checks, job advancement callbacks, starter-kit grants,
+  build status refresh, and AP confirmation replies. Prompt text, stat
+  allocation order, SP variant gating, job-prompt thresholds, starter-kit
+  contents, auto-equip refresh, and reply timing remain unchanged.
 
 Initial reconstruction order:
 

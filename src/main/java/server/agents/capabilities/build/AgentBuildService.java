@@ -21,7 +21,7 @@ import server.agents.integration.AgentBotBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBuildService {
     public enum StatType {
@@ -59,7 +59,7 @@ public final class AgentBuildService {
     }
 
     /** Stores the AP build, confirms it to the owner, and immediately spends any pending AP. */
-    public static void setApBuild(BotEntry entry, ApBuild build, String confirmMsg) {
+    public static void setApBuild(AgentRuntimeEntry entry, ApBuild build, String confirmMsg) {
         AgentBotBuildStateRuntime.setApBuild(entry, build);
         AgentBotBuildRuntime.confirmApBuild(entry, confirmMsg);
         autoAssignAp(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
@@ -70,14 +70,14 @@ public final class AgentBuildService {
      * no AP is pending, a build is already chosen, a prompt was already sent,
      * or the bot is not on a supported branch.
      */
-    public static String buildApPrompt(BotEntry entry, Character bot) {
+    public static String buildApPrompt(AgentRuntimeEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
         if (AgentBotBuildStateRuntime.hasApBuild(entry) || AgentBotBuildStateRuntime.apPromptSent(entry) || bot.getRemainingAp() < 1) return null;
         return requestApBuildPrompt(entry, bot);
     }
 
-    public static String requestApBuildPrompt(BotEntry entry, Character bot) {
+    public static String requestApBuildPrompt(AgentRuntimeEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
         AgentBotBuildStateRuntime.markApPromptSent(entry);
@@ -85,7 +85,7 @@ public final class AgentBuildService {
     }
 
     /** Spends all remaining AP according to the stored build. */
-    public static void autoAssignAp(BotEntry entry, Character bot) {
+    public static void autoAssignAp(AgentRuntimeEntry entry, Character bot) {
         ApBuild build = AgentBotBuildStateRuntime.apBuild(entry);
         if (build == null || bot.getRemainingAp() < 1) return;
 
@@ -110,7 +110,7 @@ public final class AgentBuildService {
         }
     }
 
-    public static String respecAp(BotEntry entry, Character bot) {
+    public static String respecAp(AgentRuntimeEntry entry, Character bot) {
         if (apPromptForJob(bot.getJob()) == null) {
             return "dont have an ap build for my job yet";
         }
@@ -127,7 +127,7 @@ public final class AgentBuildService {
         return "ok, rebuilt my ap using the bot build";
     }
 
-    public static void handleJobAdvance(BotEntry entry, Character bot, Job oldJob, Job newJob) {
+    public static void handleJobAdvance(AgentRuntimeEntry entry, Character bot, Job oldJob, Job newJob) {
         if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBotBuildStateRuntime.hasApBuild(entry)) {
             reallocateAp(entry, bot);
         }
@@ -136,7 +136,7 @@ public final class AgentBuildService {
         autoAssignAp(entry, bot);
     }
 
-    private static boolean reallocateAp(BotEntry entry, Character bot) {
+    private static boolean reallocateAp(AgentRuntimeEntry entry, Character bot) {
         int minStr = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.STR);
         int minDex = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.DEX);
         int minInt = AssignAPProcessor.getMinStatFloor(bot.getJob(), Stat.INT);
@@ -154,7 +154,7 @@ public final class AgentBuildService {
      * Returns a prompt asking for the SP build variant, or null if not needed.
      * Currently only Hero has two documented builds.
      */
-    public static String buildSpVariantPrompt(BotEntry entry, Character bot) {
+    public static String buildSpVariantPrompt(AgentRuntimeEntry entry, Character bot) {
         if (bot.getJob() != Job.HERO) return null;
         if (AgentBotBuildStateRuntime.hasSpVariant(entry) || AgentBotBuildStateRuntime.spVariantPromptSent(entry) || bot.getRemainingSps()[3] < 1) return null;
         AgentBotBuildStateRuntime.markSpVariantPromptSent(entry);
@@ -165,7 +165,7 @@ public final class AgentBuildService {
      * Spends all available SP following the configured build order.
      * Hero SP is held until the owner chooses a variant.
      */
-    public static void autoAssignSp(BotEntry entry, Character bot) {
+    public static void autoAssignSp(AgentRuntimeEntry entry, Character bot) {
         String spVariant = AgentBotBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) return;
 
@@ -175,7 +175,7 @@ public final class AgentBuildService {
         autoAssignSp(bot, steps);
     }
 
-    public static String respecSp(BotEntry entry, Character bot) {
+    public static String respecSp(AgentRuntimeEntry entry, Character bot) {
         String spVariant = AgentBotBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) {
             return "need your hero build first. say '1h' or '2h'";
@@ -313,7 +313,7 @@ public final class AgentBuildService {
     /**
      * Detects level-up and sends prompts before spending SP/AP so gating can apply.
      */
-    public static void checkLevelUp(BotEntry entry, Character bot) {
+    public static void checkLevelUp(AgentRuntimeEntry entry, Character bot) {
         int lvl = bot.getLevel();
         if (AgentBotBuildStateRuntime.lastKnownLevel(entry) == lvl) return;
 
@@ -335,7 +335,7 @@ public final class AgentBuildService {
     }
 
     /** Returns the next job-advancement prompt, or null if none is pending. */
-    public static String buildJobPrompt(BotEntry entry, Character bot) {
+    public static String buildJobPrompt(AgentRuntimeEntry entry, Character bot) {
         int lvl = bot.getLevel();
         Job job = bot.getJob();
         int prompted = AgentBotBuildStateRuntime.jobPromptSent(entry);

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.capabilities.build.AgentBuildService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.EnumMap;
@@ -20,7 +20,7 @@ import java.util.Map;
 public final class AgentStarterKitService {
     private static final Logger log = LoggerFactory.getLogger(AgentStarterKitService.class);
 
-    public static void advanceJob(BotEntry entry, Job newJob) {
+    public static void advanceJob(AgentRuntimeEntry entry, Job newJob) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         Job oldJob = bot.getJob();

@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
 import server.agents.capabilities.build.AgentStarterKitService;
 import server.agents.capabilities.build.AgentBuildService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned build callback facade over temporary bot-side AP/SP/job side
@@ -18,7 +18,7 @@ public final class AgentBotBuildRuntime {
     private AgentBotBuildRuntime() {
     }
 
-    public static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(BotEntry entry) {
+    public static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatBuildFlow.SpVariantCallbacks() {
             @Override
             public void oneHanded() {
@@ -36,7 +36,7 @@ public final class AgentBotBuildRuntime {
         };
     }
 
-    public static AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks(BotEntry entry) {
+    public static AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatBuildFlow.ApBuildCallbacks() {
             @Override
             public void requestBuildPrompt() {
@@ -54,7 +54,7 @@ public final class AgentBotBuildRuntime {
         };
     }
 
-    public static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(BotEntry entry) {
+    public static AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks(AgentRuntimeEntry entry) {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
             AgentBotReplyRuntime.replyNow(entry, reply);
@@ -62,11 +62,11 @@ public final class AgentBotBuildRuntime {
         };
     }
 
-    public static void confirmApBuild(BotEntry entry, String confirmMsg) {
+    public static void confirmApBuild(AgentRuntimeEntry entry, String confirmMsg) {
         AgentBotReplyRuntime.replyNow(entry, confirmMsg);
     }
 
-    private static void handleApBuildSelection(BotEntry entry, String message) {
+    private static void handleApBuildSelection(AgentRuntimeEntry entry, String message) {
         Character bot = bot(entry);
         Job job = bot.getJob();
         AgentApBuildDialogueResolver.ApBuildChoice choice = AgentApBuildDialogueResolver.resolve(
@@ -93,7 +93,7 @@ public final class AgentBotBuildRuntime {
     }
 
     private static void applyApBuildChoice(
-            BotEntry entry,
+            AgentRuntimeEntry entry,
             AgentBuildService.ApBuild build,
             String confirmMsg,
             String alreadyMsg) {
@@ -112,7 +112,7 @@ public final class AgentBotBuildRuntime {
                 && left.secondaryTarget() == right.secondaryTarget();
     }
 
-    private static Character bot(BotEntry entry) {
+    private static Character bot(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }
