@@ -5777,6 +5777,11 @@ Current physics correction:
 - Anchored farm runtime hooks now use `AgentRuntimeEntry` for local opportunity
   attacks, idle movement/broadcast, and movement-core stepping. Anchored farm
   target handling, idle/farm physics, and movement ordering remain unchanged.
+- Script-task execution, tick-failure recovery, and interaction command wiring
+  now call `AgentBotMovementCommandRuntime` through its `AgentRuntimeEntry`
+  API instead of casting command callbacks back to `BotEntry`. Script start,
+  failure idling, recruit/transfer/dismiss, follow, grind, and stop behavior
+  remain unchanged.
 
 Initial reconstruction order:
 

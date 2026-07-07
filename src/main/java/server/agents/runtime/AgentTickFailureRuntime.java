@@ -30,7 +30,7 @@ public final class AgentTickFailureRuntime {
                 agentCharId,
                 failure,
                 log,
-                stopEntry -> AgentBotMovementCommandRuntime.stop(asBotEntry(stopEntry)));
+                AgentBotMovementCommandRuntime::stop);
     }
 
     public static void handleFailure(AgentRuntimeEntry entry,
@@ -73,7 +73,4 @@ public final class AgentTickFailureRuntime {
         }
     }
 
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (server.bots.BotEntry) entry;
-    }
 }

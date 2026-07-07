@@ -302,6 +302,12 @@ Recent map updates:
   `server.agents.runtime.AgentAnchoredFarmRuntime`. Anchored farm runtime hooks
   now use `AgentRuntimeEntry` for local opportunity attacks, idle movement and
   broadcast, and movement-core stepping while preserving anchored-farm behavior.
+- `BotManager.java#movement-command-callbacks` now routes script-task,
+  tick-failure, and interaction command callbacks through the
+  `AgentRuntimeEntry`-based `AgentBotMovementCommandRuntime` API. Temporary
+  `BotEntry` casts were removed from script execution and tick failure; the
+  interaction facade still returns `BotEntry` until registration/lifecycle
+  return types are migrated.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while

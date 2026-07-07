@@ -17,11 +17,11 @@ public final class AgentScriptTaskExecutionService {
                 entry,
                 task,
                 new AgentScriptTaskStartService.StartHooks(
-                        (point, precise) -> AgentBotMovementCommandRuntime.moveTo(asBotEntry(entry), point, precise),
-                        target -> AgentBotMovementCommandRuntime.follow(asBotEntry(entry), target),
+                        (point, precise) -> AgentBotMovementCommandRuntime.moveTo(entry, point, precise),
+                        target -> AgentBotMovementCommandRuntime.follow(entry, target),
                         targetResolver(entry),
-                        () -> AgentBotMovementCommandRuntime.grind(asBotEntry(entry)),
-                        () -> AgentBotMovementCommandRuntime.stop(asBotEntry(entry)),
+                        () -> AgentBotMovementCommandRuntime.grind(entry),
+                        () -> AgentBotMovementCommandRuntime.stop(entry),
                         (type, itemId, quantity) -> dropItem(entry, type, itemId, quantity)));
     }
 
@@ -42,7 +42,4 @@ public final class AgentScriptTaskExecutionService {
         return AgentScriptItemActionService.dropItem(entry, type, itemId, quantity);
     }
 
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (server.bots.BotEntry) entry;
-    }
 }
