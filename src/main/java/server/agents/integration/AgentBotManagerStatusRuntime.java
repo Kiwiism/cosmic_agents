@@ -19,7 +19,7 @@ public final class AgentBotManagerStatusRuntime {
         AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
     }
 
-    public static void announceOwnerReturnedFromOffline(BotEntry entry) {
+    public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
         AgentBotChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
     }
 

@@ -5334,6 +5334,9 @@ Current physics correction:
   reads the same airshow state without a BotEntry cast, preserving the existing
   skip behavior while airshow movement itself remains a separate capability
   slice.
+- Manager-status offline-return announcement now accepts `AgentRuntimeEntry`;
+  inactive-leader recovery still invokes the same chat-status announcement path
+  with unchanged delayed party message and expression behavior.
 
 Initial reconstruction order:
 
