@@ -6,7 +6,6 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 
@@ -27,21 +26,20 @@ public final class AgentBotBuildStatusRuntime {
     }
 
     public static AgentChatStatusRuntime.StatusCheckActions statusCheckActions(AgentRuntimeEntry entry, Character bot) {
-        BotEntry botEntry = asBotEntry(entry);
         return new AgentChatStatusRuntime.StatusCheckActions() {
             @Override
             public String buildJobPrompt() {
-                return AgentBuildService.buildJobPrompt(botEntry, bot);
+                return AgentBuildService.buildJobPrompt(entry, bot);
             }
 
             @Override
             public String buildSpVariantPrompt() {
-                return AgentBuildService.buildSpVariantPrompt(botEntry, bot);
+                return AgentBuildService.buildSpVariantPrompt(entry, bot);
             }
 
             @Override
             public String buildApPrompt() {
-                return AgentBuildService.buildApPrompt(botEntry, bot);
+                return AgentBuildService.buildApPrompt(entry, bot);
             }
 
             @Override
@@ -51,12 +49,12 @@ public final class AgentBotBuildStatusRuntime {
 
             @Override
             public void autoAssignSp() {
-                AgentBuildService.autoAssignSp(botEntry, bot);
+                AgentBuildService.autoAssignSp(entry, bot);
             }
 
             @Override
             public void autoAssignAp() {
-                AgentBuildService.autoAssignAp(botEntry, bot);
+                AgentBuildService.autoAssignAp(entry, bot);
             }
 
             @Override
@@ -66,7 +64,7 @@ public final class AgentBotBuildStatusRuntime {
                         AgentBotStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 owner != null,
-                                () -> AgentOfferService.offerBestRecommendedGear(botEntry, bot, owner)),
+                                () -> AgentOfferService.offerBestRecommendedGear(entry, bot, owner)),
                         System.currentTimeMillis());
             }
 
@@ -77,7 +75,7 @@ public final class AgentBotBuildStatusRuntime {
                         AgentBotStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 owner != null,
-                                () -> AgentOfferService.offerBestGearToSibling(botEntry, bot)),
+                                () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
                         System.currentTimeMillis());
             }
 
@@ -95,13 +93,9 @@ public final class AgentBotBuildStatusRuntime {
                 List<AgentEquipRecommendation> recs =
                         AgentEquipmentService.findRecommendedEquips(bot, owner);
                 if (!recs.isEmpty()) {
-                    AgentOfferService.notifyOwnerGainedEquip(botEntry, bot, recs.get(0).candidate());
+                    AgentOfferService.notifyOwnerGainedEquip(entry, bot, recs.get(0).candidate());
                 }
             }
         };
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

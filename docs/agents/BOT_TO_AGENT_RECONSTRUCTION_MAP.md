@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotBuildStatusRuntime` now stays on `AgentRuntimeEntry` when building
+  status-check actions. Job/AP/SP prompt lookup, auto-assignment callbacks,
+  gear suggestion gates, spawn-upgrade offering, pending-offer checks, and
+  queued build replies remain unchanged.
 - `AgentMakerService` now accepts `AgentRuntimeEntry` for monster-crystal and
   trash-equip disassembly batches. Maker skill gating, active-batch guard,
   leftover scanning, trash-equip selection, client-lock retry behavior,

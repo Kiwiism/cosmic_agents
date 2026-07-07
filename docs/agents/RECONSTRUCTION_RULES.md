@@ -5618,6 +5618,10 @@ Current physics correction:
   leftover scanning, trash-equip selection, client-lock retry behavior,
   activity-epoch interruption, step timing, abort reasons, and completion
   replies remain unchanged.
+- Build status runtime now stays on `AgentRuntimeEntry` when creating
+  status-check actions. Job/AP/SP prompt lookup, auto-assignment callbacks,
+  gear suggestion gates, spawn-upgrade offering, pending-offer checks, and
+  queued build replies remain unchanged.
 
 Initial reconstruction order:
 
