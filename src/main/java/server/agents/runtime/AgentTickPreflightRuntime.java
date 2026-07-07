@@ -26,7 +26,7 @@ public final class AgentTickPreflightRuntime {
 
     private static AgentTickPreflightService.Hooks hooks() {
         return new AgentTickPreflightService.Hooks(
-                entry -> AgentBotManagerStatusRuntime.airshowActive(asBotEntry(entry)),
+                AgentBotManagerStatusRuntime::airshowActive,
                 AgentBotTickCadenceStateRuntime::consumeSkipDelay,
                 AgentRuntimeCleanupService::removeAgentByCharacterId,
                 (entry, agent, nowMs, heartbeatIntervalMs) -> AgentHeartbeatService.tickHeartbeat(

@@ -5330,6 +5330,10 @@ Current physics correction:
   owner-position sampling, AFK timer state, delayed welcome-back scheduling,
   expression changes, and reply behavior are unchanged, and common tick no
   longer casts for this AFK status callback.
+- Airshow-active status checks now accept `AgentRuntimeEntry`; tick preflight
+  reads the same airshow state without a BotEntry cast, preserving the existing
+  skip behavior while airshow movement itself remains a separate capability
+  slice.
 
 Initial reconstruction order:
 
