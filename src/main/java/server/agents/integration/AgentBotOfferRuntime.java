@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.agents.capabilities.trade.AgentOfferService;
 
@@ -13,7 +14,7 @@ public final class AgentBotOfferRuntime {
     private AgentBotOfferRuntime() {
     }
 
-    public static boolean isOwnerIdleForOffer(BotEntry entry) {
+    public static boolean isOwnerIdleForOffer(AgentRuntimeEntry entry) {
         return AgentBotChatStatusRuntime.isOwnerIdle(entry);
     }
 
@@ -21,7 +22,7 @@ public final class AgentBotOfferRuntime {
         AgentBotReplyRuntime.replyNow(entry, message);
     }
 
-    public static void queueSay(BotEntry entry, String message) {
+    public static void queueSay(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.queueSay(entry, message);
     }
 

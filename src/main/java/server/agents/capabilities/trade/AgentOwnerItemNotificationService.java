@@ -7,8 +7,8 @@ import client.inventory.Item;
 import constants.inventory.ItemConstants;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.bots.BotEntry;
 
 import java.util.List;
 
@@ -24,14 +24,14 @@ public final class AgentOwnerItemNotificationService {
             return;
         }
 
-        List<BotEntry> entries = AgentRuntimeRegistry.entriesForLeader(
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.agentEntriesForLeader(
                 AgentRuntimeRegistry.entriesByLeaderId(), owner.getId());
         if (entries.isEmpty()) {
             return;
         }
 
         AgentBotSchedulerRuntime.afterDelay(0L, () -> {
-            for (BotEntry entry : entries) {
+            for (AgentRuntimeEntry entry : entries) {
                 AgentOfferService.notifyOwnerGainedEquip(entry, AgentBotRuntimeIdentityRuntime.bot(entry), item);
             }
         });

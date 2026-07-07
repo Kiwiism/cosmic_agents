@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 /**
@@ -42,7 +43,7 @@ public final class AgentBotChatStatusRuntime {
         AgentChatStatusRuntime.prepareActiveMode(AgentBotActiveModeRuntime.activeModeActions(entry));
     }
 
-    public static boolean isOwnerIdle(BotEntry entry) {
+    public static boolean isOwnerIdle(AgentRuntimeEntry entry) {
         return AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry));
     }
 

@@ -3,6 +3,7 @@ package server.agents.integration;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import client.Character;
 
@@ -16,7 +17,7 @@ public final class AgentBotStatusRuntime {
     private AgentBotStatusRuntime() {
     }
 
-    public static AgentChatStatusRuntime.StatusState statusState(BotEntry entry) {
+    public static AgentChatStatusRuntime.StatusState statusState(AgentRuntimeEntry entry) {
         return new AgentChatStatusRuntime.StatusState() {
             @Override
             public void setOwnerAfkPosition(Point position) {

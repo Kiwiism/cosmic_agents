@@ -5273,6 +5273,10 @@ Current physics correction:
   leader-scoped entries. The mutable registry storage remains BotEntry-backed,
   while follow-anchor and target-snapshot read paths no longer request
   BotEntry-shaped lists.
+- Owner item notification now reads leader entries through the Agent runtime
+  registry view, and the gear-upgrade notification entry point accepts
+  `AgentRuntimeEntry`; equip filtering, self-agent trade suppression, deferred
+  offer scan scheduling, and upgrade recommendation behavior are unchanged.
 
 Initial reconstruction order:
 

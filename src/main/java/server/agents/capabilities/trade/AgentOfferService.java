@@ -27,6 +27,7 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public final class AgentOfferService {
 
     private AgentOfferService() {}
 
-    public static boolean hasOfferReservation(BotEntry entry) {
+    public static boolean hasOfferReservation(AgentRuntimeEntry entry) {
         return AgentBotOfferStateRuntime.hasOfferReservation(entry);
     }
 
@@ -58,7 +59,7 @@ public final class AgentOfferService {
         return AgentBotOfferStateRuntime.hasPendingOffer(entry);
     }
 
-    public static void notifyOwnerGainedEquip(BotEntry entry, Character bot, Item item) {
+    public static void notifyOwnerGainedEquip(AgentRuntimeEntry entry, Character bot, Item item) {
         if (AgentBotOfferRuntime.isOwnerIdleForOffer(entry)) {
             return;
         }
@@ -230,7 +231,7 @@ public final class AgentOfferService {
         clearPendingOffer(entry);
     }
 
-    private static void createOwnerUpgradeRequest(BotEntry entry, Character bot, Character owner, Item ownerItem) {
+    private static void createOwnerUpgradeRequest(AgentRuntimeEntry entry, Character bot, Character owner, Item ownerItem) {
         // Audience for the specifier is the bot itself: it's describing why the item
         // is good for it, so format stats relative to the bot's job.
         String itemDesc = formatItemSpecifier(ownerItem, bot);
