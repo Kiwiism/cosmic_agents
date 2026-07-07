@@ -5,8 +5,8 @@ import client.Character;
 import java.util.List;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLeaderSafetyRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.bots.BotEntry;
 
 /**
  * Temporary bot-side gateway for session lifecycle side effects while
@@ -20,11 +20,11 @@ public final class AgentBotSessionLifecycleSideEffects {
         AgentInteractionRuntime.reloginAgent(charId, ownerCharId, world, channel);
     }
 
-    public static List<BotEntry> getBotEntries(int ownerCharId) {
-        return AgentRuntimeRegistry.entriesForLeader(ownerCharId);
+    public static List<AgentRuntimeEntry> getBotEntries(int ownerCharId) {
+        return AgentRuntimeRegistry.agentEntriesForLeader(ownerCharId);
     }
 
-    public static BotEntry getBotEntry(int ownerCharId, String agentName) {
+    public static AgentRuntimeEntry getBotEntry(int ownerCharId, String agentName) {
         return AgentRuntimeRegistry.findByName(ownerCharId, agentName);
     }
 

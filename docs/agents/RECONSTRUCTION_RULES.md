@@ -5758,6 +5758,9 @@ Current physics correction:
   stop, move-to, farm-here, patrol, and grind commands. Script-task clearing,
   shop-visit cancellation, navigation-state clearing, patrol-region lookup,
   missing-region reply text, and mode state transitions remain unchanged.
+- Session lifecycle side-effect lookup methods now return `AgentRuntimeEntry`
+  instead of exposing `BotEntry` lists. Relogin dispatch, active-leader lookup,
+  inactive safe-mode issuing, and name/leader lookup behavior remain unchanged.
 
 Initial reconstruction order:
 
