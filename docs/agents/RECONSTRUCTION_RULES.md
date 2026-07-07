@@ -5285,6 +5285,12 @@ Current physics correction:
   target selection, retry suppression callbacks, passive-radius exclusion,
   seek-range filtering, patrol-region adjacency checks, and inventory-full
   guards are unchanged.
+- Passive loot capability and runtime callback boundaries now accept
+  `AgentRuntimeEntry`; loot-inhibit/trade-sequence gates, cooldown ticks,
+  inventory-full warnings, NX-card owner pickup routing, ghost-drop cleanup,
+  auto-equip, and loot-offer prompt scheduling behavior are unchanged. The
+  remaining BotEntry cast is isolated at the inventory integration adapter for
+  the still BotEntry-shaped offer scheduler.
 
 Initial reconstruction order:
 

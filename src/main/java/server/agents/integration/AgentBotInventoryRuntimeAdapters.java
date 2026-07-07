@@ -52,7 +52,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentBotOfferStateRuntime::pendingLootOfferItem,
                 AgentInventoryItemPolicy::hasItem,
                 AgentEquipmentService::autoEquip,
-                AgentOfferService::scheduleLootOfferPrompt,
+                (entry, bot, item, delayMs) -> AgentOfferService.scheduleLootOfferPrompt((BotEntry) entry, bot, item, delayMs),
                 AgentLootCleanupService::cleanupGhostDrop,
                 Character::pickupItem);
     }

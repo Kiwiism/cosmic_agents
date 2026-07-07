@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 
 import java.awt.Point;
@@ -20,7 +20,7 @@ public final class AgentPassiveLootService {
     private AgentPassiveLootService() {
     }
 
-    public static void tickPassiveLoot(BotEntry entry, Character agent, PassiveLootCallbacks callbacks) {
+    public static void tickPassiveLoot(AgentRuntimeEntry entry, Character agent, PassiveLootCallbacks callbacks) {
         if (callbacks.hasLootInhibit()) {
             callbacks.tickLootInhibit();
             return;
@@ -84,7 +84,7 @@ public final class AgentPassiveLootService {
         }
     }
 
-    private static void warnInventoryFullIfNeeded(BotEntry entry,
+    private static void warnInventoryFullIfNeeded(AgentRuntimeEntry entry,
                                                   Character agent,
                                                   MapItem drop,
                                                   PassiveLootCallbacks callbacks) {
@@ -98,7 +98,7 @@ public final class AgentPassiveLootService {
         }
     }
 
-    private static void warnInventoryFull(BotEntry entry,
+    private static void warnInventoryFull(AgentRuntimeEntry entry,
                                           InventoryType type,
                                           PassiveLootCallbacks callbacks) {
         if (!callbacks.canWarnInventoryFull()) {
@@ -116,14 +116,14 @@ public final class AgentPassiveLootService {
         long nowMs();
         int lootRadius();
         boolean canWarnInventoryFull();
-        void replyNow(BotEntry entry, String message);
+        void replyNow(AgentRuntimeEntry entry, String message);
         int delayInventoryFullWarnCooldown();
         void setInventoryFullWarnCooldownMs(int cooldownMs);
         Character owner();
         Item pendingLootOfferItem();
         boolean hasItem(Character agent, Item item);
         void autoEquip(Character agent, Character owner, Item pendingLootOfferItem);
-        void scheduleLootOfferPrompt(BotEntry entry, Character agent, Item item, long delayMs);
+        void scheduleLootOfferPrompt(AgentRuntimeEntry entry, Character agent, Item item, long delayMs);
         void cleanupGhostDrop(Character agent, MapItem drop);
         void pickup(Character character, MapItem drop);
 
@@ -152,7 +152,7 @@ public final class AgentPassiveLootService {
                 @Override public long nowMs() { return nowMs.getAsLong(); }
                 @Override public int lootRadius() { return lootRadius.getAsInt(); }
                 @Override public boolean canWarnInventoryFull() { return canWarnInventoryFull.getAsBoolean(); }
-                @Override public void replyNow(BotEntry entry, String message) { replyNow.reply(entry, message); }
+                @Override public void replyNow(AgentRuntimeEntry entry, String message) { replyNow.reply(entry, message); }
                 @Override public int delayInventoryFullWarnCooldown() { return delayInventoryFullWarnCooldown.getAsInt(); }
                 @Override public void setInventoryFullWarnCooldownMs(int cooldownMs) {
                     setInventoryFullWarnCooldownMs.accept(cooldownMs);
@@ -163,7 +163,7 @@ public final class AgentPassiveLootService {
                 @Override public void autoEquip(Character agent, Character owner, Item pendingLootOfferItem) {
                     autoEquip.autoEquip(agent, owner, pendingLootOfferItem);
                 }
-                @Override public void scheduleLootOfferPrompt(BotEntry entry, Character agent, Item item, long delayMs) {
+                @Override public void scheduleLootOfferPrompt(AgentRuntimeEntry entry, Character agent, Item item, long delayMs) {
                     scheduleLootOfferPrompt.schedule(entry, agent, item, delayMs);
                 }
                 @Override public void cleanupGhostDrop(Character agent, MapItem drop) {
@@ -178,7 +178,7 @@ public final class AgentPassiveLootService {
 
     @FunctionalInterface
     public interface ReplySink {
-        void reply(BotEntry entry, String message);
+        void reply(AgentRuntimeEntry entry, String message);
     }
 
     @FunctionalInterface
@@ -193,7 +193,7 @@ public final class AgentPassiveLootService {
 
     @FunctionalInterface
     public interface LootOfferPromptSink {
-        void schedule(BotEntry entry, Character agent, Item item, long delayMs);
+        void schedule(AgentRuntimeEntry entry, Character agent, Item item, long delayMs);
     }
 
     @FunctionalInterface

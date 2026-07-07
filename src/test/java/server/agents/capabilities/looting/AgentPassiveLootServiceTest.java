@@ -8,6 +8,7 @@ import constants.id.ItemId;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -159,7 +160,7 @@ class AgentPassiveLootServiceTest {
         @Override public long nowMs() { return System.currentTimeMillis(); }
         @Override public int lootRadius() { return 100; }
         @Override public boolean canWarnInventoryFull() { return warnAllowed; }
-        @Override public void replyNow(BotEntry entry, String message) { replyMessage.set(message); }
+        @Override public void replyNow(AgentRuntimeEntry entry, String message) { replyMessage.set(message); }
         @Override public int delayInventoryFullWarnCooldown() { return delayCooldown; }
         @Override public void setInventoryFullWarnCooldownMs(int cooldownMs) { warnCooldown.set(cooldownMs); }
         @Override public Character owner() { return owner.get(); }
@@ -170,7 +171,7 @@ class AgentPassiveLootServiceTest {
             autoEquipOwner.set(owner);
             pendingOfferItem.set(pendingLootOfferItem);
         }
-        @Override public void scheduleLootOfferPrompt(BotEntry entry, Character agent, Item item, long delayMs) {
+        @Override public void scheduleLootOfferPrompt(AgentRuntimeEntry entry, Character agent, Item item, long delayMs) {
             offerItem.set(item);
             offerDelayMs.set(delayMs);
         }
