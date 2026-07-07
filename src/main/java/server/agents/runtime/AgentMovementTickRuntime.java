@@ -23,6 +23,14 @@ public final class AgentMovementTickRuntime {
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 
+    public static void stepMovementCore(AgentRuntimeEntry entry,
+                                        Point targetPosition,
+                                        boolean runAiTick,
+                                        boolean enableUnstuck,
+                                        int stopDistance) {
+        stepMovementCore(asBotEntry(entry), targetPosition, runAiTick, enableUnstuck, stopDistance);
+    }
+
     public static void stepMovementCore(BotEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick,
@@ -47,5 +55,9 @@ public final class AgentMovementTickRuntime {
                 (ignored, targetPosition) -> AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPosition),
                 ignored -> AgentStuckDetectionRuntime.tickStuckDetection(entry, enableUnstuck),
                 ignored -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

@@ -4,7 +4,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
 
 import client.Character;
-import server.bots.BotEntry;
 
 public final class AgentStandaloneMoveTargetRuntime {
     private AgentStandaloneMoveTargetRuntime() {
@@ -32,16 +31,12 @@ public final class AgentStandaloneMoveTargetRuntime {
                 runAiTick,
                 new AgentStandaloneMoveTargetTickService.Hooks(
                         AgentMapTransitionRuntime::groundAfterMapChange,
-                        moveEntry -> AgentMovementProfileService.refreshMovementProfile(asBotEntry(moveEntry)),
+                        AgentMovementProfileService::refreshMovementProfile,
                         (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
-                                asBotEntry(moveEntry),
+                                moveEntry,
                                 targetPosition,
                                 moveRunAiTick,
                                 enableUnstuck,
                                 stopDistance)));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

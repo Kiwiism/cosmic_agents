@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentStandaloneMoveTargetRuntime` now uses AgentRuntimeEntry all the way to
+  movement-core dispatch. `AgentMovementTickRuntime` gained an Agent entry
+  overload that isolates the temporary BotEntry cast while lower movement
+  services continue their staged reconstruction.
 - `AgentLocalAttackMoveWindowRuntime` now exposes AgentRuntimeEntry-based
   configured-distance wrappers around `AgentLocalAttackMoveWindowService`;
   legacy BotEntry callers still pass through by inheritance while the wrapper

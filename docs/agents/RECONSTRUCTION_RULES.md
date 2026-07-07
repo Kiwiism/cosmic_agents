@@ -5522,6 +5522,11 @@ Current physics correction:
 - Local attack move-window runtime now accepts `AgentRuntimeEntry` for its
   configured-distance wrappers; set and clear behavior still delegates to
   `AgentLocalAttackMoveWindowService` with the same movement config values.
+- Standalone move-target runtime now stays on `AgentRuntimeEntry` through
+  movement-core dispatch. The temporary cast is isolated in
+  `AgentMovementTickRuntime` while map-change grounding, movement profile
+  refresh, move-target lookup, unstuck config, and stop-distance behavior remain
+  unchanged.
 
 Initial reconstruction order:
 
