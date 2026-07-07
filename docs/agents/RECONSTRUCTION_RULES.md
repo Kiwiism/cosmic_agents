@@ -5494,6 +5494,10 @@ Current physics correction:
 - Targeted bot command parser resolution is now generic over
   `AgentRuntimeEntry`; existing BotEntry lists still resolve identically, while
   the parser itself no longer imports the bot package.
+- Movement chat callbacks now accept `AgentRuntimeEntry`; farm-here, patrol,
+  move-here, follow, grind, stop, fidget, greeting, delayed replies, active-mode
+  preparation, and pot-share checks remain unchanged through Agent-entry
+  overloads on the movement command and potion adapters.
 
 Initial reconstruction order:
 

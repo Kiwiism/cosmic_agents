@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.supplies.AgentPotionService;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ public final class AgentBotMovementRuntime {
     private AgentBotMovementRuntime() {
     }
 
-    public static AgentChatMovementFlow.MovementCallbacks movementCallbacks(BotEntry entry) {
+    public static AgentChatMovementFlow.MovementCallbacks movementCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatMovementFlow.MovementCallbacks() {
             @Override
             public boolean farmHere() {
@@ -117,7 +117,7 @@ public final class AgentBotMovementRuntime {
         };
     }
 
-    private static Character bot(BotEntry entry) {
+    private static Character bot(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

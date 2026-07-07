@@ -26,6 +26,10 @@ public final class AgentBotMovementCommandRuntime {
         follow(asBotEntry(entry), AgentBotRuntimeIdentityRuntime.owner(entry));
     }
 
+    public static void follow(AgentRuntimeEntry entry, Character target) {
+        follow(asBotEntry(entry), target);
+    }
+
     public static void follow(BotEntry entry, Character target) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
@@ -55,6 +59,10 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startMoveTo(entry, dest, precise));
     }
 
+    public static void moveTo(AgentRuntimeEntry entry, Point dest, boolean precise) {
+        moveTo(asBotEntry(entry), dest, precise);
+    }
+
     public static void farmHere(BotEntry entry, Point dest) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
@@ -62,6 +70,10 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
                 () -> AgentModeService.startFarmHere(entry, dest, AgentMovementStateResetService::clearNavigationState));
+    }
+
+    public static void farmHere(AgentRuntimeEntry entry, Point dest) {
+        farmHere(asBotEntry(entry), dest);
     }
 
     public static void patrol(BotEntry entry, Point ownerPos) {
@@ -83,12 +95,20 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startPatrol(entry, regionId, AgentMovementStateResetService::clearNavigationState));
     }
 
+    public static void patrol(AgentRuntimeEntry entry, Point ownerPos) {
+        patrol(asBotEntry(entry), ownerPos);
+    }
+
     public static void grind(BotEntry entry) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
                 () -> AgentModeService.startGrind(entry, AgentMovementStateResetService::clearNavigationState));
+    }
+
+    public static void grind(AgentRuntimeEntry entry) {
+        grind(asBotEntry(entry));
     }
 
     private static BotEntry asBotEntry(AgentRuntimeEntry entry) {

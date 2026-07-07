@@ -41,6 +41,9 @@ Recent map updates:
 - `AgentBotCommandParser.resolveTargetedBot` is now generic over
   `AgentRuntimeEntry`, preserving current targeted command matching while
   removing its direct dependency on the legacy bot entry type.
+- `AgentBotMovementRuntime` movement chat callbacks now use
+  `AgentRuntimeEntry`; lower movement command and potion adapters keep the
+  temporary BotEntry compatibility casts for their own side effects.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving

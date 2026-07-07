@@ -16,6 +16,7 @@ import server.agents.integration.AgentBotMovementRuntime;
 import server.agents.integration.AgentBotMovementStatusRuntime;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -54,7 +55,9 @@ class AgentBotMovementRuntimeTest {
             assertTrue(AgentBotMovementRuntime.movementCallbacks(entry).farmHere());
 
             status.verify(() -> AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.farmHere(eq(entry), pointCaptor.capture()));
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.farmHere(
+                    (AgentRuntimeEntry) eq(entry),
+                    pointCaptor.capture()));
             assertEquals(new Point(10, 20), pointCaptor.getValue());
             replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
         }
@@ -99,7 +102,7 @@ class AgentBotMovementRuntimeTest {
 
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
             replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
-            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(entry, bot));
+            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart((AgentRuntimeEntry) eq(entry), eq(bot)));
             movementCommands.verify(() -> AgentBotMovementCommandRuntime.followOwner(entry));
         }
     }

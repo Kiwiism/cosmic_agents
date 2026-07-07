@@ -30,6 +30,7 @@ import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.StatEffect;
 
@@ -220,6 +221,10 @@ public final class AgentPotionService {
         AgentBotPotionStateRuntime.clearAllPotShareRequests(entry);
         AgentAmmoService.checkAmmoShareOnModeStart(entry, bot);
         requestLowPotShares(entry, bot, false);
+    }
+
+    public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
+        checkPotShareOnModeStart((BotEntry) entry, bot);
     }
 
     public static boolean requestLowSuppliesFromOwnerAsk(BotEntry entry, Character bot) {
