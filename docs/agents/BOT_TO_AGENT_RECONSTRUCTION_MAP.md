@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotActiveModeRuntime` now stays on `AgentRuntimeEntry` for active-mode
+  preparation callbacks. Auto-equip, gear suggestion cooldown reset, sibling
+  gear suggestion, autopot setup, and mode-start potion-share checks remain
+  unchanged.
 - `AgentBotUtilityRuntime`, `AgentBotSupplyRuntime`, and
   `AgentBotTransferRuntime` now accept `AgentRuntimeEntry` for chat utility,
   supply request, upgrade request, item query, and transfer command callbacks.

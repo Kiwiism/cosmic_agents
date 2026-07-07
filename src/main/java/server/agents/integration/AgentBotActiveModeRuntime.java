@@ -3,7 +3,6 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -17,7 +16,6 @@ public final class AgentBotActiveModeRuntime {
     }
 
     public static AgentChatStatusRuntime.ActiveModeActions activeModeActions(AgentRuntimeEntry entry) {
-        BotEntry botEntry = asBotEntry(entry);
         return new AgentChatStatusRuntime.ActiveModeActions() {
             @Override
             public void autoEquip() {
@@ -41,7 +39,7 @@ public final class AgentBotActiveModeRuntime {
 
             @Override
             public void checkPotShareOnModeStart() {
-                AgentPotionService.checkPotShareOnModeStart(botEntry, bot(entry));
+                AgentPotionService.checkPotShareOnModeStart(entry, bot(entry));
             }
         };
     }
@@ -53,13 +51,12 @@ public final class AgentBotActiveModeRuntime {
     }
 
     public static void maybeSuggestGearToSiblings(AgentRuntimeEntry entry, Character bot) {
-        BotEntry botEntry = asBotEntry(entry);
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentBotStatusRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
                         owner != null,
-                        () -> AgentOfferService.offerBestGearToSibling(botEntry, bot)),
+                        () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
                 System.currentTimeMillis());
     }
 
@@ -76,9 +73,5 @@ public final class AgentBotActiveModeRuntime {
 
     private static Character bot(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.bot(entry);
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

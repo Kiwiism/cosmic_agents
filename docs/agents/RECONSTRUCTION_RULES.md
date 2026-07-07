@@ -5628,6 +5628,10 @@ Current physics correction:
   evaluation, request-id superseding, and transfer result decisions remain
   unchanged. `AgentShopService` now exposes an Agent-entry sell-trash overload
   while deeper shop internals remain staged.
+- Active-mode runtime now stays on `AgentRuntimeEntry` for preparation
+  callbacks. Auto-equip, gear suggestion cooldown reset, sibling gear
+  suggestion, autopot setup, and mode-start potion-share checks remain
+  unchanged.
 
 Initial reconstruction order:
 
