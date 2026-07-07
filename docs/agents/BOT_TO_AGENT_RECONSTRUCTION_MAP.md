@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotInventoryRuntimeAdapters` no longer imports `BotEntry`. Passive
+  loot, manual trade, trade tick, lifecycle, transfer availability, and trade
+  runtime callback wiring remain unchanged.
 - `AgentBotOfferRuntime` no longer imports `BotEntry` for recommended-gear
   report actions. It now calls `AgentOfferService.offerBestRecommendedGear`
   with the existing `AgentRuntimeEntry`; owner checks, offer execution, and

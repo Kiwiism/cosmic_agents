@@ -17,6 +17,9 @@ Rules:
 
 Recent reconstruction notes:
 
+- Inventory runtime adapter callbacks no longer import `BotEntry`. Passive
+  loot, manual trade, trade tick, lifecycle, transfer availability, and trade
+  runtime callback wiring are unchanged.
 - Recommended-gear offer report actions now call `AgentOfferService` with
   `AgentRuntimeEntry` directly. Owner-present checks, best-gear offering, and
   queued report replies are unchanged while the offer adapter no longer casts

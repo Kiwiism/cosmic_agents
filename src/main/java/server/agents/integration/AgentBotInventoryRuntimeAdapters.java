@@ -28,7 +28,6 @@ import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.ArrayList;
