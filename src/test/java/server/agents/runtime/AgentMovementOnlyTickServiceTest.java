@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ class AgentMovementOnlyTickServiceTest {
         List<String> calls = new ArrayList<>();
 
         AgentMovementOnlyTickService.stepMovementOnly(
-                new BotEntry(null, mock(Character.class), null),
+                new AgentRuntimeEntry(null, mock(Character.class), null),
                 new Point(10, 20),
                 true,
                 1000L,
@@ -170,8 +169,8 @@ class AgentMovementOnlyTickServiceTest {
         return new HookBuilder(calls);
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 
     private static final class HookBuilder {

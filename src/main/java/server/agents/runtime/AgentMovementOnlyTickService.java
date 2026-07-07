@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -12,52 +11,52 @@ import java.awt.Point;
 public final class AgentMovementOnlyTickService {
     @FunctionalInterface
     public interface IdleTick {
-        boolean tick(BotEntry entry, Character agent);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface FollowMapSync {
-        boolean sync(BotEntry entry, Character agent, Character leader);
+        boolean sync(AgentRuntimeEntry entry, Character agent, Character leader);
     }
 
     @FunctionalInterface
     public interface FollowAnchorResolver {
-        Character resolve(BotEntry entry, Character leader);
+        Character resolve(AgentRuntimeEntry entry, Character leader);
     }
 
     @FunctionalInterface
     public interface RecoveryTick {
-        boolean recover(BotEntry entry, Character agent, Character anchor);
+        boolean recover(AgentRuntimeEntry entry, Character agent, Character anchor);
     }
 
     @FunctionalInterface
     public interface TargetRecoveryTick {
-        boolean recover(BotEntry entry, Character agent, Point targetPosition);
+        boolean recover(AgentRuntimeEntry entry, Character agent, Point targetPosition);
     }
 
     @FunctionalInterface
     public interface AgentTick {
-        boolean tick(BotEntry entry, Character agent);
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
     public interface AgentPointSupplier {
-        Point get(BotEntry entry);
+        Point get(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface ShopDelaySupplier {
-        int get(BotEntry entry);
+        int get(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface FollowIdleFastPath {
-        boolean tryFastPath(BotEntry entry, Character agent, Point targetPosition, long nowMs);
+        boolean tryFastPath(AgentRuntimeEntry entry, Character agent, Point targetPosition, long nowMs);
     }
 
     @FunctionalInterface
     public interface MovementCore {
-        void step(BotEntry entry, Point targetPosition, boolean runAiTick);
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
     public record MovementOnlyHooks(IdleTick idleTick,
@@ -77,7 +76,7 @@ public final class AgentMovementOnlyTickService {
     private AgentMovementOnlyTickService() {
     }
 
-    public static void stepMovementOnly(BotEntry entry,
+    public static void stepMovementOnly(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick,
                                         long nowMs,

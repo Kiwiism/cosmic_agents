@@ -5249,6 +5249,9 @@ Current physics correction:
   through `AgentRuntimeEntry`; arrival-distance handling, precise target
   preservation, patrol map matching, and live tick context ordering are
   unchanged.
+- Movement-only tick ordering service now accepts `AgentRuntimeEntry`; no-agent
+  and null-target guards, idle/follow-map/recovery/map-change/shop/follow-idle
+  short-circuit order, and final movement-core dispatch behavior are unchanged.
 
 Initial reconstruction order:
 
