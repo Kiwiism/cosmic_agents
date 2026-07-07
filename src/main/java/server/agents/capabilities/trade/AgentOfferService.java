@@ -180,7 +180,7 @@ public final class AgentOfferService {
         AgentBotOfferRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
-    public static boolean handlePendingOfferResponse(BotEntry entry, Character speaker, String message) {
+    public static boolean handlePendingOfferResponse(AgentRuntimeEntry entry, Character speaker, String message) {
         expirePendingOffer(entry);
         if (!hasPendingOffer(entry)
                 || speaker == null

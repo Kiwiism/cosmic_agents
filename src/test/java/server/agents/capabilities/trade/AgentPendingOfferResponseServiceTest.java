@@ -5,7 +5,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.integration.AgentBotOfferStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,8 @@ class AgentPendingOfferResponseServiceTest {
     @Test
     void routesSinglePendingOfferResponseToOnlyMatch() {
         Character speaker = mock(Character.class);
-        BotEntry match = new BotEntry(mock(Character.class), speaker, null);
-        BotEntry other = new BotEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry match = new AgentRuntimeEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry other = new AgentRuntimeEntry(mock(Character.class), speaker, null);
         List<String> calls = new ArrayList<>();
 
         boolean handled = AgentPendingOfferResponseService.handlePendingOfferResponse(
@@ -43,8 +43,8 @@ class AgentPendingOfferResponseServiceTest {
     @Test
     void targetedResponseUsesResolvedCommandText() {
         Character speaker = mock(Character.class);
-        BotEntry first = new BotEntry(mock(Character.class), speaker, null);
-        BotEntry second = new BotEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(mock(Character.class), speaker, null);
         List<String> calls = new ArrayList<>();
 
         boolean handled = AgentPendingOfferResponseService.handlePendingOfferResponse(
@@ -71,8 +71,8 @@ class AgentPendingOfferResponseServiceTest {
     @Test
     void ambiguousConfirmationProducesLegacyFeedback() {
         Character speaker = mock(Character.class);
-        BotEntry first = new BotEntry(mock(Character.class), speaker, null);
-        BotEntry second = new BotEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(mock(Character.class), speaker, null);
         List<String> calls = new ArrayList<>();
 
         boolean handled = AgentPendingOfferResponseService.handlePendingOfferResponse(
@@ -96,7 +96,7 @@ class AgentPendingOfferResponseServiceTest {
     @Test
     void returnsFalseWhenNoOfferMatches() {
         Character speaker = mock(Character.class);
-        BotEntry entry = new BotEntry(mock(Character.class), speaker, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), speaker, null);
 
         boolean handled = AgentPendingOfferResponseService.handlePendingOfferResponse(
                 List.of(List.of(entry)),
@@ -114,7 +114,7 @@ class AgentPendingOfferResponseServiceTest {
         when(speaker.getId()).thenReturn(100);
         when(speaker.getMapId()).thenReturn(20000);
         when(agent.getMapId()).thenReturn(20000);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentBotOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, 1L, false);
 
         assertTrue(AgentPendingOfferChatRouteService.isPendingOfferTarget(entry, speaker));
@@ -130,7 +130,7 @@ class AgentPendingOfferResponseServiceTest {
         assertFalse(AgentPendingOfferChatRouteService.isPendingOfferTarget(null, speaker));
     }
 
-    private static AgentPendingOfferResponseService.Hooks<BotEntry> hooks(BotEntry match, List<String> calls) {
+    private static AgentPendingOfferResponseService.Hooks<AgentRuntimeEntry> hooks(AgentRuntimeEntry match, List<String> calls) {
         return new AgentPendingOfferResponseService.Hooks(
                 entry -> calls.add("expire"),
                 (entry, speaker) -> {
@@ -149,3 +149,4 @@ class AgentPendingOfferResponseServiceTest {
                 (speaker, feedback) -> calls.add("feedback:" + feedback));
     }
 }
+

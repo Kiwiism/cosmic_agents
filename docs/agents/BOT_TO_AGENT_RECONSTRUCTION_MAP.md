@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentPendingOfferChatRouteService` now routes pending offer responses over
+  generic `AgentRuntimeEntry` groups instead of `BotEntry` groups. The targeted
+  response resolver, same-map recipient check, positive/negative confirmation
+  behavior, and direct item transfer callback remain behavior-compatible.
 - `AgentSupplyShareTradeService` now accepts `AgentRuntimeEntry` for potion
   and ammo share transfer orchestration. Empty-transfer skips, active-trade
   retry queueing, share budget setup, trade sequence initialization, and

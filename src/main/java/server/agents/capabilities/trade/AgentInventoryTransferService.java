@@ -29,6 +29,7 @@ import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.ArrayList;
@@ -105,7 +106,7 @@ public final class AgentInventoryTransferService {
                                 log)));
     }
 
-    public static void startTradeTransfer(Item item, Character recipient, BotEntry entry, Character agent) {
+    public static void startTradeTransfer(Item item, Character recipient, AgentRuntimeEntry entry, Character agent) {
         AgentDirectItemTradeService.DirectItemTradeDecision decision = AgentDirectItemTradeService.decideStart(
                 recipient != null,
                 AgentInventoryItemPolicy.hasItem(agent, item),
@@ -154,7 +155,7 @@ public final class AgentInventoryTransferService {
                                            List<Item> items,
                                            int mesos,
                                            boolean singleBatch,
-                                           BotEntry entry,
+                                           AgentRuntimeEntry entry,
                                            Character agent) {
         AgentTradeSequenceService.startSequence(
                 category,
@@ -166,7 +167,7 @@ public final class AgentInventoryTransferService {
                 (batchItems, batchMesos) -> openTradeBatch(entry, agent, batchItems, batchMesos));
     }
 
-    private static void openTradeBatch(BotEntry entry, Character agent, List<Item> items, int mesos) {
+    private static void openTradeBatch(AgentRuntimeEntry entry, Character agent, List<Item> items, int mesos) {
         AgentTradeBatchService.openBatch(
                 entry,
                 agent,
@@ -180,7 +181,7 @@ public final class AgentInventoryTransferService {
                         () -> AgentTradeResetService.reset(
                                 entry,
                                 agent,
-                                () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
+                                () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems((BotEntry) entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
                                 () -> AgentEquipmentService.autoEquip(agent, AgentBotRuntimeIdentityRuntime.owner(entry), null))),
                 () -> server.Trade.startTrade(agent),

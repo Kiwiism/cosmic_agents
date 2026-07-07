@@ -5567,6 +5567,11 @@ Current physics correction:
   share orchestration. Empty-item skips, retry queueing when a trade is active,
   share budget setup, trade sequence initialization, and trade invitation
   replies remain unchanged.
+- Pending offer chat route service now accepts generic `AgentRuntimeEntry`
+  groups instead of BotEntry groups. Offer expiry, targeted response parsing,
+  same-map recipient filtering, confirmation handling, and speaker feedback
+  remain unchanged; deeper offer/transfer methods still contain staged BotEntry
+  compatibility points for later slices.
 
 Initial reconstruction order:
 
