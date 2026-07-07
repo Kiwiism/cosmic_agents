@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick runtime now accepts `AgentRuntimeEntry` and Agent-entry movement command
+  callbacks at its public boundary. The deeper tick core and failure handler
+  still use explicit temporary BotEntry casts until those runtime slices are
+  migrated, but guarded tick orchestration and movement command behavior are
+  unchanged.
 - Whisper command runtime now uses `AgentRuntimeEntry` as its Agent-facing hook
   type instead of importing `BotEntry`. The temporary registry still returns the
   compatibility shell internally, but whisper target resolution, reply-channel

@@ -67,8 +67,8 @@ public final class AgentInteractionRuntime {
                 entry,
                 leaderCharId,
                 agentCharId,
-                AgentBotMovementCommandRuntime::grind,
-                AgentBotMovementCommandRuntime::followOwner);
+                grindEntry -> AgentBotMovementCommandRuntime.grind((BotEntry) grindEntry),
+                followEntry -> AgentBotMovementCommandRuntime.followOwner((BotEntry) followEntry));
     }
 
     private static String recruitAgent(int leaderCharId, Character leader, String agentName) {

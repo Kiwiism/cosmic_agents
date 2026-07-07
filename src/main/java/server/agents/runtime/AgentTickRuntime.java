@@ -1,18 +1,16 @@
 package server.agents.runtime;
 
-import server.bots.BotEntry;
-
 import java.util.function.Consumer;
 
 public final class AgentTickRuntime {
     private AgentTickRuntime() {
     }
 
-    public static void tick(BotEntry entry,
+    public static void tick(AgentRuntimeEntry entry,
                             int leaderCharId,
                             int agentCharId,
-                            Consumer<BotEntry> issueGrind,
-                            Consumer<BotEntry> issueFollow) {
+                            Consumer<AgentRuntimeEntry> issueGrind,
+                            Consumer<AgentRuntimeEntry> issueFollow) {
         AgentTickOrchestrator.runGuardedTick(
                 entry,
                 leaderCharId,
@@ -21,8 +19,8 @@ public final class AgentTickRuntime {
                         asBotEntry(tickEntry),
                         tickLeaderId,
                         tickAgentId,
-                        grindEntry -> issueGrind.accept(asBotEntry(grindEntry)),
-                        followEntry -> issueFollow.accept(asBotEntry(followEntry))),
+                        issueGrind,
+                        issueFollow),
                 (failedEntry, failedLeaderId, failedAgentId, failure) -> AgentTickFailureRuntime.handleFailure(
                         asBotEntry(failedEntry),
                         failedLeaderId,
@@ -30,7 +28,7 @@ public final class AgentTickRuntime {
                         failure));
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (server.bots.BotEntry) entry;
     }
 }

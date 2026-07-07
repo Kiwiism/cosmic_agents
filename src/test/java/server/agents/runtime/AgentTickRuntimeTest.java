@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,7 +11,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentTickRuntimeTest {
     @Test
     void tickUsesGuardedAgentTickOrchestrator() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
 
         try (MockedStatic<AgentTickOrchestrator> orchestrator = mockStatic(AgentTickOrchestrator.class)) {
             orchestrator.when(() -> AgentTickOrchestrator.runGuardedTick(
