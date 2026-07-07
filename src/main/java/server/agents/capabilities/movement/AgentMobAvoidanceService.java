@@ -12,7 +12,7 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.life.Monster;
@@ -21,7 +21,7 @@ public final class AgentMobAvoidanceService {
     private AgentMobAvoidanceService() {
     }
 
-    public static boolean shouldJumpToAvoidMob(BotEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
+    public static boolean shouldJumpToAvoidMob(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
                 || currentFoothold == null || botPos == null || stepX == 0) {
             return false;
@@ -40,7 +40,7 @@ public final class AgentMobAvoidanceService {
         return simulatedJumpLandsInCurrentRegion(entry, currentFoothold, botPos, stepX);
     }
 
-    static Monster firstBlockingMobInWalkLane(BotEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
+    static Monster firstBlockingMobInWalkLane(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         int direction = Integer.signum(stepX);
         int lookahead = Math.max(Math.abs(stepX),
@@ -78,7 +78,7 @@ public final class AgentMobAvoidanceService {
         return nearest;
     }
 
-    static boolean isMobInCurrentGroundRegion(BotEntry entry, Foothold currentFoothold, Monster mob) {
+    static boolean isMobInCurrentGroundRegion(AgentRuntimeEntry entry, Foothold currentFoothold, Monster mob) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         Foothold mobFoothold = AgentGroundingService.findGroundFoothold(map, mob.getPosition());
         if (mobFoothold != null && mobFoothold.getId() == currentFoothold.getId()) {
@@ -97,7 +97,7 @@ public final class AgentMobAvoidanceService {
         return currentRegionId >= 0 && currentRegionId == mobRegionId;
     }
 
-    static boolean simulatedJumpLandsInCurrentRegion(BotEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
+    static boolean simulatedJumpLandsInCurrentRegion(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         int airVelX = AgentJumpActionService.resolveAirVelocityX(map, profile, stepX);

@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Ground movement step resolution and mob avoidance now take
+  `AgentRuntimeEntry` directly. Warmup fallback stepping, hysteresis,
+  was-moving state updates, walk-lane mob detection, region checks, and jump
+  landing simulation preserve the same behavior.
 - Ground action planning/execution now exposes `AgentRuntimeEntry` at its
   public boundary. Ground step resolution, ledge fallback, mob avoidance, and
   ground physics remain explicit temporary compatibility calls into

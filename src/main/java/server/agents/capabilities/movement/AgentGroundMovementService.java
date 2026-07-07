@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -12,7 +12,7 @@ public final class AgentGroundMovementService {
     private AgentGroundMovementService() {
     }
 
-    public static int resolveGroundStepX(BotEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
+    public static int resolveGroundStepX(AgentRuntimeEntry entry, Point botPos, Point targetPos, int stopDist, int followDist) {
         if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return 0;
         }
@@ -48,12 +48,12 @@ public final class AgentGroundMovementService {
                 AgentMovementKinematicsService.walkStep(map, profile));
     }
 
-    public static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX) {
+    public static int updateStepX(AgentRuntimeEntry entry, MapleMap map, int botX, int targetX) {
         return updateStepX(entry, map, botX, targetX,
                 AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
     }
 
-    public static int updateStepX(BotEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
+    public static int updateStepX(AgentRuntimeEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
         int stepX = calcStepX(map, AgentBotMovementStateRuntime.movementProfile(entry), botX, targetX,
                 AgentBotMovementStateRuntime.wasMovingX(entry), stopDist, followDist);
         if (stepX == 0) {
