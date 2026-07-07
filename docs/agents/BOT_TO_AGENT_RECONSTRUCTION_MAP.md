@@ -146,6 +146,10 @@ Recent map updates:
   stop dispatch, farewell delay, and farewell reply behavior are unchanged.
   Spawn/register/relogin lifecycle hooks remain separate BotEntry-backed
   migration targets.
+- `AgentIdlePhysicsRuntime` now accepts `AgentRuntimeEntry`; live trade-window
+  physics, idle-mode physics, ownerless idle physics, anchored-farm idle, and
+  movement-only idle call sites no longer cast for this boundary. The runtime
+  still adapts to BotEntry for lower movement phase dispatch services.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

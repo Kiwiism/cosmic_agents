@@ -5453,6 +5453,10 @@ Current physics correction:
   scheduled-task cancellation, stop-command dispatch, delayed farewell timing,
   and farewell reply behavior are unchanged while spawn/register lifecycle
   hooks remain temporary BotEntry-backed boundaries.
+- Idle physics runtime now accepts `AgentRuntimeEntry`; trade-window physics,
+  idle-mode physics, ownerless idle physics, anchored-farm idle, and
+  movement-only idle dispatch behavior are unchanged. Movement phase dispatch
+  remains a later BotEntry-backed movement capability slice.
 
 Initial reconstruction order:
 

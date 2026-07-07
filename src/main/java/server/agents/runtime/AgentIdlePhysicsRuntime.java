@@ -11,11 +11,11 @@ public final class AgentIdlePhysicsRuntime {
     private AgentIdlePhysicsRuntime() {
     }
 
-    public static void tickPhysicsOnly(BotEntry entry, Character agent) {
+    public static void tickPhysicsOnly(AgentRuntimeEntry entry, Character agent) {
         AgentIdlePhysicsService.tickPhysicsOnly(entry, agent, hooks());
     }
 
-    public static boolean tickIdleEntry(BotEntry entry, Character agent) {
+    public static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent) {
         return AgentIdlePhysicsService.tickIdleEntry(entry, agent, hooks());
     }
 

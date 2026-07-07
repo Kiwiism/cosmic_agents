@@ -58,7 +58,7 @@ public final class AgentAnchoredFarmRuntime {
                     return new AgentAnchoredFarmTickService.LocalOpportunityResult(
                             result.consumedTick(), result.targetPos());
                 },
-                (entry, agent) -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(entry), agent),
+                AgentIdlePhysicsRuntime::tickIdleEntry,
                 (entry, agent) -> {
                     AgentMovementPoseService.idleOnGround(asBotEntry(entry), agent);
                     AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry));

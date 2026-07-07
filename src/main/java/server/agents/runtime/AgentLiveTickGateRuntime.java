@@ -39,14 +39,14 @@ public final class AgentLiveTickGateRuntime {
                 (entry, agent, leader, runAiTick) ->
                         AgentCommonTickRuntime.runCommonTickSystems(asBotEntry(entry), agent, leader, runAiTick, tickScriptTasks),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
-                        asBotEntry(tradeEntry),
+                        tradeEntry,
                         tradeAgent,
-                        (physicsEntry, physicsAgent) -> tickTradePhysics(asBotEntry(physicsEntry), physicsAgent, perf)),
+                        (physicsEntry, physicsAgent) -> tickTradePhysics(physicsEntry, physicsAgent, perf)),
                 (idleEntry, idleAgent) -> AgentIdleModeTickService.tickIdleMode(
                         idleEntry,
                         idleAgent,
                         new AgentIdleModeTickService.Hooks((ignored, physicsAgent) ->
-                                tickIdleEntry(asBotEntry(idleEntry), physicsAgent, perf))),
+                                tickIdleEntry(idleEntry, physicsAgent, perf))),
                 (recoveryEntry, recoveryAgent, recoveryFollowAnchor, recoveryTargetPos) -> AgentRecoveryTickService.tickRecovery(
                         recoveryEntry,
                         recoveryAgent,
@@ -81,7 +81,7 @@ public final class AgentLiveTickGateRuntime {
         return (BotEntry) entry;
     }
 
-    private static void tickTradePhysics(BotEntry entry, Character agent, boolean perf) {
+    private static void tickTradePhysics(AgentRuntimeEntry entry, Character agent, boolean perf) {
         if (!perf) {
             AgentIdlePhysicsRuntime.tickPhysicsOnly(entry, agent);
             return;
@@ -94,7 +94,7 @@ public final class AgentLiveTickGateRuntime {
         }
     }
 
-    private static boolean tickIdleEntry(BotEntry entry, Character agent, boolean perf) {
+    private static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent, boolean perf) {
         if (!perf) {
             return AgentIdlePhysicsRuntime.tickIdleEntry(entry, agent);
         }

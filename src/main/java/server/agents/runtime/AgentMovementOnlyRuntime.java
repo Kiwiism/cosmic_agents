@@ -30,7 +30,7 @@ public final class AgentMovementOnlyRuntime {
             BiFunction<BotEntry, Character, Character> followAnchorResolver,
             MovementOnlyConfig config) {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
-                (entry, agent) -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(entry), agent),
+                AgentIdlePhysicsRuntime::tickIdleEntry,
                 (entry, agent) -> AgentBotShopStateRuntime.shopVisitPending(entry),
                 (entry, agent, leader) -> AgentFollowMapSyncRuntime.syncFollowMap(asBotEntry(entry), agent, leader),
                 (entry, leader) -> followAnchorResolver.apply(asBotEntry(entry), leader),

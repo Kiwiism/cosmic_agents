@@ -168,7 +168,7 @@ public final class AgentTickCoreRuntime {
                         ownerlessRunAiTick,
                                 (runtimeEntry, agent) -> groundAfterMapChange.test(asBotEntry(runtimeEntry), agent),
                                 standaloneMoveTargetTick,
-                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(ownerlessEntry), ownerlessAgent)),
+                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessAgent)),
                 deadTick,
                 (liveEntry, liveAgent, liveLeader) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
                         asBotEntry(liveEntry),
