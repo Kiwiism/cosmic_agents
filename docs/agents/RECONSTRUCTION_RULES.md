@@ -5219,6 +5219,9 @@ Current physics correction:
 - Navigation climb-entry execution now accepts `AgentRuntimeEntry`; rope lookup,
   position gating, block reasons, direct attach, top-platform queueing, rope
   jump entry, and broadcast behavior are unchanged.
+- Climb movement runtime now accepts `AgentRuntimeEntry`; climb ticking, idle
+  hold, precise snap, rope jump-off, rope transfer, climb action selection, and
+  performance recording behavior are unchanged.
 
 Initial reconstruction order:
 

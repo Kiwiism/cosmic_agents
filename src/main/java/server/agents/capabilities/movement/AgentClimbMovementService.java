@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -22,7 +22,7 @@ public final class AgentClimbMovementService {
     private AgentClimbMovementService() {
     }
 
-    public static void tickClimbing(BotEntry entry, Point targetPos, boolean runAiTick) {
+    public static void tickClimbing(AgentRuntimeEntry entry, Point targetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
             Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -70,14 +70,14 @@ public final class AgentClimbMovementService {
         }
     }
 
-    public static void jumpOffRope(BotEntry entry, Character agent, int dx) {
+    public static void jumpOffRope(AgentRuntimeEntry entry, Character agent, int dx) {
         int airVelX = AgentJumpActionService.resolveAirVelocityX(
                 agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
         AgentRopeMovementService.beginJumpOffRope(entry, agent, airVelX);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    public static void jumpToRope(BotEntry entry, Character agent, int dx) {
+    public static void jumpToRope(AgentRuntimeEntry entry, Character agent, int dx) {
         Rope sourceRope = AgentBotClimbStateRuntime.climbRope(entry);
         int airVelX = AgentJumpActionService.resolveAirVelocityX(
                 agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
@@ -85,7 +85,7 @@ public final class AgentClimbMovementService {
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    private static void applyClimbAction(BotEntry entry, Character agent, ClimbAction action) {
+    private static void applyClimbAction(AgentRuntimeEntry entry, Character agent, ClimbAction action) {
         AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, switch (action) {
             case CLIMB_UP -> -1;
             case CLIMB_DOWN -> 1;
@@ -100,7 +100,7 @@ public final class AgentClimbMovementService {
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    public static boolean shouldHoldClimbIdle(BotEntry entry, int dy, int dxOwner) {
+    public static boolean shouldHoldClimbIdle(AgentRuntimeEntry entry, int dy, int dxOwner) {
         return AgentClimbMovementPolicy.shouldHoldClimbIdle(
                 AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry),
                 AgentBotModeStateRuntime.grinding(entry),
@@ -110,7 +110,7 @@ public final class AgentClimbMovementService {
                 AgentMovementPhysicsConfig.configuredFollowDist());
     }
 
-    public static boolean shouldSnapToClimbTarget(BotEntry entry, Point targetPos, int dy) {
+    public static boolean shouldSnapToClimbTarget(AgentRuntimeEntry entry, Point targetPos, int dy) {
         if (entry == null) {
             return false;
         }
