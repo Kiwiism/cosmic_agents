@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotReplyRuntime;
-import server.bots.BotEntry;
 
 public final class AgentFormationCommandRuntime {
     private AgentFormationCommandRuntime() {
@@ -25,14 +24,10 @@ public final class AgentFormationCommandRuntime {
                                 fallbackFormation),
                         AgentFormationService.formationsByLeaderId()::put,
                         AgentFormationService::applyOffsets,
-                        (entry, reply) -> AgentBotReplyRuntime.queueReply(asBotEntry(entry), reply),
+                        AgentBotReplyRuntime::queueReply,
                         Character::yellowMessage,
                         defaultFormation,
                         defaultFollowStaggerPx,
                         defaultSnapRangePx));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

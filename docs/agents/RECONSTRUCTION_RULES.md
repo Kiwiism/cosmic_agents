@@ -5239,6 +5239,9 @@ Current physics correction:
   entry, respawn timing, HP restore, leader-map change, grounding, teleport,
   movement reset, movement broadcast, map speech, and glare emote behavior are
   unchanged.
+- Formation command runtime now queues replies with `AgentRuntimeEntry`
+  directly; formation parsing, leader fallback help, formation state writes,
+  offset application, and visible reply text are unchanged.
 
 Initial reconstruction order:
 
