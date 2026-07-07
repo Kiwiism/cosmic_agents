@@ -5210,6 +5210,9 @@ Current physics correction:
 - Jump action initiation now accepts `AgentRuntimeEntry`; signed air velocity,
   ground jump, fixed-arc jump, rope jump, and movement broadcast behavior are
   unchanged.
+- Queued movement actions now accept `AgentRuntimeEntry`; down-jump queueing,
+  top-rope entry queueing, invalid down-jump clearing, valid down-jump launch,
+  grace-period setting, and queued rope attach behavior are unchanged.
 
 Initial reconstruction order:
 

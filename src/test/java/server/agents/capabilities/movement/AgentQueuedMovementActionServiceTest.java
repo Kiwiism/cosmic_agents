@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapleMap;
@@ -23,7 +23,7 @@ class AgentQueuedMovementActionServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         AgentQueuedMovementActionService.queueDownJump(entry, agent);
 
@@ -37,7 +37,7 @@ class AgentQueuedMovementActionServiceTest {
         when(agent.getMap()).thenReturn(null);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
         AgentBotMovementStateRuntime.setCrouching(entry, true);
 
@@ -64,7 +64,7 @@ class AgentQueuedMovementActionServiceTest {
         when(agent.getMap()).thenReturn(map);
         when(agent.getPosition()).thenReturn(position);
         when(agent.getHp()).thenReturn(1);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
         AgentBotMovementStateRuntime.setCrouching(entry, true);
 
