@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -28,7 +28,7 @@ public final class AgentLootEligibility {
                 && map.getMapObject(drop.getObjectId()) == drop;
     }
 
-    public static boolean canBotLoot(BotEntry entry, Character bot, MapItem drop) {
+    public static boolean canBotLoot(AgentRuntimeEntry entry, Character bot, MapItem drop) {
         if (entry == null || bot == null || drop == null || !drop.canBePickedBy(bot)) {
             return false;
         }
@@ -56,7 +56,7 @@ public final class AgentLootEligibility {
         return true;
     }
 
-    public static boolean canBotTargetLoot(BotEntry entry, Character bot, MapleMap map, MapItem drop, long now) {
+    public static boolean canBotTargetLoot(AgentRuntimeEntry entry, Character bot, MapleMap map, MapItem drop, long now) {
         return isPresent(map, drop)
                 && canBotLoot(entry, bot, drop)
                 && now - drop.getDropTime() >= requiredTargetLootAgeMs(bot, drop);

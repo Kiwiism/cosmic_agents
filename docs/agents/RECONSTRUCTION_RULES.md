@@ -5277,6 +5277,10 @@ Current physics correction:
   registry view, and the gear-upgrade notification entry point accepts
   `AgentRuntimeEntry`; equip filtering, self-agent trade suppression, deferred
   offer scan scheduling, and upgrade recommendation behavior are unchanged.
+- Loot eligibility now accepts `AgentRuntimeEntry`; drop presence checks,
+  quest-item gating, inventory-full gating, KPQ pass/rice-cake exclusions,
+  KPQ coupon target/skip behavior, and bot-inventory-drop age delays are
+  unchanged.
 
 Initial reconstruction order:
 

@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.capabilities.partyquest.kpq.AgentKpqState;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 /**
@@ -27,7 +28,7 @@ public final class AgentBotPqRuntime {
         state(entry).markStage5Claimed();
     }
 
-    public static int kpqCouponTarget(BotEntry entry) {
+    public static int kpqCouponTarget(AgentRuntimeEntry entry) {
         return state(entry).couponTarget();
     }
 
@@ -43,7 +44,7 @@ public final class AgentBotPqRuntime {
         return state(entry).stateIs(state);
     }
 
-    public static boolean kpqStageStateAtLeast(BotEntry entry, int state) {
+    public static boolean kpqStageStateAtLeast(AgentRuntimeEntry entry, int state) {
         return state(entry).stateAtLeast(state);
     }
 
@@ -64,7 +65,7 @@ public final class AgentBotPqRuntime {
         AgentBotScriptTaskStateRuntime.resetScript(entry, null);
     }
 
-    private static AgentKpqState state(BotEntry entry) {
+    private static AgentKpqState state(AgentRuntimeEntry entry) {
         return entry.kpqState();
     }
 }

@@ -6,6 +6,7 @@ import server.agents.capabilities.partyquest.kpq.AgentKpqStage5;
 import server.agents.integration.AgentBotPqRuntime;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptRunner;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -39,7 +40,7 @@ public final class AgentPartyQuestHooks {
     }
 
     /** True once the bot no longer needs coupons — suppress coupon loot. */
-    public static boolean shouldSkipCouponLoot(BotEntry entry) {
+    public static boolean shouldSkipCouponLoot(AgentRuntimeEntry entry) {
         return AgentKpqStage1.shouldSkipCouponLoot(entry);
     }
 

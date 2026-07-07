@@ -8,6 +8,7 @@ import server.agents.integration.AgentBotPqRuntime;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptContext;
 import server.agents.plans.AgentScriptStep;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.life.NPC;
 
@@ -95,7 +96,7 @@ public final class AgentKpqStage1 {
         return SCRIPT;
     }
 
-    public static boolean shouldSkipCouponLoot(BotEntry entry) {
+    public static boolean shouldSkipCouponLoot(AgentRuntimeEntry entry) {
         return AgentBotPqRuntime.kpqStageStateAtLeast(entry, SECOND_WALK);
     }
 
