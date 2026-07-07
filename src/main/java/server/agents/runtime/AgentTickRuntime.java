@@ -22,7 +22,7 @@ public final class AgentTickRuntime {
                         issueGrind,
                         issueFollow),
                 (failedEntry, failedLeaderId, failedAgentId, failure) -> AgentTickFailureRuntime.handleFailure(
-                        asBotEntry(failedEntry),
+                        failedEntry,
                         failedLeaderId,
                         failedAgentId,
                         failure));

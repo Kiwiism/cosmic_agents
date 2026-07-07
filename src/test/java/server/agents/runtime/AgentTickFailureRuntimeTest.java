@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.bots.BotEntry;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,7 +13,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentTickFailureRuntimeTest {
     @Test
     void defaultOverloadDelegatesToFailurePolicyWithRuntimeHooks() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         RuntimeException failure = new RuntimeException("boom");
 
         try (MockedStatic<AgentTickFailurePolicy> policy = mockStatic(AgentTickFailurePolicy.class);

@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotReplyRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -21,19 +20,25 @@ public final class AgentTickFailureRuntime {
     private AgentTickFailureRuntime() {
     }
 
-    public static void handleFailure(BotEntry entry,
+    public static void handleFailure(AgentRuntimeEntry entry,
                                      int leaderCharId,
                                      int agentCharId,
                                      Throwable failure) {
-        handleFailure(entry, leaderCharId, agentCharId, failure, log, AgentBotMovementCommandRuntime::stop);
+        handleFailure(
+                entry,
+                leaderCharId,
+                agentCharId,
+                failure,
+                log,
+                stopEntry -> AgentBotMovementCommandRuntime.stop(asBotEntry(stopEntry)));
     }
 
-    public static void handleFailure(BotEntry entry,
+    public static void handleFailure(AgentRuntimeEntry entry,
                                      int leaderCharId,
                                      int agentCharId,
                                      Throwable failure,
                                      Logger log,
-                                     Consumer<BotEntry> stopAgent) {
+                                     Consumer<AgentRuntimeEntry> stopAgent) {
         AgentTickFailurePolicy.handleFailure(
                 entry,
                 leaderCharId,
@@ -57,8 +62,8 @@ public final class AgentTickFailureRuntime {
                                 context.leaderName(), context.mapId(), context.grinding(), context.following(), warningFailure)));
     }
 
-    private static void forceIdleAfterTickFailure(AgentRuntimeEntry entry, Logger log, Consumer<BotEntry> stopAgent) {
-        stopAgent.accept(asBotEntry(entry));
+    private static void forceIdleAfterTickFailure(AgentRuntimeEntry entry, Logger log, Consumer<AgentRuntimeEntry> stopAgent) {
+        stopAgent.accept(entry);
         try {
             AgentBotReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
         } catch (Throwable chatError) {
@@ -68,7 +73,7 @@ public final class AgentTickFailureRuntime {
         }
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (server.bots.BotEntry) entry;
     }
 }

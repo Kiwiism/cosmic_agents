@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Tick failure runtime now accepts `AgentRuntimeEntry` and Agent-entry stop
+  hooks. Failure-window counting, movement-state reset, cleanup on disable,
+  forced idle, failure reply text, and logging behavior are unchanged while the
+  default movement-stop hook remains an explicit temporary compatibility edge.
 - Common tick runtime and the live-gate common tick hook now use
   `AgentRuntimeEntry` directly. Per-tick mob damage, death handling, passive
   loot, potion checks, level-up/build checks, AFK checks, trade ticks, PQ hooks,
