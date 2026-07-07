@@ -69,6 +69,11 @@ Recent map updates:
   Skill-buff readiness, living-mob checks, support rebuff detection, support
   skill execution, cooldown updates, alert marking, and legacy debug summaries
   are unchanged while common tick no longer casts for this buff callback.
+- `AgentBuffService` now accepts `AgentRuntimeEntry` for ticking and debug
+  state. Consumable buff enablement, cheap-mode filtering, scan cadence,
+  inventory selection, ACC-hit checks, use-item application, last-action notes,
+  chat summaries, and debug formatting are unchanged while common tick no
+  longer casts for this buff-pot callback.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

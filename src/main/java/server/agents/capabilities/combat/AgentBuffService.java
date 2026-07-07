@@ -14,7 +14,7 @@ import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentBotBuffStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.StatEffect;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 import tools.Pair;
@@ -53,7 +53,7 @@ public final class AgentBuffService {
 
     private AgentBuffService() {}
 
-    public static void tick(BotEntry entry, Character bot) {
+    public static void tick(AgentRuntimeEntry entry, Character bot) {
         if (!AgentBotBuffStateRuntime.enabled(entry)) return;
 
         long now = System.currentTimeMillis();
@@ -101,7 +101,7 @@ public final class AgentBuffService {
                 summarizeAvailable(available, 2, bot));
     }
 
-    public static List<String> getDebugLines(BotEntry entry, Character bot) {
+    public static List<String> getDebugLines(AgentRuntimeEntry entry, Character bot) {
         return AgentBuffDialogueReporter.debugLines(
                 AgentBotBuffStateRuntime.enabled(entry),
                 AgentBotBuffStateRuntime.cheapMode(entry),
@@ -109,7 +109,7 @@ public final class AgentBuffService {
                 summarizeAvailable(buildSelection(bot, AgentBotBuffStateRuntime.cheapMode(entry)), 5, bot));
     }
 
-    public static String formatDebugState(BotEntry entry) {
+    public static String formatDebugState(AgentRuntimeEntry entry) {
         return AgentBuffDialogueReporter.debugState(
                 AgentBotBuffStateRuntime.enabled(entry),
                 AgentBotBuffStateRuntime.cheapMode(entry));
@@ -154,7 +154,7 @@ public final class AgentBuffService {
         return result;
     }
 
-    private static boolean needsAnyBuffStat(BotEntry entry, Character bot, StatEffect fx) {
+    private static boolean needsAnyBuffStat(AgentRuntimeEntry entry, Character bot, StatEffect fx) {
         for (Pair<BuffStat, Integer> statup : fx.getStatups()) {
             BuffStat stat = statup.getLeft();
             if (bot.getBuffedValue(stat) != null) {
@@ -171,7 +171,7 @@ public final class AgentBuffService {
         return false;
     }
 
-    private static boolean needsAccBuff(BotEntry entry, Character bot) {
+    private static boolean needsAccBuff(AgentRuntimeEntry entry, Character bot) {
         Monster ref = AgentBotGrindTargetStateRuntime.target(entry);
         if (ref == null) {
             for (Monster monster : bot.getMap().getAllMonsters()) {
@@ -336,7 +336,7 @@ public final class AgentBuffService {
         return minutes + "m" + seconds + "s";
     }
 
-    private static void noteDecision(BotEntry entry, String summary) {
+    private static void noteDecision(AgentRuntimeEntry entry, String summary) {
         AgentBotBuffStateRuntime.noteDecision(entry, System.currentTimeMillis(), summary);
     }
 

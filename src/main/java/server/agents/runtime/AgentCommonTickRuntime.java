@@ -62,7 +62,7 @@ public final class AgentCommonTickRuntime {
                         entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBotCombatBuffRuntime.tickBuffs(
                         entry, agent, AgentCombatConfig.cfg),
-                (entry, agent) -> AgentBuffService.tick(asBotEntry(entry), agent),
+                AgentBuffService::tick,
                 AgentActionLockPhysicsRuntime::tickActionLocked);
     }
 

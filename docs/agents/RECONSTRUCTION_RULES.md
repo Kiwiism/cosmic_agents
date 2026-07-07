@@ -5379,6 +5379,11 @@ Current physics correction:
   readiness gates, living-mob checks, party support rebuff detection, support
   skill execution, cooldown updates, alert marking, and legacy debug summaries
   remain unchanged while common tick no longer casts for this buff callback.
+- Consumable buff-pot service now accepts `AgentRuntimeEntry`; enabled/cheap
+  state, scan cadence, monster-presence gating, inventory selection, ACC
+  need checks, use-item application, last-action notes, chat summaries, and
+  debug formatting remain unchanged while common tick no longer casts for this
+  buff-pot callback.
 
 Initial reconstruction order:
 
