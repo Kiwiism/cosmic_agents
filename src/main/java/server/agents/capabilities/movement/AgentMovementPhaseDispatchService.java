@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -25,8 +24,8 @@ public final class AgentMovementPhaseDispatchService {
         AgentGroundMovementRuntimeService.tickGrounded(asBotEntry(entry), targetPos);
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        if (entry instanceof BotEntry botEntry) {
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        if (entry instanceof server.bots.BotEntry botEntry) {
             return botEntry;
         }
         throw new IllegalArgumentException("Legacy movement phase dispatch requires BotEntry compatibility shell");

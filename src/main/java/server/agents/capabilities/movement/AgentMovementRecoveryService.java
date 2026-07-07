@@ -5,7 +5,6 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -21,7 +20,7 @@ public final class AgentMovementRecoveryService {
         tickUnstuck(asBotEntry(entry));
     }
 
-    public static void tickUnstuck(BotEntry entry) {
+    public static void tickUnstuck(server.bots.BotEntry entry) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         int walkStep = AgentMovementKinematicsService.walkStep(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {
@@ -33,7 +32,7 @@ public final class AgentMovementRecoveryService {
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (server.bots.BotEntry) entry;
     }
 }

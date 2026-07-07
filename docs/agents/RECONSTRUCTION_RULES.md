@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Movement phase dispatch and stuck recovery no longer import `BotEntry`.
+  Airborne/grounded movement and unstuck recovery still call deeper
+  BotEntry-backed movement services through explicit temporary compatibility
+  casts, preserving phase selection, random unstuck jump direction, cooldown,
+  navigation reset, and movement broadcast behavior.
 - Anchored farm runtime now exposes `AgentRuntimeEntry` at its public boundary.
   Local opportunity attack, idle physics, idle-on-ground broadcast, and
   movement-core stepping still route through explicit temporary compatibility
