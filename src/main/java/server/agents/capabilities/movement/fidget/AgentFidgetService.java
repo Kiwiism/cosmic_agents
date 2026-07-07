@@ -27,7 +27,6 @@ import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import tools.PacketCreator;
 
@@ -43,7 +42,7 @@ public final class AgentFidgetService {
     private AgentFidgetService() {
     }
 
-    public static boolean tryHandleTick(BotEntry entry, Point targetPos, boolean runAiTick) {
+    public static boolean tryHandleTick(AgentRuntimeEntry entry, Point targetPos, boolean runAiTick) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || targetPos == null) {
             clear(entry);
@@ -85,7 +84,7 @@ public final class AgentFidgetService {
         AgentBotFidgetStateRuntime.clear(entry);
     }
 
-    private static void finishFidget(BotEntry entry, Point botPos) {
+    private static void finishFidget(AgentRuntimeEntry entry, Point botPos) {
         if (entry == null) {
             return;
         }
@@ -165,11 +164,11 @@ public final class AgentFidgetService {
         return true;
     }
 
-    private static boolean isEligible(BotEntry entry, Point botPos, Point targetPos) {
+    private static boolean isEligible(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         return isEligible(entry, botPos, targetPos, false);
     }
 
-    private static boolean isEligible(BotEntry entry,
+    private static boolean isEligible(AgentRuntimeEntry entry,
                                       Point botPos,
                                       Point targetPos,
                                       boolean allowAirborneJumpFidget) {
@@ -189,7 +188,7 @@ public final class AgentFidgetService {
                 && (airborneJumpFidget || Math.abs(targetPos.y - botPos.y) <= AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2);
     }
 
-    private static boolean shouldKeepRunning(BotEntry entry, Point botPos, Point targetPos, long now) {
+    private static boolean shouldKeepRunning(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now) {
         if (!isEligible(entry, botPos, targetPos, true) || AgentBotFidgetStateRuntime.expired(entry, now)) {
             return false;
         }
@@ -206,7 +205,7 @@ public final class AgentFidgetService {
         return mode == AgentFidgetMode.JUMP || mode == AgentFidgetMode.DIAGONAL_JUMP;
     }
 
-    private static void maybeRollIdleFidget(BotEntry entry, Point botPos, Point targetPos, long now) {
+    private static void maybeRollIdleFidget(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now) {
         if (!AgentBotTickStateRuntime.lastTickWasAi(entry) || !isOwnerMostlyIdle(entry)) {
             return;
         }
@@ -229,7 +228,7 @@ public final class AgentFidgetService {
         startRandomFidget(entry, now, (int) AgentRandom.randMs(2000, 10_000), AgentFidgetTrigger.IDLE);
     }
 
-    private static void maybeStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos, long now, boolean runAiTick) {
+    private static void maybeStartSpeedMismatchFidget(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now, boolean runAiTick) {
         if (!runAiTick || !AgentBotFidgetStateRuntime.nextFidgetDue(entry, now)) {
             return;
         }
@@ -245,7 +244,7 @@ public final class AgentFidgetService {
         startRandomFidget(entry, now, (int) AgentRandom.randMs(2000, 4500), AgentFidgetTrigger.AUTO_FOLLOW);
     }
 
-    public static boolean shouldStartSpeedMismatchFidget(BotEntry entry, Point botPos, Point targetPos) {
+    public static boolean shouldStartSpeedMismatchFidget(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || botPos == null || targetPos == null) {
             return false;
@@ -261,7 +260,7 @@ public final class AgentFidgetService {
                 && ownerStep < walkStep;
     }
 
-    private static boolean isOwnerMostlyIdle(BotEntry entry) {
+    private static boolean isOwnerMostlyIdle(AgentRuntimeEntry entry) {
         return AgentBotOwnerMotionStateRuntime.ownerMostlyIdle(entry);
     }
 
@@ -281,7 +280,7 @@ public final class AgentFidgetService {
         startFidget(entry, mode, now, durationMs, trigger);
     }
 
-    private static boolean handleActiveTick(BotEntry entry, Point botPos, Point targetPos, long now) {
+    private static boolean handleActiveTick(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now) {
         if (AgentBotMovementStateRuntime.climbing(entry)) {
             finishFidget(entry, botPos);
             return false;
@@ -294,7 +293,7 @@ public final class AgentFidgetService {
         return executeGrounded(entry, botPos, targetPos, now);
     }
 
-    private static void tickActiveAirborne(BotEntry entry, long now) {
+    private static void tickActiveAirborne(AgentRuntimeEntry entry, long now) {
         if (!AgentBotFidgetStateRuntime.modeIsAny(entry, AgentFidgetMode.JUMP, AgentFidgetMode.DIAGONAL_JUMP)
                 || !AgentBotFidgetStateRuntime.actionDue(entry, now)) {
             return;
@@ -311,7 +310,7 @@ public final class AgentFidgetService {
                 now + jitteredDelayMs(AgentBotFidgetStateRuntime.actionBaseDelayMs(entry)));
     }
 
-    private static boolean executeGrounded(BotEntry entry, Point botPos, Point targetPos, long now) {
+    private static boolean executeGrounded(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return false;
@@ -367,7 +366,7 @@ public final class AgentFidgetService {
         };
     }
 
-    private static void initiateFidgetJump(BotEntry entry,
+    private static void initiateFidgetJump(AgentRuntimeEntry entry,
                                           Character bot,
                                           Point botPos,
                                           Point targetPos,
@@ -394,7 +393,7 @@ public final class AgentFidgetService {
         AgentBotFidgetStateRuntime.setNextJumpAtMs(entry, now + AgentRandom.randMs(200, 400));
     }
 
-    private static int nextDiagonalJumpDir(BotEntry entry, Character bot, Point botPos) {
+    private static int nextDiagonalJumpDir(AgentRuntimeEntry entry, Character bot, Point botPos) {
         Point origin = AgentBotFidgetStateRuntime.originPos(entry);
         if (origin != null && botPos != null) {
             int dxFromOrigin = botPos.x - origin.x;
@@ -411,7 +410,7 @@ public final class AgentFidgetService {
                 : AgentBotFidgetStateRuntime.jumpDir(entry);
     }
 
-    private static void tickSidewaysMovement(BotEntry entry, Character bot, Point botPos, long now) {
+    private static void tickSidewaysMovement(AgentRuntimeEntry entry, Character bot, Point botPos, long now) {
         if (AgentBotFidgetStateRuntime.actionDue(entry, now) || AgentBotFidgetStateRuntime.moveDir(entry) == 0) {
             AgentBotFidgetStateRuntime.setMoveDir(entry, nextSidewaysDir(entry, bot, botPos));
             AgentBotFidgetStateRuntime.setNextActionAtMs(
@@ -442,7 +441,7 @@ public final class AgentFidgetService {
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    private static int nextSidewaysDir(BotEntry entry, Character bot, Point botPos) {
+    private static int nextSidewaysDir(AgentRuntimeEntry entry, Character bot, Point botPos) {
         Point origin = AgentBotFidgetStateRuntime.originPos(entry);
         int walkStep = AgentMovementKinematicsService.walkStep(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         if (origin != null && botPos != null) {
@@ -482,7 +481,7 @@ public final class AgentFidgetService {
         return base + (ThreadLocalRandom.current().nextBoolean() ? SPAM_JITTER_MS : 0);
     }
 
-    private static void maybeBroadcastProneAttackVisual(BotEntry entry, long now) {
+    private static void maybeBroadcastProneAttackVisual(AgentRuntimeEntry entry, long now) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || bot.getMap() == null
                 || !AgentBotFidgetStateRuntime.crouching(entry)

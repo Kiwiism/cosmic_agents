@@ -5761,6 +5761,10 @@ Current physics correction:
 - Session lifecycle side-effect lookup methods now return `AgentRuntimeEntry`
   instead of exposing `BotEntry` lists. Relogin dispatch, active-leader lookup,
   inactive safe-mode issuing, and name/leader lookup behavior remain unchanged.
+- Fidget runtime now accepts `AgentRuntimeEntry` throughout. Idle/social/speed
+  mismatch fidget selection, prone/sideways/jump actions, return-to-origin
+  behavior, movement broadcasts, and visual prone-attack packets remain
+  unchanged.
 
 Initial reconstruction order:
 
