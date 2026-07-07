@@ -5291,6 +5291,10 @@ Current physics correction:
   auto-equip, and loot-offer prompt scheduling behavior are unchanged. The
   remaining BotEntry cast is isolated at the inventory integration adapter for
   the still BotEntry-shaped offer scheduler.
+- KPQ Stage 5 reward tick now accepts `AgentRuntimeEntry`; map gating,
+  already-claimed gating, event clear detection, reward grant, inventory
+  snapshot comparison, claimed-state marking, and reward announcement behavior
+  are unchanged.
 
 Initial reconstruction order:
 

@@ -7,7 +7,7 @@ import client.inventory.Item;
 import scripting.event.EventInstanceManager;
 import server.ItemInformationProvider;
 import server.agents.integration.AgentBotPqRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,7 @@ public final class AgentKpqStage5 {
 
     static final int KPQ_STAGE5_MAP = 103000804;
 
-    public static void tick(BotEntry entry, Character bot) {
+    public static void tick(AgentRuntimeEntry entry, Character bot) {
         if (bot.getMapId() != KPQ_STAGE5_MAP) return;
         if (AgentBotPqRuntime.kpqStage5Claimed(entry)) return;
 

@@ -12,19 +12,19 @@ public final class AgentBotPqRuntime {
     private AgentBotPqRuntime() {
     }
 
-    public static void queueSay(BotEntry entry, String message) {
+    public static void queueSay(AgentRuntimeEntry entry, String message) {
         AgentBotReplyRuntime.queueSay(entry, message);
     }
 
-    public static void resetKpqStage5Claimed(BotEntry entry) {
+    public static void resetKpqStage5Claimed(AgentRuntimeEntry entry) {
         state(entry).clearStage5Claimed();
     }
 
-    public static boolean kpqStage5Claimed(BotEntry entry) {
+    public static boolean kpqStage5Claimed(AgentRuntimeEntry entry) {
         return state(entry).stage5Claimed();
     }
 
-    public static void markKpqStage5Claimed(BotEntry entry) {
+    public static void markKpqStage5Claimed(AgentRuntimeEntry entry) {
         state(entry).markStage5Claimed();
     }
 
