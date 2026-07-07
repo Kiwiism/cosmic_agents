@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentTickPreflightRuntime` now accepts `AgentRuntimeEntry` directly and
+  calls tick preparation without a BotEntry cast. The preflight service tests
+  also use Agent runtime entries while heartbeat, offer expiry, map-missing
+  cleanup, and AI tick cadence behavior remain unchanged.
 - `AgentSpawnPlacementService` now uses generic `AgentRuntimeHandle` hooks for
   spawn placement and normalization. The BotEntry identity lookup remains only
   in `AgentSpawnPlacementRuntime`, preserving the current spawn reset order.

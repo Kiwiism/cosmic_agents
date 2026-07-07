@@ -5512,6 +5512,9 @@ Current physics correction:
   `AgentSpawnPlacementRuntime`, while teleport, movement reset, death clear,
   map tracking, navigation warmup, cadence reset, broadcast invalidation, and
   party HP update order remain unchanged.
+- Tick preflight runtime now accepts `AgentRuntimeEntry`; null-entry short
+  circuiting, airshow skip, delay skip, missing-map cleanup, heartbeat, pending
+  offer expiry, and AI tick preparation behavior remain unchanged.
 
 Initial reconstruction order:
 

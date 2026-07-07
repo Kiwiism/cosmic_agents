@@ -159,7 +159,7 @@ public final class AgentTickCoreRuntime {
                                                     int followDistance) {
         return new AgentTickCoreService.Hooks(
                 System::currentTimeMillis,
-                (runtimeEntry, agentCharId, nowMs) -> AgentTickPreflightRuntime.runPreflight(asBotEntry(runtimeEntry), agentCharId, nowMs),
+                AgentTickPreflightRuntime::runPreflight,
                 leaderResolver,
                 inactiveLeaderTick,
                 (ownerlessEntry, ownerlessAgent, ownerlessRunAiTick) -> AgentOwnerlessTickService.tickOwnerless(

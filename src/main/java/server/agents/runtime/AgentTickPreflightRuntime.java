@@ -6,7 +6,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.bots.BotEntry;
 
 public final class AgentTickPreflightRuntime {
     private static final long HEARTBEAT_INTERVAL_MS = 600_000L;
@@ -14,7 +13,7 @@ public final class AgentTickPreflightRuntime {
     private AgentTickPreflightRuntime() {
     }
 
-    public static AgentTickPreflightService.Result runPreflight(BotEntry entry,
+    public static AgentTickPreflightService.Result runPreflight(AgentRuntimeEntry entry,
                                                                int agentCharId,
                                                                long nowMs) {
         return AgentTickPreflightService.runPreflight(
@@ -38,13 +37,9 @@ public final class AgentTickPreflightRuntime {
                         AgentMovementBroadcastService::broadcastMovement),
                 AgentOfferService::expirePendingOffer,
                 (entry, movementTickMs, aiTickMs, tickAtMs) ->
-                        AgentTickOrchestrator.prepareTick(asBotEntry(entry), movementTickMs, aiTickMs, tickAtMs),
+                        AgentTickOrchestrator.prepareTick(entry, movementTickMs, aiTickMs, tickAtMs),
                 AgentMovementPhysicsConfig.configuredMovementTickMs(),
                 AgentRuntimeConfig.cfg.AI_TICK_MS,
                 HEARTBEAT_INTERVAL_MS);
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

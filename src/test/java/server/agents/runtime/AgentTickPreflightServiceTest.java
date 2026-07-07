@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,7 +21,7 @@ class AgentTickPreflightServiceTest {
         AtomicInteger removals = new AtomicInteger();
 
         AgentTickPreflightService.Result result = AgentTickPreflightService.runPreflight(
-                new BotEntry(null, null, null),
+                new AgentRuntimeEntry(null, null, null),
                 123,
                 1_000L,
                 hooks(true, false, false, removals, new AtomicBoolean(), new AtomicBoolean()));
@@ -35,7 +34,7 @@ class AgentTickPreflightServiceTest {
     void removesAgentWhenMapIsMissing() {
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(null);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AtomicInteger removedId = new AtomicInteger();
 
         AgentTickPreflightService.Result result = AgentTickPreflightService.runPreflight(
@@ -53,7 +52,7 @@ class AgentTickPreflightServiceTest {
     void runsHeartbeatOfferExpiryAndAiPreparationWhenPreflightPasses() {
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(mock(MapleMap.class));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AtomicBoolean heartbeatRan = new AtomicBoolean();
         AtomicBoolean offerExpired = new AtomicBoolean();
         AtomicReference<Long> tickAtSeen = new AtomicReference<>();
