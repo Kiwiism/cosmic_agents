@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Transfer service hooks now use `AgentRuntimeEntry` for entry lookup,
+  scheduled-task cancellation, and stop callbacks. The transfer runtime still
+  adapts the temporary BotEntry-backed registry list at the boundary, preserving
+  legacy removal order, authorization checks, stop/cancel/register sequencing,
+  delayed greeting timing, and reply text.
 - Scripted move-combat tick service now uses `AgentRuntimeEntry` for its public
   service and hook signatures. The live-mode bridge still adapts to legacy
   movement/combat callbacks where required, but local-opportunity move gating,

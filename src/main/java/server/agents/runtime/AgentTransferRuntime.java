@@ -27,7 +27,7 @@ public final class AgentTransferRuntime {
                 agentName,
                 targetName,
                 new AgentTransferService.Hooks(
-                        id -> AgentRuntimeRegistry.entriesByLeaderId().get(id),
+                        AgentTransferRuntime::entriesByLeader,
                         AgentRuntimeRegistry::findByName,
                         (candidateLeader, target) -> candidateLeader.getMap().getCharacterByName(target),
                         (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),
@@ -42,5 +42,10 @@ public final class AgentTransferRuntime {
                                 "sure!",
                                 "hey " + targetName + "!",
                                 "hi " + targetName + "!"))));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<AgentRuntimeEntry> entriesByLeader(int leaderCharId) {
+        return (List<AgentRuntimeEntry>) (List<?>) AgentRuntimeRegistry.entriesByLeaderId().get(leaderCharId);
     }
 }

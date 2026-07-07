@@ -89,7 +89,7 @@ public final class AgentInteractionRuntime {
                 leader,
                 agentName,
                 targetName,
-                AgentBotMovementCommandRuntime::stop,
+                transferEntry -> AgentBotMovementCommandRuntime.stop((BotEntry) transferEntry),
                 (leaderId, transferLeader, agent) -> AgentRegistrationRuntime.registerManualAgent(
                         leaderId,
                         transferLeader,

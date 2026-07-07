@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.auth.AgentAuthorizationResult;
-import server.bots.BotEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +18,8 @@ class AgentTransferServiceTest {
         Character leader = character(1, "Leader", 10);
         Character target = character(2, "Target", 20);
         Character agent = character(3, "agent123", 30);
-        BotEntry entry = new BotEntry(agent, leader, null);
-        List<BotEntry> entries = new ArrayList<>(List.of(entry));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        List<AgentRuntimeEntry> entries = new ArrayList<>(List.of(entry));
         List<String> calls = new ArrayList<>();
 
         String error = AgentTransferService.transferAgent(

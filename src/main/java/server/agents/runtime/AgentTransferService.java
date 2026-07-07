@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.function.LongSupplier;
@@ -29,12 +28,12 @@ public final class AgentTransferService {
 
     @FunctionalInterface
     public interface EntriesByLeader {
-        List<BotEntry> entries(int leaderCharId);
+        List<AgentRuntimeEntry> entries(int leaderCharId);
     }
 
     @FunctionalInterface
     public interface AgentEntryByName {
-        BotEntry find(int leaderCharId, String agentName);
+        AgentRuntimeEntry find(int leaderCharId, String agentName);
     }
 
     @FunctionalInterface
@@ -49,12 +48,12 @@ public final class AgentTransferService {
 
     @FunctionalInterface
     public interface ScheduledTaskCanceler {
-        void cancel(BotEntry entry);
+        void cancel(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
     public interface AgentStopper {
-        void stop(BotEntry entry);
+        void stop(AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
@@ -81,11 +80,11 @@ public final class AgentTransferService {
                                        String agentName,
                                        String targetName,
                                        Hooks hooks) {
-        List<BotEntry> entries = hooks.entriesByLeader().entries(leaderCharId);
+        List<AgentRuntimeEntry> entries = hooks.entriesByLeader().entries(leaderCharId);
         if (entries == null) {
             return "You have no bots.";
         }
-        BotEntry found = hooks.agentEntryByName().find(leaderCharId, agentName);
+        AgentRuntimeEntry found = hooks.agentEntryByName().find(leaderCharId, agentName);
         if (found == null) {
             return "No bot named '" + agentName + "' in your group.";
         }
