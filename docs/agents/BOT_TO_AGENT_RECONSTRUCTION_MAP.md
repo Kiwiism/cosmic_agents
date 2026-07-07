@@ -38,6 +38,9 @@ Recent map updates:
   methods over `AgentRuntimeEntry`; lower supply, offer, and pending-action
   adapters keep the remaining compatibility casts for their own BotEntry-shaped
   side effects.
+- `AgentBotCommandParser.resolveTargetedBot` is now generic over
+  `AgentRuntimeEntry`, preserving current targeted command matching while
+  removing its direct dependency on the legacy bot entry type.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving

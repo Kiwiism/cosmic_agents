@@ -5491,6 +5491,9 @@ Current physics correction:
   scroll/potion/debug reporting, skill report pending-action behavior, and
   recommended gear reporting remain unchanged while remaining BotEntry
   adaptation moves into supply, offer, and pending-action adapters.
+- Targeted bot command parser resolution is now generic over
+  `AgentRuntimeEntry`; existing BotEntry lists still resolve identically, while
+  the parser itself no longer imports the bot package.
 
 Initial reconstruction order:
 
