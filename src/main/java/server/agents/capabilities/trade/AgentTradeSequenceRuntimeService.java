@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import server.Trade;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public final class AgentTradeSequenceRuntimeService {
                                           List<Item> items,
                                           int mesos,
                                           boolean singleBatch,
-                                          BotEntry entry,
+                                          AgentRuntimeEntry entry,
                                           Character agent,
                                           Runnable cancelUnavailableTrade) {
         AgentTradeSequenceOrchestrator.startTradeSequence(
@@ -31,7 +31,7 @@ public final class AgentTradeSequenceRuntimeService {
                 sequenceCallbacks(entry, agent, cancelUnavailableTrade));
     }
 
-    public static void openTradeBatch(BotEntry entry,
+    public static void openTradeBatch(AgentRuntimeEntry entry,
                                       Character agent,
                                       List<Item> items,
                                       int mesos,
@@ -44,7 +44,7 @@ public final class AgentTradeSequenceRuntimeService {
                 sequenceCallbacks(entry, agent, cancelUnavailableTrade));
     }
 
-    static AgentTradeSequenceOrchestrator.SequenceCallbacks sequenceCallbacks(BotEntry entry,
+    static AgentTradeSequenceOrchestrator.SequenceCallbacks sequenceCallbacks(AgentRuntimeEntry entry,
                                                                               Character agent,
                                                                               Runnable cancelUnavailableTrade) {
         return AgentTradeSequenceCallbackService.sequenceCallbacks(

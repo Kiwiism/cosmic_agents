@@ -5559,6 +5559,10 @@ Current physics correction:
   bookkeeping, greeting cleanup, state clearing, and delayed invite acceptance.
   Existing manual owner/peer trade flow still enters through
   `AgentManualTradeRuntimeService`, preserving behavior.
+- Trade sequence runtime service now accepts `AgentRuntimeEntry` for starting
+  trade sequences and opening trade batches. Recipient resolution, trade start,
+  invite, cancel-unavailable handling, and first-batch invitation replies still
+  flow through the same sequence callbacks.
 
 Initial reconstruction order:
 

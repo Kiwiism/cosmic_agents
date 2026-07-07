@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentTradeSequenceRuntimeService` now accepts `AgentRuntimeEntry` for trade
+  sequence start/open-batch orchestration. It delegates to the already
+  Agent-owned sequence/batch services while preserving recipient resolution,
+  invite-start order, and first-batch invitation reply behavior.
 - `AgentManualTradeService` now accepts `AgentRuntimeEntry` for manual-trade
   timeout tracking, greeting cleanup, state clearing, and delayed invite
   acceptance. `AgentManualTradeRuntimeService` remains the temporary BotEntry

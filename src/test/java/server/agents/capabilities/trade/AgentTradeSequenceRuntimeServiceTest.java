@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +24,7 @@ class AgentTradeSequenceRuntimeServiceTest {
     void announcesTradeInviteOnlyOnFirstBatchOfSequence() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
 
         when(owner.getId()).thenReturn(42);
         when(owner.getTrade()).thenReturn(null);
@@ -55,7 +55,7 @@ class AgentTradeSequenceRuntimeServiceTest {
     @Test
     void openTradeBatchCancelsThroughSuppliedCallbackWhenRecipientUnavailable() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AtomicBoolean cancelled = new AtomicBoolean();
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
@@ -70,3 +70,4 @@ class AgentTradeSequenceRuntimeServiceTest {
         assertTrue(cancelled.get());
     }
 }
+
