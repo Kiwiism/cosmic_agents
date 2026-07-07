@@ -10,7 +10,6 @@ import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -23,13 +22,13 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class AgentGrindTargetPositionService {
     @FunctionalInterface
     public interface RegionResolver {
-        int resolve(AgentNavigationGraph graph, BotEntry entry, MapleMap map, Point position);
+        int resolve(AgentNavigationGraph graph, AgentRuntimeEntry entry, MapleMap map, Point position);
     }
 
     private AgentGrindTargetPositionService() {
     }
 
-    public static Point resolveNoGrindTargetPosition(BotEntry entry,
+    public static Point resolveNoGrindTargetPosition(AgentRuntimeEntry entry,
                                                      Point agentPosition,
                                                      MapleMap map,
                                                      int lootRadius,
@@ -67,7 +66,7 @@ public final class AgentGrindTargetPositionService {
                 agentPosition.y);
     }
 
-    public static Point resolveNoGrindTargetPosition(BotEntry entry,
+    public static Point resolveNoGrindTargetPosition(AgentRuntimeEntry entry,
                                                      Point agentPosition,
                                                      int lootRadius,
                                                      int stopDistance,
@@ -85,7 +84,7 @@ public final class AgentGrindTargetPositionService {
                 regionResolver);
     }
 
-    public static Point activeGrindLootPosition(BotEntry entry,
+    public static Point activeGrindLootPosition(AgentRuntimeEntry entry,
                                                 Point agentPosition,
                                                 int lootRadius,
                                                 int grindLootRetrySuppressMs) {
@@ -114,7 +113,7 @@ public final class AgentGrindTargetPositionService {
         return lootPos;
     }
 
-    public static void suppressGrindLootRetry(BotEntry entry, MapItem loot, int grindLootRetrySuppressMs) {
+    public static void suppressGrindLootRetry(AgentRuntimeEntry entry, MapItem loot, int grindLootRetrySuppressMs) {
         if (entry == null || loot == null) {
             return;
         }
@@ -133,7 +132,7 @@ public final class AgentGrindTargetPositionService {
         return (double) dx * dx + (double) dy * dy;
     }
 
-    public static Point convenientLootTarget(BotEntry entry,
+    public static Point convenientLootTarget(AgentRuntimeEntry entry,
                                              Point agentPosition,
                                              Point mobPosition,
                                              int lootRadius,
@@ -148,7 +147,7 @@ public final class AgentGrindTargetPositionService {
         return lootDistSq < mobDistSq * grindLootConvenienceRatio ? lootPos : null;
     }
 
-    public static Point resolvePatrolWanderTarget(BotEntry entry,
+    public static Point resolvePatrolWanderTarget(AgentRuntimeEntry entry,
                                                   Point agentPosition,
                                                   MapleMap map,
                                                   int lootRadius,

@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -24,7 +23,7 @@ class AgentGrindTargetPositionServiceTest {
 
     @Test
     void noGraphFallbackReusesLegacyWanderDirection() {
-        BotEntry entry = entry(null);
+        AgentRuntimeEntry entry = entry(null);
         Point agentPosition = new Point(100, 100);
 
         Point first = AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
@@ -55,7 +54,7 @@ class AgentGrindTargetPositionServiceTest {
         MapleMap map = mock(MapleMap.class);
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem loot = mockLoot(7, new Point(100 + LOOT_RADIUS, 100));
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         when(map.getMapObject(7)).thenReturn(loot);
@@ -88,7 +87,7 @@ class AgentGrindTargetPositionServiceTest {
         MapleMap map = mock(MapleMap.class);
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Point lootPosition = new Point(221, 100);
         MapItem loot = mockLoot(8, lootPosition);
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
@@ -103,10 +102,10 @@ class AgentGrindTargetPositionServiceTest {
                 RETRY_SUPPRESS_MS));
     }
 
-    private static BotEntry entry(MapleMap map) {
+    private static AgentRuntimeEntry entry(MapleMap map) {
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);
-        return new BotEntry(agent, mock(Character.class), null);
+        return new AgentRuntimeEntry(agent, mock(Character.class), null);
     }
 
     private static MapItem mockLoot(int objectId, Point position) {

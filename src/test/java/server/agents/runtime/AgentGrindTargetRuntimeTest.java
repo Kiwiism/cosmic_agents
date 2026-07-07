@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -14,7 +13,7 @@ import static org.mockito.Mockito.mock;
 class AgentGrindTargetRuntimeTest {
     @Test
     void noGraphFallbackPreservesLegacyWanderDirectionThroughRuntimeBridge() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Point agentPosition = new Point(100, 100);
 
         Point target = AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, agentPosition, null);

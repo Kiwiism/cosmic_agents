@@ -81,9 +81,9 @@ public final class AgentGrindModeRuntime {
                 AgentMovementPhaseDispatchService::tickSwimming,
                 AgentMovementPhaseDispatchService::tickAirborne,
                 (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolvePatrolWanderTarget(
-                        asBotEntry(entry), agentPosition, map),
+                        entry, agentPosition, map),
                 (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolveNoGrindTargetPosition(
-                        asBotEntry(entry), agentPosition, map),
+                        entry, agentPosition, map),
                 (entry, targetPos, runAiTick) -> movementCoreStep.step(asBotEntry(entry), targetPos, runAiTick));
     }
 
@@ -125,7 +125,7 @@ public final class AgentGrindModeRuntime {
                                 entry, agentPosition, combatTargetPosition, retreatChecked),
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, mobPosition) ->
-                        AgentGrindTargetRuntime.convenientLootTarget(asBotEntry(entry), agentPosition, mobPosition));
+                        AgentGrindTargetRuntime.convenientLootTarget(entry, agentPosition, mobPosition));
     }
 
     private static BotEntry asBotEntry(AgentRuntimeEntry entry) {

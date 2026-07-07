@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Grind target runtime and target-position service now use `AgentRuntimeEntry`
+  for fallback wander, patrol wander, active loot targeting, retry suppression,
+  convenient-loot selection, and navigation region resolution. Existing random
+  wander, patrol target reuse, loot radius, retry suppression, and grind tail
+  behavior are unchanged.
 - Navigation debug overlay selection/path helpers now use `AgentRuntimeEntry`
   locally instead of importing `BotEntry`. The temporary session lookup still
   supplies compatibility-shell instances, while graph/path overlay messages,
