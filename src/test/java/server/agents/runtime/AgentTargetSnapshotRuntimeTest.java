@@ -20,10 +20,9 @@ class AgentTargetSnapshotRuntimeTest {
         Character leader = character(100, "Leader", new Point(10, 20));
         Character agent = character(200, "Agent", new Point(1, 2));
         Character sibling = character(300, "Sibling", new Point(30, 40));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         BotEntry siblingEntry = new BotEntry(sibling, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
         AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());
 
@@ -39,13 +38,12 @@ class AgentTargetSnapshotRuntimeTest {
         Character leader = character(100, "Leader", new Point(10, 20));
         Character agent = character(200, "Agent", new Point(1, 2));
         Character sibling = character(300, "Sibling", new Point(50, 60));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         BotEntry siblingEntry = new BotEntry(sibling, leader, null);
         AgentFormationService.FormationState formation =
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 40, 0);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentFormationService.formationsByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
         AgentFormationService.formationsByLeaderId().put(leader.getId(), formation);
         AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());

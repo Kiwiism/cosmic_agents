@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
 
 import java.util.List;
 
@@ -16,14 +15,18 @@ public final class AgentTargetSnapshotRuntime {
     private AgentTargetSnapshotRuntime() {
     }
 
-    public static Character resolveFollowAnchor(BotEntry entry, Character leader) {
-        List<BotEntry> siblingEntries = leader == null ? List.of() : AgentRuntimeRegistry.entriesForLeader(leader.getId());
+    public static Character resolveFollowAnchor(AgentRuntimeEntry entry, Character leader) {
+        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
+                ? List.of()
+                : AgentRuntimeRegistry.entriesForLeader(leader.getId());
         return AgentFollowAnchorService.resolve(entry, leader, siblingEntries);
     }
 
-    public static AgentTargetSnapshot captureTargetSnapshot(BotEntry entry) {
+    public static AgentTargetSnapshot captureTargetSnapshot(AgentRuntimeEntry entry) {
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
-        List<BotEntry> siblingEntries = leader == null ? List.of() : AgentRuntimeRegistry.entriesForLeader(leader.getId());
+        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
+                ? List.of()
+                : AgentRuntimeRegistry.entriesForLeader(leader.getId());
         return AgentTargetSnapshotService.capture(
                 entry,
                 siblingEntries,

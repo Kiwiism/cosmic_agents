@@ -38,8 +38,8 @@ public final class AgentTickCoreRuntime {
                                 runAiTick),
                 (runtimeEntry, agent, leader) ->
                         AgentDeathTickRuntime.handleDeadTick(runtimeEntry, agent, leader),
-                (runtimeEntry, leader) -> AgentTargetSnapshotRuntime.resolveFollowAnchor((BotEntry) runtimeEntry, leader),
-                runtimeEntry -> AgentTargetSnapshotRuntime.captureTargetSnapshot((BotEntry) runtimeEntry),
+                AgentTargetSnapshotRuntime::resolveFollowAnchor,
+                AgentTargetSnapshotRuntime::captureTargetSnapshot,
                 runtimeEntry -> AgentScriptTaskRuntime.tick(asBotEntry(runtimeEntry)),
                 issueGrind,
                 issueFollow,

@@ -5265,6 +5265,10 @@ Current physics correction:
 - Target snapshot service now accepts `AgentRuntimeEntry`; follow-anchor
   resolution, formation lookup, shop/move/farm/grind target precedence, primary
   target source labels, and copied point behavior are unchanged.
+- Target snapshot runtime now accepts `AgentRuntimeEntry`; runtime-registry
+  sibling lookup, formation map lookup, follow-anchor resolution, and target
+  snapshot capture behavior are unchanged while registry storage remains a
+  temporary BotEntry-backed compatibility seam.
 
 Initial reconstruction order:
 
