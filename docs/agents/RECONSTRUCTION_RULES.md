@@ -5303,6 +5303,8 @@ Current physics correction:
   grind-required, and PQ follow-required decisions no longer require runtime
   casts in common tick or map-transition gates, and their map/state predicates
   are unchanged.
+- KPQ Stage 5 map-change reset now routes through the Agent-entry PQ bridge
+  directly, preserving the existing reset timing during tracked map changes.
 
 Initial reconstruction order:
 

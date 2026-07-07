@@ -38,7 +38,7 @@ public final class AgentMapTransitionRuntime {
                         hookEntry -> issueGrind.accept(asBotEntry(hookEntry)),
                         AgentPartyQuestHooks::requiresFollow,
                         hookEntry -> issueFollow.accept(asBotEntry(hookEntry)),
-                        hookEntry -> AgentBotPqRuntime.resetKpqStage5Claimed(asBotEntry(hookEntry)),
+                        AgentBotPqRuntime::resetKpqStage5Claimed,
                         (hookEntry, hookAgent) -> AgentShopService.onMapChange(asBotEntry(hookEntry), hookAgent),
                         (hookEntry, hookAgent) -> AgentBotManagerStatusRuntime.checkManagerStatus(asBotEntry(hookEntry), hookAgent)));
     }
