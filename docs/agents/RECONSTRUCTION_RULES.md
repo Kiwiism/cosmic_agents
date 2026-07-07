@@ -5326,6 +5326,10 @@ Current physics correction:
 - Chat status owner-activity and offline-return bridge methods now accept
   `AgentRuntimeEntry`; leader position lookup, status-state update, bot
   identity lookup, and offline-return announcement behavior are unchanged.
+- Chat status AFK-check bridge methods now accept `AgentRuntimeEntry`;
+  owner-position sampling, AFK timer state, delayed welcome-back scheduling,
+  expression changes, and reply behavior are unchanged, and common tick no
+  longer casts for this AFK status callback.
 
 Initial reconstruction order:
 

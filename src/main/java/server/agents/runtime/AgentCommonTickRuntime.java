@@ -50,7 +50,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentPotionService.tickPotionCheck(asBotEntry(entry), agent),
                 (entry, agent) -> AgentPotionService.tickPassiveRecovery(asBotEntry(entry), agent),
                 (entry, agent) -> AgentBuildService.checkLevelUp(asBotEntry(entry), agent),
-                (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(asBotEntry(entry), leader),
+                (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(entry, leader),
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(asBotEntry(entry), agent),
                 (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(asBotEntry(entry), agent),
                 (entry, agent, leader) -> AgentPartyQuestHooks.tick(asBotEntry(entry), agent, leader),

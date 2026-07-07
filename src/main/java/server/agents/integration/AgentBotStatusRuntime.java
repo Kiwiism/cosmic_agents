@@ -41,7 +41,7 @@ public final class AgentBotStatusRuntime {
         };
     }
 
-    public static AgentChatWelcomeBackFlow.AfkState afkState(BotEntry entry) {
+    public static AgentChatWelcomeBackFlow.AfkState afkState(AgentRuntimeEntry entry) {
         return new AgentChatWelcomeBackFlow.AfkState() {
             @Override
             public Point ownerAfkPosition() {
@@ -136,7 +136,7 @@ public final class AgentBotStatusRuntime {
         };
     }
 
-    public static AgentChatStatusRuntime.AfkReturnActions afkReturnActions(BotEntry entry) {
+    public static AgentChatStatusRuntime.AfkReturnActions afkReturnActions(AgentRuntimeEntry entry) {
         return new AgentChatStatusRuntime.AfkReturnActions() {
             @Override
             public boolean hasAgent() {

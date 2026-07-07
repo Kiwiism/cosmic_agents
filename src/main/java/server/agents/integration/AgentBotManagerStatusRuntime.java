@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 /**
@@ -22,7 +23,7 @@ public final class AgentBotManagerStatusRuntime {
         AgentBotChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
     }
 
-    public static void tickAfkCheck(BotEntry entry, Character owner) {
+    public static void tickAfkCheck(AgentRuntimeEntry entry, Character owner) {
         AgentBotChatStatusRuntime.tickAfkCheck(entry, owner);
     }
 

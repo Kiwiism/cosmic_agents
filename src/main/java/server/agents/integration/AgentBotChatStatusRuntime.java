@@ -31,7 +31,7 @@ public final class AgentBotChatStatusRuntime {
                 AgentBotStatusRuntime.offlineReturnActions(AgentBotRuntimeIdentityRuntime.bot(entry)));
     }
 
-    public static void tickAfkCheck(BotEntry entry, Character owner) {
+    public static void tickAfkCheck(AgentRuntimeEntry entry, Character owner) {
         AgentChatStatusRuntime.tickAfkCheck(
                 AgentBotStatusRuntime.afkState(entry),
                 owner.getPosition(),
