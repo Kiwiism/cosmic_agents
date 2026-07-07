@@ -8,7 +8,7 @@ import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.List;
@@ -23,11 +23,11 @@ public final class AgentBotMovementTargetSideEffects {
     private AgentBotMovementTargetSideEffects() {
     }
 
-    public static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry) {
+    public static AgentMovementTargetSnapshot captureTargetSnapshot(AgentRuntimeEntry entry) {
         return from(entry, captureAgentTargetSnapshot(entry));
     }
 
-    public static AgentMovementTargetSnapshot captureTargetSnapshot(BotEntry entry, Point rawTargetPos) {
+    public static AgentMovementTargetSnapshot captureTargetSnapshot(AgentRuntimeEntry entry, Point rawTargetPos) {
         AgentTargetSnapshot snapshot = captureAgentTargetSnapshot(entry);
         if (rawTargetPos == null || rawTargetPos.equals(snapshot.primaryTargetPos())) {
             return from(entry, snapshot);
@@ -46,7 +46,7 @@ public final class AgentBotMovementTargetSideEffects {
                 "nav-input"));
     }
 
-    public static AgentMovementTargetSnapshot from(BotEntry entry, AgentTargetSnapshot snapshot) {
+    public static AgentMovementTargetSnapshot from(AgentRuntimeEntry entry, AgentTargetSnapshot snapshot) {
         return new AgentMovementTargetSnapshot(
                 snapshot.formation().type().name(),
                 snapshot.formation().px(),
@@ -65,9 +65,9 @@ public final class AgentBotMovementTargetSideEffects {
                 snapshot.steeringTargetSource(entry));
     }
 
-    private static AgentTargetSnapshot captureAgentTargetSnapshot(BotEntry entry) {
+    private static AgentTargetSnapshot captureAgentTargetSnapshot(AgentRuntimeEntry entry) {
         client.Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
-        List<BotEntry> siblingEntries = leader == null
+        List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
                 : AgentBotSessionLifecycleSideEffects.getBotEntries(leader.getId());
         return AgentTargetSnapshotService.capture(

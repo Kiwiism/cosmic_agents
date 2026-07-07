@@ -5362,6 +5362,10 @@ Current physics correction:
 - Chat status facade no longer imports `BotEntry`; build-status and active-mode
   backend seams now accept `AgentRuntimeEntry` while preserving the same
   build, equipment, offer, autopot, and potion-share side effects.
+- Movement target snapshot facade and side-effect bridge now accept
+  `AgentRuntimeEntry`; target capture, sibling follow-anchor resolution,
+  navigation waypoint steering override, and defensive snapshot copying are
+  unchanged.
 
 Initial reconstruction order:
 
