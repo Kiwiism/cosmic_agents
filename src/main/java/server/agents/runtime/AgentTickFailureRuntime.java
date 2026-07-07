@@ -57,8 +57,8 @@ public final class AgentTickFailureRuntime {
                                 context.leaderName(), context.mapId(), context.grinding(), context.following(), warningFailure)));
     }
 
-    private static void forceIdleAfterTickFailure(BotEntry entry, Logger log, Consumer<BotEntry> stopAgent) {
-        stopAgent.accept(entry);
+    private static void forceIdleAfterTickFailure(AgentRuntimeEntry entry, Logger log, Consumer<BotEntry> stopAgent) {
+        stopAgent.accept(asBotEntry(entry));
         try {
             AgentBotReplyRuntime.replyNow(entry, "unrecoverable error caught, idling");
         } catch (Throwable chatError) {
@@ -66,5 +66,9 @@ public final class AgentTickFailureRuntime {
             log.warn("Failed to send bot failure idle message for '{}'",
                     agent != null ? agent.getName() : "?", chatError);
         }
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 }

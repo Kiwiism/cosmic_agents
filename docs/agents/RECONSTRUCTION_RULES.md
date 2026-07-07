@@ -5430,6 +5430,10 @@ Current physics correction:
   reset, queued movement/combat/drop tasks, cheap-move checks, and Stage 5 tick
   dispatch behavior are unchanged while lower runtime adapters remain
   compatibility-bound where needed.
+- Tick failure policy now accepts `AgentRuntimeEntry`; failure counting,
+  volatile action cleanup, warning/idle/disable escalation, failure-context
+  reporting, missing-entry logging, and reset behavior are unchanged while the
+  runtime hook keeps the temporary `BotEntry` stop-command adapter.
 
 Initial reconstruction order:
 

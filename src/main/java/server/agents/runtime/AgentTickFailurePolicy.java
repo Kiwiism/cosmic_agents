@@ -8,7 +8,6 @@ import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -33,9 +32,9 @@ public final class AgentTickFailurePolicy {
     }
 
     public record FailureHooks(MissingEntryLogger missingEntryLogger,
-                               BiConsumer<BotEntry, Throwable> clearMovementState,
-                               Consumer<BotEntry> disableAgent,
-                               Consumer<BotEntry> forceIdle,
+                               BiConsumer<AgentRuntimeEntry, Throwable> clearMovementState,
+                               Consumer<AgentRuntimeEntry> disableAgent,
+                               Consumer<AgentRuntimeEntry> forceIdle,
                                BiConsumer<FailureContext, Throwable> logDisable,
                                BiConsumer<FailureContext, Throwable> logWarning) {
     }
@@ -48,7 +47,7 @@ public final class AgentTickFailurePolicy {
     private AgentTickFailurePolicy() {
     }
 
-    public static void handleFailure(BotEntry entry,
+    public static void handleFailure(AgentRuntimeEntry entry,
                                      int leaderCharId,
                                      int agentCharId,
                                      Throwable failure,
@@ -77,18 +76,18 @@ public final class AgentTickFailurePolicy {
         hooks.logWarning().accept(context, failure);
     }
 
-    public static Decision recordFailure(BotEntry entry, long nowMs) {
+    public static Decision recordFailure(AgentRuntimeEntry entry, long nowMs) {
         int failureCount = AgentBotTickFailureStateRuntime.recordFailure(entry, nowMs, FAILURE_WINDOW_MS);
         return new Decision(failureCount, failureCount == 2, failureCount >= FAILURE_LIMIT);
     }
 
-    public static void resetFailures(BotEntry entry) {
+    public static void resetFailures(AgentRuntimeEntry entry) {
         if (entry != null && AgentBotTickFailureStateRuntime.hasFailures(entry)) {
             AgentBotTickFailureStateRuntime.clear(entry);
         }
     }
 
-    public static void clearVolatileActions(BotEntry entry) {
+    public static void clearVolatileActions(AgentRuntimeEntry entry) {
         AgentBotPendingActionStateRuntime.clearPendingAction(entry);
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         AgentBotGrindTargetStateRuntime.clear(entry);
@@ -96,7 +95,7 @@ public final class AgentTickFailurePolicy {
         AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
     }
 
-    private static FailureContext failureContext(BotEntry entry, int failureCount, Throwable failure) {
+    private static FailureContext failureContext(AgentRuntimeEntry entry, int failureCount, Throwable failure) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
         return new FailureContext(

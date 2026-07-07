@@ -120,6 +120,10 @@ Recent map updates:
   `AgentRuntimeEntry`; script queueing, wait/int state, cheap-target checks,
   item-drop actions, KPQ Stage 1 reset/applicability, and KPQ Stage 5 dispatch
   behavior are unchanged.
+- `AgentTickFailurePolicy` now accepts `AgentRuntimeEntry`; failure-window
+  counting, volatile action cleanup, forced-idle escalation, disable escalation,
+  and warning/disable context reporting are unchanged. `AgentTickFailureRuntime`
+  remains the temporary adapter for the legacy stop-command callback.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`
