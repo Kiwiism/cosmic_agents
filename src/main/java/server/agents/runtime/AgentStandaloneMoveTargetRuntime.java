@@ -10,7 +10,7 @@ public final class AgentStandaloneMoveTargetRuntime {
     private AgentStandaloneMoveTargetRuntime() {
     }
 
-    public static void tickStandaloneMoveTarget(BotEntry entry,
+    public static void tickStandaloneMoveTarget(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick) {
         tickStandaloneMoveTarget(
@@ -21,7 +21,7 @@ public final class AgentStandaloneMoveTargetRuntime {
                 AgentMovementPhysicsConfig.configuredStopDist());
     }
 
-    public static void tickStandaloneMoveTarget(BotEntry entry,
+    public static void tickStandaloneMoveTarget(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 boolean runAiTick,
                                                 boolean enableUnstuck,
@@ -31,7 +31,7 @@ public final class AgentStandaloneMoveTargetRuntime {
                 agent,
                 runAiTick,
                 new AgentStandaloneMoveTargetTickService.Hooks(
-                        (moveEntry, moveAgent) -> AgentMapTransitionRuntime.groundAfterMapChange(asBotEntry(moveEntry), moveAgent),
+                        AgentMapTransitionRuntime::groundAfterMapChange,
                         moveEntry -> AgentMovementProfileService.refreshMovementProfile(asBotEntry(moveEntry)),
                         (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
                                 asBotEntry(moveEntry),

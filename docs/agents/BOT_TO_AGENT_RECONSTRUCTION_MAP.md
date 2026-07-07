@@ -128,6 +128,13 @@ Recent map updates:
   execution, failure reset, failure handler dispatch, and performance timing
   behavior are unchanged. `AgentTickRuntime` keeps the temporary BotEntry
   adapter for movement command callbacks and tick-core entrypoints.
+- Tick-core map-transition and standalone-move callbacks now carry
+  `AgentRuntimeEntry` through `AgentMapTransitionRuntime`,
+  `AgentStandaloneMoveTargetRuntime`, `AgentLiveTickGateRuntime`, and the
+  issue-grind/follow callback path. Existing grounding, PQ mode switching,
+  shop map-change hooks, tracked-map-change issue callbacks, and standalone
+  move-target behavior are unchanged; script/physics/live-mode callback
+  adapters remain as later slices.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

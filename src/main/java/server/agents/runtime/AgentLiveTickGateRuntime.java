@@ -11,8 +11,8 @@ public final class AgentLiveTickGateRuntime {
     public static boolean tickLiveGates(AgentLiveTickGateService.Context context,
                                         boolean perf,
                                         Consumer<BotEntry> tickScriptTasks,
-                                        Consumer<BotEntry> issueGrind,
-                                        Consumer<BotEntry> issueFollow,
+                                        Consumer<AgentRuntimeEntry> issueGrind,
+                                        Consumer<AgentRuntimeEntry> issueFollow,
                                         int teleportDistance,
                                         int outOfBoundsTeleportDistance,
                                         int grindPartyTeleportDistanceMultiplier) {
@@ -30,8 +30,8 @@ public final class AgentLiveTickGateRuntime {
 
     private static AgentLiveTickGateService.Hooks hooks(boolean perf,
                                                         Consumer<BotEntry> tickScriptTasks,
-                                                        Consumer<BotEntry> issueGrind,
-                                                        Consumer<BotEntry> issueFollow,
+                                                        Consumer<AgentRuntimeEntry> issueGrind,
+                                                        Consumer<AgentRuntimeEntry> issueFollow,
                                                         int teleportDistance,
                                                         int outOfBoundsTeleportDistance,
                                                         int grindPartyTeleportDistanceMultiplier) {
@@ -74,7 +74,7 @@ public final class AgentLiveTickGateRuntime {
                         mapEntry,
                         mapAgent,
                         new AgentTrackedMapChangeTickService.Hooks((trackedEntry, trackedAgent) ->
-                                tickTrackedMapChange(asBotEntry(trackedEntry), trackedAgent, issueGrind, issueFollow, perf))));
+                                tickTrackedMapChange(trackedEntry, trackedAgent, issueGrind, issueFollow, perf))));
     }
 
     private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
@@ -104,10 +104,10 @@ public final class AgentLiveTickGateRuntime {
         return consumed;
     }
 
-    private static boolean tickTrackedMapChange(BotEntry entry,
+    private static boolean tickTrackedMapChange(AgentRuntimeEntry entry,
                                                 Character agent,
-                                                Consumer<BotEntry> issueGrind,
-                                                Consumer<BotEntry> issueFollow,
+                                                Consumer<AgentRuntimeEntry> issueGrind,
+                                                Consumer<AgentRuntimeEntry> issueFollow,
                                                 boolean perf) {
         if (!perf) {
             return AgentMapTransitionRuntime.handleTrackedMapChange(entry, agent, issueGrind, issueFollow);

@@ -5438,6 +5438,12 @@ Current physics correction:
   failure reset, failure handler dispatch, and performance timing behavior are
   unchanged while `AgentTickRuntime` remains the temporary adapter for
   BotEntry-shaped movement command callbacks.
+- Tick-core map-transition and standalone-move callbacks now pass
+  `AgentRuntimeEntry` through the ownerless/tracked-map-change path; map-change
+  grounding, PQ grind/follow mode switching, shop map-change handling,
+  standalone move-target ticking, and legacy movement-command issue callbacks
+  are unchanged while remaining physics/script/live-mode adapters still cast at
+  their compatibility edges.
 
 Initial reconstruction order:
 

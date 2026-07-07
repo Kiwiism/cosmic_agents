@@ -21,23 +21,23 @@ public final class AgentMapTransitionRuntime {
     private AgentMapTransitionRuntime() {
     }
 
-    public static boolean groundAfterMapChange(BotEntry entry, Character agent) {
+    public static boolean groundAfterMapChange(AgentRuntimeEntry entry, Character agent) {
         return AgentMapTransitionService.groundAfterMapChange(entry, agent, groundingHooks());
     }
 
-    public static boolean handleTrackedMapChange(BotEntry entry,
+    public static boolean handleTrackedMapChange(AgentRuntimeEntry entry,
                                                  Character agent,
-                                                 Consumer<BotEntry> issueGrind,
-                                                 Consumer<BotEntry> issueFollow) {
+                                                 Consumer<AgentRuntimeEntry> issueGrind,
+                                                 Consumer<AgentRuntimeEntry> issueFollow) {
         return AgentMapTransitionService.handleTrackedMapChange(
                 entry,
                 agent,
                 new AgentMapTransitionService.MapChangeHooks(
                         groundingHooks(),
                         AgentPartyQuestHooks::requiresGrind,
-                        hookEntry -> issueGrind.accept(asBotEntry(hookEntry)),
+                        issueGrind,
                         AgentPartyQuestHooks::requiresFollow,
-                        hookEntry -> issueFollow.accept(asBotEntry(hookEntry)),
+                        issueFollow,
                         AgentBotPqRuntime::resetKpqStage5Claimed,
                         (hookEntry, hookAgent) -> AgentShopService.onMapChange(asBotEntry(hookEntry), hookAgent),
                         AgentBotManagerStatusRuntime::checkManagerStatus));

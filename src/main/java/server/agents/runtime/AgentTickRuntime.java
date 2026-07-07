@@ -21,8 +21,8 @@ public final class AgentTickRuntime {
                         asBotEntry(tickEntry),
                         tickLeaderId,
                         tickAgentId,
-                        issueGrind,
-                        issueFollow),
+                        grindEntry -> issueGrind.accept(asBotEntry(grindEntry)),
+                        followEntry -> issueFollow.accept(asBotEntry(followEntry))),
                 (failedEntry, failedLeaderId, failedAgentId, failure) -> AgentTickFailureRuntime.handleFailure(
                         asBotEntry(failedEntry),
                         failedLeaderId,

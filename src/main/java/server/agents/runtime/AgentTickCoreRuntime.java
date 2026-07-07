@@ -15,8 +15,8 @@ public final class AgentTickCoreRuntime {
     public static void tickCore(BotEntry entry,
                                 int leaderCharId,
                                 int agentCharId,
-                                Consumer<BotEntry> issueGrind,
-                                Consumer<BotEntry> issueFollow) {
+                                Consumer<AgentRuntimeEntry> issueGrind,
+                                Consumer<AgentRuntimeEntry> issueFollow) {
         tickCore(
                 entry,
                 leaderCharId,
@@ -31,11 +31,7 @@ public final class AgentTickCoreRuntime {
                                 nowMs,
                                 runtimeLeaderCharId),
                 AgentMapTransitionRuntime::groundAfterMapChange,
-                (runtimeEntry, agent, runAiTick) ->
-                        AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(
-                                asBotEntry(runtimeEntry),
-                                agent,
-                                runAiTick),
+                AgentStandaloneMoveTargetRuntime::tickStandaloneMoveTarget,
                 (runtimeEntry, agent, leader) ->
                         AgentDeathTickRuntime.handleDeadTick(runtimeEntry, agent, leader),
                 AgentTargetSnapshotRuntime::resolveFollowAnchor,
@@ -67,8 +63,8 @@ public final class AgentTickCoreRuntime {
                                 AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
                                 AgentLiveTickContextService.TargetSnapshotCapture targetSnapshotCapture,
                                 Consumer<BotEntry> tickScriptTasks,
-                                Consumer<BotEntry> issueGrind,
-                                Consumer<BotEntry> issueFollow,
+                                Consumer<AgentRuntimeEntry> issueGrind,
+                                Consumer<AgentRuntimeEntry> issueFollow,
                                 AgentLiveModeTickRuntime.LocalOpportunityAttack localOpportunityAttack,
                                 AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep,
                                 AgentLiveModeTickRuntime.AnchoredFarmTick anchoredFarmTick,
@@ -108,8 +104,8 @@ public final class AgentTickCoreRuntime {
                                 AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
                                 AgentLiveTickContextService.TargetSnapshotCapture targetSnapshotCapture,
                                 Consumer<BotEntry> tickScriptTasks,
-                                Consumer<BotEntry> issueGrind,
-                                Consumer<BotEntry> issueFollow,
+                                Consumer<AgentRuntimeEntry> issueGrind,
+                                Consumer<AgentRuntimeEntry> issueFollow,
                                 AgentLiveModeTickRuntime.LocalOpportunityAttack localOpportunityAttack,
                                 AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep,
                                 AgentLiveModeTickRuntime.AnchoredFarmTick anchoredFarmTick,
@@ -151,8 +147,8 @@ public final class AgentTickCoreRuntime {
                                                     AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
                                                     AgentLiveTickContextService.TargetSnapshotCapture targetSnapshotCapture,
                                                     Consumer<BotEntry> tickScriptTasks,
-                                                    Consumer<BotEntry> issueGrind,
-                                                    Consumer<BotEntry> issueFollow,
+                                                    Consumer<AgentRuntimeEntry> issueGrind,
+                                                    Consumer<AgentRuntimeEntry> issueFollow,
                                                     AgentLiveModeTickRuntime.LocalOpportunityAttack localOpportunityAttack,
                                                     AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep,
                                                     AgentLiveModeTickRuntime.AnchoredFarmTick anchoredFarmTick,
@@ -170,8 +166,8 @@ public final class AgentTickCoreRuntime {
                         asBotEntry(ownerlessEntry),
                         ownerlessAgent,
                         ownerlessRunAiTick,
-                        (runtimeEntry, agent) -> groundAfterMapChange.test(asBotEntry(runtimeEntry), agent),
-                        (runtimeEntry, agent, runAiTick) -> standaloneMoveTargetTick.tick(asBotEntry(runtimeEntry), agent, runAiTick),
+                                (runtimeEntry, agent) -> groundAfterMapChange.test(asBotEntry(runtimeEntry), agent),
+                                standaloneMoveTargetTick,
                         () -> AgentIdlePhysicsRuntime.tickIdleEntry(asBotEntry(ownerlessEntry), ownerlessAgent)),
                 deadTick,
                 (liveEntry, liveAgent, liveLeader) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
