@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentEquippedSlotTradeService` now accepts `AgentRuntimeEntry` for equipped
+  slot trade preparation and temporary restore-slot cleanup. Counting,
+  cash-item filtering, bag-slot checks, item move order, restore-slot memory,
+  and restore behavior remain unchanged.
 - `AgentPendingOfferChatRouteService` now routes pending offer responses over
   generic `AgentRuntimeEntry` groups instead of `BotEntry` groups. The targeted
   response resolver, same-map recipient check, positive/negative confirmation

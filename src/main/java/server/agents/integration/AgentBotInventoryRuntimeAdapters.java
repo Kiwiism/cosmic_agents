@@ -82,7 +82,7 @@ public final class AgentBotInventoryRuntimeAdapters {
 
     public static AgentTradeLifecycleRuntimeService.RuntimeCallbacks tradeLifecycleRuntimeCallbacks() {
         return AgentTradeLifecycleRuntimeService.RuntimeCallbacks.of(
-                (entry, agent) -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems((BotEntry) entry, agent),
+                AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
                 (entry, agent) -> AgentManualTradeService.clearState((BotEntry) entry, agent),
                 AgentBotRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),

@@ -8,7 +8,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -52,7 +52,7 @@ public final class AgentEquippedSlotTradeService {
     }
 
     public static PreparedTradeItems prepareEquippedSlotTradeItems(String fragment,
-                                                                   BotEntry entry,
+                                                                   AgentRuntimeEntry entry,
                                                                    Character agent,
                                                                    Function<String, short[]> slotResolver,
                                                                    Runnable restoreTemporarilyUnequippedItems) {
@@ -100,7 +100,7 @@ public final class AgentEquippedSlotTradeService {
         return new PreparedTradeItems(result, null);
     }
 
-    public static void restoreTemporarilyUnequippedItems(BotEntry entry, Character agent) {
+    public static void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent) {
         if (agent == null || !AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry)) {
             AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
             return;

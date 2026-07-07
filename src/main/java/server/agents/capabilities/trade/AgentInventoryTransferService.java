@@ -181,7 +181,7 @@ public final class AgentInventoryTransferService {
                         () -> AgentTradeResetService.reset(
                                 entry,
                                 agent,
-                                () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems((BotEntry) entry, agent),
+                                () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
                                 () -> AgentEquipmentService.autoEquip(agent, AgentBotRuntimeIdentityRuntime.owner(entry), null))),
                 () -> server.Trade.startTrade(agent),

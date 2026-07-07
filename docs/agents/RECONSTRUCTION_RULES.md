@@ -5572,6 +5572,10 @@ Current physics correction:
   same-map recipient filtering, confirmation handling, and speaker feedback
   remain unchanged; deeper offer/transfer methods still contain staged BotEntry
   compatibility points for later slices.
+- Equipped slot trade service now accepts `AgentRuntimeEntry` for preparing
+  equipped-slot trade items and restoring temporarily moved equipment. Cash
+  filtering, bag-capacity checks, move ordering, restore-slot memory, and
+  cleanup behavior remain unchanged.
 
 Initial reconstruction order:
 

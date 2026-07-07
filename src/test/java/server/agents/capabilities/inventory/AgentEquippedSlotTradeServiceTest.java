@@ -9,7 +9,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -63,7 +63,7 @@ class AgentEquippedSlotTradeServiceTest {
         Inventory equipBag = mock(Inventory.class);
         Item hat = item(1000);
         Item glove = item(1001);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         IntPredicate oldCashItemLookup = AgentEquippedSlotTradeService.cashItemLookup;
         AgentEquippedSlotTradeService.cashItemLookup = itemId -> false;
 
@@ -110,7 +110,7 @@ class AgentEquippedSlotTradeServiceTest {
         Inventory equipped = mock(Inventory.class);
         Inventory equipBag = mock(Inventory.class);
         Item hat = item(1000);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         IntPredicate oldCashItemLookup = AgentEquippedSlotTradeService.cashItemLookup;
         AgentEquippedSlotTradeService.cashItemLookup = itemId -> false;
         Runnable restore = mock(Runnable.class);
@@ -145,7 +145,7 @@ class AgentEquippedSlotTradeServiceTest {
         Inventory equipped = mock(Inventory.class);
         Inventory equipBag = mock(Inventory.class);
         Item hat = item(1000);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         when(agent.getClient()).thenReturn(client);
         when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
@@ -171,3 +171,4 @@ class AgentEquippedSlotTradeServiceTest {
         return item;
     }
 }
+
