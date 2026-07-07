@@ -5537,6 +5537,9 @@ Current physics correction:
 - Movement-only map-change runtime now accepts `AgentRuntimeEntry`; foothold
   index rebuild, grounding, teleport pose, reset, broadcast, shop visit refresh,
   and manager status checks remain unchanged.
+- Map transition runtime now accepts `AgentRuntimeEntry` across grounding and
+  tracked map-change hooks; grind/follow reissue, KPQ reset, shop refresh, and
+  manager status behavior remain unchanged.
 
 Initial reconstruction order:
 

@@ -13,7 +13,6 @@ import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotPqRuntime;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -39,7 +38,7 @@ public final class AgentMapTransitionRuntime {
                         AgentPartyQuestHooks::requiresFollow,
                         issueFollow,
                         AgentBotPqRuntime::resetKpqStage5Claimed,
-                        (hookEntry, hookAgent) -> AgentShopService.onMapChange(asBotEntry(hookEntry), hookAgent),
+                        AgentShopService::onMapChange,
                         AgentBotManagerStatusRuntime::checkManagerStatus));
     }
 
@@ -47,13 +46,9 @@ public final class AgentMapTransitionRuntime {
         return new AgentMapTransitionService.GroundingHooks(
                 AgentFootholdIndexService::buildFhIndex,
                 AgentGroundingService::findGroundPoint,
-                (entry, agent, position) -> AgentMovementPoseService.teleportTo(asBotEntry(entry), agent, position),
-                entry -> AgentMovementStateResetService.resetEntryStateAfterTeleport(asBotEntry(entry)),
+                AgentMovementPoseService::teleportTo,
+                AgentMovementStateResetService::resetEntryStateAfterTeleport,
                 AgentNavigationGraphService::warmGraphAsync,
-                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+                AgentMovementBroadcastService::broadcastMovement);
     }
 }

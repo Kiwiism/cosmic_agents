@@ -12,6 +12,9 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentMapTransitionRuntime` now stays on `AgentRuntimeEntry` for grounding
+  and tracked map-change hooks. Movement pose/reset/broadcast and shop
+  map-change side effects use Agent entry overloads without BotEntry casts.
 - `AgentMovementOnlyMapChangeRuntime` now accepts `AgentRuntimeEntry` and uses
   Agent movement pose/reset/broadcast hooks directly. `AgentShopService`
   exposes an Agent entry map-change overload so movement-only map changes no
