@@ -11,6 +11,7 @@ import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSessionControlRuntime;
 import server.agents.integration.AgentBotSessionRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -38,7 +39,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
 
             assertEquals(AgentChatPendingAction.RELOG, AgentBotPendingActionStateRuntime.pendingAction(entry));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop(entry));
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
             replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
         }
     }
@@ -62,7 +63,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestAway();
 
             assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentBotPendingActionStateRuntime.pendingAction(entry));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop(entry));
+            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
             replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrLogoutPrompt()));
         }
     }

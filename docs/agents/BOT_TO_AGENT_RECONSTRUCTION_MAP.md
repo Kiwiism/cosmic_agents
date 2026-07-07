@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentBotSessionRuntime` now accepts `AgentRuntimeEntry` for session request
+  callbacks, relog/logout confirmation, and owner-away choices. Relog/logout
+  prompts, owner-away stay/town/logout decisions, delayed replies,
+  save/disconnect scheduling, and lifecycle lookup behavior remain unchanged.
 - `AgentBotControlRuntime` now accepts `AgentRuntimeEntry` for toggle, buff
   query, and respec callback wiring. Support/heal toggles, consumable buff
   toggles, proactive-offer toggles, buff debug reporting, and AP/SP respec

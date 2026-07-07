@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Session dialogue callbacks now use `AgentRuntimeEntry` instead of `BotEntry`.
+  Relog/logout prompts, owner-away prompts, stay/town/logout decisions,
+  delayed replies, save/disconnect scheduling, and temporary lifecycle lookup
+  behavior are unchanged.
 - Control dialogue callbacks now use `AgentRuntimeEntry` instead of `BotEntry`.
   Support/heal toggles, consumable buff toggles, proactive-offer toggles,
   buff debug reports, and AP/SP respec replies preserve the same delayed
