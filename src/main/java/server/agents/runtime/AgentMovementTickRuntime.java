@@ -4,7 +4,6 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 
@@ -12,7 +11,7 @@ public final class AgentMovementTickRuntime {
     private AgentMovementTickRuntime() {
     }
 
-    public static void stepMovementCore(BotEntry entry,
+    public static void stepMovementCore(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick) {
         stepMovementCore(
@@ -28,14 +27,6 @@ public final class AgentMovementTickRuntime {
                                         boolean runAiTick,
                                         boolean enableUnstuck,
                                         int stopDistance) {
-        stepMovementCore(asBotEntry(entry), targetPosition, runAiTick, enableUnstuck, stopDistance);
-    }
-
-    public static void stepMovementCore(BotEntry entry,
-                                        Point targetPosition,
-                                        boolean runAiTick,
-                                        boolean enableUnstuck,
-                                        int stopDistance) {
         AgentMovementTickService.stepMovementCore(
                 entry,
                 targetPosition,
@@ -43,7 +34,7 @@ public final class AgentMovementTickRuntime {
                 hooks(entry, enableUnstuck, stopDistance));
     }
 
-    private static AgentMovementTickService.MovementTickHooks hooks(BotEntry entry, boolean enableUnstuck, int stopDistance) {
+    private static AgentMovementTickService.MovementTickHooks hooks(AgentRuntimeEntry entry, boolean enableUnstuck, int stopDistance) {
         return new AgentMovementTickService.MovementTickHooks(
                 (ignored, targetPosition, runAiTick) -> {
                     AgentNavigationTargetService.NavigationDirective directive =
@@ -57,7 +48,4 @@ public final class AgentMovementTickRuntime {
                 ignored -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
-    }
 }

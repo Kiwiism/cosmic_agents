@@ -11,7 +11,6 @@ import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -27,7 +26,7 @@ public final class AgentNavigationTargetService {
     public record NavigationDirective(Point targetPos, boolean consumedTick) {
     }
 
-    public static NavigationDirective resolveTarget(BotEntry entry, Point rawTargetPos, boolean runAiTick) {
+    public static NavigationDirective resolveTarget(AgentRuntimeEntry entry, Point rawTargetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
             Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
@@ -135,7 +134,7 @@ public final class AgentNavigationTargetService {
         }
     }
 
-    public static boolean tryExecuteCommittedEdgeAfterGroundMovement(BotEntry entry, Point rawTargetPos) {
+    public static boolean tryExecuteCommittedEdgeAfterGroundMovement(AgentRuntimeEntry entry, Point rawTargetPos) {
         if (entry == null
                 || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
                 || !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
@@ -180,7 +179,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,
-                                                                         BotEntry entry,
+                                                                         AgentRuntimeEntry entry,
                                                                          Character bot,
                                                                          Point botPos,
                                                                          int startRegionId,
@@ -196,7 +195,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
-                                                                        BotEntry entry,
+                                                                        AgentRuntimeEntry entry,
                                                                         Character bot,
                                                                         int startRegionId,
                                                                         int targetRegionId,
@@ -208,7 +207,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
-                                                               BotEntry entry,
+                                                               AgentRuntimeEntry entry,
                                                                int startRegionId,
                                                                int targetRegionId) {
         return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId,
@@ -217,7 +216,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static NavigationDirective tryExecuteEdge(AgentNavigationGraph graph,
-                                                      BotEntry entry,
+                                                      AgentRuntimeEntry entry,
                                                       Character bot,
                                                       Point botPos,
                                                       Point rawTargetPos,
@@ -232,7 +231,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,
-                                                  BotEntry entry,
+                                                  AgentRuntimeEntry entry,
                                                   Point botPos,
                                                   AgentNavigationGraph.Edge edge) {
         return AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
@@ -291,7 +290,7 @@ public final class AgentNavigationTargetService {
                 });
     }
 
-    private static Point selectWaypoint(BotEntry entry,
+    private static Point selectWaypoint(AgentRuntimeEntry entry,
                                         AgentNavigationGraph graph,
                                         Point botPos,
                                         AgentNavigationGraph.Edge edge) {
@@ -307,7 +306,7 @@ public final class AgentNavigationTargetService {
     }
 
     private static Point selectJumpWaypoint(AgentNavigationGraph graph,
-                                            BotEntry entry,
+                                            AgentRuntimeEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
@@ -346,7 +345,7 @@ public final class AgentNavigationTargetService {
                 graph, botPos, edge, region -> findRopeForRegion(map, region));
     }
 
-    private static Point adjustPathTarget(BotEntry entry,
+    private static Point adjustPathTarget(AgentRuntimeEntry entry,
                                           AgentNavigationGraph graph,
                                           int targetRegionId,
                                           Point rawTargetPos) {

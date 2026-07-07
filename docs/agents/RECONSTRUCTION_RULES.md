@@ -5765,6 +5765,11 @@ Current physics correction:
   mismatch fidget selection, prone/sideways/jump actions, return-to-origin
   behavior, movement broadcasts, and visual prone-attack packets remain
   unchanged.
+- Navigation target resolution and movement-core ticking now accept
+  `AgentRuntimeEntry`. Graph warmup fallback, swim fallback, committed-edge
+  reuse/refresh, path logging, waypoint/precise-target selection, post-ground
+  edge execution, fidget short-circuiting, phase dispatch, stuck detection, and
+  move-target cleanup remain unchanged.
 
 Initial reconstruction order:
 
