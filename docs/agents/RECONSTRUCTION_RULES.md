@@ -5196,6 +5196,9 @@ Current physics correction:
 - Navigation waypoint service now accepts `AgentRuntimeEntry`; cached jump
   launch selection, drop/runway fallback, airborne handling, climb exit
   readiness, and rope-X targeting behavior are unchanged.
+- Navigation committed-edge service now accepts `AgentRuntimeEntry`; pending
+  climb-exit refresh, committed ground-edge replacement, active-edge reuse, and
+  stale-edge rejection behavior are unchanged.
 
 Initial reconstruction order:
 

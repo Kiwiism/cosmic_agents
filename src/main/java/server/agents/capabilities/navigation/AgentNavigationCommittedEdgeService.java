@@ -5,7 +5,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -44,7 +44,7 @@ public final class AgentNavigationCommittedEdgeService {
     }
 
     public static AgentNavigationGraph.Edge refreshPendingClimbExitEdge(AgentNavigationGraph graph,
-                                                                        BotEntry entry,
+                                                                        AgentRuntimeEntry entry,
                                                                         Character bot,
                                                                         Point botPos,
                                                                         int startRegionId,
@@ -82,7 +82,7 @@ public final class AgentNavigationCommittedEdgeService {
     }
 
     public static AgentNavigationGraph.Edge refreshCommittedGroundEdge(AgentNavigationGraph graph,
-                                                                       BotEntry entry,
+                                                                       AgentRuntimeEntry entry,
                                                                        Character bot,
                                                                        int startRegionId,
                                                                        int targetRegionId,
@@ -116,7 +116,7 @@ public final class AgentNavigationCommittedEdgeService {
     }
 
     public static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
-                                                               BotEntry entry,
+                                                               AgentRuntimeEntry entry,
                                                                int startRegionId,
                                                                int targetRegionId) {
         return reuseCommittedEdge(
@@ -129,7 +129,7 @@ public final class AgentNavigationCommittedEdgeService {
     }
 
     public static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
-                                                               BotEntry entry,
+                                                               AgentRuntimeEntry entry,
                                                                int startRegionId,
                                                                int targetRegionId,
                                                                EdgeUsabilityChecker edgeUsabilityChecker,
