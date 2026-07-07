@@ -6,6 +6,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -58,11 +59,11 @@ public final class AgentAirbornePhysicsService {
         return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
     }
 
-    static void landOnGround(BotEntry entry, Character agent, Point position) {
+    static void landOnGround(AgentRuntimeEntry entry, Character agent, Point position) {
         landOnGround(entry, agent, position, null, 0.0, 0.0);
     }
 
-    static void landOnGround(BotEntry entry,
+    static void landOnGround(AgentRuntimeEntry entry,
                              Character agent,
                              Point position,
                              Foothold foothold,

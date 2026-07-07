@@ -4,7 +4,7 @@ import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -12,7 +12,7 @@ public final class AgentSwimMovementService {
     private AgentSwimMovementService() {
     }
 
-    public static void tickSwimming(BotEntry entry, Point targetPos) {
+    public static void tickSwimming(AgentRuntimeEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
             AgentMotionTimerService.tickMotionTimers(entry);
@@ -24,7 +24,7 @@ public final class AgentSwimMovementService {
         }
     }
 
-    static void computeSwimIntents(BotEntry entry, Point targetPos) {
+    static void computeSwimIntents(AgentRuntimeEntry entry, Point targetPos) {
         int prevVerticalHold = AgentBotSwimStateRuntime.swimVerticalHold(entry);
         AgentBotSwimStateRuntime.clearSwimInput(entry);
 

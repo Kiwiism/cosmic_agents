@@ -5,7 +5,7 @@ import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -30,7 +30,7 @@ public final class AgentSwimPhysicsService {
     private AgentSwimPhysicsService() {
     }
 
-    public static void applySwimMotion(BotEntry entry) {
+    public static void applySwimMotion(AgentRuntimeEntry entry) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         MapleMap map = agent.getMap();
         Point position = agent.getPosition();

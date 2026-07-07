@@ -5231,6 +5231,10 @@ Current physics correction:
 - Navigation edge execution dispatch now accepts `AgentRuntimeEntry`; run-AI
   gating, jump/drop/climb/portal branch selection, consumed-tick directives,
   and climb entry/exit dispatch behavior are unchanged.
+- Swim movement and swim physics now accept `AgentRuntimeEntry`; swim intent
+  clearing, attack-cooldown gating, arrival/up/down intent selection, swim
+  velocity integration, collision landing, and airborne landing handoff behavior
+  are unchanged.
 
 Initial reconstruction order:
 

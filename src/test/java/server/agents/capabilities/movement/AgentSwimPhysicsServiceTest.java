@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -21,7 +21,7 @@ class AgentSwimPhysicsServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         when(agent.getMap()).thenReturn(null);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         AgentSwimPhysicsService.applySwimMotion(entry);
 
@@ -34,7 +34,7 @@ class AgentSwimPhysicsServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         when(agent.getMap()).thenReturn(null);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
 
         AgentSwimPhysicsService.applySwimMotion(entry);
