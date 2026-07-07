@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 class AgentNavigationEdgeExecutionStateServiceTest {
     @Test
     void setEdgeExecutionTargetStoresEndPointAsNonPreciseWaypoint() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         AgentNavigationGraph.Edge edge = new AgentNavigationGraph.Edge(
                 1,

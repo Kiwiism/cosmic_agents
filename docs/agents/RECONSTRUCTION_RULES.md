@@ -5199,6 +5199,8 @@ Current physics correction:
 - Navigation committed-edge service now accepts `AgentRuntimeEntry`; pending
   climb-exit refresh, committed ground-edge replacement, active-edge reuse, and
   stale-edge rejection behavior are unchanged.
+- Navigation edge-execution state tests now exercise `AgentRuntimeEntry`;
+  non-precise end-point waypoint writes remain unchanged.
 
 Initial reconstruction order:
 
