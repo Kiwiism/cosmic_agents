@@ -5323,6 +5323,9 @@ Current physics correction:
 - Offer reservation classification now accepts `AgentRuntimeEntry`; owner
   lookup, throwing-star recipient checks, equipment-only gating, future-reserve
   checks, and eligible bot-recipient filtering are unchanged.
+- Chat status owner-activity and offline-return bridge methods now accept
+  `AgentRuntimeEntry`; leader position lookup, status-state update, bot
+  identity lookup, and offline-return announcement behavior are unchanged.
 
 Initial reconstruction order:
 

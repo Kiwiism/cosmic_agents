@@ -14,7 +14,7 @@ public final class AgentBotChatStatusRuntime {
     private AgentBotChatStatusRuntime() {
     }
 
-    public static void markOwnerActive(BotEntry entry) {
+    public static void markOwnerActive(AgentRuntimeEntry entry) {
         Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.markActive(
                 AgentBotStatusRuntime.statusState(entry),
@@ -26,7 +26,7 @@ public final class AgentBotChatStatusRuntime {
         AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 
-    public static void announceOwnerReturnedFromOffline(BotEntry entry) {
+    public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
         AgentChatStatusRuntime.announceOfflineReturn(
                 AgentBotStatusRuntime.offlineReturnActions(AgentBotRuntimeIdentityRuntime.bot(entry)));
     }
