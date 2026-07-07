@@ -2,9 +2,9 @@ package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
 import client.Character;
-import server.bots.BotEntry;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -71,7 +71,7 @@ class AgentNavigationWaypointServiceTest {
         AgentNavigationGraph graph = graphWithGroundRegion(1, 500, 530, 107);
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentNavigationGraph.Edge jump = edge(AgentNavigationGraph.EdgeType.JUMP,
                 new Point(520, 107), new Point(480, 36), 516, 523, -8);
 
@@ -84,7 +84,7 @@ class AgentNavigationWaypointServiceTest {
 
     @Test
     void climbWaypointUsesEndPointWhenAirborne() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotMovementStateRuntime.setInAir(entry, true);
         AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(100, 200), new Point(100, 120), 0, 0, 0);
@@ -96,7 +96,7 @@ class AgentNavigationWaypointServiceTest {
 
     @Test
     void climbWaypointHoldsPositionOnlyWhenJumpExitReady() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 80, 220, false));
         AgentNavigationGraph graph = graphWithRopeRegion(1);
         AgentNavigationGraph.Edge jumpExit = edge(AgentNavigationGraph.EdgeType.CLIMB,
@@ -113,7 +113,7 @@ class AgentNavigationWaypointServiceTest {
 
     @Test
     void climbWaypointKeepsRopeXForZeroStepExitWhileClimbing() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Rope rope = new Rope(300, 100, 240, false);
         AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
         AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
@@ -126,7 +126,7 @@ class AgentNavigationWaypointServiceTest {
 
     @Test
     void climbWaypointUsesStartPointWhenNotClimbing() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(300, 100), new Point(260, 90), 0, 0, 0);
 

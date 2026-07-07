@@ -5193,6 +5193,9 @@ Current physics correction:
 - Navigation precise-target service now accepts `AgentRuntimeEntry`; airborne
   suppression, walk precision policy, jump/drop/climb readiness gating, and
   portal readiness behavior are unchanged.
+- Navigation waypoint service now accepts `AgentRuntimeEntry`; cached jump
+  launch selection, drop/runway fallback, airborne handling, climb exit
+  readiness, and rope-X targeting behavior are unchanged.
 
 Initial reconstruction order:
 

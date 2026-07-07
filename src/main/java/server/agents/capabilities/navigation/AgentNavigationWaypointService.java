@@ -10,7 +10,6 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -39,7 +38,7 @@ public final class AgentNavigationWaypointService {
         return fromRegion.pointAt(targetX);
     }
 
-    public static Point selectJumpWaypoint(BotEntry entry,
+    public static Point selectJumpWaypoint(AgentRuntimeEntry entry,
                                            Point botPos,
                                            AgentNavigationGraph.Edge edge) {
         AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(
@@ -49,7 +48,7 @@ public final class AgentNavigationWaypointService {
     }
 
     public static Point selectJumpWaypoint(AgentNavigationGraph graph,
-                                           BotEntry entry,
+                                           AgentRuntimeEntry entry,
                                            Point botPos,
                                            AgentNavigationGraph.Edge edge) {
         if (entry == null) {
@@ -76,7 +75,7 @@ public final class AgentNavigationWaypointService {
         return fromRegion.pointAt(targetX);
     }
 
-    public static Point selectDropWaypoint(BotEntry entry,
+    public static Point selectDropWaypoint(AgentRuntimeEntry entry,
                                            AgentNavigationGraph graph,
                                            Point botPos,
                                            AgentNavigationGraph.Edge edge) {
@@ -171,7 +170,7 @@ public final class AgentNavigationWaypointService {
     }
 
     public static Point selectClimbWaypoint(AgentNavigationGraph graph,
-                                            BotEntry entry,
+                                            AgentRuntimeEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge,
                                             ClimbExitReadiness climbExitReadiness) {
@@ -192,7 +191,7 @@ public final class AgentNavigationWaypointService {
         return new Point(edge.startPoint);
     }
 
-    public static Point selectClimbWaypoint(BotEntry entry,
+    public static Point selectClimbWaypoint(AgentRuntimeEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
@@ -203,7 +202,7 @@ public final class AgentNavigationWaypointService {
     }
 
     public static Point selectClimbWaypoint(AgentNavigationGraph graph,
-                                            BotEntry entry,
+                                            AgentRuntimeEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
         MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
@@ -221,6 +220,6 @@ public final class AgentNavigationWaypointService {
     }
 
     public interface ClimbExitReadiness {
-        boolean canExecute(AgentNavigationGraph graph, BotEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
+        boolean canExecute(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point botPos, AgentNavigationGraph.Edge edge);
     }
 }
