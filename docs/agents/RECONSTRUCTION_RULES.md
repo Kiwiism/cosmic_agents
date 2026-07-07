@@ -5774,6 +5774,9 @@ Current physics correction:
   cleanup, inactive town eligibility, safe-mode entry, town-scroll fallback,
   town-cluster formation target selection, map-change grounding, movement reset,
   and return announcements remain unchanged.
+- Anchored farm runtime hooks now use `AgentRuntimeEntry` for local opportunity
+  attacks, idle movement/broadcast, and movement-core stepping. Anchored farm
+  target handling, idle/farm physics, and movement ordering remain unchanged.
 
 Initial reconstruction order:
 

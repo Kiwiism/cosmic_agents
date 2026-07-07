@@ -298,6 +298,10 @@ Recent map updates:
   selection, graph scoring, region occupancy penalties, debug stats, consumable
   buff debug lines, and skill-buff debug lines are unchanged. Grind-mode target
   search now uses these Agent-entry selectors without redundant casts.
+- `BotManager.java#anchored-farm-runtime` is migrated to
+  `server.agents.runtime.AgentAnchoredFarmRuntime`. Anchored farm runtime hooks
+  now use `AgentRuntimeEntry` for local opportunity attacks, idle movement and
+  broadcast, and movement-core stepping while preserving anchored-farm behavior.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while
