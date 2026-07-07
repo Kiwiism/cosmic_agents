@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public final class AgentBotEquipmentRuntime {
         AgentBotReplyRuntime.sayMapNow(bot, message);
     }
 
-    public static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(BotEntry entry) {
+    public static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(AgentRuntimeEntry entry) {
         return new AgentChatEquipmentFlow.EquipmentCallbacks() {
             @Override
             public boolean unequipSlot(String slotName) {
@@ -64,7 +64,7 @@ public final class AgentBotEquipmentRuntime {
         };
     }
 
-    private static Character bot(BotEntry entry) {
+    private static Character bot(AgentRuntimeEntry entry) {
         return AgentBotRuntimeIdentityRuntime.bot(entry);
     }
 }

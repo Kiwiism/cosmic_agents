@@ -31,6 +31,9 @@ Recent map updates:
 - `AgentFidgetService` social/greeting start helpers and
   `AgentBotFidgetSideEffects` now use `AgentRuntimeEntry`, keeping deeper
   active fidget movement execution for a later movement reconstruction slice.
+- `AgentBotEquipmentRuntime` now exposes equipment chat callbacks over
+  `AgentRuntimeEntry`; the temporary movement-command adapter supplies the
+  legacy stop command where unequip-all still needs it.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving

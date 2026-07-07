@@ -42,6 +42,10 @@ public final class AgentBotMovementCommandRuntime {
                 () -> AgentModeService.startStop(entry));
     }
 
+    public static void stop(AgentRuntimeEntry entry) {
+        stop(asBotEntry(entry));
+    }
+
     public static void moveTo(BotEntry entry, Point dest, boolean precise) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,

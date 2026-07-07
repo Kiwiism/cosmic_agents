@@ -5483,6 +5483,9 @@ Current physics correction:
   temporary fidget side-effect bridge no longer imports the bot package while
   social fidget eligibility, random mode selection, and start-state behavior
   remain unchanged.
+- Equipment chat callbacks now accept `AgentRuntimeEntry`; unequip-slot,
+  unequip-all, auto-equip debug, auto-equip, reply timing, and stop-before-
+  unequip-all behavior remain unchanged through the movement command adapter.
 
 Initial reconstruction order:
 
