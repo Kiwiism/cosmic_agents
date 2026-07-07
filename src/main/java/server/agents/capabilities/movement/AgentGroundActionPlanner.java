@@ -4,14 +4,14 @@ import java.awt.Point;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 
 public final class AgentGroundActionPlanner {
     private AgentGroundActionPlanner() {
     }
 
-    public static AgentGroundAction planGroundAction(BotEntry entry, Foothold currentFoothold, Point botPos, Point targetPos) {
+    public static AgentGroundAction planGroundAction(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, Point targetPos) {
         AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
         boolean directionalDrop = AgentGroundMovementPolicy.isDirectionalDropEdge(navEdge);
         int stopDist = directionalDrop ? 0 : AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
@@ -22,7 +22,7 @@ public final class AgentGroundActionPlanner {
                 : (navEdge != null || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry))
                 ? stopDist
                 : AgentMovementPhysicsConfig.configuredFollowDist();
-        int stepX = AgentGroundMovementService.resolveGroundStepX(entry, botPos, targetPos, stopDist, followDist);
+        int stepX = AgentGroundMovementService.resolveGroundStepX(asBotEntry(entry), botPos, targetPos, stopDist, followDist);
         if (stepX == 0) {
             return AgentGroundAction.idle();
         }
@@ -31,7 +31,7 @@ public final class AgentGroundActionPlanner {
             boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
-                    || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {
+                    || AgentFallbackMovementService.shouldWalkOffLedge(asBotEntry(entry), botPos, targetPos, stepX))) {
                 return AgentGroundAction.walk(stepX);
             }
             if (blockedByWall && navEdge != null) {
@@ -41,9 +41,13 @@ public final class AgentGroundActionPlanner {
             }
             return AgentGroundAction.idle();
         }
-        if (AgentMobAvoidanceService.shouldJumpToAvoidMob(entry, currentFoothold, botPos, stepX)) {
+        if (AgentMobAvoidanceService.shouldJumpToAvoidMob(asBotEntry(entry), currentFoothold, botPos, stepX)) {
             return AgentGroundAction.jump(stepX);
         }
         return AgentGroundAction.walk(stepX);
+    }
+
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (server.bots.BotEntry) entry;
     }
 }

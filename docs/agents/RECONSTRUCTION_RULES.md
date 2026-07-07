@@ -17,6 +17,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Ground action planning/execution now exposes `AgentRuntimeEntry` at its
+  public boundary. Ground step resolution, ledge fallback, mob avoidance, and
+  ground physics remain explicit temporary compatibility calls into
+  BotEntry-backed movement helpers, preserving walk/jump/idle/crouch selection,
+  movement velocity updates, fixed-arc jumps, and broadcasts.
 - Movement phase dispatch and stuck recovery no longer import `BotEntry`.
   Airborne/grounded movement and unstuck recovery still call deeper
   BotEntry-backed movement services through explicit temporary compatibility

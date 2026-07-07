@@ -3,14 +3,14 @@ package server.agents.capabilities.movement;
 import client.Character;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 
 public final class AgentGroundActionExecutor {
     private AgentGroundActionExecutor() {
     }
 
-    public static void applyGroundAction(BotEntry entry, Foothold currentFoothold, AgentGroundAction action) {
+    public static void applyGroundAction(AgentRuntimeEntry entry, Foothold currentFoothold, AgentGroundAction action) {
         Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
         AgentBotMovementStateRuntime.setMoveDirection(entry, switch (action.type()) {
             case WALK, JUMP -> Integer.compare(action.stepX(), 0);
@@ -27,7 +27,7 @@ public final class AgentGroundActionExecutor {
             return;
         }
 
-        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, currentFoothold);
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(asBotEntry(entry), bot, currentFoothold);
         if (motion.lostGround()) {
             AgentMovementBroadcastService.broadcastMovement(entry);
             return;
@@ -41,7 +41,7 @@ public final class AgentGroundActionExecutor {
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
-    private static void applyIdleOrInPlaceMotion(BotEntry entry, AgentGroundAction action) {
+    private static void applyIdleOrInPlaceMotion(AgentRuntimeEntry entry, AgentGroundAction action) {
         // Preserve ground momentum while still trying to walk/jump toward a nav target.
         // Otherwise subpixel uphill/transition movement gets zeroed every tick and the agent
         // can stall forever short of a valid launch window.
@@ -49,5 +49,9 @@ public final class AgentGroundActionExecutor {
             AgentMovementPoseService.idleOnGround(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
         }
         AgentMovementBroadcastService.broadcastMovement(entry);
+    }
+
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (server.bots.BotEntry) entry;
     }
 }
