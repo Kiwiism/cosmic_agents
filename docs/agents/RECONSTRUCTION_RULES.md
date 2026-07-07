@@ -17,6 +17,10 @@ Rules:
 
 Recent reconstruction notes:
 
+- Script task execution no longer imports `BotEntry`; movement command calls are
+  now explicit temporary compatibility casts at the Agent movement-command
+  boundary. Script task start routing, follow-target resolution, grind/stop
+  dispatch, item dropping, and completion checks are unchanged.
 - Transfer service hooks now use `AgentRuntimeEntry` for entry lookup,
   scheduled-task cancellation, and stop callbacks. The transfer runtime still
   adapts the temporary BotEntry-backed registry list at the boundary, preserving

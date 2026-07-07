@@ -5,7 +5,6 @@ import client.inventory.InventoryType;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
 
 import java.util.function.IntFunction;
 
@@ -43,7 +42,7 @@ public final class AgentScriptTaskExecutionService {
         return AgentScriptItemActionService.dropItem(entry, type, itemId, quantity);
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
+    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (server.bots.BotEntry) entry;
     }
 }
