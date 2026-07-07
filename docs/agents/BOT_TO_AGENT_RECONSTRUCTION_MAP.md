@@ -110,6 +110,11 @@ Recent map updates:
   `BotEntry` shell. Missing-recipient replies, sequence/batch state setup,
   busy-recipient cancellation, trade start/invite callbacks, and invitation
   announcement behavior are unchanged.
+- `AgentTradeTransferAvailabilityRuntimeService` now accepts
+  `AgentRuntimeEntry`; named-fragment counting, equipped-slot counting,
+  owner-based recommended-item collection, and item-count behavior are
+  unchanged while inventory runtime adapters keep the temporary compatibility
+  entry.
 - `AgentStandaloneMoveTargetTickService` now accepts `AgentRuntimeEntry`.
   Map-change grounding, movement-profile refresh, stored-target lookup, and
   movement-step dispatch remain unchanged while the temporary `BotEntry`

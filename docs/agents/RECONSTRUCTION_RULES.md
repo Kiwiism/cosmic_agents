@@ -5421,6 +5421,10 @@ Current physics correction:
   cancellation, trade invite side effects, invitation reply gating, and pending
   trade state behavior are unchanged while the runtime service remains the
   temporary `BotEntry` adapter.
+- Trade transfer availability runtime now accepts `AgentRuntimeEntry`; named
+  item counts, equipped-slot checks, recommended-item collection, owner lookup,
+  and count-vs-availability behavior are unchanged while inventory tick/runtime
+  adapters continue to pass the temporary compatibility entry.
 
 Initial reconstruction order:
 

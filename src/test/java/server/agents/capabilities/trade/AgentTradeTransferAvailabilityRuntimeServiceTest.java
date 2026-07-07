@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.Set;
@@ -81,8 +81,8 @@ class AgentTradeTransferAvailabilityRuntimeServiceTest {
         assertTrue(recommendationsCollected.get());
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), null, null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), null, null);
     }
 
     private static AgentInventoryTradeRuntimeService.RuntimeCallbacks inventoryCallbacks(AtomicBoolean recommendationsCollected,

@@ -1,16 +1,17 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public final class AgentTradeTransferAvailabilityRuntimeService {
     private AgentTradeTransferAvailabilityRuntimeService() {
     }
 
     public static boolean hasTransferableItems(String category,
-                                               BotEntry entry,
+                                               AgentRuntimeEntry entry,
                                                Character agent,
                                                RuntimeCallbacks callbacks,
                                                AgentInventoryTradeRuntimeService.RuntimeCallbacks inventoryCallbacks) {
@@ -28,7 +29,7 @@ public final class AgentTradeTransferAvailabilityRuntimeService {
     }
 
     public static int countTransferableItems(String category,
-                                             BotEntry entry,
+                                             AgentRuntimeEntry entry,
                                              Character agent,
                                              RuntimeCallbacks callbacks,
                                              AgentInventoryTradeRuntimeService.RuntimeCallbacks inventoryCallbacks) {
@@ -46,18 +47,18 @@ public final class AgentTradeTransferAvailabilityRuntimeService {
     }
 
     public interface RuntimeCallbacks {
-        Character owner(BotEntry entry);
+        Character owner(AgentRuntimeEntry entry);
 
         int countNamedItems(Character agent, String fragment);
 
         int countEquippedSlotItems(Character agent, String fragment);
 
-        static RuntimeCallbacks of(java.util.function.Function<BotEntry, Character> owner,
+        static RuntimeCallbacks of(Function<AgentRuntimeEntry, Character> owner,
                                    BiFunction<Character, String, Integer> countNamedItems,
                                    BiFunction<Character, String, Integer> countEquippedSlotItems) {
             return new RuntimeCallbacks() {
                 @Override
-                public Character owner(BotEntry entry) {
+                public Character owner(AgentRuntimeEntry entry) {
                     return owner.apply(entry);
                 }
 
