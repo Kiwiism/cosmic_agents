@@ -5225,6 +5225,9 @@ Current physics correction:
 - Navigation climb-exit execution now accepts `AgentRuntimeEntry`; exit
   readiness, rope-transfer exit, top-rope alignment, jump-off, and movement
   behavior are unchanged.
+- Navigation jump execution now accepts `AgentRuntimeEntry`; in-air/climbing
+  gates, selected-launch readiness, rope fallback attach, block reasons, edge
+  target marking, and jump initiation behavior are unchanged.
 
 Initial reconstruction order:
 

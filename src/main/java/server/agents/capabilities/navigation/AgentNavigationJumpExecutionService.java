@@ -6,7 +6,7 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -19,7 +19,7 @@ public final class AgentNavigationJumpExecutionService {
     }
 
     public static boolean tryExecuteJump(AgentNavigationGraph graph,
-                                         BotEntry entry,
+                                         AgentRuntimeEntry entry,
                                          Character agent,
                                          AgentNavigationGraph.Edge edge) {
         if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotClimbStateRuntime.climbing(entry)) {
@@ -48,7 +48,7 @@ public final class AgentNavigationJumpExecutionService {
     }
 
     private static boolean canExecuteSelectedJumpFromCurrentPosition(AgentNavigationGraph graph,
-                                                                     BotEntry entry,
+                                                                     AgentRuntimeEntry entry,
                                                                      Character agent,
                                                                      Point agentPos,
                                                                      AgentNavigationGraph.Edge edge) {
