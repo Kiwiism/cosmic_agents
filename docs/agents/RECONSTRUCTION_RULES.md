@@ -5476,6 +5476,9 @@ Current physics correction:
   grounding, idle stance, map-change, and movement-state reset behavior remain
   unchanged while movement-only and recovery live-gate callers no longer cast
   for this hook.
+- Formation runtime now accepts `AgentRuntimeEntry` and
+  `List<? extends AgentRuntimeEntry>`; formation lookup, stored leader
+  formation state, and offset application behavior are unchanged.
 
 Initial reconstruction order:
 

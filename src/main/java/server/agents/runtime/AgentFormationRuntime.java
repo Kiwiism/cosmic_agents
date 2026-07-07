@@ -3,7 +3,6 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.util.List;
 
@@ -17,7 +16,7 @@ public final class AgentFormationRuntime {
                 AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
-    public static AgentFormationService.FormationState formationStateFor(BotEntry entry) {
+    public static AgentFormationService.FormationState formationStateFor(AgentRuntimeEntry entry) {
         return AgentFormationService.stateForEntry(
                 entry,
                 AgentFormationService.formationsByLeaderId(),
@@ -28,7 +27,7 @@ public final class AgentFormationRuntime {
                                          AgentFormationService.FormationType type,
                                          int px,
                                          int snapRange,
-                                         List<BotEntry> entries) {
+                                         List<? extends AgentRuntimeEntry> entries) {
         if (leader == null) {
             return;
         }

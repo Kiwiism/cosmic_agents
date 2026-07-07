@@ -25,6 +25,9 @@ Recent map updates:
   and recovery live-gate paths call the Agent follow-map sync boundary without
   BotEntry casts, preserving the existing cross-map follow synchronization
   behavior.
+- `AgentFormationRuntime` now accepts Agent runtime entries and generic Agent
+  entry lists, preserving formation state lookup and offset application while
+  removing another runtime dependency on the legacy bot entry type.
 - Targeted and untargeted chat route services now depend on the Agent-owned
   `AgentRuntimeHandle` boundary and `AgentTargetedCommandMatch`. The legacy
   `AgentBotCommandParser` match is adapted in `AgentChatRouteRuntime`, leaving
