@@ -31,6 +31,7 @@ import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
@@ -90,6 +91,10 @@ public final class AgentShopService {
 
     private record ShopSlotItem(short slot, ShopItem shopItem) {}
 
+    public static void onMapChange(AgentRuntimeEntry entry, Character bot) {
+        onMapChange(asBotEntry(entry), bot);
+    }
+
     public static void onMapChange(BotEntry entry, Character bot) {
         clearShopState(entry);
 
@@ -115,6 +120,10 @@ public final class AgentShopService {
         }
 
         startShopVisit(entry, bot, match);
+    }
+
+    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
+        return (BotEntry) entry;
     }
 
     public static void requestSellTrashVisit(BotEntry entry, Character bot) {

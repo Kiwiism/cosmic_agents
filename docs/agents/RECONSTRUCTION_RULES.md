@@ -5534,6 +5534,9 @@ Current physics correction:
 - Recovery teleport runtime now accepts `AgentRuntimeEntry`; ground lookup,
   teleport pose, reset-after-teleport, movement broadcast, teleport distance,
   out-of-bounds distance, and grind-party multiplier behavior remain unchanged.
+- Movement-only map-change runtime now accepts `AgentRuntimeEntry`; foothold
+  index rebuild, grounding, teleport pose, reset, broadcast, shop visit refresh,
+  and manager status checks remain unchanged.
 
 Initial reconstruction order:
 

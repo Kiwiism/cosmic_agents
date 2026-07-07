@@ -12,6 +12,10 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- `AgentMovementOnlyMapChangeRuntime` now accepts `AgentRuntimeEntry` and uses
+  Agent movement pose/reset/broadcast hooks directly. `AgentShopService`
+  exposes an Agent entry map-change overload so movement-only map changes no
+  longer cast for shop visit refresh.
 - `AgentRecoveryTeleportRuntime` now accepts `AgentRuntimeEntry` and delegates
   directly to Agent movement pose/reset/broadcast services. Live tick gates and
   movement-only recovery call it without BotEntry casts, preserving the same

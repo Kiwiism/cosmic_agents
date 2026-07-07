@@ -47,7 +47,7 @@ public final class AgentMovementOnlyRuntime {
                         target,
                         config.teleportDistance(),
                         config.outOfBoundsTeleportDistance()),
-                (entry, agent) -> AgentMovementOnlyMapChangeRuntime.handleMapChange(asBotEntry(entry), agent),
+                AgentMovementOnlyMapChangeRuntime::handleMapChange,
                 (entry, agent) -> AgentShopService.tickShopVisit(asBotEntry(entry), agent),
                 AgentBotShopStateRuntime::activeShopTargetPosition,
                 AgentBotShopStateRuntime::shopApproachDelayMs,
