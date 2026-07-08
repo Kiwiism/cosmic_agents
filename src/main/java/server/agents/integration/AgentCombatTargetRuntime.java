@@ -15,6 +15,7 @@ import server.agents.capabilities.combat.AgentGrindTargetGroup;
 import server.agents.capabilities.combat.AgentProjectileHitbox;
 import server.agents.capabilities.combat.AgentScoredGrindTarget;
 import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;

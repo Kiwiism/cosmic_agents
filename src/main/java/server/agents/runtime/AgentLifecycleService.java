@@ -5,7 +5,7 @@ import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.maps.MapleMap;

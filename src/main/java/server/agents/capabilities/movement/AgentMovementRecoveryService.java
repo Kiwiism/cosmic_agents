@@ -2,7 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 

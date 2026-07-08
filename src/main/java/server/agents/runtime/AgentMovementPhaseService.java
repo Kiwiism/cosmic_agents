@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import java.awt.Point;
 import java.util.function.BiPredicate;

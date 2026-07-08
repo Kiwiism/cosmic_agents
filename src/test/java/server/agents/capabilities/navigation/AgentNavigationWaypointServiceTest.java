@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import org.junit.jupiter.api.Test;
 import client.Character;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;

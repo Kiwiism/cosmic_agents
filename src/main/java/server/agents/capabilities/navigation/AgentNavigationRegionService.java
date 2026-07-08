@@ -7,7 +7,7 @@ import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.capabilities.shop.AgentShopStateRuntime;

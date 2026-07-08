@@ -6237,6 +6237,12 @@ Current physics correction:
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
   build the same movement report snapshot; chat report formatting is unchanged.
+- Movement state/profile/input/down-jump access now lives in
+  `server.agents.capabilities.movement.AgentMovementStateRuntime`. It still
+  reads and writes the same `AgentRuntimeEntry` state bags, and live Agent/
+  leader position lookup remains isolated through the temporary
+  `AgentRuntimeIdentityRuntime` integration seam; movement behavior is
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

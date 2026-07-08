@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;

@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 

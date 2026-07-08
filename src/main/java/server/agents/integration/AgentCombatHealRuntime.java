@@ -9,6 +9,7 @@ import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import client.Character;
 import client.Skill;

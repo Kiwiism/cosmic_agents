@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;

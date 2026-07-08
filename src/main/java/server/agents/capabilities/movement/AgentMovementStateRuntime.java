@@ -1,22 +1,17 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.capabilities.movement.AgentMovementMode;
-import server.agents.capabilities.movement.AgentMovementInputState;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.capabilities.movement.AgentMovementSnapshot;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.capabilities.movement.AgentDownJumpState;
-import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.capabilities.movement.AgentMovementProfileState;
 
 import java.awt.Point;
 
 /**
- * Agent-owned read-only movement state facade over temporary AgentRuntimeEntry state.
+ * Agent-owned movement state facade over AgentRuntimeEntry state. Live
+ * character position lookup remains a temporary integration dependency.
  */
 public final class AgentMovementStateRuntime {
     private AgentMovementStateRuntime() {

@@ -1,6 +1,6 @@
 package server.agents.capabilities.combat;
 
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.runtime.AgentRuntimeEntry;
 

@@ -5,7 +5,7 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

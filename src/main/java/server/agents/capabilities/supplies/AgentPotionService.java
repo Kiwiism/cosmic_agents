@@ -24,7 +24,7 @@ import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.integration.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

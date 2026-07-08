@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import server.agents.capabilities.combat.AgentGrindSearchStateRuntime;
 
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 

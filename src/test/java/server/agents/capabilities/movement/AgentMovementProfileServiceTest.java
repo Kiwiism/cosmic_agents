@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

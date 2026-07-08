@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 

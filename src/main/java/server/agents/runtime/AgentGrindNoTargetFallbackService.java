@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.maps.MapleMap;
 

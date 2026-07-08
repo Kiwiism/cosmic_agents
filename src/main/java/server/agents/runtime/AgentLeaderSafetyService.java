@@ -7,7 +7,7 @@ import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;

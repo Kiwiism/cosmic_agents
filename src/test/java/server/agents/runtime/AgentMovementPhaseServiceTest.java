@@ -4,7 +4,7 @@ import server.agents.capabilities.movement.AgentClimbStateRuntime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.maps.Rope;
 
 import java.awt.Point;

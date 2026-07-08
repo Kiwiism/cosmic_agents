@@ -18,7 +18,7 @@ import client.Character;
 import net.packet.Packet;
 import server.agents.capabilities.movement.fidget.AgentFidgetRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentOwnerMotionStateRuntime;

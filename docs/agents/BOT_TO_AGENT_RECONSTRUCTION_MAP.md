@@ -2327,3 +2327,11 @@ Recent map updates:
 | `src/main/java/server/bots/pq/BotKpqState.java` | `server.agents.capabilities.partyquest.kpq.AgentKpqState` | `MIGRATED_TO_AGENT`; temporary BotEntry-backed KPQ state bag now uses Agent-owned type |
 | `src/main/java/server/bots/pq/BotPqHooks.java` | `server.agents.capabilities.partyquest.AgentPartyQuestHooks` | `MIGRATED_TO_AGENT`; PQ tick, NPC lock, grind/follow defaults, and coupon-loot gating moved unchanged. PQ state bridge methods and PQ gate checks now accept `AgentRuntimeEntry` |
 | `src/main/resources/db/tables/025-bot-ownership.sql` | `server.agents.legacy` documentation initially; later external registry or deletion | `LEGACY_PROFILE` |
+
+Recent capability extraction notes:
+
+- `AgentMovementStateRuntime` now lives in
+  `server.agents.capabilities.movement`. It remains behavior-preserving over
+  the same `AgentRuntimeEntry` movement state bags; the only remaining
+  integration seam is live Agent/leader position lookup through
+  `AgentRuntimeIdentityRuntime`.

@@ -24,7 +24,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.shop.AgentShopRuntime;
 import server.agents.integration.AgentCombatAmmoCheckRuntime;

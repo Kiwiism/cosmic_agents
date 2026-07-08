@@ -2,7 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;

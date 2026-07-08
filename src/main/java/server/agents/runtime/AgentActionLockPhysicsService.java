@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;

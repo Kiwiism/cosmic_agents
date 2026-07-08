@@ -10,7 +10,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 
 
 
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;

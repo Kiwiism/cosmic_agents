@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 

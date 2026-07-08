@@ -16,6 +16,7 @@ import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

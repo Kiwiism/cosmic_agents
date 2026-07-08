@@ -1,19 +1,11 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentRuntimeEntry;
-
-
-import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.capabilities.movement.AgentMovementProfile;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.capabilities.movement.AgentMovementMode;
-import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
 import server.agents.capabilities.combat.AgentCombatFacingRuntime;
 import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
