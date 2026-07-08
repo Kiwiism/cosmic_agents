@@ -2354,3 +2354,6 @@ Recent capability extraction notes:
   `server.agents.capabilities.supplies`. It preserves the same ammo/MP-pot
   shortage decisions, warning state transitions, grind follow fallback, and map
   dialogue side effects.
+- `AgentStatusRuntime` now lives in `server.agents.capabilities.dialogue`. It
+  preserves the same offline-return and AFK-return status action adapters while
+  keeping live identity and reply delivery as integration seams.

@@ -3,7 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentStatusRuntime;
+import server.agents.capabilities.dialogue.AgentStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 

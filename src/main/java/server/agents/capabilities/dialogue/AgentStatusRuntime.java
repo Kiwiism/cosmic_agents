@@ -1,14 +1,15 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 
 /**
- * Temporary Agent-owned bridge from Agent runtime status side effects to Agent
- * chat/status runtime action interfaces.
+ * Agent-owned bridge from live status side effects to Agent chat/status action
+ * interfaces. Reply delivery and live identity lookup remain integration seams.
  */
 public final class AgentStatusRuntime {
     private AgentStatusRuntime() {

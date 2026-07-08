@@ -6268,6 +6268,11 @@ Current physics correction:
   `server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime`. It
   preserves the same weapon/ammo classification, warning latch state,
   grind-mode follow fallback, and map dialogue side effects.
+- Offline-return and AFK-return status action adapters now live in
+  `server.agents.capabilities.dialogue.AgentStatusRuntime`. They preserve the
+  same map-name lookup, random delay scheduling, face expression changes,
+  party speech, and reply behavior while keeping live identity and reply
+  delivery behind integration seams.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
