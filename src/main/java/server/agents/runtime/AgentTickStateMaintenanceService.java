@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 

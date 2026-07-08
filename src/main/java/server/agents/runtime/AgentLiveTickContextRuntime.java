@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
-import server.agents.integration.AgentOwnerMotionStateRuntime;
 
 public final class AgentLiveTickContextRuntime {
     private AgentLiveTickContextRuntime() {

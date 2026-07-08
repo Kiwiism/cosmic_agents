@@ -82,6 +82,12 @@ Recent reconstruction notes:
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,
   respawn placement, combat death entry, and packet-visible side effects remain
   in the existing runtime/combat integration callers.
+- Leader/owner motion observation state has moved from
+  `server.agents.integration` to
+  `server.agents.runtime.AgentOwnerMotionStateRuntime`. It still only adapts
+  remembered leader position and observed step deltas on `AgentRuntimeEntry`;
+  follow movement, fidget decisions, and tick-context timing remain in their
+  existing runtime/capability callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

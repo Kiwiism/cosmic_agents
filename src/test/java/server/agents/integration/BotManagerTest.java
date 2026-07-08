@@ -34,7 +34,7 @@ import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 import server.agents.integration.AgentCombatAttackRuntime;
 import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
-import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;

@@ -5,7 +5,7 @@ import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
