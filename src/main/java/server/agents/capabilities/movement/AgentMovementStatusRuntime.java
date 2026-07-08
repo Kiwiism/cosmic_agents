@@ -1,10 +1,12 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Temporary Agent-owned bridge for movement-triggered status side effects.
+ * Movement-facing facade for status side effects that still cross the
+ * integration chat/status boundary.
  */
 public final class AgentMovementStatusRuntime {
     private AgentMovementStatusRuntime() {

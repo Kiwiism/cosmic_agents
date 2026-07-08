@@ -6075,6 +6075,11 @@ Current physics correction:
   follow-idle movement, scripted move/combat, anchored farm dispatch, grind
   dispatch, final movement tail, jump initiation, idle pose, and movement
   broadcasting keep the same ordering and behavior.
+- Movement-triggered status facade ownership now sits in
+  `server.agents.capabilities.movement.AgentMovementStatusRuntime`. The
+  facade still delegates to the integration chat/status boundary for active-mode
+  status checks and random fidget expressions, so movement callback behavior and
+  reply timing are unchanged.
 - Shop service runtime entry points and purchase/sell-trash sequence helpers
   now use `AgentRuntimeEntry`. Map-change resupply detection, sell-trash
   visits, shop approach, purchase/recharge steps, sell-trash steps, shortfall
