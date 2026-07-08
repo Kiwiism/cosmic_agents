@@ -100,6 +100,11 @@ Recent reconstruction notes:
   decays attack cooldown before move-window cooldown through the same
   `AgentMovementTimers::tickDown` callback; common tick ordering and cooldown
   behavior are unchanged.
+- Combat action-state clearing has moved from `server.agents.integration` to
+  `server.agents.capabilities.combat.AgentCombatActionStateRuntime`. It still
+  clears the current grind target through the existing target-state seam,
+  clears attack and movement cooldown windows, clears navigation state, and
+  invalidates movement broadcasts in the same order.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

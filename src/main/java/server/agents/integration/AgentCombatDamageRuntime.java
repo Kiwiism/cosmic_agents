@@ -8,6 +8,7 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.BuffStat;
 import client.Character;
+import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
