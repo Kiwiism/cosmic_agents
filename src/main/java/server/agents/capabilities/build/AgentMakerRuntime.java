@@ -1,5 +1,7 @@
-package server.agents.integration;
+package server.agents.capabilities.build;
 
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

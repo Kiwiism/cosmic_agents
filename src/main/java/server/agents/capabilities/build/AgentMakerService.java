@@ -11,7 +11,7 @@ import client.inventory.Item;
 import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
-import server.agents.integration.AgentMakerRuntime;
+import server.agents.capabilities.build.AgentMakerRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

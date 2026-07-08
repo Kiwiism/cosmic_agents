@@ -134,6 +134,11 @@ Recent reconstruction notes:
   delegates reply delivery and delayed callbacks through the existing
   integration seams, so chat output, timers, trade replies, drop replies, and
   inventory behavior are unchanged.
+- Maker automation reply and delayed-step bridge access has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.build.AgentMakerRuntime`. It still delegates
+  reply delivery and random/fixed delays through the existing integration
+  seams, so Maker batch timing, replies, and execution behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

@@ -3,7 +3,7 @@ package server.agents.capabilities.build;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentMakerRuntime;
+import server.agents.capabilities.build.AgentMakerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.lang.reflect.Field;
