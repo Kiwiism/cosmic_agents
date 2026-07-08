@@ -7,11 +7,11 @@ import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
 import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentBotCommandParser {
-    private AgentBotCommandParser() {
+public final class AgentCommandTargetResolver {
+    private AgentCommandTargetResolver() {
     }
 
-    public static AgentTransferCommand matchBotTransferCommand(String message) {
+    public static AgentTransferCommand matchAgentTransferCommand(String message) {
         AgentCommandParser.AgentTransferCommand command = AgentCommandParser.matchTransferCommand(message);
         if (command == null) {
             return null;
@@ -20,7 +20,7 @@ public final class AgentBotCommandParser {
         return new AgentTransferCommand(command.agentName(), command.targetName());
     }
 
-    public static <E extends AgentRuntimeEntry> AgentTargetedCommandMatch<E> resolveTargetedBot(List<E> entries,
+    public static <E extends AgentRuntimeEntry> AgentTargetedCommandMatch<E> resolveTargetedAgent(List<E> entries,
                                                                                                 String message) {
         List<AgentNamedCommandTarget<E>> targets = entries == null
                 ? null

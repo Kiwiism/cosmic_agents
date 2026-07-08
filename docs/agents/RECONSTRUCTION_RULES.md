@@ -54,6 +54,10 @@ Recent reconstruction notes:
   `Agent*` names. This was a type/file/import rename only; session relog/logout,
   social reaction, LLM reply, PQ hook, and script movement behavior are
   unchanged.
+- The command resolver semantic cleanup slice renamed the integration command
+  target adapter from `AgentBotCommandParser` to `AgentCommandTargetResolver`
+  and replaced bot-named method entry points with Agent-named equivalents.
+  Transfer parsing and targeted command matching behavior are unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -2587,7 +2591,7 @@ Recent reconstruction notes:
   directly in production.
 - Bot command target-name resolution now enters through
   `AgentRuntimeIdentityRuntime` and the Agent-owned
-  `AgentBotCommandParser`; targeted command matching behavior is unchanged, and
+  `AgentCommandTargetResolver`; targeted command matching behavior is unchanged, and
   the old bot-package command parser shim has been removed.
 - Starter-kit job advancement now lives in `AgentStarterKitService` and reads
   identity through `AgentRuntimeIdentityRuntime`; job-change, starter-kit
@@ -2749,7 +2753,7 @@ Recent reconstruction notes:
   by the Agent supplies capability instead of a bot package record.
 - Bot command target, transfer, targeted-command match, and bot-entry parser
   adapter now use `AgentNamedCommandTarget`, `AgentTransferCommand`,
-  `AgentTargetedCommandMatch`, and `AgentBotCommandParser`; parsed command
+  `AgentTargetedCommandMatch`, and `AgentCommandTargetResolver`; parsed command
   boundary data is owned by Agent commands while bot-entry adaptation remains
   in the Agent integration layer, preserving the same `AgentCommandParser`
   matching behavior.

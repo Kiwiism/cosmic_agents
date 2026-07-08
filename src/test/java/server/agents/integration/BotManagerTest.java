@@ -62,7 +62,7 @@ import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentAmmoDonorPlan;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
-import server.agents.integration.AgentBotCommandParser;
+import server.agents.integration.AgentCommandTargetResolver;
 import server.agents.integration.AgentBreakoutStateRuntime;
 import server.agents.integration.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentGrindLootStateRuntime;
@@ -118,7 +118,7 @@ import static org.mockito.Mockito.when;
 class BotManagerTest {
     @Test
     void shouldParseTransferBotCommands() {
-        AgentTransferCommand command = AgentBotCommandParser.matchBotTransferCommand("transfer Jason to Bob");
+        AgentTransferCommand command = AgentCommandTargetResolver.matchAgentTransferCommand("transfer Jason to Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -127,7 +127,7 @@ class BotManagerTest {
 
     @Test
     void shouldStillAllowTransferWithoutTo() {
-        AgentTransferCommand command = AgentBotCommandParser.matchBotTransferCommand("transfer Jason Bob");
+        AgentTransferCommand command = AgentCommandTargetResolver.matchAgentTransferCommand("transfer Jason Bob");
 
         assertNotNull(command);
         assertEquals("Jason", command.botName());
@@ -136,9 +136,9 @@ class BotManagerTest {
 
     @Test
     void shouldNotTreatGivePhrasesAsBotTransfers() {
-        assertNull(AgentBotCommandParser.matchBotTransferCommand("give Jason Bob"));
-        assertNull(AgentBotCommandParser.matchBotTransferCommand("give me flaming feather"));
-        assertNull(AgentBotCommandParser.matchBotTransferCommand("give flaming feather"));
+        assertNull(AgentCommandTargetResolver.matchAgentTransferCommand("give Jason Bob"));
+        assertNull(AgentCommandTargetResolver.matchAgentTransferCommand("give me flaming feather"));
+        assertNull(AgentCommandTargetResolver.matchAgentTransferCommand("give flaming feather"));
     }
 
     @Test
@@ -200,11 +200,11 @@ class BotManagerTest {
     }
 
     @Test
-    void shouldResolveTargetedBotByPrefix() {
+    void shouldresolveTargetedAgentByPrefix() {
         AgentRuntimeEntry jason = botEntryNamed("Jason");
         AgentRuntimeEntry bob = botEntryNamed("Bob");
 
-        AgentTargetedCommandMatch<AgentRuntimeEntry> match = AgentBotCommandParser.resolveTargetedBot(
+        AgentTargetedCommandMatch<AgentRuntimeEntry> match = AgentCommandTargetResolver.resolveTargetedAgent(
                 List.of(jason, bob), "Ja pots?");
 
         assertEquals(jason, match.entry());
@@ -213,11 +213,11 @@ class BotManagerTest {
     }
 
     @Test
-    void shouldResolveTargetedBotBySlot() {
+    void shouldresolveTargetedAgentBySlot() {
         AgentRuntimeEntry jason = botEntryNamed("Jason");
         AgentRuntimeEntry bob = botEntryNamed("Bob");
 
-        AgentTargetedCommandMatch<AgentRuntimeEntry> match = AgentBotCommandParser.resolveTargetedBot(
+        AgentTargetedCommandMatch<AgentRuntimeEntry> match = AgentCommandTargetResolver.resolveTargetedAgent(
                 List.of(jason, bob), "2 follow Alice");
 
         assertEquals(bob, match.entry());
@@ -230,7 +230,7 @@ class BotManagerTest {
         AgentRuntimeEntry jane = botEntryNamed("Jane");
         AgentRuntimeEntry jason = botEntryNamed("Jason");
 
-        AgentTargetedCommandMatch<AgentRuntimeEntry> match = AgentBotCommandParser.resolveTargetedBot(
+        AgentTargetedCommandMatch<AgentRuntimeEntry> match = AgentCommandTargetResolver.resolveTargetedAgent(
                 List.of(jane, jason), "Ja yes");
 
         assertNull(match.entry());

@@ -16,7 +16,7 @@ import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentChatOrchestratorContext;
-import server.agents.integration.AgentBotCommandParser;
+import server.agents.integration.AgentCommandTargetResolver;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -121,7 +121,7 @@ public final class AgentChatRouteRuntime {
     private static <E extends AgentRuntimeEntry> AgentTargetedChatRouteService.Hooks<E> targetedChatHooks() {
         return new AgentTargetedChatRouteService.Hooks<>(
                 (entries, message) -> {
-                    var match = AgentBotCommandParser.resolveTargetedBot(entries, message);
+                    var match = AgentCommandTargetResolver.resolveTargetedAgent(entries, message);
                     return new AgentTargetedCommandMatch<>(match.entry(), match.commandText(), match.feedbackMessage());
                 },
                 AgentChatCommandClassifier::matchFollowTarget,

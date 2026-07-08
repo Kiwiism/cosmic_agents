@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.agents.integration.AgentBotCommandParser;
+import server.agents.integration.AgentCommandTargetResolver;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -23,7 +23,7 @@ public final class AgentPendingOfferChatRouteService {
                 new AgentPendingOfferResponseService.Hooks<E>(
                         AgentOfferService::expirePendingOffer,
                         AgentPendingOfferChatRouteService::isPendingOfferTarget,
-                        AgentBotCommandParser::resolveTargetedBot,
+                        AgentCommandTargetResolver::resolveTargetedAgent,
                         AgentOfferService::handlePendingOfferResponse,
                         (target, feedback) -> target.dropMessage(5, feedback)));
     }

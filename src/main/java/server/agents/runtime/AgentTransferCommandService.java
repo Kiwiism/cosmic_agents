@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.commands.AgentTransferCommand;
-import server.agents.integration.AgentBotCommandParser;
+import server.agents.integration.AgentCommandTargetResolver;
 
 public final class AgentTransferCommandService {
     private AgentTransferCommandService() {
@@ -23,7 +23,7 @@ public final class AgentTransferCommandService {
     }
 
     public static boolean handleTransferCommand(Character leader, String message, Hooks hooks) {
-        AgentTransferCommand command = AgentBotCommandParser.matchBotTransferCommand(message);
+        AgentTransferCommand command = AgentCommandTargetResolver.matchAgentTransferCommand(message);
         if (command == null) {
             return false;
         }
