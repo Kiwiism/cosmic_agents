@@ -6,6 +6,7 @@ import server.agents.capabilities.equipment.AgentMapDamageProfile;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
+import server.agents.capabilities.combat.AgentCombatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;

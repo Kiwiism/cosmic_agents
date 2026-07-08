@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -14,7 +14,6 @@ import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.capabilities.combat.AgentCombatPlanRuntime;
-import server.agents.integration.AgentCombatReportRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;
 import server.StatEffect;

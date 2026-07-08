@@ -1,22 +1,10 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
-
-import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
-
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.capabilities.combat.AgentSkillBuffDebugStateRuntime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import net.server.PlayerBuffValueHolder;
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
-import server.agents.capabilities.combat.AgentBuffService;
-import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
@@ -27,8 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Temporary Agent-owned combat report adapter while combat and buff debug data
- * still comes from bot runtime managers.
+ * Agent-owned combat report adapter. Live target search remains behind the
+ * temporary integration target runtime until combat target gateways are split.
  */
 public final class AgentCombatReportRuntime {
     private AgentCombatReportRuntime() {

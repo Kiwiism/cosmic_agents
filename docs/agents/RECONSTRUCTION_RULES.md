@@ -6224,6 +6224,11 @@ Current physics correction:
   `AgentChatStatusOrchestrator`, and airshow state reads to
   `AgentAirshowStateRuntime`; spawn status checks, offline-return notices, AFK
   checks, and airshow gating behavior are unchanged.
+- Combat report orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatReportRuntime`. It still
+  delegates live target search to the temporary `AgentCombatTargetRuntime`
+  integration seam, while debug-stat, crit, buff, and skill-buff report
+  formatting stays unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
