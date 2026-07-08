@@ -6,7 +6,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
-import server.agents.integration.AgentOfferStateRuntime;
+import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 

@@ -6110,6 +6110,11 @@ Current physics correction:
   adapts the same `AgentRuntimeEntry.manualTradeState()` fields for trade
   reference, timeout, accept delay, and clear behavior; manual trade handling
   and inventory tick behavior are unchanged.
+- Offer and upgrade prompt state access now lives in
+  `server.agents.capabilities.trade.AgentOfferStateRuntime`. It still adapts
+  the same pending loot-offer, gear-prompt, proactive-upgrade, and gear
+  suggestion fields on `AgentRuntimeEntry`; offer scheduling, pending-offer
+  chat routing, auto-equip checks, and status reporting are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

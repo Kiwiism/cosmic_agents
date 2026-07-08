@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentTargetedCommandMatch;
-import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;

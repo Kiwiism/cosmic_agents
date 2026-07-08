@@ -3,7 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
-import server.agents.integration.AgentOfferStateRuntime;
+import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 import java.awt.Point;
 

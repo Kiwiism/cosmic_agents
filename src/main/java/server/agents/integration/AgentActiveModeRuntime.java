@@ -6,6 +6,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionService;
 
 /**

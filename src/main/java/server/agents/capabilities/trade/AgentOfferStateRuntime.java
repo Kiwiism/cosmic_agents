@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;

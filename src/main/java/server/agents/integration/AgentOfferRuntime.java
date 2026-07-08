@@ -5,6 +5,7 @@ import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 /**
  * Temporary Agent-owned bridge to legacy bot offer side effects.

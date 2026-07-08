@@ -12,7 +12,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentActiveModeRuntime;
-import server.agents.integration.AgentOfferStateRuntime;
+import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

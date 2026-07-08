@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 import java.util.List;
 
