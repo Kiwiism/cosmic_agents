@@ -10,7 +10,7 @@ import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
-import server.agents.integration.AgentShopStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;

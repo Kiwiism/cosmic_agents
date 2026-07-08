@@ -5,7 +5,7 @@ import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentShopStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

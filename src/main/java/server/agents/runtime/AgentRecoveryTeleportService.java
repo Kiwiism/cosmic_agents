@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentShopStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;

@@ -8,7 +8,7 @@ import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
-import server.agents.integration.AgentShopStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
 
 import java.awt.Point;

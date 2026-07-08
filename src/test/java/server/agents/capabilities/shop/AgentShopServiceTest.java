@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentShopRuntime;
-import server.agents.integration.AgentShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.agents.runtime.AgentRuntimeEntry;

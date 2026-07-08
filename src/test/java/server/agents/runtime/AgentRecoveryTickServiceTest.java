@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentShopStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

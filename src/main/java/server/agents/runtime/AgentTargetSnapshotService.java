@@ -7,7 +7,7 @@ import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentShopStateRuntime;
+import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 

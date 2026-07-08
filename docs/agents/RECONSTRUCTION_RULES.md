@@ -4918,6 +4918,12 @@ Current physics correction:
   They remain pure `AgentRuntimeEntry` state accessors; item counting,
   consumption, inventory mutation, share-trade execution, and scheduler work
   remain at their existing capability/integration seams.
+- Shop transition state has moved from `server.agents.integration` to
+  `server.agents.capabilities.shop.AgentShopStateRuntime`. It remains a pure
+  `AgentRuntimeEntry` state accessor for pending visits, target/NPC positions,
+  sequence timing, sell-trash flags, and stuck-near-NPC fallback tracking;
+  shop NPC/inventory mutation and scheduled shop steps remain at their
+  existing capability/integration seams.
 - Movement input and facing wrappers have been removed from `BotEntry`.
   Movement velocity, movement direction, and facing direction reads/writes now
   route through `AgentMovementStateRuntime` over `AgentMovementInputState`.
