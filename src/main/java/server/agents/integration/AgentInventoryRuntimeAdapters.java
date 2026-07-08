@@ -14,6 +14,7 @@ import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.inventory.AgentEquippedSlotTradeService;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventoryNamedItemService;
+import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.capabilities.looting.AgentLootCleanupService;
 import server.agents.capabilities.looting.AgentPassiveLootRuntimeService;

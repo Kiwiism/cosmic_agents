@@ -6,7 +6,7 @@ import client.Character;
 import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentInventoryRuntime;
+import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

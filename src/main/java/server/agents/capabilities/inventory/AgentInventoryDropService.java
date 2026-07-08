@@ -9,7 +9,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentInventoryRuntime;
+import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.FieldLimit;
 

@@ -24,7 +24,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService.PreparedTradeItems;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
-import server.agents.integration.AgentInventoryRuntime;
+import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
