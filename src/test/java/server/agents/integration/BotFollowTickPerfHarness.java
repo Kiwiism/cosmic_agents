@@ -38,8 +38,8 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentMapStateRuntime;
 import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
-import server.agents.integration.AgentTickCadenceStateRuntime;
-import server.agents.integration.AgentTickStateRuntime;
+import server.agents.runtime.AgentTickCadenceStateRuntime;
+import server.agents.runtime.AgentTickStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 

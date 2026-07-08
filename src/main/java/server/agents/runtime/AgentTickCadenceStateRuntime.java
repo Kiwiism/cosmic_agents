@@ -1,7 +1,4 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentTickState;
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.runtime;
 
 /**
  * Agent-owned adapter for temporary AgentRuntimeEntry-backed tick cadence state.

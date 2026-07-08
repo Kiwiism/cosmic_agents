@@ -34,6 +34,11 @@ Recent reconstruction notes:
   is pure live-session state access. Pending-action callbacks, transfer
   decisions, replies, and session side effects stay in integration until those
   behavior slices are split.
+- Tick state adapters moved to `server.agents.runtime`:
+  `AgentTickStateRuntime`, `AgentTickCadenceStateRuntime`, and
+  `AgentTickFailureStateRuntime`. These remain behavior-preserving wrappers
+  over `AgentRuntimeEntry` state; scheduler/tick behavior and failure handling
+  are unchanged.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

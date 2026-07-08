@@ -103,6 +103,11 @@ Recent map updates:
   to `server.agents.runtime`. It only reads/writes pending action fields on
   `AgentRuntimeEntry`; pending-action decision handling and reply/transfer side
   effects remain in integration adapters for later slices.
+- `AgentTickStateRuntime`, `AgentTickCadenceStateRuntime`, and
+  `AgentTickFailureStateRuntime` have moved from `server.agents.integration`
+  to `server.agents.runtime`. They only adapt `AgentRuntimeEntry` tick,
+  cadence, heartbeat, and failure-window state; tick scheduling and failure
+  side effects remain in runtime/integration callers unchanged.
 - `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout
