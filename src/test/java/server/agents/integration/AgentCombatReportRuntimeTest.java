@@ -13,7 +13,7 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentCombatPlanRuntime;
+import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatReportRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;

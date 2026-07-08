@@ -12,6 +12,7 @@ import net.server.PlayerBuffValueHolder;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;

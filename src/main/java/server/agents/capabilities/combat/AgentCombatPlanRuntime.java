@@ -1,14 +1,6 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
-import server.agents.capabilities.combat.AgentBasicAttackPlanRuntime;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatSkillClassifier;
-import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

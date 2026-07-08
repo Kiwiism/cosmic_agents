@@ -6129,6 +6129,11 @@ Current physics correction:
   `server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime`. It still
   uses the same cluster scoring, hitbox shift, DPS threshold, and debug logging
   behavior; reposition command dispatch and combat tests are unchanged.
+- Attack-plan orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatPlanRuntime`. It still builds
+  the same cached-skill and basic-attack candidates, applies the same scoring,
+  and records the same `combat-plan` performance metric; combat execution and
+  reporting behavior are unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

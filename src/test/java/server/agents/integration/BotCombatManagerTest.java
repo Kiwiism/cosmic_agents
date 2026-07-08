@@ -71,7 +71,7 @@ import server.agents.integration.AgentCombatGroundRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheRuntime;
 import server.agents.integration.AgentCombatHealRuntime;
-import server.agents.integration.AgentCombatPlanRuntime;
+import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.runtime.AgentDeathStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
