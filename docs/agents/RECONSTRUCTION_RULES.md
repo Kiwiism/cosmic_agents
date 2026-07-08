@@ -5787,6 +5787,11 @@ Current physics correction:
   planning, ledge fallback checks, and mob-avoidance jump checks. Random
   unstuck direction, navigation-state clearing, airborne motion, and ground
   action selection remain unchanged.
+- Live-mode tick callback interfaces and grind-mode runtime hooks now use
+  `AgentRuntimeEntry`. Shop visit tick routing, follow-opportunity attacks,
+  follow-idle movement, scripted move/combat, anchored farm dispatch, grind
+  dispatch, final movement tail, jump initiation, idle pose, and movement
+  broadcasting keep the same ordering and behavior.
 
 Initial reconstruction order:
 

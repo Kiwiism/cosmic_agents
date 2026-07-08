@@ -83,7 +83,7 @@ public final class AgentGrindModeRuntime {
                         entry, agentPosition, map),
                 (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolveNoGrindTargetPosition(
                         entry, agentPosition, map),
-                (entry, targetPos, runAiTick) -> movementCoreStep.step(asBotEntry(entry), targetPos, runAiTick));
+                (entry, targetPos, runAiTick) -> movementCoreStep.step(entry, targetPos, runAiTick));
     }
 
     private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {
@@ -112,9 +112,9 @@ public final class AgentGrindModeRuntime {
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
                 AgentCombatRangePolicy::isTargetJumpable,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,
-                (entry, agent, dx) -> AgentJumpActionService.initiateJump(asBotEntry(entry), agent, dx),
-                (entry, agent) -> AgentMovementPoseService.idleOnGround(asBotEntry(entry), agent),
-                entry -> AgentMovementBroadcastService.broadcastMovement(asBotEntry(entry)));
+                AgentJumpActionService::initiateJump,
+                AgentMovementPoseService::idleOnGround,
+                AgentMovementBroadcastService::broadcastMovement);
     }
 
     private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {
@@ -125,12 +125,5 @@ public final class AgentGrindModeRuntime {
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, mobPosition) ->
                         AgentGrindTargetRuntime.convenientLootTarget(entry, agentPosition, mobPosition));
-    }
-
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        if (entry instanceof server.bots.BotEntry botEntry) {
-            return botEntry;
-        }
-        throw new IllegalArgumentException("Legacy grind runtime requires BotEntry compatibility shell");
     }
 }

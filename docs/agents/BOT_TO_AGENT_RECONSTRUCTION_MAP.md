@@ -313,6 +313,11 @@ Recent map updates:
   `AgentGroundActionPlanner`. Unstuck recovery, airborne dispatch, ground-step
   planning, ledge fallback, and mob-avoidance decisions now use
   `AgentRuntimeEntry` directly with unchanged movement behavior.
+- `BotManager.java#live-mode-tick-callbacks` is migrated through
+  `AgentLiveModeTickRuntime` and `AgentGrindModeRuntime`. Local opportunity,
+  movement-core, anchored-farm, and grind-mode callbacks now use
+  `AgentRuntimeEntry`; shop visits, scripted movement/combat, follow-idle,
+  anchored farm, grind, and final movement-tail behavior remain unchanged.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while
