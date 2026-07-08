@@ -1,7 +1,7 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -10,8 +10,8 @@ import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
- * Temporary Agent-owned bridge for active-mode side effects while equipment,
- * supply, and offer implementations still live in the bot runtime.
+ * Agent-owned active-mode preparation callbacks over equipment, supply, and
+ * offer services while live identity lookup remains an integration boundary.
  */
 public final class AgentActiveModeRuntime {
     private AgentActiveModeRuntime() {

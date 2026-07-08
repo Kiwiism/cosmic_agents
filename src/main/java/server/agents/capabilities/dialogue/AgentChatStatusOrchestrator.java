@@ -2,7 +2,6 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
-import server.agents.integration.AgentActiveModeRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

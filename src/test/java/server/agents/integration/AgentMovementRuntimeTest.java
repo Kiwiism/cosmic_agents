@@ -10,7 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.movement.AgentMovementStatusRuntime;
-import server.agents.integration.AgentActiveModeRuntime;
+import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.integration.AgentFidgetSideEffects;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementRuntime;

@@ -3,6 +3,7 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
+import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;

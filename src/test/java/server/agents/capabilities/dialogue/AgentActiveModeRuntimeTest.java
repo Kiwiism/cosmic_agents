@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -9,9 +9,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
-import server.agents.integration.AgentActiveModeRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

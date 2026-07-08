@@ -6212,6 +6212,12 @@ Current physics correction:
   effects to `AgentStatusRuntime`, and build status checks to
   `AgentBuildStatusRuntime`; status, fidget, AFK, and offline-return behavior
   is unchanged.
+- Active-mode preparation orchestration now lives in
+  `server.agents.capabilities.dialogue.AgentActiveModeRuntime`. It still
+  delegates live Agent/leader lookup to `AgentRuntimeIdentityRuntime`,
+  equipment setup to `AgentEquipmentService`, supply checks to
+  `AgentPotionService`, and gear suggestions to `AgentOfferService`; follow/
+  stop active-mode preparation behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
