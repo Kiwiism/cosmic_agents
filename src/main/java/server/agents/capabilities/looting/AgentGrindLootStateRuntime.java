@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.looting;
 
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;

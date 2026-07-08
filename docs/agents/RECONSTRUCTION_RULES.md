@@ -112,6 +112,12 @@ Recent reconstruction notes:
   navigation debug, target, portal cooldown, and active-edge state; path-log
   file creation, live Agent identity reads, and navigation execution behavior
   are unchanged.
+- Grind loot target/retry-suppression state has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.looting.AgentGrindLootStateRuntime`. It still
+  only adapts `AgentRuntimeEntry` loot-target and ignored-object fields; live
+  map item selection, pickup execution, and inventory mutation behavior are
+  unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

@@ -2,7 +2,7 @@ package server.agents.capabilities.looting;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;

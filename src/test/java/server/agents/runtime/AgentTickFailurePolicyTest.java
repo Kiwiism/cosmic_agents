@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentTickFailureStateRuntime;

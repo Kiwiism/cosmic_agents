@@ -5,7 +5,7 @@ import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
