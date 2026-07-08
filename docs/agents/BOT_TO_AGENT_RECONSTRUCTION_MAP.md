@@ -323,6 +323,11 @@ Recent map updates:
   detection, sell-trash requests, shop visits, purchase sequences, recharge
   sequences, sell-trash sequences, and scheduled shop-step guards now use
   `AgentRuntimeEntry` while preserving existing shop behavior.
+- `BotManager.java#tick-core-runtime` is migrated through
+  `AgentTickRuntime` and `AgentTickCoreRuntime`. Guarded tick dispatch,
+  preflight, leader resolution, inactive-leader handling, ownerless movement,
+  live-context preparation, live gates, live mode dispatch, and failure
+  handling now use `AgentRuntimeEntry` at the runtime seam.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while

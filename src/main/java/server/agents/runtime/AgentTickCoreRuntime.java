@@ -3,7 +3,6 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
-import server.bots.BotEntry;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -12,7 +11,7 @@ public final class AgentTickCoreRuntime {
     private AgentTickCoreRuntime() {
     }
 
-    public static void tickCore(BotEntry entry,
+    public static void tickCore(AgentRuntimeEntry entry,
                                 int leaderCharId,
                                 int agentCharId,
                                 Consumer<AgentRuntimeEntry> issueGrind,
@@ -25,7 +24,7 @@ public final class AgentTickCoreRuntime {
                         AgentLeaderSessionRuntime.resolveTickLeader(runtimeEntry, runtimeLeaderCharId),
                 (runtimeEntry, agent, leader, nowMs, runtimeLeaderCharId) ->
                         AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
-                                asBotEntry(runtimeEntry),
+                                runtimeEntry,
                                 agent,
                                 leader,
                                 nowMs,
@@ -52,12 +51,12 @@ public final class AgentTickCoreRuntime {
                                 AgentMovementTickRuntime::stepMovementCore));
     }
 
-    public static void tickCore(BotEntry entry,
+    public static void tickCore(AgentRuntimeEntry entry,
                                 int leaderCharId,
                                 int agentCharId,
                                 AgentTickCoreService.LeaderResolver leaderResolver,
                                 AgentTickCoreService.InactiveLeaderTick inactiveLeaderTick,
-                                BiPredicate<BotEntry, Character> groundAfterMapChange,
+                                BiPredicate<AgentRuntimeEntry, Character> groundAfterMapChange,
                                 AgentOwnerlessTickService.OwnerlessMoveTick standaloneMoveTargetTick,
                                 AgentTickCoreService.DeadTick deadTick,
                                 AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
@@ -93,12 +92,12 @@ public final class AgentTickCoreRuntime {
                 AgentMovementPhysicsConfig.configuredFollowDist());
     }
 
-    public static void tickCore(BotEntry entry,
+    public static void tickCore(AgentRuntimeEntry entry,
                                 int leaderCharId,
                                 int agentCharId,
                                 AgentTickCoreService.LeaderResolver leaderResolver,
                                 AgentTickCoreService.InactiveLeaderTick inactiveLeaderTick,
-                                BiPredicate<BotEntry, Character> groundAfterMapChange,
+                                BiPredicate<AgentRuntimeEntry, Character> groundAfterMapChange,
                                 AgentOwnerlessTickService.OwnerlessMoveTick standaloneMoveTargetTick,
                                 AgentTickCoreService.DeadTick deadTick,
                                 AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
@@ -141,7 +140,7 @@ public final class AgentTickCoreRuntime {
 
     private static AgentTickCoreService.Hooks hooks(AgentTickCoreService.LeaderResolver leaderResolver,
                                                     AgentTickCoreService.InactiveLeaderTick inactiveLeaderTick,
-                                                    BiPredicate<BotEntry, Character> groundAfterMapChange,
+                                                    BiPredicate<AgentRuntimeEntry, Character> groundAfterMapChange,
                                                     AgentOwnerlessTickService.OwnerlessMoveTick standaloneMoveTargetTick,
                                                     AgentTickCoreService.DeadTick deadTick,
                                                     AgentLiveTickContextService.FollowAnchorResolver followAnchorResolver,
@@ -163,15 +162,15 @@ public final class AgentTickCoreRuntime {
                 leaderResolver,
                 inactiveLeaderTick,
                 (ownerlessEntry, ownerlessAgent, ownerlessRunAiTick) -> AgentOwnerlessTickService.tickOwnerless(
-                        asBotEntry(ownerlessEntry),
+                        ownerlessEntry,
                         ownerlessAgent,
                         ownerlessRunAiTick,
-                                (runtimeEntry, agent) -> groundAfterMapChange.test(asBotEntry(runtimeEntry), agent),
+                                groundAfterMapChange,
                                 standaloneMoveTargetTick,
                         () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessAgent)),
                 deadTick,
                 (liveEntry, liveAgent, liveLeader) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
-                        asBotEntry(liveEntry),
+                        liveEntry,
                         liveAgent,
                         liveLeader,
                         followAnchorResolver,
@@ -196,7 +195,7 @@ public final class AgentTickCoreRuntime {
                 (modeEntry, modeAgent, modeFollowAnchor, liveContext, modeRunAiTick, nowMs, perf) ->
                         AgentLiveModeTickRuntime.tickLiveModes(
                                 new AgentLiveModeTickService.Context(
-                                        asBotEntry(modeEntry),
+                                        modeEntry,
                                         modeAgent,
                                         liveContext.agentPosition(),
                                         liveContext.targetPosition(),
@@ -210,9 +209,5 @@ public final class AgentTickCoreRuntime {
                                 anchoredFarmTick,
                                 grindModeTick,
                                 followDistance));
-    }
-
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
     }
 }

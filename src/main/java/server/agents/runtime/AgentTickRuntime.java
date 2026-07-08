@@ -16,7 +16,7 @@ public final class AgentTickRuntime {
                 leaderCharId,
                 agentCharId,
                 (tickEntry, tickLeaderId, tickAgentId) -> AgentTickCoreRuntime.tickCore(
-                        asBotEntry(tickEntry),
+                        tickEntry,
                         tickLeaderId,
                         tickAgentId,
                         issueGrind,
@@ -26,9 +26,5 @@ public final class AgentTickRuntime {
                         failedLeaderId,
                         failedAgentId,
                         failure));
-    }
-
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (server.bots.BotEntry) entry;
     }
 }

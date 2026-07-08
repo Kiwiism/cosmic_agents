@@ -5797,6 +5797,11 @@ Current physics correction:
   visits, shop approach, purchase/recharge steps, sell-trash steps, shortfall
   reporting, sequence validation, and scheduled shop-step guards remain
   unchanged.
+- Tick runtime and tick-core runtime public seams now use `AgentRuntimeEntry`.
+  Guarded tick execution, preflight, leader resolution, inactive-leader
+  handling, ownerless movement, dead-tick handling, live-context preparation,
+  live gates, live mode dispatch, and tick-failure handling remain in the same
+  order with unchanged behavior.
 
 Initial reconstruction order:
 
