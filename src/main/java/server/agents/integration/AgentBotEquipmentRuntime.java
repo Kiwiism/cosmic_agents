@@ -35,7 +35,7 @@ public final class AgentBotEquipmentRuntime {
             @Override
             public void unequipAll() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    AgentBotMovementCommandRuntime.stop(entry);
+                    AgentMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
             }

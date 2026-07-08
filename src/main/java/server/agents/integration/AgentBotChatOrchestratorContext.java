@@ -86,7 +86,7 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public AgentChatMovementFlow.MovementCallbacks movementCallbacks() {
-        return AgentBotMovementRuntime.movementCallbacks(entry);
+        return AgentMovementRuntime.movementCallbacks(entry);
     }
 
     @Override

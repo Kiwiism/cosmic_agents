@@ -17,13 +17,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentBotMovementCommandRuntimeTest {
+class AgentMovementCommandRuntimeTest {
     @Test
     void followOwnerUsesAgentModeStateDirectly() {
         Character owner = character(100, 100000000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), owner, null);
 
-        AgentBotMovementCommandRuntime.followOwner(entry);
+        AgentMovementCommandRuntime.followOwner(entry);
 
         assertTrue(AgentModeStateRuntime.following(entry));
         assertFalse(AgentModeStateRuntime.grinding(entry));
@@ -35,7 +35,7 @@ class AgentBotMovementCommandRuntimeTest {
         Character target = character(300, 100000000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
 
-        AgentBotMovementCommandRuntime.follow(entry, target);
+        AgentMovementCommandRuntime.follow(entry, target);
 
         assertTrue(AgentModeStateRuntime.following(entry));
         assertFalse(AgentModeStateRuntime.grinding(entry));
@@ -48,7 +48,7 @@ class AgentBotMovementCommandRuntimeTest {
         AgentModeStateRuntime.setFollowing(entry, true);
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
 
-        AgentBotMovementCommandRuntime.stop(entry);
+        AgentMovementCommandRuntime.stop(entry);
 
         assertFalse(AgentModeStateRuntime.following(entry));
         assertFalse(AgentModeStateRuntime.grinding(entry));
@@ -60,7 +60,7 @@ class AgentBotMovementCommandRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
         Point dest = new Point(10, 20);
 
-        AgentBotMovementCommandRuntime.moveTo(entry, dest, true);
+        AgentMovementCommandRuntime.moveTo(entry, dest, true);
 
         assertEquals(dest, AgentMoveTargetStateRuntime.moveTarget(entry));
         assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
@@ -73,13 +73,13 @@ class AgentBotMovementCommandRuntimeTest {
         AgentRuntimeEntry farmEntry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
         Point dest = new Point(30, 40);
 
-        AgentBotMovementCommandRuntime.farmHere(farmEntry, dest);
+        AgentMovementCommandRuntime.farmHere(farmEntry, dest);
 
         assertTrue(AgentModeStateRuntime.grinding(farmEntry));
         assertEquals(dest, AgentMoveTargetStateRuntime.moveTarget(farmEntry));
 
         AgentRuntimeEntry grindEntry = new AgentRuntimeEntry(character(201, 100000000), character(100, 100000000), null);
-        AgentBotMovementCommandRuntime.grind(grindEntry);
+        AgentMovementCommandRuntime.grind(grindEntry);
 
         assertTrue(AgentModeStateRuntime.grinding(grindEntry));
         assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(grindEntry));
@@ -98,7 +98,7 @@ class AgentBotMovementCommandRuntimeTest {
             graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentMovementStateRuntime.movementProfile(entry)))
                     .thenReturn(null);
 
-            AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
+            AgentMovementCommandRuntime.patrol(entry, patrolPos);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "can't find a patrol region here"));
             assertFalse(AgentPatrolStateRuntime.hasPatrolRegion(entry));
@@ -120,7 +120,7 @@ class AgentBotMovementCommandRuntimeTest {
                     .thenReturn(graph);
             when(graph.findRegionId(map, patrolPos)).thenReturn(7);
 
-            AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
+            AgentMovementCommandRuntime.patrol(entry, patrolPos);
 
             assertTrue(AgentModeStateRuntime.grinding(entry));
             assertEquals(7, AgentPatrolStateRuntime.patrolRegionId(entry));

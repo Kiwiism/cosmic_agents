@@ -56,7 +56,7 @@ public final class AgentBotCombatAmmoCheckRuntime {
             case MAGE_NO_MP_POTS -> {
                 AgentAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentModeStateRuntime.grinding(entry)) {
-                    AgentBotMovementCommandRuntime.followOwner(entry);
+                    AgentMovementCommandRuntime.followOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
                 }
             }
@@ -67,7 +67,7 @@ public final class AgentBotCombatAmmoCheckRuntime {
             case PROJECTILE_NO_AMMO -> {
                 AgentAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentModeStateRuntime.grinding(entry)) {
-                    AgentBotMovementCommandRuntime.followOwner(entry);
+                    AgentMovementCommandRuntime.followOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
                 }
             }

@@ -28,6 +28,11 @@ Recent map updates:
 - The state-adapter slice renamed `AgentBot*StateRuntime` classes to
   `Agent*StateRuntime` by capability/state. State storage, method signatures,
   and runtime behavior are unchanged.
+- The movement/fidget semantic rename slice renamed movement command,
+  movement callback, movement status, movement target, movement kinematics,
+  and fidget runtime adapters from `AgentBot*` to neutral `Agent*` names.
+  Movement command routing, target snapshot capture, fidget side effects, and
+  runtime behavior are unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -214,7 +219,7 @@ Recent map updates:
   entry lists, preserving formation state lookup and offset application while
   removing another runtime dependency on the legacy bot entry type.
 - `AgentFidgetService` social/greeting start helpers and
-  `AgentBotFidgetSideEffects` now use `AgentRuntimeEntry`, keeping deeper
+  `AgentFidgetSideEffects` now use `AgentRuntimeEntry`, keeping deeper
   active fidget movement execution for a later movement reconstruction slice.
 - `AgentBotEquipmentRuntime` now exposes equipment chat callbacks over
   `AgentRuntimeEntry`; the temporary movement-command adapter supplies the
@@ -226,7 +231,7 @@ Recent map updates:
 - `AgentBotCommandParser.resolveTargetedBot` is now generic over
   `AgentRuntimeEntry`, preserving current targeted command matching while
   removing its direct dependency on the legacy bot entry type.
-- `AgentBotMovementRuntime` movement chat callbacks now use
+- `AgentMovementRuntime` movement chat callbacks now use
   `AgentRuntimeEntry`; lower movement command and potion adapters keep the
   temporary BotEntry compatibility casts for their own side effects.
 - `AgentFollowTargetRuntime` now accepts Agent runtime entry lists and no
@@ -320,7 +325,7 @@ Recent map updates:
   broadcast, and movement-core stepping while preserving anchored-farm behavior.
 - `BotManager.java#movement-command-callbacks` now routes script-task,
   tick-failure, and interaction command callbacks through the
-  `AgentRuntimeEntry`-based `AgentBotMovementCommandRuntime` API. Temporary
+  `AgentRuntimeEntry`-based `AgentMovementCommandRuntime` API. Temporary
   `BotEntry` casts were removed from script execution and tick failure; the
   interaction facade still returns `BotEntry` until registration/lifecycle
   return types are migrated.
@@ -1150,7 +1155,7 @@ Recent map updates:
   queued-task checks, and cheap move-target checks directly.
 - BotManager movement command wrappers were removed. Spawn, lifecycle, tick,
   movement chat tests, and movement parity tests now use
-  `AgentBotMovementCommandRuntime` directly.
+  `AgentMovementCommandRuntime` directly.
 - BotManager leader-safety helpers for town-offer, primary-entry, and
   inactive-leader safe mode were removed. Agent session control/runtime now
   owns those checks and side effects without a BotManager compatibility hop.
@@ -1744,13 +1749,13 @@ Recent map updates:
   directly, including patrol graph-region validation and visible failure
   replies.
 - Build level-up, potion stop, and combat ammo-stop paths now request
-  follow-owner through `AgentBotMovementCommandRuntime` instead of calling
+  follow-owner through `AgentMovementCommandRuntime` instead of calling
   `BotManager.issueFollowOwner` directly.
 - Session relog/logout/away prompts and equipment unequip-all now request stop
-  through `AgentBotMovementCommandRuntime` instead of calling
+  through `AgentMovementCommandRuntime` instead of calling
   `BotManager.issueStop` directly.
 - Patrol command graph-region validation, visible failure reply, and active
-  patrol mode transition moved into `AgentBotMovementCommandRuntime`; the
+  patrol mode transition moved into `AgentMovementCommandRuntime`; the
   former `BotManager.issuePatrol` compatibility delegate has been removed.
 - Session first-agent checks, away-town offer checks, and away-safe command
   routing moved behind `AgentBotSessionControlRuntime`; BotManager remains only
@@ -1782,7 +1787,7 @@ Recent map updates:
   `BotManager.resolveFollowAnchor` call while preserving follow target
   behavior.
 - BotManager follow-owner, grind, and stop entry points were removed. Callers
-  now use `AgentBotMovementCommandRuntime` directly while preserving command
+  now use `AgentMovementCommandRuntime` directly while preserving command
   setup behavior.
 - BotManager inactive-town return-scroll item use moved to
   `server.agents.runtime.AgentReturnScrollService`; BotManager remains only the
@@ -2096,7 +2101,7 @@ Recent map updates:
   adaptation, transfer command wrapping, and targeted-command feedback are
   unchanged; `AgentCommandParser` remains the shared parser core.
 - `server.bots.BotFidgetSideEffects` has moved to
-  `server.agents.integration.AgentBotFidgetSideEffects`. Greeting/social
+  `server.agents.integration.AgentFidgetSideEffects`. Greeting/social
   fidget dispatch still delegates to the unchanged legacy fidget runtime, but
   the Agent movement callback no longer imports the bot-side shim.
 - `server.bots.BotSessionLifecycleSideEffects` has moved to
@@ -2104,7 +2109,7 @@ Recent map updates:
   owner-entry lookup behavior still delegates to `BotManager`, but session
   orchestration no longer imports a bot-side lifecycle shim.
 - `server.bots.BotMovementTargetSideEffects` has moved to
-  `server.agents.integration.AgentBotMovementTargetSideEffects`. Snapshot
+  `server.agents.integration.AgentMovementTargetSideEffects`. Snapshot
   conversion and raw navigation-target override behavior are unchanged while
   BotManager remains the temporary target-snapshot source.
 - `server.bots.BotScriptRuntime` has moved to
@@ -2163,7 +2168,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment.AgentEquipmentService` and equipment capability classes | `MIGRATED_TO_AGENT`; production callers now enter through `AgentEquipmentService`. Map-damage benchmark snapshot/selection lives in `AgentMapDamageProfile`, production weapon/job compatibility plus self-reserve weapon track labels live in `AgentWeaponCompatibilityPolicy`, slot alias resolution, ring slot detection, DP slot ordering, and display labels live in `AgentEquipmentSlotResolver`, useful-stat and defense-adjusted damage scoring lives in `AgentEquipmentScoringPolicy`, auto-equip duplicate-trigger state lives in `AgentAutoEquipThrottle`, auto-equip execution and debug branch reporting live in `AgentEquipmentAutoEquipService`, auto-equip debug report formatting lives in `AgentEquipmentDebugReportFormatter`, recommendation result data uses `AgentEquipRecommendation`, optimizer result data uses `AgentEquipmentOptimizerResult`, fixed-weapon DP result/score data uses `AgentEquipmentDpResult` and `AgentEquipmentScore`, optimizer stat snapshot data uses `AgentEquipmentStatSnapshot`, optimizer metadata/requirement hooks use `AgentEquipmentOptimizerHooks`, weapon-branch debug score breakdown data uses `AgentWeaponScoreBreakdown`, recommendation candidate eligibility lives in `AgentEquipmentRecommendationPolicy`, recommendation filtering/result construction/summary formatting lives in `AgentEquipmentRecommendationService`, unequip command execution lives in `AgentEquipmentUnequipService`, and owned/incoming equipment reserve, requirement-gate, requirement-comparison, and future-track policy lives in `AgentEquipmentReservePolicy`; production bot file deleted after compile and focused equipment tests passed |
 | `src/main/java/server/bots/BotFallbackMovementManager.java` | `server.agents.capabilities.movement.AgentFallbackMovementService` | `MIGRATED_TO_AGENT`; fallback steering, rope/drop/swim/jump immediate actions, and ledge targeting moved unchanged |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; active fidget state machine and social/greeting fidget start behavior moved unchanged, fidget leader-idle status checks now accept `AgentRuntimeEntry`, and movement/physics helpers remain temporary backing seams |
-| `src/main/java/server/bots/BotFidgetSideEffects.java` | `server.agents.integration.AgentBotFidgetSideEffects` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/BotFidgetSideEffects.java` | `server.agents.integration.AgentFidgetSideEffects` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotInventoryManager.java` | `server.agents.capabilities.inventory.AgentInventoryTickRuntime`, `looting`, `trade`, `server.agents.capabilities.dialogue.AgentItemQueryNormalizer`, `server.agents.capabilities.dialogue.AgentDialogueCatalog`, `server.agents.capabilities.supplies.AgentAmmoService`, `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentPotionSharePolicy`, `server.agents.capabilities.trade.AgentSupplyShareTradeService`, `server.agents.capabilities.trade.AgentTradeCommandProfiler`, `server.agents.capabilities.trade.AgentInventoryTransferService`, `server.agents.capabilities.trade.AgentManualTradeService`, `server.agents.capabilities.trade.AgentManualPeerTradeService`, `server.agents.capabilities.trade.AgentGroupedTradeTransferService`, `server.agents.capabilities.trade.AgentReservedEquipTradeTransferService`, `server.agents.capabilities.trade.AgentPreparedTradeTransferService`, `server.agents.capabilities.trade.AgentTradeTransferRouter`, `server.agents.capabilities.trade.AgentTradeRecipientService`, `server.agents.capabilities.trade.AgentMesoTradeService`, `server.agents.capabilities.trade.AgentDirectItemTradeService`, `server.agents.capabilities.trade.AgentTradeStateService`, `server.agents.capabilities.trade.AgentTradeBatchService`, `server.agents.capabilities.trade.AgentTradeCancellationService`, `server.agents.capabilities.trade.AgentTradeCompletionService`, `server.agents.capabilities.trade.AgentTradeSequenceService`, `server.agents.capabilities.trade.AgentTradeResetService`, `server.agents.capabilities.trade.AgentTradeMesoAddService`, `server.agents.capabilities.trade.AgentTradeItemAddService`, `server.agents.capabilities.trade.AgentTradeAllItemsAddedService`, `server.agents.capabilities.trade.AgentTradeCategoryAnnouncementService`, `server.agents.capabilities.trade.AgentTradeInviteWaitService`, `server.agents.capabilities.trade.AgentTradeConfirmWaitService`, `server.agents.capabilities.trade.AgentTradeClosedWindowService`, `server.agents.capabilities.trade.AgentTradeTransferStartGuard`, `server.agents.capabilities.trade.AgentTradeQueuedRetryService`, `server.agents.capabilities.trade.AgentTradeBetweenBatchService`, `server.agents.capabilities.trade.AgentTradeItemAddTickService`, `server.agents.capabilities.trade.AgentTradeTickService`, `server.agents.capabilities.trade.AgentTradeSequenceOrchestrator` | `MIGRATED_TO_AGENT`; source file deleted after item query normalization, USE-item classification, passive loot, transfer availability/count, trade tick, manual trade, trade state, trade sequencing, drop behavior, supply sharing, and reply/result pools moved to Agent-owned modules. Passive loot capability/runtime callbacks, trade retry, between-batch advancement, recipient resolution, all-items-added completion marking, sequence start, tick dispatch, invite/confirmation waits, closed-window handling, cancellation, completion reactions, item-add execution, command profiling, and peer-trade ticking now accept `AgentRuntimeEntry` directly while preserving the same state-adapter behavior |
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT`; loot eligibility and loot target selection now accept `AgentRuntimeEntry` while preserving target age, quest-item, inventory-full, retry suppression, seek-range, and patrol-region behavior |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build.AgentMakerService` | `MIGRATED_TO_AGENT`; Maker crystal and trash-disassembly batch orchestration moved unchanged. Maker reply bridge now accepts `AgentRuntimeEntry` |
@@ -2196,7 +2201,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#follow-map-sync` | `server.agents.runtime.AgentFollowMapSyncService` | `MIGRATED_TO_AGENT`; cross-map follow synchronization now accepts `AgentRuntimeEntry` while preserving follow-mode gating, same-map/null-anchor skip behavior, grounded anchor spawn selection, idle-on-ground, map change, and movement reset side effects |
 | `src/main/java/server/bots/BotManager.java#follow-target-command` | `server.agents.runtime.AgentFollowTargetCommandService` | `MIGRATED_TO_AGENT`; follow-target command application now accepts `AgentRuntimeEntry` collections while preserving target resolution, null/missing/self-target filtering, reply queuing, delay scheduling, auto-equip, potion sharing, and follow-start ordering |
 | `src/main/java/server/bots/BotManager.java#follow-target-candidates` | `server.agents.runtime.AgentFollowTargetCandidateService` | `MIGRATED_TO_AGENT`; follow-target candidate selection now accepts Agent runtime sibling entries while preserving leader inclusion, party-member filtering, sibling-agent filtering, and duplicate suppression |
-| `src/main/java/server/bots/BotManager.java#movement-command-runtime` | `server.agents.integration.AgentBotMovementCommandRuntime` | `MIGRATED_TO_AGENT`; follow, stop, move-to, farm-here, patrol, and grind command entry points now accept `AgentRuntimeEntry` while preserving prepared-mode ordering, script-task clearing, shop cancellation, patrol-region lookup, missing-region reply text, navigation-state clearing, and mode transitions |
+| `src/main/java/server/bots/BotManager.java#movement-command-runtime` | `server.agents.integration.AgentMovementCommandRuntime` | `MIGRATED_TO_AGENT`; follow, stop, move-to, farm-here, patrol, and grind command entry points now accept `AgentRuntimeEntry` while preserving prepared-mode ordering, script-task clearing, shop cancellation, patrol-region lookup, missing-region reply text, navigation-state clearing, and mode transitions |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; fidget runtime now accepts `AgentRuntimeEntry` while preserving idle/social/speed-mismatch selection, prone/sideways/jump behavior, return-to-origin, movement broadcasts, and visual prone-attack packets |
 | `src/main/java/server/bots/BotManager.java#formation-state` | `server.agents.runtime.AgentFormationService` | `MIGRATED_TO_AGENT`; formation state lookup and offset application now accept Agent runtime entries while preserving formation store access, leader/default resolution, and offset assignment patterns |
 | `src/main/java/server/bots/BotManager.java#formation-command` | `server.agents.runtime.AgentFormationCommandService` | `MIGRATED_TO_AGENT`; formation command handling now accepts Agent runtime entries while preserving command matching, help/status replies, snap range updates, formation writes, offset application, and first-entry/leader reply routing |
@@ -2205,7 +2210,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#grind-mode-tick` | `server.agents.runtime.AgentGrindModeRuntime`, `server.agents.capabilities.combat.AgentGrindModeTickService` | `MIGRATED_TO_AGENT`; grind-mode tick entry points now accept `AgentRuntimeEntry` while preserving target seek, loot validation/refresh, no-target fallback, commitment, ranged engagement, navigation-tail resolution, seek range, and loot radius behavior. Some downstream grind callbacks still adapt to the temporary BotEntry shell |
 | `src/main/java/server/bots/BotManager.java#shop-visit-tick` | `server.agents.runtime.AgentShopVisitTickService` | `MIGRATED_TO_AGENT`; shop-visit tick gating now accepts `AgentRuntimeEntry` while preserving pending-shop checks, shop tick execution, active target lookup, approach-delay consumption, target movement stepping, and result propagation |
 | `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `MIGRATED_TO_AGENT`; cooldown/delay countdown math, packet-visible movement broadcast, movement reset/transient cleanup, foothold-index construction, walk-step kinematics, movement profile refresh, stuck recovery, swim/airborne/climb/grounded phase runtime, ground grind target adjustment, mob avoidance, ground action planning/execution, jump/rope probe seams, fallback jump/rope routing, jump action initiation, queued movement actions, rope/climb launch routing, grounded physics entry-point routing, movement phase dispatch, ground-step resolution/update state, climb idle/snap/rope identity policy, ground horizontal step policy, precise-stop/drop-edge policy, and movement command distance/config reads are Agent-owned; production bot file deleted after compile and focused movement tests passed. Movement snapshot/broadcast, motion-timer services, rope movement actions, jump action initiation, queued movement actions, climb movement runtime, swim movement runtime, swim physics, grounded physics, grounded runtime dispatch, and fallback movement now accept `AgentRuntimeEntry` |
-| `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentBotMovementTargetSideEffects` | `MIGRATED_TO_AGENT`; movement target snapshot facade and side-effect bridge now accept `AgentRuntimeEntry` while preserving target capture and steering target behavior |
+| `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentMovementTargetSideEffects` | `MIGRATED_TO_AGENT`; movement target snapshot facade and side-effect bridge now accept `AgentRuntimeEntry` while preserving target capture and steering target behavior |
 | `src/main/java/server/bots/BotMovementProfile.java` | `server.agents.capabilities.movement.AgentMovementProfile` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationDebugOverlay.java` | `server.agents.capabilities.navigation.AgentNavigationDebugOverlay` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotNavigationGraph.java` | `server.agents.capabilities.navigation.AgentNavigationGraph` | `MIGRATED_TO_AGENT`; graph model, region/edge/segment data, cache serialization shape, and lookup helpers moved unchanged |

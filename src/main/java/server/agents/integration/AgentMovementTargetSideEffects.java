@@ -17,10 +17,10 @@ import java.util.List;
  * Gateway for AgentTargetSnapshot reads while target resolution continues to be
  * split into Agent runtime services.
  */
-public final class AgentBotMovementTargetSideEffects {
+public final class AgentMovementTargetSideEffects {
     private static final int PLATFORM_EDGE_INSET_PX = 12;
 
-    private AgentBotMovementTargetSideEffects() {
+    private AgentMovementTargetSideEffects() {
     }
 
     public static AgentMovementTargetSnapshot captureTargetSnapshot(AgentRuntimeEntry entry) {

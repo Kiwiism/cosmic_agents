@@ -6,8 +6,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 /**
  * Temporary Agent-owned bridge for movement-triggered status side effects.
  */
-public final class AgentBotMovementStatusRuntime {
-    private AgentBotMovementStatusRuntime() {
+public final class AgentMovementStatusRuntime {
+    private AgentMovementStatusRuntime() {
     }
 
     public static void prepareMovementActiveMode(AgentRuntimeEntry entry) {

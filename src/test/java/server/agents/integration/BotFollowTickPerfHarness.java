@@ -36,7 +36,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentMapStateRuntime;
-import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentTickCadenceStateRuntime;
 import server.agents.integration.AgentTickStateRuntime;
@@ -204,7 +204,7 @@ public class BotFollowTickPerfHarness {
                     // We still get useful timing for sections that DID execute.
                 }
                 try {
-                    AgentMovementTargetSnapshot snap = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
+                    AgentMovementTargetSnapshot snap = AgentMovementTargetSideEffects.captureTargetSnapshot(entry);
                     Point ownerPos = snap.rawOwnerPosition();
                     AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
                     AgentMovementOnlyStepRuntime.stepMovementOnly(entry, snap.primaryTargetPosition(), runAiTick);

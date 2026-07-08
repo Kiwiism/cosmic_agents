@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import client.inventory.InventoryType;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.plans.AgentTask;
 
@@ -17,11 +17,11 @@ public final class AgentScriptTaskExecutionService {
                 entry,
                 task,
                 new AgentScriptTaskStartService.StartHooks(
-                        (point, precise) -> AgentBotMovementCommandRuntime.moveTo(entry, point, precise),
-                        target -> AgentBotMovementCommandRuntime.follow(entry, target),
+                        (point, precise) -> AgentMovementCommandRuntime.moveTo(entry, point, precise),
+                        target -> AgentMovementCommandRuntime.follow(entry, target),
                         targetResolver(entry),
-                        () -> AgentBotMovementCommandRuntime.grind(entry),
-                        () -> AgentBotMovementCommandRuntime.stop(entry),
+                        () -> AgentMovementCommandRuntime.grind(entry),
+                        () -> AgentMovementCommandRuntime.stop(entry),
                         (type, itemId, quantity) -> dropItem(entry, type, itemId, quantity)));
     }
 

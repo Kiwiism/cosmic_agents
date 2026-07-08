@@ -16,7 +16,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import net.packet.Packet;
-import server.agents.integration.AgentBotFidgetRuntime;
+import server.agents.integration.AgentFidgetRuntime;
 import server.agents.integration.AgentFidgetStateRuntime;
 import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
@@ -149,7 +149,7 @@ public final class AgentFidgetService {
         if (entry == null
                 || AgentFidgetStateRuntime.active(entry)
                 || !AgentModeStateRuntime.following(entry)
-                || AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
+                || AgentFidgetRuntime.isLeaderIdleForFidget(entry)
                 || AgentModeStateRuntime.grinding(entry)
                 || AgentMoveTargetStateRuntime.hasMoveTarget(entry)
                 || AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
@@ -176,7 +176,7 @@ public final class AgentFidgetService {
         boolean airborneJumpFidget = inAir && allowAirborneJumpFidget
                 && isJumpFidget(AgentFidgetStateRuntime.mode(entry));
         return AgentModeStateRuntime.following(entry)
-                && !AgentBotFidgetRuntime.isLeaderIdleForFidget(entry)
+                && !AgentFidgetRuntime.isLeaderIdleForFidget(entry)
                 && !AgentModeStateRuntime.grinding(entry)
                 && !AgentMoveTargetStateRuntime.hasMoveTarget(entry)
                 && !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)

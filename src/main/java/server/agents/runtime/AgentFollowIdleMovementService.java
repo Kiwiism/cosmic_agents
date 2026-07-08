@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFidgetRuntime;
+import server.agents.integration.AgentFidgetRuntime;
 import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
@@ -65,7 +65,7 @@ public final class AgentFollowIdleMovementService {
         }
         if (AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 || AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
-                || AgentBotFidgetRuntime.hasActiveFidgetMode(entry)) {
+                || AgentFidgetRuntime.hasActiveFidgetMode(entry)) {
             return false;
         }
         if (AgentShopStateRuntime.hasActiveShopTransition(entry)) {

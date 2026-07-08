@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,7 +17,7 @@ class AgentTickFailureRuntimeTest {
         RuntimeException failure = new RuntimeException("boom");
 
         try (MockedStatic<AgentTickFailurePolicy> policy = mockStatic(AgentTickFailurePolicy.class);
-             MockedStatic<AgentBotMovementCommandRuntime> movement = mockStatic(AgentBotMovementCommandRuntime.class)) {
+             MockedStatic<AgentMovementCommandRuntime> movement = mockStatic(AgentMovementCommandRuntime.class)) {
             policy.when(() -> AgentTickFailurePolicy.handleFailure(
                             eq(entry),
                             eq(100),

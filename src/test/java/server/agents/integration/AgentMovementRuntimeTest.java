@@ -10,10 +10,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.integration.AgentBotActiveModeRuntime;
-import server.agents.integration.AgentBotFidgetSideEffects;
-import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.agents.integration.AgentBotMovementRuntime;
-import server.agents.integration.AgentBotMovementStatusRuntime;
+import server.agents.integration.AgentFidgetSideEffects;
+import server.agents.integration.AgentMovementCommandRuntime;
+import server.agents.integration.AgentMovementRuntime;
+import server.agents.integration.AgentMovementStatusRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AgentBotMovementRuntimeTest {
+class AgentMovementRuntimeTest {
     @Test
     void farmHereSchedulesActiveModeAndFarmCommandAtOwnerPosition() {
         Character owner = mock(Character.class);
@@ -42,20 +42,20 @@ class AgentBotMovementRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class);
+             MockedStatic<AgentMovementStatusRuntime> status = mockStatic(AgentMovementStatusRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
-             MockedStatic<AgentBotMovementCommandRuntime> movementCommands =
-                     mockStatic(AgentBotMovementCommandRuntime.class)) {
+             MockedStatic<AgentMovementCommandRuntime> movementCommands =
+                     mockStatic(AgentMovementCommandRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
 
-            assertTrue(AgentBotMovementRuntime.movementCallbacks(entry).farmHere());
+            assertTrue(AgentMovementRuntime.movementCallbacks(entry).farmHere());
 
-            status.verify(() -> AgentBotMovementStatusRuntime.prepareMovementActiveMode(entry));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.farmHere(
+            status.verify(() -> AgentMovementStatusRuntime.prepareMovementActiveMode(entry));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.farmHere(
                     (AgentRuntimeEntry) eq(entry),
                     pointCaptor.capture()));
             assertEquals(new Point(10, 20), pointCaptor.getValue());
@@ -69,7 +69,7 @@ class AgentBotMovementRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {
-            assertFalse(AgentBotMovementRuntime.movementCallbacks(entry).moveHere());
+            assertFalse(AgentMovementRuntime.movementCallbacks(entry).moveHere());
 
             scheduler.verifyNoInteractions();
         }
@@ -85,8 +85,8 @@ class AgentBotMovementRuntimeTest {
              MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
-             MockedStatic<AgentBotMovementCommandRuntime> movementCommands =
-                     mockStatic(AgentBotMovementCommandRuntime.class)) {
+             MockedStatic<AgentMovementCommandRuntime> movementCommands =
+                     mockStatic(AgentMovementCommandRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -98,12 +98,12 @@ class AgentBotMovementRuntimeTest {
                         return null;
                     });
 
-            AgentBotMovementRuntime.movementCallbacks(entry).follow();
+            AgentMovementRuntime.movementCallbacks(entry).follow();
 
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> AgentPotionService.checkPotShareOnModeStart((AgentRuntimeEntry) eq(entry), eq(bot)));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.followOwner(entry));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.followOwner(entry));
         }
     }
 
@@ -114,21 +114,21 @@ class AgentBotMovementRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentBotFidgetSideEffects> fidgets = mockStatic(AgentBotFidgetSideEffects.class);
+             MockedStatic<AgentFidgetSideEffects> fidgets = mockStatic(AgentFidgetSideEffects.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
-             MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class)) {
+             MockedStatic<AgentMovementStatusRuntime> status = mockStatic(AgentMovementStatusRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
 
-            AgentBotMovementRuntime.movementCallbacks(entry).greeting();
+            AgentMovementRuntime.movementCallbacks(entry).greeting();
 
             verify(bot).changeFaceExpression(AgentEmote.HAPPY.getValue());
-            fidgets.verify(() -> AgentBotFidgetSideEffects.maybeStartGreetingFidget(eq(entry), anyInt()));
+            fidgets.verify(() -> AgentFidgetSideEffects.maybeStartGreetingFidget(eq(entry), anyInt()));
             replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), anyString()));
-            status.verify(() -> AgentBotMovementStatusRuntime.checkMovementStatus(entry, bot));
+            status.verify(() -> AgentMovementStatusRuntime.checkMovementStatus(entry, bot));
         }
     }
 }

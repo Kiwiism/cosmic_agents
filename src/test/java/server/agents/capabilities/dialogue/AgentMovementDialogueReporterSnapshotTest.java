@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentBotMovementKinematicsRuntime;
+import server.agents.integration.AgentMovementKinematicsRuntime;
 import server.maps.MapleMap;
 
 import java.util.List;
@@ -25,7 +25,7 @@ class AgentMovementDialogueReporterSnapshotTest {
         AgentMovementProfile profile = AgentMovementProfile.fromCharacter(agent);
 
         List<String> report = AgentMovementDialogueReporter.movementStatsReport(
-                AgentBotMovementKinematicsRuntime.snapshot(agent));
+                AgentMovementKinematicsRuntime.snapshot(agent));
 
         assertEquals(List.of(
                 "speed 120% jump 110%",

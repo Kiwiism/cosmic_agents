@@ -6,11 +6,11 @@ import server.agents.runtime.AgentRuntimeEntry;
 /**
  * Agent-owned target snapshot facade.
  */
-public final class AgentBotMovementTargetRuntime {
-    private AgentBotMovementTargetRuntime() {
+public final class AgentMovementTargetRuntime {
+    private AgentMovementTargetRuntime() {
     }
 
     public static AgentMovementTargetSnapshot snapshot(AgentRuntimeEntry entry) {
-        return AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
+        return AgentMovementTargetSideEffects.captureTargetSnapshot(entry);
     }
 }

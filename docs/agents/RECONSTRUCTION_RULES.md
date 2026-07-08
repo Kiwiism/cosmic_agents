@@ -32,6 +32,11 @@ Recent reconstruction notes:
 - The next semantic cleanup slice renamed state adapters from
   `AgentBot*StateRuntime` to `Agent*StateRuntime`. This was a type/file/import
   rename only; state ownership and behavior are unchanged.
+- The movement/fidget semantic cleanup slice renamed movement command,
+  movement callback, movement status, movement target, movement kinematics,
+  and fidget runtime adapters from `AgentBot*` to neutral `Agent*` names. This
+  was a type/file/import rename only; movement, navigation targeting, fidget,
+  and follow behavior are unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -505,7 +510,7 @@ Recent reconstruction notes:
   move-target checks now use Agent script services directly.
 - BotManager movement command wrappers were removed. Spawn, transfer/dismiss,
   live tick mode callbacks, movement chat tests, and movement parity tests now
-  call `AgentBotMovementCommandRuntime` directly for follow, stop, grind,
+  call `AgentMovementCommandRuntime` directly for follow, stop, grind,
   farm-here, patrol, and fixed move commands.
 - BotManager leader-safety compatibility helpers were removed. Session
   side-effect wiring now calls `AgentLeaderSafetyRuntime` directly for
@@ -1139,13 +1144,13 @@ Recent reconstruction notes:
   directly for follow-owner, stop, move-to, farm-here, grind, and patrol,
   including patrol graph-region validation and the visible failure reply.
 - Build, potion, and combat ammo fallback paths now request follow-owner via
-  `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The same
+  `AgentMovementCommandRuntime` instead of direct BotManager calls. The same
   follow-owner mode transition and visible dialogue behavior are preserved.
 - Session relog/logout/away prompts and equipment unequip-all now request stop
-  via `AgentBotMovementCommandRuntime` instead of direct BotManager calls. The
+  via `AgentMovementCommandRuntime` instead of direct BotManager calls. The
   same pending-action, reply timing, and equipment side effects are preserved.
 - Patrol command graph-region validation, visible failure reply, and mode-state
-  transition now live in `AgentBotMovementCommandRuntime`; the former
+  transition now live in `AgentMovementCommandRuntime`; the former
   `BotManager.issuePatrol` compatibility delegate has been removed.
 - Session first-agent checks, away-town offer checks, and away-safe command
   routing now enter through `AgentBotSessionControlRuntime`; actual away-safe
@@ -1176,7 +1181,7 @@ Recent reconstruction notes:
   lifecycle gateway instead of calling `BotManager.resolveFollowAnchor`;
   follow, sibling-target, and rope/climb targeting behavior are unchanged.
 - BotManager follow-owner, grind, and stop compatibility hooks were removed.
-  Spawn/lifecycle/tick call sites now use `AgentBotMovementCommandRuntime`
+  Spawn/lifecycle/tick call sites now use `AgentMovementCommandRuntime`
   directly; command preparation, script-task clearing, shop cancellation,
   mode transitions, and navigation clearing remain behavior-equivalent.
 - Return-scroll use for inactive leader safety now lives in
@@ -1215,7 +1220,7 @@ Recent reconstruction notes:
   routes formation commands and lifecycle cleanup through compatibility calls,
   but no longer owns the in-memory leader-to-formation map.
 - Follow-target position resolution now lives in
-  `AgentFollowTargetPositionService`, and `AgentBotMovementTargetSideEffects`
+  `AgentFollowTargetPositionService`, and `AgentMovementTargetSideEffects`
   captures movement snapshots directly through Agent runtime services instead
   of calling `BotManager.captureTargetSnapshot`.
 - Live runtime entry storage now lives in `AgentRuntimeRegistry`; BotManager's
@@ -1606,17 +1611,17 @@ Recent reconstruction notes:
   facade in `AgentBotSessionRuntime`; `BotChatSessionRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Movement/follow/grind/stop/fidget/greeting callback orchestration now has an
-  Agent-owned facade in `AgentBotMovementRuntime`; `BotChatMovementRuntime`
+  Agent-owned facade in `AgentMovementRuntime`; `BotChatMovementRuntime`
   remains only as a temporary compatibility shim for legacy bot package callers.
 - Follow/stop/move/farm/patrol/grind command dispatch now has an Agent-owned
-  facade in `AgentBotMovementCommandRuntime`; BotManager no longer exposes
+  facade in `AgentMovementCommandRuntime`; BotManager no longer exposes
   temporary movement-command wrapper methods.
 - Read-only movement state snapshots now have Agent-owned types in
   `AgentMovementSnapshot`/`AgentMovementMode` and an integration facade in
   `AgentMovementStateRuntime`; `BotEntry` remains the temporary state source.
 - Read-only target/formation snapshots now have an Agent-owned type in
   `AgentMovementTargetSnapshot` and an integration facade in
-  `AgentBotMovementTargetRuntime`; `BotManager.TargetSnapshot` remains the
+  `AgentMovementTargetRuntime`; `BotManager.TargetSnapshot` remains the
   temporary target-resolution source.
 - Navigation debug overlay and path logging now consume
   `AgentMovementTargetSnapshot` for read-only target/formation data; pathfinding
@@ -1797,11 +1802,11 @@ Recent reconstruction notes:
   `AgentBotOfferRuntime.isOwnerIdleForOffer`; `AgentOfferService` no longer
   reaches directly into the broad chat-status facade for offer prompt checks.
 - Fidget idle gating now enters through
-  `AgentBotFidgetRuntime.isLeaderIdleForFidget`; `AgentFidgetService` no longer
+  `AgentFidgetRuntime.isLeaderIdleForFidget`; `AgentFidgetService` no longer
   reaches directly into the broad chat-status facade for fidget eligibility.
 - Movement-triggered active-mode preparation, post-movement status checks, and
-  random fidget expressions now enter through `AgentBotMovementStatusRuntime`;
-  `AgentBotMovementRuntime` no longer reaches directly into the broad
+  random fidget expressions now enter through `AgentMovementStatusRuntime`;
+  `AgentMovementRuntime` no longer reaches directly into the broad
   chat-status facade for those movement callbacks.
 - BotManager-triggered spawn status checks, map-change status checks,
   shop-transition status checks, offline-return announcements, and AFK ticks
@@ -2309,7 +2314,7 @@ Recent reconstruction notes:
   reset, fixed-air-arc gating/setup, and broadcast foothold caching keep
   BotEntry as the temporary backing store but no longer read or write
   `jumpCooldownMs`, `fixedAirArc`, or `lastGroundFhId` directly in production.
-- Fidget mode presence now enters through `AgentBotFidgetRuntime`; BotManager
+- Fidget mode presence now enters through `AgentFidgetRuntime`; BotManager
   follow-idle fast-path gating keeps BotEntry as the temporary backing store but
   no longer reads `fidgetMode` directly in production.
 - No-ammo combat gate state now enters through `AgentAmmoStateRuntime`;
@@ -3327,7 +3332,7 @@ Recent reconstruction notes:
   unchanged while BotEntry, BotManager, BotMovementManager, and
   BotPhysicsEngine remain temporary backing seams.
 - Greeting/social fidget side-effect dispatch now enters through
-  `AgentBotFidgetSideEffects`; the old bot-side fidget side-effect shim has
+  `AgentFidgetSideEffects`; the old bot-side fidget side-effect shim has
   been removed, while `AgentFidgetService` owns the legacy fidget behavior in
   the Agent movement capability.
 - Relog and owner-bot session lifecycle bridge calls now enter through
@@ -3335,7 +3340,7 @@ Recent reconstruction notes:
   shim has been removed while `BotManager` still performs the unchanged relog
   and owner-entry lookup side effects.
 - Movement target snapshot capture now enters through
-  `AgentBotMovementTargetSideEffects`; the old bot-side movement-target shim has
+  `AgentMovementTargetSideEffects`; the old bot-side movement-target shim has
   been removed while `BotManager` still owns temporary target-snapshot
   construction and steering-source resolution.
 - Script runtime mutable state now lives in
@@ -3933,7 +3938,7 @@ Recent reconstruction notes:
   same-region guards, and region mob counting are preserved.
 - Public movement mode commands for explicit move, farm-here, and concrete
   target-follow now dispatch through
-  `server.agents.integration.AgentBotMovementCommandRuntime`; BotManager no
+  `server.agents.integration.AgentMovementCommandRuntime`; BotManager no
   longer keeps those compatibility entry points. The same script task clearing,
   shop-visit cancellation, null guards, mode-state transitions,
   and navigation-state clear hooks are preserved.
@@ -5793,7 +5798,7 @@ Current physics correction:
   attacks, idle movement/broadcast, and movement-core stepping. Anchored farm
   target handling, idle/farm physics, and movement ordering remain unchanged.
 - Script-task execution, tick-failure recovery, and interaction command wiring
-  now call `AgentBotMovementCommandRuntime` through its `AgentRuntimeEntry`
+  now call `AgentMovementCommandRuntime` through its `AgentRuntimeEntry`
   API instead of casting command callbacks back to `BotEntry`. Script start,
   failure idling, recruit/transfer/dismiss, follow, grind, and stop behavior
   remain unchanged.

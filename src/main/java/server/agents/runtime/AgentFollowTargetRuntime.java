@@ -5,7 +5,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -49,7 +49,7 @@ public final class AgentFollowTargetRuntime {
                         AgentSchedulerRuntime::afterDelay,
                         AgentFollowTargetRuntime::autoEquipForFollow,
                         AgentFollowTargetRuntime::checkPotShareForFollow,
-                        AgentBotMovementCommandRuntime::follow));
+                        AgentMovementCommandRuntime::follow));
     }
 
     private static String followTargetReply(Character target) {

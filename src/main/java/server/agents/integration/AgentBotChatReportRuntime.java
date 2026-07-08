@@ -142,7 +142,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static List<String> buildMovementStatsReport(Character bot) {
-        return AgentMovementDialogueReporter.movementStatsReport(AgentBotMovementKinematicsRuntime.snapshot(bot));
+        return AgentMovementDialogueReporter.movementStatsReport(AgentMovementKinematicsRuntime.snapshot(bot));
     }
 
     public static void reportBuild(AgentRuntimeEntry entry, Character bot) {

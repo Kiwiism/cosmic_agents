@@ -4,7 +4,7 @@ import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 
 /**
  * Agent-owned public runtime entry points for server integrations that still
@@ -37,7 +37,7 @@ public final class AgentInteractionRuntime {
                 leader,
                 agentName,
                 AgentInteractionRuntime::tick,
-                AgentBotMovementCommandRuntime::followOwner,
+                AgentMovementCommandRuntime::followOwner,
                 log);
     }
 
@@ -66,8 +66,8 @@ public final class AgentInteractionRuntime {
                 entry,
                 leaderCharId,
                 agentCharId,
-                AgentBotMovementCommandRuntime::grind,
-                AgentBotMovementCommandRuntime::followOwner);
+                AgentMovementCommandRuntime::grind,
+                AgentMovementCommandRuntime::followOwner);
     }
 
     private static String recruitAgent(int leaderCharId, Character leader, String agentName) {
@@ -88,7 +88,7 @@ public final class AgentInteractionRuntime {
                 leader,
                 agentName,
                 targetName,
-                AgentBotMovementCommandRuntime::stop,
+                AgentMovementCommandRuntime::stop,
                 (leaderId, transferLeader, agent) -> AgentRegistrationRuntime.registerManualAgent(
                         leaderId,
                         transferLeader,
@@ -100,6 +100,6 @@ public final class AgentInteractionRuntime {
         return AgentLifecycleChatCommandRuntime.dismissAgent(
                 leaderCharId,
                 agentName,
-                AgentBotMovementCommandRuntime::stop);
+                AgentMovementCommandRuntime::stop);
     }
 }

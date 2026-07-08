@@ -7,8 +7,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Temporary bot-side gateway for fidget side effects that still live in the
  * legacy bot package.
  */
-public final class AgentBotFidgetSideEffects {
-    private AgentBotFidgetSideEffects() {
+public final class AgentFidgetSideEffects {
+    private AgentFidgetSideEffects() {
     }
 
     public static void maybeStartSocialFidget(AgentRuntimeEntry entry) {

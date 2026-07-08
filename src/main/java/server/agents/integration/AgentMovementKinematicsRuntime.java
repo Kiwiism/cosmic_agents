@@ -12,8 +12,8 @@ import server.maps.MapleMap;
  * Temporary integration adapter for read-only movement/physics metrics while
  * movement calculation still lives in the legacy bot runtime.
  */
-public final class AgentBotMovementKinematicsRuntime {
-    private AgentBotMovementKinematicsRuntime() {
+public final class AgentMovementKinematicsRuntime {
+    private AgentMovementKinematicsRuntime() {
     }
 
     public static AgentMovementKinematicsSnapshot snapshot(Character bot) {

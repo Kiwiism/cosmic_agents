@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentTargetSnapshot;
 
@@ -14,7 +14,7 @@ import java.awt.Point;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class AgentBotMovementTargetRuntimeTest {
+class AgentMovementTargetRuntimeTest {
     @Test
     void targetSnapshotDefensivelyCopiesPoints() {
         Point rawOwner = new Point(1, 2);
@@ -85,7 +85,7 @@ class AgentBotMovementTargetRuntimeTest {
                 new Point(17, 27),
                 "move-target");
 
-        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, targetSnapshot);
+        AgentMovementTargetSnapshot snapshot = AgentMovementTargetSideEffects.from(entry, targetSnapshot);
 
         assertEquals("SPREAD", snapshot.formationType());
         assertEquals(70, snapshot.formationPx());
@@ -122,7 +122,7 @@ class AgentBotMovementTargetRuntimeTest {
                 new Point(5, 5),
                 "follow-target");
 
-        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, targetSnapshot);
+        AgentMovementTargetSnapshot snapshot = AgentMovementTargetSideEffects.from(entry, targetSnapshot);
 
         assertEquals(new Point(90, 91), snapshot.steeringTargetPosition());
         assertEquals("nav-waypoint", snapshot.steeringTargetSource());
@@ -147,7 +147,7 @@ class AgentBotMovementTargetRuntimeTest {
                 "follow-target");
         Point rawTarget = new Point(60, 61);
 
-        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.from(entry, new AgentTargetSnapshot(
+        AgentMovementTargetSnapshot snapshot = AgentMovementTargetSideEffects.from(entry, new AgentTargetSnapshot(
                 targetSnapshot.formation(),
                 targetSnapshot.rawOwnerPos(),
                 targetSnapshot.followAnchorPos(),

@@ -17,8 +17,8 @@ import java.awt.Point;
 /**
  * Agent-owned movement command facade.
  */
-public final class AgentBotMovementCommandRuntime {
-    private AgentBotMovementCommandRuntime() {
+public final class AgentMovementCommandRuntime {
+    private AgentMovementCommandRuntime() {
     }
 
     public static void followOwner(AgentRuntimeEntry entry) {

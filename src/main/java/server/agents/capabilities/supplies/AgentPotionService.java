@@ -21,7 +21,7 @@ import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.integration.AgentModeStateRuntime;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPotionRuntime;
@@ -209,7 +209,7 @@ public final class AgentPotionService {
         }
         startedAt = AgentPerformanceMonitor.start();
         if (pots[0] < AgentRuntimeConfig.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
-            AgentBotMovementCommandRuntime.followOwner(entry);
+            AgentMovementCommandRuntime.followOwner(entry);
             AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueCatalog.potLowReturnReply());
             bot.changeFaceExpression(AgentEmote.GLARE.getValue());
         }

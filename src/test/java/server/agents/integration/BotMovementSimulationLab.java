@@ -35,7 +35,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentMapStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotMovementTargetSideEffects;
+import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentTickCadenceStateRuntime;
 import server.agents.integration.AgentTickStateRuntime;
@@ -177,7 +177,7 @@ final class BotMovementSimulationLab {
             for (Map.Entry<String, AgentRuntimeEntry> AgentRuntimeEntry : bots.entrySet()) {
                 AgentRuntimeEntry entry = AgentRuntimeEntry.getValue();
                 boolean runAiTick = consumeAiTick(entry);
-                AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
+                AgentMovementTargetSnapshot targetSnapshot = AgentMovementTargetSideEffects.captureTargetSnapshot(entry);
                 Point ownerPos = targetSnapshot.rawOwnerPosition();
                 AgentTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
                 AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
@@ -204,12 +204,12 @@ final class BotMovementSimulationLab {
         elapsedMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
         AgentTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
 
-        AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
+        AgentMovementTargetSnapshot targetSnapshot = AgentMovementTargetSideEffects.captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPosition();
         AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, new Point(targetPos), runAiTick);
         trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry,
-                AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry)));
+                AgentMovementTargetSideEffects.captureTargetSnapshot(entry)));
     }
 
     Character actor(String name) {
@@ -240,7 +240,7 @@ final class BotMovementSimulationLab {
 
     String describeCurrentState(String botName) {
         AgentRuntimeEntry entry = requireBot(botName);
-        AgentMovementTargetSnapshot snapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
+        AgentMovementTargetSnapshot snapshot = AgentMovementTargetSideEffects.captureTargetSnapshot(entry);
         return TraceFrame.capture(trace.size(), elapsedMs, botName, entry, snapshot).format();
     }
 

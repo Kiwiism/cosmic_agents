@@ -19,7 +19,7 @@ import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -326,7 +326,7 @@ public final class AgentBuildService {
         }
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {
-            AgentBotMovementCommandRuntime.followOwner(entry);
+            AgentMovementCommandRuntime.followOwner(entry);
             AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
         }
 

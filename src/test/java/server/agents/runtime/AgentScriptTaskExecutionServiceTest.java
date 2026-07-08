@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.plans.AgentTask;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -25,11 +25,11 @@ class AgentScriptTaskExecutionServiceTest {
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(sibling, leader, null));
 
-        try (MockedStatic<AgentBotMovementCommandRuntime> movement =
-                     mockStatic(AgentBotMovementCommandRuntime.class)) {
+        try (MockedStatic<AgentMovementCommandRuntime> movement =
+                     mockStatic(AgentMovementCommandRuntime.class)) {
             AgentScriptTaskExecutionService.start(entry, AgentTask.follow(sibling));
 
-            movement.verify(() -> AgentBotMovementCommandRuntime.follow(entry, sibling));
+            movement.verify(() -> AgentMovementCommandRuntime.follow(entry, sibling));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }

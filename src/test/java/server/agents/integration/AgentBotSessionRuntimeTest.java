@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
-import server.agents.integration.AgentBotMovementCommandRuntime;
+import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
@@ -28,7 +28,7 @@ class AgentBotSessionRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentBotMovementCommandRuntime> movementCommands = mockStatic(AgentBotMovementCommandRuntime.class);
+             MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
@@ -39,7 +39,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
 
             assertEquals(AgentChatPendingAction.RELOG, AgentPendingActionStateRuntime.pendingAction(entry));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
         }
     }
@@ -49,7 +49,7 @@ class AgentBotSessionRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentBotMovementCommandRuntime> movementCommands = mockStatic(AgentBotMovementCommandRuntime.class);
+             MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
              MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             sessionControl.when(() -> AgentBotSessionControlRuntime.isPrimarySession(entry)).thenReturn(true);
@@ -63,7 +63,7 @@ class AgentBotSessionRuntimeTest {
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestAway();
 
             assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentPendingActionStateRuntime.pendingAction(entry));
-            movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrLogoutPrompt()));
         }
     }
