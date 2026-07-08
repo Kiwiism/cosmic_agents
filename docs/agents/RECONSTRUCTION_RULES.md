@@ -67,6 +67,10 @@ Recent reconstruction notes:
   remains a pure `AgentRuntimeEntry` wrapper for swim mode, movement direction,
   vertical hold, jump request, and next-jump timing; swim physics and pose
   updates stay in the existing movement capability services.
+- Movement broadcast cache state has moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime`.
+  It only tracks the last broadcast tuple and invalidation flag; actual packet
+  broadcasting remains in the existing movement broadcast service.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

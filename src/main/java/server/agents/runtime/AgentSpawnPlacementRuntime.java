@@ -10,7 +10,7 @@ import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentDeathStateRuntime;
 import server.agents.integration.AgentMapStateRuntime;
-import server.agents.integration.AgentMovementBroadcastStateRuntime;
+import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;

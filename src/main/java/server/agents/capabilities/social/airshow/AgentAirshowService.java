@@ -14,7 +14,7 @@ import server.life.LifeFactory;
 import server.life.Monster;
 import server.TimerManager;
 import server.agents.integration.AgentAirshowStateRuntime;
-import server.agents.integration.AgentMovementBroadcastStateRuntime;
+import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;

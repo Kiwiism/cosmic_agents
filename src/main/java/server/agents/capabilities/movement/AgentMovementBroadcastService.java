@@ -5,7 +5,6 @@ import io.netty.buffer.Unpooled;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
-import server.agents.integration.AgentMovementBroadcastStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
