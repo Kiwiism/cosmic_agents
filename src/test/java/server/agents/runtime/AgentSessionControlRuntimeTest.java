@@ -1,9 +1,9 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 
 import java.util.List;
 

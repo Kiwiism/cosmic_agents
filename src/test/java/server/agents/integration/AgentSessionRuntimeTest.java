@@ -9,7 +9,7 @@ import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.integration.AgentSessionControlRuntime;
+import server.agents.runtime.AgentSessionControlRuntime;
 import server.agents.integration.AgentSessionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

@@ -1,7 +1,7 @@
-package server.agents.integration;
+package server.agents.runtime;
 
-import server.agents.runtime.AgentLeaderSafetyService;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 
 /**
  * Agent-owned session control boundary over AgentRuntimeEntry-backed session

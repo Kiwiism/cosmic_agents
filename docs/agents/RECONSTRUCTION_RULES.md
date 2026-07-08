@@ -6139,6 +6139,10 @@ Current physics correction:
   `server.agents.runtime.AgentSchedulerRuntime`. It still delegates to the same
   `TimerManager` schedule call and uses the same inclusive/exclusive random
   delay window; delayed dialogue/status/item behavior is unchanged.
+- Session-control orchestration now lives in
+  `server.agents.runtime.AgentSessionControlRuntime`. It still uses the same
+  primary-session check and delegates owner-away safe-mode effects to the
+  existing integration lifecycle boundary; away prompt behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

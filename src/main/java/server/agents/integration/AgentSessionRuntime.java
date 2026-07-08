@@ -2,6 +2,7 @@ package server.agents.integration;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSessionControlRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
