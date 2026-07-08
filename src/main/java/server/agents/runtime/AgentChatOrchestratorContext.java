@@ -17,7 +17,7 @@ import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.integration.AgentBuildRuntime;
-import server.agents.integration.AgentBuildStateRuntime;
+import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.integration.AgentChatReportRuntime;
 import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.integration.AgentControlRuntime;

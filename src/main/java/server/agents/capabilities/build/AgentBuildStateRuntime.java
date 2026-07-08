@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.capabilities.build;
 
-import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

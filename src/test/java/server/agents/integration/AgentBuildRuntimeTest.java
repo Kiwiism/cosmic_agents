@@ -11,7 +11,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.integration.AgentBuildRuntime;
-import server.agents.integration.AgentBuildStateRuntime;
+import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 

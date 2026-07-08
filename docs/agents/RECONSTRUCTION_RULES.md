@@ -4919,6 +4919,12 @@ Current physics correction:
   They remain pure `AgentRuntimeEntry` state accessors; item counting,
   consumption, inventory mutation, share-trade execution, and scheduler work
   remain at their existing capability/integration seams.
+- Build prompt/progression state has moved from `server.agents.integration`
+  to `server.agents.capabilities.build.AgentBuildStateRuntime`. It remains a
+  pure `AgentRuntimeEntry` state accessor for AP build choice, AP/SP prompt
+  flags, SP variant, last known level, and job-prompt milestone markers;
+  build command handling, delayed replies, job/AP/SP mutation, and live
+  character access remain at their existing runtime/integration seams.
 - Shop transition state has moved from `server.agents.integration` to
   `server.agents.capabilities.shop.AgentShopStateRuntime`. It remains a pure
   `AgentRuntimeEntry` state accessor for pending visits, target/NPC positions,
