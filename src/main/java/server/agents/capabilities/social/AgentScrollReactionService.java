@@ -7,7 +7,6 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentScrollReactionRuntime;
-import server.agents.integration.AgentScrollReactionStateRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;

@@ -4914,6 +4914,11 @@ Current physics correction:
   `AgentRuntimeEntry` state accessors; actual attack execution, buff
   packet/application work, damage mutation, and alert scheduling remain at
   their existing integration/runtime seams.
+- Scroll-reaction state has moved from `server.agents.integration` to
+  `server.agents.capabilities.social.AgentScrollReactionStateRuntime`. It
+  remains a pure `AgentRuntimeEntry` state accessor for reaction cooldown,
+  recent-load decay, and per-scroller streak tracking; emote/fidget/reply
+  side effects remain at the existing social capability and integration seams.
 - Ammo and potion supply state adapters have moved from
   `server.agents.integration` to `server.agents.capabilities.supplies`.
   They remain pure `AgentRuntimeEntry` state accessors; item counting,

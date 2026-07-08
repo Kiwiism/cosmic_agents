@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.capabilities.social;
 
-import server.agents.capabilities.social.AgentScrollReactionState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentScrollReactionStateRuntime {
