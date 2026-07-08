@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.plans;
 
-import server.agents.plans.AgentScriptMoveTargetService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
