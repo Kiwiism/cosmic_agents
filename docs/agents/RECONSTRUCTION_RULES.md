@@ -6192,6 +6192,12 @@ Current physics correction:
   `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, shop/maker
   work to their existing services, and direct server trade invitation mutation
   to `AgentTradeInviteGateway`; utility command behavior is unchanged.
+- Toggle, buff-query, and respec chat callback orchestration now lives in
+  `server.agents.capabilities.dialogue.AgentControlRuntime`. It still delegates
+  live Agent lookup to `AgentRuntimeIdentityRuntime`, visible replies to
+  `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, and
+  detailed buff/build reports to the existing report/build services; control
+  command behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -6,16 +6,16 @@ import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
-import server.agents.capabilities.dialogue.AgentChatRespecFlow;
-import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.build.AgentBuildService;
+import server.agents.integration.AgentChatReportRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Temporary Agent-owned bridge for control callbacks while toggle/respec side
- * effects still write into the live Agent runtime entry.
+ * Agent-owned control callbacks while reply delivery, scheduling, and live
+ * identity lookup stay behind runtime/integration boundaries.
  */
 public final class AgentControlRuntime {
     private AgentControlRuntime() {
