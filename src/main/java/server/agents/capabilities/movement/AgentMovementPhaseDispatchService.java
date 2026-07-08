@@ -17,17 +17,11 @@ public final class AgentMovementPhaseDispatchService {
     }
 
     public static void tickAirborne(AgentRuntimeEntry entry, Point targetPos) {
-        AgentAirborneMovementService.tickAirborne(asBotEntry(entry), targetPos);
+        AgentAirborneMovementService.tickAirborne(entry, targetPos);
     }
 
     public static void tickGrounded(AgentRuntimeEntry entry, Point targetPos) {
         AgentGroundMovementRuntimeService.tickGrounded(entry, targetPos);
     }
 
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        if (entry instanceof server.bots.BotEntry botEntry) {
-            return botEntry;
-        }
-        throw new IllegalArgumentException("Legacy movement phase dispatch requires BotEntry compatibility shell");
-    }
 }

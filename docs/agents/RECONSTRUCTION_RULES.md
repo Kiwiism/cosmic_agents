@@ -5782,6 +5782,11 @@ Current physics correction:
   API instead of casting command callbacks back to `BotEntry`. Script start,
   failure idling, recruit/transfer/dismiss, follow, grind, and stop behavior
   remain unchanged.
+- Movement recovery, movement phase dispatch, and ground-action planning now
+  stay on `AgentRuntimeEntry` for unstuck jumps, airborne dispatch, ground-step
+  planning, ledge fallback checks, and mob-avoidance jump checks. Random
+  unstuck direction, navigation-state clearing, airborne motion, and ground
+  action selection remain unchanged.
 
 Initial reconstruction order:
 

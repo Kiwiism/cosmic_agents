@@ -17,10 +17,6 @@ public final class AgentMovementRecoveryService {
      * Clears the nav edge so A* replans on the next AI tick.
      */
     public static void tickUnstuck(AgentRuntimeEntry entry) {
-        tickUnstuck(asBotEntry(entry));
-    }
-
-    public static void tickUnstuck(server.bots.BotEntry entry) {
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         int walkStep = AgentMovementKinematicsService.walkStep(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {
@@ -30,9 +26,5 @@ public final class AgentMovementRecoveryService {
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
         AgentMovementBroadcastService.broadcastMovement(entry);
-    }
-
-    private static server.bots.BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (server.bots.BotEntry) entry;
     }
 }

@@ -308,6 +308,11 @@ Recent map updates:
   `BotEntry` casts were removed from script execution and tick failure; the
   interaction facade still returns `BotEntry` until registration/lifecycle
   return types are migrated.
+- `BotMovementManager.java#movement-helper-dispatch` is migrated through
+  `AgentMovementRecoveryService`, `AgentMovementPhaseDispatchService`, and
+  `AgentGroundActionPlanner`. Unstuck recovery, airborne dispatch, ground-step
+  planning, ledge fallback, and mob-avoidance decisions now use
+  `AgentRuntimeEntry` directly with unchanged movement behavior.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while
