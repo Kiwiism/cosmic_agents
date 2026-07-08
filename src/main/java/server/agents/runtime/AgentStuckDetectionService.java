@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentMovementStuckStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 

@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentMovementStuckStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;

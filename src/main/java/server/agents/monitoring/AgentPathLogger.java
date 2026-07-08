@@ -17,7 +17,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentFormationStateRuntime;
-import server.agents.integration.AgentMovementStuckStateRuntime;
+import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;

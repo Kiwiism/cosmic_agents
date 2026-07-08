@@ -52,6 +52,11 @@ Recent reconstruction notes:
   a pure `AgentRuntimeEntry` state adapter for target storage, precision flags,
   and arrival checks; movement execution, packet broadcasts, map access, and
   tick ordering stay in their existing runtime/capability/integration seams.
+- Movement stuck-state counters have moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentMovementStuckStateRuntime`. They
+  still only adapt `AgentRuntimeEntry` stuck timing, cooldown, and last-check
+  position; recovery jumps, movement execution, and path/log side effects stay
+  in the existing movement/runtime callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no
