@@ -6100,6 +6100,11 @@ Current physics correction:
   `server.agents.runtime.AgentLeaderStateRuntime`. It still stores the same
   live `Character` reference on `AgentRuntimeEntry.identityState()` and keeps
   tick-leader refresh behavior unchanged.
+- Map/foothold tracking state access now lives in
+  `server.agents.runtime.AgentMapStateRuntime`. It still stores the same last
+  map id and copied foothold index on `AgentRuntimeEntry.mapTrackingState()`;
+  map-change, spawn placement, and movement-only refresh behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentMapStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 

@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.runtime;
 
-import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 

@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentMapStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 

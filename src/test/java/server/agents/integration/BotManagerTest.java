@@ -70,7 +70,7 @@ import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
-import server.agents.integration.AgentMapStateRuntime;
+import server.agents.runtime.AgentMapStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
