@@ -1,16 +1,8 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentAttackPlanScoringPolicy;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatScoringPolicy;
-import server.agents.capabilities.combat.AgentCombatTargetSelector;
-import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

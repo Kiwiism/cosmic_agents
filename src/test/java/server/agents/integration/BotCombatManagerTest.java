@@ -59,7 +59,7 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
-import server.agents.integration.AgentCombatAoeRepositionRuntime;
+import server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime;
 import server.agents.integration.AgentCombatAttackRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 import server.agents.integration.AgentCombatBuffRuntime;

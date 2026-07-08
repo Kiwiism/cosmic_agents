@@ -6125,6 +6125,10 @@ Current physics correction:
   scans the same learned skills, classifies attack/AoE/summon/buff/heal
   buckets, and writes the same skill-cache state; common tick routing and
   combat parity behavior are unchanged.
+- AoE reposition planning now lives in
+  `server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime`. It still
+  uses the same cluster scoring, hitbox shift, DPS threshold, and debug logging
+  behavior; reposition command dispatch and combat tests are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
