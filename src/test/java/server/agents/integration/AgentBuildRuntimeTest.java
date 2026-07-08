@@ -13,7 +13,7 @@ import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.integration.AgentBuildRuntime;
 import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;

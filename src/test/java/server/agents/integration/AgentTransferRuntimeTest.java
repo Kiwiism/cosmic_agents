@@ -8,7 +8,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.integration.AgentTransferRuntime;
 
 import static org.mockito.ArgumentMatchers.any;

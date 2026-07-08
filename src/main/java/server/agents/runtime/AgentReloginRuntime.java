@@ -4,7 +4,7 @@ import client.Character;
 import net.server.Server;
 import org.slf4j.Logger;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;

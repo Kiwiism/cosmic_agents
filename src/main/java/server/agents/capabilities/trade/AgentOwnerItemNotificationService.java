@@ -5,7 +5,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.inventory.ItemConstants;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;

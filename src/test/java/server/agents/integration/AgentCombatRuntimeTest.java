@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentCombatRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;

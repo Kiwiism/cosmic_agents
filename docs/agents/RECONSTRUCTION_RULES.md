@@ -6135,6 +6135,10 @@ Current physics correction:
   the same cached-skill and basic-attack candidates, applies the same scoring,
   and records the same `combat-plan` performance metric; combat execution and
   reporting behavior are unchanged.
+- Delayed Agent callback scheduling now lives in
+  `server.agents.runtime.AgentSchedulerRuntime`. It still delegates to the same
+  `TimerManager` schedule call and uses the same inclusive/exclusive random
+  delay window; delayed dialogue/status/item behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

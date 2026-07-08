@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.List;
 

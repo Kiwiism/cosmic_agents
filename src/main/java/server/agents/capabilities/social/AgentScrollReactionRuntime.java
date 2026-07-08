@@ -1,7 +1,7 @@
 package server.agents.capabilities.social;
 
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

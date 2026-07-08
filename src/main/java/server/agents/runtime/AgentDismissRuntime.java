@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.List;
 import java.util.function.Consumer;

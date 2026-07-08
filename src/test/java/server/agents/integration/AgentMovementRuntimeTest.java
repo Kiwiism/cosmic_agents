@@ -15,7 +15,7 @@ import server.agents.integration.AgentFidgetSideEffects;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

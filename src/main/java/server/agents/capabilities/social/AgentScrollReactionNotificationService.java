@@ -2,7 +2,7 @@ package server.agents.capabilities.social;
 
 import client.Character;
 import client.inventory.Equip;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 public final class AgentScrollReactionNotificationService {

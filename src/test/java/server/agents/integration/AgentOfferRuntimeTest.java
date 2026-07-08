@@ -8,7 +8,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentOfferRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;

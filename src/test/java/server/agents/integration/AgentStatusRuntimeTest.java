@@ -10,7 +10,7 @@ import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.integration.AgentStatusRuntime;
 import server.agents.runtime.AgentStatusStateRuntime;
 

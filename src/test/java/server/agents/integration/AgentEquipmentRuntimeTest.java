@@ -7,7 +7,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.integration.AgentEquipmentRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

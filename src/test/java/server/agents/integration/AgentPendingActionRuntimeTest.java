@@ -12,7 +12,7 @@ import server.agents.integration.AgentPendingActionRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.List;
 
