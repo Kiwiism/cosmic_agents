@@ -118,6 +118,12 @@ Recent reconstruction notes:
   only adapts `AgentRuntimeEntry` loot-target and ignored-object fields; live
   map item selection, pickup execution, and inventory mutation behavior are
   unchanged.
+- Fidget runtime status checks have moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.fidget.AgentFidgetRuntime`. The bridge
+  still delegates leader-idle detection through the existing
+  `AgentChatStatusRuntime` integration seam and reads fidget-active state from
+  the fidget capability; fidget movement, visuals, and status behavior are
+  unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

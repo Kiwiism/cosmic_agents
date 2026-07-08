@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.movement.fidget;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.integration.AgentChatStatusRuntime;
-import server.agents.integration.AgentFidgetRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

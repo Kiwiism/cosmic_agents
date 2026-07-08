@@ -1,6 +1,6 @@
-package server.agents.integration;
+package server.agents.capabilities.movement.fidget;
 
-import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
+import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
