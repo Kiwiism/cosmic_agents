@@ -11,7 +11,7 @@ import server.agents.integration.AgentGrindWanderStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
-import server.agents.integration.AgentRetreatHoldStateRuntime;
+import server.agents.capabilities.combat.AgentRetreatHoldStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;

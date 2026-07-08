@@ -4903,6 +4903,11 @@ Current physics correction:
   enqueue/poll/sending-state, map/party/whisper routing state, and null-to-map
   normalization are pure `AgentRuntimeEntry` state operations; packet
   delivery remains in `AgentReplyRuntime` at the Cosmic integration boundary.
+- Combat positioning state adapters for surround breakout, AoE reposition,
+  and retreat hold have moved from `server.agents.integration` to
+  `server.agents.capabilities.combat`. They remain pure `AgentRuntimeEntry`
+  state accessors; movement execution, map access, and combat side effects
+  remain at their existing runtime/integration seams.
 - Movement input and facing wrappers have been removed from `BotEntry`.
   Movement velocity, movement direction, and facing direction reads/writes now
   route through `AgentMovementStateRuntime` over `AgentMovementInputState`.

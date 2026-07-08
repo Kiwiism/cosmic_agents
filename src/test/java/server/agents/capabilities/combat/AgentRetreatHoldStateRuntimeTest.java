@@ -1,9 +1,7 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.capabilities.combat;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentRetreatHoldStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
