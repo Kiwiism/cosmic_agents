@@ -1,11 +1,12 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.capabilities.combat.AgentCombatRuntime;
-
-import client.Character;
+import server.agents.integration.AgentCombatStanceGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
+/**
+ * Agent-owned combat alert timing/state orchestration. Packet-visible stance
+ * refresh remains behind the integration gateway.
+ */
 public final class AgentCombatAlertRuntime {
     private static final long ALERT_DURATION_MS = 5000L;
 
@@ -31,13 +32,7 @@ public final class AgentCombatAlertRuntime {
                 return;
             }
             AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
-            try {
-                Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-                if (bot != null) {
-                    bot.broadcastStance();
-                }
-            } catch (Throwable ignored) {
-            }
+            AgentCombatStanceGateway.broadcastCurrentStance(entry);
         });
     }
 }

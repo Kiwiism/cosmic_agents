@@ -6229,6 +6229,10 @@ Current physics correction:
   delegates live target search to the temporary `AgentCombatTargetRuntime`
   integration seam, while debug-stat, crit, buff, and skill-buff report
   formatting stays unchanged.
+- Combat alert timing/state orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatAlertRuntime`. It still uses
+  the same alert duration, reset scheduling, and cooldown state; packet-visible
+  stance refresh is isolated behind `AgentCombatStanceGateway`.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

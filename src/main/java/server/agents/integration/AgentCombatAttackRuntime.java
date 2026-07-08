@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatAlertRuntime;
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;

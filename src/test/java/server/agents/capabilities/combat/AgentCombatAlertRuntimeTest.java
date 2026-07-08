@@ -1,13 +1,10 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentCombatAlertRuntime;
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.capabilities.combat.AgentCombatRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,7 +12,7 @@ import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class BotCombatAlertSchedulerTest {
+class AgentCombatAlertRuntimeTest {
     @Test
     void markAlertedSchedulesResetThroughAgentCombatRuntime() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
