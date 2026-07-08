@@ -19,7 +19,7 @@ import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
-import server.agents.integration.AgentOfferRuntime;
+import server.agents.capabilities.trade.AgentOfferRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

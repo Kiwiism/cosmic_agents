@@ -1,16 +1,17 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.integration.AgentChatStatusRuntime;
+import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 /**
- * Temporary Agent-owned bridge to legacy bot offer side effects.
+ * Agent-owned bridge for offer reply/timing/state orchestration while visible
+ * reply delivery stays behind integration runtime boundaries.
  */
 public final class AgentOfferRuntime {
     private AgentOfferRuntime() {

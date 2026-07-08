@@ -1,12 +1,10 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentOfferRuntime;
-import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 

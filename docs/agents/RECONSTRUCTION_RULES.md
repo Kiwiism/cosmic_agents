@@ -6170,6 +6170,11 @@ Current physics correction:
   `server.agents.capabilities.equipment.AgentEquipmentRuntime`. It still uses
   the same delayed reply scheduling, movement stop, equipment service, and
   pending-offer lookup; unequip and auto-equip chat behavior is unchanged.
+- Offer reply/timing/state orchestration now lives in
+  `server.agents.capabilities.trade.AgentOfferRuntime`. It still delegates
+  visible replies to `AgentReplyRuntime`, owner-idle checks to the status
+  runtime, and delayed callbacks to `AgentSchedulerRuntime`; offer prompt,
+  auto-accept, and recommended-gear behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.integration.AgentChatReportRuntime;
-import server.agents.integration.AgentOfferRuntime;
+import server.agents.capabilities.trade.AgentOfferRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import java.util.ArrayList;

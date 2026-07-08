@@ -13,6 +13,7 @@ import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.capabilities.dialogue.AgentSkillReportDecisionService;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
 import server.agents.capabilities.movement.AgentMovementKinematicsRuntime;
+import server.agents.capabilities.trade.AgentOfferRuntime;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.runtime.AgentRuntimeEntry;
