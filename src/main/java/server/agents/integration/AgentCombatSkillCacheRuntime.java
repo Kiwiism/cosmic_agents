@@ -1,5 +1,9 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+
+import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
+
 import client.Character;
 import client.Skill;
 import server.StatEffect;

@@ -4908,6 +4908,11 @@ Current physics correction:
   `server.agents.capabilities.combat`. They remain pure `AgentRuntimeEntry`
   state accessors; movement execution, map access, and combat side effects
   remain at their existing runtime/integration seams.
+- Combat cooldown, buff/support, and skill-cache state adapters have moved
+  from `server.agents.integration` to `server.agents.capabilities.combat`.
+  These adapters remain pure `AgentRuntimeEntry` state accessors; actual
+  attack execution, buff packet/application work, damage mutation, and alert
+  scheduling remain at their existing integration/runtime seams.
 - Movement input and facing wrappers have been removed from `BotEntry`.
   Movement velocity, movement direction, and facing direction reads/writes now
   route through `AgentMovementStateRuntime` over `AgentMovementInputState`.

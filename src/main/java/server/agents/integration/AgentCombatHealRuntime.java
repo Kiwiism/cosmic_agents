@@ -1,5 +1,11 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+
+import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
+
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 

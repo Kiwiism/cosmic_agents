@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentGrindLootStateRuntime;

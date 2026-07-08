@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+
 import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

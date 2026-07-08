@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.runtime.AgentRuntimeEntry;

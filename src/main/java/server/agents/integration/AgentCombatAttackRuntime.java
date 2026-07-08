@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+
 import client.Character;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;

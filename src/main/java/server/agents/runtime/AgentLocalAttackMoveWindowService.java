@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 
 import java.awt.Point;

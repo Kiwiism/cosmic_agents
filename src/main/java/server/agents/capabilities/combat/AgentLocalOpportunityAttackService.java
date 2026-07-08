@@ -5,7 +5,6 @@ import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.integration.AgentAmmoStateRuntime;
 import server.agents.integration.AgentCombatAttackRuntime;
-import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;

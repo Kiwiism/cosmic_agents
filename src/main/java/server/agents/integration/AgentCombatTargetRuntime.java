@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;

@@ -3,7 +3,6 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

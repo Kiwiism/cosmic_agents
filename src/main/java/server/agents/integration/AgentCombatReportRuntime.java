@@ -1,5 +1,11 @@
 package server.agents.integration;
 
+import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
+
+import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
+
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+
 import client.Character;
 import net.server.PlayerBuffValueHolder;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;

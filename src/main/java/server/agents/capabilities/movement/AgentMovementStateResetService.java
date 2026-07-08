@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMovementBroadcastStateRuntime;
