@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 
 import java.awt.Point;
 

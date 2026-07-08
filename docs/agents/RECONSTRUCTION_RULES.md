@@ -4914,6 +4914,11 @@ Current physics correction:
   `AgentRuntimeEntry` state accessors; actual attack execution, buff
   packet/application work, damage mutation, and alert scheduling remain at
   their existing integration/runtime seams.
+- Grind-wander state has moved from `server.agents.integration` to
+  `server.agents.capabilities.combat.AgentGrindWanderStateRuntime`. It
+  remains a pure `AgentRuntimeEntry` state accessor for no-target grind
+  fallback direction; target selection, movement target creation, and runtime
+  grind tick ordering remain at their existing runtime/capability seams.
 - Scroll-reaction state has moved from `server.agents.integration` to
   `server.agents.capabilities.social.AgentScrollReactionStateRuntime`. It
   remains a pure `AgentRuntimeEntry` state accessor for reaction cooldown,

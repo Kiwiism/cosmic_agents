@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.integration.AgentGrindLootStateRuntime;
-import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
