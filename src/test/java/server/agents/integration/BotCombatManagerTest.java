@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 
@@ -75,7 +75,6 @@ import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.runtime.AgentDeathStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
-import server.agents.integration.AgentMobTouchStateRuntime;
 import server.agents.integration.AgentMobTouchRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
