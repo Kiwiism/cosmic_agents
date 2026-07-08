@@ -6156,6 +6156,10 @@ Current physics correction:
   `server.agents.capabilities.supplies.AgentPotionRuntime`. It still delegates
   map-chat delivery to `AgentReplyRuntime` and delayed callbacks/random delays
   to `AgentSchedulerRuntime`; potion request/share behavior is unchanged.
+- Shop automation reply/timing facade now lives in
+  `server.agents.capabilities.shop.AgentShopRuntime`. It still delegates
+  visible replies to `AgentReplyRuntime` and delayed shop steps/random delays
+  to `AgentSchedulerRuntime`; resupply and sell-trash behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

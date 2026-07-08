@@ -1,13 +1,14 @@
-package server.agents.integration;
+package server.agents.capabilities.shop;
 
 
-import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
+import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 /**
- * Temporary Agent-owned bridge for shop automation replies and delayed shop
- * steps while shop execution still lives in the legacy bot runtime.
+ * Agent-owned bridge for shop automation replies and delayed shop steps while
+ * reply delivery stays behind the integration runtime boundary.
  */
 public final class AgentShopRuntime {
     private AgentShopRuntime() {
