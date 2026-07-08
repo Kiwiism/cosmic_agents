@@ -88,6 +88,11 @@ Recent reconstruction notes:
   remembered leader position and observed step deltas on `AgentRuntimeEntry`;
   follow movement, fidget decisions, and tick-context timing remain in their
   existing runtime/capability callers.
+- Formation spacing state has moved from `server.agents.integration` to
+  `server.agents.runtime.AgentFormationStateRuntime`. It still only adapts
+  `AgentRuntimeEntry` formation offset fields; formation command handling,
+  target snapshot resolution, follow movement, and path logging remain in their
+  existing runtime/monitoring callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

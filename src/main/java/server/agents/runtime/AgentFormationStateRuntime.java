@@ -1,6 +1,4 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.runtime;
 
 /**
  * Agent-owned adapter for AgentRuntimeEntry-backed formation spacing state.

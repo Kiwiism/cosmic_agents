@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentFormationStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;

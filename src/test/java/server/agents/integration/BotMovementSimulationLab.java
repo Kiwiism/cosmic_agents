@@ -9,7 +9,7 @@ import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 
 
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentFormationStateRuntime;
+import server.agents.runtime.AgentFormationStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
