@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

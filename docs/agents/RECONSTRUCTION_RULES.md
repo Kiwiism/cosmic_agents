@@ -93,6 +93,11 @@ Recent reconstruction notes:
   `AgentRuntimeEntry` formation offset fields; formation command handling,
   target snapshot resolution, follow movement, and path logging remain in their
   existing runtime/monitoring callers.
+- Airshow capability state has moved from `server.agents.integration` to
+  `server.agents.capabilities.social.airshow.AgentAirshowStateRuntime`. It
+  still only adapts `AgentRuntimeEntry` airshow flags, trail timing, and
+  scripted movement frame state; monster spawning, map broadcasts, timers, and
+  session cleanup remain in the existing airshow service/integration callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.social.airshow;
 
 import server.agents.runtime.AgentRuntimeEntry;
 

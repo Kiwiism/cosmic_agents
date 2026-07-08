@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentChatStatusRuntime;
-import server.agents.integration.AgentAirshowStateRuntime;
+import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.integration.AgentManagerStatusRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 

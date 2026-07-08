@@ -1,13 +1,10 @@
-package server.agents.integration;
+package server.agents.capabilities.social.airshow;
 
 import server.agents.runtime.AgentRuntimeEntry;
-
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
-
 import server.agents.integration.AgentMovementStateRuntime;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentAirshowStateRuntime;
 
 import java.awt.Point;
 
