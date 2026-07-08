@@ -6115,6 +6115,11 @@ Current physics correction:
   the same pending loot-offer, gear-prompt, proactive-upgrade, and gear
   suggestion fields on `AgentRuntimeEntry`; offer scheduling, pending-offer
   chat routing, auto-equip checks, and status reporting are unchanged.
+- Grind target state access now lives in
+  `server.agents.capabilities.combat.AgentGrindTargetStateRuntime`. It still
+  stores the same active `Monster` reference on `AgentRuntimeEntry`, including
+  alive/map/seek-range validation; grind target snapshots, fallback clearing,
+  commitment, and combat report behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

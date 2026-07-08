@@ -74,7 +74,7 @@ import server.agents.integration.AgentCombatHealRuntime;
 import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.runtime.AgentDeathStateRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMobTouchRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;

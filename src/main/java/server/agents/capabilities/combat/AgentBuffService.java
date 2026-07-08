@@ -11,7 +11,7 @@ import net.server.channel.handlers.UseItemHandler;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.StatEffect;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;

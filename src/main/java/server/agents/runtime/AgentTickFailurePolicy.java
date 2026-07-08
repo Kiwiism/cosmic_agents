@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

@@ -1,6 +1,6 @@
 package server.agents.capabilities.combat;
 
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 

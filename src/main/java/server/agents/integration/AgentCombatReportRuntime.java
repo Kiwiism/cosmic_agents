@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.combat.AgentBuffService;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;

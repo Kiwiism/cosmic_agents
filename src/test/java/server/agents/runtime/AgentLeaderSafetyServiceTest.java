@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.plans.AgentTask;
 import server.life.Monster;

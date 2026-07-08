@@ -1,10 +1,9 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 

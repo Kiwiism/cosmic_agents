@@ -68,7 +68,7 @@ import server.agents.integration.AgentCommandTargetResolver;
 import server.agents.capabilities.combat.AgentBreakoutStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.runtime.AgentMapStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;

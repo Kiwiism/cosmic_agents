@@ -7,7 +7,7 @@ import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;

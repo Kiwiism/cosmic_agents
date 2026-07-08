@@ -4,7 +4,7 @@ import server.agents.capabilities.combat.AgentGrindSearchStateRuntime;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

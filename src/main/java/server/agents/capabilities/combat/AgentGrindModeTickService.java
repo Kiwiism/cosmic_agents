@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.integration.AgentCombatPlanRuntime;
-import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
