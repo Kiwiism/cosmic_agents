@@ -6160,6 +6160,12 @@ Current physics correction:
   `server.agents.capabilities.shop.AgentShopRuntime`. It still delegates
   visible replies to `AgentReplyRuntime` and delayed shop steps/random delays
   to `AgentSchedulerRuntime`; resupply and sell-trash behavior is unchanged.
+- Build AP/SP/job and status orchestration now lives in
+  `server.agents.capabilities.build.AgentBuildRuntime` and
+  `server.agents.capabilities.build.AgentBuildStatusRuntime`. They still use
+  the same reply, owner lookup, starter-kit, equipment, and offer services;
+  build prompt, AP/SP assignment, job advancement, and gear suggestion behavior
+  are unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

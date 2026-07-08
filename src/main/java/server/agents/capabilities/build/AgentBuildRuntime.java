@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.build;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -8,14 +8,12 @@ import server.agents.capabilities.dialogue.AgentApBuildDialogueResolver;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.capabilities.dialogue.AgentChatJobAdvancementFlow;
-import server.agents.capabilities.build.AgentStarterKitService;
-import server.agents.capabilities.build.AgentBuildService;
-import server.agents.capabilities.build.AgentBuildStateRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned build callback facade over temporary bot-side AP/SP/job side
- * effects.
+ * Agent-owned build callback facade over AP/SP/job reply and scheduling flows.
  */
 public final class AgentBuildRuntime {
     private AgentBuildRuntime() {

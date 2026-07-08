@@ -4,7 +4,7 @@ import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBuildStatusRuntime;
+import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;

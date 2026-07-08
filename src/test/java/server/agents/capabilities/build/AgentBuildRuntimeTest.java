@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.build;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -7,11 +7,8 @@ import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
-import server.agents.integration.AgentBuildRuntime;
-import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 

@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
+import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 

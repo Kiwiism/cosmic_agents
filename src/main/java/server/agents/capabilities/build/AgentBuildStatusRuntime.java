@@ -1,10 +1,11 @@
-package server.agents.integration;
+package server.agents.capabilities.build;
 
 import server.agents.capabilities.equipment.AgentEquipRecommendation;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.capabilities.build.AgentBuildService;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
@@ -14,8 +15,7 @@ import server.agents.capabilities.trade.AgentOfferService;
 import java.util.List;
 
 /**
- * Temporary Agent-owned bridge for build/status side effects while the build,
- * equipment, and offer implementations still live in the bot runtime.
+ * Agent-owned bridge for build/status side effects and recommendation checks.
  */
 public final class AgentBuildStatusRuntime {
     private AgentBuildStatusRuntime() {
