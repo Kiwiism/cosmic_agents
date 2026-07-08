@@ -51,7 +51,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks() {
-        return AgentBotSessionRuntime.sessionRequestCallbacks(entry);
+        return AgentSessionRuntime.sessionRequestCallbacks(entry);
     }
 
     @Override
@@ -61,7 +61,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatSocialFlow.SocialCallbacks socialCallbacks() {
-        return AgentBotSocialRuntime.socialCallbacks(entry);
+        return AgentSocialRuntime.socialCallbacks(entry);
     }
 
     @Override

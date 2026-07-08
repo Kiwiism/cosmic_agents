@@ -7,8 +7,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Temporary Agent-owned bridge for party-quest dialogue while PQ automation
  * still lives in the legacy bot runtime.
  */
-public final class AgentBotPqRuntime {
-    private AgentBotPqRuntime() {
+public final class AgentPqRuntime {
+    private AgentPqRuntime() {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {

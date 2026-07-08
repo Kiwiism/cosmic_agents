@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.maps.MapleMap;
 import server.maps.Foothold;
 import server.maps.Rope;
@@ -267,9 +267,9 @@ class BotNavigationManagerTest {
         AgentModeStateRuntime.setFollowing(entry, true);
         AgentModeStateRuntime.setFollowTargetId(entry, sibling.getId());
 
-        try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId()))
+        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
+                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleSideEffects.getBotEntries(owner.getId()))
                     .thenReturn(List.of(siblingEntry));
 
             int regionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, siblingPosition);

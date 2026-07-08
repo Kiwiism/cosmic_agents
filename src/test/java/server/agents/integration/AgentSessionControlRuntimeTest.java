@@ -13,7 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentBotSessionControlRuntimeTest {
+class AgentSessionControlRuntimeTest {
     @Test
     void primarySessionUsesFirstEntryForLeader() {
         Character owner = mock(Character.class);
@@ -21,23 +21,23 @@ class AgentBotSessionControlRuntimeTest {
         AgentRuntimeEntry first = new AgentRuntimeEntry(null, owner, null);
         AgentRuntimeEntry second = new AgentRuntimeEntry(null, owner, null);
 
-        try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntries(123))
+        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
+                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleSideEffects.getBotEntries(123))
                     .thenReturn(List.of(first, second));
 
-            assertTrue(AgentBotSessionControlRuntime.isPrimarySession(first));
-            assertFalse(AgentBotSessionControlRuntime.isPrimarySession(second));
+            assertTrue(AgentSessionControlRuntime.isPrimarySession(first));
+            assertFalse(AgentSessionControlRuntime.isPrimarySession(second));
         }
     }
 
     @Test
     void ownerAwaySafeModeUsesLifecycleSideEffectBoundary() {
-        try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, true);
+        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
+                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
+            AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, true);
 
-            lifecycle.verify(() -> AgentBotSessionLifecycleSideEffects.issueOwnerAwaySafeModeForLeader(123, true));
+            lifecycle.verify(() -> AgentSessionLifecycleSideEffects.issueOwnerAwaySafeModeForLeader(123, true));
         }
     }
 }

@@ -12,8 +12,8 @@ import server.agents.runtime.AgentRuntimeRegistry;
  * Temporary bot-side gateway for session lifecycle side effects while
  * orchestration moves into Agent modules.
  */
-public final class AgentBotSessionLifecycleSideEffects {
-    private AgentBotSessionLifecycleSideEffects() {
+public final class AgentSessionLifecycleSideEffects {
+    private AgentSessionLifecycleSideEffects() {
     }
 
     public static void reloginBot(int charId, int ownerCharId, int world, int channel) {

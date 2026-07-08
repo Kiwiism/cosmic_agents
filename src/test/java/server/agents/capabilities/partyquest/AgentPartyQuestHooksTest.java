@@ -2,7 +2,7 @@ package server.agents.capabilities.partyquest;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPqRuntime;
+import server.agents.integration.AgentPqRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,7 +19,7 @@ class AgentPartyQuestHooksTest {
 
         assertFalse(AgentPartyQuestHooks.requiresGrind(entry, bot));
 
-        AgentBotPqRuntime.setKpqStageState(entry, 3);
+        AgentPqRuntime.setKpqStageState(entry, 3);
 
         assertTrue(AgentPartyQuestHooks.requiresGrind(entry, bot));
     }
@@ -42,7 +42,7 @@ class AgentPartyQuestHooksTest {
 
         assertFalse(AgentPartyQuestHooks.shouldSkipCouponLoot(entry));
 
-        AgentBotPqRuntime.setKpqStageState(entry, 4);
+        AgentPqRuntime.setKpqStageState(entry, 4);
 
         assertTrue(AgentPartyQuestHooks.shouldSkipCouponLoot(entry));
     }

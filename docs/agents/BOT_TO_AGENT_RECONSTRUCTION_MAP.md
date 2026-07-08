@@ -43,6 +43,11 @@ Recent map updates:
   and utility runtime adapters from `AgentBot*` to neutral `Agent*` names.
   Build setup, item automation, shop/trade orchestration, upgrade offers,
   supply sharing, and utility command behavior are unchanged.
+- The session/social/PQ semantic rename slice renamed LLM, party-quest,
+  script move target, scroll reaction, session control, session lifecycle,
+  session runtime, and social runtime adapters from `AgentBot*` to neutral
+  `Agent*` names. LLM reply routing, PQ hooks, scroll/social reactions,
+  relog/logout session flows, and scripted movement behavior are unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -67,7 +72,7 @@ Recent map updates:
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout
   confirmations, skill-report decisions, and queued replies remain unchanged.
-- `AgentBotSessionRuntime` now accepts `AgentRuntimeEntry` for session request
+- `AgentSessionRuntime` now accepts `AgentRuntimeEntry` for session request
   callbacks, relog/logout confirmation, and owner-away choices. Relog/logout
   prompts, owner-away stay/town/logout decisions, delayed replies,
   save/disconnect scheduling, and lifecycle lookup behavior remain unchanged.
@@ -278,7 +283,7 @@ Recent map updates:
   `AgentLlmReplyService`.
 - LLM follow-up reply delivery now accepts `AgentRuntimeHandle` plus a reply
   emitter callback; the current `BotEntry` delivery path remains supplied by
-  `AgentLlmReplyService` through `AgentBotLlmRuntime.replyNow`.
+  `AgentLlmReplyService` through `AgentLlmRuntime.replyNow`.
 - `AgentLlmPromptContext` now carries prompt/situation snapshot values without
   importing `BotEntry`; `AgentLlmReplyService` remains the temporary adapter
   that populates it from runtime state.
@@ -570,7 +575,7 @@ Recent map updates:
 - Scroll-reaction reply and scheduler pass-through bridges were removed.
   Queued scroll-reaction dialogue and delayed callbacks now call the existing
   Agent reply and scheduler runtimes directly through
-  `AgentBotScrollReactionRuntime`.
+  `AgentScrollReactionRuntime`.
 - Maker reply and scheduler pass-through bridges were removed. Maker owner
   replies and delayed batch callbacks now call the existing Agent reply and
   scheduler runtimes directly through `AgentMakerRuntime`.
@@ -581,9 +586,9 @@ Recent map updates:
   replies, queued/map/channel dialogue, queued-say delay estimation, and delayed
   callbacks now call the existing Agent reply and scheduler runtimes directly.
 - PQ reply pass-through bridge was removed. Queued party-quest dialogue now
-  calls the existing Agent reply runtime directly through `AgentBotPqRuntime`.
+  calls the existing Agent reply runtime directly through `AgentPqRuntime`.
 - LLM reply pass-through bridge was removed. LLM reply delivery now calls the
-  existing Agent reply runtime directly through `AgentBotLlmRuntime`.
+  existing Agent reply runtime directly through `AgentLlmRuntime`.
 - Equipment reply and scheduler pass-through bridges were removed. Equipment
   visible replies, unequip, auto-equip debug, and auto-equip callbacks now call
   the existing Agent reply and scheduler runtimes directly.
@@ -1191,7 +1196,7 @@ Recent map updates:
   `server.agents.runtime.AgentTickCoreRuntime`. BotManager now passes only the
   temporary grind/follow mode callbacks into the compact Agent tick-core entry.
 - Script move-target default near-target radius handoff moved from BotManager
-  and `AgentBotScriptMoveTargetRuntime` to
+  and `AgentScriptMoveTargetRuntime` to
   `server.agents.plans.AgentScriptMoveTargetService`.
 - Grind-mode default loot-radius handoff moved from BotManager to
   `server.agents.runtime.AgentGrindModeRuntime`. Tick-core wiring now calls
@@ -1636,7 +1641,7 @@ Recent map updates:
   loading, registering, placing, map changing, and starting follow mode.
 - Active Agent lookup helpers moved to live-store methods on
   `server.agents.runtime.AgentRuntimeRegistry`. BotManager and
-  `AgentBotSessionLifecycleSideEffects` remain temporary compatibility
+  `AgentSessionLifecycleSideEffects` remain temporary compatibility
   delegates for older callers, while lookup ownership sits in Agent runtime.
 - Whisper-to-Agent command ingress moved from BotManager to
   `server.agents.capabilities.dialogue.AgentWhisperCommandService`.
@@ -1768,31 +1773,31 @@ Recent map updates:
   patrol mode transition moved into `AgentMovementCommandRuntime`; the
   former `BotManager.issuePatrol` compatibility delegate has been removed.
 - Session first-agent checks, away-town offer checks, and away-safe command
-  routing moved behind `AgentBotSessionControlRuntime`; BotManager remains only
+  routing moved behind `AgentSessionControlRuntime`; BotManager remains only
   the temporary side-effect bridge for away-safe state changes.
 - Support-heal jump-anchor resolution now uses `AgentFollowAnchorService` plus
-  `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing the direct
+  `AgentSessionLifecycleSideEffects.getBotEntries`, removing the direct
   `BotManager.resolveFollowAnchor` call from Agent combat heal runtime.
 - Combat grind region-occupancy scoring now reads sibling Agents through
-  `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing another direct
+  `AgentSessionLifecycleSideEffects.getBotEntries`, removing another direct
   `BotManager.getBotEntries` call from Agent combat target runtime.
 - Ammo-share, potion-share, and sibling gear offer scans now read sibling
-  Agents through `AgentBotSessionLifecycleSideEffects.getBotEntries`, removing
+  Agents through `AgentSessionLifecycleSideEffects.getBotEntries`, removing
   direct BotManager entry-list calls from those capability donor scans.
 - Bot-inventory-drop loot delay detection now reads active Agent ownership via
-  `AgentBotSessionLifecycleSideEffects.activeLeaderByAgentCharacterId`, removing
+  `AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId`, removing
   the direct BotManager lookup from `AgentLootEligibility`.
 - Airshow named-Agent lookup now reads through
-  `AgentBotSessionLifecycleSideEffects.getBotEntry`, removing the direct
+  `AgentSessionLifecycleSideEffects.getBotEntry`, removing the direct
   BotManager lookup from `AgentAirshowService`.
 - Manual trade greeting selection moved to `AgentTradeDialogueService` backed
   by `AgentDialogueCatalog`; inventory runtime adapters no longer call
   `BotManager.getInstance().manualTradeGreeting`.
 - Navigation debug overlay bot selection now reads Agent entries through
-  `AgentBotSessionLifecycleSideEffects`, removing direct BotManager lookup from
+  `AgentSessionLifecycleSideEffects`, removing direct BotManager lookup from
   `AgentNavigationDebugOverlay`.
 - BotNavigationManager follow-anchor region resolution now reads sibling Agent
-  entries through `AgentBotSessionLifecycleSideEffects` and resolves anchors
+  entries through `AgentSessionLifecycleSideEffects` and resolves anchors
   through `server.agents.runtime.AgentFollowAnchorService`, removing its direct
   `BotManager.resolveFollowAnchor` call while preserving follow target
   behavior.
@@ -2115,7 +2120,7 @@ Recent map updates:
   fidget dispatch still delegates to the unchanged legacy fidget runtime, but
   the Agent movement callback no longer imports the bot-side shim.
 - `server.bots.BotSessionLifecycleSideEffects` has moved to
-  `server.agents.integration.AgentBotSessionLifecycleSideEffects`. Relog and
+  `server.agents.integration.AgentSessionLifecycleSideEffects`. Relog and
   owner-entry lookup behavior still delegates to `BotManager`, but session
   orchestration no longer imports a bot-side lifecycle shim.
 - `server.bots.BotMovementTargetSideEffects` has moved to
@@ -2240,8 +2245,8 @@ Recent map updates:
 | `src/main/java/server/bots/BotScriptRuntime.java` | `server.agents.plans.AgentScriptRuntimeState` | `MIGRATED_TO_AGENT`; script move-target cheapness checks now accept `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotScriptStep.java` | `server.agents.plans.AgentScriptStep` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotScrollReactionManager.java` | `server.agents.capabilities.social.AgentScrollReactionService` | `MIGRATED_TO_AGENT`; scroll-reaction reply queue bridge now accepts `AgentRuntimeEntry` |
-| `src/main/java/server/bots/BotSessionLifecycleSideEffects.java` | `server.agents.integration.AgentBotSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT`; session-control primary-session and away-town checks now accept `AgentRuntimeEntry` while preserving the same lifecycle side-effect backend |
-| `src/main/java/server/bots/BotSessionLifecycleSideEffects.java#lookup` | `server.agents.integration.AgentBotSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT`; session side-effect lookups now return `AgentRuntimeEntry` lists/entries while preserving relogin dispatch, active-leader lookup, inactive safe-mode, and name/leader lookup behavior |
+| `src/main/java/server/bots/BotSessionLifecycleSideEffects.java` | `server.agents.integration.AgentSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT`; session-control primary-session and away-town checks now accept `AgentRuntimeEntry` while preserving the same lifecycle side-effect backend |
+| `src/main/java/server/bots/BotSessionLifecycleSideEffects.java#lookup` | `server.agents.integration.AgentSessionLifecycleSideEffects` | `MIGRATED_TO_AGENT`; session side-effect lookups now return `AgentRuntimeEntry` lists/entries while preserving relogin dispatch, active-leader lookup, inactive safe-mode, and name/leader lookup behavior |
 | `src/main/java/server/bots/BotShopManager.java` | `server.agents.capabilities.shop.AgentShopService`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATED_TO_AGENT`; shop visit orchestration, sell-trash visit routing, resupply/recharge purchases, shop approach selection, timeout handling, and purchase sequence callbacks now live in Agent shop. Shop reply bridge now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotStarterKitManager.java` | `server.agents.capabilities.build.AgentStarterKitService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotTask.java` | `server.agents.plans.AgentTask` | `MIGRATED_TO_AGENT`; script task start dispatch now accepts `AgentRuntimeEntry` |

@@ -5,8 +5,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
-public final class AgentBotScriptMoveTargetRuntime {
-    private AgentBotScriptMoveTargetRuntime() {
+public final class AgentScriptMoveTargetRuntime {
+    private AgentScriptMoveTargetRuntime() {
     }
 
     public static boolean isCheapMoveTarget(AgentRuntimeEntry entry,

@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import scripting.event.EventInstanceManager;
 import server.ItemInformationProvider;
-import server.agents.integration.AgentBotPqRuntime;
+import server.agents.integration.AgentPqRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.HashMap;
@@ -22,7 +22,7 @@ public final class AgentKpqStage5 {
 
     public static void tick(AgentRuntimeEntry entry, Character bot) {
         if (bot.getMapId() != KPQ_STAGE5_MAP) return;
-        if (AgentBotPqRuntime.kpqStage5Claimed(entry)) return;
+        if (AgentPqRuntime.kpqStage5Claimed(entry)) return;
 
         EventInstanceManager eim = bot.getEventInstance();
         if (eim == null || eim.getProperty("5stageclear") == null) return;
@@ -30,9 +30,9 @@ public final class AgentKpqStage5 {
         Map<Integer, Integer> before = snapshotInventory(bot);
         boolean success = eim.giveEventReward(bot);
         if (success) {
-            AgentBotPqRuntime.markKpqStage5Claimed(entry);
+            AgentPqRuntime.markKpqStage5Claimed(entry);
             String reward = findNewItem(before, snapshotInventory(bot));
-            AgentBotPqRuntime.queueSay(entry, reward != null ? "r, I got " + reward : "r");
+            AgentPqRuntime.queueSay(entry, reward != null ? "r, I got " + reward : "r");
         }
     }
 

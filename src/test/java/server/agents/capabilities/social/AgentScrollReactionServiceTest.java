@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotScrollReactionRuntime;
+import server.agents.integration.AgentScrollReactionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -33,8 +33,8 @@ class AgentScrollReactionServiceTest {
         when(bot.getPosition()).thenReturn(new Point(60, 60));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotScrollReactionRuntime> scheduler = mockStatic(AgentBotScrollReactionRuntime.class)) {
-            scheduler.when(() -> AgentBotScrollReactionRuntime.randomDelayMs(0, 2001)).thenReturn(123L);
+        try (MockedStatic<AgentScrollReactionRuntime> scheduler = mockStatic(AgentScrollReactionRuntime.class)) {
+            scheduler.when(() -> AgentScrollReactionRuntime.randomDelayMs(0, 2001)).thenReturn(123L);
 
             AgentScrollReactionService.handleScrollEvent(
                     source,
@@ -42,8 +42,8 @@ class AgentScrollReactionServiceTest {
                     0,
                     List.of(List.of(entry)));
 
-            scheduler.verify(() -> AgentBotScrollReactionRuntime.randomDelayMs(0, 2001));
-            scheduler.verify(() -> AgentBotScrollReactionRuntime.afterDelay(eq(123L), any(Runnable.class)));
+            scheduler.verify(() -> AgentScrollReactionRuntime.randomDelayMs(0, 2001));
+            scheduler.verify(() -> AgentScrollReactionRuntime.afterDelay(eq(123L), any(Runnable.class)));
         }
     }
 }

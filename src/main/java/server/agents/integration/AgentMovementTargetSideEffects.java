@@ -69,7 +69,7 @@ public final class AgentMovementTargetSideEffects {
         client.Character leader = AgentRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
-                : AgentBotSessionLifecycleSideEffects.getBotEntries(leader.getId());
+                : AgentSessionLifecycleSideEffects.getBotEntries(leader.getId());
         return AgentTargetSnapshotService.capture(
                 entry,
                 siblingEntries,

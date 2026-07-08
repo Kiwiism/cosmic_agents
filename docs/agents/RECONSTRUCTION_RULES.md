@@ -48,6 +48,12 @@ Recent reconstruction notes:
   and utility runtime adapters from `AgentBot*` to neutral `Agent*` names. This
   was a type/file/import rename only; item automation, trade/shop flows,
   build setup, upgrade offers, and supply sharing behavior are unchanged.
+- The session/social/PQ semantic cleanup slice renamed LLM, party-quest,
+  script move target, scroll reaction, session control, session lifecycle,
+  session runtime, and social runtime adapters from `AgentBot*` to neutral
+  `Agent*` names. This was a type/file/import rename only; session relog/logout,
+  social reaction, LLM reply, PQ hook, and script movement behavior are
+  unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -1164,7 +1170,7 @@ Recent reconstruction notes:
   transition now live in `AgentMovementCommandRuntime`; the former
   `BotManager.issuePatrol` compatibility delegate has been removed.
 - Session first-agent checks, away-town offer checks, and away-safe command
-  routing now enter through `AgentBotSessionControlRuntime`; actual away-safe
+  routing now enter through `AgentSessionControlRuntime`; actual away-safe
   map/state side effects still use the temporary BotManager lifecycle bridge.
 - Support-heal jump-anchor resolution now uses `AgentFollowAnchorService` and
   the Agent session lifecycle gateway instead of calling `BotManager` directly;
@@ -1610,7 +1616,7 @@ Recent reconstruction notes:
   `AgentUtilityRuntime`; `BotChatUtilityRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Social/fame chat callbacks now have an Agent-owned facade in
-  `AgentBotSocialRuntime`; `BotChatSocialRuntime` remains only as a temporary
+  `AgentSocialRuntime`; `BotChatSocialRuntime` remains only as a temporary
   compatibility shim for legacy bot package callers.
 - Transfer/item-query chat callbacks and async transfer result routing now have
   an Agent-owned facade in `AgentTransferRuntime`; `BotChatTransferRuntime`
@@ -1619,7 +1625,7 @@ Recent reconstruction notes:
   Agent-owned facade in `AgentSupplyRuntime`; `BotChatSupplyRuntime` remains
   only as a temporary compatibility shim for legacy bot package callers.
 - Session/relog/logout/away callback orchestration now has an Agent-owned
-  facade in `AgentBotSessionRuntime`; `BotChatSessionRuntime` remains only as a
+  facade in `AgentSessionRuntime`; `BotChatSessionRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Movement/follow/grind/stop/fidget/greeting callback orchestration now has an
   Agent-owned facade in `AgentMovementRuntime`; `BotChatMovementRuntime`
@@ -1684,11 +1690,11 @@ Recent reconstruction notes:
   resolves `ItemInformationProvider` so guard paths and Agent adapter tests do
   not initialize database-backed item data before it is needed.
 - Scroll-reaction jitter delays and queued reaction chat now enter through
-  `AgentBotScrollReactionRuntime`; `BotScrollReactionManager` no longer reaches
+  `AgentScrollReactionRuntime`; `BotScrollReactionManager` no longer reaches
   directly into the lower-level reply or scheduler runtime for scroll-reaction
   owned flows.
 - KPQ Stage 1 progress/pass dialogue and Stage 5 reward dialogue now enter
-  through `AgentBotPqRuntime`; the KPQ script classes no longer reach directly
+  through `AgentPqRuntime`; the KPQ script classes no longer reach directly
   into the lower-level reply runtime for party-quest-owned dialogue.
 - Sell-trash shop owner-directed replies and delayed shop step callbacks now
   enter through `AgentShopRuntime`; `AgentShopService` no longer reaches
@@ -1783,7 +1789,7 @@ Recent reconstruction notes:
   `AgentSchedulerRuntime` while preserving the legacy visible `botSay`
   delivery and random reply pools.
 - LLM split-message owner-directed replies now enter through
-  `AgentBotLlmRuntime`; `BotLlmReplyManager` no longer reaches directly into
+  `AgentLlmRuntime`; `BotLlmReplyManager` no longer reaches directly into
   the lower-level reply runtime, and the existing LLM executor,
   multi-message delay, and sanitization/splitting behavior are unchanged.
 - Bot dismissal acknowledgement scheduling now routes through
@@ -2331,7 +2337,7 @@ Recent reconstruction notes:
 - No-ammo combat gate state now enters through `AgentAmmoStateRuntime`;
   BotManager local combat opportunity checks keep BotEntry as the temporary
   backing store but no longer read `noAmmo` directly in production.
-- KPQ Stage 5 claim reset state now enters through `AgentBotPqRuntime`;
+- KPQ Stage 5 claim reset state now enters through `AgentPqRuntime`;
   BotManager map-change handling keeps BotEntry as the temporary backing store
   but no longer writes `kpq.stage5Claimed` directly in production.
 - Airshow-active tick gate state now enters through
@@ -2586,14 +2592,14 @@ Recent reconstruction notes:
 - Starter-kit job advancement now lives in `AgentStarterKitService` and reads
   identity through `AgentRuntimeIdentityRuntime`; job-change, starter-kit
   grant, auto-equip, and build-status ordering are unchanged.
-- KPQ coupon-target loot eligibility now enters through `AgentBotPqRuntime`;
+- KPQ coupon-target loot eligibility now enters through `AgentPqRuntime`;
   AgentLootEligibility preserves coupon/pass/rice-cake and quest-item filtering
   behavior while no longer reading KPQ coupon target state directly from
   BotEntry in production.
-- KPQ grind-requirement stage reads now enter through `AgentBotPqRuntime`;
+- KPQ grind-requirement stage reads now enter through `AgentPqRuntime`;
   AgentPartyQuestHooks preserves stage-1 grind gating while no longer reading KPQ state
   directly from BotEntry in production.
-- KPQ stage-5 reward-claim state now enters through `AgentBotPqRuntime`;
+- KPQ stage-5 reward-claim state now enters through `AgentPqRuntime`;
   AgentKpqStage5 preserves reward-claim and announcement behavior while no
   longer reading or writing stage-5 claimed state directly on BotEntry in
   production.
@@ -2607,7 +2613,7 @@ Recent reconstruction notes:
   BotScriptContext and BotScriptRunner preserve script id reset, step entry,
   step advancement, script-local ints, wait timers, and queued-task behavior
   while no longer reading or writing `entry.script` directly in production.
-- KPQ stage-1 state-machine fields now enter through `AgentBotPqRuntime`;
+- KPQ stage-1 state-machine fields now enter through `AgentPqRuntime`;
   AgentKpqStage1 preserves stage transitions, coupon target assignment, progress
   reporting, pass exchange, pass delivery, and reset behavior while no longer
   reading or writing KPQ or script runtime fields directly on BotEntry in
@@ -3347,7 +3353,7 @@ Recent reconstruction notes:
   been removed, while `AgentFidgetService` owns the legacy fidget behavior in
   the Agent movement capability.
 - Relog and owner-bot session lifecycle bridge calls now enter through
-  `AgentBotSessionLifecycleSideEffects`; the old bot-side session lifecycle
+  `AgentSessionLifecycleSideEffects`; the old bot-side session lifecycle
   shim has been removed while `BotManager` still performs the unchanged relog
   and owner-entry lookup side effects.
 - Movement target snapshot capture now enters through
@@ -4839,7 +4845,7 @@ Current physics correction:
   state objects.
 - Dead KPQ reset, owner-given item set, and pending gear-prompt compatibility
   wrappers were removed from `BotEntry`. KPQ stage-5 reset now routes through
-  `AgentBotPqRuntime` directly to `AgentKpqState`; trade and gear-prompt
+  `AgentPqRuntime` directly to `AgentKpqState`; trade and gear-prompt
   callers already use Agent-owned state adapters.
 - Tick cadence and leader activity wrappers have been removed from `BotEntry`.
   Skip-delay and AI accumulator setup now routes through
@@ -5030,7 +5036,7 @@ Current physics correction:
   command text.
 - LLM multi-message delivery now uses an Agent-owned runtime handle and reply
   emitter callback. `AgentLlmReplyService` still supplies
-  `AgentBotLlmRuntime.replyNow` at the temporary adapter edge, preserving
+  `AgentLlmRuntime.replyNow` at the temporary adapter edge, preserving
   immediate/follow-up reply timing and failure swallowing.
 - LLM prompt assembly now flows through `AgentLlmPromptContext`, an Agent-owned
   snapshot of identity, map, mode, farm-anchor, and last-command values. The
@@ -5040,7 +5046,7 @@ Current physics correction:
 - LLM reply orchestration now accepts `AgentLlmReplyRequest` and
   `AgentRuntimeHandle` instead of `BotEntry`. `AgentLlmReplyRuntime` is the
   temporary adapter that reads live identity/reply-channel/mode state from the
-  legacy shell, builds the request, and supplies `AgentBotLlmRuntime.replyNow`.
+  legacy shell, builds the request, and supplies `AgentLlmRuntime.replyNow`.
   Existing enablement checks, stranger-whisper suppression, in-flight gates,
   async scheduling, memory behavior, and reply delivery timing are unchanged.
 - Potion check requests now split into a handle-based

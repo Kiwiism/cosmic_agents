@@ -4,8 +4,8 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
-import server.agents.integration.AgentBotPqRuntime;
-import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.agents.integration.AgentPqRuntime;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.maps.MapItem;
@@ -40,7 +40,7 @@ public final class AgentLootEligibility {
         if (itemId == HPQ_RICE_CAKE) {
             return false;
         }
-        int kpqCouponTarget = AgentBotPqRuntime.kpqCouponTarget(entry);
+        int kpqCouponTarget = AgentPqRuntime.kpqCouponTarget(entry);
         if (itemId == KPQ_COUPON && (AgentPartyQuestHooks.shouldSkipCouponLoot(entry)
                 || (kpqCouponTarget > 0 && bot.getItemQuantity(KPQ_COUPON, false) >= kpqCouponTarget))) {
             return false;
@@ -76,6 +76,6 @@ public final class AgentLootEligibility {
         int ownerId = drop.getOwnerId();
         return drop.isPlayerDrop()
                 && ownerId > 0
-                && AgentBotSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(ownerId) != null;
+                && AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(ownerId) != null;
     }
 }

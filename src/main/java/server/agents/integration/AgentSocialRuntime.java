@@ -10,8 +10,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Agent-owned social chat callback facade over temporary bot-side fame side
  * effects.
  */
-public final class AgentBotSocialRuntime {
-    private AgentBotSocialRuntime() {
+public final class AgentSocialRuntime {
+    private AgentSocialRuntime() {
     }
 
     public static AgentChatSocialFlow.SocialCallbacks socialCallbacks(AgentRuntimeEntry entry) {

@@ -289,7 +289,7 @@ public final class AgentBotCombatTargetRuntime {
         }
 
         int occupiedCount = 0;
-        for (AgentRuntimeEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry sibling : AgentSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             if (sibling == context.entry() || sibling == null || !AgentModeStateRuntime.grinding(sibling)) {
                 continue;
             }

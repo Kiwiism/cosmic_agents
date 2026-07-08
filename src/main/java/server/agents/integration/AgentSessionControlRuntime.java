@@ -7,15 +7,15 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Agent-owned session control boundary over AgentRuntimeEntry-backed session
  * storage and owner-away side effects.
  */
-public final class AgentBotSessionControlRuntime {
-    private AgentBotSessionControlRuntime() {
+public final class AgentSessionControlRuntime {
+    private AgentSessionControlRuntime() {
     }
 
     public static boolean isPrimarySession(AgentRuntimeEntry entry) {
         if (entry == null || AgentRuntimeIdentityRuntime.owner(entry) == null) {
             return false;
         }
-        return AgentBotSessionLifecycleSideEffects.getBotEntries(AgentRuntimeIdentityRuntime.ownerId(entry))
+        return AgentSessionLifecycleSideEffects.getBotEntries(AgentRuntimeIdentityRuntime.ownerId(entry))
                 .stream()
                 .findFirst()
                 .filter(first -> first == entry)
@@ -27,6 +27,6 @@ public final class AgentBotSessionControlRuntime {
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int leaderCharId, boolean town) {
-        AgentBotSessionLifecycleSideEffects.issueOwnerAwaySafeModeForLeader(leaderCharId, town);
+        AgentSessionLifecycleSideEffects.issueOwnerAwaySafeModeForLeader(leaderCharId, town);
     }
 }

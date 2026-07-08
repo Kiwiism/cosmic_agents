@@ -25,7 +25,7 @@ import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -128,7 +128,7 @@ public final class AgentOfferService {
         // to a sibling if this bot could actually wear it.
         AgentEquipmentService.autoEquip(bot, owner, AgentOfferStateRuntime.pendingLootOfferItem(entry));
 
-        List<? extends AgentRuntimeEntry> siblings = AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
+        List<? extends AgentRuntimeEntry> siblings = AgentSessionLifecycleSideEffects.getBotEntries(owner.getId());
         for (AgentRuntimeEntry sibling : siblings) {
             if (sibling == entry) {
                 continue;

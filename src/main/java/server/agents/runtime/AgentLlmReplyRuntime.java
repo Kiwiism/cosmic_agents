@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.llm.AgentLlmReplyService;
 import server.agents.capabilities.dialogue.llm.AgentSenderRelation;
 import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotLlmRuntime;
+import server.agents.integration.AgentLlmRuntime;
 import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -22,7 +22,7 @@ public final class AgentLlmReplyRuntime {
             return;
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-        AgentLlmReplyService.maybeRespond(replyRequest(entry, agent, sender), sender, message, AgentBotLlmRuntime::replyNow);
+        AgentLlmReplyService.maybeRespond(replyRequest(entry, agent, sender), sender, message, AgentLlmRuntime::replyNow);
     }
 
     private static AgentLlmReplyRequest<AgentRuntimeEntry> replyRequest(AgentRuntimeEntry entry, Character agent, Character sender) {

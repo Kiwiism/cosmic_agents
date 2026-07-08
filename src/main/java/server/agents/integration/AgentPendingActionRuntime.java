@@ -47,7 +47,7 @@ public final class AgentPendingActionRuntime {
         return new AgentPendingChatActionFlow.PendingActionCallbacks() {
             @Override
             public void handleOwnerAwayChoice(String message) {
-                AgentBotSessionRuntime.handleOwnerAwayChoice(entry, message);
+                AgentSessionRuntime.handleOwnerAwayChoice(entry, message);
             }
 
             @Override
@@ -73,12 +73,12 @@ public final class AgentPendingActionRuntime {
 
             @Override
             public void confirmRelog() {
-                AgentBotSessionRuntime.scheduleRelogConfirm(entry);
+                AgentSessionRuntime.scheduleRelogConfirm(entry);
             }
 
             @Override
             public void confirmLogout() {
-                AgentBotSessionRuntime.scheduleLogoutConfirm(entry);
+                AgentSessionRuntime.scheduleLogoutConfirm(entry);
             }
 
             @Override

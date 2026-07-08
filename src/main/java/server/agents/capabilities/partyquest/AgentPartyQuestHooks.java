@@ -3,7 +3,7 @@ package server.agents.capabilities.partyquest;
 import client.Character;
 import server.agents.capabilities.partyquest.kpq.AgentKpqStage1;
 import server.agents.capabilities.partyquest.kpq.AgentKpqStage5;
-import server.agents.integration.AgentBotPqRuntime;
+import server.agents.integration.AgentPqRuntime;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptRunner;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -35,7 +35,7 @@ public final class AgentPartyQuestHooks {
     /** Returns true if the bot is in a PQ map that requires grind mode (KPQ stage 1). */
     public static boolean requiresGrind(AgentRuntimeEntry entry, Character bot) {
         return bot.getMapId() == AgentKpqStage1.KPQ_STAGE1_MAP
-                && AgentBotPqRuntime.kpqStageState(entry) == AgentKpqStage1.GRINDING;
+                && AgentPqRuntime.kpqStageState(entry) == AgentKpqStage1.GRINDING;
     }
 
     /** True once the bot no longer needs coupons — suppress coupon loot. */

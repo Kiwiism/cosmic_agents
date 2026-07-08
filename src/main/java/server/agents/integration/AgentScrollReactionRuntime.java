@@ -6,8 +6,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Temporary Agent-owned bridge for scroll reaction chat and timing while scroll
  * reaction decisions still live in the legacy bot runtime.
  */
-public final class AgentBotScrollReactionRuntime {
-    private AgentBotScrollReactionRuntime() {
+public final class AgentScrollReactionRuntime {
+    private AgentScrollReactionRuntime() {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {

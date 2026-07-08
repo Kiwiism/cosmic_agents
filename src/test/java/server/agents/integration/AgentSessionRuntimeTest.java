@@ -9,8 +9,8 @@ import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentBotSessionControlRuntime;
-import server.agents.integration.AgentBotSessionRuntime;
+import server.agents.integration.AgentSessionControlRuntime;
+import server.agents.integration.AgentSessionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentBotSessionRuntimeTest {
+class AgentSessionRuntimeTest {
     @Test
     void relogRequestSchedulesStopPromptAndPendingAction() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -36,7 +36,7 @@ class AgentBotSessionRuntimeTest {
                         return null;
                     });
 
-            AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
+            AgentSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
 
             assertEquals(AgentChatPendingAction.RELOG, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
@@ -50,17 +50,17 @@ class AgentBotSessionRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
-             MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);
+             MockedStatic<AgentSessionControlRuntime> sessionControl = mockStatic(AgentSessionControlRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            sessionControl.when(() -> AgentBotSessionControlRuntime.isPrimarySession(entry)).thenReturn(true);
-            sessionControl.when(() -> AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(true);
+            sessionControl.when(() -> AgentSessionControlRuntime.isPrimarySession(entry)).thenReturn(true);
+            sessionControl.when(() -> AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(true);
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
 
-            AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestAway();
+            AgentSessionRuntime.sessionRequestCallbacks(entry).requestAway();
 
             assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
@@ -76,19 +76,19 @@ class AgentBotSessionRuntimeTest {
         AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);
+             MockedStatic<AgentSessionControlRuntime> sessionControl = mockStatic(AgentSessionControlRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            sessionControl.when(() -> AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(false);
+            sessionControl.when(() -> AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(false);
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(700), eq(900), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
 
-            AgentBotSessionRuntime.handleOwnerAwayChoice(entry, "stay");
+            AgentSessionRuntime.handleOwnerAwayChoice(entry, "stay");
 
             assertNull(AgentPendingActionStateRuntime.pendingAction(entry));
-            sessionControl.verify(() -> AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, false));
+            sessionControl.verify(() -> AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, false));
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
         }
     }

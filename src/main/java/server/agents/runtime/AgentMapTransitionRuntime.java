@@ -12,7 +12,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentManagerStatusRuntime;
-import server.agents.integration.AgentBotPqRuntime;
+import server.agents.integration.AgentPqRuntime;
 
 import java.util.function.Consumer;
 
@@ -37,7 +37,7 @@ public final class AgentMapTransitionRuntime {
                         issueGrind,
                         AgentPartyQuestHooks::requiresFollow,
                         issueFollow,
-                        AgentBotPqRuntime::resetKpqStage5Claimed,
+                        AgentPqRuntime::resetKpqStage5Claimed,
                         AgentShopService::onMapChange,
                         AgentManagerStatusRuntime::checkManagerStatus));
     }

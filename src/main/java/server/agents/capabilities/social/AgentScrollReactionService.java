@@ -6,7 +6,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotScrollReactionRuntime;
+import server.agents.integration.AgentScrollReactionRuntime;
 import server.agents.integration.AgentScrollReactionStateRuntime;
 import client.Character;
 import client.inventory.Equip;
@@ -112,9 +112,9 @@ public final class AgentScrollReactionService {
                 if (dx * dx + dy * dy > maxDistSq) {
                     continue;
                 }
-                long botDelayMs = AgentBotScrollReactionRuntime.randomDelayMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
+                long botDelayMs = AgentScrollReactionRuntime.randomDelayMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
                 long reactionAtMs = now + botDelayMs;
-                AgentBotScrollReactionRuntime.afterDelay(botDelayMs,
+                AgentScrollReactionRuntime.afterDelay(botDelayMs,
                         () -> maybeReact(entry, source.getId(), success, scrollSuccessRate, reactionAtMs));
             }
         }
@@ -146,7 +146,7 @@ public final class AgentScrollReactionService {
         }
 
         if (rollPercent(CHAT_CHANCE_PCT, chanceScale) && shouldQueueChat(entry)) {
-            AgentBotScrollReactionRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
+            AgentScrollReactionRuntime.queueSay(entry, selectChatLine(success, streak, scrollSuccessRate));
             reacted = true;
         }
 

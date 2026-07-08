@@ -9,8 +9,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 /**
  * Agent-owned session facade over temporary bot-side lifecycle side effects.
  */
-public final class AgentBotSessionRuntime {
-    private AgentBotSessionRuntime() {
+public final class AgentSessionRuntime {
+    private AgentSessionRuntime() {
     }
 
     public static AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks(AgentRuntimeEntry entry) {
@@ -35,7 +35,7 @@ public final class AgentBotSessionRuntime {
 
             @Override
             public void requestAway() {
-                if (!AgentBotSessionControlRuntime.isPrimarySession(entry)) {
+                if (!AgentSessionControlRuntime.isPrimarySession(entry)) {
                     return;
                 }
                 AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> promptOwnerAway(entry));
@@ -60,7 +60,7 @@ public final class AgentBotSessionRuntime {
                 relogBot.saveCharToDB(true);
                 relogBot.getClient().disconnect(false, false);
                 AgentSchedulerRuntime.afterRandomDelay(10000, 10100,
-                        () -> AgentBotSessionLifecycleSideEffects.reloginBot(charId, ownerCharId, world, channel));
+                        () -> AgentSessionLifecycleSideEffects.reloginBot(charId, ownerCharId, world, channel));
             });
         });
     }
@@ -79,13 +79,13 @@ public final class AgentBotSessionRuntime {
     public static void handleOwnerAwayChoice(AgentRuntimeEntry entry, String message) {
         AgentChatAwayFlow.handleOwnerAwayChoice(
                 message,
-                AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry),
+                AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry),
                 awayChoiceCallbacks(entry));
     }
 
     private static void promptOwnerAway(AgentRuntimeEntry entry) {
         AgentChatAwayFlow.promptOwnerAway(
-                AgentBotSessionControlRuntime.shouldOfferTownForAwayCommand(entry),
+                AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry),
                 awayPromptCallbacks(entry));
     }
 
@@ -132,7 +132,7 @@ public final class AgentBotSessionRuntime {
             public void townOrStay(boolean townOffered) {
                 int ownerId = ownerId(entry);
                 if (ownerId != 0) {
-                    AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, townOffered);
+                    AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, townOffered);
                 }
                 AgentSchedulerRuntime.afterRandomDelay(700, 900, () ->
                         AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrStayConfirmReply(townOffered)));
@@ -142,7 +142,7 @@ public final class AgentBotSessionRuntime {
             public void stay() {
                 int ownerId = ownerId(entry);
                 if (ownerId != 0) {
-                    AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, false);
+                    AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, false);
                 }
                 AgentSchedulerRuntime.afterRandomDelay(700, 900, () ->
                         AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
@@ -162,7 +162,7 @@ public final class AgentBotSessionRuntime {
             return;
         }
 
-        for (AgentRuntimeEntry owned : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry owned : AgentSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
             AgentMovementCommandRuntime.stop(owned);
             AgentSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
                 Character ownedBot = bot(owned);

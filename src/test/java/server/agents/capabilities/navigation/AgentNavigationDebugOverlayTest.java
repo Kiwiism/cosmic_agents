@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentLegacyCommandBridge;
-import server.agents.integration.AgentBotSessionLifecycleSideEffects;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -32,8 +32,8 @@ class AgentNavigationDebugOverlayTest {
         Character viewer = mock(Character.class);
         when(viewer.getId()).thenReturn(123);
 
-        try (var lifecycle = mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntries(123))
+        try (var lifecycle = mockStatic(AgentSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleSideEffects.getBotEntries(123))
                     .thenReturn(List.of());
 
             assertEquals("No owned bot found. Spawn one first or use !botnav path <botName>.",
@@ -46,8 +46,8 @@ class AgentNavigationDebugOverlayTest {
         Character viewer = mock(Character.class);
         when(viewer.getId()).thenReturn(123);
 
-        try (var lifecycle = mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getAgentEntry(123, "alpha"))
+        try (var lifecycle = mockStatic(AgentSessionLifecycleSideEffects.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleSideEffects.getAgentEntry(123, "alpha"))
                     .thenReturn(null);
 
             assertEquals("No owned bot named 'alpha' found.",
