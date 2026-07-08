@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentMovementKinematicsRuntime;
+import server.agents.capabilities.movement.AgentMovementKinematicsRuntime;
 import server.maps.MapleMap;
 
 import java.util.List;

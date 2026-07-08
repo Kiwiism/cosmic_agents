@@ -1,10 +1,6 @@
-package server.agents.integration;
-
-import server.agents.capabilities.movement.AgentMovementKinematicsService;
+package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.capabilities.movement.AgentMovementKinematicsSnapshot;
-import server.agents.capabilities.movement.AgentMovementProfile;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 

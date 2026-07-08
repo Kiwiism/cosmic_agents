@@ -6129,6 +6129,10 @@ Current physics correction:
   `server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime`. It still
   uses the same cluster scoring, hitbox shift, DPS threshold, and debug logging
   behavior; reposition command dispatch and combat tests are unchanged.
+- Movement kinematics snapshot construction now lives in
+  `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
+  still reads the same live character/map movement stats and field limits to
+  build the same movement report snapshot; chat report formatting is unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
