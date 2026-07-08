@@ -5,8 +5,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed stuck/unstuck movement
- * state. The legacy BotEntry fields remain the backing store during
+ * Agent-owned adapter for AgentRuntimeEntry-backed stuck/unstuck movement
+ * state. The Agent runtime fields remain the backing store during
  * reconstruction.
  */
 public final class AgentBotMovementStuckStateRuntime {

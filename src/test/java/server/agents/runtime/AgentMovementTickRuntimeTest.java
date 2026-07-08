@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentMovementTickRuntimeTest {
     @Test
     void configBoundOverloadDelegatesToMovementTickService() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Point target = new Point(10, 20);
 
         try (MockedStatic<AgentMovementTickService> service = mockStatic(AgentMovementTickService.class)) {

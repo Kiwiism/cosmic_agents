@@ -3,7 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ class AgentUntargetedChatRouteServiceTest {
     void followTargetCommandRunsBeforeOtherRouting() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
-        List<BotEntry> entries = List.of(entry(character(2, "Agent"), leader));
+        List<AgentRuntimeEntry> entries = List.of(entry(character(2, "Agent"), leader));
 
         AgentUntargetedChatRouteService.handleUntargetedChat(
                 leader,
@@ -33,7 +33,7 @@ class AgentUntargetedChatRouteServiceTest {
     void groupSupplyRequestRoutesToSingleResponder() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
-        BotEntry responder = entry(character(2, "Agent"), leader);
+        AgentRuntimeEntry responder = entry(character(2, "Agent"), leader);
 
         AgentUntargetedChatRouteService.handleUntargetedChat(
                 leader,
@@ -54,7 +54,7 @@ class AgentUntargetedChatRouteServiceTest {
     void typoSuggestionQueuesOnceOnFirstEntry() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
-        BotEntry first = entry(character(2, "Agent"), leader);
+        AgentRuntimeEntry first = entry(character(2, "Agent"), leader);
 
         AgentUntargetedChatRouteService.handleUntargetedChat(
                 leader,
@@ -75,8 +75,8 @@ class AgentUntargetedChatRouteServiceTest {
     void broadcastsToEveryEntryWhenNoSpecialRouteMatches() {
         List<String> calls = new ArrayList<>();
         Character leader = character(1, "Leader");
-        BotEntry first = entry(character(2, "Agent"), leader);
-        BotEntry second = entry(character(3, "Other"), leader);
+        AgentRuntimeEntry first = entry(character(2, "Agent"), leader);
+        AgentRuntimeEntry second = entry(character(3, "Other"), leader);
 
         AgentUntargetedChatRouteService.handleUntargetedChat(
                 leader,
@@ -95,10 +95,10 @@ class AgentUntargetedChatRouteServiceTest {
                 "chat:Other:hello"), calls);
     }
 
-    private static AgentUntargetedChatRouteService.Hooks<BotEntry> hooks(BotEntry groupResponder,
+    private static AgentUntargetedChatRouteService.Hooks<AgentRuntimeEntry> hooks(AgentRuntimeEntry groupResponder,
                                                                boolean typoDisabled,
                                                                List<String> calls) {
-        return new AgentUntargetedChatRouteService.Hooks<BotEntry>(
+        return new AgentUntargetedChatRouteService.Hooks<AgentRuntimeEntry>(
                 message -> {
                     calls.add("followMatcher:" + message);
                     return message.startsWith("follow ") ? message.substring("follow ".length()) : null;
@@ -122,8 +122,8 @@ class AgentUntargetedChatRouteServiceTest {
                 (entry, reply) -> calls.add("reply:" + entry.bot().getName() + ":" + reply));
     }
 
-    private static BotEntry entry(Character agent, Character leader) {
-        return new BotEntry(agent, leader, null);
+    private static AgentRuntimeEntry entry(Character agent, Character leader) {
+        return new AgentRuntimeEntry(agent, leader, null);
     }
 
     private static Character character(int id, String name) {

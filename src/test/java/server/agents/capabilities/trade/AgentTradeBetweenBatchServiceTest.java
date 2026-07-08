@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mock;
 class AgentTradeBetweenBatchServiceTest {
     @Test
     void ignoresNonBetweenBatchState() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
         AgentBotPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
         TraceCallbacks callbacks = new TraceCallbacks();
@@ -30,7 +30,7 @@ class AgentTradeBetweenBatchServiceTest {
 
     @Test
     void resetsSingleBatchBetweenBatchState() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
         AgentBotPendingTradeStateRuntime.setSingleBatch(entry, true);
         TraceCallbacks callbacks = new TraceCallbacks();
@@ -41,7 +41,7 @@ class AgentTradeBetweenBatchServiceTest {
 
     @Test
     void ticksTimerBeforeCollectingNextBatch() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
         AgentBotPendingTradeStateRuntime.setTimerMs(entry, 500);
         TraceCallbacks callbacks = new TraceCallbacks();
@@ -53,7 +53,7 @@ class AgentTradeBetweenBatchServiceTest {
 
     @Test
     void opensNextBatchForSameCategoryWhenItemsRemain() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
         Item item = mock(Item.class);
         TraceCallbacks callbacks = new TraceCallbacks();
@@ -68,7 +68,7 @@ class AgentTradeBetweenBatchServiceTest {
 
     @Test
     void advancesCategoryWhenCurrentCategoryIsEmpty() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "equips");
         Item item = mock(Item.class);
         TraceCallbacks callbacks = new TraceCallbacks();
@@ -86,7 +86,7 @@ class AgentTradeBetweenBatchServiceTest {
 
     @Test
     void resetsWhenNoItemsOrAdvancedCategoryRemain() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "equips");
         TraceCallbacks callbacks = new TraceCallbacks();
 
@@ -96,8 +96,8 @@ class AgentTradeBetweenBatchServiceTest {
         assertTrue(callbacks.opened.isEmpty());
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), null, null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), null, null);
     }
 
     private static final class TraceCallbacks implements AgentTradeBetweenBatchService.BetweenBatchCallbacks {

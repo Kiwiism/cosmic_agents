@@ -6,7 +6,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.util.List;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed chat queue state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed chat queue state.
  */
 public final class AgentBotMessageQueueStateRuntime {
     private AgentBotMessageQueueStateRuntime() {

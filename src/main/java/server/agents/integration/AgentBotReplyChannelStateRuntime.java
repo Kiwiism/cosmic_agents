@@ -5,7 +5,7 @@ import server.agents.commands.AgentReplyChannelState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed reply-channel state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed reply-channel state.
  */
 public final class AgentBotReplyChannelStateRuntime {
     private AgentBotReplyChannelStateRuntime() {

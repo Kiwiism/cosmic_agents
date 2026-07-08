@@ -4,7 +4,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 class AgentTradeAllItemsAddedServiceTest {
     @Test
     void returnsFalseWhenItemsRemain() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, List.of(item()), 0);
 
@@ -31,7 +31,7 @@ class AgentTradeAllItemsAddedServiceTest {
 
     @Test
     void marksAllItemsAddedClearsTimerAndChatsWhenNoItemsRemain() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, List.of(item()), 0);
         AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);

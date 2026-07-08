@@ -45,7 +45,7 @@ public final class AgentAirshowService {
             return "Syntax: !airshow <botname>";
         }
 
-        AgentRuntimeEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(owner.getId(), botName);
+        AgentRuntimeEntry entry = AgentBotSessionLifecycleSideEffects.getAgentEntry(owner.getId(), botName);
         if (entry == null) {
             return "No active owned bot named '" + botName + "'.";
         }

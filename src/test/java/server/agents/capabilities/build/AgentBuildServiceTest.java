@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -41,7 +41,7 @@ class AgentBuildServiceTest {
     void setApBuildConfirmsThroughAgentBuildRuntime() {
         Character bot = mock(Character.class);
         when(bot.getRemainingAp()).thenReturn(0);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         AgentBuildService.ApBuild build = new AgentBuildService.ApBuild(
                 AgentBuildService.StatType.LUK,
                 AgentBuildService.StatType.DEX,
@@ -59,7 +59,7 @@ class AgentBuildServiceTest {
     @Test
     void initialSyncWarriorSpendsPendingSpWithoutPrompt() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int warriorBook = GameConstants.getSkillBook(Warrior.IMPROVED_HPREC / 10000);
         int[] remainingSps = new int[5];
         remainingSps[warriorBook] = 1;
@@ -86,7 +86,7 @@ class AgentBuildServiceTest {
     @Test
     void initialSyncHeroKeepsPendingSpUntilVariantIsChosen() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int[] remainingSps = new int[5];
         remainingSps[3] = 1;
 
@@ -106,7 +106,7 @@ class AgentBuildServiceTest {
     @Test
     void warriorLevel16BuildStartsPowerStrikeAndSlashBlastAfterHpSkills() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int warriorBook = GameConstants.getSkillBook(Warrior.IMPROVED_HPREC / 10000);
         int[] remainingSps = new int[5];
         remainingSps[warriorBook] = 19;
@@ -141,7 +141,7 @@ class AgentBuildServiceTest {
     @Test
     void warriorRespecRebuildsIncorrectFirstJobAllocation() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int warriorBook = GameConstants.getSkillBook(Warrior.IMPROVED_HPREC / 10000);
         int[] remainingSps = new int[5];
         Map<Integer, Integer> skillLevels = new HashMap<>();
@@ -181,7 +181,7 @@ class AgentBuildServiceTest {
     @Test
     void magicianBuildFollowsRequestedFirstJobOrder() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int mageBook = GameConstants.getSkillBook(Magician.ENERGY_BOLT / 10000);
         int[] remainingSps = new int[5];
         remainingSps[mageBook] = 7;
@@ -214,7 +214,7 @@ class AgentBuildServiceTest {
     @Test
     void bowmanBuildFollowsRequestedFirstJobOrder() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int bowmanBook = GameConstants.getSkillBook(Archer.ARROW_BLOW / 10000);
         int[] remainingSps = new int[5];
         remainingSps[bowmanBook] = 7;
@@ -249,7 +249,7 @@ class AgentBuildServiceTest {
     @Test
     void thiefBuildFollowsRequestedFirstJobOrder() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int thiefBook = GameConstants.getSkillBook(Rogue.LUCKY_SEVEN / 10000);
         int[] remainingSps = new int[5];
         remainingSps[thiefBook] = 7;
@@ -282,7 +282,7 @@ class AgentBuildServiceTest {
     @Test
     void bishopBuildHoldsSpUntilGenesisIsUnlocked() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         int bishopBook = GameConstants.getSkillBook(Bishop.GENESIS / 10000);
         int[] remainingSps = new int[5];
         remainingSps[bishopBook] = 5;
@@ -325,7 +325,7 @@ class AgentBuildServiceTest {
     @Test
     void mageLuklessBuildDumpsRemainingApIntoInt() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.INT, AgentBuildService.StatType.LUK, 4));
 
         when(bot.getRemainingAp()).thenReturn(5);
@@ -339,7 +339,7 @@ class AgentBuildServiceTest {
     @Test
     void thiefFixedDexBuildFillsDexBeforeLuk() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.LUK, AgentBuildService.StatType.DEX, 25));
 
         when(bot.getRemainingAp()).thenReturn(5);
@@ -353,7 +353,7 @@ class AgentBuildServiceTest {
     @Test
     void bowmanStrlessBuildDumpsRemainingApIntoDex() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.DEX, AgentBuildService.StatType.STR, 4));
 
         when(bot.getRemainingAp()).thenReturn(5);
@@ -367,7 +367,7 @@ class AgentBuildServiceTest {
     @Test
     void apRespecResetsToBaseStatsThenRebuildsUsingSavedPlan() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.INT, AgentBuildService.StatType.LUK, 4));
 
         AtomicInteger str = new AtomicInteger(35);
@@ -408,7 +408,7 @@ class AgentBuildServiceTest {
     @Test
     void apRespecKeepsFirstJobRequiredDexForThiefBuilds() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
         AgentBotBuildStateRuntime.setApBuild(entry, new AgentBuildService.ApBuild(AgentBuildService.StatType.LUK, AgentBuildService.StatType.DEX, 4));
 
         AtomicInteger str = new AtomicInteger(20);

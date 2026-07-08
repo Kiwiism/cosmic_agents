@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.mock;
 class AgentTickOrchestratorTest {
     @Test
     void guardedTickRunsCoreAndClearsPreviousFailures() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotTickFailureStateRuntime.recordFailure(entry, 1_000L, 10_000L);
         int[] coreRuns = {0};
         int[] failures = {0};
@@ -40,7 +40,7 @@ class AgentTickOrchestratorTest {
 
     @Test
     void guardedTickRoutesFailureToHandler() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         RuntimeException failure = new RuntimeException("boom");
         int[] failures = {0};
 

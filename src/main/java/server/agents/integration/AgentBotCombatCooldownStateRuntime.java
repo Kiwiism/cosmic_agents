@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.util.function.IntUnaryOperator;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed combat cooldown state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed combat cooldown state.
  */
 public final class AgentBotCombatCooldownStateRuntime {
     private AgentBotCombatCooldownStateRuntime() {

@@ -12,6 +12,15 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Final compatibility shell removal is complete: `src/main/java/server/bots/**`
+  and `src/test/java/server/bots/**` are removed. Runtime/session fixtures now
+  use `AgentRuntimeEntry` directly, and source/test scans for `server.bots` and
+  `BotEntry` are clean. Runtime behavior is unchanged.
+- Remaining `AgentBot*` production names are intentionally retained for now as
+  Agent-owned adapter/runtime names that preserve historical behavior while the
+  semantic rename pass is planned separately. They do not depend on
+  `server.bots` and should be renamed by capability in a future low-risk
+  naming-only milestone.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,

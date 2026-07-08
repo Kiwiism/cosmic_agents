@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,14 +15,14 @@ import static org.mockito.Mockito.mock;
 class AgentTradeQueuedRetryServiceTest {
     @Test
     void returnsFalseWhenNoQueuedRetryExists() {
-        BotEntry entry = new BotEntry(mock(Character.class), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
 
         assertFalse(AgentTradeQueuedRetryService.tickQueuedRetry(entry, remaining -> remaining - 1));
     }
 
     @Test
     void ticksQueuedRetryDelayBeforeRunning() {
-        BotEntry entry = new BotEntry(mock(Character.class), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AtomicInteger runs = new AtomicInteger();
         AgentBotPendingTradeStateRuntime.queueRetry(entry, runs::incrementAndGet, 500);
 
@@ -35,7 +35,7 @@ class AgentTradeQueuedRetryServiceTest {
 
     @Test
     void runsQueuedRetryWhenDelayExpires() {
-        BotEntry entry = new BotEntry(mock(Character.class), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AtomicInteger runs = new AtomicInteger();
         AgentBotPendingTradeStateRuntime.queueRetry(entry, runs::incrementAndGet, 0);
 

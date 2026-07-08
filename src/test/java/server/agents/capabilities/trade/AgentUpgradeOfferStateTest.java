@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentUpgradeOfferStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentUpgradeOfferState state = new AgentUpgradeOfferState();
 
         assertTrue(state.proactiveUpgradeOffers());

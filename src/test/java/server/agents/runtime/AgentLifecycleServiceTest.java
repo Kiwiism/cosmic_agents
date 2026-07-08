@@ -10,7 +10,7 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -90,7 +90,7 @@ class AgentLifecycleServiceTest {
     void registerAgentReplacesSameCharacterAndCancelsOldTask() {
         Character leader = character(100, "Leader");
         Character agent = character(200, "Alpha");
-        BotEntry oldEntry = new BotEntry(agent, leader, mock(ScheduledFuture.class));
+        AgentRuntimeEntry oldEntry = new AgentRuntimeEntry(agent, leader, mock(ScheduledFuture.class));
         ScheduledFuture<?> newTask = mock(ScheduledFuture.class);
         AtomicInteger cancelled = new AtomicInteger();
         AgentRuntimeRegistry.entriesByLeaderId().clear();
@@ -191,7 +191,7 @@ class AgentLifecycleServiceTest {
                             return agent;
                         },
                         (leaderId, resolvedLeader, resolvedAgent) -> {
-                            BotEntry entry = new BotEntry(resolvedAgent, resolvedLeader, null);
+                            AgentRuntimeEntry entry = new AgentRuntimeEntry(resolvedAgent, resolvedLeader, null);
                             registeredEntry.set(entry);
                             return entry;
                         },
@@ -264,7 +264,7 @@ class AgentLifecycleServiceTest {
     void dismissAgentByNameRemovesEntryCancelsStopsAndSchedulesFarewell() {
         Character leader = character(100, "Leader");
         Character agent = character(200, "Alpha");
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AtomicReference<Runnable> delayedAction = new AtomicReference<>();
         AtomicInteger cancelled = new AtomicInteger();
         AtomicInteger stopped = new AtomicInteger();
@@ -337,7 +337,7 @@ class AgentLifecycleServiceTest {
                         },
                         (leaderId, resolvedLeader, resolvedAgent) -> {
                             registered.incrementAndGet();
-                            BotEntry entry = new BotEntry(resolvedAgent, resolvedLeader, null);
+                            AgentRuntimeEntry entry = new AgentRuntimeEntry(resolvedAgent, resolvedLeader, null);
                             AgentRuntimeRegistry.mutableEntriesForLeader(leaderId).add(entry);
                             return entry;
                         },
@@ -376,7 +376,7 @@ class AgentLifecycleServiceTest {
         MapleMap map = mock(MapleMap.class);
         AgentOwnershipService ownership = mock(AgentOwnershipService.class);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(otherLeader.getId()).add(new BotEntry(agent, otherLeader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(otherLeader.getId()).add(new AgentRuntimeEntry(agent, otherLeader, null));
         when(map.getId()).thenReturn(100000000);
         when(leader.getMap()).thenReturn(map);
         when(leader.getPosition()).thenReturn(new Point(10, 20));
@@ -421,7 +421,7 @@ class AgentLifecycleServiceTest {
                 new AgentLifecycleService.SpawnHooks(
                         (spawnMap, point) -> spawnPosition,
                         (leaderId, resolvedLeader, resolvedAgent) -> {
-                            BotEntry entry = new BotEntry(resolvedAgent, resolvedLeader, null);
+                            AgentRuntimeEntry entry = new AgentRuntimeEntry(resolvedAgent, resolvedLeader, null);
                             registeredEntry.set(entry);
                             return entry;
                         },
@@ -521,8 +521,8 @@ class AgentLifecycleServiceTest {
     @Test
     void removesAllLeaderEntriesAndAssociatedState() {
         Character leader = character(100, "Leader");
-        BotEntry first = new BotEntry(character(200, "Alpha"), leader, null);
-        BotEntry second = new BotEntry(character(201, "Beta"), leader, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(character(200, "Alpha"), leader, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(character(201, "Beta"), leader, null);
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         Map<Integer, Object> formations = new ConcurrentHashMap<>();
         Map<Integer, Point> townAnchors = new ConcurrentHashMap<>();
@@ -546,8 +546,8 @@ class AgentLifecycleServiceTest {
         ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
 
         AgentLifecycleService.cancelScheduledTickIfPresent(null);
-        AgentLifecycleService.cancelScheduledTickIfPresent(new BotEntry(character(200, "NoTask"), leader, null));
-        AgentLifecycleService.cancelScheduledTickIfPresent(new BotEntry(character(201, "Task"), leader, scheduledTask));
+        AgentLifecycleService.cancelScheduledTickIfPresent(new AgentRuntimeEntry(character(200, "NoTask"), leader, null));
+        AgentLifecycleService.cancelScheduledTickIfPresent(new AgentRuntimeEntry(character(201, "Task"), leader, scheduledTask));
 
         verify(scheduledTask).cancel(false);
     }
@@ -555,8 +555,8 @@ class AgentLifecycleServiceTest {
     @Test
     void removesAgentByCharacterIdAndKeepsLeaderWhenEntriesRemain() {
         Character leader = character(100, "Leader");
-        BotEntry first = new BotEntry(character(200, "Alpha"), leader, null);
-        BotEntry second = new BotEntry(character(201, "Beta"), leader, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(character(200, "Alpha"), leader, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(character(201, "Beta"), leader, null);
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         Map<Integer, Object> formations = new ConcurrentHashMap<>();
         Map<Integer, Point> townAnchors = new ConcurrentHashMap<>();
@@ -578,7 +578,7 @@ class AgentLifecycleServiceTest {
     @Test
     void removesEmptyLeaderStateAfterLastAgentRemoval() {
         Character leader = character(100, "Leader");
-        BotEntry only = new BotEntry(character(200, "Alpha"), leader, null);
+        AgentRuntimeEntry only = new AgentRuntimeEntry(character(200, "Alpha"), leader, null);
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         Map<Integer, Object> formations = new ConcurrentHashMap<>();
         Map<Integer, Point> townAnchors = new ConcurrentHashMap<>();

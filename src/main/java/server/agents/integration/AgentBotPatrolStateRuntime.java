@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed patrol runtime state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed patrol runtime state.
  */
 public final class AgentBotPatrolStateRuntime {
     private AgentBotPatrolStateRuntime() {

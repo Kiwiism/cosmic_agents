@@ -7,7 +7,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeSequenceOrchestratorTest {
     @Test
     void startTradeSequenceMissingRecipientRepliesWithoutOpening() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
@@ -48,7 +48,7 @@ class AgentTradeSequenceOrchestratorTest {
 
     @Test
     void startTradeSequenceInitializesAndOpensBatch() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Character recipient = mock(Character.class);
         Item item = item(2040000);
@@ -79,7 +79,7 @@ class AgentTradeSequenceOrchestratorTest {
 
     @Test
     void openTradeBatchCancelsWhenResolvedRecipientBusy() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
         Character recipient = mock(Character.class);
         callbacks.recipient.set(recipient);

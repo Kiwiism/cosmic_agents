@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
@@ -32,7 +32,7 @@ class AgentMobAvoidanceServiceTest {
         doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
 
         Character bot = mockBot(new Point(100, 100), map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentMobAvoidanceService.shouldJumpToAvoidMob(entry, foothold, new Point(100, 100), 12));
@@ -47,7 +47,7 @@ class AgentMobAvoidanceServiceTest {
         doReturn(List.of(mockMob(new Point(120, 100), 100100))).when(map).getAllMonsters();
 
         Character bot = mockBot(new Point(100, 100), map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
 
         assertFalse(AgentMobAvoidanceService.shouldJumpToAvoidMob(entry, foothold, new Point(100, 100), 12));

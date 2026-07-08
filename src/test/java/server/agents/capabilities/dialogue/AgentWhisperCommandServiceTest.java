@@ -10,7 +10,7 @@ import server.agents.integration.AgentBotReplyChannelStateRuntime;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentWhisperCommandRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ class AgentWhisperCommandServiceTest {
     void runtimeRoutesWhisperToTargetedAgentAndMarksWhisperReplyChannel() {
         Character leader = character(1, mock(Client.class));
         Character target = character(2, new BotClient(0, 0));
-        BotEntry entry = new BotEntry(target, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(target, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), List.of(entry));
 

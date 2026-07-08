@@ -17,7 +17,7 @@ import server.agents.integration.AgentBotShopRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.NPC;
 import server.maps.MapleMap;
 import testutil.Items;
@@ -41,7 +41,7 @@ class AgentShopServiceTest {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
         when(bot.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         try (MockedStatic<AgentInventorySellTrashService> inventories = mockStatic(AgentInventorySellTrashService.class);
              MockedStatic<AgentBotShopRuntime> replies = mockStatic(AgentBotShopRuntime.class)) {
@@ -57,7 +57,7 @@ class AgentShopServiceTest {
     @Test
     void shouldNotTriggerClawShopVisitWhenBestStarIsAboveThreshold() {
         Character bot = clawBotWithStars(800, 1000, 1000, 1000, 1000, 1000); // 5800 of the best star
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         MapleMap map = bot.getMap();
         NPC npc = shopNpc(new Point(20, 0));
         Shop shop = mock(Shop.class);
@@ -85,7 +85,7 @@ class AgentShopServiceTest {
     @Test
     void shouldTriggerClawShopVisitWhenBestStarIsBelowThreshold() {
         Character bot = clawBotWithStars(800, 1000, 1000); // 2800 of the best star
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         MapleMap map = bot.getMap();
         NPC npc = shopNpc(new Point(20, 0));
         Shop shop = mock(Shop.class);
@@ -147,7 +147,7 @@ class AgentShopServiceTest {
     void shouldTriggerSellTrashShopVisitEvenWhenNoResupplyIsNeeded() {
         Character bot = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         NPC npc = shopNpc(new Point(20, 0));
         Shop shop = mock(Shop.class);
 
@@ -232,7 +232,7 @@ class AgentShopServiceTest {
     }
 
     private static boolean entryWouldTriggerShopVisit(Character bot, WeaponType weaponType) {
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         MapleMap map = bot.getMap();
         NPC npc = shopNpc(new Point(20, 0));
         Shop shop = mock(Shop.class);

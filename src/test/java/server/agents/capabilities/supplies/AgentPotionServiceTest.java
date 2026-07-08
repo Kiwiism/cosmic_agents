@@ -6,7 +6,6 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +25,8 @@ class AgentPotionServiceTest {
         Character owner = mock(Character.class);
         Character requestingBot = mock(Character.class);
         Character donorBot = mock(Character.class);
-        BotEntry entry = new BotEntry(requestingBot, owner, null);
-        BotEntry donorEntry = new BotEntry(donorBot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(requestingBot, owner, null);
+        AgentRuntimeEntry donorEntry = new AgentRuntimeEntry(donorBot, owner, null);
 
         when(owner.getId()).thenReturn(88);
         when(owner.getMapId()).thenReturn(100000000);

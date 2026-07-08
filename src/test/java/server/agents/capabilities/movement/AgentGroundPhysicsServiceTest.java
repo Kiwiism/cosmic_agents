@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapleMap;
@@ -24,7 +24,7 @@ class AgentGroundPhysicsServiceTest {
     void stopGroundMotionPreservesLegacyVelocityReset() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 2.5);
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 7, 3);
 
@@ -48,7 +48,7 @@ class AgentGroundPhysicsServiceTest {
         Foothold foothold = new Foothold(new Point(0, 100), new Point(400, 100), 1);
         map.getFootholds().insert(foothold);
         Character agent = mockAgent(new Point(100, 100), map);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
         AgentBotMovementStateRuntime.setMoveDirection(entry, 1);
 
@@ -64,7 +64,7 @@ class AgentGroundPhysicsServiceTest {
     void syncAndDetectGroundStartsFallWhenNoGroundExists() {
         MapleMap map = createEmptyTestMap(910000302);
         Character agent = mockAgent(new Point(100, 100), map);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
 
         Foothold foothold = AgentGroundPhysicsService.syncAndDetectGround(entry, agent);
 

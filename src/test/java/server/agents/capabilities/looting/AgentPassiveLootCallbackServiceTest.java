@@ -3,7 +3,7 @@ package server.agents.capabilities.looting;
 import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,7 +22,7 @@ class AgentPassiveLootCallbackServiceTest {
         Character owner = mock(Character.class);
         Item item = mock(Item.class);
         MapItem drop = mock(MapItem.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         AtomicBoolean lootInhibitTicked = new AtomicBoolean();
         AtomicBoolean cooldownTicked = new AtomicBoolean();
         AtomicReference<String> reply = new AtomicReference<>();

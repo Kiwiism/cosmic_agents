@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,7 +16,7 @@ class AgentLeaderSessionRuntimeTest {
     void delegatesLeaderResolutionToServiceWithRuntimeLookup() {
         Character offlineLeader = character(100, false);
         Character refreshedLeader = character(100, true);
-        BotEntry entry = new BotEntry(character(200, true), offlineLeader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), offlineLeader, null);
         AtomicInteger requestedLeaderId = new AtomicInteger();
 
         Character resolved = AgentLeaderSessionRuntime.resolveTickLeader(entry, refreshedLeader.getId(), id -> {

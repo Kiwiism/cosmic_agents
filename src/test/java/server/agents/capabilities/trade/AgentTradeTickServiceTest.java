@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeTickServiceTest {
     @Test
     void queuedRetryRunsBeforeTradeLookup() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         List<String> events = new ArrayList<>();
         AgentBotPendingTradeStateRuntime.queueRetry(entry, () -> events.add("retry"), 0);
 
@@ -37,7 +37,7 @@ class AgentTradeTickServiceTest {
 
     @Test
     void betweenBatchRunsBeforeClosedWindowHandling() {
-        BotEntry entry = activeEntry();
+        AgentRuntimeEntry entry = activeEntry();
         List<String> events = new ArrayList<>();
         TraceCallbacks callbacks = callbacks(events, null);
         callbacks.betweenBatch = true;
@@ -49,7 +49,7 @@ class AgentTradeTickServiceTest {
 
     @Test
     void nullTradeHandlesClosedWindow() {
-        BotEntry entry = activeEntry();
+        AgentRuntimeEntry entry = activeEntry();
         List<String> events = new ArrayList<>();
 
         AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, null));
@@ -59,7 +59,7 @@ class AgentTradeTickServiceTest {
 
     @Test
     void nonFullTradeWaitsForAccept() {
-        BotEntry entry = activeEntry();
+        AgentRuntimeEntry entry = activeEntry();
         Trade trade = mock(Trade.class);
         when(trade.isFullTrade()).thenReturn(false);
         List<String> events = new ArrayList<>();
@@ -71,7 +71,7 @@ class AgentTradeTickServiceTest {
 
     @Test
     void addingItemsRunsBeforeConfirmation() {
-        BotEntry entry = activeEntry();
+        AgentRuntimeEntry entry = activeEntry();
         Trade trade = mock(Trade.class);
         when(trade.isFullTrade()).thenReturn(true);
         List<String> events = new ArrayList<>();
@@ -85,7 +85,7 @@ class AgentTradeTickServiceTest {
 
     @Test
     void confirmationRunsWhenItemsAreAddedAndBotIsNotDone() {
-        BotEntry entry = activeEntry();
+        AgentRuntimeEntry entry = activeEntry();
         Trade trade = mock(Trade.class);
         when(trade.isFullTrade()).thenReturn(true);
         List<String> events = new ArrayList<>();
@@ -97,7 +97,7 @@ class AgentTradeTickServiceTest {
 
     @Test
     void botDoneWaitsForClosedWindowAfterItemsAreAdded() {
-        BotEntry entry = activeEntry();
+        AgentRuntimeEntry entry = activeEntry();
         Trade trade = mock(Trade.class);
         when(trade.isFullTrade()).thenReturn(true);
         AgentBotPendingTradeStateRuntime.markBotDone(entry);
@@ -108,12 +108,12 @@ class AgentTradeTickServiceTest {
         assertEquals(List.of("trade", "between", "adding"), events);
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), null, null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), null, null);
     }
 
-    private static BotEntry activeEntry() {
-        BotEntry entry = entry();
+    private static AgentRuntimeEntry activeEntry() {
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
         return entry;
     }

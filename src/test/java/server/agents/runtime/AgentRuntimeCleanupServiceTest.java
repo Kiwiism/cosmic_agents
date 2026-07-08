@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import client.keybind.KeyBinding;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.LinkedHashMap;
@@ -28,8 +28,8 @@ class AgentRuntimeCleanupServiceTest {
         Character secondAgent = character(89);
         ScheduledFuture<?> firstTask = mock(ScheduledFuture.class);
         ScheduledFuture<?> secondTask = mock(ScheduledFuture.class);
-        BotEntry firstEntry = new BotEntry(firstAgent, leader, firstTask);
-        BotEntry secondEntry = new BotEntry(secondAgent, leader, secondTask);
+        AgentRuntimeEntry firstEntry = new AgentRuntimeEntry(firstAgent, leader, firstTask);
+        AgentRuntimeEntry secondEntry = new AgentRuntimeEntry(secondAgent, leader, secondTask);
 
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentFormationService.formationsByLeaderId().clear();
@@ -59,7 +59,7 @@ class AgentRuntimeCleanupServiceTest {
         Character leader = character(77);
         Character agent = character(88);
         ScheduledFuture<?> task = mock(ScheduledFuture.class);
-        BotEntry entry = new BotEntry(agent, leader, task);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, task);
 
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentFormationService.formationsByLeaderId().clear();

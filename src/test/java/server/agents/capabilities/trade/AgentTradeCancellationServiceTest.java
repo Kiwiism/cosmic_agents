@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeCancellationServiceTest {
     @Test
     void cancelWithoutActiveTradeRepliesAndResets() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         AtomicBoolean reset = new AtomicBoolean(false);
 
@@ -33,7 +33,7 @@ class AgentTradeCancellationServiceTest {
 
     @Test
     void cancelWithActiveTradeCancelsNoResponseThenResets() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade activeTrade = mock(Trade.class);
         AtomicBoolean reset = new AtomicBoolean(false);

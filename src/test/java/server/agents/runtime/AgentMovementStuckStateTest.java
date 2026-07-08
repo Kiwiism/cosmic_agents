@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentMovementStuckStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentMovementStuckState state = new AgentMovementStuckState();
 
         assertEquals(0, state.stuckMs());

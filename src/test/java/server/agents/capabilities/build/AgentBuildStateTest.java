@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentBuildStateTest {
     @Test
-    void defaultsMatchLegacyBotEntryState() {
+    void defaultsMatchLegacyAgentRuntimeEntryState() {
         AgentBuildState state = new AgentBuildState();
 
         assertNull(state.apBuild());

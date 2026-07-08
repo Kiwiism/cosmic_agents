@@ -4,7 +4,7 @@ import client.Character;
 import net.server.world.Party;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 class AgentFollowAnchorServiceTest {
     @Test
     void returnsNullWhenLeaderIsMissing() {
-        BotEntry entry = new BotEntry(character(200, true), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), null, null);
 
         assertNull(AgentFollowAnchorService.resolve(entry, null, List.of()));
     }
@@ -24,7 +24,7 @@ class AgentFollowAnchorServiceTest {
     @Test
     void returnsLeaderWhenNoExplicitTargetExists() {
         Character leader = character(100, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
 
         assertSame(leader, AgentFollowAnchorService.resolve(entry, leader, List.of()));
     }
@@ -33,7 +33,7 @@ class AgentFollowAnchorServiceTest {
     void returnsLeaderWhenTargetIsLeaderOrSelf() {
         Character leader = character(100, true);
         Character agent = character(200, true);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
 
         AgentBotModeStateRuntime.setFollowTargetId(entry, leader.getId());
         assertSame(leader, AgentFollowAnchorService.resolve(entry, leader, List.of()));
@@ -47,7 +47,7 @@ class AgentFollowAnchorServiceTest {
         Character leader = character(100, true);
         Character partyMember = character(300, true);
         Character siblingAgent = character(300, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
         AgentBotModeStateRuntime.setFollowTargetId(entry, partyMember.getId());
         when(leader.getParty()).thenReturn(mock(Party.class));
         when(leader.getPartyMembersOnline()).thenReturn(List.of(partyMember));
@@ -55,7 +55,7 @@ class AgentFollowAnchorServiceTest {
         Character resolved = AgentFollowAnchorService.resolve(
                 entry,
                 leader,
-                List.of(new BotEntry(siblingAgent, leader, null)));
+                List.of(new AgentRuntimeEntry(siblingAgent, leader, null)));
 
         assertSame(partyMember, resolved);
     }
@@ -64,13 +64,13 @@ class AgentFollowAnchorServiceTest {
     void returnsOnlineSiblingAgentWhenNoPartyMemberMatches() {
         Character leader = character(100, true);
         Character siblingAgent = character(300, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
         AgentBotModeStateRuntime.setFollowTargetId(entry, siblingAgent.getId());
 
         Character resolved = AgentFollowAnchorService.resolve(
                 entry,
                 leader,
-                List.of(new BotEntry(siblingAgent, leader, null)));
+                List.of(new AgentRuntimeEntry(siblingAgent, leader, null)));
 
         assertSame(siblingAgent, resolved);
     }
@@ -79,20 +79,20 @@ class AgentFollowAnchorServiceTest {
     void fallsBackToLeaderWhenTargetIsMissingOrOffline() {
         Character leader = character(100, true);
         Character offlineSibling = character(300, false);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
         AgentBotModeStateRuntime.setFollowTargetId(entry, offlineSibling.getId());
 
         Character resolved = AgentFollowAnchorService.resolve(
                 entry,
                 leader,
-                List.of(new BotEntry(offlineSibling, leader, null)));
+                List.of(new AgentRuntimeEntry(offlineSibling, leader, null)));
 
         assertSame(leader, resolved);
     }
 
     @Test
     void resolveTargetReturnsNullWhenLeaderIsMissing() {
-        BotEntry entry = new BotEntry(character(200, true), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), null, null);
 
         assertNull(AgentFollowAnchorService.resolveTarget(entry, null, 300, List.of()));
     }
@@ -101,7 +101,7 @@ class AgentFollowAnchorServiceTest {
     void resolveTargetReturnsLeaderForMissingLeaderTargetOrSelfTarget() {
         Character leader = character(100, true);
         Character agent = character(200, true);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
 
         assertSame(leader, AgentFollowAnchorService.resolveTarget(entry, leader, 0, List.of()));
         assertSame(leader, AgentFollowAnchorService.resolveTarget(entry, leader, leader.getId(), List.of()));
@@ -113,7 +113,7 @@ class AgentFollowAnchorServiceTest {
         Character leader = character(100, true);
         Character partyMember = character(300, true);
         Character siblingAgent = character(300, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
         when(leader.getParty()).thenReturn(mock(Party.class));
         when(leader.getPartyMembersOnline()).thenReturn(List.of(partyMember));
 
@@ -121,7 +121,7 @@ class AgentFollowAnchorServiceTest {
                 entry,
                 leader,
                 partyMember.getId(),
-                List.of(new BotEntry(siblingAgent, leader, null)));
+                List.of(new AgentRuntimeEntry(siblingAgent, leader, null)));
 
         assertSame(partyMember, resolved);
     }
@@ -130,13 +130,13 @@ class AgentFollowAnchorServiceTest {
     void resolveTargetUsesOnlineSiblingWhenPartyDoesNotMatch() {
         Character leader = character(100, true);
         Character siblingAgent = character(300, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
 
         Character resolved = AgentFollowAnchorService.resolveTarget(
                 entry,
                 leader,
                 siblingAgent.getId(),
-                List.of(new BotEntry(siblingAgent, leader, null)));
+                List.of(new AgentRuntimeEntry(siblingAgent, leader, null)));
 
         assertSame(siblingAgent, resolved);
     }
@@ -145,10 +145,10 @@ class AgentFollowAnchorServiceTest {
     void resolveTargetFromRuntimeRegistryUsesLiveSiblingEntries() {
         Character leader = character(100, true);
         Character siblingAgent = character(300, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(siblingAgent, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(siblingAgent, leader, null));
 
         Character resolved = AgentFollowAnchorService.resolveTargetFromRuntimeRegistry(entry, siblingAgent.getId());
 

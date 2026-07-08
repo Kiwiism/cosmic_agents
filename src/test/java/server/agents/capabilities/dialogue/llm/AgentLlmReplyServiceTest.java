@@ -6,7 +6,7 @@ import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeHandle;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.lang.reflect.Constructor;
 import java.util.concurrent.ScheduledFuture;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class AgentLlmReplyServiceTest {
     @Test
     void deliverReplyPartsRoutesImmediateAndFollowUpsThroughAgentReplyRuntime() throws Exception {
-        BotEntry entry = newBotEntry();
+        AgentRuntimeEntry entry = newAgentEntry();
         int oldDelay = AgentLlmConfig.multiMessageDelayMs;
         AgentLlmConfig.multiMessageDelayMs = 250;
         List<Long> delays = new ArrayList<>();
@@ -95,12 +95,12 @@ class AgentLlmReplyServiceTest {
         assertTrue(situation.contains("Last command from owner: \"pots\" (12s ago)"));
     }
 
-    private static BotEntry newBotEntry() throws Exception {
-        return newBotEntry(mock(Character.class), mock(Character.class));
+    private static AgentRuntimeEntry newAgentEntry() throws Exception {
+        return newAgentEntry(mock(Character.class), mock(Character.class));
     }
 
-    private static BotEntry newBotEntry(Character bot, Character owner) throws Exception {
-        Constructor<BotEntry> constructor = BotEntry.class.getDeclaredConstructor(
+    private static AgentRuntimeEntry newAgentEntry(Character bot, Character owner) throws Exception {
+        Constructor<AgentRuntimeEntry> constructor = AgentRuntimeEntry.class.getDeclaredConstructor(
                 Character.class, Character.class, ScheduledFuture.class);
         constructor.setAccessible(true);
         return constructor.newInstance(bot, owner, null);

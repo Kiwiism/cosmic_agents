@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,7 +18,7 @@ class AgentTradeWindowTickServiceTest {
     void fallsThroughWhenTradeWindowIsNotOpen() {
         Character agent = mock(Character.class);
         when(agent.getTrade()).thenReturn(null);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AtomicInteger physicsTicks = new AtomicInteger();
 
         boolean consumed = AgentTradeWindowTickService.tickIfTradeWindowOpen(
@@ -34,7 +34,7 @@ class AgentTradeWindowTickServiceTest {
     void consumesTickAndRunsPhysicsWhenTradeWindowIsOpen() {
         Character agent = mock(Character.class);
         when(agent.getTrade()).thenReturn(mock(Trade.class));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AtomicInteger physicsTicks = new AtomicInteger();
 
         boolean consumed = AgentTradeWindowTickService.tickIfTradeWindowOpen(

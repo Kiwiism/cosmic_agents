@@ -4,7 +4,7 @@ import server.agents.runtime.AgentModeState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed high-level movement mode state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed high-level movement mode state.
  */
 public final class AgentBotModeStateRuntime {
     private AgentBotModeStateRuntime() {

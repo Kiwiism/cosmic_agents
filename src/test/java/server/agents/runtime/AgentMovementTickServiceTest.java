@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 class AgentMovementTickServiceTest {
     @Test
     void navigationConsumedTickStopsPipeline() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         List<String> calls = new ArrayList<>();
 
         AgentMovementTickService.stepMovementCore(
@@ -29,7 +29,7 @@ class AgentMovementTickServiceTest {
 
     @Test
     void fidgetConsumedTickStopsAfterPreciseMarkerPoint() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         List<String> calls = new ArrayList<>();
 
         AgentMovementTickService.stepMovementCore(
@@ -43,7 +43,7 @@ class AgentMovementTickServiceTest {
 
     @Test
     void groundedAiTickRunsMovementCommittedEdgeAndMaintenance() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         List<String> calls = new ArrayList<>();
 
         AgentMovementTickService.stepMovementCore(
@@ -57,7 +57,7 @@ class AgentMovementTickServiceTest {
 
     @Test
     void nonAiTickSkipsCommittedEdgeButRunsMaintenance() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         List<String> calls = new ArrayList<>();
 
         AgentMovementTickService.stepMovementCore(
@@ -71,7 +71,7 @@ class AgentMovementTickServiceTest {
 
     @Test
     void airborneAiTickSkipsCommittedEdgeButRunsMaintenance() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotMovementStateRuntime.setInAir(entry, true);
         List<String> calls = new ArrayList<>();
 
@@ -102,7 +102,7 @@ class AgentMovementTickServiceTest {
                 entry -> calls.add("cleanup"));
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 }

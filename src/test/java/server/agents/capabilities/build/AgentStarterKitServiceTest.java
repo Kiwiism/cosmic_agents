@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
@@ -55,7 +55,7 @@ class AgentStarterKitServiceTest {
     void advanceJobAlwaysReevaluatesAutoEquip() {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, owner, mock(ScheduledFuture.class));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, mock(ScheduledFuture.class));
 
         when(bot.getJob()).thenReturn(Job.BOWMAN);
 

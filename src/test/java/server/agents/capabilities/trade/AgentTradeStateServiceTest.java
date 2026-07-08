@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AgentTradeStateServiceTest {
     @Test
     void initializesSequenceLikeLegacyTradeState() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
 
         AgentTradeStateService.initializeSequence(entry, "equips", 123, false);
@@ -30,7 +30,7 @@ class AgentTradeStateServiceTest {
 
     @Test
     void initializesBatchWithFirstTradeWindowAndClearsProgress() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         List<Item> items = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
             items.add(new Item(2000000 + i, (short) 1, (short) 1));
@@ -55,7 +55,7 @@ class AgentTradeStateServiceTest {
 
     @Test
     void enterBetweenBatchesClearsBatchItemsAndSetsDelay() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotPendingTradeStateRuntime.setItems(entry, List.of(new Item(2000000, (short) 1, (short) 1)));
         AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
         AgentBotPendingTradeStateRuntime.markBotDone(entry);
@@ -70,7 +70,7 @@ class AgentTradeStateServiceTest {
 
     @Test
     void clearSequenceClearsAllPendingTradeState() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotPendingTradeStateRuntime.setCategory(entry, "pots");
         AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "message");
         AgentBotPendingTradeStateRuntime.setItems(entry, List.of(new Item(2000000, (short) 1, (short) 1)));

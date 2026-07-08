@@ -6,7 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -28,7 +28,7 @@ class AgentGrindCombatRuntimeTest {
 
     @Test
     void delegatesAoeRepositionToExistingPlanner() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Monster target = mock(Monster.class);
         AgentAttackPlan attackPlan = mock(AgentAttackPlan.class);

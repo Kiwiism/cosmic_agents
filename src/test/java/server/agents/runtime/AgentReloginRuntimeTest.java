@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,7 +16,7 @@ class AgentReloginRuntimeTest {
     void tickCallbackOverloadBuildsAgentRegistrationHook() {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Logger log = mock(Logger.class);
         AgentLifecycleService.AgentTickCallback tickCallback = (activeEntry, leaderCharId, agentCharId) -> {
         };

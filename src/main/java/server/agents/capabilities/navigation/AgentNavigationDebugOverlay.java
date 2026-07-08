@@ -83,7 +83,7 @@ public final class AgentNavigationDebugOverlay {
             return "Bot nav overlay unavailable: no supported mist skill effect is loaded on this server build.";
         }
 
-        BotSelection selection = selectBotEntry(viewer, botName);
+        BotSelection selection = selectAgentEntry(viewer, botName);
         if (selection.errorMessage != null) {
             return selection.errorMessage;
         }
@@ -138,7 +138,7 @@ public final class AgentNavigationDebugOverlay {
     }
 
     public static synchronized String pathLog(Character viewer, String botName, String note) {
-        BotSelection selection = selectBotEntry(viewer, botName);
+        BotSelection selection = selectAgentEntry(viewer, botName);
         if (selection.errorMessage != null) {
             return selection.errorMessage;
         }
@@ -161,7 +161,7 @@ public final class AgentNavigationDebugOverlay {
         overlay.drawApproxRegion(region, type);
     }
 
-    private static BotSelection selectBotEntry(Character viewer, String botName) {
+    private static BotSelection selectAgentEntry(Character viewer, String botName) {
         if (botName == null || botName.isBlank()) {
             var entries = AgentBotSessionLifecycleSideEffects.getBotEntries(viewer.getId());
             if (entries.isEmpty()) {
@@ -177,7 +177,7 @@ public final class AgentNavigationDebugOverlay {
             }
             return new BotSelection(entries.getFirst(), null);
         }
-        AgentRuntimeEntry entry = AgentBotSessionLifecycleSideEffects.getBotEntry(viewer.getId(), botName);
+        AgentRuntimeEntry entry = AgentBotSessionLifecycleSideEffects.getAgentEntry(viewer.getId(), botName);
         if (entry == null) {
             return new BotSelection(null, "No owned bot named '" + botName + "' found.");
         }

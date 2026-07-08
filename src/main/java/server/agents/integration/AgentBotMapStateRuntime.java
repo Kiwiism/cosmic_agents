@@ -7,7 +7,7 @@ import server.maps.MapleMap;
 import java.util.Map;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed map/foothold tracking state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed map/foothold tracking state.
  */
 public final class AgentBotMapStateRuntime {
     private AgentBotMapStateRuntime() {

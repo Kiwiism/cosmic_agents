@@ -8,7 +8,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeCompletionServiceTest {
     @Test
     void receivedTradeSnapshotsOwnerGivenEquipsCompletesAndThanks() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         Trade partner = mock(Trade.class);
@@ -63,7 +63,7 @@ class AgentTradeCompletionServiceTest {
 
     @Test
     void emptyTradeMaySendFreebieReaction() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
 

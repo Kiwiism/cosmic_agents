@@ -9,7 +9,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 class AgentGroundActionPlannerTest {
     @Test
     void shouldIdleWhenNoTargetIsAvailable() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, null, new Point(0, 0), null);
 
@@ -42,7 +42,7 @@ class AgentGroundActionPlannerTest {
         map.setFootholds(footholds(foothold));
 
         Character bot = mockBot(new Point(8, 100), map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.WALK,
                 new Point(8, 100), new Point(60, 100),
@@ -65,7 +65,7 @@ class AgentGroundActionPlannerTest {
         doReturn(List.of(mockMob(new Point(130, 100), 100100))).when(map).getAllMonsters();
 
         Character bot = mockBot(new Point(100, 100), map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
 
         AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, foothold, new Point(100, 100), new Point(250, 100));

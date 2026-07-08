@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentAirborneSteeringStateTest {
     @Test
-    void defaultsMatchLegacyBotEntryFields() {
+    void defaultsMatchLegacyAgentRuntimeEntryFields() {
         AgentAirborneSteeringState state = new AgentAirborneSteeringState();
 
         assertEquals(0, state.velocityX());

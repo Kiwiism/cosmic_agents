@@ -7,7 +7,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentTradeInviteWaitServiceTest {
     @Test
     void belowTimeoutOnlyAddsTimer() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         AtomicBoolean reset = new AtomicBoolean(false);
 
@@ -37,7 +37,7 @@ class AgentTradeInviteWaitServiceTest {
 
     @Test
     void overTimeoutRepliesCancelsAndResets() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         AtomicBoolean reset = new AtomicBoolean(false);
         AgentBotPendingTradeStateRuntime.setTimerMs(entry, 29_950);

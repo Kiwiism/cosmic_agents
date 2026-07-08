@@ -4,7 +4,7 @@ import server.agents.runtime.AgentLeaderSafetyService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned session control boundary over temporary BotEntry-backed session
+ * Agent-owned session control boundary over AgentRuntimeEntry-backed session
  * storage and owner-away side effects.
  */
 public final class AgentBotSessionControlRuntime {

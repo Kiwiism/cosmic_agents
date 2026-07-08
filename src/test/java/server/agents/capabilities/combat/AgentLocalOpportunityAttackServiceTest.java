@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotAmmoStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 class AgentLocalOpportunityAttackServiceTest {
     @Test
     void returnsWithoutSideEffectsWhenAgentHasNoAmmo() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
         AtomicInteger hookCalls = new AtomicInteger();
 
@@ -37,7 +37,7 @@ class AgentLocalOpportunityAttackServiceTest {
 
     @Test
     void returnsWithoutSideEffectsWhenAgentOrPositionIsMissing() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AtomicInteger hookCalls = new AtomicInteger();
 
         AgentLocalOpportunityAttackService.Result missingAgent =

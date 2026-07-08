@@ -1,0 +1,120 @@
+package server.agents.integration;
+
+import server.agents.runtime.AgentRuntimeEntry;
+
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.navigation.AgentNavigationWaypointService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
+import client.Character;
+import org.junit.jupiter.api.Test;
+import server.maps.Foothold;
+import server.maps.MapleMap;
+
+import java.awt.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class BotDirectionalDropNavigationTest {
+    @Test
+    void shouldKeepDirectionalDropDirectionWhileBotIsStillOnRunway() {
+        DropTestFixture fixture = createDirectionalDropFixture(910000040);
+        // New O(1) runway semantics: startPoint is placed launchRunwayPx behind the ledge.
+        // Once the bot has crossed the runway anchor in the launch direction, nav should
+        // feed endPoint until physics performs the walk-off.
+        Character bot = mockBot(new Point(fixture.edge.startPoint.x + 2, fixture.edge.startPoint.y), fixture.map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
+
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+
+        assertEquals(fixture.edge.endPoint, waypoint,
+                "directional drops should keep the held walk direction while the bot is already on the runway");
+    }
+
+    @Test
+    void shouldKeepDirectionalDropLandingTargetWhenNaturalWalkOffAlreadyMatchesEdge() {
+        DropTestFixture fixture = createDirectionalDropFixture(910000041);
+        Character bot = mockBot(new Point(fixture.edge.startPoint), fixture.map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
+
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+
+        assertEquals(fixture.edge.endPoint, waypoint,
+                "once the walk-off already has enough runway, nav should keep feeding the landing-side direction");
+    }
+
+    @Test
+    void shouldKeepDirectionalDropDirectionAfterCrossingNegativeRunwayAnchor() {
+        DropTestFixture fixture = createDirectionalDropFixture(910000042, false);
+        Character bot = mockBot(new Point(fixture.edge.startPoint.x - 5, fixture.edge.startPoint.y), fixture.map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
+
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, fixture.graph, bot.getPosition(), fixture.edge);
+
+        assertEquals(fixture.edge.endPoint, waypoint,
+                "once the bot has crossed the negative-direction drop anchor, nav should keep holding the drop direction");
+    }
+
+    private static DropTestFixture createDirectionalDropFixture(int mapId) {
+        return createDirectionalDropFixture(mapId, true);
+    }
+
+    private static DropTestFixture createDirectionalDropFixture(int mapId, boolean dropRight) {
+        MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
+        Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold lower = dropRight
+                ? new Foothold(new Point(106, 160), new Point(280, 160), 2)
+                : new Foothold(new Point(-180, 160), new Point(-6, 160), 2);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(upper);
+        footholds.insert(lower);
+        map.setFootholds(footholds);
+
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        AgentNavigationGraph.Edge edge = graph.regions.stream()
+                .flatMap(region -> graph.getOutgoing(region.id).stream())
+                .filter(candidate -> candidate.type == AgentNavigationGraph.EdgeType.DROP
+                        && (dropRight ? candidate.launchStepX > 0 : candidate.launchStepX < 0))
+                .filter(candidate -> candidate.endPoint.y > candidate.startPoint.y)
+                .findFirst()
+                .orElse(null);
+        assertNotNull(edge, "fixture should produce a directional walk-off drop edge");
+        return new DropTestFixture(map, graph, edge);
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map) {
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getId()).thenReturn(1);
+        when(bot.getHp()).thenReturn(100);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
+        return bot;
+    }
+
+    private record DropTestFixture(MapleMap map,
+                                   AgentNavigationGraph graph,
+                                   AgentNavigationGraph.Edge edge) {
+    }
+}

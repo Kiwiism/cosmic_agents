@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeItemAddTickServiceTest {
     @Test
     void returnsFalseWhenAllItemsAlreadyAdded() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
 
         assertFalse(AgentTradeItemAddTickService.tickAddingItems(
@@ -35,7 +35,7 @@ class AgentTradeItemAddTickServiceTest {
 
     @Test
     void ticksTimerBeforeOtherWork() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotPendingTradeStateRuntime.setTimerMs(entry, 500);
 
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
@@ -49,7 +49,7 @@ class AgentTradeItemAddTickServiceTest {
 
     @Test
     void cancelsWhenPendingMesoIsNoLongerAvailable() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -67,7 +67,7 @@ class AgentTradeItemAddTickServiceTest {
 
     @Test
     void marksCompleteWhenNoMoreItemsRemain() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Trade trade = mock(Trade.class);
         AgentBotPendingTradeStateRuntime.setItems(entry, List.of());
 
@@ -83,7 +83,7 @@ class AgentTradeItemAddTickServiceTest {
 
     @Test
     void announcesCategoryBeforeFirstItem() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Trade trade = mock(Trade.class);
         AgentBotPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
         AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "scrolls here");
@@ -100,7 +100,7 @@ class AgentTradeItemAddTickServiceTest {
 
     @Test
     void addsNextItemWhenReady() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AgentBotPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
@@ -112,8 +112,8 @@ class AgentTradeItemAddTickServiceTest {
         }
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), null, null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), null, null);
     }
 
     private static AgentTradeItemAddTickService.ItemAddTickCallbacks callbacks() {

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AgentMovementPhysicsCacheStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentMovementPhysicsCacheState state = new AgentMovementPhysicsCacheState();
 
         assertEquals(0, state.lastGroundFootholdId());

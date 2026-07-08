@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 class AgentScriptTaskStartServiceTest {
     @Test
     void startsMoveToTask() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Hooks hooks = new Hooks();
         Point target = new Point(10, 20);
 
@@ -31,7 +31,7 @@ class AgentScriptTaskStartServiceTest {
     @Test
     void startsFollowOwnerTaskWithEntryOwner() {
         Character owner = character(100);
-        BotEntry entry = new BotEntry(character(200), owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200), owner, null);
         Hooks hooks = new Hooks();
 
         AgentScriptTaskStartService.start(entry, AgentTask.followOwner(), hooks.startHooks());
@@ -42,7 +42,7 @@ class AgentScriptTaskStartServiceTest {
     @Test
     void startsFollowTargetTasksWithResolvedTarget() {
         Character target = character(300);
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Hooks hooks = new Hooks();
         hooks.resolvedTarget.set(target);
 
@@ -61,7 +61,7 @@ class AgentScriptTaskStartServiceTest {
 
     @Test
     void startsModeTasks() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Hooks hooks = new Hooks();
 
         AgentScriptTaskStartService.start(entry, AgentTask.grind(), hooks.startHooks());
@@ -73,7 +73,7 @@ class AgentScriptTaskStartServiceTest {
 
     @Test
     void startsDropItemTask() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Hooks hooks = new Hooks();
 
         AgentScriptTaskStartService.start(
@@ -84,8 +84,8 @@ class AgentScriptTaskStartServiceTest {
         assertEquals((short) 3, hooks.dropQuantity.get());
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(character(200), character(100), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(character(200), character(100), null);
     }
 
     private static Character character(int id) {

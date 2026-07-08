@@ -5,7 +5,7 @@ import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class AgentScriptTaskQueueServiceTest {
     @Test
     void queueTaskIsNullSafe() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
 
         AgentScriptTaskQueueService.queueTask(null, AgentTask.stop());
         AgentScriptTaskQueueService.queueTask(entry, null);
@@ -30,7 +30,7 @@ class AgentScriptTaskQueueServiceTest {
 
     @Test
     void clearTasksBumpsEpochAndClearsQueue() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         int before = AgentBotScriptTaskStateRuntime.activityEpoch(entry);
         AgentScriptTaskQueueService.queueTask(entry, AgentTask.stop());
 
@@ -42,7 +42,7 @@ class AgentScriptTaskQueueServiceTest {
 
     @Test
     void queuesMoveToWithCombatMode() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
 
         AgentScriptTaskQueueService.queueMoveTo(entry, target, true, AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY);
@@ -56,7 +56,7 @@ class AgentScriptTaskQueueServiceTest {
 
     @Test
     void queuesMoveThenDropItemInOrder() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
 
         AgentScriptTaskQueueService.queueMoveThenDropItem(entry, target, false, InventoryType.USE, 2000000, (short) 2);
@@ -75,7 +75,7 @@ class AgentScriptTaskQueueServiceTest {
 
     @Test
     void queuesFollowThenDropItemInOrder() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character target = character(300);
 
         AgentScriptTaskQueueService.queueFollowThenDropItem(entry, target, 25, InventoryType.ETC, 4000000, (short) 1);
@@ -92,8 +92,8 @@ class AgentScriptTaskQueueServiceTest {
         assertEquals(4000000, drop.itemId());
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(character(200), character(100), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(character(200), character(100), null);
     }
 
     private static Character character(int id) {

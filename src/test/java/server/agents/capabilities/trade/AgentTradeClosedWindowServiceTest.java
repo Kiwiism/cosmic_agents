@@ -5,7 +5,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentTradeClosedWindowServiceTest {
     @Test
     void botDoneSingleBatchResetsAndRefills() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
         AgentTradeStateService.initializeSequence(entry, "scrolls", 1, true);
@@ -36,7 +36,7 @@ class AgentTradeClosedWindowServiceTest {
 
     @Test
     void botDoneMultiBatchEntersBetweenBatches() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
         AgentTradeStateService.initializeSequence(entry, "scrolls", 1, false);
@@ -58,7 +58,7 @@ class AgentTradeClosedWindowServiceTest {
 
     @Test
     void allItemsAddedReplyCancelledResetsAndRefills() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
         AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
@@ -81,7 +81,7 @@ class AgentTradeClosedWindowServiceTest {
 
     @Test
     void declinedInviteRepliesAndResetsOnly() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
 

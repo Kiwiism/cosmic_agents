@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentNamedCommandTarget;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.Mockito.mock;
 
@@ -31,8 +31,8 @@ class AgentBotCommandBoundaryTest {
 
     @Test
     void commandTargetPreservesEntryAndName() {
-        BotEntry entry = mock(BotEntry.class);
-        AgentNamedCommandTarget<BotEntry> target = new AgentNamedCommandTarget<>(entry, "agent123");
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        AgentNamedCommandTarget<AgentRuntimeEntry> target = new AgentNamedCommandTarget<>(entry, "agent123");
 
         assertEquals(entry, target.entry());
         assertEquals("agent123", target.name());

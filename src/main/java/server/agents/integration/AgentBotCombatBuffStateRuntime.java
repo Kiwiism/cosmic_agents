@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed combat buff/support state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed combat buff/support state.
  */
 public final class AgentBotCombatBuffStateRuntime {
     private AgentBotCombatBuffStateRuntime() {

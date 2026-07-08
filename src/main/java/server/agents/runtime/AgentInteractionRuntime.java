@@ -8,7 +8,7 @@ import server.agents.integration.AgentBotMovementCommandRuntime;
 
 /**
  * Agent-owned public runtime entry points for server integrations that still
- * need legacy BotEntry-backed behavior.
+ * need legacy AgentRuntimeEntry-backed behavior.
  */
 public final class AgentInteractionRuntime {
     private static final Logger log = LoggerFactory.getLogger(AgentInteractionRuntime.class);

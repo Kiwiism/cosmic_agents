@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.util.List;
@@ -18,7 +18,7 @@ class AgentTradeRecipientServiceTest {
     void resolvesOwnerWhenNoExplicitRecipientIsSet() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
 
         assertSame(owner, AgentTradeRecipientService.resolveTradeRecipient(entry, agent));
     }
@@ -27,7 +27,7 @@ class AgentTradeRecipientServiceTest {
     void resolvesExplicitOwnerRecipient() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         when(owner.getId()).thenReturn(42);
         AgentBotPendingTradeStateRuntime.setRecipientId(entry, 42);
 
@@ -40,7 +40,7 @@ class AgentTradeRecipientServiceTest {
         Character owner = mock(Character.class);
         Character mapRecipient = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         when(agent.getMap()).thenReturn(map);
         when(map.getCharacterById(99)).thenReturn(mapRecipient);
         AgentBotPendingTradeStateRuntime.setRecipientId(entry, 99);
@@ -54,7 +54,7 @@ class AgentTradeRecipientServiceTest {
         Character owner = mock(Character.class);
         Character partyRecipient = mock(Character.class);
         MapleMap map = mock(MapleMap.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         when(agent.getMap()).thenReturn(map);
         when(owner.getParty()).thenReturn(mock(net.server.world.Party.class));
         when(owner.getPartyMembersOnline()).thenReturn(List.of(partyRecipient));
@@ -68,7 +68,7 @@ class AgentTradeRecipientServiceTest {
     void returnsNullWhenExplicitRecipientCannotBeFound() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         AgentBotPendingTradeStateRuntime.setRecipientId(entry, 123);
 
         assertNull(AgentTradeRecipientService.resolveTradeRecipient(entry, agent));

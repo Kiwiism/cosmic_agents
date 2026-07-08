@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.ScheduledFuture;
 
@@ -14,7 +14,7 @@ class AgentScheduledTaskRuntimeTest {
     @Test
     void adaptsScheduledTaskCancellation() {
         ScheduledFuture<?> task = mock(ScheduledFuture.class);
-        BotEntry entry = new BotEntry(null, null, task);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, task);
 
         assertFalse(AgentScheduledTaskRuntime.hasScheduledTask(null));
         assertTrue(AgentScheduledTaskRuntime.hasScheduledTask(entry));

@@ -5,7 +5,7 @@ import server.agents.capabilities.trade.AgentManualTradeState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed manual trade invite state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed manual trade invite state.
  */
 public final class AgentBotManualTradeStateRuntime {
     private AgentBotManualTradeStateRuntime() {

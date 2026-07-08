@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentMovementBroadcastStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentMovementBroadcastState state = new AgentMovementBroadcastState();
 
         assertFalse(state.valid());

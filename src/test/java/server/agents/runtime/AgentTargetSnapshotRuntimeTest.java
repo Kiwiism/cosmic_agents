@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -21,7 +21,7 @@ class AgentTargetSnapshotRuntimeTest {
         Character agent = character(200, "Agent", new Point(1, 2));
         Character sibling = character(300, "Sibling", new Point(30, 40));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        BotEntry siblingEntry = new BotEntry(sibling, leader, null);
+        AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
         AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());
@@ -39,7 +39,7 @@ class AgentTargetSnapshotRuntimeTest {
         Character agent = character(200, "Agent", new Point(1, 2));
         Character sibling = character(300, "Sibling", new Point(50, 60));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        BotEntry siblingEntry = new BotEntry(sibling, leader, null);
+        AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, leader, null);
         AgentFormationService.FormationState formation =
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 40, 0);
         AgentRuntimeRegistry.entriesByLeaderId().clear();

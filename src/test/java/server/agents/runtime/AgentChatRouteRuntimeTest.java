@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatIngressService;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -43,7 +43,7 @@ class AgentChatRouteRuntimeTest {
     void delegatesChatThroughAgentIngressHooks() {
         Character leader = mock(Character.class);
         AgentReplyChannel channel = AgentReplyChannel.MAP;
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
 
         try (MockedStatic<AgentChatIngressService> ingress = mockStatic(AgentChatIngressService.class)) {
             AgentChatRouteRuntime.handleChat(

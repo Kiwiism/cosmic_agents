@@ -10,7 +10,7 @@ import static org.mockito.Mockito.mock;
 
 class AgentManualTradeStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentManualTradeState state = new AgentManualTradeState();
 
         assertEquals(0, state.acceptDelayMs());

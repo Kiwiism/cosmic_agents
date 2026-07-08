@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -20,7 +20,7 @@ class AgentGrindModeTickServiceTest {
     void noTargetPathUsesFallbackMovementAndConsumesTick() {
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(mock(MapleMap.class));
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Point agentPosition = new Point(50, 25);
         Point currentTarget = new Point(75, 25);
         Point fallbackTarget = new Point(250, 25);

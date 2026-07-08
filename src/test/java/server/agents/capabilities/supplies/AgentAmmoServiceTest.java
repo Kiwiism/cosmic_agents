@@ -11,7 +11,6 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 import testutil.Items;
 
 import java.util.List;
@@ -31,8 +30,8 @@ class AgentAmmoServiceTest {
         Character owner = mock(Character.class);
         Character requestingBot = mock(Character.class);
         Character donorBot = ammoBot(22, 100000000, 1000);
-        BotEntry entry = new BotEntry(requestingBot, owner, null);
-        BotEntry donorEntry = new BotEntry(donorBot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(requestingBot, owner, null);
+        AgentRuntimeEntry donorEntry = new AgentRuntimeEntry(donorBot, owner, null);
 
         when(owner.getId()).thenReturn(77);
         when(owner.getMapId()).thenReturn(100000000);

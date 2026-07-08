@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotDeathStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -25,7 +25,7 @@ class AgentDeathTickServiceTest {
         MapleMap map = mock(MapleMap.class);
         Character leader = character(100, 1, map, new Point(50, 100));
         Character agent = character(200, 1, map, new Point(10, 100));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point ground = new Point(50, 99);
         AtomicInteger mapChanges = new AtomicInteger();
         AtomicReference<Point> groundedFrom = new AtomicReference<>();
@@ -85,7 +85,7 @@ class AgentDeathTickServiceTest {
         Point leaderPosition = new Point(50, 100);
         Character leader = character(100, 1, leaderMap, leaderPosition);
         Character agent = character(200, 2, agentMap, new Point(10, 100));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AtomicInteger mapChanges = new AtomicInteger();
         AtomicReference<Point> teleportedTo = new AtomicReference<>();
         when(agent.getMaxHp()).thenReturn(123);
@@ -113,7 +113,7 @@ class AgentDeathTickServiceTest {
 
     @Test
     void returnsFalseWhenAgentIsAliveAndDoesNotNeedDeadState() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Counters counters = new Counters();
 
         boolean consumed = AgentDeathTickService.handleDeadTick(
@@ -125,7 +125,7 @@ class AgentDeathTickServiceTest {
 
     @Test
     void entersDeadStateAndConsumesTick() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Counters counters = new Counters();
 
         boolean consumed = AgentDeathTickService.handleDeadTick(
@@ -138,7 +138,7 @@ class AgentDeathTickServiceTest {
 
     @Test
     void consumesTickWhileWaitingForRespawn() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         Counters counters = new Counters();
 
@@ -151,7 +151,7 @@ class AgentDeathTickServiceTest {
 
     @Test
     void runsRespawnWhenDeadWindowIsDue() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         Counters counters = new Counters();
 
@@ -170,8 +170,8 @@ class AgentDeathTickServiceTest {
         return () -> true;
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 
     private static Character character(int id, int mapId, MapleMap map, Point position) {
@@ -183,7 +183,7 @@ class AgentDeathTickServiceTest {
         return character;
     }
 
-    private static Character agent(BotEntry entry) {
+    private static Character agent(AgentRuntimeEntry entry) {
         return entry.bot();
     }
 

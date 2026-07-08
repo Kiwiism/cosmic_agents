@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 class AgentScriptTaskTickServiceTest {
     @Test
     void skipsWhenEntryHasNoAgentCharacter() {
-        BotEntry entry = new BotEntry(null, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, mock(Character.class), null);
         AtomicInteger starts = new AtomicInteger();
 
         AgentScriptTaskTickService.tick(entry, (ignoredEntry, ignoredTask) -> starts.incrementAndGet(), (ignoredEntry, ignoredTask) -> true);
@@ -29,7 +29,7 @@ class AgentScriptTaskTickServiceTest {
 
     @Test
     void activatesAndStartsNextTaskWhenNoneActive() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentTask task = AgentTask.stop();
         AgentBotScriptTaskStateRuntime.queueTask(entry, task);
         List<AgentTask> started = new ArrayList<>();
@@ -42,7 +42,7 @@ class AgentScriptTaskTickServiceTest {
 
     @Test
     void keepsIncompleteActiveTask() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentTask task = AgentTask.grind();
         AgentBotScriptTaskStateRuntime.queueTask(entry, task);
 
@@ -53,7 +53,7 @@ class AgentScriptTaskTickServiceTest {
 
     @Test
     void clearsCompletedTasksAndStartsFollowingQueuedTasksInSameTick() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         AgentTask first = AgentTask.stop();
         AgentTask second = AgentTask.grind();
         AgentBotScriptTaskStateRuntime.queueTask(entry, first);
@@ -66,8 +66,8 @@ class AgentScriptTaskTickServiceTest {
         assertNull(AgentBotScriptTaskStateRuntime.activeTask(entry));
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(character(200), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(character(200), mock(Character.class), null);
     }
 
     private static Character character(int id) {

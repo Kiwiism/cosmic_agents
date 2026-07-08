@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentMovementInputStateTest {
     @Test
-    void defaultsMatchLegacyBotEntryFields() {
+    void defaultsMatchLegacyAgentRuntimeEntryFields() {
         AgentMovementInputState state = new AgentMovementInputState();
 
         assertEquals(0, state.moveDirection());

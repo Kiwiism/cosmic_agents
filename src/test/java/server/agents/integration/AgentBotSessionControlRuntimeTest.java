@@ -3,7 +3,7 @@ package server.agents.integration;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -18,8 +18,8 @@ class AgentBotSessionControlRuntimeTest {
     void primarySessionUsesFirstEntryForLeader() {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(123);
-        BotEntry first = new BotEntry(null, owner, null);
-        BotEntry second = new BotEntry(null, owner, null);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(null, owner, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(null, owner, null);
 
         try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
                      mockStatic(AgentBotSessionLifecycleSideEffects.class)) {

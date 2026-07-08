@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed live leader/anchor state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed live leader/anchor state.
  */
 public final class AgentBotLeaderStateRuntime {
     private AgentBotLeaderStateRuntime() {

@@ -3,7 +3,7 @@ package server.agents.capabilities.looting;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -18,7 +18,7 @@ class AgentGrindLootTargetServiceTest {
         MapleMap map = mock(MapleMap.class);
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem loot = mockLoot(7, false);
         when(map.getMapObject(7)).thenReturn(loot);
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
@@ -33,7 +33,7 @@ class AgentGrindLootTargetServiceTest {
         MapleMap map = mock(MapleMap.class);
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(map);
-        BotEntry pickedEntry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry pickedEntry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem pickedLoot = mockLoot(7, true);
         AgentBotGrindLootStateRuntime.setGrindLootTarget(pickedEntry, pickedLoot);
 
@@ -41,7 +41,7 @@ class AgentGrindLootTargetServiceTest {
 
         assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(pickedEntry));
 
-        BotEntry staleEntry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry staleEntry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem staleLoot = mockLoot(8, false);
         AgentBotGrindLootStateRuntime.setGrindLootTarget(staleEntry, staleLoot);
         when(map.getMapObject(8)).thenReturn(null);
@@ -54,7 +54,7 @@ class AgentGrindLootTargetServiceTest {
     @Test
     void refreshDoesNothingWhenAiTickIsNotDue() {
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem existingLoot = mockLoot(9, false);
         AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, existingLoot);
 

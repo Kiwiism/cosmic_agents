@@ -9,7 +9,7 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentPotionCheckRequestRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +60,7 @@ class AgentPotionCheckRequestServiceTest {
     void runtimeRequestsPotionCheckSoonForActiveAgentEntry() {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         int oldDelay = AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS;
 
         when(leader.getId()).thenReturn(77);

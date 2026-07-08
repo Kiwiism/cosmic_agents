@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentNavigationEdgeStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentNavigationEdgeState state = new AgentNavigationEdgeState();
 
         assertFalse(state.hasActiveEdge());

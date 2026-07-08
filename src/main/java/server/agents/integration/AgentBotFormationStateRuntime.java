@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed formation spacing state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed formation spacing state.
  */
 public final class AgentBotFormationStateRuntime {
     private AgentBotFormationStateRuntime() {

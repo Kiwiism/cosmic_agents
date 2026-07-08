@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 import java.awt.Point;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class AgentAoeRepositionServiceTest {
     @Test
     void existingLiveAnchorIsReusedUntilArrivalOrExpiry() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Point anchor = new Point(300, 100);
         AgentBotAoeRepositionStateRuntime.setAnchor(
                 entry,
@@ -43,7 +43,7 @@ class AgentAoeRepositionServiceTest {
 
     @Test
     void deadTargetClearsExistingAnchor() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentBotAoeRepositionStateRuntime.setAnchor(
                 entry,
                 new Point(300, 100),
@@ -64,7 +64,7 @@ class AgentAoeRepositionServiceTest {
 
     @Test
     void newAnchorFromPlannerIsStoredWithDeadline() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Monster target = mock(Monster.class);
         AgentAttackPlan plan = mock(AgentAttackPlan.class);

@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentGrindModeTickService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentGrindModeRuntimeTest {
     @Test
     void defaultGrindModeUsesRuntimeLootRadius() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Point agentPosition = new Point(10, 20);
         Point targetPosition = new Point(30, 40);
@@ -58,7 +58,7 @@ class AgentGrindModeRuntimeTest {
 
     @Test
     void delegatesGrindModeThroughAgentRuntimeHookBundle() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Point agentPosition = new Point(10, 20);
         Point targetPosition = new Point(30, 40);

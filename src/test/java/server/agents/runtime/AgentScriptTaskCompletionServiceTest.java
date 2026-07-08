@@ -5,7 +5,7 @@ import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 class AgentScriptTaskCompletionServiceTest {
     @Test
     void moveToCompletesWhenMoveTargetCleared() {
-        BotEntry entry = entryAt(100000000, new Point(0, 0));
+        AgentRuntimeEntry entry = entryAt(100000000, new Point(0, 0));
 
         assertTrue(AgentScriptTaskCompletionService.isComplete(
                 entry, AgentTask.moveTo(new Point(500, 0), false), 50, ignored -> null));
@@ -25,7 +25,7 @@ class AgentScriptTaskCompletionServiceTest {
 
     @Test
     void moveToCompletesWhenAgentIsNearTarget() {
-        BotEntry entry = entryAt(100000000, new Point(100, 100));
+        AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(110, 105), false);
 
         assertTrue(AgentScriptTaskCompletionService.isComplete(
@@ -34,7 +34,7 @@ class AgentScriptTaskCompletionServiceTest {
 
     @Test
     void preciseMoveToUsesLegacyEightPixelDistance() {
-        BotEntry entry = entryAt(100000000, new Point(100, 100));
+        AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(109, 100), true);
 
         assertFalse(AgentScriptTaskCompletionService.isComplete(
@@ -44,7 +44,7 @@ class AgentScriptTaskCompletionServiceTest {
     @Test
     void followUntilNearRequiresResolvedTargetSameMapAndNear() {
         Character target = character(300, 100000000, new Point(120, 100));
-        BotEntry entry = entryAt(100000000, new Point(100, 100));
+        AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
 
         assertTrue(AgentScriptTaskCompletionService.isComplete(
                 entry, AgentTask.followUntilNear(target, 25), 50, ignored -> target));
@@ -53,7 +53,7 @@ class AgentScriptTaskCompletionServiceTest {
     @Test
     void followUntilNearIsIncompleteWhenTargetMissingFarOrDifferentMap() {
         Character target = character(300, 100000001, new Point(100, 100));
-        BotEntry entry = entryAt(100000000, new Point(100, 100));
+        AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
 
         assertFalse(AgentScriptTaskCompletionService.isComplete(
                 entry, AgentTask.followUntilNear(target, 25), 50, ignored -> null));
@@ -67,7 +67,7 @@ class AgentScriptTaskCompletionServiceTest {
 
     @Test
     void nonWaitingTasksCompleteImmediately() {
-        BotEntry entry = entryAt(100000000, new Point(100, 100));
+        AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
         Character target = character(300, 100000000, new Point(100, 100));
 
         assertTrue(AgentScriptTaskCompletionService.isComplete(entry, AgentTask.followOwner(), 50, ignored -> target));
@@ -78,8 +78,8 @@ class AgentScriptTaskCompletionServiceTest {
                 entry, AgentTask.dropItem(InventoryType.USE, 2000000, (short) 1), 50, ignored -> target));
     }
 
-    private static BotEntry entryAt(int mapId, Point position) {
-        return new BotEntry(character(200, mapId, position), mock(Character.class), null);
+    private static AgentRuntimeEntry entryAt(int mapId, Point position) {
+        return new AgentRuntimeEntry(character(200, mapId, position), mock(Character.class), null);
     }
 
     private static Character character(int id, int mapId, Point position) {

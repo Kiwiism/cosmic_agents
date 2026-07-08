@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentScriptTaskRuntimeTest {
     @Test
     void defaultTickUsesMovementStopDistance() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         AgentTask task = AgentTask.stop();
         List<String> calls = new ArrayList<>();
 
@@ -29,7 +29,7 @@ class AgentScriptTaskRuntimeTest {
                             any()))
                     .thenAnswer(invocation -> {
                         @SuppressWarnings("unchecked")
-                        java.util.function.BiPredicate<BotEntry, AgentTask> isComplete = invocation.getArgument(2);
+                        java.util.function.BiPredicate<AgentRuntimeEntry, AgentTask> isComplete = invocation.getArgument(2);
                         isComplete.test(entry, task);
                         calls.add("tick");
                         return null;
@@ -51,7 +51,7 @@ class AgentScriptTaskRuntimeTest {
 
     @Test
     void delegatesTickThroughAgentScriptTaskServices() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         AgentTask task = AgentTask.stop();
         List<String> calls = new ArrayList<>();
 
@@ -63,9 +63,9 @@ class AgentScriptTaskRuntimeTest {
                             any()))
                     .thenAnswer(invocation -> {
                         @SuppressWarnings("unchecked")
-                        java.util.function.BiConsumer<BotEntry, AgentTask> startTask = invocation.getArgument(1);
+                        java.util.function.BiConsumer<AgentRuntimeEntry, AgentTask> startTask = invocation.getArgument(1);
                         @SuppressWarnings("unchecked")
-                        java.util.function.BiPredicate<BotEntry, AgentTask> isComplete = invocation.getArgument(2);
+                        java.util.function.BiPredicate<AgentRuntimeEntry, AgentTask> isComplete = invocation.getArgument(2);
                         startTask.accept(entry, task);
                         isComplete.test(entry, task);
                         calls.add("tick");

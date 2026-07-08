@@ -10,7 +10,7 @@ import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -42,7 +42,7 @@ class AgentOfferServiceTest {
     void requestBestUpgradeBusyReplyUsesAgentReplyAdapter() {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentBotPendingActionStateRuntime.setPendingAction(entry, "trade");
 
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
@@ -56,7 +56,7 @@ class AgentOfferServiceTest {
     void notifyOwnerGainedEquipSkipsWhenOfferOwnerIsIdle() {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         Item item = new Item(1002000, (short) 1, (short) 1);
 
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class);
@@ -74,7 +74,7 @@ class AgentOfferServiceTest {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(100);
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentBotOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, true);
 
@@ -93,7 +93,7 @@ class AgentOfferServiceTest {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(100);
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentBotOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, false);
 
@@ -114,7 +114,7 @@ class AgentOfferServiceTest {
         Character speaker = mock(Character.class);
         when(owner.getId()).thenReturn(100);
         when(speaker.getId()).thenReturn(200);
-        BotEntry entry = new BotEntry(bot, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentBotOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 200, Long.MAX_VALUE, false);
 

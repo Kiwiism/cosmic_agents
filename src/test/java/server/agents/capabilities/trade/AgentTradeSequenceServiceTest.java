@@ -7,7 +7,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeSequenceServiceTest {
     @Test
     void missingRecipientRepliesWithoutOpeningBatch() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicInteger opened = new AtomicInteger();
 
         try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
@@ -46,7 +46,7 @@ class AgentTradeSequenceServiceTest {
 
     @Test
     void recipientInitializesSequenceAndOpensBatch() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character recipient = mock(Character.class);
         Item item = item(2040000);
         AtomicReference<List<Item>> openedItems = new AtomicReference<>();

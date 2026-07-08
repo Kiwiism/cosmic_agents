@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotMakerRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.lang.reflect.Field;
 import java.util.Set;
@@ -18,7 +18,7 @@ class AgentMakerServiceTest {
     void makeCrystalsBusyReplyUsesAgentReplyAdapter() throws Exception {
         Character bot = mock(Character.class);
         when(bot.getId()).thenReturn(100);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         Set<Integer> active = activeMakerSet();
         active.add(100);
 
@@ -35,7 +35,7 @@ class AgentMakerServiceTest {
     void disassembleTrashBusyReplyUsesAgentReplyAdapter() throws Exception {
         Character bot = mock(Character.class);
         when(bot.getId()).thenReturn(200);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         Set<Integer> active = activeMakerSet();
         active.add(200);
 

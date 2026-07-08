@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -22,7 +22,7 @@ class AgentMovementOnlyStepRuntimeTest {
     @Test
     void returnsFalseWithoutAgent() {
         boolean runAiTick = AgentMovementOnlyStepRuntime.stepMovementOnly(
-                new BotEntry(null, mock(Character.class), null),
+                new AgentRuntimeEntry(null, mock(Character.class), null),
                 1_000L,
                 config());
 
@@ -33,7 +33,7 @@ class AgentMovementOnlyStepRuntimeTest {
     void preparesTickUpdatesLeaderMotionAndRunsMovementOnlyStep() {
         Character leader = character(100, "Leader", new Point(10, 20));
         Character agent = character(200, "Agent", new Point(1, 2));
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentTargetSnapshot snapshot = new AgentTargetSnapshot(
                 AgentFormationService.defaultStagger(60, 120),
                 new Point(10, 20),

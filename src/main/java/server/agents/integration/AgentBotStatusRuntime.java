@@ -9,7 +9,7 @@ import client.Character;
 import java.awt.Point;
 
 /**
- * Temporary Agent-owned bridge from legacy BotEntry status fields to Agent
+ * Temporary Agent-owned bridge from Agent runtime status fields to Agent
  * chat/status runtime state interfaces.
  */
 public final class AgentBotStatusRuntime {

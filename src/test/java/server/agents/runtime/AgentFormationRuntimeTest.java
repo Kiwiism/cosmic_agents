@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ class AgentFormationRuntimeTest {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
         when(leader.getId()).thenReturn(441);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
 
         AgentFormationRuntime.setFormationState(
                 leader,

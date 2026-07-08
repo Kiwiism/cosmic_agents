@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntFunction;
@@ -19,7 +19,7 @@ class AgentLeaderSessionServiceTest {
     @Test
     void keepsCachedLeaderWhenItMatchesAndIsOnline() {
         Character leader = character(100, true);
-        BotEntry entry = new BotEntry(character(200, true), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
         IntFunction<Character> lookup = mockLookup(character(999, true));
 
         Character resolved = AgentLeaderSessionService.resolveTickLeader(entry, leader.getId(), lookup);
@@ -31,7 +31,7 @@ class AgentLeaderSessionServiceTest {
     @Test
     void refreshesMissingLeader() {
         Character refreshed = character(100, true);
-        BotEntry entry = new BotEntry(character(200, true), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), null, null);
 
         Character resolved = AgentLeaderSessionService.resolveTickLeader(entry, refreshed.getId(), id -> refreshed);
 
@@ -43,7 +43,7 @@ class AgentLeaderSessionServiceTest {
     void refreshesMismatchedLeader() {
         Character oldLeader = character(100, true);
         Character refreshed = character(101, true);
-        BotEntry entry = new BotEntry(character(200, true), oldLeader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), oldLeader, null);
 
         Character resolved = AgentLeaderSessionService.resolveTickLeader(entry, refreshed.getId(), id -> refreshed);
 
@@ -55,7 +55,7 @@ class AgentLeaderSessionServiceTest {
     void refreshesOfflineLeader() {
         Character offlineLeader = character(100, false);
         Character refreshed = character(100, true);
-        BotEntry entry = new BotEntry(character(200, true), offlineLeader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), offlineLeader, null);
 
         Character resolved = AgentLeaderSessionService.resolveTickLeader(entry, refreshed.getId(), id -> refreshed);
 
@@ -66,7 +66,7 @@ class AgentLeaderSessionServiceTest {
     @Test
     void passesRequestedLeaderIdToLookupAndCachesNullWhenNotFound() {
         Character offlineLeader = character(100, false);
-        BotEntry entry = new BotEntry(character(200, true), offlineLeader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), offlineLeader, null);
         AtomicInteger requestedId = new AtomicInteger();
 
         Character resolved = AgentLeaderSessionService.resolveTickLeader(entry, 123, id -> {

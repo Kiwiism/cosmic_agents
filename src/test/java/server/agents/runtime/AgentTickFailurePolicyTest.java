@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,7 +40,7 @@ class AgentTickFailurePolicyTest {
     void clearsVolatileActionsAndWarnsOnFirstFailure() {
         Character agent = character("Alpha", 100000000);
         Character leader = character("Leader", 100000000);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop");
         AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equip");
         AgentBotGrindTargetStateRuntime.setTarget(entry, mock(server.life.Monster.class));
@@ -69,7 +69,7 @@ class AgentTickFailurePolicyTest {
 
     @Test
     void forcesIdleOnSecondFailureAndDisablesOnThirdFailure() {
-        BotEntry entry = new BotEntry(character("Alpha", 1), character("Leader", 1), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character("Alpha", 1), character("Leader", 1), null);
         AtomicInteger forceIdle = new AtomicInteger();
         AtomicInteger disable = new AtomicInteger();
 
@@ -104,7 +104,7 @@ class AgentTickFailurePolicyTest {
 
     @Test
     void escalatesFromWarningToIdleToDisableWithinWindow() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
 
         AgentTickFailurePolicy.Decision first = AgentTickFailurePolicy.recordFailure(entry, 1_000L);
         AgentTickFailurePolicy.Decision second = AgentTickFailurePolicy.recordFailure(entry, 2_000L);
@@ -123,7 +123,7 @@ class AgentTickFailurePolicyTest {
 
     @Test
     void resetsFailures() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         AgentTickFailurePolicy.recordFailure(entry, 1_000L);
 
         AgentTickFailurePolicy.resetFailures(entry);

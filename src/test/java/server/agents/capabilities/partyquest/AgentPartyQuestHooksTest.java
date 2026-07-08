@@ -3,7 +3,7 @@ package server.agents.capabilities.partyquest;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPqRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 class AgentPartyQuestHooksTest {
     @Test
     void requiresGrindOnlyDuringKpqStageOneGrinding() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character bot = mock(Character.class);
         when(bot.getMapId()).thenReturn(103000800);
 
@@ -26,7 +26,7 @@ class AgentPartyQuestHooksTest {
 
     @Test
     void requiresFollowInLaterKpqStageMaps() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character bot = mock(Character.class);
 
         when(bot.getMapId()).thenReturn(103000801);
@@ -38,7 +38,7 @@ class AgentPartyQuestHooksTest {
 
     @Test
     void skipsCouponLootAfterStageOneGrinding() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         assertFalse(AgentPartyQuestHooks.shouldSkipCouponLoot(entry));
 

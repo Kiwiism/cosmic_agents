@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentLocalOpportunityAttackRuntimeTest {
     @Test
     void convertsCapabilityResultForLiveModeRuntime() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Point agentPosition = new Point(10, 20);
         Point movementTarget = new Point(30, 40);

@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed sentry/farm anchor state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed sentry/farm anchor state.
  */
 public final class AgentBotFarmAnchorStateRuntime {
     private AgentBotFarmAnchorStateRuntime() {

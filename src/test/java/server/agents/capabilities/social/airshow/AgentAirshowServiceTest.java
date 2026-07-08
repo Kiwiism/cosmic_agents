@@ -18,13 +18,13 @@ class AgentAirshowServiceTest {
 
         try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
                      mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntry(123, "alpha"))
+            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getAgentEntry(123, "alpha"))
                     .thenReturn(null);
 
             String result = AgentAirshowService.start(owner, "alpha");
 
             assertEquals("No active owned bot named 'alpha'.", result);
-            lifecycle.verify(() -> AgentBotSessionLifecycleSideEffects.getBotEntry(123, "alpha"));
+            lifecycle.verify(() -> AgentBotSessionLifecycleSideEffects.getAgentEntry(123, "alpha"));
         }
     }
 }

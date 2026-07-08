@@ -24,7 +24,7 @@ public final class AgentBotSessionLifecycleSideEffects {
         return AgentRuntimeRegistry.agentEntriesForLeader(ownerCharId);
     }
 
-    public static AgentRuntimeEntry getBotEntry(int ownerCharId, String agentName) {
+    public static AgentRuntimeEntry getAgentEntry(int ownerCharId, String agentName) {
         return AgentRuntimeRegistry.findByName(ownerCharId, agentName);
     }
 

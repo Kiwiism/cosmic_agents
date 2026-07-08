@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeMesoAddServiceTest {
     @Test
     void noPendingMesoDoesNothing() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -37,7 +37,7 @@ class AgentTradeMesoAddServiceTest {
 
     @Test
     void insufficientMesoCancels() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -59,7 +59,7 @@ class AgentTradeMesoAddServiceTest {
 
     @Test
     void enoughMesoAddsMesoAndSetsDelay() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean cancelled = new AtomicBoolean(false);

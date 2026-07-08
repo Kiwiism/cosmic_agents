@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 class AgentTradeBatchServiceTest {
     @Test
     void missingRecipientCancelsWithoutInitializingBatch() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicBoolean cancelled = new AtomicBoolean(false);
 
         AgentTradeBatchService.openBatch(
@@ -40,7 +40,7 @@ class AgentTradeBatchServiceTest {
 
     @Test
     void availableRecipientInitializesBatchAndInvites() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Character recipient = mock(Character.class);
         Item item = item(2000000);
@@ -75,7 +75,7 @@ class AgentTradeBatchServiceTest {
 
     @Test
     void supplyShareCategorySkipsInviteAnnouncement() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentTradeStateService.initializeSequence(entry, "pot_share", 22, true);
 
         AgentTradeBatchService.openBatch(

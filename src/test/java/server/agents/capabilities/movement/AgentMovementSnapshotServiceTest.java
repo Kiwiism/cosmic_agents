@@ -4,7 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -20,7 +20,7 @@ class AgentMovementSnapshotServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         when(agent.getStance()).thenReturn(CharacterStance.STAND_LEFT_STANCE);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
         AgentBotMovementStateRuntime.setMovementVelocity(entry, 4, -2);
 

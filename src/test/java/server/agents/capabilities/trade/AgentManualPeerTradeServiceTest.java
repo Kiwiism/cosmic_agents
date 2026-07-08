@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -100,8 +100,8 @@ class AgentManualPeerTradeServiceTest {
         assertSame(owner, callbacks.refillOwner.get());
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), null, null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), null, null);
     }
 
     private static Character owner(int id) {

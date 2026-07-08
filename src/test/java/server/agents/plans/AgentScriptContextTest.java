@@ -5,7 +5,6 @@ import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.bots.BotEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicReference;
@@ -120,7 +119,7 @@ class AgentScriptContextTest {
 
     private static AgentScriptContext context() {
         Character owner = character(100);
-        BotEntry entry = new BotEntry(character(200), owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200), owner, null);
         return new AgentScriptContext(entry, entry.bot(), owner, (ignoredEntry, ignoredPoint, ignoredMaxPathCost,
                 ignoredFallbackRangeX, ignoredFallbackRangeY) -> false, (ignoredEntry, ignoredType, ignoredItemId,
                 ignoredQuantity) -> false);

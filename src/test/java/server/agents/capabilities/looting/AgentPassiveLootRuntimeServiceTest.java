@@ -2,7 +2,7 @@ package server.agents.capabilities.looting;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -41,8 +41,8 @@ class AgentPassiveLootRuntimeServiceTest {
         verify(agent, org.mockito.Mockito.never()).getMap();
     }
 
-    private static BotEntry entry(Character agent) {
-        return new BotEntry(agent, null, null);
+    private static AgentRuntimeEntry entry(Character agent) {
+        return new AgentRuntimeEntry(agent, null, null);
     }
 
     private static AgentPassiveLootRuntimeService.RuntimeCallbacks callbacks(boolean hasLootInhibit,

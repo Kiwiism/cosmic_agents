@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ class AgentFollowTargetRuntimeTest {
         Character leader = character(1, "Leader", true);
         Character sibling = character(2, "Sibling", true);
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId())
-                .add(new BotEntry(sibling, leader, null));
+                .add(new AgentRuntimeEntry(sibling, leader, null));
 
         assertEquals(List.of(leader, sibling), AgentFollowTargetRuntime.followTargetCandidates(leader));
         assertSame(sibling, AgentFollowTargetRuntime.resolveFollowTarget(leader, "sib"));

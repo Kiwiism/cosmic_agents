@@ -6,7 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.integration.AgentBotInventoryStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiFunction;
 
@@ -23,7 +23,7 @@ class AgentInventoryTransferServiceTest {
     @Test
     void executeTradeChoiceStartsTradeTransfer() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         try (MockedStatic<AgentTradeTransferRouter> router = mockStatic(AgentTradeTransferRouter.class)) {
             AgentInventoryTransferService.executeChoice("scrolls", true, entry, bot);
@@ -41,7 +41,7 @@ class AgentInventoryTransferServiceTest {
     @Test
     void executeDropChoiceDropsCategoryAndInhibitsLoot() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         try (MockedStatic<AgentInventoryDropService> drops = mockStatic(AgentInventoryDropService.class)) {
             AgentInventoryTransferService.executeChoice("scrolls", false, entry, bot);
@@ -59,7 +59,7 @@ class AgentInventoryTransferServiceTest {
     @Test
     void startTradeTransferRoutesThroughAgentTradeRouter() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         when(bot.getTrade()).thenReturn(null);
 
         try (MockedStatic<AgentTradeTransferRouter> router = mockStatic(AgentTradeTransferRouter.class)) {
@@ -78,7 +78,7 @@ class AgentInventoryTransferServiceTest {
     @Test
     void countsMesoTransfersThroughAgentBoundary() {
         Character bot = mock(Character.class);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         org.mockito.Mockito.when(bot.getMeso()).thenReturn(1_500);
 
         assertEquals(true, AgentInventoryTransferService.hasTransferableItems("mesos:1000", entry, bot));

@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed death/respawn window state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed death/respawn window state.
  */
 public final class AgentBotDeathStateRuntime {
     private AgentBotDeathStateRuntime() {

@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed consumable buff state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed consumable buff state.
  */
 public final class AgentBotBuffStateRuntime {
     private AgentBotBuffStateRuntime() {

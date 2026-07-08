@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.TimerManager;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -32,8 +32,8 @@ class AgentOwnerItemNotificationServiceTest {
 
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.entriesByLeaderId().put(owner.getId(), List.of(
-                new BotEntry(sourceAgent, owner, null),
-                new BotEntry(observerAgent, owner, null)));
+                new AgentRuntimeEntry(sourceAgent, owner, null),
+                new AgentRuntimeEntry(observerAgent, owner, null)));
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceAgent);
@@ -49,7 +49,7 @@ class AgentOwnerItemNotificationServiceTest {
         Character owner = mock(Character.class);
         Character observerAgent = mock(Character.class);
         Character sourcePlayer = mock(Character.class);
-        BotEntry observerEntry = new BotEntry(observerAgent, owner, null);
+        AgentRuntimeEntry observerEntry = new AgentRuntimeEntry(observerAgent, owner, null);
         Item tradedEquip = new Item(1002000, (short) 1, (short) 1);
         TimerManager inlineTimer = mock(TimerManager.class);
 

@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.mock;
 class AgentIdleModeTickServiceTest {
     @Test
     void returnsFalseWhenIdleTickFallsThrough() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         AtomicInteger idleTicks = new AtomicInteger();
 
@@ -32,7 +32,7 @@ class AgentIdleModeTickServiceTest {
 
     @Test
     void returnsTrueWhenIdleTickConsumes() {
-        BotEntry entry = new BotEntry(mock(Character.class), mock(Character.class), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
 
         boolean consumed = AgentIdleModeTickService.tickIdleMode(

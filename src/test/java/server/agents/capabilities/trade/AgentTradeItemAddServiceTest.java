@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeItemAddServiceTest {
     @Test
     void noRemainingItemReturnsFalseWithoutMutatingIndex() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, List.of(), 0);
@@ -48,7 +48,7 @@ class AgentTradeItemAddServiceTest {
 
     @Test
     void changedSlotStillConsumesAttemptAndSkipsTradeAdd() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         Inventory inventory = mock(Inventory.class);
@@ -73,7 +73,7 @@ class AgentTradeItemAddServiceTest {
 
     @Test
     void successfulAddCopiesItemRemovesInventoryAndSendsPackets() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Character recipient = mock(Character.class);
         Trade trade = mock(Trade.class);

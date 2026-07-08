@@ -3,7 +3,7 @@ package server.agents.capabilities.dialogue;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,8 +105,8 @@ class AgentChatIngressServiceTest {
         return order.subList(0, order.indexOf(route) + 1);
     }
 
-    private static AgentChatIngressService.Hooks<BotEntry> hooks(String handledRoute,
-                                                       List<BotEntry> entries,
+    private static AgentChatIngressService.Hooks<AgentRuntimeEntry> hooks(String handledRoute,
+                                                       List<AgentRuntimeEntry> entries,
                                                        List<String> calls) {
         return new AgentChatIngressService.Hooks<>(
                 (leader, message) -> route("pending", handledRoute, calls),
@@ -131,9 +131,9 @@ class AgentChatIngressServiceTest {
         return route.equals(handledRoute);
     }
 
-    private static List<BotEntry> entries() {
+    private static List<AgentRuntimeEntry> entries() {
         Character leader = character(1);
-        return List.of(new BotEntry(character(2), leader, null));
+        return List.of(new AgentRuntimeEntry(character(2), leader, null));
     }
 
     private static Character character(int id) {

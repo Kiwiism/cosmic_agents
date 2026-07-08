@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.plans.AgentTask;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -20,10 +20,10 @@ class AgentScriptTaskExecutionServiceTest {
         Character leader = character(100, 100000000, new Point(0, 0), true);
         Character agent = character(200, 100000000, new Point(0, 0), true);
         Character sibling = character(300, 100000000, new Point(20, 0), true);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(sibling, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(sibling, leader, null));
 
         try (MockedStatic<AgentBotMovementCommandRuntime> movement =
                      mockStatic(AgentBotMovementCommandRuntime.class)) {
@@ -40,10 +40,10 @@ class AgentScriptTaskExecutionServiceTest {
         Character leader = character(100, 100000000, new Point(0, 0), true);
         Character agent = character(200, 100000000, new Point(0, 0), true);
         Character sibling = character(300, 100000000, new Point(20, 0), true);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(sibling, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(sibling, leader, null));
 
         try {
             assertTrue(AgentScriptTaskExecutionService.isComplete(

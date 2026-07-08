@@ -7,7 +7,6 @@ import client.inventory.Item;
 import constants.id.ItemId;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -108,8 +107,8 @@ class AgentPassiveLootServiceTest {
         assertSame(owner, callbacks.pickupCharacter.get());
     }
 
-    private static BotEntry entry(Character agent) {
-        return new BotEntry(agent, null, null);
+    private static AgentRuntimeEntry entry(Character agent) {
+        return new AgentRuntimeEntry(agent, null, null);
     }
 
     private static Character agentOnMap() {

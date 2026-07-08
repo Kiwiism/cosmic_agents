@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 class AgentManualTradeRuntimeServiceTest {
     @Test
     void activeTradeSequenceSuppressesManualTradeInspection() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         AtomicBoolean activeSequenceChecked = new AtomicBoolean();
 
@@ -31,7 +31,7 @@ class AgentManualTradeRuntimeServiceTest {
 
     @Test
     void missingManualTradeStopsBeforeOwnerTradeInspection() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
         when(agent.getTrade()).thenReturn(null);

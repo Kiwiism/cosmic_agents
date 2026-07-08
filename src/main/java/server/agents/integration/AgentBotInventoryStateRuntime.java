@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.util.function.IntUnaryOperator;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed inventory and loot cooldown state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed inventory and loot cooldown state.
  */
 public final class AgentBotInventoryStateRuntime {
     private AgentBotInventoryStateRuntime() {

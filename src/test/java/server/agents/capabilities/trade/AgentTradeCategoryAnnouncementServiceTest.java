@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import org.junit.jupiter.api.Test;
 import server.Trade;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.verify;
 class AgentTradeCategoryAnnouncementServiceTest {
     @Test
     void noMessageDoesNothing() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
 
         boolean handled = AgentTradeCategoryAnnouncementService.announceBeforeFirstItem(entry, trade, () -> 600);
@@ -27,7 +27,7 @@ class AgentTradeCategoryAnnouncementServiceTest {
 
     @Test
     void nonFirstItemDoesNothing() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, java.util.List.of(), 0);
         AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "reserved");
@@ -42,7 +42,7 @@ class AgentTradeCategoryAnnouncementServiceTest {
 
     @Test
     void firstItemWithMessageChatsAndSetsDelay() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, java.util.List.of(), 0);
         AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "reserved");

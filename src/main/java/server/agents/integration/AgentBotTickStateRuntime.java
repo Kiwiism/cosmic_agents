@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed tick and heartbeat
+ * Agent-owned adapter for AgentRuntimeEntry-backed tick and heartbeat
  * metadata.
  */
 public final class AgentBotTickStateRuntime {

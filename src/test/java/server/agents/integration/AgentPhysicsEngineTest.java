@@ -1,0 +1,858 @@
+package server.agents.integration;
+
+import server.agents.runtime.AgentRuntimeEntry;
+
+import server.agents.integration.AgentBotClimbStateRuntime;
+
+import server.agents.integration.AgentBotMovementStateRuntime;
+
+import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.movement.AgentAirbornePhysicsService;
+import server.agents.capabilities.movement.AgentAirborneStepResult;
+import server.agents.capabilities.movement.AgentGroundCollisionService;
+import server.agents.capabilities.movement.AgentGroundMotion;
+import server.agents.capabilities.movement.AgentGroundPhysicsService;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentJumpLanding;
+import server.agents.capabilities.movement.AgentJumpProbeService;
+import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentMovementPacketSnapshot;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementProfile;
+import server.agents.capabilities.movement.AgentMovementSnapshotService;
+import server.agents.capabilities.movement.AgentMotionTimerService;
+import server.agents.capabilities.movement.AgentQueuedMovementActionService;
+import server.agents.capabilities.movement.AgentRopeMovementService;
+
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+
+import server.agents.capabilities.navigation.AgentNavigationMapLoader;
+import server.agents.capabilities.navigation.AgentNavigationPhysicsService;
+
+import client.Character;
+import constants.game.CharacterStance;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import server.maps.MapleMap;
+import server.maps.Foothold;
+import server.maps.Rope;
+
+import java.awt.*;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class AgentPhysicsEngineTest {
+    private static final Supplier<MapleMap> henesysS = lazyMap(100000000);
+    private static final Supplier<MapleMap> elliniaWeaponStoreS = lazyMap(101000001);
+    private static final Supplier<MapleMap> kerningS = lazyMap(103000000);
+    private static final Supplier<MapleMap> kerningPharmacyS = lazyMap(103000002);
+    private static final Supplier<MapleMap> kpqS1S = lazyMap(103000800);
+    private static final Supplier<MapleMap> mushroomShrineS = lazyMap(800000000);
+    private static final Supplier<MapleMap> sleepyForestS = lazyMap(105040400);
+
+    private static MapleMap henesys() { return henesysS.get(); }
+    private static MapleMap elliniaWeaponStore() { return elliniaWeaponStoreS.get(); }
+    private static MapleMap kerning() { return kerningS.get(); }
+    private static MapleMap kerningPharmacy() { return kerningPharmacyS.get(); }
+    private static MapleMap kpqS1() { return kpqS1S.get(); }
+    private static MapleMap mushroomShrine() { return mushroomShrineS.get(); }
+    private static MapleMap sleepyForest() { return sleepyForestS.get(); }
+
+    private static Supplier<MapleMap> lazyMap(int mapId) {
+        Supplier<MapleMap> delegate = () -> AgentNavigationMapLoader.loadMapGeometry(mapId);
+        return new Supplier<>() {
+            private volatile MapleMap value;
+            @Override public MapleMap get() {
+                MapleMap v = value;
+                if (v != null) return v;
+                synchronized (this) {
+                    if (value == null) value = delegate.get();
+                    return value;
+                }
+            }
+        };
+    }
+
+    @BeforeAll
+    static void initWzPath() {
+        System.setProperty("wz-path", Path.of("wz").toAbsolutePath().toString());
+    }
+
+    @Test
+    void shouldPreserveAgentMovementPhysicsConfigValues() {
+        assertEquals(50, AgentMovementPhysicsConfig.configuredMovementTickMs());
+        assertEquals(16, AgentMovementPhysicsConfig.configuredMaxSnapDrop());
+        assertEquals(26, AgentMovementPhysicsConfig.configuredMaxSlopeUp());
+        assertEquals(8, AgentMovementPhysicsConfig.configuredRopeGrabX());
+    }
+
+    @Test
+    void shouldSimulateKnownHenesysVerticalJumpLanding() {
+        AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(henesys(), new Point(1080, 334), 0);
+
+        assertNotNull(landing);
+        assertEquals(new Point(1080, 275), landing.point());
+    }
+
+    @Test
+    void shouldTreatNearbySyntheticRopeAsReachableAndFarOffsetAsUnreachable() {
+        MapleMap map = createEmptyTestMap(910000101);
+        Rope rope = new Rope(100, 40, 160, false);
+        map.addRope(rope);
+
+        Point nearPoint = new Point(rope.x() - AgentMovementKinematicsService.walkStep(map), rope.bottomY());
+        Point farPoint = new Point(rope.x() - AgentMovementKinematicsService.maxJumpHorizontalTravel(map, AgentMovementProfile.base()) - 50, rope.bottomY());
+
+        assertTrue(AgentJumpProbeService.canReachRopeFromGround(map, nearPoint, rope));
+        assertFalse(AgentJumpProbeService.canReachRopeFromGround(map, farPoint, rope));
+    }
+
+    @Test
+    void shouldSimulateRopeToRopeGrabAtActualCatchY() {
+        MapleMap map = createEmptyTestMap(910000001);
+        Rope sourceRope = new Rope(0, 100, 200, false);
+        map.addRope(sourceRope);
+        Point jumpStart = new Point(sourceRope.x(), 160);
+        int stepX = AgentMovementKinematicsService.walkStep(map);
+
+        Rope targetRope = null;
+        Point ropeGrab = null;
+        for (int targetX = stepX; targetX <= AgentMovementKinematicsService.maxRopeJumpHorizontalTravel(map, AgentMovementProfile.base()); targetX += stepX) {
+            Rope candidate = new Rope(targetX, 120, 220, false);
+            Point candidateGrab = AgentJumpProbeService.simulateRopeJumpGrab(
+                    map, jumpStart, stepX, candidate, AgentMovementProfile.base());
+            if (candidateGrab != null) {
+                targetRope = candidate;
+                ropeGrab = candidateGrab;
+                break;
+            }
+        }
+
+        assertNotNull(targetRope, "expected a reachable target rope for the current rope-jump physics");
+        assertNotNull(ropeGrab);
+        assertEquals(targetRope.x(), ropeGrab.x);
+        assertTrue(ropeGrab.y > targetRope.topY(),
+                "rope grab should use the actual catch Y instead of snapping to the rope top");
+        assertTrue(ropeGrab.y <= targetRope.bottomY());
+    }
+
+    @Test
+    void shouldClearMovementStateOnReset() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        entry.climbState().setClimbingFlag(true);
+        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentBotClimbStateRuntime.setClimbUpIntent(entry, true);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 7f);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 12);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 99);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 88);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, 123, -456);
+        AgentBotMovementStateRuntime.setMoveDirection(entry, -1);
+        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 350);
+
+        AgentMovementPoseService.resetMotion(entry, new Point(10, 20));
+
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
+        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
+        assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
+        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertEquals(10.0, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(20.0, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.moveDirection(entry));
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
+    }
+
+    @Test
+    void shouldClearWalkIntentWhenIdlingOnGround() {
+        Character bot = mockBot(new Point(10, 20), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementStateRuntime.setMoveDirection(entry, -1);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, -125, AgentBotMovementStateRuntime.movementVelocityY(entry));
+
+        AgentMovementPoseService.idleOnGround(entry, bot);
+
+        assertEquals(0, AgentBotMovementStateRuntime.moveDirection(entry));
+        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
+    }
+
+    @Test
+    void shouldDeriveMovementSnapshotFromPhysicsState() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, -180, -240);
+
+        AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
+
+        assertEquals(-180, snapshot.velX());
+        assertEquals(-240, snapshot.velY());
+        assertEquals(CharacterStance.JUMP_LEFT_STANCE, snapshot.stance());
+    }
+
+    @Test
+    void shouldResolveIdleGroundStanceFromLastFacingDirection() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        assertEquals(CharacterStance.STAND_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
+    }
+
+    @Test
+    void shouldResolveProneStanceFromLastFacingDirection() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentBotMovementStateRuntime.setCrouching(entry, true);
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
+        assertEquals(CharacterStance.PRONE_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        assertEquals(CharacterStance.PRONE_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
+    }
+
+    @Test
+    void shouldResolveDeadStanceFromLastFacingDirection() {
+        Character bot = mockBot(new Point(10, 20), null, 0);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
+        assertEquals(CharacterStance.DEAD_RIGHT_STANCE, AgentMovementPoseService.resolveStance(entry));
+
+        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        assertEquals(CharacterStance.DEAD_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
+    }
+
+    @Test
+    void shouldFaceAirSteeringDirectionEvenWhenMomentumIsOpposite() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getFootholds()).thenReturn(null);
+        when(map.getRopes()).thenReturn(List.of());
+
+        Character bot = mockBot(new Point(100, 200), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
+        AgentBotMovementStateRuntime.setMovementVelocity(entry, AgentMovementKinematicsService.velocityFromDeltaX(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)), AgentBotMovementStateRuntime.movementVelocityY(entry));
+        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 200);
+        AgentBotMovementStateRuntime.setMoveDirection(entry, -1);  // set intent for air steering left
+
+        AgentAirbornePhysicsService.stepAirborne(entry, bot);
+
+        assertTrue(AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry) < 0.0, "left steer intent should produce negative airSteerVelX");
+        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry), "facing should follow steer direction, not momentum");
+        assertEquals(CharacterStance.JUMP_LEFT_STANCE, AgentMovementPoseService.resolveStance(entry));
+    }
+
+    @Test
+    void shouldUseLadderAndRopeStancesFromClimbState() {
+        AgentRuntimeEntry ladderEntry = new AgentRuntimeEntry(null, null, null);
+        AgentBotClimbStateRuntime.setClimbingOnRope(ladderEntry, new Rope(100, 0, 40, true));
+
+        AgentRuntimeEntry ropeEntry = new AgentRuntimeEntry(null, null, null);
+        AgentBotClimbStateRuntime.setClimbingOnRope(ropeEntry, new Rope(100, 0, 40, false));
+
+        assertEquals(CharacterStance.LADDER_STANCE, AgentMovementPoseService.resolveStance(ladderEntry));
+        assertEquals(CharacterStance.ROPE_STANCE, AgentMovementPoseService.resolveStance(ropeEntry));
+    }
+
+    @Test
+    void shouldTickDownDownJumpGraceInsidePhysicsEngine() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 120);
+
+        AgentMotionTimerService.tickMotionTimers(entry);
+
+        assertEquals(70, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertFalse(AgentAirbornePhysicsService.canLand(entry));
+
+        AgentMotionTimerService.tickMotionTimers(entry);
+
+        assertEquals(20, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertFalse(AgentAirbornePhysicsService.canLand(entry));
+
+        AgentMotionTimerService.tickMotionTimers(entry);
+
+        assertEquals(0, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertTrue(AgentAirbornePhysicsService.canLand(entry));
+    }
+
+    @Test
+    void shouldNotBeginDownJumpFromForbidFallDownFoothold() {
+        MapleMap map = createEmptyTestMap(910000059);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold lower = new Foothold(new Point(0, 180), new Point(100, 180), 2);
+        upper.setForbidFallDown(true);
+        footholds.insert(upper);
+        footholds.insert(lower);
+
+        Character bot = mockBot(new Point(50, 100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
+        AgentQueuedMovementActionService.queueDownJump(entry, bot);
+
+        AgentQueuedMovementActionService.beginDownJump(entry, bot);
+
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
+        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertEquals(new Point(50, 100), bot.getPosition());
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
+    }
+
+    @Test
+    void shouldRejectSimulatedDownJumpFromForbidFallDownFoothold() {
+        MapleMap map = createEmptyTestMap(910000060);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold lower = new Foothold(new Point(0, 180), new Point(100, 180), 2);
+        upper.setForbidFallDown(true);
+        footholds.insert(upper);
+        footholds.insert(lower);
+
+        assertNull(AgentJumpProbeService.simulateDownJumpLanding(map, new Point(50, 100)));
+    }
+
+    @Test
+    void shouldBeginFallWhenClimbDownMovesPastRopeBottom() {
+        Character bot = mockBot(new Point(100, 40), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        Rope rope = new Rope(100, 0, 40, false);
+        AgentRopeMovementService.attachToRope(entry, bot, rope, rope.bottomY());
+
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 1);  // intent: climb down
+        AgentRopeMovementService.advanceClimb(entry, bot);
+
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
+        assertEquals(new Point(100, 40), bot.getPosition());
+    }
+
+    @Test
+    void shouldTreatRopeTopAsDismountBoundaryNotAttachPosition() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> new Point(100, 0));
+        Character bot = mockBot(new Point(100, 0), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        Rope rope = new Rope(100, 0, 40, false);
+        AgentRopeMovementService.attachToRope(entry, bot, rope, rope.topY());
+
+        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
+        assertEquals(new Point(100, 1), bot.getPosition());
+
+        AgentRopeMovementService.holdClimb(entry, bot);
+
+        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
+        assertEquals(new Point(100, 1), bot.getPosition());
+
+        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, -1);
+        AgentRopeMovementService.advanceClimb(entry, bot);
+
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
+        assertEquals(new Point(100, 0), bot.getPosition());
+        assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
+    }
+
+    @Test
+    void shouldSnapGroundMotionBackToFootholdWhenBotStartsSlightlyAboveGround() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> {
+            Point probe = invocation.getArgument(0);
+            return new Point(probe.x, 120);
+        });
+        Character bot = mockBot(new Point(100, 110), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        Foothold foothold = mock(Foothold.class);
+        when(foothold.slope()).thenReturn(0.0);
+
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
+        AgentBotMovementStateRuntime.setMoveDirection(entry, 0);  // intent: idle
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, foothold);
+
+        assertFalse(motion.lostGround());
+        assertEquals(0, motion.stepX());
+        assertEquals(new Point(100, 120), bot.getPosition());
+        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+    }
+
+    @Test
+    void shouldPreferCloserGroundPointWhenExactProbeFallsThroughToLowerPlatform() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.getPointBelow(any(Point.class))).thenAnswer(invocation -> {
+            Point probe = invocation.getArgument(0);
+            if (probe.y >= 151) {
+                return new Point(probe.x, 215);
+            }
+            return new Point(probe.x, 150);
+        });
+
+        assertEquals(new Point(-65, 150), AgentGroundingService.findGroundPoint(map, new Point(-65, 151)));
+    }
+
+    @Test
+    void shouldPreferCurrentWalkRegionSurfaceWhenParallelPlatformSitsAbove() {
+        MapleMap map = createEmptyTestMap(910000013);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lowerLeft = new Foothold(new Point(0, 100), new Point(20, 100), 1);
+        Foothold lowerRight = new Foothold(new Point(20, 100), new Point(40, 100), 2);
+        Foothold upper = new Foothold(new Point(10, 92), new Point(30, 92), 3);
+        lowerLeft.setNext(2);
+        lowerRight.setPrev(1);
+        footholds.insert(lowerLeft);
+        footholds.insert(lowerRight);
+        footholds.insert(upper);
+        AgentNavigationGraphService.rebuildGraph(map);
+
+        Point ground = AgentGroundCollisionService.findWalkRegionGroundPoint(map, lowerLeft, 24, 100);
+
+        assertNotNull(ground);
+        assertEquals(new Point(24, 100), ground);
+    }
+
+    @Test
+    void shouldKeepWalkingAcrossKpqPlatformEvenWithNearbyPlatformAbove() {
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(kpqS1());
+        Point start = new Point(-335, 116);
+        Point target = new Point(-170, 103);
+        int startRegionId = graph.findRegionId(kpqS1(), start);
+
+        assertEquals(startRegionId, graph.findRegionId(kpqS1(), target));
+
+        Character bot = mockBot(start, kpqS1());
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
+        AgentBotMovementStateRuntime.setMoveDirection(entry, 1);  // intent: walk right
+
+        Foothold currentFoothold = AgentGroundingService.findGroundFoothold(kpqS1(), bot.getPosition());
+        assertNotNull(currentFoothold);
+
+        for (int i = 0; i < 40 && bot.getPosition().x < target.x; i++) {
+            AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, currentFoothold);
+            assertFalse(motion.lostGround(), "Walking across the same KPQ region should not lose ground because of the nearby upper platform");
+            currentFoothold = AgentGroundingService.findGroundFoothold(kpqS1(), bot.getPosition());
+            assertNotNull(currentFoothold);
+            assertEquals(startRegionId, graph.findRegionId(kpqS1(), bot.getPosition()));
+        }
+
+        assertTrue(bot.getPosition().x > start.x);
+    }
+
+    @Test
+    void shouldUseIntermediateBumpLandingInFallSimulation() {
+        MapleMap map = createEmptyTestMap(910000004);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(0, 110), new Point(20, 110), 1));
+        footholds.insert(new Foothold(new Point(4, 102), new Point(6, 102), 2));
+
+        AgentJumpLanding landing = AgentJumpProbeService.simulateFallLanding(map, new Point(0, 100), 8);
+
+        assertNotNull(landing);
+        assertEquals(new Point(4, 102), landing.point());
+        assertEquals(2, landing.foothold().getId());
+    }
+
+    @Test
+    void shouldLandApexJumpOnSleepyForestUpperPlatform() {
+        AgentJumpLanding landing =
+                AgentJumpProbeService.simulateJumpLanding(sleepyForest(), new Point(197, -14), 8);
+
+        assertNotNull(landing);
+        assertTrue(landing.point().y < 0,
+                "the logged r9->r5 jump should land on the upper platform instead of falling back to the ground below");
+    }
+
+    @Test
+    void shouldKeepAirborneBotInsideMapSideBoundary() {
+        Point start = new Point(376, 182);
+        int stepX = AgentMovementKinematicsService.walkStep(elliniaWeaponStore());
+
+        AgentJumpLanding landing =
+                AgentJumpProbeService.simulateJumpLanding(elliniaWeaponStore(), start, stepX);
+
+        assertNotNull(landing, "rightward shop jump should hit the map boundary and fall back to the platform");
+        assertEquals(new Point(400, 182), landing.point());
+    }
+
+    @Test
+    void shouldPreferExactGroundFootholdWhenOffsetLookupWouldChooseDifferentPlatform() {
+        MapleMap map = createEmptyTestMap(910000102);
+        Foothold exactGround = new Foothold(new Point(0, 100), new Point(120, 100), 1);
+        Foothold nearbyUpper = new Foothold(new Point(0, 92), new Point(120, 92), 2);
+        map.getFootholds().insert(exactGround);
+        map.getFootholds().insert(nearbyUpper);
+        StandingLookupCase lookupCase = findStandingLookupCaseWhereOffsetDiffers(map);
+
+        assertNotNull(lookupCase, "Expected at least one standing point where offset-only lookup picks a different foothold");
+        assertNotEquals(lookupCase.exactFoothold().getId(), lookupCase.offsetFoothold().getId());
+        Point chosenGround = AgentGroundingService.findGroundPoint(map, lookupCase.point());
+        Foothold chosenFoothold = AgentGroundingService.findGroundFoothold(map, lookupCase.point());
+
+        assertNotNull(chosenGround);
+        assertNotNull(chosenFoothold);
+        assertEquals(chosenFoothold.getId(),
+                map.getFootholds().findBelow(new Point(chosenGround.x, chosenGround.y)).getId());
+    }
+
+    private static StandingLookupCase findStandingLookupCaseWhereOffsetDiffers(MapleMap map) {
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (foothold.isWall()) {
+                continue;
+            }
+
+            int minX = Math.min(foothold.getX1(), foothold.getX2());
+            int maxX = Math.max(foothold.getX1(), foothold.getX2());
+            if (maxX - minX < 2) {
+                continue;
+            }
+
+            for (int x = minX + 1; x < maxX; x += 4) {
+                Point point = new Point(x, footingY(foothold, x));
+                Foothold exact = map.getFootholds().findBelow(point);
+                Foothold offset = map.getFootholds().findBelow(
+                        new Point(point.x, point.y - AgentMovementPhysicsConfig.configuredMaxSlopeUp()));
+                if (exact != null && offset != null && exact.getId() != offset.getId()) {
+                    return new StandingLookupCase(point, exact, offset);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static AgentNavigationGraph.Edge findFirstStraightDropEdge(AgentNavigationGraph graph) {
+        for (AgentNavigationGraph.Region region : graph.regions) {
+            for (AgentNavigationGraph.Edge edge : graph.getOutgoing(region.id)) {
+                if (edge.type == AgentNavigationGraph.EdgeType.DROP && edge.launchStepX == 0) {
+                    return edge;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static int footingY(Foothold foothold, int x) {
+        if (foothold.getX1() == foothold.getX2()) {
+            return Math.min(foothold.getY1(), foothold.getY2());
+        }
+
+        double ratio = (x - foothold.getX1()) / (double) (foothold.getX2() - foothold.getX1());
+        return (int) Math.round(foothold.getY1() + (foothold.getY2() - foothold.getY1()) * ratio);
+    }
+
+    private static MapleMap createEmptyTestMap(int mapId) {
+        MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
+        map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
+        return map;
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map) {
+        return mockBot(startPosition, map, 100);
+    }
+
+    private static Character mockBot(Point startPosition, MapleMap map, int hp) {
+        Character bot = mock(Character.class);
+        AtomicReference<Point> position = new AtomicReference<>(new Point(startPosition));
+        AtomicInteger stance = new AtomicInteger(CharacterStance.STAND_RIGHT_STANCE);
+
+        when(bot.getPosition()).thenAnswer(invocation -> new Point(position.get()));
+        doAnswer(invocation -> {
+            position.set(new Point(invocation.getArgument(0)));
+            return null;
+        }).when(bot).setPosition(any(Point.class));
+        when(bot.getMap()).thenReturn(map);
+        when(bot.getHp()).thenReturn(hp);
+        when(bot.getTotalMoveSpeedStat()).thenReturn(100);
+        when(bot.getTotalJumpStat()).thenReturn(100);
+        when(bot.getStance()).thenAnswer(invocation -> stance.get());
+        doAnswer(invocation -> {
+            stance.set(invocation.getArgument(0));
+            return null;
+        }).when(bot).setStance(anyInt());
+        return bot;
+    }
+
+    @Test
+    void shouldPermitWalkableEndpointStep() {
+        assertTrue(AgentNavigationPhysicsService.isWalkableEndpointStep(0, -1));
+        assertTrue(AgentNavigationPhysicsService.isWalkableEndpointStep(12, 0));
+    }
+
+    @Test
+    void shouldBlockWalkBetweenFootholdsForFloatingPlatformAbove() {
+        // Current foothold ends at X=10; floating platform spans far above with no nearby endpoint.
+        Foothold platform  = new Foothold(new Point(0, 10),    new Point(10, 10),   1);
+        Foothold floating  = new Foothold(new Point(-100, -16), new Point(100, -16), 2);
+
+        assertFalse(AgentNavigationPhysicsService.canWalkAcrossFootholds(platform, floating));
+    }
+
+    @Test
+    void shouldNotLoseGroundWalkingOntoConnectedStep() {
+        Foothold platform = new Foothold(new Point(0, 10), new Point(10, 10), 1);
+        Foothold step     = new Foothold(new Point(10, 9), new Point(40, 9),  2);
+
+        assertTrue(AgentNavigationPhysicsService.canWalkAcrossFootholds(platform, step));
+    }
+
+    @Test
+    void shouldNotTreatSeparatedVerticalOffsetAsWalkableEndpointStep() {
+        Foothold platform = new Foothold(new Point(0, 10), new Point(10, 10), 1);
+        Foothold adjacent = new Foothold(new Point(10, 1), new Point(40, 1),  2);
+
+        assertFalse(AgentNavigationPhysicsService.canWalkAcrossFootholds(platform, adjacent));
+    }
+
+    @Test
+    void shouldLoseGroundWalkingOffLedgeWithFloatingPlatformAbove() {
+        // Bot on a platform walking right off the edge. A wide platform sits MAX_SLOPE_UP above
+        // with no endpoint near the ledge — the bot must fall, not snap up.
+        MapleMap map = createEmptyTestMap(910000011);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold platform = new Foothold(new Point(0, 10),    new Point(10, 10),   1);
+        Foothold floating = new Foothold(new Point(-100, -16), new Point(100, -16), 2);
+        footholds.insert(platform);
+        footholds.insert(floating);
+
+        // Bot at (4, 10) on platform; physX advanced to 14 (past the ledge at X=10).
+        Character bot = mockBot(new Point(4, 10), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementPoseService.resetMotion(entry, bot.getPosition());
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 14);
+        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 0);
+        AgentBotMovementStateRuntime.setMoveDirection(entry, 1);  // intent: walk right
+
+        AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, bot, platform);
+
+        assertTrue(motion.lostGround());
+        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "walk-off should transition directly into airborne state");
+        assertTrue(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry) > 0, "walk-off should preserve horizontal momentum instead of zeroing X velocity for one tick");
+        assertTrue(AgentBotMovementStateRuntime.movementVelocityX(entry) > 0, "movement packet should carry non-zero horizontal velocity on the ledge-drop tick");
+        assertTrue(bot.getPosition().x > 10, "walk-off should keep the full horizontal step instead of snapping to the ledge edge");
+    }
+
+    @Test
+    void shouldBlockGroundStepThroughCollidableWall() {
+        MapleMap map = createEmptyTestMap(910000049);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 60), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 60), new Point(120, 60), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        assertFalse(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12),
+                "ground movement should not phase through collidable stair/platform walls");
+    }
+
+    @Test
+    void shouldWalkUpShortCollidableWallEndpointWithinSlopeLimit() {
+        MapleMap map = createEmptyTestMap(910000054);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(120, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        assertTrue(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12),
+                "short wall endpoints should behave like a walkable step up within MAX_SLOPE_UP");
+    }
+
+    @Test
+    void shouldWalkOffLedgeWhenWallTopIsLevelWithGround() {
+        MapleMap map = createEmptyTestMap(910000055);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold upper = new Foothold(new Point(0, 80), new Point(50, 80), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 140), 2);
+        Foothold lower = new Foothold(new Point(50, 140), new Point(120, 140), 3);
+        wall.setPrev(upper.getId());
+        wall.setNext(lower.getId());
+        footholds.insert(upper);
+        footholds.insert(wall);
+        footholds.insert(lower);
+
+        assertFalse(AgentGroundCollisionService.isGroundStepBlockedByWall(map, new Point(44, 80), 12),
+                "a wall whose top is level with the current ground is a ledge edge, not a blocking wall");
+    }
+
+    @Test
+    void shouldBlockGroundStepThroughBottomConnectedOpenTopWall() {
+        MapleMap map = createEmptyTestMap(910000057);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 100), new Point(50, 60), 2);
+        wall.setPrev(lower.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+
+        assertFalse(AgentGroundCollisionService.canWalkGroundStep(map, new Point(44, 100), 12),
+                "bottom-connected walls with an open top should still be collidable");
+    }
+
+    @Test
+    void shouldTreatMap193000000BottomAnchoredWallsAsCollidable() {
+        MapleMap map = AgentNavigationMapLoader.loadMapGeometry(193000000);
+        AgentNavigationGraphService.rebuildGraph(map);
+
+        java.util.Set<Integer> collidableWallIds = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
+
+        assertNotNull(collidableWallIds);
+        assertTrue(collidableWallIds.contains(2), "top-right shaft wall should be collidable");
+        assertTrue(collidableWallIds.contains(10), "left lower wall should be collidable");
+        assertTrue(collidableWallIds.contains(13), "bottom platform right wall should be collidable");
+    }
+
+    @Test
+    void shouldCacheKerningPharmacyBlockedUndersidesAtGraphBuild() {
+        AgentNavigationGraphService.rebuildGraph(kerningPharmacy());
+
+        java.util.Set<Integer> collidableFromBelowIds = AgentNavigationGraphService.getCachedCollidableFromBelowIds(kerningPharmacy().getId());
+
+        assertNotNull(collidableFromBelowIds);
+        assertTrue(collidableFromBelowIds.contains(1), "left pharmacy box lower edge should block jumps from below");
+        assertTrue(collidableFromBelowIds.contains(27), "right pharmacy box lower edge should block jumps from below");
+        assertFalse(collidableFromBelowIds.contains(17), "standalone pharmacy platform should stay jump-through from below");
+    }
+
+    @Test
+    void shouldCacheMushroomShrineDoughnutUndersidesAtGraphBuild() {
+        AgentNavigationGraphService.rebuildGraph(mushroomShrine());
+
+        java.util.Set<Integer> collidableFromBelowIds = AgentNavigationGraphService.getCachedCollidableFromBelowIds(mushroomShrine().getId());
+
+        assertNotNull(collidableFromBelowIds);
+        assertTrue(collidableFromBelowIds.contains(248), "outer doughnut lower edge should block jumps from below");
+        assertFalse(collidableFromBelowIds.contains(250), "outer doughnut upper edge should stay a normal floor");
+        assertFalse(collidableFromBelowIds.contains(264), "inner doughnut lower edge should stay a normal floor");
+    }
+
+    @Test
+    void shouldBumpHeadAgainstClosedBoxUnderside() {
+        MapleMap map = createEmptyTestMap(910000058);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(40, 100), 1);
+        Foothold right = new Foothold(new Point(40, 100), new Point(40, 60), 2);
+        Foothold upper = new Foothold(new Point(40, 60), new Point(0, 60), 3);
+        Foothold left = new Foothold(new Point(0, 60), new Point(0, 100), 4);
+        lower.setPrev(left.getId());
+        lower.setNext(right.getId());
+        right.setPrev(lower.getId());
+        right.setNext(upper.getId());
+        upper.setPrev(right.getId());
+        upper.setNext(left.getId());
+        left.setPrev(upper.getId());
+        left.setNext(lower.getId());
+        footholds.insert(lower);
+        footholds.insert(right);
+        footholds.insert(upper);
+        footholds.insert(left);
+        AgentNavigationGraphService.rebuildGraph(map);
+
+        Character bot = mockBot(new Point(20, 120), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 20);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 120);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -30f);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+
+        assertEquals(AgentAirborneStepResult.CEILING, AgentAirbornePhysicsService.stepAirborne(entry, bot));
+        assertEquals(new Point(20, 101), bot.getPosition());
+        assertEquals(0f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
+    }
+
+    @Test
+    void shouldKeepAirborneBotOnNearSideOfCollidableWall() {
+        MapleMap map = createEmptyTestMap(910000052);
+        server.maps.FootholdTree footholds = map.getFootholds();
+        Foothold lower = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 80), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 80), new Point(120, 80), 3);
+        wall.setNext(lower.getId());
+        wall.setPrev(upper.getId());
+        footholds.insert(lower);
+        footholds.insert(wall);
+        footholds.insert(upper);
+
+        Character bot = mockBot(new Point(56, 90), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 56);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 90);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
+
+        assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
+        assertTrue(bot.getPosition().x > 50, "wall collision should place the bot on the near side, not inside the wall");
+
+        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, -1.5);
+        AgentAirbornePhysicsService.stepAirborne(entry, bot);
+
+        assertTrue(bot.getPosition().x > 50, "continued air steering into the wall must not cross to the far side");
+    }
+
+    @Test
+    void shouldUseFootholdXBoundsWhenMapHasSyntheticBounds() {
+        MapleMap map = createEmptyTestMap(910000056);
+        map.setMapPointBoundings(-(1 << 17), -(1 << 17), 1 << 18, 1 << 18);
+
+        server.maps.FootholdTree footholds = map.getFootholds();
+        footholds.insert(new Foothold(new Point(-399, 95), new Point(399, 95), 1));
+
+        assertEquals(-399, footholds.getMinDropX());
+        assertEquals(399, footholds.getMaxDropX());
+
+        Character bot = mockBot(new Point(-389, 61), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, -389);
+        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 61);
+        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -11.9f);
+        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -11);
+
+        assertEquals(AgentAirborneStepResult.WALL, AgentAirbornePhysicsService.stepAirborne(entry, bot));
+        assertEquals(-399, bot.getPosition().x);
+        assertEquals(0, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+    }
+
+    private record StandingLookupCase(Point point, Foothold exactFoothold, Foothold offsetFoothold) {
+    }
+}

@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentTickCoreRuntimeTest {
     @Test
     void compactTickCoreEntryOwnsDefaultAgentRuntimeHooks() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         List<String> calls = new ArrayList<>();
 
         try (MockedStatic<AgentTickCoreService> tickCore = mockStatic(AgentTickCoreService.class)) {
@@ -44,7 +44,7 @@ class AgentTickCoreRuntimeTest {
 
     @Test
     void defaultTickCoreUsesAgentRuntimeConfigAndHookBundle() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         List<String> calls = new ArrayList<>();
 
         try (MockedStatic<AgentTickCoreService> tickCore = mockStatic(AgentTickCoreService.class)) {
@@ -85,7 +85,7 @@ class AgentTickCoreRuntimeTest {
 
     @Test
     void delegatesTickCoreThroughAgentRuntimeHookBundle() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         List<String> calls = new ArrayList<>();
 
         try (MockedStatic<AgentTickCoreService> tickCore = mockStatic(AgentTickCoreService.class)) {

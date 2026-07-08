@@ -21,9 +21,9 @@ import java.util.function.LongSupplier;
 import java.util.concurrent.ScheduledFuture;
 
 /**
- * Agent-owned lifecycle map mutation helpers over the temporary BotEntry store.
+ * Agent-owned lifecycle map mutation helpers over the Agent runtime store.
  * Runtime side effects such as scheduled-task canceling are supplied through
- * Agent-owned hook bundles while BotEntry remains the backing session object.
+ * Agent-owned hook bundles while AgentRuntimeEntry is the backing session object.
  */
 public final class AgentLifecycleService {
     public record AgentSpawnResult(boolean success, Character agent, boolean autoRegistered, String errorMessage) {

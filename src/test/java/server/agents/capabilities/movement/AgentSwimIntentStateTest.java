@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentSwimIntentStateTest {
     @Test
-    void defaultsMatchLegacyBotEntryFields() {
+    void defaultsMatchLegacyAgentRuntimeEntryFields() {
         AgentSwimIntentState state = new AgentSwimIntentState();
 
         assertFalse(state.swimming());

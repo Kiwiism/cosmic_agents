@@ -1,0 +1,137 @@
+package server.agents.integration;
+
+import server.agents.capabilities.combat.AgentAttackExecutionProvider;
+
+import org.junit.jupiter.api.Test;
+import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.capabilities.combat.data.AgentAttackTiming;
+
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class AgentAttackDataProviderTest {
+    @Test
+    void shouldMatchOpenStoryBodyAndAfterimageAttackTimingInputs() {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+
+        assertTrue(provider.getBodyStanceDurationMs("swingO1") > 0);
+        assertTrue(provider.getBodyStanceDelayBeforeFrameMs("swingO1", 2) > 0);
+        assertTrue(provider.getBodyActionDurationMs("doublefire") > 0);
+        assertTrue(provider.getBodyActionAttackDelayMs("doublefire", 0) >= 0);
+        assertEquals(5, provider.getBodyActionId("swingO1"));
+        assertEquals(6, provider.getBodyActionId("swingO2"));
+        assertEquals(7, provider.getBodyActionId("swingO3"));
+        assertEquals(16, provider.getBodyActionId("stabO1"));
+        assertEquals(17, provider.getBodyActionId("stabO2"));
+        assertEquals(32, provider.getBodyActionId("proneStab"));
+        assertEquals(56, provider.getBodyActionId("avenger"));
+        assertEquals(69, provider.getBodyActionId("genesis"));
+        assertEquals(77, provider.getBodyActionId("handgun"));
+        assertEquals(86, provider.getBodyActionId("doublefire"));
+        AgentAttackExecutionProvider.CloseRangePacketFields closeRangeFields =
+                AgentAttackExecutionProvider.mimicCloseRangePacketFields("stabO1", "swingO1", false);
+        assertEquals(0, closeRangeFields.display());
+        assertEquals(16, closeRangeFields.bodyActionId());
+        assertEquals(0, closeRangeFields.facingMask());
+        assertEquals(0x80, AgentAttackExecutionProvider.mimicCloseRangePacketFields("stabO1", "swingO1", true).facingMask());
+        assertEquals(0x00, AgentAttackExecutionProvider.attackPacketStance(false));
+        assertEquals(0x80, AgentAttackExecutionProvider.attackPacketStance(true));
+
+        AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        assertNotNull(profile);
+        assertTrue(profile.getSourceActions().contains("swingO1"));
+        assertTrue(profile.getAfterimageFirstFrame("swingO1") > 0);
+    }
+
+    @Test
+    void shouldPreferExplicitBodyActionTimingOverSkillAnimationDelay() {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+        int rawActionHitDelayMs = provider.getBodyActionAttackDelayMs("doublefire", 0);
+        int rawActionDurationMs = provider.getBodyActionDurationMs("doublefire");
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("doublefire", null, 999, 4, 300, 590);
+
+        assertTrue(rawActionDurationMs > 0);
+        assertTrue(rawActionHitDelayMs >= 0);
+        assertEquals(adjustedDelay(rawActionHitDelayMs), timing.hitDelayMs());
+        assertEquals(Math.max(adjustedDelay(rawActionDurationMs), 590), timing.cooldownMs());
+    }
+
+    @Test
+    void shouldUseBodyStanceTimingForExplicitStanceStyleSkillActions() {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+        AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        assertNotNull(profile);
+
+        int rawStanceHitDelayMs = provider.getBodyStanceDelayBeforeFrameMs("swingO1",
+                profile.getAfterimageFirstFrame("swingO1"));
+        int rawStanceDurationMs = provider.getBodyStanceDurationMs("swingO1");
+
+        AgentAttackExecutionProvider.SkillAttackTiming timing =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("swingO1", profile, 999, 4, 0, 0);
+
+        assertTrue(rawStanceDurationMs > 0);
+        assertTrue(rawStanceHitDelayMs > 0);
+        assertEquals(adjustedDelay(rawStanceHitDelayMs), timing.hitDelayMs());
+        assertEquals(adjustedDelay(rawStanceDurationMs), timing.cooldownMs());
+    }
+
+    @Test
+    void shouldUseFullRegularAttackCooldownForSkillsSharingBasicAttackAnimation() {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+        int rawShootDurationMs = provider.getBodyStanceDurationMs("shoot1");
+        int rawClawDurationMs = provider.getBodyStanceDurationMs("swingO1");
+
+        AgentAttackExecutionProvider.SkillAttackTiming doubleShotTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("shoot1", null, 0, 4, 0, 0);
+        AgentAttackExecutionProvider.SkillAttackTiming luckySevenTiming =
+                AgentAttackExecutionProvider.resolveSkillAttackTiming("swingO1", null, 0, 4, 0, 0);
+
+        assertTrue(rawShootDurationMs > 0);
+        assertTrue(rawClawDurationMs > 0);
+        assertEquals(adjustedDelay(rawShootDurationMs), doubleShotTiming.cooldownMs());
+        assertEquals(adjustedDelay(rawClawDurationMs), luckySevenTiming.cooldownMs());
+    }
+
+    private static int adjustedDelay(int rawDelayMs) {
+        return AgentAttackTiming.adjustDelayMillis(rawDelayMs, 4);
+    }
+
+    @Test
+    void shouldExposePerActionAttackBoundsThatDifferBetweenStabAndSwing() {
+        AgentAttackDataProvider provider = AgentAttackDataProvider.getInstance();
+        AgentAttackDataProvider.NormalAttackProfile profile = provider.getNormalAttackProfile(1302077);
+        assertNotNull(profile);
+        assertTrue(profile.hasBoundingBox());
+
+        Point origin = new Point(0, 0);
+        Rectangle swing = profile.calculateActionBoundingBox("swingO1", origin, false);
+        Rectangle stab = profile.calculateActionBoundingBox("stabO1", origin, false);
+        assertNotNull(swing);
+        assertNotNull(stab);
+        // A single moveset's overhead swing (tall) and stab (low/short) cover different areas, so
+        // the bot must gate the hit on the rolled action's own box, not the union envelope.
+        assertNotEquals(swing, stab);
+
+        // An unknown / non-afterimage action falls back to the unioned envelope (still valid).
+        Rectangle union = profile.calculateBoundingBox(origin, false);
+        assertEquals(union, profile.calculateActionBoundingBox("not-a-real-action", origin, false));
+    }
+
+    @Test
+    void shouldFilterWeaponActionsToLegalAttackGroupAnimations() {
+        AgentAttackDataProvider.AttackAnimationSpec attackSpec =
+                AgentAttackDataProvider.getInstance().getBasicAttackSpec(1, client.inventory.WeaponType.GENERAL1H_SWING);
+
+        List<String> actions = AgentAttackExecutionProvider.resolveAttackActions(attackSpec,
+                List.of("swingOF", "stabO1", "proneStab", "swingO3", "stabOF"));
+
+        assertEquals(List.of("stabO1", "swingO3"), actions);
+    }
+}

@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentDownJumpStateTest {
     @Test
-    void defaultsMatchLegacyBotEntryFields() {
+    void defaultsMatchLegacyAgentRuntimeEntryFields() {
         AgentDownJumpState state = new AgentDownJumpState();
 
         assertFalse(state.pending());

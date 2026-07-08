@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.util.List;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed combat skill cache state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed combat skill cache state.
  */
 public final class AgentBotCombatSkillCacheStateRuntime {
     private AgentBotCombatSkillCacheStateRuntime() {

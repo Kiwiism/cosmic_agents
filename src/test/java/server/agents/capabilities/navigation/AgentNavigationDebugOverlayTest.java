@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentLegacyCommandBridge;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -47,7 +47,7 @@ class AgentNavigationDebugOverlayTest {
         when(viewer.getId()).thenReturn(123);
 
         try (var lifecycle = mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getBotEntry(123, "alpha"))
+            lifecycle.when(() -> AgentBotSessionLifecycleSideEffects.getAgentEntry(123, "alpha"))
                     .thenReturn(null);
 
             assertEquals("No owned bot named 'alpha' found.",

@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -16,7 +16,7 @@ class AgentMotionTimerServiceTest {
     void tickMotionTimersPreservesLegacyDownJumpGraceCountdown() {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 100);
 
         AgentMotionTimerService.tickMotionTimers(entry);

@@ -6,6 +6,12 @@ Target package groups:
 
 - `server.agents.api`: stable public service/query/command surfaces.
 - `server.agents.runtime`: sessions, lifecycle, registry, scheduler, snapshots.
+  Final compatibility shell cleanup is complete: runtime/session code now uses
+  `AgentRuntimeEntry` directly, and the production/test `server.bots` package
+  has been removed.
+  Remaining `AgentBot*` runtime names are Agent-owned historical adapter names;
+  they are documented for a later semantic rename pass rather than mixed into
+  the shell-removal change.
   Current reconstruction runtime boundaries include lifecycle command wiring
   such as `AgentLifecycleChatCommandRuntime` and
   `AgentFormationCommandRuntime`, plus live tick context preparation through

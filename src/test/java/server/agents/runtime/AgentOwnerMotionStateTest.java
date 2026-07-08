@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentOwnerMotionStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentOwnerMotionState state = new AgentOwnerMotionState();
 
         assertNull(state.lastOwnerPosition());

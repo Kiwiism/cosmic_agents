@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import server.agents.commands.AgentReplyChannel;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.Consumer;
 
@@ -35,7 +35,7 @@ class AgentInteractionRuntimeTest {
     void registerSpawnedAgentDelegatesToAgentRegistrationRuntimeWithAgentTickCallback() {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
 
         try (MockedStatic<AgentRegistrationRuntime> registrationRuntime = mockStatic(AgentRegistrationRuntime.class)) {
             registrationRuntime.when(() -> AgentRegistrationRuntime.registerSpawnedAgent(

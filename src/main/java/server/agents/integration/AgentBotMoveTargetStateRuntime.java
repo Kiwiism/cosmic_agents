@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed explicit movement targets.
+ * Agent-owned adapter for AgentRuntimeEntry-backed explicit movement targets.
  */
 public final class AgentBotMoveTargetStateRuntime {
     private AgentBotMoveTargetStateRuntime() {

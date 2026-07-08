@@ -4,9 +4,9 @@ import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 
 /**
- * Agent-owned tick orchestration helpers over temporary BotEntry-backed state.
+ * Agent-owned tick orchestration helpers over AgentRuntimeEntry-backed state.
  * Full tick dispatch now enters through AgentInteractionRuntime and shared
- * Agent tick services while BotEntry state is still being migrated.
+ * Agent tick services while Agent runtime state is centralized.
  */
 public final class AgentTickOrchestrator {
     @FunctionalInterface

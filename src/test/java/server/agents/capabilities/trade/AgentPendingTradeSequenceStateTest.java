@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 class AgentPendingTradeSequenceStateTest {
     @Test
-    void defaultsPreserveLegacyBotEntryValues() {
+    void defaultsPreserveLegacyAgentRuntimeEntryValues() {
         AgentPendingTradeSequenceState state = new AgentPendingTradeSequenceState();
 
         assertNull(state.category());

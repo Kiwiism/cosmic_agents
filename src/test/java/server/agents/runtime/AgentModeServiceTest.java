@@ -11,7 +11,7 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,7 +28,7 @@ class AgentModeServiceTest {
     void startFollowPreservesLegacyTargetAndClearsMovementModes() {
         Character leader = character(100, 100000000);
         Character target = character(300, 100000000);
-        BotEntry entry = new BotEntry(character(200, 100000000), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), leader, null);
         AgentBotModeStateRuntime.setGrinding(entry, true);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
         AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(30, 40), 100000000);
@@ -45,7 +45,7 @@ class AgentModeServiceTest {
     @Test
     void startFollowUsesLeaderWhenTargetIsLeaderOrMissing() {
         Character leader = character(100, 100000000);
-        BotEntry entry = new BotEntry(character(200, 100000000), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), leader, null);
 
         AgentModeService.startFollow(entry, leader);
         assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
@@ -56,7 +56,7 @@ class AgentModeServiceTest {
 
     @Test
     void startGrindAppliesActiveModeResetAndClearsNavigation() {
-        BotEntry entry = dirtyEntry();
+        AgentRuntimeEntry entry = dirtyEntry();
         AtomicInteger navigationClears = new AtomicInteger();
 
         AgentModeService.startGrind(entry, ignored -> navigationClears.incrementAndGet());
@@ -67,7 +67,7 @@ class AgentModeServiceTest {
 
     @Test
     void startStopClearsMovementAndExplicitMoveTargetButDoesNotClearNavigationCallback() {
-        BotEntry entry = dirtyEntry();
+        AgentRuntimeEntry entry = dirtyEntry();
 
         AgentModeService.startStop(entry);
 
@@ -82,7 +82,7 @@ class AgentModeServiceTest {
 
     @Test
     void startMoveToClearsModeAndSetsTarget() {
-        BotEntry entry = dirtyEntry();
+        AgentRuntimeEntry entry = dirtyEntry();
         Point destination = new Point(400, 500);
 
         AgentModeService.startMoveTo(entry, destination, true);
@@ -95,7 +95,7 @@ class AgentModeServiceTest {
 
     @Test
     void startFarmHereUsesActiveModeAndSetsAnchorAndPreciseMoveTarget() {
-        BotEntry entry = dirtyEntry();
+        AgentRuntimeEntry entry = dirtyEntry();
         Point destination = new Point(700, 800);
         AtomicInteger navigationClears = new AtomicInteger();
 
@@ -111,7 +111,7 @@ class AgentModeServiceTest {
 
     @Test
     void startPatrolUsesActiveModeAndSetsPatrolRegion() {
-        BotEntry entry = dirtyEntry();
+        AgentRuntimeEntry entry = dirtyEntry();
         AtomicInteger navigationClears = new AtomicInteger();
 
         AgentModeService.startPatrol(entry, 42, ignored -> navigationClears.incrementAndGet());
@@ -123,7 +123,7 @@ class AgentModeServiceTest {
         assertEquals(1, navigationClears.get());
     }
 
-    private static void assertActiveModeReset(BotEntry entry) {
+    private static void assertActiveModeReset(AgentRuntimeEntry entry) {
         assertFalse(AgentBotModeStateRuntime.following(entry));
         assertTrue(AgentBotModeStateRuntime.grinding(entry));
         assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
@@ -137,9 +137,9 @@ class AgentModeServiceTest {
         assertEquals(0, AgentBotGrindWanderStateRuntime.wanderDirection(entry));
     }
 
-    private static BotEntry dirtyEntry() {
+    private static AgentRuntimeEntry dirtyEntry() {
         Character leader = character(100, 123456789);
-        BotEntry entry = new BotEntry(character(200, 123456789), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 123456789), leader, null);
         AgentBotModeStateRuntime.startFollowing(entry, leader.getId());
         AgentBotModeStateRuntime.setGrinding(entry, true);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), false);

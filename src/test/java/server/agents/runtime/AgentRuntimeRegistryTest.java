@@ -4,7 +4,7 @@ import client.BotClient;
 import client.Character;
 import client.Client;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +26,8 @@ class AgentRuntimeRegistryTest {
         Character leader = character(100, "Leader");
         Character alpha = character(200, "Alpha");
         Character beta = character(201, "Beta");
-        BotEntry alphaEntry = new BotEntry(alpha, leader, null);
-        BotEntry betaEntry = new BotEntry(beta, leader, null);
+        AgentRuntimeEntry alphaEntry = new AgentRuntimeEntry(alpha, leader, null);
+        AgentRuntimeEntry betaEntry = new AgentRuntimeEntry(beta, leader, null);
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(alphaEntry, betaEntry)));
 
@@ -57,7 +57,7 @@ class AgentRuntimeRegistryTest {
     @Test
     void returnsDefensiveEntryCopy() {
         Character leader = character(100, "Leader");
-        BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, "Alpha"), leader, null);
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
 
@@ -70,7 +70,7 @@ class AgentRuntimeRegistryTest {
     @Test
     void returnsDefensiveAgentEntryReadView() {
         Character leader = character(100, "Leader");
-        BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, "Alpha"), leader, null);
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
 
@@ -85,7 +85,7 @@ class AgentRuntimeRegistryTest {
     void ownsMutableLiveEntryStore() {
         Character leader = character(100, "Leader");
         Character alpha = character(200, "Alpha");
-        BotEntry entry = new BotEntry(alpha, leader, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(alpha, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
 
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
@@ -108,9 +108,9 @@ class AgentRuntimeRegistryTest {
         Character beta = character(201, "Beta");
         AgentRuntimeRegistry.entriesByLeaderId().clear();
 
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(alpha, leader, null));
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(null, leader, null));
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(beta, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(alpha, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(null, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(beta, leader, null));
 
         assertEquals(3, AgentRuntimeRegistry.activeAgentCountForLeader(leader.getId()));
         assertEquals(List.of(alpha, beta), AgentRuntimeRegistry.activeAgentCharactersForLeader(leader.getId()));
@@ -133,7 +133,7 @@ class AgentRuntimeRegistryTest {
         assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(player));
         assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(null));
 
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new BotEntry(agent, leader, null));
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(agent, leader, null));
 
         assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(agent));
 

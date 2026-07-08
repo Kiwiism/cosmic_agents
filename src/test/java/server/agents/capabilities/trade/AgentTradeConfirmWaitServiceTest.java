@@ -7,7 +7,7 @@ import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class AgentTradeConfirmWaitServiceTest {
     @Test
     void partnerConfirmedCompletesMarksDoneAndClearsTimer() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean completed = new AtomicBoolean(false);
@@ -48,7 +48,7 @@ class AgentTradeConfirmWaitServiceTest {
 
     @Test
     void botRecipientCompletesWithoutPartnerConfirmation() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Character recipient = mock(Character.class);
         Trade trade = mock(Trade.class);
@@ -71,7 +71,7 @@ class AgentTradeConfirmWaitServiceTest {
 
     @Test
     void belowTimeoutOnlyAddsTimer() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean completed = new AtomicBoolean(false);
@@ -99,7 +99,7 @@ class AgentTradeConfirmWaitServiceTest {
 
     @Test
     void overTimeoutRepliesCancelsAndResets() {
-        BotEntry entry = new BotEntry(null, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean reset = new AtomicBoolean(false);

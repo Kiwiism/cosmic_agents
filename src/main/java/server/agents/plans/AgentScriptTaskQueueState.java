@@ -3,7 +3,7 @@ package server.agents.plans;
 import java.util.ArrayDeque;
 
 /**
- * Mutable queued task state for scripted Agent plans while BotEntry is being drained.
+ * Mutable queued task state for scripted Agent plans while Agent runtime reconstruction is being finalized.
  */
 public final class AgentScriptTaskQueueState {
     private final ArrayDeque<AgentTask> queuedTasks = new ArrayDeque<>();

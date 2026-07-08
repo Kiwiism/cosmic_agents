@@ -4,7 +4,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed AP/SP build state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed AP/SP build state.
  */
 public final class AgentBotBuildStateRuntime {
     private AgentBotBuildStateRuntime() {

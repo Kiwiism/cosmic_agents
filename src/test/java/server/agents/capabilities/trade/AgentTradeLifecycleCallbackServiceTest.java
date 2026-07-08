@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -16,7 +16,7 @@ class AgentTradeLifecycleCallbackServiceTest {
     void buildsLifecycleCallbacksFromLegacyOperations() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        BotEntry entry = new BotEntry(agent, owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         AtomicBoolean restored = new AtomicBoolean();
         AtomicBoolean cleared = new AtomicBoolean();
         AtomicBoolean refilled = new AtomicBoolean();

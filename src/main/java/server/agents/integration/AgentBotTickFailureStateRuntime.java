@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed tick failure window state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed tick failure window state.
  */
 public final class AgentBotTickFailureStateRuntime {
     private AgentBotTickFailureStateRuntime() {

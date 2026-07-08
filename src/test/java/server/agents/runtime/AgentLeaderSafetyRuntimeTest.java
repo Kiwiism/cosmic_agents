@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentLeaderSafetyRuntimeTest {
     @Test
     void defaultInactiveLeaderTickUsesAgentRuntimeConfigTimeout() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         List<String> calls = new ArrayList<>();
 
@@ -48,7 +48,7 @@ class AgentLeaderSafetyRuntimeTest {
 
     @Test
     void delegatesInactiveLeaderTickThroughAgentRuntimeHooks() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         List<String> calls = new ArrayList<>();
 

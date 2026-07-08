@@ -8,7 +8,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -66,7 +66,7 @@ class AgentCornerFallThroughTest {
     private String simulateKnock(MapleMap map, int startX, int airVelocityX, float velocityY) {
         Point start = new Point(startX, CORNER.y);
         Character agent = mockAgent(start, map);
-        BotEntry entry = new BotEntry(agent, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentMovementPoseService.resetMotion(entry, agent.getPosition());
         AgentBotMovementStateRuntime.setFacingDirection(entry, airVelocityX < 0 ? -1 : 1);
         if (airVelocityX == 0 && velocityY == 0f) {

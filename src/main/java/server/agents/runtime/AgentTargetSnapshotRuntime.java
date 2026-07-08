@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Runtime wiring for target snapshot and follow-anchor lookup over the current
- * BotEntry-backed registry.
+ * AgentRuntimeEntry-backed registry.
  */
 public final class AgentTargetSnapshotRuntime {
     private static final int PLATFORM_EDGE_INSET_PX = 12;

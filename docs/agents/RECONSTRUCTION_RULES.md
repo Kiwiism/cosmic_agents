@@ -17,6 +17,14 @@ Rules:
 
 Recent reconstruction notes:
 
+- Final shell cleanup removed `src/main/java/server/bots/**` and
+  `src/test/java/server/bots/**`. Tests that used the constructor-compatible
+  shell now instantiate `AgentRuntimeEntry` directly. Source and test code no
+  longer import or reference `server.bots`; behavior is unchanged.
+- `AgentBot*` class names remain as documented Agent-owned adapter/runtime
+  names after shell deletion. They are naming artifacts only, not dependencies
+  on the removed bot package, and should be renamed by capability in a later
+  semantic cleanup branch.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 class AgentOwnerlessTickServiceTest {
     @Test
     void clearsFollowingAndStopsWhenGroundingConsumesTick() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
@@ -38,7 +38,7 @@ class AgentOwnerlessTickServiceTest {
 
     @Test
     void ticksStandaloneMoveWhenMoveTargetExists() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
@@ -62,7 +62,7 @@ class AgentOwnerlessTickServiceTest {
 
     @Test
     void idlesWhenNoMoveTargetExists() {
-        BotEntry entry = entry();
+        AgentRuntimeEntry entry = entry();
         Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
@@ -79,7 +79,7 @@ class AgentOwnerlessTickServiceTest {
         assertEquals(1, idles.get());
     }
 
-    private static BotEntry entry() {
-        return new BotEntry(mock(Character.class), mock(Character.class), null);
+    private static AgentRuntimeEntry entry() {
+        return new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
     }
 }

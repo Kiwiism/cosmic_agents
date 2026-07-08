@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentBotInventoryRuntimeAdaptersTest {
     @Test
     void exposesInventoryRuntimeCallbackAdapters() {
-        BotEntry entry = new BotEntry(mock(Character.class), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         Character agent = mock(Character.class);
 
         assertNotNull(AgentBotInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
@@ -27,7 +27,7 @@ class AgentBotInventoryRuntimeAdaptersTest {
 
     @Test
     void manualTradeGreetingUsesAgentTradeDialogueService() {
-        BotEntry entry = new BotEntry(mock(Character.class), null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
 
         try (MockedStatic<AgentTradeDialogueService> tradeDialogue = mockStatic(AgentTradeDialogueService.class)) {
             tradeDialogue.when(AgentTradeDialogueService::manualTradeGreeting).thenReturn("hello");

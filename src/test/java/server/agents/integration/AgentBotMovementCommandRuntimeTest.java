@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -21,7 +21,7 @@ class AgentBotMovementCommandRuntimeTest {
     @Test
     void followOwnerUsesAgentModeStateDirectly() {
         Character owner = character(100, 100000000);
-        BotEntry entry = new BotEntry(character(200, 100000000), owner, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), owner, null);
 
         AgentBotMovementCommandRuntime.followOwner(entry);
 
@@ -33,7 +33,7 @@ class AgentBotMovementCommandRuntimeTest {
     @Test
     void followTargetUsesAgentModeStateDirectly() {
         Character target = character(300, 100000000);
-        BotEntry entry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
 
         AgentBotMovementCommandRuntime.follow(entry, target);
 
@@ -44,7 +44,7 @@ class AgentBotMovementCommandRuntimeTest {
 
     @Test
     void stopUsesAgentModeStateDirectly() {
-        BotEntry entry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
         AgentBotModeStateRuntime.setFollowing(entry, true);
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
 
@@ -57,7 +57,7 @@ class AgentBotMovementCommandRuntimeTest {
 
     @Test
     void moveToUsesAgentMoveTargetStateDirectly() {
-        BotEntry entry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
         Point dest = new Point(10, 20);
 
         AgentBotMovementCommandRuntime.moveTo(entry, dest, true);
@@ -70,7 +70,7 @@ class AgentBotMovementCommandRuntimeTest {
 
     @Test
     void farmAndGrindUseAgentModeStateDirectly() {
-        BotEntry farmEntry = new BotEntry(character(200, 100000000), character(100, 100000000), null);
+        AgentRuntimeEntry farmEntry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
         Point dest = new Point(30, 40);
 
         AgentBotMovementCommandRuntime.farmHere(farmEntry, dest);
@@ -78,7 +78,7 @@ class AgentBotMovementCommandRuntimeTest {
         assertTrue(AgentBotModeStateRuntime.grinding(farmEntry));
         assertEquals(dest, AgentBotMoveTargetStateRuntime.moveTarget(farmEntry));
 
-        BotEntry grindEntry = new BotEntry(character(201, 100000000), character(100, 100000000), null);
+        AgentRuntimeEntry grindEntry = new AgentRuntimeEntry(character(201, 100000000), character(100, 100000000), null);
         AgentBotMovementCommandRuntime.grind(grindEntry);
 
         assertTrue(AgentBotModeStateRuntime.grinding(grindEntry));
@@ -90,7 +90,7 @@ class AgentBotMovementCommandRuntimeTest {
         MapleMap map = mock(MapleMap.class);
         Character bot = character(200, 100000000);
         when(bot.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(bot, character(100, 100000000), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, character(100, 100000000), null);
         Point patrolPos = new Point(30, 40);
 
         try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class);
@@ -111,7 +111,7 @@ class AgentBotMovementCommandRuntimeTest {
         when(map.getId()).thenReturn(100000000);
         Character bot = character(200, 100000000);
         when(bot.getMap()).thenReturn(map);
-        BotEntry entry = new BotEntry(bot, character(100, 100000000), null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, character(100, 100000000), null);
         Point patrolPos = new Point(30, 40);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 

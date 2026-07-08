@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary BotEntry-backed owner activity/AFK state.
+ * Agent-owned adapter for AgentRuntimeEntry-backed owner activity/AFK state.
  */
 public final class AgentBotActivityStateRuntime {
     private AgentBotActivityStateRuntime() {

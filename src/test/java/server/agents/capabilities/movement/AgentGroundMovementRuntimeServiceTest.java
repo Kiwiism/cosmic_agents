@@ -5,7 +5,7 @@ import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapleMap;
@@ -26,7 +26,7 @@ class AgentGroundMovementRuntimeServiceTest {
         map.setFootholds(footholds);
 
         Character bot = mockBot(new Point(100, 100), map);
-        BotEntry entry = new BotEntry(bot, null, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 

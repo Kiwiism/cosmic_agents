@@ -11,7 +11,7 @@ import net.server.world.Party;
 import tools.PacketCreator;
 
 /**
- * Temporary Agent-owned adapter from legacy BotEntry message fields to the
+ * Temporary Agent-owned adapter from Agent runtime message fields to the
  * Agent reply queue runtime.
  */
 public final class AgentBotReplyRuntime {

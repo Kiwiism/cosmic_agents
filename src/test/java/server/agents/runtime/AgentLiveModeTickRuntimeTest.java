@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.bots.BotEntry;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.mockStatic;
 class AgentLiveModeTickRuntimeTest {
     @Test
     void shopVisitConsumptionShortCircuitsRemainingLiveModes() {
-        BotEntry entry = mock(BotEntry.class);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Character followAnchor = mock(Character.class);
         Point agentPos = new Point(10, 20);
@@ -28,7 +28,7 @@ class AgentLiveModeTickRuntimeTest {
 
         try (MockedStatic<AgentShopVisitTickService> shopVisit = mockStatic(AgentShopVisitTickService.class)) {
             shopVisit.when(() -> AgentShopVisitTickService.tickShopVisitIfPending(
-                            any(BotEntry.class),
+                            any(AgentRuntimeEntry.class),
                             any(Character.class),
                             anyBoolean(),
                             any()))
