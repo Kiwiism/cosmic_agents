@@ -4908,8 +4908,8 @@ Current physics correction:
   `server.agents.capabilities.combat`. They remain pure `AgentRuntimeEntry`
   state accessors; movement execution, map access, and combat side effects
   remain at their existing runtime/integration seams.
-- Combat cooldown, consumable-buff, support-buff, and skill-cache state
-  adapters have moved from `server.agents.integration` to
+- Combat cooldown, consumable-buff, support-buff, skill-buff debug, and
+  skill-cache state adapters have moved from `server.agents.integration` to
   `server.agents.capabilities.combat`. These adapters remain pure
   `AgentRuntimeEntry` state accessors; actual attack execution, buff
   packet/application work, damage mutation, and alert scheduling remain at

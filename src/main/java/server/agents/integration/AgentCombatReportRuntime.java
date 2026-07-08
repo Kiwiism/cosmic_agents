@@ -5,6 +5,7 @@ import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentSkillBuffDebugStateRuntime;
 
 import client.Character;
 import net.server.PlayerBuffValueHolder;
