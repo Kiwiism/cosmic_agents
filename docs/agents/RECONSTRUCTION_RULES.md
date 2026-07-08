@@ -4925,6 +4925,12 @@ Current physics correction:
   flags, SP variant, last known level, and job-prompt milestone markers;
   build command handling, delayed replies, job/AP/SP mutation, and live
   character access remain at their existing runtime/integration seams.
+- Inventory cooldown state has moved from `server.agents.integration` to
+  `server.agents.capabilities.inventory.AgentInventoryStateRuntime`. It
+  remains a pure `AgentRuntimeEntry` state accessor for loot inhibit and
+  inventory-full warning cooldowns; item pickup/drop/transfer mutation and
+  movement timer tick-down scheduling remain at their existing capability/
+  integration seams.
 - Shop transition state has moved from `server.agents.integration` to
   `server.agents.capabilities.shop.AgentShopStateRuntime`. It remains a pure
   `AgentRuntimeEntry` state accessor for pending visits, target/NPC positions,

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
-import server.agents.integration.AgentInventoryStateRuntime;
+import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiFunction;

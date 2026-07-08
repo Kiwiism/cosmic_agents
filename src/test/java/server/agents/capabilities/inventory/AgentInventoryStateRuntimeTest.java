@@ -1,9 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.inventory;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentInventoryStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
