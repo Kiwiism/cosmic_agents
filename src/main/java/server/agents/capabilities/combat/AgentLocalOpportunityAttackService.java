@@ -7,7 +7,6 @@ import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import server.agents.integration.AgentCombatAttackRuntime;
 import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatTargetRuntime;
-import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

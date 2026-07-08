@@ -5,7 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
-import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;

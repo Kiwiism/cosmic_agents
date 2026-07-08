@@ -3,7 +3,6 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

@@ -1,7 +1,6 @@
 package server.agents.capabilities.combat;
 
 import client.inventory.WeaponType;
-import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

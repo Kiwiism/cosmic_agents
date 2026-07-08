@@ -4,7 +4,7 @@ import server.agents.capabilities.combat.AgentGrindSearchStateRuntime;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
