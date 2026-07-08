@@ -2344,3 +2344,6 @@ Recent capability extraction notes:
   active-mode preparation, movement command dispatch, and fidget side effects;
   live identity, scheduling, reply delivery, and fidget side effects remain
   explicit seams.
+- `AgentMobTouchRuntime` now lives in `server.agents.capabilities.combat`. It
+  preserves the same touch-sweep bounds, hitbox lookup, lower-half
+  intersection policy, and checkpoint state behavior.

@@ -1,8 +1,6 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentMobTouchPolicy;
-import server.agents.capabilities.combat.AgentMobTouchStateRuntime;
 import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

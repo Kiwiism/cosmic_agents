@@ -6255,6 +6255,10 @@ Current physics correction:
   the same delays, replies, supply checks, active-mode preparation, command
   dispatch, and fidget side effects; live identity, scheduler, reply delivery,
   and fidget side effects remain explicit integration/runtime seams.
+- Mob-touch sweep and checkpoint behavior now lives in
+  `server.agents.capabilities.combat.AgentMobTouchRuntime`. It preserves the
+  same previous-position sweep bounds, mob hitbox lookup, lower-half
+  intersection policy, and per-map checkpoint memory.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
