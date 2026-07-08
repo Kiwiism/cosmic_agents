@@ -29,7 +29,7 @@ import server.agents.integration.AgentSessionRuntime;
 import server.agents.integration.AgentSocialRuntime;
 import server.agents.capabilities.supplies.AgentSupplyRuntime;
 import server.agents.capabilities.trade.AgentTransferRuntime;
-import server.agents.integration.AgentUtilityRuntime;
+import server.agents.capabilities.dialogue.AgentUtilityRuntime;
 
 /**
  * Agent-owned adapter from the live Agent runtime entry to the generic

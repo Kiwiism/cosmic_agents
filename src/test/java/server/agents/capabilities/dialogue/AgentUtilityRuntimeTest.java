@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import server.agents.capabilities.shop.AgentShopService;
 
@@ -6,8 +6,8 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentTradeInviteGateway;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.integration.AgentUtilityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -71,7 +71,8 @@ class AgentUtilityRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentTradeInviteGateway> trade = mockStatic(AgentTradeInviteGateway.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(600), eq(1000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
@@ -82,6 +83,35 @@ class AgentUtilityRuntimeTest {
 
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), any(String.class)));
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)));
+            trade.verifyNoInteractions();
+        }
+    }
+
+    @Test
+    void tradeInviteGatewayRunsAfterSecondDelay() {
+        Character bot = mock(Character.class);
+        Character owner = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
+
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentTradeInviteGateway> trade = mockStatic(AgentTradeInviteGateway.class)) {
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(600), eq(1000), any(Runnable.class)))
+                    .thenAnswer(invocation -> {
+                        invocation.<Runnable>getArgument(2).run();
+                        return null;
+                    });
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)))
+                    .thenAnswer(invocation -> {
+                        invocation.<Runnable>getArgument(2).run();
+                        return null;
+                    });
+
+            AgentUtilityRuntime.utilityCallbacks(entry).tradeInvite();
+
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), any(String.class)));
+            trade.verify(() -> AgentTradeInviteGateway.startAndInvite(bot, owner));
         }
     }
 }

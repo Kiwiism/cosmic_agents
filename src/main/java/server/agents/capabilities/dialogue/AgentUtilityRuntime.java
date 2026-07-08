@@ -1,19 +1,20 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
 
 import client.Character;
-import server.Trade;
-import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentTradeInviteGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.build.AgentMakerService;
 import server.agents.capabilities.shop.AgentShopService;
 
 /**
- * Agent-owned utility chat callback facade over temporary bot-side trade,
- * shop, and maker side effects.
+ * Agent-owned utility chat callback facade. Server-side trade mutation remains
+ * behind the integration gateway.
  */
 public final class AgentUtilityRuntime {
     private AgentUtilityRuntime() {
@@ -30,8 +31,7 @@ public final class AgentUtilityRuntime {
                     AgentSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
                         AgentReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
                         AgentSchedulerRuntime.afterRandomDelay(800, 1200, () -> {
-                            Trade.startTrade(bot);
-                            Trade.inviteTrade(bot, owner);
+                            AgentTradeInviteGateway.startAndInvite(bot, owner);
                         });
                     });
                 }
