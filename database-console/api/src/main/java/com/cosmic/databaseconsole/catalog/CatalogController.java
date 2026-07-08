@@ -30,7 +30,7 @@ public class CatalogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "48") int size) {
         return catalog.search(q, type.toUpperCase(), subtype.toUpperCase(), category, minLevel, maxLevel, jobId, region, usedOnly,
-                sort, direction, Math.max(page, 0), Math.clamp(size, 12, 200));
+                sort, direction, Math.max(page, 0), Math.clamp(size, 12, 500));
     }
 
     @GetMapping("/suggest")
@@ -38,7 +38,7 @@ public class CatalogController {
                                       @RequestParam(defaultValue = "") String type,
                                       @RequestParam(defaultValue = "") String subtype,
                                       @RequestParam(defaultValue = "12") int limit) {
-        return catalog.suggest(q, type.toUpperCase(), subtype.toUpperCase(), Math.clamp(limit, 1, 30));
+        return catalog.suggest(q, type.toUpperCase(), subtype.toUpperCase(), Math.clamp(limit, 1, 500));
     }
 
     @GetMapping("/{type}/{id}")

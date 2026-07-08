@@ -2,7 +2,9 @@ param(
     [string] $WzRoot = "wz",
     [string] $GameCatalogDir = "tmp/game-catalog",
     [string] $NpcCatalogDir = "tmp/npc-catalog",
-    [string] $OutputDir = "tmp/agent-llm-catalog"
+    [string] $OutputDir = "tmp/agent-llm-catalog",
+    [switch] $SummaryOnly,
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
@@ -1084,6 +1086,52 @@ $summary = @(
     "- Catalog facts are planning hints, not authority. Runtime must still validate current map, NPC, quest, inventory, party, and combat state."
 )
 Set-Content -Encoding UTF8 -Path $out.summary -Value $summary
+
+$outputFiles = @(
+    [pscustomobject] @{ key = "portalGraph"; path = $out.portalGraph }
+    [pscustomobject] @{ key = "mobSpawn"; path = $out.mobSpawn }
+    [pscustomobject] @{ key = "mapSummary"; path = $out.mapSummary }
+    [pscustomobject] @{ key = "questObjectives"; path = $out.questObjectives }
+    [pscustomobject] @{ key = "itemSources"; path = $out.itemSources }
+    [pscustomobject] @{ key = "resupply"; path = $out.resupply }
+    [pscustomobject] @{ key = "affordances"; path = $out.affordances }
+    [pscustomobject] @{ key = "mapleIslandMvp"; path = $out.mapleIslandMvp }
+    [pscustomobject] @{ key = "mapleIslandMvpIndexes"; path = $out.mapleIslandMvpIndexes }
+    [pscustomobject] @{ key = "manifest"; path = $out.manifest }
+    [pscustomobject] @{ key = "summary"; path = $out.summary }
+)
+
+$report = [ordered]@{
+    schemaVersion = 1
+    generatedAt = (Get-Date).ToString("o")
+    status = "OK"
+    wzRoot = $WzRoot
+    gameCatalogDir = $GameCatalogDir
+    npcCatalogDir = $NpcCatalogDir
+    outputDir = $OutputDir
+    summaryOnly = [bool] $SummaryOnly
+    rowsOmitted = [bool] $SummaryOnly
+    outputFileCount = $outputFiles.Count
+    returnedOutputFileCount = if ($SummaryOnly) { 0 } else { $outputFiles.Count }
+    counts = [ordered]@{
+        maps = $counts.maps
+        portalEdges = $counts.portalEdges
+        mobSpawnMaps = $counts.mobSpawnMaps
+        mapSummaries = $counts.mapSummaries
+        questObjectivePlans = $counts.questObjectivePlans
+        itemSourceIndexes = $counts.itemSourceIndexes
+        resupplyShops = $counts.resupplyShops
+        actionAffordances = $counts.actionAffordances
+        mapleIslandMvpQuests = $counts.mapleIslandMvpQuests
+        mapleIslandMvpReachableMaps = $counts.mapleIslandMvpReachableMaps
+    }
+    outputFiles = if ($SummaryOnly) { $null } else { $outputFiles }
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 6
+    return
+}
 
 Write-Host "Agent/LLM catalog export complete:"
 Write-Host "  Output: $OutputDir"

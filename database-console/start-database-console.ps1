@@ -25,6 +25,7 @@ function Stop-ListeningProcesses {
             $processMatch = (-not [string]::IsNullOrWhiteSpace($ProcessNameHint) -and $process.Name -like "*$ProcessNameHint*")
             if ($commandMatch -or $processMatch) {
                 Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                Wait-Process -Id $pid -Timeout 10 -ErrorAction SilentlyContinue
             }
         }
     } catch {
@@ -32,8 +33,31 @@ function Stop-ListeningProcesses {
     }
 }
 
+function Stop-CommandLineProcesses {
+    param(
+        [string]$CommandHint,
+        [string]$ProcessNameHint = $null
+    )
+
+    try {
+        $processes = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+            -not [string]::IsNullOrWhiteSpace($_.CommandLine) -and
+            $_.CommandLine -like "*$CommandHint*" -and
+            ([string]::IsNullOrWhiteSpace($ProcessNameHint) -or $_.Name -like "*$ProcessNameHint*")
+        }
+        foreach ($process in $processes) {
+            Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+            Wait-Process -Id $process.ProcessId -Timeout 10 -ErrorAction SilentlyContinue
+        }
+    } catch {
+        # ignore transient process lookup failures during startup cleanup
+    }
+}
+
 Stop-ListeningProcesses -Port 8081 -CommandHint "cosmic-database-console" -ProcessNameHint "java"
 Stop-ListeningProcesses -Port 3000 -CommandHint "database-console\\web" -ProcessNameHint "node.exe"
+Stop-CommandLineProcesses -CommandHint "cosmic-database-console-api-0.1.0-SNAPSHOT.jar" -ProcessNameHint "java"
+Stop-CommandLineProcesses -CommandHint "database-console\web\.next\standalone\server.js" -ProcessNameHint "node.exe"
 
 if (-not $nodeCommand) {
     $bundledNode = Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"

@@ -8,7 +8,11 @@ param(
 
     [switch] $Uncheck,
 
-    [switch] $List
+    [switch] $List,
+
+    [switch] $SummaryOnly,
+
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,12 +44,51 @@ if (-not (Test-Path -LiteralPath $checklistPath)) {
 }
 
 $lines = @(Get-Content -LiteralPath $checklistPath)
+$items = Get-ChecklistItems $lines
+
+function New-ChecklistReport {
+    param(
+        [object[]] $Items,
+        [int] $MatchedCount = 0,
+        [int] $ChangedCount = 0,
+        [string] $Action = "list"
+    )
+
+    return [ordered]@{
+        status = "OK"
+        runPath = $resolvedRunPath.Path
+        checklistPath = $checklistPath
+        action = $Action
+        summaryOnly = [bool] $SummaryOnly
+        rowsOmitted = [bool] $SummaryOnly
+        itemCount = @($Items).Count
+        checkedCount = @($Items | Where-Object { $_.checked }).Count
+        uncheckedCount = @($Items | Where-Object { -not $_.checked }).Count
+        matchedCount = $MatchedCount
+        changedCount = $ChangedCount
+        returnedItemCount = if ($SummaryOnly) { 0 } else { @($Items).Count }
+        items = if ($SummaryOnly) { @() } else { @($Items) }
+    }
+}
 
 if ($List) {
-    $items = Get-ChecklistItems $lines
-    foreach ($item in $items) {
-        $mark = if ($item.checked) { "x" } else { " " }
-        Write-Host ("[{0}] {1}. {2}" -f $mark, $item.lineNumber, $item.text)
+    $report = New-ChecklistReport $items
+    if ($Json) {
+        $report | ConvertTo-Json -Depth 6
+        return
+    }
+
+    if (-not $SummaryOnly) {
+        foreach ($item in $items) {
+            $mark = if ($item.checked) { "x" } else { " " }
+            Write-Host ("[{0}] {1}. {2}" -f $mark, $item.lineNumber, $item.text)
+        }
+        Write-Host ""
+    }
+    Write-Host "Checked: $($report.checkedCount)"
+    Write-Host "Unchecked: $($report.uncheckedCount)"
+    if ($SummaryOnly) {
+        Write-Host "Checklist item rows omitted."
     }
     return
 }
@@ -85,6 +128,15 @@ if ($matchedCount -eq 0) {
 Set-Content -LiteralPath $checklistPath -Value $lines -Encoding UTF8
 
 $action = if ($Uncheck) { "unchecked" } else { "checked" }
+if ($Json) {
+    $updatedItems = Get-ChecklistItems @(Get-Content -LiteralPath $checklistPath)
+    New-ChecklistReport $updatedItems $matchedCount $changed $action | ConvertTo-Json -Depth 6
+    return
+}
+
 Write-Host "Checklist items matched: $matchedCount"
 Write-Host "Checklist items $action`: $changed"
 Write-Host "Checklist: $checklistPath"
+if ($SummaryOnly) {
+    Write-Host "Checklist item rows omitted."
+}

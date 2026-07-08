@@ -23,7 +23,13 @@ param(
     [ValidateSet("true", "false", "unchanged")]
     [string] $RestartClean = "unchanged",
 
-    [string[]] $Note
+    [string[]] $Note,
+
+    [switch] $DryRun,
+
+    [switch] $SummaryOnly,
+
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,6 +43,7 @@ function Set-PropertyIfProvided {
 
     if ($Value -ge 0) {
         $Object.$Name = $Value
+        [void] $changedFields.Add($Name)
     }
 }
 
@@ -49,8 +56,10 @@ function Set-BoolIfProvided {
 
     if ($Value -eq "true") {
         $Object.$Name = $true
+        [void] $changedFields.Add($Name)
     } elseif ($Value -eq "false") {
         $Object.$Name = $false
+        [void] $changedFields.Add($Name)
     }
 }
 
@@ -62,6 +71,7 @@ if (-not (Test-Path -LiteralPath $summaryPath)) {
 }
 
 $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json
+$changedFields = [System.Collections.Generic.List[string]]::new()
 
 Set-PropertyIfProvided $summary "durationMinutes" $DurationMinutes
 Set-PropertyIfProvided $summary "sampleIntervalMinutes" $SampleIntervalMinutes
@@ -88,9 +98,35 @@ if ($Note -and $Note.Count -gt 0) {
     }
 
     $summary.notes = @($existingNotes + $Note)
+    [void] $changedFields.Add("notes")
 }
 
-$summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+if (!$DryRun) {
+    $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+}
 
-Write-Host "Updated baseline summary:"
+$report = [ordered]@{
+    status = if ($DryRun) { "DRY_RUN" } else { "OK" }
+    runPath = $resolvedRunPath.Path
+    summaryPath = $summaryPath
+    dryRun = [bool] $DryRun
+    updated = -not [bool] $DryRun
+    summaryOnly = [bool] $SummaryOnly
+    summaryOmitted = [bool] $SummaryOnly
+    changedFields = @($changedFields)
+    changedFieldCount = $changedFields.Count
+    summary = if ($SummaryOnly) { $null } else { $summary }
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 8
+    return
+}
+
+if ($DryRun) {
+    Write-Host "Dry run only. Baseline summary was not updated:"
+} else {
+    Write-Host "Updated baseline summary:"
+}
 Write-Host "  $summaryPath"
+Write-Host "Changed fields: $($changedFields.Count)"

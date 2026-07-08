@@ -12,7 +12,13 @@ param(
 
     [switch] $FromClipboard,
 
-    [string] $Timestamp
+    [string] $Timestamp,
+
+    [switch] $DryRun,
+
+    [switch] $SummaryOnly,
+
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,13 +68,53 @@ if ([string]::IsNullOrWhiteSpace($sampleText)) {
     throw "Sample text is empty."
 }
 
+$sampleCountBefore = @(
+    Select-String -LiteralPath $targetPath -Pattern '^# sample:' -ErrorAction SilentlyContinue
+).Count
+
 $entry = @"
 
 # sample: $Timestamp
 $sampleText
 "@
 
-Add-Content -LiteralPath $targetPath -Value $entry -Encoding UTF8
+if (!$DryRun) {
+    Add-Content -LiteralPath $targetPath -Value $entry -Encoding UTF8
+}
 
-Write-Host "Appended $Target sample to:"
+$sampleCount = if ($DryRun) {
+    $sampleCountBefore + 1
+} else {
+    @(
+        Select-String -LiteralPath $targetPath -Pattern '^# sample:' -ErrorAction SilentlyContinue
+    ).Count
+}
+
+$report = [ordered]@{
+    status = if ($DryRun) { "DRY_RUN" } else { "OK" }
+    runPath = $resolvedRunPath.Path
+    target = $Target
+    targetPath = $targetPath
+    timestamp = $Timestamp
+    dryRun = [bool] $DryRun
+    summaryOnly = [bool] $SummaryOnly
+    rowsOmitted = $false
+    appended = -not [bool] $DryRun
+    appendedCharacterCount = $sampleText.Length
+    sampleCountBefore = $sampleCountBefore
+    sampleCount = $sampleCount
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 4
+    return
+}
+
+if ($DryRun) {
+    Write-Host "Dry run only. No $Target sample was appended to:"
+} else {
+    Write-Host "Appended $Target sample to:"
+}
 Write-Host "  $targetPath"
+Write-Host "Samples before: $sampleCountBefore"
+Write-Host "Samples after: $sampleCount"

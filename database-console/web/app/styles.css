@@ -148,7 +148,7 @@ aside nav{overflow:auto;min-height:0}
 .stat-field-actions>span{display:flex;align-items:center}
 .stat-field-actions>span:last-child{margin-left:auto}
 .equipment-appearance-shell{display:grid;grid-template-columns:minmax(280px,.72fr) minmax(420px,1fr);gap:14px;margin-bottom:14px;align-items:stretch}.avatar-preview-panel,.appearance-controls{min-width:0;height:100%;display:flex;flex-direction:column}.avatar-preview-body{display:grid;grid-template-columns:1fr;gap:16px;align-items:stretch;flex:1}.avatar-stage{min-height:360px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(180deg,#fbfcff,#f3f5fb);display:grid;place-items:center;color:var(--brand);font-weight:900;padding:18px;text-align:center}.avatar-stage strong,.avatar-stage small{display:block;color:var(--ink)}.avatar-stage small{color:var(--muted);font-size:11px}.avatar-face-stack{position:relative;width:150px;height:170px;display:grid;place-items:center}.avatar-face-stack .image-fallback{position:absolute;width:54px;height:54px}.avatar-face-stack .skin-swatch.large{position:absolute;width:118px;height:118px;border-radius:50%;border:1px solid #e4d3c8}.avatar-face-icon,.avatar-hair-icon{position:absolute;object-fit:contain;filter:drop-shadow(0 8px 16px #1b234022)}.avatar-face-icon{width:72px;height:72px;z-index:2}.avatar-hair-icon{width:100px;height:100px;z-index:3;transform:translateY(-24px)}.appearance-stack{display:grid;grid-template-columns:1fr;gap:10px;flex:1}.appearance-selector{position:relative;border:1px solid var(--line);border-radius:12px;background:#fafbfe;padding:10px;display:grid;gap:8px}.appearance-selector>label,.appearance-dropdown>span:first-child{color:#737b91;font-size:10px;font-weight:900;text-transform:uppercase}.appearance-current,.appearance-results button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;text-align:left;color:inherit}.appearance-current img,.appearance-results img{width:42px;height:42px;object-fit:contain}.appearance-current strong,.appearance-current code,.appearance-results strong,.appearance-results code{display:block;min-width:0}.appearance-current strong,.appearance-results strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.appearance-current code,.appearance-results code{font-size:10px;color:#7d8497}.appearance-selector .search-box{height:36px}.appearance-results{display:grid;gap:6px;max-height:260px;overflow:auto}.appearance-results.compact{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none}.skin-swatch{width:42px;height:42px;border:1px solid var(--line);border-radius:10px;background:#f1f3f8;display:grid;place-items:center;color:var(--brand)}.appearance-dropdown{border:1px solid var(--line);border-radius:12px;background:#fafbfe;padding:10px;display:grid;gap:8px}.appearance-dropdown-current{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center}.appearance-dropdown select{height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);padding:0 10px;min-width:0}.equipment-slot-grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}.equipment-slot{height:86px;padding:6px;display:grid;place-items:center;align-content:center;gap:4px}.equipment-slot>span{right:4px;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}.equipment-slot small{display:block;max-width:100%;font-size:9px;color:#697186;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.equipment-slot:not(.occupied){background:#f8f9fc;border-style:dashed;color:#9aa2b5}.equipment-slot:not(.occupied) small{color:#a1a8b8}.equipment-slot img{width:38px;height:38px;object-fit:contain}
-.avatar-panel-title{align-items:flex-start}.avatar-panel-title .filter-check{height:34px;background:#f7f4ff}.avatar-fullbody{width:150px;max-height:240px;object-fit:contain;filter:drop-shadow(0 12px 18px #1b23401c)}.console-shell:has(.inventory-editor-dock) .equipment-appearance-shell{grid-template-columns:minmax(240px,.85fr) minmax(270px,1fr)}.console-shell:has(.inventory-editor-dock) .avatar-stage{min-height:300px}.console-shell:has(.inventory-editor-dock) .avatar-fullbody{width:128px;max-height:210px}
+.avatar-panel-title{align-items:flex-start}.avatar-panel-title .filter-check{height:34px;background:#f7f4ff}.avatar-fullbody{width:150px;max-height:240px;object-fit:contain;filter:drop-shadow(0 12px 18px #1b23401c)}.avatar-ign-editor{width:min(220px,100%);display:grid;gap:5px;color:#737b91;font-size:10px;font-weight:900;text-transform:uppercase}.avatar-ign-editor input{width:100%;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:14px;font-weight:900;text-align:center;padding:8px 10px;text-transform:none;outline:0}.avatar-ign-editor input:focus{border-color:var(--brand);box-shadow:0 0 0 3px #6f55e51a}.avatar-ign-status{width:min(220px,100%);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.avatar-ign-status small{text-align:left;font-size:10px;line-height:1.25}.avatar-ign-status small.available{color:var(--good)}.avatar-ign-status small.unavailable{color:var(--danger)}.primary.compact{min-height:30px;padding:6px 10px;font-size:11px}.console-shell:has(.inventory-editor-dock) .equipment-appearance-shell{grid-template-columns:minmax(240px,.85fr) minmax(270px,1fr)}.console-shell:has(.inventory-editor-dock) .avatar-stage{min-height:300px}.console-shell:has(.inventory-editor-dock) .avatar-fullbody{width:128px;max-height:210px}
 .equipment-slot.occupied{gap:0}.equipment-slot.occupied img{width:46px;height:46px}.equipment-slot.occupied small{display:none}.inventory-editor-actions{margin-top:18px;padding-bottom:14px;margin-bottom:0}.inventory-edit-section>label:last-of-type{margin-bottom:0}
 .equipment-appearance-shell{grid-template-columns:minmax(280px,1fr) minmax(280px,1fr);align-items:start}.avatar-preview-panel,.appearance-controls{height:auto;min-height:0}.appearance-controls{align-self:start}.appearance-controls .panel-title{margin-bottom:14px}.appearance-stack{gap:10px}.equipment-slot-grid{grid-template-columns:repeat(auto-fill,72px);align-items:start}.equipment-slot{width:72px;height:72px;aspect-ratio:1/1}.equipment-slot.occupied img{width:42px;height:42px}.equipment-slot small{font-size:8px}.console-shell:has(.inventory-editor-dock) .equipment-appearance-shell{grid-template-columns:minmax(230px,1fr) minmax(230px,1fr)}.console-shell:has(.inventory-editor-dock) .appearance-current,.console-shell:has(.inventory-editor-dock) .appearance-results button{grid-template-columns:34px minmax(0,1fr);gap:8px}.console-shell:has(.inventory-editor-dock) .appearance-current img,.console-shell:has(.inventory-editor-dock) .appearance-results img{width:34px;height:34px}
 @media(max-width:900px){.equipment-appearance-shell{grid-template-columns:1fr}.avatar-preview-body{grid-template-columns:1fr}.avatar-stage{min-height:180px}}
@@ -739,4 +739,77 @@ body[data-theme="dark"] .creation-form-grid>label,
 body[data-theme="dark"] .creation-identity-row>label{
   color: #c8d2e8;
 }
+
+.quest-book-tabs{margin:14px 0}
+.quest-status-layout{display:grid;grid-template-columns:minmax(420px,1fr) minmax(320px,420px);gap:16px;align-items:start}
+.quest-edit-panel{position:sticky;top:112px;z-index:3}
+.quest-list-panel .rich-list{display:grid;gap:8px}
+.quest-row{width:100%;display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:10px 12px;text-align:left}
+.quest-row:hover,.quest-row.selected{border-color:#7d6df0;background:var(--surface-soft)}
+.quest-row svg{color:#7d6df0}
+.quest-row strong{display:block;font-size:14px}
+.quest-row small{display:block;color:var(--muted);margin-top:3px}
+.quest-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-bottom:12px;align-items:start}
+.quest-status-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.quest-status-actions button{min-height:34px}
+.quest-edit-grid label{min-height:70px}
+.quest-edit-grid label,.quest-progress-list label,.quest-progress-add label{display:grid;gap:5px;font-size:12px;font-weight:800;color:var(--muted);align-content:start}
+.quest-edit-grid select,.quest-edit-grid input,.quest-progress-list input,.quest-progress-add input{height:36px;border:1px solid var(--line);border-radius:7px;background:var(--field);color:var(--ink);padding:0 10px;min-width:0}
+.quest-edit-grid .stat-detail{min-height:26px;line-height:1.25}
+.quest-progress-list{display:grid;gap:8px;margin:10px 0 12px}
+.quest-progress-add{display:grid;grid-template-columns:120px minmax(0,1fr) 96px;gap:10px;align-items:end}
+.quest-progress-add .secondary{width:100%;height:36px;padding:5px 8px;font-size:11px;line-height:1.05;align-self:end}
+.quest-book-panel .panel-title{align-items:center}
+.book-section-tabs{margin:10px 0 14px;flex-wrap:wrap}
+.monster-book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.monster-book-card{display:grid;grid-template-columns:minmax(0,1fr) 76px;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:10px;min-height:76px;text-align:left;color:inherit}
+.monster-book-main{display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center;border:0;background:transparent;color:inherit;text-align:left;min-width:0;cursor:pointer;padding:0}
+.monster-book-card img,.monster-book-card .image-fallback{width:46px;height:46px;object-fit:contain}
+.monster-book-card strong{display:block;font-size:13px}
+.monster-book-card code,.monster-book-card small{display:block;color:var(--muted);font-size:11px}
+.monster-book-card strong,.monster-book-card code,.monster-book-card small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.monster-book-card.gold{border-color:#ffe047;background:linear-gradient(180deg,color-mix(in srgb,#ffef67 22%,var(--surface)),var(--surface))}
+.monster-book-card.silver{border-color:#aeb8c8;background:linear-gradient(180deg,color-mix(in srgb,#c7d0df 16%,var(--surface)),var(--surface))}
+.monster-book-card.bronze{border-color:#c7894e;background:linear-gradient(180deg,color-mix(in srgb,#d79555 14%,var(--surface)),var(--surface))}
+.monster-book-medal{position:relative;display:inline-flex;width:18px;height:18px;margin-top:5px;border-radius:50%;box-shadow:inset 0 0 0 2px #ffffff66,0 2px 6px #0002}
+.monster-book-medal:before,.monster-book-medal:after{content:"";position:absolute;bottom:-6px;width:7px;height:9px;border-radius:1px;clip-path:polygon(0 0,100% 0,70% 100%,50% 74%,30% 100%)}
+.monster-book-medal:before{left:3px;transform:rotate(13deg)}
+.monster-book-medal:after{right:3px;transform:rotate(-13deg)}
+.monster-book-card.gold .monster-book-medal{background:linear-gradient(135deg,#fffbd1,#ffe600 54%,#ffc400);border:1px solid #ffdc18}
+.monster-book-card.silver .monster-book-medal{background:linear-gradient(135deg,#f4f7fb,#b8c3d3 55%,#7c8797);border:1px solid #9ba8b8}
+.monster-book-card.bronze .monster-book-medal{background:linear-gradient(135deg,#ffd4aa,#c87835 55%,#884410);border:1px solid #b66a2e}
+.monster-book-card.gold .monster-book-medal:before,.monster-book-card.gold .monster-book-medal:after{background:#ffd400}
+.monster-book-card.silver .monster-book-medal:before,.monster-book-card.silver .monster-book-medal:after{background:#94a0b0}
+.monster-book-card.bronze .monster-book-medal:before,.monster-book-card.bronze .monster-book-medal:after{background:#a95d25}
+.monster-card-count{display:grid;gap:5px;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase}
+.monster-card-count select{height:34px;border:1px solid var(--line);border-radius:7px;background:var(--field);color:var(--ink);padding:0 8px;font-size:12px}
+.quest-npc-strip{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.quest-npc-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;background:var(--surface-soft);padding:4px 8px;color:var(--ink);font-size:12px;max-width:100%}
+.quest-npc-chip img,.quest-npc-chip .image-fallback{width:24px;height:24px;object-fit:contain}
+.quest-npc-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.quest-npc-chip code{font-size:10px;color:var(--muted)}
+.quest-npc-chip:hover,.monster-book-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}
+.quest-hero-icon{width:58px;height:58px;border-radius:14px;background:var(--surface-soft);border:1px solid var(--line);display:grid;place-items:center;color:#8b75ff}
+.quest-hero-icon svg{width:30px;height:30px}
+.quest-text-list{display:grid;gap:8px}
+.quest-text-list article{border:1px solid var(--line);border-radius:8px;background:var(--surface-soft);padding:10px}
+.quest-text-list strong{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.quest-text-list p{margin:0;white-space:pre-line;line-height:1.45}
+.quest-reference-block{display:grid;gap:8px;margin:10px 0}
+.quest-reference-block h4{margin:0;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.quest-phase-properties{margin-top:10px}
+.quest-detail-drawer .technical pre{max-height:260px;overflow:auto;background:#070b15;color:#d7e0f5;border-radius:8px;border:1px solid var(--line);padding:10px;font-size:11px;line-height:1.45}
+body[data-theme="dark"] .quest-row,
+body[data-theme="dark"] .monster-book-card{background:var(--surface-soft);border-color:var(--line);color:var(--ink)}
+body[data-theme="dark"] .monster-book-card.gold{border-color:#ffe14c;background:linear-gradient(180deg,#38340e,var(--surface-soft))}
+body[data-theme="dark"] .monster-book-card.silver{border-color:#9ba9bd;background:linear-gradient(180deg,#252b36,var(--surface-soft))}
+body[data-theme="dark"] .monster-book-card.bronze{border-color:#bd7b42;background:linear-gradient(180deg,#302319,var(--surface-soft))}
+body[data-theme="dark"] .quest-row:hover,
+body[data-theme="dark"] .quest-row.selected{background:#211d38;border-color:#7768dd}
+body[data-theme="dark"] .quest-edit-grid select,
+body[data-theme="dark"] .quest-edit-grid input,
+body[data-theme="dark"] .monster-card-count select,
+body[data-theme="dark"] .quest-progress-list input,
+body[data-theme="dark"] .quest-progress-add input{background:var(--field);color:var(--ink)}
+@media(max-width:1100px){.quest-status-layout{grid-template-columns:1fr}.quest-edit-panel{position:static}.quest-progress-add{grid-template-columns:1fr}}
 

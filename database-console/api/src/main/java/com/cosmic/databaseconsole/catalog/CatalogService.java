@@ -130,6 +130,10 @@ public class CatalogService {
                 SELECT * FROM catalog_entities WHERE entity_type = ? AND entity_id = ?
                 """, type, id);
         if (rows.isEmpty()) {
+            Map<String, Object> fallback = stringEntityFallback(type, id);
+            if (fallback != null) {
+                return fallback;
+            }
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.NOT_FOUND, "Catalog entity not found");
         }
@@ -692,7 +696,7 @@ public class CatalogService {
 
     private void collectEntities(Element element, StringFile definition, List<CatalogEntity> entities) {
         String nodeName = element.getAttribute("name");
-        if ("imgdir".equals(element.getTagName()) && nodeName.matches("\\d{5,9}")) {
+        if ("imgdir".equals(element.getTagName()) && nodeName.matches("\\d{4,9}")) {
             String name = directValue(element, "name");
             if ("MAP".equals(definition.type())) name = directValue(element, "mapName");
             if (name != null && !name.isBlank()) {
@@ -713,6 +717,60 @@ public class CatalogService {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         return factory;
+    }
+
+    private Map<String, Object> stringEntityFallback(String type, int id) {
+        Path source = switch (type) {
+            case "NPC" -> wzPath.resolve("String.wz/Npc.img.xml");
+            case "MOB" -> wzPath.resolve("String.wz/Mob.img.xml");
+            default -> null;
+        };
+        if (source == null || !Files.isRegularFile(source)) {
+            return null;
+        }
+        try {
+            Element root = factory().newDocumentBuilder().parse(source.toFile()).getDocumentElement();
+            Element entity = findStringEntity(root, id);
+            if (entity == null) {
+                return null;
+            }
+            Map<String, Object> strings = scalarChildren(entity);
+            String name = String.valueOf(strings.getOrDefault("name", type + " " + id));
+            String description = String.valueOf(strings.getOrDefault("desc", strings.getOrDefault("n0", "")));
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("entity_type", type);
+            result.put("entity_id", id);
+            result.put("name", name);
+            result.put("description", description);
+            result.put("category", category(source));
+            result.put("subtype", type);
+            result.put("used_in_game", false);
+            result.put("source_path", relative(source));
+            result.put("properties_json", Map.of("stringSource", relative(source), "stringEntries", strings, "fallbackCatalogEntry", true));
+            if ("NPC".equals(type)) {
+                result.put("locations", List.of());
+                result.put("shops", List.of());
+            } else if ("MOB".equals(type)) {
+                result.put("drops", List.of());
+                result.put("spawns", List.of());
+            }
+            return result;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Element findStringEntity(Element root, int id) {
+        for (Element child : childElements(root)) {
+            if ("imgdir".equals(child.getTagName()) && String.valueOf(id).equals(child.getAttribute("name"))) {
+                return child;
+            }
+            Element nested = findStringEntity(child, id);
+            if (nested != null) {
+                return nested;
+            }
+        }
+        return null;
     }
 
     private Element directDirectory(Element parent, String name) {

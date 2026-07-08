@@ -2,6 +2,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $RunPath,
 
+    [switch] $SummaryOnly,
+
     [switch] $Json
 )
 
@@ -181,6 +183,7 @@ if ($summary) {
 
 $serverHealthPath = Join-Path $resolvedRunPath "serverhealth-5min-samples.log"
 $serverHealthSamples = Get-NonCommentLineCount $serverHealthPath
+$expectedServerHealthSamples = $null
 if ($serverHealthSamples -gt 0) {
     Add-Check $checks "evidence:serverhealth" "PASS" "serverhealth samples have non-comment content."
 } else {
@@ -188,11 +191,11 @@ if ($serverHealthSamples -gt 0) {
 }
 
 if ($summary -and $summary.durationMinutes -gt 0 -and $summary.sampleIntervalMinutes -gt 0) {
-    $expectedSamples = [Math]::Max(1, [Math]::Ceiling([double]$summary.durationMinutes / [double]$summary.sampleIntervalMinutes))
-    if ($serverHealthSamples -ge $expectedSamples) {
-        Add-Check $checks "evidence:serverhealth-sample-count" "PASS" "serverhealth sample count $serverHealthSamples meets expected minimum $expectedSamples."
+    $expectedServerHealthSamples = [int] [Math]::Max(1, [Math]::Ceiling([double]$summary.durationMinutes / [double]$summary.sampleIntervalMinutes))
+    if ($serverHealthSamples -ge $expectedServerHealthSamples) {
+        Add-Check $checks "evidence:serverhealth-sample-count" "PASS" "serverhealth sample count $serverHealthSamples meets expected minimum $expectedServerHealthSamples."
     } else {
-        Add-Check $checks "evidence:serverhealth-sample-count" "WARN" "serverhealth sample count $serverHealthSamples is below expected minimum $expectedSamples."
+        Add-Check $checks "evidence:serverhealth-sample-count" "WARN" "serverhealth sample count $serverHealthSamples is below expected minimum $expectedServerHealthSamples."
     }
 }
 
@@ -213,6 +216,8 @@ if ($shutdownLines -gt 0) {
 }
 
 $checklistPath = Join-Path $resolvedRunPath "evidence-checklist.md"
+$uncheckedItems = $null
+$checkedItems = $null
 if (Test-Path -LiteralPath $checklistPath) {
     $checklistLines = Get-Content -LiteralPath $checklistPath
     $uncheckedItems = @($checklistLines | Where-Object { $_ -match '^\s*-\s+\[\s\]' }).Count
@@ -229,6 +234,15 @@ if (Test-Path -LiteralPath $checklistPath) {
 
 $failCount = @($checks | Where-Object { $_.status -eq "FAIL" }).Count
 $warnCount = @($checks | Where-Object { $_.status -eq "WARN" }).Count
+$evidenceSummary = [ordered]@{
+    serverHealthSampleCount = $serverHealthSamples
+    expectedServerHealthSampleCount = $expectedServerHealthSamples
+    startupLineCount = $startupLines
+    shutdownLineCount = $shutdownLines
+    checklistCheckedCount = $checkedItems
+    checklistUncheckedCount = $uncheckedItems
+    checklistItemCount = [int] $checkedItems + [int] $uncheckedItems
+}
 
 $overall = if ($failCount -gt 0) {
     "FAIL"
@@ -243,7 +257,15 @@ $report = [ordered]@{
     runPath = $resolvedRunPath.Path
     failCount = $failCount
     warnCount = $warnCount
-    checks = @($checks)
+    checkCount = @($checks).Count
+    passCount = @($checks | Where-Object { $_.status -eq "PASS" }).Count
+    warningIds = @($checks | Where-Object { $_.status -eq "WARN" } | ForEach-Object { $_.id })
+    failureIds = @($checks | Where-Object { $_.status -eq "FAIL" } | ForEach-Object { $_.id })
+    summaryOnly = [bool] $SummaryOnly
+    rowsOmitted = [bool] $SummaryOnly
+    returnedCheckCount = if ($SummaryOnly) { 0 } else { @($checks).Count }
+    evidenceSummary = $evidenceSummary
+    checks = if ($SummaryOnly) { $null } else { @($checks) }
 }
 
 if ($Json) {
@@ -252,10 +274,16 @@ if ($Json) {
     Write-Host "Baseline evidence verification: $overall"
     Write-Host "Run path: $($resolvedRunPath.Path)"
     Write-Host "Failures: $failCount  Warnings: $warnCount"
+    Write-Host "Serverhealth samples: $serverHealthSamples / $expectedServerHealthSamples"
+    Write-Host "Checklist checked/unchecked: $checkedItems / $uncheckedItems"
     Write-Host ""
 
-    foreach ($check in $checks) {
-        Write-Host ("[{0}] {1} - {2}" -f $check.status, $check.id, $check.message)
+    if ($SummaryOnly) {
+        Write-Host "Detailed check rows omitted."
+    } else {
+        foreach ($check in $checks) {
+            Write-Host ("[{0}] {1} - {2}" -f $check.status, $check.id, $check.message)
+        }
     }
 }
 

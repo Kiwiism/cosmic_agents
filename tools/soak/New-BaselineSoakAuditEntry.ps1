@@ -2,7 +2,11 @@ param(
     [Parameter(Mandatory = $true)]
     [string] $RunPath,
 
-    [string] $OutputPath
+    [string] $OutputPath,
+
+    [switch] $SummaryOnly,
+
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
@@ -154,6 +158,38 @@ if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
     }
 
     Set-Content -LiteralPath $OutputPath -Value $markdown -Encoding UTF8
-} else {
+}
+
+$report = [ordered]@{
+    status = "OK"
+    runPath = $resolvedRunPathText
+    summaryPath = $summaryPath
+    verificationPath = if (Test-Path -LiteralPath $verificationPath) { $verificationPath } else { $null }
+    outputPath = if ([string]::IsNullOrWhiteSpace($OutputPath)) { $null } else { $OutputPath }
+    summaryOnly = [bool] $SummaryOnly
+    markdownOmitted = [bool] $SummaryOnly
+    auditStatus = $auditStatus
+    verificationStatus = $verificationStatus
+    verificationFailures = $verificationFailures
+    verificationWarnings = $verificationWarnings
+    markdownCharacterCount = $markdown.Length
+    markdown = if ($SummaryOnly) { $null } else { $markdown }
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 4
+    return
+}
+
+if ($SummaryOnly) {
+    Write-Host "Baseline soak audit entry summary:"
+    Write-Host "  Run: $runId"
+    Write-Host "  Audit status: $auditStatus"
+    Write-Host "  Verification status: $verificationStatus"
+} elseif ([string]::IsNullOrWhiteSpace($OutputPath)) {
     Write-Output $markdown
+} else {
+    Write-Host "Baseline soak audit entry written:"
+    Write-Host "  $OutputPath"
+    Write-Host "Audit status: $auditStatus"
 }

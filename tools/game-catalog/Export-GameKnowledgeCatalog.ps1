@@ -1,9 +1,12 @@
 param(
     [string] $WzRoot = "wz",
-    [string] $OutputDir = "tmp/game-catalog"
+    [string] $OutputDir = "tmp/game-catalog",
+    [switch] $SummaryOnly,
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
+$repoRoot = (Resolve-Path ".").Path
 
 function Load-XmlDocument {
     param([string] $Path)
@@ -88,6 +91,20 @@ function New-StringList {
         }
     }
     return ,$list
+}
+
+function ConvertTo-RepoRelativePath {
+    param([string] $Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return $Path
+    }
+
+    $fullPath = (Get-Item -LiteralPath $Path).FullName
+    if ($fullPath.StartsWith($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ($fullPath.Substring($repoRoot.Length).TrimStart("\", "/") -replace "\\", "/")
+    }
+    return ($fullPath -replace "\\", "/")
 }
 
 function ConvertTo-RowArray {
@@ -299,7 +316,7 @@ function Export-MapCatalog {
             npcIds = New-IntList @($npcIds | Sort-Object)
             mobIds = New-IntList @($mobIds | Sort-Object)
             footholdCount = $footholdCount
-            source = $file.FullName
+            source = ConvertTo-RepoRelativePath $file.FullName
         })
     }
     return $rows
@@ -351,7 +368,7 @@ function Export-MobCatalog {
                 expPerHp = if ($hp -and $hp -gt 0 -and $null -ne $exp) { [math]::Round($exp / [double] $hp, 4) } else { $null }
                 danger = if ($boss) { "boss" } elseif ($level -ge 100) { "high" } elseif ($level -ge 50) { "medium" } else { "low" }
             }
-            source = $file.FullName
+            source = ConvertTo-RepoRelativePath $file.FullName
         })
     }
     return $rows
@@ -814,6 +831,51 @@ $summary = @(
 ) -join "`n"
 
 Set-Content -Encoding UTF8 -Path $paths.summary -Value $summary
+
+$outputFiles = @(
+    [pscustomobject] @{ key = "maps"; path = $paths.maps }
+    [pscustomobject] @{ key = "mobs"; path = $paths.mobs }
+    [pscustomobject] @{ key = "drops"; path = $paths.drops }
+    [pscustomobject] @{ key = "items"; path = $paths.items }
+    [pscustomobject] @{ key = "shops"; path = $paths.shops }
+    [pscustomobject] @{ key = "quests"; path = $paths.quests }
+    [pscustomobject] @{ key = "skills"; path = $paths.skills }
+    [pscustomobject] @{ key = "summary"; path = $paths.summary }
+)
+
+$report = [ordered]@{
+    schemaVersion = 1
+    generatedAt = (Get-Date).ToString("o")
+    status = "OK"
+    wzRoot = $WzRoot
+    outputDir = $OutputDir
+    summaryOnly = [bool] $SummaryOnly
+    rowsOmitted = [bool] $SummaryOnly
+    outputFileCount = $outputFiles.Count
+    returnedOutputFileCount = if ($SummaryOnly) { 0 } else { $outputFiles.Count }
+    counts = [ordered]@{
+        maps = $mapCount
+        townMaps = $townCount
+        freeMarketMaps = $fmCount
+        mobs = $mobCount
+        mobsWithMapPlacements = $mobWithMapCount
+        drops = $dropCount
+        items = $itemCount
+        itemsWithMobDrops = $itemWithDropCount
+        itemsSoldInShops = $itemWithShopCount
+        shops = $shopCount
+        shopItems = $shopItemCount
+        quests = $questCount
+        questsWithNpcData = $questWithNpcCount
+        skills = $skillCount
+    }
+    outputFiles = if ($SummaryOnly) { $null } else { $outputFiles }
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 6
+    return
+}
 
 Write-Host "Game knowledge catalog generated:"
 foreach ($key in @("maps", "mobs", "drops", "items", "shops", "quests", "skills", "summary")) {

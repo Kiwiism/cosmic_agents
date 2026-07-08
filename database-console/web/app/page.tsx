@@ -14,7 +14,7 @@ import { api, assetUrl, assetUrls, avatarUrl } from "../lib/api";
 type View =
   "dashboard"
   | "accounts" | "create-account"
-  | "character-stats" | "inventory" | "character-equipment"
+  | "character-stats" | "inventory" | "character-equipment" | "character-quests"
   | "mobs"
   | "items"
   | "maps" | "npcs" | "shops" | "gacha"
@@ -41,6 +41,7 @@ const nav:readonly ConsoleNavItem<View>[] = [
     {key:"character-stats",label:"AP / SP & Stats",icon:Activity},
     {key:"inventory",label:"Inventory / Storage",icon:Boxes},
     {key:"character-equipment",label:"Equipment / Appearance",icon:ShieldCheck},
+    {key:"character-quests",label:"Quests / Monster Book",icon:BookOpen},
   ]},
   {label:"Mobs",icon:Skull,children:[
     {key:"mobs",label:"Mob Catalog / Drop Table",icon:Skull},
@@ -103,7 +104,7 @@ const defaultUnderwearByGender={
 
 const characterTabs:readonly [View,string][]=[
   ["character-stats","AP / SP & Stats"],["inventory","Inventory / Storage"],
-  ["character-equipment","Equipment / Appearance"]
+  ["character-equipment","Equipment / Appearance"],["character-quests","Quests / Monster Book"]
 ];
 const worldTabs:readonly [View,string][]=[
   ["maps","Maps"],["npcs","NPCs"],["shops","Shops"],["gacha","Gachapon"]
@@ -149,7 +150,7 @@ export default function App(){
       const next=[...previous.slice(0,historyIndex+1),{type,id}].slice(-10);setHistoryIndex(next.length-1);return next;
     });
   }
-  function jump(target:JumpTarget){setView(target.view);setFocusId(target.id);setFocusLocation(target.location);if(["character-stats","inventory","character-equipment"].includes(target.view))setSelectedCharacterId(target.id);if(target.type&&target.id)openDrawer(target.type,target.id)}
+  function jump(target:JumpTarget){setView(target.view);setFocusId(target.id);setFocusLocation(target.location);if(["character-stats","inventory","character-equipment","character-quests"].includes(target.view))setSelectedCharacterId(target.id);if(target.type&&target.id)openDrawer(target.type,target.id)}
   function inspectEntity(type:string,id:number){openDrawer(type,id)}
   function moveHistory(index:number){const entry=viewHistory[index];if(!entry)return;setHistoryIndex(index);setDrawer({type:entry.type,id:entry.id})}
   function nameHistory(type:string,id:number,name:string){setViewHistory(previous=>previous.map(entry=>entry.type===type&&entry.id===id?{...entry,name}:entry))}
@@ -172,6 +173,7 @@ export default function App(){
         {view==="character-stats"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterStats notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId}/></SectionFrame>}
         {view==="inventory"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><Inventory notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId} onOpen={inspectEntity} jump={jump} onInspectorChange={setEmbeddedInspector}/></SectionFrame>}
         {view==="character-equipment"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><EquipmentAppearance notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId} onOpen={inspectEntity} jump={jump} onInspectorChange={setEmbeddedInspector}/></SectionFrame>}
+        {view==="character-quests"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterQuestsMonsterBook notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId} onOpen={inspectEntity}/></SectionFrame>}
         {view==="items"&&<SectionFrame title="Items" tabs={[["items","Catalog"]]} active={view} setView={setView}><Library fixedType="ITEM" onOpen={inspectEntity}/></SectionFrame>}
         {view==="mobs"&&<SectionFrame title="Mobs" tabs={[["mobs","Catalog / Drop Table"]]} active={view} setView={setView}><Drops notify={notify} focusMob={focusId} onOpen={(type,id)=>openDrawer(type,id)}/></SectionFrame>}
         {view==="maps"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Maps focusMap={focusId} onOpen={inspectEntity}/></SectionFrame>}
@@ -654,19 +656,36 @@ function nearestStorageItem(rows:any[],deleted:any){
     || null;
 }
 
+function mergeSavedInventoryRows(rows:any[],previous:any,saved:any){
+  const savedId=Number(saved.inventoryitemid);
+  const previousId=Number(previous.inventoryitemid);
+  const savedPosition=Number(saved.position);
+  const savedType=Number(saved.inventorytype);
+  const next=rows.filter(row=>{
+    if(Number(row.inventoryitemid)===savedId||Number(row.inventoryitemid)===previousId)return false;
+    return !(savedType===-1&&Number(row.inventorytype)===-1&&Number(row.position)===savedPosition);
+  });
+  return [...next,saved].sort((a,b)=>Number(a.inventorytype)-Number(b.inventorytype)||Number(a.position)-Number(b.position));
+}
+
 function EquipmentAppearance({notify,focusCharacter,onCharacterSelect,onOpen,jump,onInspectorChange}:{notify:Notify;focusCharacter?:number;onCharacterSelect?:(id:number)=>void;onOpen:(type:string,id:number)=>void;jump:(x:JumpTarget)=>void;onInspectorChange:(size:"none"|"standard"|"wide")=>void}){
   const [character,setCharacter]=useState<any|null>(null);const [items,setItems]=useState<any[]>([]);const [editing,setEditing]=useState<any|null>(null);
   const [accounts,setAccounts]=useState<any[]>([]);const [browseAccount,setBrowseAccount]=useState<any>();const [accountCharacters,setAccountCharacters]=useState<any[]>([]);
   const [accountQuery,setAccountQuery]=useState("");const [worldFilter,setWorldFilter]=useState("all");const [appearance,setAppearance]=useState<any>({});const [showCash,setShowCash]=useState(true);
+  const [ignDraft,setIgnDraft]=useState("");const [ignStatus,setIgnStatus]=useState<any|null>(null);const [savingIgn,setSavingIgn]=useState(false);
   useEffect(()=>{onInspectorChange(editing?"wide":"none");return()=>onInspectorChange("none")},[editing,onInspectorChange]);
   useEffect(()=>{api<Page<any>>("/api/accounts?sort=name&direction=asc&page=0&size=200").then(r=>setAccounts(r.items))},[]);
   async function chooseAccount(account:any){setBrowseAccount(account);setAccountCharacters(await api<any[]>(`/api/accounts/${account.id}/characters`))}
-  async function selectCharacter(row:any){const id=Number(row.id);const details=await api<any>(`/api/characters/${id}`);setCharacter(details);setAppearance({hair:details.hair??0,face:details.face??0,skincolor:details.skincolor??0,gender:details.gender??0});onCharacterSelect?.(id)}
+  async function selectCharacter(row:any){const id=Number(row.id);const details=await api<any>(`/api/characters/${id}`);setCharacter(details);setIgnDraft(details.name||"");setIgnStatus(null);setAppearance({hair:details.hair??0,face:details.face??0,skincolor:details.skincolor??0,gender:details.gender??0});onCharacterSelect?.(id)}
   useEffect(()=>{if(focusCharacter&&Number(character?.id)!==Number(focusCharacter))selectCharacter({id:focusCharacter})},[focusCharacter]);
   useEffect(()=>{if(!character?.accountid||!accounts.length)return;const account=accounts.find(row=>Number(row.id)===Number(character.accountid));if(account&&Number(browseAccount?.id)!==Number(account.id)){setBrowseAccount(account);api<any[]>(`/api/accounts/${account.id}/characters`).then(setAccountCharacters)}},[character?.accountid,accounts.length]);
   async function load(){if(!character)return[];const rows=(await api<any[]>(`/api/characters/${character.id}/inventory`)).filter(item=>Number(item.position)<0);setItems(rows);return rows}
   useEffect(()=>{if(character)load()},[character]);
   async function saveAppearance(next:any){if(!character)return;setAppearance(next);const updated=await api<any>(`/api/characters/${character.id}/appearance`,{method:"PATCH",body:JSON.stringify({...next,reason:"Edited appearance through Equipment / Appearance page"})});setCharacter(updated);notify("Appearance updated")}
+  const ignChanged=Boolean(character&&ignDraft.trim()&&ignDraft.trim()!==String(character.name||""));
+  const canSaveIgn=ignChanged&&ignStatus?.valid&&ignStatus?.available&&!savingIgn;
+  useEffect(()=>{if(!character){setIgnStatus(null);return}const name=ignDraft.trim();if(!name||name===String(character.name||"")){setIgnStatus(null);return}const timer=setTimeout(()=>api<any>(`/api/characters/name-check?name=${encodeURIComponent(name)}&characterId=${character.id}`).then(setIgnStatus).catch(error=>setIgnStatus({valid:false,available:false,message:error.message})),180);return()=>clearTimeout(timer)},[ignDraft,character?.id,character?.name]);
+  async function saveIgn(){if(!character||!canSaveIgn)return;setSavingIgn(true);try{const updated=await api<any>(`/api/characters/${character.id}/name`,{method:"PATCH",body:JSON.stringify({name:ignDraft.trim(),reason:"Renamed through Equipment / Appearance page"})});setCharacter(updated);setIgnDraft(updated.name||"");setIgnStatus(null);setAccountCharacters(rows=>rows.map(row=>Number(row.id)===Number(updated.id)?{...row,name:updated.name}:row));notify("IGN updated")}finally{setSavingIgn(false)}}
   const accountWorlds=useMemo(()=>Array.from(new Set(accounts.flatMap(row=>String(row.worlds||"").split(",").filter(Boolean)))).sort((a,b)=>Number(a)-Number(b)),[accounts]);
   const visibleAccounts=accounts.filter(row=>{const rowWorlds=String(row.worlds||"").split(",").filter(Boolean);const haystack=`${row.name||""} ${row.id||""} ${row.character_names||""}`.toLowerCase();return (!accountQuery||haystack.includes(accountQuery.toLowerCase()))&&(worldFilter==="all"||rowWorlds.includes(worldFilter))});
   const visibleCharacters=accountCharacters.filter(c=>worldFilter==="all"||String(c.world)===worldFilter);
@@ -686,10 +705,74 @@ function EquipmentAppearance({notify,focusCharacter,onCharacterSelect,onOpen,jum
     <div className="inventory-browser"><div><h3>Browse accounts</h3>{visibleAccounts.map(a=><button className={browseAccount?.id===a.id?"selected":""} key={a.id} onClick={()=>chooseAccount(a)}><UsersRound/><span><strong>{a.name}</strong><small>World {a.worlds||"-"} | {a.banned?"Banned":a.loggedin?"Online":a.mute?"Muted":"Active"} | GM {a.max_gm||0}</small><small>{a.character_count}/{a.characterslots||3} characters</small></span></button>)}</div>
       <div><h3>{browseAccount?`${browseAccount.name}'s characters`:"Choose an account"}</h3>{visibleCharacters.map(c=><button key={c.id} className={Number(character?.id)===Number(c.id)?"selected":""} onClick={()=>selectCharacter(c)}><CircleUserRound/><span><strong>{browseAccount.name} {"->"} {c.name}</strong><small>World {c.world} | Lv. {c.level} {c.job_name||"Unknown job"} ({c.job}) | GM {c.gm||0}</small></span></button>)}</div></div>
     {!character?<Empty text="Choose an account and character to edit equipment and appearance"/>:<><div className="equipment-appearance-shell">
-      <article className="panel avatar-preview-panel"><div className="panel-title avatar-panel-title"><div><h2>{character.account_name} {"->"} {character.name}</h2><p>{character.job_name||"Unknown job"} ({character.job}) | Lv. {character.level}</p></div><label className="filter-check"><input type="checkbox" checked={showCash} onChange={event=>setShowCash(event.target.checked)}/>Cash</label></div><div className="avatar-preview-body"><div className="avatar-stage"><img className="avatar-fullbody" src={avatarSource} alt={`${character.name} avatar`}/><strong>{character.name}</strong><small>{showCash&&cashEquipped.length?"Cash view":"Equip view"}</small></div></div></article>
-      <article className="panel appearance-controls"><PanelTitle title="Appearance" subtitle="Search by id or name, then select to save."/><div className="appearance-stack"><AppearanceCatalogSelect label="Hair" type="HAIR" value={Number(appearance.hair||0)} onSelect={entity=>saveAppearance({...appearance,hair:entity.entity_id})}/><AppearanceCatalogSelect label="Face" type="FACE" value={Number(appearance.face||0)} onSelect={entity=>saveAppearance({...appearance,face:entity.entity_id})}/><ChoiceSelect label="Skin" value={Number(appearance.skincolor||0)} choices={skinChoices} onSelect={choice=>saveAppearance({...appearance,skincolor:choice.id})}/><GenderIconSelect value={Number(appearance.gender||0)} onSelect={value=>saveAppearance({...appearance,gender:value})}/></div></article>
+      <article className="panel avatar-preview-panel"><div className="panel-title avatar-panel-title"><div><h2>{character.account_name} {"->"} {character.name}</h2><p>{character.job_name||"Unknown job"} ({character.job}) | Lv. {character.level}</p></div><label className="filter-check"><input type="checkbox" checked={showCash} onChange={event=>setShowCash(event.target.checked)}/>Cash</label></div><div className="avatar-preview-body"><div className="avatar-stage"><img className="avatar-fullbody" src={avatarSource} alt={`${character.name} avatar`}/><label className="avatar-ign-editor"><span>IGN</span><input value={ignDraft} maxLength={13} onChange={event=>setIgnDraft(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();saveIgn()}}}/></label>{ignChanged&&<div className="avatar-ign-status"><small className={ignStatus?.available?"available":"unavailable"}>{ignStatus?.message||"Checking IGN..."}</small><button type="button" className="primary compact" disabled={!canSaveIgn} onClick={saveIgn}>{savingIgn?"Saving":"Update"}</button></div>}<small>{showCash&&cashEquipped.length?"Cash view":"Equip view"}</small></div></div></article>
+      <article className="panel appearance-controls"><PanelTitle title="Appearance" subtitle="Search by id or name, then select to save."/><div className="appearance-stack"><AppearanceCatalogSelect label="Hair" type="HAIR" gender={Number(appearance.gender||0)} value={Number(appearance.hair||0)} onSelect={entity=>saveAppearance({...appearance,hair:entity.entity_id})}/><AppearanceCatalogSelect label="Face" type="FACE" gender={Number(appearance.gender||0)} value={Number(appearance.face||0)} onSelect={entity=>saveAppearance({...appearance,face:entity.entity_id})}/><ChoiceSelect label="Skin" value={Number(appearance.skincolor||0)} choices={skinChoices} onSelect={choice=>saveAppearance({...appearance,skincolor:choice.id})}/><GenderIconSelect value={Number(appearance.gender||0)} onSelect={value=>saveAppearance({...appearance,gender:value})}/></div></article>
     </div>{renderEquipped(equipped,"Equipped items",equipmentSlots)}{renderEquipped(cashEquipped,"Cash equipped items",cashEquipmentSlots)}</>}
-    {editing&&character&&<ItemEditor key={`${editing.newItem?"new":editing.inventoryitemid}-${editing.position}`} item={editing} characterId={character.id} close={()=>setEditing(null)} saved={savedItem=>{if(!savedItem){setEditing(null);setItems(rows=>rows.filter(row=>Number(row.inventoryitemid)!==Number(editing.inventoryitemid)));return}setItems(rows=>{const exists=rows.some(row=>Number(row.inventoryitemid)===Number(savedItem.inventoryitemid));return exists?rows.map(row=>Number(row.inventoryitemid)===Number(savedItem.inventoryitemid)?savedItem:row):[...rows,savedItem]});setEditing(savedItem)}} notify={notify} duplicate={async()=>{}} allowDuplicate={false} onOpen={onOpen} jump={jump}/>}</>
+    {editing&&character&&<ItemEditor key={`${editing.newItem?"new":editing.inventoryitemid}-${editing.position}`} item={editing} characterId={character.id} close={()=>setEditing(null)} saved={savedItem=>{if(!savedItem){setEditing(null);setItems(rows=>rows.filter(row=>Number(row.inventoryitemid)!==Number(editing.inventoryitemid)));return}setItems(rows=>mergeSavedInventoryRows(rows,editing,savedItem));setEditing(savedItem)}} notify={notify} duplicate={async()=>{}} allowDuplicate={false} onOpen={onOpen} jump={jump}/>}</>
+}
+
+function CharacterQuestsMonsterBook({notify,focusCharacter,onCharacterSelect,onOpen}:{notify:Notify;focusCharacter?:number;onCharacterSelect?:(id:number)=>void;onOpen:(type:string,id:number)=>void}){
+  const [character,setCharacter]=useState<any|null>(null);const [accounts,setAccounts]=useState<any[]>([]);
+  const [browseAccount,setBrowseAccount]=useState<any>();const [accountCharacters,setAccountCharacters]=useState<any[]>([]);
+  const [accountQuery,setAccountQuery]=useState("");const [worldFilter,setWorldFilter]=useState("all");
+  const [tab,setTab]=useState<"available"|"progress"|"completed"|"book">("progress");
+  const [questData,setQuestData]=useState<any>({quests:[],progress:[]});const [selectedQuest,setSelectedQuest]=useState<any|null>(null);
+  const [book,setBook]=useState<any>({cover:0,cards:[]});const [bookTab,setBookTab]=useState("All");const [bookPage,setBookPage]=useState(0);
+  useEffect(()=>{api<Page<any>>("/api/accounts?sort=name&direction=asc&page=0&size=200").then(r=>setAccounts(r.items))},[]);
+  async function chooseAccount(account:any){setBrowseAccount(account);setAccountCharacters(await api<any[]>(`/api/accounts/${account.id}/characters`))}
+  async function selectCharacter(row:any){const id=Number(row.id);const details=await api<any>(`/api/characters/${id}`);setCharacter(details);onCharacterSelect?.(id);setSelectedQuest(null)}
+  useEffect(()=>{if(focusCharacter&&Number(character?.id)!==Number(focusCharacter))selectCharacter({id:focusCharacter})},[focusCharacter]);
+  useEffect(()=>{if(!character?.accountid||!accounts.length)return;const account=accounts.find(row=>Number(row.id)===Number(character.accountid));if(account&&Number(browseAccount?.id)!==Number(account.id)){setBrowseAccount(account);api<any[]>(`/api/accounts/${account.id}/characters`).then(setAccountCharacters)}},[character?.accountid,accounts.length]);
+  async function loadCharacterState(){if(!character)return;const [quests,bookRows]=await Promise.all([api<any>(`/api/characters/${character.id}/quests`),api<any>(`/api/characters/${character.id}/monster-book`)]);setQuestData(quests);setBook(bookRows)}
+  useEffect(()=>{if(character)loadCharacterState()},[character?.id]);
+  const accountWorlds=useMemo(()=>Array.from(new Set(accounts.flatMap(row=>String(row.worlds||"").split(",").filter(Boolean)))).sort((a,b)=>Number(a)-Number(b)),[accounts]);
+  const visibleAccounts=accounts.filter(row=>{const rowWorlds=String(row.worlds||"").split(",").filter(Boolean);const haystack=`${row.name||""} ${row.id||""} ${row.character_names||""}`.toLowerCase();return (!accountQuery||haystack.includes(accountQuery.toLowerCase()))&&(worldFilter==="all"||rowWorlds.includes(worldFilter))});
+  const visibleCharacters=accountCharacters.filter(c=>worldFilter==="all"||String(c.world)===worldFilter);
+  const progressByStatusId=useMemo(()=>{const grouped:Record<string,any[]>={};for(const row of questData.progress||[]){const key=String(row.queststatusid);grouped[key]=[...(grouped[key]||[]),row]}return grouped},[questData.progress]);
+  const quests=(questData.quests||[]).filter((quest:any)=>Number(quest.status)===questStatusForTab(tab));
+  const tabs=[["available","Quest Available"],["progress","Quest In Progress"],["completed","Quest Completed"],["book","Monster Book"]] as const;
+  const bookTabs=useMemo<string[]>(()=>{
+    const preferred=["Beginner","Basic","Intermediate","Advanced","Master"];
+    const existing=new Set<string>((book.cards||[]).map((row:any)=>String(row.book_tab||"Other")));
+    return ["All",...preferred.filter(name=>existing.has(name)),...Array.from(existing).filter(name=>!preferred.includes(name)).sort()];
+  },[book.cards]);
+  const visibleCards=(book.cards||[]).filter((row:any)=>bookTab==="All"||String(row.book_tab||"Other")===bookTab).sort(compareMonsterBookRows);
+  const cardPageRows=visibleCards.slice(bookPage*30,bookPage*30+30);
+  async function saveQuest(quest:any,next:any){if(!character)return;const saved=await api<any>(`/api/characters/${character.id}/quests/${quest.quest}`,{method:"PATCH",body:JSON.stringify({status:Number(next.status),time:Number(next.time||0),expires:Number(next.expires||0),forfeited:Number(next.forfeited||0),completed:Number(next.completed||0),info:Number(next.info||0),reason:"Edited quest status through Database Console"})});notify("Quest status updated");setSelectedQuest({...quest,...saved,quest_name:quest.quest_name,quest_npcs:quest.quest_npcs});await loadCharacterState()}
+  async function saveProgress(quest:any,progressId:number,value:string){if(!character)return;await api<any>(`/api/characters/${character.id}/quests/${quest.quest}/progress/${progressId}`,{method:"PATCH",body:JSON.stringify({progress:value,reason:"Edited quest progress through Database Console"})});notify("Quest progress updated");await loadCharacterState()}
+  async function questAction(quest:any,action:"start"|"forfeit"|"reset"){if(!character)return;const saved=await api<any>(`/api/characters/${character.id}/quests/${quest.quest}/${action}`,{method:"POST",body:JSON.stringify({reason:`${action} quest through Database Console`})});notify(action==="start"?"Quest started":action==="forfeit"?"Quest forfeited":"Quest reset to available");setSelectedQuest(saved);await loadCharacterState()}
+  async function saveBookCard(row:any,level:number){if(!character)return;const nextLevel=Math.max(0,Math.min(5,Number(level)||0));setBook((current:any)=>({...current,cards:(current.cards||[]).map((card:any)=>Number(card.cardid)===Number(row.cardid)?{...card,level:nextLevel}:card)}));await api<any>(`/api/characters/${character.id}/monster-book/${row.cardid}`,{method:"PATCH",body:JSON.stringify({level:nextLevel,reason:"Edited monster book card count through Database Console"})});notify("Monster Book updated")}
+  return <><div className="inventory-account-toolbar"><SearchInput value={accountQuery} setValue={setAccountQuery} placeholder="Search account, character or ID"/><select value={worldFilter} onChange={e=>setWorldFilter(e.target.value)}><option value="all">All worlds</option>{accountWorlds.map(world=><option value={world} key={world}>World {world}</option>)}</select></div>
+    <div className="inventory-browser"><div><h3>Browse accounts</h3>{visibleAccounts.map(a=><button className={browseAccount?.id===a.id?"selected":""} key={a.id} onClick={()=>chooseAccount(a)}><UsersRound/><span><strong>{a.name}</strong><small>World {a.worlds||"-"} | {a.banned?"Banned":a.loggedin?"Online":a.mute?"Muted":"Active"} | GM {a.max_gm||0}</small><small>{a.character_count}/{a.characterslots||3} characters</small></span></button>)}</div>
+      <div><h3>{browseAccount?`${browseAccount.name}'s characters`:"Choose an account"}</h3>{visibleCharacters.map(c=><button key={c.id} className={Number(character?.id)===Number(c.id)?"selected":""} onClick={()=>selectCharacter(c)}><CircleUserRound/><span><strong>{browseAccount.name} {"->"} {c.name}</strong><small>World {c.world} | Lv. {c.level} {c.job_name||"Unknown job"} ({c.job}) | GM {c.gm||0}</small></span></button>)}</div></div>
+    {!character?<Empty text="Choose an account and character to view quests and monster book"/>:<>
+      <div className="tab-bar quest-book-tabs">{tabs.map(([key,label])=><button type="button" key={key} className={tab===key?"active":""} onClick={()=>{setTab(key);setBookPage(0)}}>{label}</button>)}</div>
+      {tab==="book"?<article className="panel quest-book-panel"><div className="panel-title"><div><h2>Monster Book</h2><p>{visibleCards.length.toLocaleString()} mobs in {bookTab}. Cover item {book.cover||0}.</p></div><Pager page={bookPage} pages={Math.ceil(visibleCards.length/30)} setPage={setBookPage}/></div>
+        <div className="tab-bar book-section-tabs">{bookTabs.map(name=><button type="button" className={bookTab===name?"active":""} key={name} onClick={()=>{setBookTab(name);setBookPage(0)}}>{name}</button>)}</div>
+        <div className="monster-book-grid">{cardPageRows.map((row:any)=>{const cardLevel=Math.min(5,Number(row.level||0));const medal=monsterBookMedal(cardLevel);return <article className={`monster-book-card ${medal.className}`} key={`${row.cardid}-${row.mobid}`}><button type="button" className="monster-book-main" onClick={()=>onOpen("MOB",Number(row.mobid))}><EntityImage type="MOB" id={Number(row.mobid)}/><span><strong>{row.mob_name}</strong><code>{row.mobid}</code><small>Card {row.cardid}</small>{medal.label&&<span className="monster-book-medal" aria-label={`${medal.label} completion`} title={`${medal.label} completion`}/>}</span></button><label className="monster-card-count">Cards<select value={cardLevel} onChange={event=>saveBookCard(row,Number(event.target.value))}>{[0,1,2,3,4,5].map(count=><option value={count} key={count}>{count}/5</option>)}</select></label></article>})}</div><Pager page={bookPage} pages={Math.ceil(visibleCards.length/30)} setPage={setBookPage}/></article>
+      :<div className="quest-status-layout"><article className="panel quest-list-panel"><PanelTitle title={tabs.find(([key])=>key===tab)?.[1]||"Quests"} subtitle="Matches the character-facing quest window categories; raw empty placeholders stay hidden."/>
+        <div className="rich-list">{quests.length?quests.map((quest:any)=><div key={quest.queststatusid} role="button" tabIndex={0} className={`quest-row ${selectedQuest?.queststatusid===quest.queststatusid?"selected":""}`} onClick={()=>{setSelectedQuest(quest);onOpen("QUEST",Number(quest.quest))}} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();setSelectedQuest(quest);onOpen("QUEST",Number(quest.quest))}}}><BookOpen/><span><strong>{questName(quest)}</strong><small>{questRowSummary(quest,progressByStatusId[String(quest.queststatusid)]||[])}</small><QuestNpcLinks quest={quest} onOpen={onOpen}/></span><span className="tag soft">{questStatusLabel(Number(quest.status))}</span></div>):<p className="muted">No quests in this tab.</p>}</div></article>
+        <article className="panel quest-edit-panel">{selectedQuest?<QuestStatusEditor quest={selectedQuest} progressRows={progressByStatusId[String(selectedQuest.queststatusid)]||[]} saveQuest={saveQuest} saveProgress={saveProgress} questAction={questAction} onOpen={onOpen}/>:<Empty text="Select a quest to edit status or progress"/>}</article></div>}</>}
+  </>;
+}
+
+function QuestStatusEditor({quest,progressRows,saveQuest,saveProgress,questAction,onOpen}:{quest:any;progressRows:any[];saveQuest:(quest:any,next:any)=>void;saveProgress:(quest:any,progressId:number,value:string)=>void;questAction:(quest:any,action:"start"|"forfeit"|"reset")=>void;onOpen:(type:string,id:number)=>void}){
+  const [draft,setDraft]=useState<any>(quest);const [newProgressId,setNewProgressId]=useState(0);const [newProgressValue,setNewProgressValue]=useState("");
+  useEffect(()=>setDraft(quest),[quest.queststatusid]);
+  return <><PanelTitle title={questName(quest)} subtitle={`Quest ${quest.quest} | status row ${quest.queststatusid}`}/><QuestNpcLinks quest={quest} onOpen={onOpen}/><div className="quest-status-actions">{Number(quest.status)===0&&<button type="button" className="primary" onClick={()=>questAction(quest,"start")}>Start quest</button>}{Number(quest.status)===1&&<button type="button" className="danger-button" onClick={()=>questAction(quest,"forfeit")}>Forfeit quest</button>}{Number(quest.status)===2&&<button type="button" className="secondary" onClick={()=>questAction(quest,"reset")}>Reset to available</button>}</div><div className="quest-edit-grid"><label>Status<select value={Number(draft.status)} onChange={e=>setDraft({...draft,status:Number(e.target.value)})}><option value={0}>Available</option><option value={1}>In Progress</option><option value={2}>Completed</option></select></label><NumberField label="Completed count" value={draft.completed} set={v=>setDraft({...draft,completed:v})}/><NumberField label="Forfeited" value={draft.forfeited} set={v=>setDraft({...draft,forfeited:v})}/><DateTimeField label="Time" value={draft.time} set={v=>setDraft({...draft,time:v})}/><DateTimeField label="Expires" value={draft.expires} set={v=>setDraft({...draft,expires:v})}/><NumberField label="Info" value={draft.info} set={v=>setDraft({...draft,info:v})}/></div><button type="button" className="primary" onClick={()=>saveQuest(quest,draft)}>Save quest status</button>
+    <h3>Progress</h3><div className="quest-progress-list">{progressRows.map(row=><label key={row.id}>Progress {row.progressid}<input defaultValue={row.progress} onBlur={e=>e.target.value!==String(row.progress)&&saveProgress(quest,Number(row.progressid),e.target.value)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>)}</div>
+    <div className="quest-progress-add"><NumberField label="Progress ID" value={newProgressId} set={setNewProgressId}/><label>Progress value<input value={newProgressValue} onChange={e=>setNewProgressValue(e.target.value)}/></label><button type="button" className="secondary" disabled={!newProgressId} onClick={()=>{saveProgress(quest,newProgressId,newProgressValue);setNewProgressValue("")}}>Add / update progress</button></div></>
+}
+
+function questStatusForTab(tab:string){if(tab==="available")return 0;if(tab==="completed")return 2;return 1}
+function questStatusLabel(status:number){return status===2?"Completed":status===1?"In Progress":"Available"}
+function questName(quest:any){return quest.quest_name||`Quest ${quest.quest}`}
+function questRowSummary(quest:any,progressRows:any[]){if(Number(quest.status)===2)return `Completed count ${quest.completed||1}${quest.time?` | ${epochSecondsLabel(quest.time)}`:""}`;if(progressRows.length)return progressRows.map(row=>`${row.progressid}: ${row.progress}`).join(" | ");return Number(quest.status)===1?"Started, no tracked progress rows":"Available to start when shown by game/server state"}
+
+function QuestNpcLinks({quest,onOpen}:{quest:any;onOpen:(type:string,id:number)=>void}){
+  const npcs=Array.isArray(quest.quest_npcs)?quest.quest_npcs:[];
+  if(!npcs.length)return null;
+  return <div className="quest-npc-strip">{npcs.map((npc:any)=>{const id=Number(npc.id);return <button type="button" className="quest-npc-chip" key={`${quest.quest}-${id}`} onClick={event=>{event.stopPropagation();onOpen("NPC",id)}}><EntityImage type="NPC" id={id}/><span>{npc.name||`NPC ${id}`}</span><code>{id}</code></button>})}</div>
 }
 
 function CharacterEditor({characterId,close,saved}:{characterId:number;close:()=>void;saved:(x:any)=>void}){
@@ -732,15 +815,19 @@ function ItemEditor({item,characterId,accountId,world,close,saved,notify,duplica
       owner:String(f.get("owner")??""),flag:Number(f.get("flag")??0),expiration:Number(f.get("expiration")??-1),
       giftFrom:String(f.get("giftFrom")??""),equipment,reason:String(f.get("reason"))};
     const storagePayload={world, itemId, position:payload.position, quantity:payload.quantity, equipment, reason:payload.reason};
-    const savedItem=storageMode
-      ? item.newItem
-        ? (selected&&accountId!=null?await api<any>(`/api/accounts/${accountId}/storage`,{method:"POST",body:JSON.stringify(storagePayload)}):null)
-        : accountId!=null?await api<any>(`/api/accounts/${accountId}/storage/${item.inventoryitemid}`,{method:"PATCH",body:JSON.stringify(storagePayload)}):null
-      : item.newItem
-        ? (selected?await api<any>(`/api/characters/${characterId}/inventory`,{method:"POST",body:JSON.stringify(payload)}):null)
-        : await api<any>(`/api/characters/${characterId}/inventory/${item.inventoryitemid}`,{method:"PATCH",body:JSON.stringify(payload)});
-    if(!savedItem)return;
-    notify(item.newItem?(storageMode?"Storage item added":"Item added"):(storageMode?"Storage item updated":"Item updated"));await saved(savedItem)}
+    try {
+      const savedItem=storageMode
+        ? item.newItem
+          ? (selected&&accountId!=null?await api<any>(`/api/accounts/${accountId}/storage`,{method:"POST",body:JSON.stringify(storagePayload)}):null)
+          : accountId!=null?await api<any>(`/api/accounts/${accountId}/storage/${item.inventoryitemid}`,{method:"PATCH",body:JSON.stringify(storagePayload)}):null
+        : item.newItem
+          ? (selected?await api<any>(`/api/characters/${characterId}/inventory`,{method:"POST",body:JSON.stringify(payload)}):null)
+          : await api<any>(`/api/characters/${characterId}/inventory/${item.inventoryitemid}`,{method:"PATCH",body:JSON.stringify(payload)});
+      if(!savedItem)return;
+      notify(item.newItem?(storageMode?"Storage item added":"Item added"):(storageMode?"Storage item updated":"Item updated"));await saved(savedItem)
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Item update failed");
+    }}
   async function remove(){if(storageMode&&accountId!=null&&world!=null)await api(`/api/accounts/${accountId}/storage/${item.inventoryitemid}?world=${world}&reason=Deleted%20from%20Console`,{method:"DELETE"});else await api(`/api/characters/${characterId}/inventory/${item.inventoryitemid}?reason=Deleted%20from%20Console`,{method:"DELETE"});notify(storageMode?"Storage item deleted":"Item deleted");setConfirmDelete(false);await saved()}
   const originalProps=metadata(original?.properties_json);
   const editSection=<section className="inventory-edit-section"><h3>{item.newItem?"New item values":"Current saved item values"}</h3>
@@ -789,8 +876,11 @@ function ItemEditor({item,characterId,accountId,world,close,saved,notify,duplica
 }
 
 function EntityDrawer({entity,close,jump,history,historyIndex,moveHistory,named}:{entity:{type:string;id:number;context?:string};close:()=>void;jump:(x:JumpTarget)=>void;history:HistoryEntry[];historyIndex:number;moveHistory:(index:number)=>void;named:(type:string,id:number,name:string)=>void}){
-  const [data,setData]=useState<any>();useEffect(()=>{setData(undefined);api<any>(`/api/catalog/${entity.type}/${entity.id}`).then(value=>{setData(value);named(entity.type,entity.id,value.name)})},[entity]);
+  const [data,setData]=useState<any>();const [error,setError]=useState("");
+  useEffect(()=>{setData(undefined);setError("");const path=entity.type==="QUEST"?`/api/quests/${entity.id}`:`/api/catalog/${entity.type}/${entity.id}`;api<any>(path).then(value=>{setData(value);named(entity.type,entity.id,value.name||`${entity.type} ${entity.id}`)}).catch(reason=>setError(reason instanceof Error?reason.message:String(reason)))},[entity]);
+  if(error)return <div className="drawer"><button className="modal-close" onClick={close}><X/></button><Empty text={`${entity.type} ${entity.id} is not available in the current catalog data`}/><section className="technical"><h3>Technical</h3><code className="source-code">{error}</code><code className="source-code">{entity.type==="QUEST"?`GET /api/quests/${entity.id}`:`GET /api/catalog/${entity.type}/${entity.id}`}</code></section></div>;
   if(!data)return <div className="drawer"><button className="modal-close" onClick={close}><X/></button><Loading/></div>;
+  if(entity.type==="QUEST")return <QuestDrawer data={data} close={close} history={history} historyIndex={historyIndex} moveHistory={moveHistory} jump={jump}/>;
   const props=metadata(data.properties_json);
   const imageSources=assetUrls(entity.type,entity.id,props);
   return <div className="drawer"><button className="modal-close" onClick={close}><X/></button><div className="drawer-history"><button disabled={historyIndex<=0} onClick={()=>moveHistory(historyIndex-1)}><ChevronLeft/><span>{history[historyIndex-1]?.name||"Back"}</span></button><select value={historyIndex} onChange={e=>moveHistory(Number(e.target.value))}>{history.map((entry,index)=><option value={index} key={`${entry.type}-${entry.id}-${index}`}>{entry.name||`${entry.type} ${entry.id}`}</option>)}</select><button disabled={historyIndex>=history.length-1} onClick={()=>moveHistory(historyIndex+1)}><span>{history[historyIndex+1]?.name||"Forward"}</span><ChevronRight/></button></div>
@@ -817,6 +907,36 @@ function EntityDrawer({entity,close,jump,history,historyIndex,moveHistory,named}
   </div>
 }
 
+function QuestDrawer({data,close,history,historyIndex,moveHistory,jump}:{data:any;close:()=>void;history:HistoryEntry[];historyIndex:number;moveHistory:(index:number)=>void;jump:(x:JumpTarget)=>void}){
+  const props=data.properties||{};
+  return <div className="drawer quest-detail-drawer"><button className="modal-close" onClick={close}><X/></button><div className="drawer-history"><button disabled={historyIndex<=0} onClick={()=>moveHistory(historyIndex-1)}><ChevronLeft/><span>{history[historyIndex-1]?.name||"Back"}</span></button><select value={historyIndex} onChange={e=>moveHistory(Number(e.target.value))}>{history.map((entry,index)=><option value={index} key={`${entry.type}-${entry.id}-${index}`}>{entry.name||`${entry.type} ${entry.id}`}</option>)}</select><button disabled={historyIndex>=history.length-1} onClick={()=>moveHistory(historyIndex+1)}><span>{history[historyIndex+1]?.name||"Forward"}</span><ChevronRight/></button></div>
+    <div className="drawer-hero"><span className="quest-hero-icon"><BookOpen/></span><div><div className="tag-row"><span className="tag">QUEST</span>{props.area!=null&&<span className="tag soft">Area {props.area}</span>}{props.autoStart!=null&&<span className="tag soft">Auto start</span>}{props.autoComplete!=null&&<span className="tag soft">Auto complete</span>}</div><h2>{data.name}</h2><code>{data.id}</code></div></div>
+    <section><h3>Quest Text</h3>{(data.overview||[]).length?<div className="quest-text-list">{data.overview.map((row:any)=><article key={row.stage}><strong>Stage {row.stage}</strong><p>{cleanQuestText(row.text)}</p></article>)}</div>:<p className="muted">No quest text found.</p>}</section>
+    <QuestPhase title="Start Requirements" phase={data.requirements} jump={jump}/>
+    <QuestPhase title="Completion Criteria" phase={data.completionCriteria} jump={jump}/>
+    <QuestPhase title="Start Actions" phase={data.startActions} jump={jump}/>
+    <QuestPhase title="Completion Rewards" phase={data.completionRewards} jump={jump}/>
+    <section className="technical"><h3>Technical WZ Data</h3><PropertyGrid data={props}/><code className="source-code">QuestInfo: {data.technical?.questInfoSource}</code><code className="source-code">Check: {data.technical?.checkSource}</code><code className="source-code">Act: {data.technical?.actSource}</code><details><summary>Raw QuestInfo</summary><pre>{JSON.stringify(data.technical?.questInfoRaw||{},null,2)}</pre></details><details><summary>Raw Check</summary><pre>{JSON.stringify(data.technical?.checkRaw||{},null,2)}</pre></details><details><summary>Raw Act</summary><pre>{JSON.stringify(data.technical?.actRaw||{},null,2)}</pre></details></section>
+  </div>
+}
+
+function QuestPhase({title,phase,jump}:{title:string;phase:any;jump:(x:JumpTarget)=>void}){
+  const props=phase?.properties||{};
+  const hasData=Object.keys(props).length||phase?.npcs?.length||phase?.items?.length||phase?.mobs?.length||phase?.quests?.length||phase?.jobs?.length||phase?.info?.length;
+  return <section><h3>{title}</h3>{!hasData?<p className="muted">No entries.</p>:<><QuestReferenceRows title="NPC" type="NPC" rows={phase.npcs||[]} jump={jump}/><QuestReferenceRows title="Items" type="ITEM" rows={phase.items||[]} jump={jump}/><QuestReferenceRows title="Monsters" type="MOB" rows={phase.mobs||[]} jump={jump}/><QuestReferenceRows title="Prerequisite Quests" type="QUEST" rows={phase.quests||[]} jump={jump}/><QuestReferenceRows title="Jobs" type="JOB" rows={phase.jobs||[]} jump={jump}/><QuestReferenceRows title="Info" type="INFO" rows={phase.info||[]} jump={jump}/>{Object.keys(props).length>0&&<details className="quest-phase-properties" open><summary>Properties</summary><PropertyGrid data={props}/></details>}</>}</section>
+}
+
+function QuestReferenceRows({title,type,rows,jump}:{title:string;type:string;rows:any[];jump:(x:JumpTarget)=>void}){
+  if(!rows?.length)return null;
+  return <div className="quest-reference-block"><h4>{title}</h4><div className="linked-rows">{rows.map((row:any,index:number)=>{
+    const id=Number(row.id||0);const count=Number(row.count||0);const clickable=["ITEM","MOB","NPC","QUEST"].includes(type)&&id>0;
+    const targetView=type==="ITEM"?"items":type==="MOB"?"mobs":type==="NPC"?"npcs":"character-quests";
+    return <button type="button" key={`${type}-${id}-${index}`} disabled={!clickable} onClick={()=>clickable&&jump({view:targetView as View,type,id})}><span className="linked-icon">{type==="QUEST"?<BookOpen/>:type==="JOB"?<ShieldCheck/>:type==="INFO"?<Database/>:<EntityImage type={type} id={id}/>}</span><span className="linked-copy"><strong>{row.name||`${type} ${id}`}</strong><code>{id||row.slot}</code>{count!==0&&<small>Count {count}</small>}{row.state!=null&&<small>State {row.state}</small>}{row.prop!=null&&<small>Prop {row.prop}</small>}</span>{clickable&&<ChevronRight size={14}/>}</button>
+  })}</div></div>
+}
+
+function cleanQuestText(value:any){return String(value||"").replace(/#.[^#]*#/g,"").replace(/#\\w/g,"").replace(/\\n/g,"\n").trim()}
+
 function Autocomplete({type,subtype="",value,onSelect,placeholder}:{type:string;subtype?:string;value:Entity|null;onSelect:(x:Entity)=>void;placeholder:string}){
   const [query,setQuery]=useState("");const [rows,setRows]=useState<Entity[]>([]);
   useEffect(()=>{if(query.trim().length<1){setRows([]);return}const t=setTimeout(async()=>{
@@ -837,11 +957,11 @@ function JobAutocomplete({value,onSelect}:{value:any|null;onSelect:(x:any)=>void
     <SearchInput value={query} setValue={setQuery} placeholder="Search job ID or name"/>
     {rows.length>0&&<div className="suggestions">{rows.map(row=><button type="button" key={row.job_id} onClick={()=>{onSelect(row);setQuery("")}}><JobBadge jobId={Number(row.job_id||0)} skillId={Number(row.icon_skill_id||0)}/><span><strong>{row.job_name}</strong><small>Job {row.job_id}</small><em>{row.source_path}</em></span></button>)}</div>}</div>
 }
-function AppearanceCatalogSelect({label,type,value,onSelect}:{label:string;type:"HAIR"|"FACE";value:number;onSelect:(entity:Entity)=>void}){
-  const [selected,setSelected]=useState<Entity|null>(null);const [query,setQuery]=useState("");const [rows,setRows]=useState<Entity[]>([]);
+function AppearanceCatalogSelect({label,type,gender,value,onSelect}:{label:string;type:"HAIR"|"FACE";gender:number;value:number;onSelect:(entity:Entity)=>void}){
+  const [selected,setSelected]=useState<Entity|null>(null);const [query,setQuery]=useState("");const [rows,setRows]=useState<Entity[]>([]);const [open,setOpen]=useState(false);
   useEffect(()=>{if(value)api<Entity>(`/api/catalog/ITEM/${value}`).then(setSelected).catch(()=>setSelected({entity_type:"ITEM",entity_id:value,name:`${label} ${value}`,subtype:type}))},[type,value,label]);
-  useEffect(()=>{if(!query.trim()){setRows([]);return}const timer=setTimeout(()=>api<Page<Entity>>(`/api/catalog/search?type=ITEM&subtype=${type}&q=${encodeURIComponent(query)}&page=0&size=12&sort=name`).then(page=>setRows(page.items)),160);return()=>clearTimeout(timer)},[type,query]);
-  return <div className="appearance-selector"><label>{label}</label>{selected&&<button type="button" className="appearance-current" onClick={()=>setQuery(String(selected.entity_id))}><EntityImage type="ITEM" id={selected.entity_id}/><span><strong>{selected.name}</strong><code>{selected.entity_id}</code></span></button>}<SearchInput value={query} setValue={setQuery} placeholder={`Search ${label.toLowerCase()} id or name`}/>{rows.length>0&&<div className="appearance-results">{rows.map(row=><button type="button" key={row.entity_id} onClick={()=>{setSelected(row);setQuery("");setRows([]);onSelect(row)}}><EntityImage type="ITEM" id={row.entity_id}/><span><strong>{row.name}</strong><code>{row.entity_id}</code></span></button>)}</div>}</div>
+  useEffect(()=>{if(!open){setRows([]);return}const timer=setTimeout(async()=>{const q=query.trim();const suggestions=await api<Entity[]>(`/api/catalog/suggest?type=ITEM&subtype=${type}&q=${encodeURIComponent(q)}&limit=500`);let next=suggestions.filter(row=>matchesAppearanceGender(type,Number(row.entity_id),gender));if(q&&next.length===0){const page=await api<Page<Entity>>(`/api/catalog/search?type=ITEM&subtype=${type}&q=${encodeURIComponent(q)}&page=0&size=500&sort=name`);next=page.items.filter(row=>matchesAppearanceGender(type,Number(row.entity_id),gender))}setRows(next)},160);return()=>clearTimeout(timer)},[type,gender,query,open]);
+  return <div className="appearance-selector"><label>{label}</label>{selected&&<button type="button" className="appearance-current" onClick={()=>{setOpen(true);setQuery(String(selected.entity_id))}}><EntityImage type="ITEM" id={selected.entity_id}/><span><strong>{selected.name}</strong><code>{selected.entity_id}</code></span></button>}<SearchInput value={query} setValue={value=>{setOpen(true);setQuery(value)}} onFocus={()=>setOpen(true)} placeholder={`Search ${label.toLowerCase()} id or name`}/>{open&&rows.length>0&&<div className="appearance-results">{rows.map(row=><button type="button" key={row.entity_id} onClick={()=>{setSelected(row);setQuery("");setRows([]);setOpen(false);onSelect(row)}}><EntityImage type="ITEM" id={row.entity_id}/><span><strong>{row.name}</strong><code>{row.entity_id}</code></span></button>)}</div>}</div>
 }
 function GenderIconSelect({value,onSelect}:{value:number;onSelect:(value:number)=>void}){
   return <label className="gender-icon-select"><span>Gender</span>
@@ -872,10 +992,18 @@ function StarterEquipPicker({slot,label,gender,value,set}:{slot:StarterEquipSlot
   return <article className="starter-equip-picker"><h4>{label}</h4><div className="starter-equip-options">{options.map(itemId=><button type="button" key={itemId} className={value===itemId?"selected":""} onClick={()=>set(itemId)}><EntityImage type="ITEM" id={itemId}/><span><strong>{items[itemId]?.name||`Item ${itemId}`}</strong><small>{itemId}</small></span></button>)}</div></article>
 }
 function NumberField({label,value,set,onCommit,className="",detail,leftAction,rightAction,children}:{label:string;value:any;set:(value:number)=>void;onCommit?:(value:number)=>void;className?:string;detail?:string;leftAction?:ReactNode;rightAction?:ReactNode;children?:ReactNode}){const trailing=rightAction??children;const [startingValue,setStartingValue]=useState<number|null>(null);const [focused,setFocused]=useState(false);const [draft,setDraft]=useState(formatInteger(value));useEffect(()=>{if(!focused)setDraft(formatInteger(value))},[value,focused]);return <label className={className}>{label}<input type="text" inputMode="numeric" value={focused?draft:formatInteger(value)} onFocus={()=>{setFocused(true);setStartingValue(num(value));setDraft(String(num(value)))}} onChange={e=>{setDraft(e.target.value);set(parseNumberInput(e.target.value))}} onBlur={e=>{const next=parseNumberInput(e.target.value);setFocused(false);setDraft(formatInteger(next));if(startingValue===null||next!==startingValue)onCommit?.(next);setStartingValue(null)}} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();e.currentTarget.blur()}}}/>{detail&&<small className="stat-detail">{detail}</small>}{(leftAction||trailing)&&<span className="stat-field-actions"><span>{leftAction}</span><span>{trailing}</span></span>}</label>}
+function DateTimeField({label,value,set}:{label:string;value:any;set:(value:number)=>void}){const seconds=num(value);return <label>{label}<input type="datetime-local" value={epochSecondsToInput(seconds)} onChange={event=>set(inputToEpochSeconds(event.target.value))}/><small className="stat-detail">{seconds>0?`${epochSecondsLabel(seconds)} | ${formatInteger(seconds)}`:"Not set"}</small></label>}
 function GmLevelSelect({value,set,onCommit,className=""}:{value:any;set:(value:number)=>void;onCommit?:(value:number)=>void;className?:string}){const current=Math.min(6,Math.max(0,num(value)));return <label className={`gm-level-select ${className}`.trim()}>GM level<select value={current} onChange={event=>{const next=Number(event.target.value);set(next);if(next!==current)onCommit?.(next)}}>{[0,1,2,3,4,5,6].map(level=><option key={level} value={level}>GM {level}</option>)}</select></label>}
+function matchesAppearanceGender(type:"HAIR"|"FACE",id:number,gender:number){const female=Number(gender)===1;if(type==="FACE")return female?(id>=21000&&id<22000):(id>=20000&&id<21000);return female?((id>=31000&&id<32000)||(id>=34000&&id<35000)):((id>=30000&&id<31000)||(id>=33000&&id<34000))}
 function num(value:any){const parsed=Number(value);return Number.isFinite(parsed)?parsed:0}
 function parseNumberInput(value:any){const parsed=Number(String(value??"").replace(/,/g,""));return Number.isFinite(parsed)?parsed:0}
 function formatInteger(value:any){return parseNumberInput(value).toLocaleString()}
+function epochSecondsToInput(value:any){const seconds=num(value);if(seconds<=0)return"";const date=new Date(seconds*1000);if(Number.isNaN(date.getTime()))return"";const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);return local.toISOString().slice(0,16)}
+function inputToEpochSeconds(value:string){if(!value)return 0;const time=new Date(value).getTime();return Number.isFinite(time)?Math.floor(time/1000):0}
+function epochSecondsLabel(value:any){const seconds=num(value);if(seconds<=0)return"Not set";const date=new Date(seconds*1000);return Number.isNaN(date.getTime())?`Invalid (${seconds})`:date.toLocaleString()}
+function monsterBookMedal(level:number){if(level>=5)return{label:"Gold",className:"gold"};if(level>=3)return{label:"Silver",className:"silver"};if(level>=1)return{label:"Bronze",className:"bronze"};return{label:"",className:"none"}}
+function monsterBookOrder(name:any){const order=["Beginner","Basic","Intermediate","Advanced","Master"];const index=order.indexOf(String(name||"Other"));return index>=0?index:order.length}
+function compareMonsterBookRows(a:any,b:any){return monsterBookOrder(a.book_tab)-monsterBookOrder(b.book_tab)||Number(a.level_value||0)-Number(b.level_value||0)||Number(a.mobid||0)-Number(b.mobid||0)}
 function spArray(value:any){const result=String(value??"0,0,0,0,0,0,0,0,0,0").split(",").map(x=>Math.max(0,num(x)));while(result.length<10)result.push(0);return result.slice(0,10)}
 function skillBook(jobId:any){const id=Math.abs(num(jobId));if(id===0||id%1000===0)return 0;if(id%100===0)return 1;if(id%10===0)return 2;if(id%10===1)return 3;return 4}
 function totalApBudget(level:number){return 25+Math.max(0,level-1)*5}
@@ -919,7 +1047,7 @@ function Chance({value}:{value:number}){const display=chanceDisplay(value);retur
 function Pager({page,pages,setPage}:{page:number;pages:number;setPage:(n:number)=>void}){const [target,setTarget]=useState(String(page+1));useEffect(()=>setTarget(String(page+1)),[page]);if(pages<=1)return null;
   function go(){const next=Math.min(pages,Math.max(1,Number(target)||1));setPage(next-1)}
   return <div className="pager"><button disabled={page===0} onClick={()=>setPage(page-1)}><ChevronLeft/></button><span>{page+1} / {pages}</span><label>Go to<input type="number" min="1" max={pages} value={target} onChange={e=>setTarget(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></label><button className="go-page" onClick={go}>Go</button><button disabled={page>=pages-1} onClick={()=>setPage(page+1)}><ChevronRight/></button></div>}
-function SearchInput({value,setValue,placeholder}:{value:string;setValue:(x:string)=>void;placeholder:string}){return <div className="search-box"><Search size={17}/><input value={value} onChange={e=>setValue(e.target.value)} placeholder={placeholder}/></div>}
+function SearchInput({value,setValue,placeholder,onFocus}:{value:string;setValue:(x:string)=>void;placeholder:string;onFocus?:()=>void}){return <div className="search-box" onMouseDown={event=>{if(event.target!==event.currentTarget.querySelector("input"))event.currentTarget.querySelector("input")?.focus()}}><Search size={17}/><input value={value} onFocus={onFocus} onChange={e=>setValue(e.target.value)} placeholder={placeholder}/></div>}
 function EntityImage({type,id,properties={},className=""}:{type:string;id:number;properties?:Record<string,any>;className?:string}){
   const sources=assetUrls(type,id,properties);const [sourceIndex,setSourceIndex]=useState(0);useEffect(()=>setSourceIndex(0),[type,id,properties.imageAction]);
   if(sourceIndex>=sources.length){if(type==="SKILL")return <SkillBadge skillId={id} className={className}/>;

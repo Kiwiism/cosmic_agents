@@ -8,10 +8,13 @@ param(
     [int] $ApproachSampleStepPx = 20,
     [int] $MaxApproachPointsPerNpc = 12,
     [int] $ValidationTopN = 100,
-    [switch] $SkipApproach
+    [switch] $SkipApproach,
+    [switch] $SummaryOnly,
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
+$repoRoot = (Resolve-Path ".").Path
 
 function Load-XmlDocument {
     param([string] $Path)
@@ -46,6 +49,20 @@ function Get-AttrValue {
         return $null
     }
     return $Node.Attributes[$Name].Value
+}
+
+function ConvertTo-RepoRelativePath {
+    param([string] $Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return $Path
+    }
+
+    $fullPath = (Get-Item -LiteralPath $Path).FullName
+    if ($fullPath.StartsWith($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ($fullPath.Substring($repoRoot.Length).TrimStart("\", "/") -replace "\\", "/")
+    }
+    return ($fullPath -replace "\\", "/")
 }
 
 function Get-IntChildValue {
@@ -284,7 +301,7 @@ function Get-LifePlacements {
                 x = Get-IntChildValue $entry "x"
                 y = Get-IntChildValue $entry "y"
                 footholdId = Get-IntChildValue $entry "fh"
-                source = $file.FullName
+                source = ConvertTo-RepoRelativePath $file.FullName
             })
         }
     }
@@ -945,7 +962,7 @@ function Get-NpcScriptCatalogRows {
     foreach ($file in $scriptFiles) {
         $npcId = [int] $file.BaseName
         $text = Get-Content -Raw $file.FullName
-        $relativePath = $file.FullName
+        $relativePath = ConvertTo-RepoRelativePath $file.FullName
         $visibleChars = Get-ScriptVisibleTextLength $text
         $optionMatches = [regex]::Matches($text, "#L(-?\d+)#(.*?)#l")
         foreach ($match in $optionMatches) {
@@ -1692,6 +1709,68 @@ $validation = @(
 ) -join "`n"
 
 Set-Content -Encoding UTF8 -Path $validationPath -Value $validation
+
+$outputFiles = @(
+    [pscustomobject] @{ key = "catalog"; path = $catalogPath }
+    [pscustomobject] @{ key = "placements"; path = $placementsPath }
+    if (!$SkipApproach) { [pscustomobject] @{ key = "approach"; path = $approachPath } }
+    [pscustomobject] @{ key = "dialogueTiming"; path = $dialogueTimingPath }
+    [pscustomobject] @{ key = "actions"; path = $actionsPath }
+    [pscustomobject] @{ key = "dialogueOptions"; path = $dialogueOptionsPath }
+    [pscustomobject] @{ key = "services"; path = $servicesPath }
+    [pscustomobject] @{ key = "rewardChoices"; path = $rewardChoicesPath }
+    [pscustomobject] @{ key = "shopInventory"; path = $shopInventoryPath }
+    [pscustomobject] @{ key = "fastIndexes"; path = $fastIndexesPath }
+    [pscustomobject] @{ key = "mapSummary"; path = $mapSummaryPath }
+    [pscustomobject] @{ key = "summary"; path = $summaryPath }
+    [pscustomobject] @{ key = "gaps"; path = $gapsPath }
+    [pscustomobject] @{ key = "validation"; path = $validationPath }
+)
+
+$report = [ordered]@{
+    schemaVersion = 1
+    generatedAt = (Get-Date).ToString("o")
+    status = "OK"
+    wzRoot = $WzRoot
+    outputDir = $OutputDir
+    skipApproach = [bool] $SkipApproach
+    summaryOnly = [bool] $SummaryOnly
+    rowsOmitted = [bool] $SummaryOnly
+    outputFileCount = $outputFiles.Count
+    returnedOutputFileCount = if ($SummaryOnly) { 0 } else { $outputFiles.Count }
+    counts = [ordered]@{
+        catalogNpcs = @($catalog).Count
+        placements = @($placements).Count
+        placedNpcs = $placedNpcCount
+        shopNpcs = $shopNpcCount
+        questNpcs = $questNpcCount
+        missingNames = $missingNameCount
+        placementsWithApproachCandidates = $placementsWithApproachCount
+        approachCandidates = $approachCandidateCount
+        questDialogueTimingRows = $questDialogueTimingCount
+        npcQuestActionRows = $questActionCount
+        dialogueOptionRows = $dialogueOptionCount
+        serviceHintRows = $serviceCount
+        rewardChoiceRows = $rewardChoiceCount
+        shopInventoryRows = $shopInventoryCount
+        shopInventoryItemRows = $shopInventoryItemCount
+    }
+    reviewCounts = [ordered]@{
+        missingNames = $missingNameRows.Count
+        missingApproachCandidates = $missingApproachRows.Count
+        questNpcsWithoutPlacement = $questWithoutPlacementRows.Count
+        shopNpcsWithoutPlacement = $shopWithoutPlacementRows.Count
+        doNotAutoUseNpcs = $doNotAutoUseRows.Count
+        highPlacementNpcs = $highPlacementRows.Count
+        inferredInteractionTypeNpcs = $inferredTypeRows.Count
+    }
+    outputFiles = if ($SummaryOnly) { $null } else { $outputFiles }
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 6
+    return
+}
 
 Write-Host "NPC catalog generated:"
 Write-Host "  $catalogPath"

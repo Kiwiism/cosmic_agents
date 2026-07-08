@@ -2,7 +2,9 @@ param(
     [string] $RunId,
     [string] $OutputRoot = "logs/soak/baseline",
     [int] $DurationMinutes = 60,
-    [int] $SampleIntervalMinutes = 5
+    [int] $SampleIntervalMinutes = 5,
+    [switch] $SummaryOnly,
+    [switch] $Json
 )
 
 $ErrorActionPreference = "Stop"
@@ -70,6 +72,14 @@ function Invoke-RepoScriptSnapshot {
 
 $repoRoot = Resolve-RepoRoot
 Set-Location -LiteralPath $repoRoot
+
+if ($DurationMinutes -lt 1) {
+    throw "DurationMinutes must be 1 or greater."
+}
+
+if ($SampleIntervalMinutes -lt 1) {
+    throw "SampleIntervalMinutes must be 1 or greater."
+}
 
 if ([string]::IsNullOrWhiteSpace($RunId)) {
     $RunId = "baseline-" + (Get-Date -Format "yyyyMMdd-HHmm")
@@ -222,6 +232,50 @@ Invoke-RepoScriptSnapshot `
 Invoke-RepoScriptSnapshot `
     -ScriptPath (Join-Path $repoRoot "tools/soak/Get-BaselineSoakStatus.ps1") `
     -OutputPath (Join-Path $runDir "baseline-status-before-run.log")
+
+$packageFiles = @(
+    "README.md",
+    "evidence-checklist.md",
+    "serverhealth-5min-samples.log",
+    "scale-health.log",
+    "slow-operations.log",
+    "startup.log",
+    "shutdown.log",
+    "prep-verifier-before-run.log",
+    "baseline-status-before-run.log",
+    "summary.json"
+)
+
+$packageFileReports = @($packageFiles | ForEach-Object {
+    [ordered]@{
+        name = $_
+        path = (Join-Path $runDir $_)
+        exists = Test-Path -LiteralPath (Join-Path $runDir $_)
+    }
+})
+
+$report = [ordered]@{
+    status = "OK"
+    runId = $RunId
+    runPath = (Resolve-Path -LiteralPath $runDir).Path
+    outputRoot = (Resolve-Path -LiteralPath $OutputRoot).Path
+    summaryPath = (Resolve-Path -LiteralPath $summaryPath).Path
+    durationMinutes = $DurationMinutes
+    sampleIntervalMinutes = $SampleIntervalMinutes
+    expectedServerHealthSampleCount = [int] [Math]::Max(1, [Math]::Ceiling([double] $DurationMinutes / [double] $SampleIntervalMinutes))
+    createdAt = $createdAt
+    summaryOnly = [bool] $SummaryOnly
+    rowsOmitted = [bool] $SummaryOnly
+    packageFileCount = @($packageFileReports).Count
+    missingPackageFileCount = @($packageFileReports | Where-Object { -not $_.exists }).Count
+    returnedPackageFileCount = if ($SummaryOnly) { 0 } else { @($packageFileReports).Count }
+    packageFiles = if ($SummaryOnly) { @() } else { $packageFileReports }
+}
+
+if ($Json) {
+    $report | ConvertTo-Json -Depth 6
+    return
+}
 
 Write-Host "Created baseline evidence package:"
 Write-Host "  $runDir"

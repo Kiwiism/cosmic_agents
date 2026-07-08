@@ -229,7 +229,7 @@ public final class CombatFormulaProvider {
     /**
      * Variant used by Heal path: the client's damage-vs-undead formula includes a target multiplier
      * of {@code 1.5 + 5 / N} where N is the number of targets including the caster. Callers that
-     * know how many undead are being hit (e.g. {@code AgentBotCombatHealRuntime}) should pass
+     * know how many undead are being hit (e.g. {@code AgentCombatHealRuntime}) should pass
      * {@code undeadCount + 1} so the bot's Heal damage matches what a real client would send.
      *
      * @param healTargetCount N in the formula — caster + undead mobs. Ignored for non-Heal skills.

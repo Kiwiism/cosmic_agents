@@ -1,6 +1,7 @@
 package com.cosmic.databaseconsole.players;
 
 import com.cosmic.databaseconsole.audit.AuditService;
+import com.cosmic.databaseconsole.bridge.BridgeClient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -20,12 +22,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @RestController
@@ -37,15 +49,21 @@ public class PlayerController {
     private static final int[] DEFAULT_KEY_ACTIONS = {0, 106, 10, 1, 12, 13, 18, 24, 8, 5, 4, 19, 14, 15, 2, 17, 11, 3, 20, 16, 9, 50, 51, 6, 7, 53, 100, 101, 102, 103, 104, 105, 54, 22, 52, 21, 25, 26, 23, 27};
     private final NamedParameterJdbcTemplate game;
     private final AuditService audit;
+    private final BridgeClient bridge;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper json;
+    private final Path wzPath;
+    private Map<Integer, Map<String, Object>> questMetadataCache;
 
     public PlayerController(@Qualifier("gameJdbc") NamedParameterJdbcTemplate game, AuditService audit,
-                            PasswordEncoder passwordEncoder, ObjectMapper json) {
+                            BridgeClient bridge, PasswordEncoder passwordEncoder, ObjectMapper json,
+                            @Value("${cosmic.wz-path}") String wzPath) {
         this.game = game;
         this.audit = audit;
+        this.bridge = bridge;
         this.passwordEncoder = passwordEncoder;
         this.json = json;
+        this.wzPath = Path.of(wzPath).toAbsolutePath().normalize();
     }
 
     @GetMapping("/accounts")
@@ -116,13 +134,14 @@ public class PlayerController {
     }
 
     @GetMapping("/characters/name-check")
-    Map<String, Object> checkCharacterName(@RequestParam(defaultValue = "") String name) {
+    Map<String, Object> checkCharacterName(@RequestParam(defaultValue = "") String name,
+                                           @RequestParam(required = false) Integer characterId) {
         String trimmed = name.trim();
         String message = characterNameProblem(trimmed);
         if (message != null) {
             return Map.of("name", trimmed, "valid", false, "available", false, "message", message);
         }
-        boolean available = characterNameAvailable(trimmed);
+        boolean available = characterNameAvailable(trimmed, characterId);
         return Map.of("name", trimmed, "valid", true, "available", available,
                 "message", available ? "IGN is available" : "IGN is already taken");
     }
@@ -138,7 +157,7 @@ public class PlayerController {
         if (nameProblem != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, nameProblem);
         }
-        if (!characterNameAvailable(name)) {
+        if (!characterNameAvailable(name, null)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "IGN is already taken");
         }
         Map<String, Object> owner = account(accountId);
@@ -261,8 +280,15 @@ public class PlayerController {
     @Transactional("gameTransactionManager")
     Map<String, Object> updateAppearance(@PathVariable int characterId, @Valid @RequestBody AppearancePatch body,
                                          Principal principal, HttpServletRequest request) {
-        lockCharacter(characterId);
         Map<String, Object> before = character(characterId);
+        if (isOnline(before)) {
+            bridge.updateAppearance(characterId, appearanceBridgeBody(body));
+            Map<String, Object> after = characterForUpdate(characterId);
+            audit.record(principal, "CHARACTER_APPEARANCE_UPDATE", "CHARACTER", characterId, body.reason(), before, after,
+                    "SAVED_LIVE", request);
+            return after;
+        }
+        lockCharacter(characterId);
         requireOffline(((Number) before.get("accountid")).intValue());
         game.update("""
                 UPDATE characters SET hair = :hair, face = :face, skincolor = :skincolor,
@@ -272,6 +298,31 @@ public class PlayerController {
                 .addValue("skincolor", body.skincolor()).addValue("gender", body.gender()));
         Map<String, Object> after = character(characterId);
         audit.record(principal, "CHARACTER_APPEARANCE_UPDATE", "CHARACTER", characterId, body.reason(), before, after,
+                "SAVED_OFFLINE", request);
+        return after;
+    }
+
+    @PatchMapping("/characters/{characterId}/name")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> updateCharacterName(@PathVariable int characterId, @Valid @RequestBody CharacterNamePatch body,
+                                            Principal principal, HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> before = character(characterId);
+        requireOffline(((Number) before.get("accountid")).intValue());
+        String name = body.name().trim();
+        String nameProblem = characterNameProblem(name);
+        if (nameProblem != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, nameProblem);
+        }
+        if (!characterNameAvailable(name, characterId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "IGN is already taken");
+        }
+        if (!name.equals(before.get("name"))) {
+            game.update("UPDATE characters SET name = :name WHERE id = :id",
+                    new MapSqlParameterSource().addValue("id", characterId).addValue("name", name));
+        }
+        Map<String, Object> after = character(characterId);
+        audit.record(principal, "CHARACTER_RENAME", "CHARACTER", characterId, body.reason(), before, after,
                 "SAVED_OFFLINE", request);
         return after;
     }
@@ -301,6 +352,290 @@ public class PlayerController {
                 ORDER BY job_id, skillid
                 """, new MapSqlParameterSource()
                 .addValue("characterId", characterId).addValue("jobIds", jobIds));
+    }
+
+    @GetMapping("/characters/{characterId}/quests")
+    Map<String, Object> characterQuests(@PathVariable int characterId) {
+        character(characterId);
+        List<Map<String, Object>> quests = game.queryForList("""
+                SELECT qs.queststatusid, qs.quest, qs.status, qs.time, qs.expires,
+                       qs.forfeited, qs.completed, qs.info,
+                       GROUP_CONCAT(CONCAT(qp.progressid, ':', qp.progress)
+                           ORDER BY qp.progressid SEPARATOR '|') progress_summary
+                FROM queststatus qs
+                LEFT JOIN questprogress qp ON qp.queststatusid = qs.queststatusid
+                WHERE qs.characterid = :characterId
+                GROUP BY qs.queststatusid, qs.quest, qs.status, qs.time, qs.expires,
+                         qs.forfeited, qs.completed, qs.info
+                ORDER BY qs.status, qs.quest
+                """, Map.of("characterId", characterId));
+        List<Map<String, Object>> progress = game.queryForList("""
+                SELECT qp.id, qp.queststatusid, qp.progressid, qp.progress
+                FROM questprogress qp
+                WHERE qp.characterid = :characterId
+                ORDER BY qp.queststatusid, qp.progressid
+                """, Map.of("characterId", characterId));
+        return Map.of("quests", enrichQuestRows(quests), "progress", progress);
+    }
+
+    @PatchMapping("/characters/{characterId}/quests/{questId}")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> updateCharacterQuest(@PathVariable int characterId, @PathVariable int questId,
+                                             @Valid @RequestBody QuestStatusPatch body, Principal principal,
+                                             HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> ownerCharacter = character(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        List<Map<String, Object>> beforeRows = game.queryForList("""
+                SELECT * FROM queststatus WHERE characterid = :characterId AND quest = :quest
+                ORDER BY queststatusid DESC LIMIT 1
+                """, Map.of("characterId", characterId, "quest", questId));
+        Map<String, Object> before = beforeRows.isEmpty() ? null : beforeRows.getFirst();
+        if (body.status() < 0 || body.status() > 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quest status must be 0, 1, or 2");
+        }
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("characterId", characterId).addValue("quest", questId)
+                .addValue("status", body.status()).addValue("time", body.time())
+                .addValue("expires", body.expires()).addValue("forfeited", body.forfeited())
+                .addValue("completed", body.completed()).addValue("info", body.info());
+        if (before == null) {
+            game.update("""
+                    INSERT INTO queststatus(characterid, quest, status, time, expires, forfeited, completed, info)
+                    VALUES (:characterId, :quest, :status, :time, :expires, :forfeited, :completed, :info)
+                    """, params);
+        } else {
+            game.update("""
+                    UPDATE queststatus
+                    SET status = :status, time = :time, expires = :expires, forfeited = :forfeited,
+                        completed = :completed, info = :info
+                    WHERE queststatusid = :questStatusId
+                    """, params.addValue("questStatusId", before.get("queststatusid")));
+        }
+        Map<String, Object> after = game.queryForList("""
+                SELECT * FROM queststatus WHERE characterid = :characterId AND quest = :quest
+                ORDER BY queststatusid DESC LIMIT 1
+                """, Map.of("characterId", characterId, "quest", questId)).getFirst();
+        audit.record(principal, "CHARACTER_QUEST_STATUS_UPDATE", "CHARACTER_QUEST", questId,
+                body.reason(), before, after, "SAVED_OFFLINE", request);
+        return after;
+    }
+
+    @PostMapping("/characters/{characterId}/quests/{questId}/start")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> startCharacterQuest(@PathVariable int characterId, @PathVariable int questId,
+                                            @Valid @RequestBody ReasonRequest body, Principal principal,
+                                            HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> ownerCharacter = character(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        Map<String, Object> before = latestQuestStatus(characterId, questId);
+        int now = nowSeconds();
+        if (before == null) {
+            game.update("""
+                    INSERT INTO queststatus(characterid, quest, status, time, expires, forfeited, completed, info)
+                    VALUES (:characterId, :quest, 1, :time, 0, 0, 0, 0)
+                    """, Map.of("characterId", characterId, "quest", questId, "time", now));
+        } else {
+            game.update("""
+                    UPDATE queststatus
+                    SET status = 1, time = :time, expires = 0
+                    WHERE queststatusid = :questStatusId
+                    """, Map.of("time", now, "questStatusId", before.get("queststatusid")));
+        }
+        Map<String, Object> after = latestQuestStatus(characterId, questId);
+        audit.record(principal, "CHARACTER_QUEST_START", "CHARACTER_QUEST", questId,
+                body.reason(), before, after, "SAVED_OFFLINE", request);
+        return enrichedQuestRow(after);
+    }
+
+    @PostMapping("/characters/{characterId}/quests/{questId}/forfeit")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> forfeitCharacterQuest(@PathVariable int characterId, @PathVariable int questId,
+                                              @Valid @RequestBody ReasonRequest body, Principal principal,
+                                              HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> ownerCharacter = character(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        Map<String, Object> before = latestQuestStatus(characterId, questId);
+        if (before == null || ((Number) before.get("status")).intValue() != 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only in-progress quests can be forfeited");
+        }
+        int forfeited = ((Number) before.getOrDefault("forfeited", 0)).intValue() + 1;
+        game.update("""
+                UPDATE queststatus
+                SET status = 0, time = :time, expires = 0, forfeited = :forfeited, completed = 0
+                WHERE queststatusid = :questStatusId
+                """, Map.of("time", nowSeconds(), "forfeited", forfeited, "questStatusId", before.get("queststatusid")));
+        deleteQuestProgress(characterId, ((Number) before.get("queststatusid")).intValue());
+        Map<String, Object> after = latestQuestStatus(characterId, questId);
+        audit.record(principal, "CHARACTER_QUEST_FORFEIT", "CHARACTER_QUEST", questId,
+                body.reason(), before, after, "SAVED_OFFLINE", request);
+        return enrichedQuestRow(after);
+    }
+
+    @PostMapping("/characters/{characterId}/quests/{questId}/reset")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> resetCharacterQuest(@PathVariable int characterId, @PathVariable int questId,
+                                            @Valid @RequestBody ReasonRequest body, Principal principal,
+                                            HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> ownerCharacter = character(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        Map<String, Object> before = latestQuestStatus(characterId, questId);
+        if (before == null) {
+            game.update("""
+                    INSERT INTO queststatus(characterid, quest, status, time, expires, forfeited, completed, info)
+                    VALUES (:characterId, :quest, 0, :time, 0, 0, 0, 0)
+                    """, Map.of("characterId", characterId, "quest", questId, "time", nowSeconds()));
+        } else {
+            game.update("""
+                    UPDATE queststatus
+                    SET status = 0, time = :time, expires = 0, forfeited = 0, completed = 0, info = 0
+                    WHERE queststatusid = :questStatusId
+                    """, Map.of("time", nowSeconds(), "questStatusId", before.get("queststatusid")));
+            deleteQuestProgress(characterId, ((Number) before.get("queststatusid")).intValue());
+        }
+        Map<String, Object> after = latestQuestStatus(characterId, questId);
+        audit.record(principal, "CHARACTER_QUEST_RESET", "CHARACTER_QUEST", questId,
+                body.reason(), before, after, "SAVED_OFFLINE", request);
+        return enrichedQuestRow(after);
+    }
+
+    @PatchMapping("/characters/{characterId}/quests/{questId}/progress/{progressId}")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> updateCharacterQuestProgress(@PathVariable int characterId, @PathVariable int questId,
+                                                     @PathVariable int progressId,
+                                                     @Valid @RequestBody QuestProgressPatch body,
+                                                     Principal principal, HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> ownerCharacter = character(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        Map<String, Object> status = questStatusForUpdate(characterId, questId);
+        int questStatusId = ((Number) status.get("queststatusid")).intValue();
+        List<Map<String, Object>> beforeRows = game.queryForList("""
+                SELECT * FROM questprogress
+                WHERE characterid = :characterId AND queststatusid = :questStatusId AND progressid = :progressId
+                """, new MapSqlParameterSource().addValue("characterId", characterId)
+                .addValue("questStatusId", questStatusId).addValue("progressId", progressId));
+        Map<String, Object> before = beforeRows.isEmpty() ? null : beforeRows.getFirst();
+        if (body.progress().isBlank()) {
+            game.update("""
+                    DELETE FROM questprogress
+                    WHERE characterid = :characterId AND queststatusid = :questStatusId AND progressid = :progressId
+                    """, new MapSqlParameterSource().addValue("characterId", characterId)
+                    .addValue("questStatusId", questStatusId).addValue("progressId", progressId));
+        } else {
+            MapSqlParameterSource params = new MapSqlParameterSource().addValue("characterId", characterId)
+                    .addValue("questStatusId", questStatusId).addValue("progressId", progressId)
+                    .addValue("progress", body.progress());
+            if (before == null) {
+                game.update("""
+                        INSERT INTO questprogress(characterid, queststatusid, progressid, progress)
+                        VALUES (:characterId, :questStatusId, :progressId, :progress)
+                        """, params);
+            } else {
+                game.update("""
+                        UPDATE questprogress SET progress = :progress
+                        WHERE characterid = :characterId AND queststatusid = :questStatusId
+                          AND progressid = :progressId
+                        """, params);
+            }
+        }
+        Map<String, Object> after = game.queryForList("""
+                SELECT * FROM questprogress
+                WHERE characterid = :characterId AND queststatusid = :questStatusId AND progressid = :progressId
+                """, new MapSqlParameterSource().addValue("characterId", characterId)
+                .addValue("questStatusId", questStatusId).addValue("progressId", progressId))
+                .stream().findFirst().orElse(Map.of());
+        audit.record(principal, "CHARACTER_QUEST_PROGRESS_UPDATE", "CHARACTER_QUEST", questId,
+                body.reason(), before, after, "SAVED_OFFLINE", request);
+        return after;
+    }
+
+    @GetMapping("/quests/{questId}")
+    Map<String, Object> questDetail(@PathVariable int questId) {
+        Element info = questElement("QuestInfo.img.xml", questId);
+        Element check = questElement("Check.img.xml", questId);
+        Element act = questElement("Act.img.xml", questId);
+        if (info == null && check == null && act == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Quest not found in WZ");
+        }
+        Map<String, Object> detail = new LinkedHashMap<>();
+        detail.put("id", questId);
+        detail.put("name", questInfoName(info, questId));
+        detail.put("overview", info == null ? List.of() : questInfoText(info));
+        detail.put("properties", info == null ? Map.of() : scalarChildren(info));
+        detail.put("requirements", questPhase(check, "0"));
+        detail.put("completionCriteria", questPhase(check, "1"));
+        detail.put("startActions", questPhase(act, "0"));
+        detail.put("completionRewards", questPhase(act, "1"));
+        detail.put("technical", Map.of(
+                "questInfoSource", "Quest.wz/QuestInfo.img.xml",
+                "checkSource", "Quest.wz/Check.img.xml",
+                "actSource", "Quest.wz/Act.img.xml",
+                "questInfoRaw", info == null ? Map.of() : elementMap(info),
+                "checkRaw", check == null ? Map.of() : elementMap(check),
+                "actRaw", act == null ? Map.of() : elementMap(act)
+        ));
+        return detail;
+    }
+
+    @GetMapping("/characters/{characterId}/monster-book")
+    Map<String, Object> characterMonsterBook(@PathVariable int characterId) {
+        Map<String, Object> owner = character(characterId);
+        List<Map<String, Object>> cards = game.queryForList("""
+                SELECT md.cardid, COALESCE(mb.level, 0) level, md.mobid,
+                       COALESCE(m.name, CONCAT('Monster ', md.mobid)) mob_name,
+                       COALESCE(m.level_value, 0) level_value,
+                       CASE
+                         WHEN COALESCE(m.level_value, 0) < 20 THEN 'Beginner'
+                         WHEN COALESCE(m.level_value, 0) < 40 THEN 'Basic'
+                         WHEN COALESCE(m.level_value, 0) < 70 THEN 'Intermediate'
+                         WHEN COALESCE(m.level_value, 0) < 100 THEN 'Advanced'
+                         ELSE 'Master'
+                       END book_tab
+                FROM monstercarddata md
+                LEFT JOIN monsterbook mb ON mb.cardid = md.cardid AND mb.charid = :characterId
+                LEFT JOIN cosmic_database_console.catalog_entities m
+                  ON m.entity_type = 'MOB' AND m.entity_id = md.mobid
+                ORDER BY book_tab, level_value, mobid
+                """, Map.of("characterId", characterId));
+        return Map.of("cover", owner.getOrDefault("monsterbookcover", 0), "cards", cards);
+    }
+
+    @PatchMapping("/characters/{characterId}/monster-book/{cardId}")
+    @Transactional("gameTransactionManager")
+    Map<String, Object> updateMonsterBookCard(@PathVariable int characterId, @PathVariable int cardId,
+                                              @Valid @RequestBody MonsterBookPatch body,
+                                              Principal principal, HttpServletRequest request) {
+        lockCharacter(characterId);
+        Map<String, Object> ownerCharacter = character(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        List<Map<String, Object>> beforeRows = game.queryForList("""
+                SELECT * FROM monsterbook WHERE charid = :characterId AND cardid = :cardId
+                """, Map.of("characterId", characterId, "cardId", cardId));
+        Map<String, Object> before = beforeRows.isEmpty() ? null : beforeRows.getFirst();
+        if (body.level() <= 0) {
+            game.update("DELETE FROM monsterbook WHERE charid = :characterId AND cardid = :cardId",
+                    Map.of("characterId", characterId, "cardId", cardId));
+        } else if (before == null) {
+            game.update("""
+                    INSERT INTO monsterbook(charid, cardid, level)
+                    VALUES (:characterId, :cardId, :level)
+                    """, Map.of("characterId", characterId, "cardId", cardId, "level", body.level()));
+        } else {
+            game.update("""
+                    UPDATE monsterbook SET level = :level
+                    WHERE charid = :characterId AND cardid = :cardId
+                    """, Map.of("characterId", characterId, "cardId", cardId, "level", body.level()));
+        }
+        Map<String, Object> after = game.queryForList("""
+                SELECT * FROM monsterbook WHERE charid = :characterId AND cardid = :cardId
+                """, Map.of("characterId", characterId, "cardId", cardId)).stream().findFirst().orElse(Map.of());
+        audit.record(principal, "CHARACTER_MONSTER_BOOK_UPDATE", "MONSTER_BOOK_CARD", cardId,
+                body.reason(), before, after, "SAVED_OFFLINE", request);
+        return after;
     }
 
     @PatchMapping("/characters/{characterId}/skills/{skillId}")
@@ -360,11 +695,8 @@ public class PlayerController {
     Map<String, Object> updateInventoryItem(@PathVariable int characterId, @PathVariable long inventoryItemId,
                                             @Valid @RequestBody InventoryItemPatch body, Principal principal,
                                             HttpServletRequest request) {
-        lockCharacter(characterId);
         Map<String, Object> ownerCharacter = character(characterId);
-        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         Map<String, Object> before = inventoryItem(inventoryItemId, characterId);
-        int storedInventoryType = ((Number) before.get("inventorytype")).intValue();
         int itemInventoryType = ((Number) before.get("itemid")).intValue() / 1_000_000;
         if (body.itemId() / 1_000_000 != itemInventoryType) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -374,20 +706,38 @@ public class PlayerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     itemInventoryType == 1 ? "Equipment position cannot be zero" : "Inventory position must be positive");
         }
+        if (isOnline(ownerCharacter)) {
+            int currentInventoryType = ((Number) before.get("inventorytype")).intValue();
+            if (itemInventoryType != 1 || currentInventoryType != -1 || body.position() >= 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Online edits only support equipped equipment slots in this MVP");
+            }
+            bridge.upsertEquippedItem(characterId, equippedItemBridgeBody(body,
+                    ((Number) before.get("position")).intValue()));
+            Map<String, Object> after = equippedInventoryItem(characterId, body.position());
+            audit.record(principal, "INVENTORY_ITEM_UPDATE", "INVENTORY_ITEM", inventoryItemId, body.reason(),
+                    before, after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockCharacter(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        int targetInventoryType = storedInventoryTypeForPosition(itemInventoryType, body.position());
         Integer conflict = game.queryForObject("""
                 SELECT COUNT(*) FROM inventoryitems WHERE characterid=:characterId
                   AND inventorytype=:inventoryType AND position=:position AND inventoryitemid<>:itemId
                 """, new MapSqlParameterSource().addValue("characterId", characterId)
-                .addValue("inventoryType", storedInventoryType).addValue("position", body.position())
+                .addValue("inventoryType", targetInventoryType).addValue("position", body.position())
                 .addValue("itemId", inventoryItemId), Integer.class);
         if (conflict != null && conflict > 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Target inventory slot is occupied");
         }
         game.update("""
-                UPDATE inventoryitems SET itemid=:replacementItemId, position=:position, quantity=:quantity, owner=:owner,
-                    flag=:flag, expiration=:expiration, giftFrom=:giftFrom
+                UPDATE inventoryitems SET itemid=:replacementItemId, inventorytype=:inventoryType,
+                    position=:position, quantity=:quantity, owner=:owner, flag=:flag,
+                    expiration=:expiration, giftFrom=:giftFrom
                 WHERE inventoryitemid=:itemId AND characterid=:characterId
                 """, new MapSqlParameterSource().addValue("replacementItemId", body.itemId())
+                .addValue("inventoryType", targetInventoryType)
                 .addValue("position", body.position())
                 .addValue("quantity", itemInventoryType == 1 ? 1 : body.quantity())
                 .addValue("owner", body.owner()).addValue("flag", body.flag())
@@ -696,9 +1046,7 @@ public class PlayerController {
     @Transactional("gameTransactionManager")
     Map<String, Object> addInventoryItem(@PathVariable int characterId, @Valid @RequestBody InventoryItemCreate body,
                                          Principal principal, HttpServletRequest request) {
-        lockCharacter(characterId);
         Map<String, Object> ownerCharacter = character(characterId);
-        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         int inventoryType = body.itemId() / 1_000_000;
         if (inventoryType < 1 || inventoryType > 5) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item ID does not map to a valid inventory");
@@ -707,14 +1055,7 @@ public class PlayerController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     inventoryType == 1 ? "Equipment position cannot be zero" : "Inventory position must be positive");
         }
-        Integer occupied = game.queryForObject("""
-                SELECT COUNT(*) FROM inventoryitems
-                WHERE characterid = :characterId AND inventorytype = :inventoryType AND position = :position
-                """, Map.of("characterId", characterId, "inventoryType", inventoryType,
-                "position", body.position()), Integer.class);
-        if (occupied != null && occupied > 0) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "That inventory slot is already occupied");
-        }
+        int storedInventoryType = storedInventoryTypeForPosition(inventoryType, body.position());
         Integer catalogMatches = game.queryForObject("""
                 SELECT COUNT(*) FROM cosmic_database_console.catalog_entities
                 WHERE entity_type = 'ITEM' AND entity_id = :itemId
@@ -722,6 +1063,28 @@ public class PlayerController {
         if (catalogMatches == null || catalogMatches == 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Unknown item ID. Import the WZ catalog before granting items");
+        }
+        if (isOnline(ownerCharacter)) {
+            if (inventoryType != 1 || body.position() >= 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Online edits only support equipped equipment slots in this MVP");
+            }
+            bridge.upsertEquippedItem(characterId, equippedItemBridgeBody(body, null));
+            Map<String, Object> after = equippedInventoryItem(characterId, body.position());
+            audit.record(principal, "INVENTORY_ITEM_CREATE", "INVENTORY_ITEM", after.get("inventoryitemid"),
+                    body.reason(), null, after, "SAVED_LIVE", request);
+            return after;
+        }
+
+        lockCharacter(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
+        Integer occupied = game.queryForObject("""
+                SELECT COUNT(*) FROM inventoryitems
+                WHERE characterid = :characterId AND inventorytype = :inventoryType AND position = :position
+                """, Map.of("characterId", characterId, "inventoryType", storedInventoryType,
+                "position", body.position()), Integer.class);
+        if (occupied != null && occupied > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "That inventory slot is already occupied");
         }
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -732,7 +1095,7 @@ public class PlayerController {
                     :quantity, :owner, -1, :flag, :expiration, :giftFrom)
                 """, new MapSqlParameterSource()
                 .addValue("characterId", characterId).addValue("itemId", body.itemId())
-                .addValue("inventoryType", inventoryType).addValue("position", body.position())
+                .addValue("inventoryType", storedInventoryType).addValue("position", body.position())
                 .addValue("quantity", inventoryType == 1 ? 1 : body.quantity())
                 .addValue("owner", body.owner()).addValue("flag", body.flag())
                 .addValue("expiration", body.expiration()).addValue("giftFrom", body.giftFrom()),
@@ -787,6 +1150,54 @@ public class PlayerController {
                     :hp, :mp, :watk, :matk, :wdef, :mdef, :acc, :avoid, :hands, :speed, :jump,
                     :locked, :vicious, :itemLevel, :itemExp, -1)
                 """, equipmentParameters(inventoryItemId, stats));
+    }
+
+    private boolean isOnline(Map<String, Object> character) {
+        Object loggedIn = character.get("loggedin");
+        return loggedIn instanceof Number number && number.intValue() != 0;
+    }
+
+    private Map<String, Object> appearanceBridgeBody(AppearancePatch body) {
+        return Map.of(
+                "hair", body.hair(),
+                "face", body.face(),
+                "skincolor", body.skincolor(),
+                "gender", body.gender(),
+                "reason", body.reason());
+    }
+
+    private Map<String, Object> equippedItemBridgeBody(InventoryItemCreate body, Integer sourcePosition) {
+        return equippedItemBridgeBody(body.itemId(), body.position(), body.quantity(), body.owner(), body.flag(),
+                body.expiration(), body.giftFrom(), body.equipment(), body.reason(), sourcePosition);
+    }
+
+    private Map<String, Object> equippedItemBridgeBody(InventoryItemPatch body, Integer sourcePosition) {
+        return equippedItemBridgeBody(body.itemId(), body.position(), body.quantity(), body.owner(), body.flag(),
+                body.expiration(), body.giftFrom(), body.equipment(), body.reason(), sourcePosition);
+    }
+
+    private Map<String, Object> equippedItemBridgeBody(int itemId, int position, int quantity, String owner,
+                                                       int flag, long expiration, String giftFrom,
+                                                       EquipmentStats equipment, String reason,
+                                                       Integer sourcePosition) {
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("itemId", itemId);
+        values.put("position", position);
+        values.put("quantity", quantity);
+        values.put("owner", owner);
+        values.put("flag", flag);
+        values.put("expiration", expiration);
+        values.put("giftFrom", giftFrom);
+        values.put("equipment", equipment);
+        values.put("reason", reason);
+        if (sourcePosition != null) {
+            values.put("sourcePosition", sourcePosition);
+        }
+        return values;
+    }
+
+    private int storedInventoryTypeForPosition(int inventoryType, int position) {
+        return inventoryType == 1 && position < 0 ? -1 : inventoryType;
     }
 
     private void insertStarterEquipment(int characterId, CharacterCreate body) {
@@ -876,9 +1287,13 @@ public class PlayerController {
         return null;
     }
 
-    private boolean characterNameAvailable(String name) {
-        Integer existing = game.queryForObject("SELECT COUNT(*) FROM characters WHERE LOWER(name)=LOWER(:name)",
-                Map.of("name", name), Integer.class);
+    private boolean characterNameAvailable(String name, Integer characterId) {
+        Integer existing = game.queryForObject("""
+                SELECT COUNT(*) FROM characters
+                WHERE LOWER(name)=LOWER(:name)
+                  AND (:characterId IS NULL OR id <> :characterId)
+                """, new MapSqlParameterSource().addValue("name", name).addValue("characterId", characterId),
+                Integer.class);
         return existing == null || existing == 0;
     }
 
@@ -904,6 +1319,19 @@ public class PlayerController {
                 """, Map.of("inventoryItemId", inventoryItemId, "characterId", characterId));
         if (rows.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found");
+        }
+        return rows.getFirst();
+    }
+
+    private Map<String, Object> equippedInventoryItem(int characterId, int position) {
+        List<Map<String, Object>> rows = game.queryForList("""
+                SELECT i.*, e.* FROM inventoryitems i
+                LEFT JOIN inventoryequipment e ON e.inventoryitemid = i.inventoryitemid
+                WHERE i.characterid = :characterId AND i.inventorytype = -1 AND i.position = :position
+                ORDER BY i.inventoryitemid DESC LIMIT 1 FOR UPDATE
+                """, Map.of("characterId", characterId, "position", position));
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipped item was not saved by the live bridge");
         }
         return rows.getFirst();
     }
@@ -958,6 +1386,40 @@ public class PlayerController {
         return rows.getFirst();
     }
 
+    private Map<String, Object> characterForUpdate(int id) {
+        List<Map<String, Object>> rows = game.queryForList("""
+                SELECT c.*, a.name account_name, a.loggedin, j.job_name, m.name map_name
+                FROM characters c JOIN accounts a ON a.id = c.accountid
+                LEFT JOIN cosmic_database_console.catalog_jobs j ON j.job_id=c.job
+                LEFT JOIN cosmic_database_console.catalog_entities m ON m.entity_type='MAP' AND m.entity_id=c.map
+                WHERE c.id = :id FOR UPDATE
+                """, Map.of("id", id));
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Character not found");
+        }
+        return rows.getFirst();
+    }
+
+    private Map<String, Object> questStatusForUpdate(int characterId, int questId) {
+        List<Map<String, Object>> rows = game.queryForList("""
+                SELECT * FROM queststatus
+                WHERE characterid = :characterId AND quest = :quest
+                ORDER BY queststatusid DESC LIMIT 1 FOR UPDATE
+                """, Map.of("characterId", characterId, "quest", questId));
+        if (rows.isEmpty()) {
+            game.update("""
+                    INSERT INTO queststatus(characterid, quest, status, time, expires, forfeited, completed, info)
+                    VALUES (:characterId, :quest, 1, 0, 0, 0, 0, 0)
+                    """, Map.of("characterId", characterId, "quest", questId));
+            rows = game.queryForList("""
+                    SELECT * FROM queststatus
+                    WHERE characterid = :characterId AND quest = :quest
+                    ORDER BY queststatusid DESC LIMIT 1 FOR UPDATE
+                    """, Map.of("characterId", characterId, "quest", questId));
+        }
+        return rows.getFirst();
+    }
+
     private List<Integer> jobTree(int jobId) {
         List<Integer> jobs = new ArrayList<>();
         jobs.add(0);
@@ -982,6 +1444,426 @@ public class PlayerController {
         return jobs;
     }
 
+    private List<Map<String, Object>> enrichQuestRows(List<Map<String, Object>> quests) {
+        List<Map<String, Object>> enriched = new ArrayList<>();
+        for (Map<String, Object> quest : quests) {
+            enriched.add(enrichedQuestRow(quest));
+        }
+        return enriched;
+    }
+
+    private Map<String, Object> enrichedQuestRow(Map<String, Object> quest) {
+        if (quest == null) {
+            return Map.of();
+        }
+        Map<String, Object> row = new LinkedHashMap<>(quest);
+        Object id = row.get("quest");
+        if (id instanceof Number number) {
+            row.putAll(questMetadata(number.intValue()));
+        }
+        return row;
+    }
+
+    private Map<String, Object> latestQuestStatus(int characterId, int questId) {
+        List<Map<String, Object>> rows = game.queryForList("""
+                SELECT qs.queststatusid, qs.quest, qs.status, qs.time, qs.expires,
+                       qs.forfeited, qs.completed, qs.info,
+                       GROUP_CONCAT(CONCAT(qp.progressid, ':', qp.progress)
+                           ORDER BY qp.progressid SEPARATOR '|') progress_summary
+                FROM queststatus qs
+                LEFT JOIN questprogress qp ON qp.queststatusid = qs.queststatusid
+                WHERE qs.characterid = :characterId AND qs.quest = :quest
+                GROUP BY qs.queststatusid, qs.quest, qs.status, qs.time, qs.expires,
+                         qs.forfeited, qs.completed, qs.info
+                ORDER BY qs.queststatusid DESC LIMIT 1
+                """, Map.of("characterId", characterId, "quest", questId));
+        return rows.isEmpty() ? null : rows.getFirst();
+    }
+
+    private void deleteQuestProgress(int characterId, int questStatusId) {
+        game.update("""
+                DELETE FROM questprogress
+                WHERE characterid = :characterId AND queststatusid = :questStatusId
+                """, Map.of("characterId", characterId, "questStatusId", questStatusId));
+        game.update("""
+                DELETE FROM medalmaps
+                WHERE characterid = :characterId AND queststatusid = :questStatusId
+                """, Map.of("characterId", characterId, "questStatusId", questStatusId));
+    }
+
+    private int nowSeconds() {
+        return (int) (System.currentTimeMillis() / 1000);
+    }
+
+    private Map<String, Object> questMetadata(int questId) {
+        Map<String, Object> found = questMetadataCache().get(questId);
+        if (found != null) {
+            return found;
+        }
+        return Map.of("quest_name", "Quest " + questId, "quest_npcs", List.of());
+    }
+
+    private synchronized Map<Integer, Map<String, Object>> questMetadataCache() {
+        if (questMetadataCache != null) {
+            return questMetadataCache;
+        }
+        Map<Integer, String> names = new HashMap<>();
+        Map<Integer, Set<Integer>> npcIds = new HashMap<>();
+        readQuestNames(names);
+        readQuestNpcIds(npcIds);
+        Map<Integer, String> npcNames = catalogNpcNames();
+        Map<Integer, Map<String, Object>> next = new HashMap<>();
+        Set<Integer> questIds = new HashSet<>();
+        questIds.addAll(names.keySet());
+        questIds.addAll(npcIds.keySet());
+        for (Integer questId : questIds) {
+            List<Map<String, Object>> npcs = new ArrayList<>();
+            for (Integer npcId : npcIds.getOrDefault(questId, Set.of())) {
+                npcs.add(Map.of("id", npcId, "name", npcNames.getOrDefault(npcId, "NPC " + npcId)));
+            }
+            next.put(questId, Map.of(
+                    "quest_name", names.getOrDefault(questId, "Quest " + questId),
+                    "quest_npcs", npcs
+            ));
+        }
+        questMetadataCache = next;
+        return questMetadataCache;
+    }
+
+    private void readQuestNames(Map<Integer, String> names) {
+        Path file = wzPath.resolve("Quest.wz").resolve("QuestInfo.img.xml");
+        if (!Files.isRegularFile(file)) {
+            return;
+        }
+        Document document = parseXml(file);
+        if (document != null) {
+            collectQuestNames(document.getDocumentElement(), names);
+        }
+    }
+
+    private void readQuestNpcIds(Map<Integer, Set<Integer>> npcIds) {
+        Path file = wzPath.resolve("Quest.wz").resolve("Check.img.xml");
+        if (!Files.isRegularFile(file)) {
+            return;
+        }
+        Document document = parseXml(file);
+        if (document != null) {
+            collectQuestNpcIds(document.getDocumentElement(), npcIds);
+        }
+    }
+
+    private Document parseXml(Path file) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setXIncludeAware(false);
+            factory.setExpandEntityReferences(false);
+            return factory.newDocumentBuilder().parse(file.toFile());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void collectQuestNames(Element element, Map<Integer, String> names) {
+        Integer questId = numericName(element);
+        if (questId != null) {
+            for (Element child : elementChildren(element)) {
+                if ("string".equals(child.getTagName()) && "name".equals(child.getAttribute("name"))) {
+                    names.put(questId, child.getAttribute("value"));
+                    break;
+                }
+            }
+        }
+        for (Element child : elementChildren(element)) {
+            collectQuestNames(child, names);
+        }
+    }
+
+    private void collectQuestNpcIds(Element root, Map<Integer, Set<Integer>> npcIds) {
+        for (Element quest : elementChildren(root)) {
+            Integer questId = numericName(quest);
+            if (questId == null) {
+                continue;
+            }
+            Set<Integer> ids = new HashSet<>();
+            for (Element phase : elementChildren(quest)) {
+                for (Element value : elementChildren(phase)) {
+                    if ("int".equals(value.getTagName()) && "npc".equals(value.getAttribute("name"))) {
+                        Integer npcId = parseInteger(value.getAttribute("value"));
+                        if (npcId != null) {
+                            ids.add(npcId);
+                        }
+                    }
+                }
+            }
+            if (!ids.isEmpty()) {
+                npcIds.put(questId, ids);
+            }
+        }
+    }
+
+    private List<Element> elementChildren(Element element) {
+        List<Element> children = new ArrayList<>();
+        NodeList nodes = element.getChildNodes();
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (node instanceof Element child) {
+                children.add(child);
+            }
+        }
+        return children;
+    }
+
+    private Integer numericName(Element element) {
+        if (!"imgdir".equals(element.getTagName())) {
+            return null;
+        }
+        return parseInteger(element.getAttribute("name"));
+    }
+
+    private Integer parseInteger(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Map<Integer, String> catalogNpcNames() {
+        Map<Integer, String> names = new HashMap<>();
+        try {
+            List<Map<String, Object>> rows = game.queryForList("""
+                    SELECT entity_id, name
+                    FROM cosmic_database_console.catalog_entities
+                    WHERE entity_type = 'NPC'
+                    """, Map.of());
+            for (Map<String, Object> row : rows) {
+                if (row.get("entity_id") instanceof Number id) {
+                    names.put(id.intValue(), String.valueOf(row.getOrDefault("name", "NPC " + id.intValue())));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return names;
+    }
+
+    private Element questElement(String fileName, int questId) {
+        Path file = wzPath.resolve("Quest.wz").resolve(fileName);
+        if (!Files.isRegularFile(file)) {
+            return null;
+        }
+        Document document = parseXml(file);
+        if (document == null) {
+            return null;
+        }
+        for (Element child : elementChildren(document.getDocumentElement())) {
+            Integer id = numericName(child);
+            if (id != null && id == questId) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    private String questInfoName(Element info, int questId) {
+        if (info != null) {
+            for (Element child : elementChildren(info)) {
+                if ("string".equals(child.getTagName()) && "name".equals(child.getAttribute("name"))) {
+                    return child.getAttribute("value");
+                }
+            }
+        }
+        return String.valueOf(questMetadata(questId).getOrDefault("quest_name", "Quest " + questId));
+    }
+
+    private List<Map<String, Object>> questInfoText(Element info) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Element child : elementChildren(info)) {
+            if ("string".equals(child.getTagName()) && child.getAttribute("name").matches("\\d+")) {
+                rows.add(Map.of("stage", child.getAttribute("name"), "text", child.getAttribute("value")));
+            }
+        }
+        return rows;
+    }
+
+    private Map<String, Object> questPhase(Element quest, String phaseName) {
+        Element phase = namedChild(quest, phaseName);
+        if (phase == null) {
+            return Map.of("properties", Map.of(), "npcs", List.of(), "items", List.of(),
+                    "mobs", List.of(), "quests", List.of(), "jobs", List.of(), "raw", Map.of());
+        }
+        Map<String, Object> properties = scalarChildren(phase);
+        List<Map<String, Object>> npcs = new ArrayList<>();
+        Object npc = properties.get("npc");
+        if (npc instanceof Number id) {
+            npcs.add(catalogRef("NPC", id.intValue(), 0, "npc"));
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("properties", properties);
+        result.put("npcs", npcs);
+        result.put("items", questGroup(phase, "item", "ITEM"));
+        result.put("mobs", questGroup(phase, "mob", "MOB"));
+        result.put("quests", questGroup(phase, "quest", "QUEST"));
+        result.put("jobs", questGroup(phase, "job", "JOB"));
+        result.put("info", questGroup(phase, "infoex", "INFO"));
+        result.put("raw", elementMap(phase));
+        return result;
+    }
+
+    private List<Map<String, Object>> questGroup(Element phase, String groupName, String type) {
+        Element group = namedChild(phase, groupName);
+        if (group == null) {
+            return List.of();
+        }
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Element entry : elementChildren(group)) {
+            Map<String, Object> values = scalarChildren(entry);
+            int id = values.get("id") instanceof Number number ? number.intValue() : parseInteger(entry.getAttribute("value")) == null ? 0 : parseInteger(entry.getAttribute("value"));
+            int count = values.get("count") instanceof Number number ? number.intValue() : 0;
+            if ("JOB".equals(type)) {
+                id = parseInteger(entry.getAttribute("value")) == null ? id : parseInteger(entry.getAttribute("value"));
+                if (id == 0 && values.get(entry.getAttribute("name")) instanceof Number number) {
+                    id = number.intValue();
+                }
+            }
+            Map<String, Object> row = new LinkedHashMap<>(values);
+            row.put("slot", entry.getAttribute("name"));
+            row.put("type", type);
+            row.put("id", id);
+            row.put("count", count);
+            row.put("name", questReferenceName(type, id));
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private Map<String, Object> catalogRef(String type, int id, int count, String slot) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("slot", slot);
+        row.put("type", type);
+        row.put("id", id);
+        row.put("count", count);
+        row.put("name", questReferenceName(type, id));
+        return row;
+    }
+
+    private String questReferenceName(String type, int id) {
+        if (id <= 0) {
+            return type + " " + id;
+        }
+        if ("QUEST".equals(type)) {
+            return questInfoName(questElement("QuestInfo.img.xml", id), id);
+        }
+        if ("JOB".equals(type)) {
+            try {
+                List<Map<String, Object>> rows = game.queryForList("""
+                        SELECT job_name FROM cosmic_database_console.catalog_jobs WHERE job_id = :id
+                        """, Map.of("id", id));
+                if (!rows.isEmpty()) {
+                    return String.valueOf(rows.getFirst().get("job_name"));
+                }
+            } catch (Exception ignored) {
+            }
+            return "Job " + id;
+        }
+        try {
+            List<Map<String, Object>> rows = game.queryForList("""
+                    SELECT name FROM cosmic_database_console.catalog_entities
+                    WHERE entity_type = :type AND entity_id = :id
+                    """, Map.of("type", type, "id", id));
+            if (!rows.isEmpty()) {
+                return String.valueOf(rows.getFirst().get("name"));
+            }
+        } catch (Exception ignored) {
+        }
+        String stringName = stringWzName(type, id);
+        if (stringName != null) {
+            return stringName;
+        }
+        return type + " " + id;
+    }
+
+    private String stringWzName(String type, int id) {
+        Path source = switch (type) {
+            case "NPC" -> wzPath.resolve("String.wz").resolve("Npc.img.xml");
+            case "MOB" -> wzPath.resolve("String.wz").resolve("Mob.img.xml");
+            case "ITEM" -> null;
+            default -> null;
+        };
+        if (source == null || !Files.isRegularFile(source)) {
+            return null;
+        }
+        Document document = parseXml(source);
+        if (document == null) {
+            return null;
+        }
+        Element element = findNamedImgdir(document.getDocumentElement(), String.valueOf(id));
+        if (element == null) {
+            return null;
+        }
+        for (Element child : elementChildren(element)) {
+            if ("string".equals(child.getTagName()) && "name".equals(child.getAttribute("name"))) {
+                return child.getAttribute("value");
+            }
+        }
+        return null;
+    }
+
+    private Element findNamedImgdir(Element element, String name) {
+        if ("imgdir".equals(element.getTagName()) && name.equals(element.getAttribute("name"))) {
+            return element;
+        }
+        for (Element child : elementChildren(element)) {
+            Element found = findNamedImgdir(child, name);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private Element namedChild(Element element, String name) {
+        if (element == null) {
+            return null;
+        }
+        for (Element child : elementChildren(element)) {
+            if ("imgdir".equals(child.getTagName()) && name.equals(child.getAttribute("name"))) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    private Map<String, Object> scalarChildren(Element element) {
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (Element child : elementChildren(element)) {
+            if ("int".equals(child.getTagName())) {
+                Integer value = parseInteger(child.getAttribute("value"));
+                values.put(child.getAttribute("name"), value == null ? child.getAttribute("value") : value);
+            } else if ("string".equals(child.getTagName())) {
+                values.put(child.getAttribute("name"), child.getAttribute("value"));
+            }
+        }
+        return values;
+    }
+
+    private Map<String, Object> elementMap(Element element) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("tag", element.getTagName());
+        row.put("name", element.getAttribute("name"));
+        if (element.hasAttribute("value")) {
+            row.put("value", element.getAttribute("value"));
+        }
+        List<Map<String, Object>> children = new ArrayList<>();
+        for (Element child : elementChildren(element)) {
+            children.add(elementMap(child));
+        }
+        row.put("children", children);
+        return row;
+    }
+
     private void requireOffline(int accountId) {
         Integer loggedIn = game.queryForObject("SELECT loggedin FROM accounts WHERE id = :id",
                 Map.of("id", accountId), Integer.class);
@@ -1002,8 +1884,19 @@ public class PlayerController {
                                   @PositiveOrZero int skincolor, @PositiveOrZero int gender,
                                   @NotBlank String reason) {}
 
+    public record CharacterNamePatch(@NotBlank String name, @NotBlank String reason) {}
+
     public record SkillPatch(@PositiveOrZero int skillLevel, @PositiveOrZero int masterLevel,
                              long expiration, @NotBlank String reason) {}
+
+    public record QuestStatusPatch(@Min(0) @Max(2) int status, @PositiveOrZero int time,
+                                   @PositiveOrZero long expires, @PositiveOrZero int forfeited,
+                                   @PositiveOrZero int completed, @PositiveOrZero int info,
+                                   @NotBlank String reason) {}
+
+    public record QuestProgressPatch(@NotNull String progress, @NotBlank String reason) {}
+
+    public record MonsterBookPatch(@Min(0) @Max(5) int level, @NotBlank String reason) {}
 
     public record AccountPatch(boolean banned, String banReason, boolean mute,
                                @PositiveOrZero int nxCredit, @PositiveOrZero int maplePoint,

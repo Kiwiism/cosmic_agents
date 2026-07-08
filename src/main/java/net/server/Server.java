@@ -61,6 +61,7 @@ import net.server.task.RankingCommandTask;
 import net.server.task.RankingLoginTask;
 import net.server.task.RespawnTask;
 import net.server.world.World;
+import net.server.admin.DatabaseConsoleBridgeServer;
 import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,7 @@ import service.NoteService;
 import tools.DatabaseConnection;
 import tools.Pair;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -121,6 +123,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Server {
     private static final Logger log = LoggerFactory.getLogger(Server.class);
+    private static final String DATABASE_CONSOLE_BRIDGE_ENABLED_ENV = "COSMIC_DATABASE_CONSOLE_BRIDGE_ENABLED";
     private static Server instance = null;
 
     public static Server getInstance() {
@@ -136,6 +139,7 @@ public class Server {
     private static ChannelDependencies channelDependencies;
 
     private LoginServer loginServer;
+    private DatabaseConsoleBridgeServer databaseConsoleBridgeServer;
     private final List<Map<Integer, String>> channels = new LinkedList<>();
     private final List<World> worlds = new ArrayList<>();
     private final Properties subnetInfo = new Properties();
@@ -973,6 +977,31 @@ public class Server {
         for (Channel ch : this.getAllChannels()) {
             ch.reloadEventScriptManager();
         }
+
+        startDatabaseConsoleBridge();
+    }
+
+    private void startDatabaseConsoleBridge() {
+        if (!isDatabaseConsoleBridgeEnabled()) {
+            log.info("Database Console bridge disabled. Set {}=true to enable it.", DATABASE_CONSOLE_BRIDGE_ENABLED_ENV);
+            return;
+        }
+
+        try {
+            databaseConsoleBridgeServer = new DatabaseConsoleBridgeServer();
+            databaseConsoleBridgeServer.start();
+            log.info("Database Console bridge listening on 127.0.0.1:{}", System.getenv().getOrDefault("COSMIC_BRIDGE_PORT", "8787"));
+        } catch (IOException e) {
+            log.warn("Database Console bridge did not start", e);
+        }
+    }
+
+    private boolean isDatabaseConsoleBridgeEnabled() {
+        String value = System.getenv(DATABASE_CONSOLE_BRIDGE_ENABLED_ENV);
+        if (value == null || value.isBlank()) {
+            return true;
+        }
+        return !("false".equalsIgnoreCase(value) || "0".equals(value) || "no".equalsIgnoreCase(value));
     }
 
     private ChannelDependencies registerChannelDependencies() {
@@ -1117,7 +1146,7 @@ public class Server {
         return lines;
     }
 
-    private ServerMetricsSnapshot buildMetricsSnapshot() {
+    public ServerMetricsSnapshot buildMetricsSnapshot() {
         Runtime runtime = Runtime.getRuntime();
         long usedHeapMb = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024;
         long maxHeapMb = runtime.maxMemory() / 1024 / 1024;
@@ -2105,6 +2134,10 @@ public class Server {
         }
         for (World w : getWorlds()) {
             w.shutdown();
+        }
+        if (databaseConsoleBridgeServer != null) {
+            databaseConsoleBridgeServer.stop();
+            databaseConsoleBridgeServer = null;
         }
 
         /*for (World w : getWorlds()) {

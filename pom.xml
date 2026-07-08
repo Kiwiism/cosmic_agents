@@ -67,6 +67,7 @@
         <mysql-connector-j.version>9.3.0</mysql-connector-j.version> <!-- MySQL JDBC driver -->
         <jdbi-version>3.49.5</jdbi-version> <!-- Convenience wrapper around JDBC -->
         <liquibase-core.version>4.32.0</liquibase-core.version> <!-- Database migrations -->
+        <jackson.version>2.19.0</jackson.version> <!-- JSON for internal admin bridge -->
         <junit.version>5.13.1</junit.version> <!-- Unit test -->
         <mockito.version>5.18.0</mockito.version> <!-- Unit test -->
     </properties>
@@ -103,6 +104,11 @@
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
             <version>${liquibase-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Networking -->
