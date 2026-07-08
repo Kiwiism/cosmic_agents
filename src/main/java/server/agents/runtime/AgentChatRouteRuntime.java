@@ -17,7 +17,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.integration.AgentCommandTargetResolver;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;

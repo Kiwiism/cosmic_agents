@@ -1,8 +1,7 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelState;
-import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for AgentRuntimeEntry-backed reply-channel state.

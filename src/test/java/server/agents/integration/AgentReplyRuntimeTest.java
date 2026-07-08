@@ -6,7 +6,7 @@ import client.Character;
 import client.Client;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.maps.MapleMap;
 

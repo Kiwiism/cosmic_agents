@@ -4898,6 +4898,11 @@ Current physics correction:
   velocity, fall peak, horizontal speed, physics position, ground carry, and
   jump cooldown reads/writes now route through
   `AgentMovementPhysicsStateRuntime` over `AgentMovementPhysicsState`.
+- Chat reply queue and reply-channel state adapters have moved from
+  `server.agents.integration` to `server.agents.runtime`. Queue size,
+  enqueue/poll/sending-state, map/party/whisper routing state, and null-to-map
+  normalization are pure `AgentRuntimeEntry` state operations; packet
+  delivery remains in `AgentReplyRuntime` at the Cosmic integration boundary.
 - Movement input and facing wrappers have been removed from `BotEntry`.
   Movement velocity, movement direction, and facing direction reads/writes now
   route through `AgentMovementStateRuntime` over `AgentMovementInputState`.

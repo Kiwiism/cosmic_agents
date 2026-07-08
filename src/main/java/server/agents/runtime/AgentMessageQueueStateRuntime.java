@@ -1,7 +1,6 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import server.agents.commands.AgentQueuedMessage;
-import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 

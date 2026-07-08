@@ -6,7 +6,7 @@ import client.Client;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentWhisperCommandRuntime;

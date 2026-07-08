@@ -23,7 +23,7 @@ import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
-import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;

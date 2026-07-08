@@ -7,6 +7,8 @@ import server.agents.commands.AgentQueuedMessage;
 import server.agents.commands.AgentReplyQueue;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentMessageQueueStateRuntime;
+import server.agents.runtime.AgentReplyChannelStateRuntime;
 import net.server.world.Party;
 import tools.PacketCreator;
 

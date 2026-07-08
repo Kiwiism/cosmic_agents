@@ -1,10 +1,7 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentReplyChannelStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

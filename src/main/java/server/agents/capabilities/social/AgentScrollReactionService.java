@@ -4,7 +4,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 
-import server.agents.integration.AgentMessageQueueStateRuntime;
+import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentScrollReactionRuntime;
 import server.agents.integration.AgentScrollReactionStateRuntime;
