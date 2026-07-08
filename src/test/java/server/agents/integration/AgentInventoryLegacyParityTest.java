@@ -25,7 +25,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
-import server.agents.integration.AgentManualTradeStateRuntime;
+import server.agents.capabilities.trade.AgentManualTradeStateRuntime;
 import server.Trade;
 import server.maps.Foothold;
 import server.maps.MapItem;

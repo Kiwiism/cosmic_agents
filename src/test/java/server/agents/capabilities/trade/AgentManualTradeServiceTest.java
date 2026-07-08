@@ -4,7 +4,6 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentManualTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,10 +1,9 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.agents.integration.AgentManualTradeStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

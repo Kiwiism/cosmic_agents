@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.agents.integration.AgentManualTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Set;

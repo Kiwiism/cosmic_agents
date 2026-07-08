@@ -1,7 +1,6 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 import server.Trade;
-import server.agents.capabilities.trade.AgentManualTradeState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
