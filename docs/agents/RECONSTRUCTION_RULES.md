@@ -124,6 +124,10 @@ Recent reconstruction notes:
   `AgentChatStatusRuntime` integration seam and reads fidget-active state from
   the fidget capability; fidget movement, visuals, and status behavior are
   unchanged.
+- LLM reply bridge access has moved from `server.agents.integration` to
+  `server.agents.capabilities.llm.AgentLlmRuntime`. It still delegates actual
+  reply delivery through `AgentReplyRuntime`, so chat packet/reply-channel
+  behavior is unchanged while LLM orchestration gains an Agent capability home.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

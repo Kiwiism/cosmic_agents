@@ -1,10 +1,9 @@
-package server.agents.integration;
+package server.agents.capabilities.llm;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentLlmRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import static org.mockito.Mockito.mockStatic;
