@@ -11,7 +11,6 @@ import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
-import server.agents.integration.AgentManagerStatusRuntime;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
 
 import java.util.function.Consumer;

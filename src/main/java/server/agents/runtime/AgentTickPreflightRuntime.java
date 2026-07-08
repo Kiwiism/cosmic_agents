@@ -4,7 +4,6 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.integration.AgentManagerStatusRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 
 public final class AgentTickPreflightRuntime {

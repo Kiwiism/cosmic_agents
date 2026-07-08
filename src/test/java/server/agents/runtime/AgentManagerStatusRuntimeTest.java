@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.runtime;
 
-import server.agents.runtime.AgentRuntimeEntry;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
@@ -8,8 +7,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
-import server.agents.integration.AgentManagerStatusRuntime;
-import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

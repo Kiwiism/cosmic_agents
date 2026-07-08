@@ -6218,6 +6218,12 @@ Current physics correction:
   equipment setup to `AgentEquipmentService`, supply checks to
   `AgentPotionService`, and gear suggestions to `AgentOfferService`; follow/
   stop active-mode preparation behavior is unchanged.
+- Manager status callback orchestration now lives in
+  `server.agents.runtime.AgentManagerStatusRuntime`. It still delegates delayed
+  spawn checks to `AgentSchedulerRuntime`, status behavior to
+  `AgentChatStatusOrchestrator`, and airshow state reads to
+  `AgentAirshowStateRuntime`; spawn status checks, offline-return notices, AFK
+  checks, and airshow gating behavior are unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

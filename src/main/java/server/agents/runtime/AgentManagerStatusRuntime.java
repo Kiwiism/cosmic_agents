@@ -1,14 +1,13 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 
-import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned bridge for status callbacks from tick and lifecycle services.
+ * Agent-owned runtime orchestration for status callbacks from tick and
+ * lifecycle services.
  */
 public final class AgentManagerStatusRuntime {
     private AgentManagerStatusRuntime() {
