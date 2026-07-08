@@ -3,7 +3,7 @@ package server.agents.capabilities.supplies;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentPotionRuntime;
+import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 

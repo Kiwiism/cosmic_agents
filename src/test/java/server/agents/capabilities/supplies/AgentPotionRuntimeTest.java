@@ -1,9 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.supplies;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentPotionRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

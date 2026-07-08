@@ -6152,6 +6152,10 @@ Current physics correction:
   `server.agents.capabilities.supplies.AgentAmmoRuntime`. It still delegates
   map-chat delivery to `AgentReplyRuntime` and delayed callbacks/random delays
   to `AgentSchedulerRuntime`; ammo request/share behavior is unchanged.
+- Potion share reply/timing facade now lives in
+  `server.agents.capabilities.supplies.AgentPotionRuntime`. It still delegates
+  map-chat delivery to `AgentReplyRuntime` and delayed callbacks/random delays
+  to `AgentSchedulerRuntime`; potion request/share behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
