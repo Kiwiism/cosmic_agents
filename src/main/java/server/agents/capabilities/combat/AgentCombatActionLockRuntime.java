@@ -1,6 +1,4 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentMovementTimers;
 

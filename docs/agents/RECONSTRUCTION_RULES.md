@@ -95,6 +95,11 @@ Recent reconstruction notes:
   It remains a pure `AgentRuntimeEntry` state adapter for mark/clear/read
   behavior; local opportunity attacks, ranged engagement, and navigation-tail
   behavior are unchanged.
+- Combat action-lock ticking has moved from `server.agents.integration` to
+  `server.agents.capabilities.combat.AgentCombatActionLockRuntime`. It still
+  decays attack cooldown before move-window cooldown through the same
+  `AgentMovementTimers::tickDown` callback; common tick ordering and cooldown
+  behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

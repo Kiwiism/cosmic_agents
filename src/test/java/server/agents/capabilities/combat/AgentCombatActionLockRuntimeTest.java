@@ -1,10 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentCombatActionLockRuntime;
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
