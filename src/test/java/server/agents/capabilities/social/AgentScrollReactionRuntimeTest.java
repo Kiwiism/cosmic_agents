@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.social;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentScrollReactionRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;

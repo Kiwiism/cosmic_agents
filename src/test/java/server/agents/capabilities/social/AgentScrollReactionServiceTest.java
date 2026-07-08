@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentScrollReactionRuntime;
+import server.agents.capabilities.social.AgentScrollReactionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 

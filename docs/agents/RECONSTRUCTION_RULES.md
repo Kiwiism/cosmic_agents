@@ -139,6 +139,12 @@ Recent reconstruction notes:
   `server.agents.capabilities.build.AgentMakerRuntime`. It still delegates
   reply delivery and random/fixed delays through the existing integration
   seams, so Maker batch timing, replies, and execution behavior are unchanged.
+- Scroll-reaction reply and timing bridge access has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.social.AgentScrollReactionRuntime`. It still
+  delegates queued speech and delay/random-delay scheduling through the
+  existing integration seams, so scroll reaction timing, chat, and visual
+  behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,
