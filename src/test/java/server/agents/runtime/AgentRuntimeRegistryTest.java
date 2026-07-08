@@ -28,7 +28,7 @@ class AgentRuntimeRegistryTest {
         Character beta = character(201, "Beta");
         BotEntry alphaEntry = new BotEntry(alpha, leader, null);
         BotEntry betaEntry = new BotEntry(beta, leader, null);
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(alphaEntry, betaEntry)));
 
         assertSame(betaEntry, AgentRuntimeRegistry.findByCharacterId(entries, leader.getId(), beta.getId()));
@@ -42,7 +42,7 @@ class AgentRuntimeRegistryTest {
 
     @Test
     void returnsNullOrEmptyForMissingEntries() {
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
 
         assertNull(AgentRuntimeRegistry.findByCharacterId(entries, 100, 200));
         assertNull(AgentRuntimeRegistry.findByName(entries, 100, "Alpha"));
@@ -58,10 +58,10 @@ class AgentRuntimeRegistryTest {
     void returnsDefensiveEntryCopy() {
         Character leader = character(100, "Leader");
         BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
 
-        List<BotEntry> snapshot = AgentRuntimeRegistry.entriesForLeader(entries, leader.getId());
+        List<AgentRuntimeEntry> snapshot = AgentRuntimeRegistry.entriesForLeader(entries, leader.getId());
 
         assertEquals(List.of(entry), snapshot);
         assertThrows(UnsupportedOperationException.class, () -> snapshot.add(entry));
@@ -71,7 +71,7 @@ class AgentRuntimeRegistryTest {
     void returnsDefensiveAgentEntryReadView() {
         Character leader = character(100, "Leader");
         BotEntry entry = new BotEntry(character(200, "Alpha"), leader, null);
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
 
         List<AgentRuntimeEntry> snapshot = AgentRuntimeRegistry.agentEntriesForLeader(entries, leader.getId());

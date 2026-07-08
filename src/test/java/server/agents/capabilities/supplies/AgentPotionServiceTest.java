@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotPotionRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 
 import java.util.List;
@@ -33,7 +34,7 @@ class AgentPotionServiceTest {
         when(owner.getTrade()).thenReturn(null);
         when(donorBot.getMapId()).thenReturn(100000000);
 
-        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
+        Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class, CALLS_REAL_METHODS);

@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.slf4j.Logger;
 import server.agents.auth.AgentOwnershipService;
-import server.bots.BotEntry;
 
 import java.util.function.Consumer;
 
@@ -18,7 +17,7 @@ public final class AgentSpawnRuntime {
     public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader,
                                                                             String agentName,
                                                                             AgentLifecycleService.AgentTickCallback tickCallback,
-                                                                            Consumer<BotEntry> startFollowLeader,
+                                                                            Consumer<AgentRuntimeEntry> startFollowLeader,
                                                                             Logger log) {
         AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
                 (leaderCharId, spawnLeader, agent) -> AgentRegistrationRuntime.registerAgent(
@@ -38,7 +37,7 @@ public final class AgentSpawnRuntime {
     public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader,
                                                                             String agentName,
                                                                             AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent,
-                                                                            Consumer<BotEntry> startFollowLeader,
+                                                                            Consumer<AgentRuntimeEntry> startFollowLeader,
                                                                             Logger log) {
         return AgentLifecycleService.spawnAgentForLeaderQuietly(
                 leader,

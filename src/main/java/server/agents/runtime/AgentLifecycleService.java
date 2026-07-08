@@ -9,7 +9,6 @@ import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -41,13 +40,13 @@ public final class AgentLifecycleService {
                              RegisterSpawnedAgent registerSpawnedAgent,
                              OfflineAgentLoader loadOfflineAgent,
                              PlaceSpawnedOnlineAgent placeSpawnedOnlineAgent,
-                             Consumer<BotEntry> startFollowLeader,
+                             Consumer<AgentRuntimeEntry> startFollowLeader,
                              ChangeMapToSpawn changeMapToSpawn) {
     }
 
     @FunctionalInterface
     public interface RegisterSpawnedAgent {
-        BotEntry register(int leaderCharId, Character leader, Character agent);
+        AgentRuntimeEntry register(int leaderCharId, Character leader, Character agent);
     }
 
     @FunctionalInterface
@@ -57,7 +56,7 @@ public final class AgentLifecycleService {
 
     @FunctionalInterface
     public interface PlaceSpawnedOnlineAgent {
-        void place(BotEntry entry, Character agent, MapleMap spawnMap, Point spawnPosition);
+        void place(AgentRuntimeEntry entry, Character agent, MapleMap spawnMap, Point spawnPosition);
     }
 
     @FunctionalInterface
@@ -73,9 +72,9 @@ public final class AgentLifecycleService {
     public record RegisterHooks(long tickMs,
                                 AgentTickScheduler tickScheduler,
                                 AgentTickCallback tickCallback,
-                                Consumer<BotEntry> cancelExistingTask,
+                                Consumer<AgentRuntimeEntry> cancelExistingTask,
                                 AgentFormationService.FormationState defaultFormation,
-                                Consumer<BotEntry> normalizeSpawnedAgent,
+                                Consumer<AgentRuntimeEntry> normalizeSpawnedAgent,
                                 LongSupplier spawnStatusDelayMs) {
     }
 
@@ -86,7 +85,7 @@ public final class AgentLifecycleService {
 
     @FunctionalInterface
     public interface AgentTickCallback {
-        void tick(BotEntry entry, int leaderCharId, int agentCharId);
+        void tick(AgentRuntimeEntry entry, int leaderCharId, int agentCharId);
     }
 
     public record ReloginHooks(LeaderResolver resolveLeader,
@@ -165,7 +164,7 @@ public final class AgentLifecycleService {
                 return AgentSpawnResult.fail("Bot '" + agentName + "' is controlled by " + activeLeader.getName() + ".");
             }
 
-            BotEntry entry = activeLeader == null
+            AgentRuntimeEntry entry = activeLeader == null
                     ? hooks.registerSpawnedAgent().register(leader.getId(), leader, agent)
                     : AgentRuntimeRegistry.findByCharacterId(leader.getId(), agent.getId());
             if (agent.getMapId() != map.getId()) {
@@ -184,7 +183,7 @@ public final class AgentLifecycleService {
                 leader.getClient().getChannel(),
                 map,
                 spawnPosition);
-        BotEntry entry = hooks.registerSpawnedAgent().register(leader.getId(), leader, agent);
+        AgentRuntimeEntry entry = hooks.registerSpawnedAgent().register(leader.getId(), leader, agent);
         hooks.startFollowLeader().accept(entry);
         return AgentSpawnResult.ok(agent, auth.autoRegistered());
     }
@@ -202,12 +201,12 @@ public final class AgentLifecycleService {
         }
     }
 
-    public static BotEntry registerAgent(int leaderCharId,
-                                         Character leader,
-                                         Character agent,
-                                         boolean normalizeSpawnState,
-                                         RegisterHooks hooks) {
-        List<BotEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
+    public static AgentRuntimeEntry registerAgent(int leaderCharId,
+                                                  Character leader,
+                                                  Character agent,
+                                                  boolean normalizeSpawnState,
+                                                  RegisterHooks hooks) {
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
         entries.removeIf(entry -> {
             if (AgentBotRuntimeIdentityRuntime.botIs(entry, agent.getId())) {
                 hooks.cancelExistingTask().accept(entry);
@@ -217,11 +216,11 @@ public final class AgentLifecycleService {
         });
 
         int agentCharId = agent.getId();
-        BotEntry[] ref = new BotEntry[1];
+        AgentRuntimeEntry[] ref = new AgentRuntimeEntry[1];
         ScheduledFuture<?> task = hooks.tickScheduler().schedule(
                 () -> hooks.tickCallback().tick(ref[0], leaderCharId, agentCharId),
                 hooks.tickMs());
-        BotEntry entry = new BotEntry(agent, leader, task);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, task);
         ref[0] = entry;
 
         AgentBotMovementStateRuntime.refreshMovementProfile(entry, agent);
@@ -275,11 +274,11 @@ public final class AgentLifecycleService {
     }
 
     public static boolean dismissAgentByName(int leaderCharId, String agentName, DismissHooks hooks) {
-        List<BotEntry> entries = AgentRuntimeRegistry.entriesByLeaderId().get(leaderCharId);
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.entriesByLeaderId().get(leaderCharId);
         if (entries == null) {
             return false;
         }
-        BotEntry entry = AgentRuntimeRegistry.findByName(leaderCharId, agentName);
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByName(leaderCharId, agentName);
         if (entry == null) {
             return false;
         }
@@ -292,14 +291,14 @@ public final class AgentLifecycleService {
         return true;
     }
 
-    public static void removeLeaderEntries(Map<Integer, List<BotEntry>> entriesByLeaderId,
+    public static void removeLeaderEntries(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,
                                            Map<Integer, ?> leaderFormations,
                                            Map<Integer, ?> townClusterAnchors,
                                            int leaderCharId,
-                                           Consumer<BotEntry> beforeRemove) {
-        List<BotEntry> entries = entriesByLeaderId.remove(leaderCharId);
+                                           Consumer<AgentRuntimeEntry> beforeRemove) {
+        List<AgentRuntimeEntry> entries = entriesByLeaderId.remove(leaderCharId);
         if (entries != null) {
-            for (BotEntry entry : entries) {
+            for (AgentRuntimeEntry entry : entries) {
                 beforeRemove.accept(entry);
             }
         }
@@ -307,20 +306,20 @@ public final class AgentLifecycleService {
         townClusterAnchors.remove(leaderCharId);
     }
 
-    public static void cancelScheduledTickIfPresent(BotEntry entry) {
+    public static void cancelScheduledTickIfPresent(AgentRuntimeEntry entry) {
         if (entry != null && entry.scheduledTaskState().hasScheduledTask()) {
             entry.scheduledTaskState().cancelScheduledTask();
         }
     }
 
-    public static boolean removeAgentByCharacterId(Map<Integer, List<BotEntry>> entriesByLeaderId,
+    public static boolean removeAgentByCharacterId(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,
                                                    Map<Integer, ?> leaderFormations,
                                                    Map<Integer, ?> townClusterAnchors,
                                                    int agentCharId,
-                                                   Consumer<BotEntry> beforeRemove) {
+                                                   Consumer<AgentRuntimeEntry> beforeRemove) {
         boolean removed = false;
-        for (Map.Entry<Integer, List<BotEntry>> leaderEntry : entriesByLeaderId.entrySet()) {
-            List<BotEntry> entries = leaderEntry.getValue();
+        for (Map.Entry<Integer, List<AgentRuntimeEntry>> leaderEntry : entriesByLeaderId.entrySet()) {
+            List<AgentRuntimeEntry> entries = leaderEntry.getValue();
             boolean removedFromLeader = entries.removeIf(entry -> {
                 if (AgentBotRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
                     beforeRemove.accept(entry);

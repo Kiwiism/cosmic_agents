@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotAmmoRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.bots.BotEntry;
 import testutil.Items;
 
@@ -37,7 +38,7 @@ class AgentAmmoServiceTest {
         when(owner.getMapId()).thenReturn(100000000);
         when(owner.getTrade()).thenReturn(null);
 
-        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
+        Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);

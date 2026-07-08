@@ -5802,6 +5802,12 @@ Current physics correction:
   handling, ownerless movement, dead-tick handling, live-context preparation,
   live gates, live mode dispatch, and tick-failure handling remain in the same
   order with unchanged behavior.
+- Lifecycle registration, spawn placement, interaction registration, and the
+  runtime registry now store and return `AgentRuntimeEntry` directly instead
+  of the temporary `BotEntry` compatibility shell. Registration scheduling,
+  replacement/cancel behavior, spawn normalization, formation offsets, spawn
+  status checks, dismiss/remove cleanup, active-leader lookup, and registry
+  snapshots remain unchanged.
 
 Initial reconstruction order:
 

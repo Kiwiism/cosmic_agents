@@ -82,6 +82,7 @@ import server.agents.integration.AgentBotSchedulerRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.life.MonsterStats;
 import server.maps.Foothold;
@@ -1708,7 +1709,7 @@ class BotCombatManagerTest {
         BotEntry siblingEntry = new BotEntry(siblingBot, owner, null);
         AgentBotModeStateRuntime.setGrinding(siblingEntry, true);
 
-        Map<Integer, List<BotEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
+        Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry, siblingEntry)));
         try (MockedStatic<AgentNavigationGraphService> graphProvider =
                      Mockito.mockStatic(AgentNavigationGraphService.class, Mockito.CALLS_REAL_METHODS)) {

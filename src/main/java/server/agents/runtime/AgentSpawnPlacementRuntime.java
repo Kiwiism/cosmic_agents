@@ -14,7 +14,6 @@ import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.bots.BotEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -27,16 +26,16 @@ public final class AgentSpawnPlacementRuntime {
     private AgentSpawnPlacementRuntime() {
     }
 
-    public static void placeSpawnedOnlineAgent(BotEntry entry, Character agent, MapleMap spawnMap, Point spawnPosition) {
+    public static void placeSpawnedOnlineAgent(AgentRuntimeEntry entry, Character agent, MapleMap spawnMap, Point spawnPosition) {
         AgentSpawnPlacementService.placeSpawnedOnlineAgent(entry, agent, spawnMap, spawnPosition, hooks());
     }
 
-    public static void normalizeSpawnedAgent(BotEntry entry) {
+    public static void normalizeSpawnedAgent(AgentRuntimeEntry entry) {
         AgentSpawnPlacementService.normalizeSpawnedAgent(entry, hooks());
     }
 
-    private static AgentSpawnPlacementService.Hooks<BotEntry> hooks() {
-        return new AgentSpawnPlacementService.Hooks<BotEntry>(
+    private static AgentSpawnPlacementService.Hooks<AgentRuntimeEntry> hooks() {
+        return new AgentSpawnPlacementService.Hooks<AgentRuntimeEntry>(
                 AgentBotRuntimeIdentityRuntime::bot,
                 AgentBotRuntimeIdentityRuntime::owner,
                 AgentSpawnPositionService::resolveSpawnPosition,

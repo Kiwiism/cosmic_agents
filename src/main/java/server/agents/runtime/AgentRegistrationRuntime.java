@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.bots.BotEntry;
 
 /**
  * Temporary legacy hook bundle for Agent registration scheduling while the live
@@ -13,25 +12,25 @@ public final class AgentRegistrationRuntime {
     private AgentRegistrationRuntime() {
     }
 
-    public static BotEntry registerManualAgent(int leaderCharId,
-                                               Character leader,
-                                               Character agent,
-                                               AgentLifecycleService.AgentTickCallback tickCallback) {
+    public static AgentRuntimeEntry registerManualAgent(int leaderCharId,
+                                                        Character leader,
+                                                        Character agent,
+                                                        AgentLifecycleService.AgentTickCallback tickCallback) {
         return registerAgent(leaderCharId, leader, agent, false, tickCallback);
     }
 
-    public static BotEntry registerSpawnedAgent(int leaderCharId,
-                                                Character leader,
-                                                Character agent,
-                                                AgentLifecycleService.AgentTickCallback tickCallback) {
+    public static AgentRuntimeEntry registerSpawnedAgent(int leaderCharId,
+                                                         Character leader,
+                                                         Character agent,
+                                                         AgentLifecycleService.AgentTickCallback tickCallback) {
         return registerAgent(leaderCharId, leader, agent, true, tickCallback);
     }
 
-    public static BotEntry registerAgent(int leaderCharId,
-                                         Character leader,
-                                         Character agent,
-                                         boolean normalizeSpawnState,
-                                         AgentLifecycleService.AgentTickCallback tickCallback) {
+    public static AgentRuntimeEntry registerAgent(int leaderCharId,
+                                                  Character leader,
+                                                  Character agent,
+                                                  boolean normalizeSpawnState,
+                                                  AgentLifecycleService.AgentTickCallback tickCallback) {
         return AgentLifecycleService.registerAgent(
                 leaderCharId,
                 leader,

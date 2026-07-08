@@ -328,6 +328,12 @@ Recent map updates:
   preflight, leader resolution, inactive-leader handling, ownerless movement,
   live-context preparation, live gates, live mode dispatch, and failure
   handling now use `AgentRuntimeEntry` at the runtime seam.
+- `BotEntry` runtime storage is migrated to `AgentRuntimeEntry` through
+  `AgentRuntimeRegistry`, `AgentLifecycleService`, `AgentRegistrationRuntime`,
+  `AgentSpawnRuntime`, `AgentSpawnPlacementRuntime`, and
+  `AgentInteractionRuntime`. Agent registration now constructs the Agent
+  runtime entry directly; the deprecated `server.bots.BotEntry` shell is no
+  longer used by production Agent modules.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while

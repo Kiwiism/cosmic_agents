@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.bots.BotEntry;
 
 /**
  * Agent-owned public runtime entry points for server integrations that still
@@ -25,7 +24,7 @@ public final class AgentInteractionRuntime {
                 AgentInteractionRuntime::tick);
     }
 
-    public static BotEntry registerSpawnedAgent(int leaderCharId, Character leader, Character agent) {
+    public static AgentRuntimeEntry registerSpawnedAgent(int leaderCharId, Character leader, Character agent) {
         return AgentRegistrationRuntime.registerSpawnedAgent(
                 leaderCharId,
                 leader,
@@ -62,7 +61,7 @@ public final class AgentInteractionRuntime {
                 log);
     }
 
-    private static void tick(BotEntry entry, int leaderCharId, int agentCharId) {
+    private static void tick(AgentRuntimeEntry entry, int leaderCharId, int agentCharId) {
         AgentTickRuntime.tick(
                 entry,
                 leaderCharId,

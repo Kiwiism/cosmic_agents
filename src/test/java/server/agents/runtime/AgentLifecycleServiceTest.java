@@ -40,14 +40,14 @@ class AgentLifecycleServiceTest {
         Character agent = character(200, "Alpha");
         ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
         AtomicReference<Runnable> scheduledTick = new AtomicReference<>();
-        AtomicReference<BotEntry> tickedEntry = new AtomicReference<>();
-        AtomicReference<BotEntry> normalizedEntry = new AtomicReference<>();
+        AtomicReference<AgentRuntimeEntry> tickedEntry = new AtomicReference<>();
+        AtomicReference<AgentRuntimeEntry> normalizedEntry = new AtomicReference<>();
         AtomicBoolean normalized = new AtomicBoolean();
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentFormationService.formationsByLeaderId().clear();
 
         try (MockedStatic<AgentBotManagerStatusRuntime> status = mockStatic(AgentBotManagerStatusRuntime.class)) {
-            BotEntry entry = AgentLifecycleService.registerAgent(
+            AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
                     leader.getId(),
                     leader,
                     agent,
@@ -97,7 +97,7 @@ class AgentLifecycleServiceTest {
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(oldEntry);
 
         try (MockedStatic<AgentBotManagerStatusRuntime> status = mockStatic(AgentBotManagerStatusRuntime.class)) {
-            BotEntry newEntry = AgentLifecycleService.registerAgent(
+            AgentRuntimeEntry newEntry = AgentLifecycleService.registerAgent(
                     leader.getId(),
                     leader,
                     agent,
@@ -161,7 +161,7 @@ class AgentLifecycleServiceTest {
         Point leaderPosition = new Point(10, 20);
         Point spawnPosition = new Point(11, 21);
         AtomicReference<Runnable> delayedAction = new AtomicReference<>();
-        AtomicReference<BotEntry> registeredEntry = new AtomicReference<>();
+        AtomicReference<AgentRuntimeEntry> registeredEntry = new AtomicReference<>();
         AtomicReference<String> spoken = new AtomicReference<>();
         when(leader.getMap()).thenReturn(map);
         when(leader.getPosition()).thenReturn(leaderPosition);
@@ -403,7 +403,7 @@ class AgentLifecycleServiceTest {
         MapleMap map = mock(MapleMap.class);
         Point spawnPosition = new Point(11, 21);
         AgentOwnershipService ownership = mock(AgentOwnershipService.class);
-        AtomicReference<BotEntry> registeredEntry = new AtomicReference<>();
+        AtomicReference<AgentRuntimeEntry> registeredEntry = new AtomicReference<>();
         AtomicInteger followed = new AtomicInteger();
         when(leader.getClient()).thenReturn(client);
         when(client.getWorld()).thenReturn(1);
@@ -523,7 +523,7 @@ class AgentLifecycleServiceTest {
         Character leader = character(100, "Leader");
         BotEntry first = new BotEntry(character(200, "Alpha"), leader, null);
         BotEntry second = new BotEntry(character(201, "Beta"), leader, null);
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         Map<Integer, Object> formations = new ConcurrentHashMap<>();
         Map<Integer, Point> townAnchors = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(first, second)));
@@ -557,7 +557,7 @@ class AgentLifecycleServiceTest {
         Character leader = character(100, "Leader");
         BotEntry first = new BotEntry(character(200, "Alpha"), leader, null);
         BotEntry second = new BotEntry(character(201, "Beta"), leader, null);
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         Map<Integer, Object> formations = new ConcurrentHashMap<>();
         Map<Integer, Point> townAnchors = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(first, second)));
@@ -579,7 +579,7 @@ class AgentLifecycleServiceTest {
     void removesEmptyLeaderStateAfterLastAgentRemoval() {
         Character leader = character(100, "Leader");
         BotEntry only = new BotEntry(character(200, "Alpha"), leader, null);
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
         Map<Integer, Object> formations = new ConcurrentHashMap<>();
         Map<Integer, Point> townAnchors = new ConcurrentHashMap<>();
         entries.put(leader.getId(), new CopyOnWriteArrayList<>(List.of(only)));
@@ -597,7 +597,7 @@ class AgentLifecycleServiceTest {
 
     @Test
     void returnsFalseWhenAgentIsMissing() {
-        Map<Integer, List<BotEntry>> entries = new ConcurrentHashMap<>();
+        Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
 
         assertFalse(AgentLifecycleService.removeAgentByCharacterId(
                 entries, new ConcurrentHashMap<>(), new ConcurrentHashMap<>(), 404, ignored -> {}));
