@@ -26,6 +26,10 @@ Recent reconstruction notes:
   `server.agents.runtime`. It still invokes the same callback adapters, so chat
   command routing, pending actions, supply/social/control/build/transfer/report
   callbacks, and job advancement behavior are unchanged.
+- `AgentStatusStateRuntime` now holds status/AFK/gear-suggestion state adapter
+  builders in `server.agents.runtime`. `AgentStatusRuntime` stays in
+  `server.agents.integration` for live side effects only: delayed scheduling,
+  party/reply emission, map-name reads, and face-expression changes.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

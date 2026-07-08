@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentStatusStateRuntime;
 
 /**
  * Agent-owned status facade over temporary bot-side status state and side
@@ -15,7 +16,7 @@ public final class AgentChatStatusRuntime {
     public static void markOwnerActive(AgentRuntimeEntry entry) {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         server.agents.capabilities.dialogue.AgentChatStatusRuntime.markActive(
-                AgentStatusRuntime.statusState(entry),
+                AgentStatusStateRuntime.statusState(entry),
                 owner != null ? owner.getPosition() : null,
                 System.currentTimeMillis());
     }
@@ -31,7 +32,7 @@ public final class AgentChatStatusRuntime {
 
     public static void tickAfkCheck(AgentRuntimeEntry entry, Character owner) {
         server.agents.capabilities.dialogue.AgentChatStatusRuntime.tickAfkCheck(
-                AgentStatusRuntime.afkState(entry),
+                AgentStatusStateRuntime.afkState(entry),
                 owner.getPosition(),
                 System.currentTimeMillis(),
                 AgentStatusRuntime.afkReturnActions(entry));
@@ -42,7 +43,7 @@ public final class AgentChatStatusRuntime {
     }
 
     public static boolean isOwnerIdle(AgentRuntimeEntry entry) {
-        return server.agents.capabilities.dialogue.AgentChatStatusRuntime.isOwnerIdle(AgentStatusRuntime.statusState(entry));
+        return server.agents.capabilities.dialogue.AgentChatStatusRuntime.isOwnerIdle(AgentStatusStateRuntime.statusState(entry));
     }
 
     public static int randomFidgetExpression() {

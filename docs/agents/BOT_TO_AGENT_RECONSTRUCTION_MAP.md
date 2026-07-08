@@ -94,6 +94,11 @@ Recent map updates:
   `server.agents.runtime`. It is runtime orchestration for the generic dialogue
   context, not a direct Cosmic boundary. Its callback wiring still points at
   existing integration runtime adapters until those slices are split safely.
+- `AgentStatusStateRuntime` now owns the status/AFK/gear-suggestion state
+  adapters under `server.agents.runtime`. `AgentStatusRuntime` remains in
+  `server.agents.integration` only for the offline/AFK return actions that
+  still schedule timers, emit replies, or change the live Agent character
+  expression.
 - `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout

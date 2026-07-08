@@ -6,6 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 
@@ -21,7 +22,7 @@ public final class AgentBuildStatusRuntime {
 
     public static void checkBuildStatus(AgentRuntimeEntry entry, Character bot) {
         AgentChatStatusRuntime.checkStatus(
-                AgentStatusRuntime.statusCheckState(entry),
+                AgentStatusStateRuntime.statusCheckState(entry),
                 statusCheckActions(entry, bot));
     }
 
@@ -61,7 +62,7 @@ public final class AgentBuildStatusRuntime {
             public void maybeSuggestRecommendedGear() {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
-                        AgentStatusRuntime.gearSuggestionState(entry),
+                        AgentStatusStateRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 owner != null,
                                 () -> AgentOfferService.offerBestRecommendedGear(entry, bot, owner)),
@@ -72,7 +73,7 @@ public final class AgentBuildStatusRuntime {
             public void maybeSuggestGearToSiblings() {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
-                        AgentStatusRuntime.gearSuggestionState(entry),
+                        AgentStatusStateRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 owner != null,
                                 () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
@@ -82,7 +83,7 @@ public final class AgentBuildStatusRuntime {
             @Override
             public boolean canOfferSpawnUpgrade() {
                 return AgentRuntimeIdentityRuntime.owner(entry) != null
-                        && !AgentChatStatusRuntime.isOwnerIdle(AgentStatusRuntime.statusState(entry))
+                        && !AgentChatStatusRuntime.isOwnerIdle(AgentStatusStateRuntime.statusState(entry))
                         && !AgentPendingActionStateRuntime.hasPendingAction(entry)
                         && !AgentOfferService.hasPendingOffer(entry);
             }

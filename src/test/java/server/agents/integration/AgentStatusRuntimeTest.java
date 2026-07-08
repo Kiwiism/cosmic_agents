@@ -12,6 +12,7 @@ import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentStatusRuntime;
+import server.agents.runtime.AgentStatusStateRuntime;
 
 import java.awt.Point;
 
@@ -25,7 +26,7 @@ class AgentStatusRuntimeTest {
     @Test
     void statusStateAdaptsAgentRuntimeEntryAfkFields() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatStatusRuntime.StatusState state = AgentStatusRuntime.statusState(entry);
+        AgentChatStatusRuntime.StatusState state = AgentStatusStateRuntime.statusState(entry);
         Point position = new Point(10, 20);
 
         state.setOwnerAfkPosition(position);
@@ -41,7 +42,7 @@ class AgentStatusRuntimeTest {
     @Test
     void afkStateAdaptsAgentRuntimeEntryAfkFields() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatWelcomeBackFlow.AfkState state = AgentStatusRuntime.afkState(entry);
+        AgentChatWelcomeBackFlow.AfkState state = AgentStatusStateRuntime.afkState(entry);
         Point position = new Point(30, 40);
 
         state.setOwnerAfkPosition(position);
@@ -70,7 +71,7 @@ class AgentStatusRuntimeTest {
     @Test
     void statusCheckStateAdaptsSpawnUpgradeFlag() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatStatusRuntime.StatusCheckState state = AgentStatusRuntime.statusCheckState(entry);
+        AgentChatStatusRuntime.StatusCheckState state = AgentStatusStateRuntime.statusCheckState(entry);
 
         assertFalse(state.spawnUpgradeCheckDone());
 
@@ -83,7 +84,7 @@ class AgentStatusRuntimeTest {
     @Test
     void gearSuggestionStateAdaptsCooldown() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatStatusRuntime.GearSuggestionState state = AgentStatusRuntime.gearSuggestionState(entry);
+        AgentChatStatusRuntime.GearSuggestionState state = AgentStatusStateRuntime.gearSuggestionState(entry);
 
         state.setNextGearSuggestionAt(9000L);
 
@@ -95,7 +96,7 @@ class AgentStatusRuntimeTest {
     void recommendedGearReportStateAdaptsCooldown() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        AgentStatusRuntime.recommendedGearReportState(entry).setNextGearSuggestionAt(12_000L);
+        AgentStatusStateRuntime.recommendedGearReportState(entry).setNextGearSuggestionAt(12_000L);
 
         assertEquals(12_000L, AgentOfferStateRuntime.nextGearSuggestionAt(entry));
     }

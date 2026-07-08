@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.capabilities.supplies.AgentPotionService;
@@ -53,7 +54,7 @@ public final class AgentActiveModeRuntime {
     public static void maybeSuggestGearToSiblings(AgentRuntimeEntry entry, Character bot) {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
-                AgentStatusRuntime.gearSuggestionState(entry),
+                AgentStatusStateRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
                         owner != null,
                         () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
