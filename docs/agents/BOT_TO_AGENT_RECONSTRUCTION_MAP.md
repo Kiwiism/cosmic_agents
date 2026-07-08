@@ -2339,3 +2339,8 @@ Recent capability extraction notes:
   `server.agents.capabilities.movement`. It preserves the existing follow,
   stop, move-to, farm-here, patrol, and grind mode-transition behavior while
   keeping live identity lookup and visible replies behind integration seams.
+- `AgentMovementRuntime` now lives in `server.agents.capabilities.movement`.
+  It preserves the same movement chat callback timings, replies, supply checks,
+  active-mode preparation, movement command dispatch, and fidget side effects;
+  live identity, scheduling, reply delivery, and fidget side effects remain
+  explicit seams.

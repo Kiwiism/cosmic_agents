@@ -6249,6 +6249,12 @@ Current physics correction:
   prepared-mode ordering, script-task clearing, shop cancellation, navigation
   state clearing, and missing-patrol-region reply; live identity lookup and
   visible replies remain temporary integration seams.
+- Movement chat callback orchestration now lives in
+  `server.agents.capabilities.movement.AgentMovementRuntime`. Farm-here,
+  patrol, move-here, follow, grind, stop, fidget, and greeting callbacks keep
+  the same delays, replies, supply checks, active-mode preparation, command
+  dispatch, and fidget side effects; live identity, scheduler, reply delivery,
+  and fidget side effects remain explicit integration/runtime seams.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

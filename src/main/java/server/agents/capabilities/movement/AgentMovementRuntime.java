@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -7,8 +7,9 @@ import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
-import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.capabilities.movement.AgentMovementStatusRuntime;
+import server.agents.integration.AgentFidgetSideEffects;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.supplies.AgentPotionService;
 
@@ -16,8 +17,8 @@ import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Agent-owned movement chat facade over temporary bot-side movement side
- * effects.
+ * Agent-owned movement chat facade. Live identity, reply delivery, and fidget
+ * side effects remain temporary integration seams.
  */
 public final class AgentMovementRuntime {
     private AgentMovementRuntime() {
