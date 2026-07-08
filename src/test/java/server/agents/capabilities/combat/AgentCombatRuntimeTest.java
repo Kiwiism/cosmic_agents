@@ -1,8 +1,7 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentCombatRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 

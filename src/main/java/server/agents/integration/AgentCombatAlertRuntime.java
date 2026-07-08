@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.combat.AgentCombatRuntime;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;

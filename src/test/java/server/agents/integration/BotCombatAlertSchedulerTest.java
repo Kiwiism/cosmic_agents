@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentCombatAlertRuntime;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentCombatRuntime;
+import server.agents.capabilities.combat.AgentCombatRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;

@@ -6143,6 +6143,11 @@ Current physics correction:
   `server.agents.runtime.AgentSessionControlRuntime`. It still uses the same
   primary-session check and delegates owner-away safe-mode effects to the
   existing integration lifecycle boundary; away prompt behavior is unchanged.
+- Combat reply/timing facade now lives in
+  `server.agents.capabilities.combat.AgentCombatRuntime`. It still delegates
+  map-chat delivery to `AgentReplyRuntime` and delayed callbacks to
+  `AgentSchedulerRuntime`; combat alert and ammo/death reply behavior is
+  unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

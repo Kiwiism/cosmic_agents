@@ -1,12 +1,13 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 
-import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 /**
- * Temporary Agent-owned bridge for combat-owned timing/replies while combat
- * execution still lives in the legacy bot runtime.
+ * Agent-owned bridge for combat-owned timing/replies while reply delivery stays
+ * behind the integration runtime boundary.
  */
 public final class AgentCombatRuntime {
     private AgentCombatRuntime() {
