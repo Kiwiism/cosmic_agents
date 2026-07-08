@@ -334,6 +334,10 @@ Recent map updates:
   `AgentInteractionRuntime`. Agent registration now constructs the Agent
   runtime entry directly; the deprecated `server.bots.BotEntry` shell is no
   longer used by production Agent modules.
+- Final production dependency scan for this reconstruction slice shows no
+  `server.bots` references under `src/main/java/server/agents/**`. The only
+  production file remaining under `src/main/java/server/bots/**` is the
+  deprecated empty `BotEntry` compatibility shell, with no runtime logic.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while

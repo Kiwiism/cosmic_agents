@@ -5808,6 +5808,11 @@ Current physics correction:
   replacement/cancel behavior, spawn normalization, formation offsets, spawn
   status checks, dismiss/remove cleanup, active-leader lookup, and registry
   snapshots remain unchanged.
+- Reconstruction audit: production `src/main/java/server/agents/**` no longer
+  references `server.bots`; production `src/main/java/server/bots/**` contains
+  only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
+  references are test-side compatibility fixtures or stale explanatory wording,
+  not production Agent runtime dependencies.
 
 Initial reconstruction order:
 
