@@ -1,11 +1,8 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.runtime;
 
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentChatOrchestratorContext;
 import server.agents.integration.AgentPendingActionStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -17,6 +17,15 @@ Rules:
 
 Recent reconstruction notes:
 
+- Integration runtime extraction has started. `server.agents.integration` should
+  keep Cosmic/server boundary work: Character/MapleMap access, packets, timers,
+  inventory mutation, shop/trade/NPC/database/server internals, and gateway
+  adapters. Runtime orchestration moves to `server.agents.runtime`, and pure
+  domain behavior moves to `server.agents.capabilities.*` one slice at a time.
+- `AgentChatOrchestratorContext` moved from `server.agents.integration` to
+  `server.agents.runtime`. It still invokes the same callback adapters, so chat
+  command routing, pending actions, supply/social/control/build/transfer/report
+  callbacks, and job advancement behavior are unchanged.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

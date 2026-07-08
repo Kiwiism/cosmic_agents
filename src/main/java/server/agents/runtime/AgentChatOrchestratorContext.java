@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import client.Job;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
@@ -16,7 +16,21 @@ import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.AgentBuildRuntime;
+import server.agents.integration.AgentBuildStateRuntime;
+import server.agents.integration.AgentChatReportRuntime;
+import server.agents.integration.AgentChatStatusRuntime;
+import server.agents.integration.AgentControlRuntime;
+import server.agents.integration.AgentEquipmentRuntime;
+import server.agents.integration.AgentMovementRuntime;
+import server.agents.integration.AgentPendingActionRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSessionRuntime;
+import server.agents.integration.AgentSocialRuntime;
+import server.agents.integration.AgentSupplyRuntime;
+import server.agents.integration.AgentTransferRuntime;
+import server.agents.integration.AgentUtilityRuntime;
 
 /**
  * Agent-owned adapter from the live Agent runtime entry to the generic

@@ -12,6 +12,20 @@ This map tracks reconstruction from the source/master bot baseline into neutral 
 
 Recent map updates:
 
+- Integration runtime adapter audit has started. Current classification:
+
+  | Classification | Files | Notes |
+  | --- | --- | --- |
+  | `MOVE_TO_RUNTIME` | `AgentChatOrchestratorContext`, `AgentRuntimeIdentityRuntime`, `AgentSchedulerRuntime`, `AgentManagerStatusRuntime`, `AgentActiveModeRuntime`, `AgentSessionControlRuntime`, `AgentSessionRuntime` | Runtime/session/tick/chat-flow orchestration rather than a Cosmic boundary. `AgentChatOrchestratorContext` moved first; other files need one-slice moves with focused tests. |
+  | `MOVE_TO_RUNTIME` | `AgentActivityStateRuntime`, `AgentAirshowStateRuntime`, `AgentAoeRepositionStateRuntime`, `AgentBreakoutStateRuntime`, `AgentDeathStateRuntime`, `AgentFarmAnchorStateRuntime`, `AgentFormationStateRuntime`, `AgentLeaderStateRuntime`, `AgentMapStateRuntime`, `AgentModeStateRuntime`, `AgentOwnerMotionStateRuntime`, `AgentPatrolStateRuntime`, `AgentRetreatHoldStateRuntime`, `AgentTickCadenceStateRuntime`, `AgentTickFailureStateRuntime`, `AgentTickStateRuntime` | Mutable runtime/session state adapters. Move after a state-package split so capability code no longer imports integration for state reads/writes. |
+  | `MOVE_TO_CAPABILITY_dialogue` | `AgentChatReportRuntime`, `AgentChatStatusRuntime`, `AgentControlRuntime`, `AgentPendingActionRuntime`, `AgentPendingActionStateRuntime`, `AgentReplyChannelStateRuntime`, `AgentReplyRuntime`, `AgentSocialRuntime`, `AgentLlmRuntime`, `AgentScrollReactionRuntime`, `AgentScrollReactionStateRuntime`, `AgentMessageQueueStateRuntime` | Dialogue/report/status/social behavior should move toward dialogue/social capability modules; leave queueing, scheduling, and packet side effects behind integration boundaries until gateways exist. |
+  | `MOVE_TO_CAPABILITY_combat` | `AgentAmmoStateRuntime`, `AgentCombatActionLockRuntime`, `AgentCombatActionStateRuntime`, `AgentCombatAlertRuntime`, `AgentCombatAmmoCheckRuntime`, `AgentCombatAoeRepositionRuntime`, `AgentCombatAttackRuntime`, `AgentCombatBuffRuntime`, `AgentCombatBuffStateRuntime`, `AgentCombatCooldownStateRuntime`, `AgentCombatDamageRuntime`, `AgentCombatDeathRuntime`, `AgentCombatFacingRuntime`, `AgentCombatGroundRuntime`, `AgentCombatHealRuntime`, `AgentCombatPlanRuntime`, `AgentCombatReportRuntime`, `AgentCombatRuntime`, `AgentCombatSkillCacheRuntime`, `AgentCombatSkillCacheStateRuntime`, `AgentCombatTargetRuntime`, `AgentDegenerateAttackStateRuntime`, `AgentGrindSearchStateRuntime`, `AgentGrindTargetStateRuntime`, `AgentMobTouchRuntime`, `AgentMobTouchStateRuntime`, `AgentSkillBuffDebugStateRuntime` | Combat planning/state belongs in combat capability. Attack packets, damage mutation, and mob-touch server writes stay integration until gateway seams are introduced. |
+  | `MOVE_TO_CAPABILITY_movement_navigation` | `AgentClimbStateRuntime`, `AgentFidgetRuntime`, `AgentFidgetStateRuntime`, `AgentGrindLootStateRuntime`, `AgentGrindWanderStateRuntime`, `AgentMovementBroadcastStateRuntime`, `AgentMovementCommandRuntime`, `AgentMovementKinematicsRuntime`, `AgentMovementPhysicsStateRuntime`, `AgentMovementRuntime`, `AgentMovementStateRuntime`, `AgentMovementStatusRuntime`, `AgentMovementStuckStateRuntime`, `AgentMovementTargetRuntime`, `AgentMoveTargetStateRuntime`, `AgentNavigationDebugStateRuntime`, `AgentScriptMoveTargetRuntime`, `AgentSwimStateRuntime` | Movement/navigation state and decisions belong in movement/navigation capabilities. Packet broadcasts and map/foothold access remain integration until gateway-backed. |
+  | `MOVE_TO_CAPABILITY_items` | `AgentAmmoRuntime`, `AgentBuildRuntime`, `AgentBuildStateRuntime`, `AgentBuildStatusRuntime`, `AgentBuffStateRuntime`, `AgentEquipmentRuntime`, `AgentInventoryRuntime`, `AgentInventoryStateRuntime`, `AgentMakerRuntime`, `AgentManualTradeStateRuntime`, `AgentOfferRuntime`, `AgentOfferStateRuntime`, `AgentPendingTradeStateRuntime`, `AgentPotionRuntime`, `AgentPotionStateRuntime`, `AgentShopRuntime`, `AgentShopStateRuntime`, `AgentSupplyRuntime`, `AgentTransferRuntime`, `AgentUtilityRuntime` | Build/supply/inventory/equipment/trade/shop behavior should move into domain capabilities; real inventory mutation, trade/shop APIs, timers, and client locks stay integration until adapters are available. |
+  | `MOVE_TO_CAPABILITY_plans_pq` | `AgentPqRuntime`, `AgentScriptTaskStateRuntime` | PQ/script state belongs with plan/PQ capabilities. Server-side PQ/script hooks must stay integration until split. |
+  | `KEEP_IN_INTEGRATION_BOUNDARY` | `CharacterGateway`, `CombatGateway`, `InventoryGateway`, `MapGateway`, `MovementGateway`, `NpcGateway`, `PacketGateway`, `PartyGateway`, `QuestGateway`, `AgentServerAdapter` | These are intentional Cosmic/server boundary contracts or adapter entry points. |
+  | `SPLIT_LATER` | Any file above that mixes pure decisions with `Character`, `MapleMap`, timers, packets, inventory/shop/trade/NPC/database mutation, or other server internals | Split pure behavior into capability/runtime first and leave only side effects in integration. |
+
 - Final compatibility shell removal is complete: `src/main/java/server/bots/**`
   and `src/test/java/server/bots/**` are removed. Runtime/session fixtures now
   use `AgentRuntimeEntry` directly, and source/test scans for `server.bots` and
@@ -76,6 +90,10 @@ Recent map updates:
   generic Agent dialogue context adapter. Pending action, session, supply,
   social, control, equipment, movement, build, utility, transfer, report, and
   job advancement callback wiring remains unchanged.
+- `AgentChatOrchestratorContext` has moved from `server.agents.integration` to
+  `server.agents.runtime`. It is runtime orchestration for the generic dialogue
+  context, not a direct Cosmic boundary. Its callback wiring still points at
+  existing integration runtime adapters until those slices are split safely.
 - `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout
