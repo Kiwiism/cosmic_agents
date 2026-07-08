@@ -5,7 +5,7 @@ import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentFormationStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.life.Monster;

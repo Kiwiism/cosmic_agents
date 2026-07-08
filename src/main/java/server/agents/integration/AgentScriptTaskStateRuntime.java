@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.plans.AgentTask;

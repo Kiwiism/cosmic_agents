@@ -6,7 +6,7 @@ import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;

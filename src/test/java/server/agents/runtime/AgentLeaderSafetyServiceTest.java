@@ -6,7 +6,7 @@ import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 import server.life.Monster;

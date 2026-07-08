@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.runtime.AgentModeStateRuntime;

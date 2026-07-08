@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 

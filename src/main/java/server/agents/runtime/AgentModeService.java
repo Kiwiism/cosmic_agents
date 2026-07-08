@@ -9,7 +9,7 @@ import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.capabilities.combat.AgentRetreatHoldStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementMode;
 import server.agents.capabilities.movement.AgentMovementInputState;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementSnapshot;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;

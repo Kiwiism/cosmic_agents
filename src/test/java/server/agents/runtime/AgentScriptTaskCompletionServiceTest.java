@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.plans.AgentTask;
 import server.agents.runtime.AgentRuntimeEntry;
 

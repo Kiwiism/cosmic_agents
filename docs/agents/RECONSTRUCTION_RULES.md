@@ -47,6 +47,11 @@ Recent reconstruction notes:
   `AgentPatrolStateRuntime`. These are still direct `AgentRuntimeEntry` state
   wrappers; movement/combat/navigation side effects stay in their existing
   callers.
+- Explicit move-target state has moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentMoveTargetStateRuntime`. It remains
+  a pure `AgentRuntimeEntry` state adapter for target storage, precision flags,
+  and arrival checks; movement execution, packet broadcasts, map access, and
+  tick ordering stay in their existing runtime/capability/integration seams.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

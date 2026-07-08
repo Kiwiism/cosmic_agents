@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.maps.MapleMap;
 

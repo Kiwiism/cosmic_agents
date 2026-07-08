@@ -8,7 +8,7 @@ import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 import server.life.Monster;

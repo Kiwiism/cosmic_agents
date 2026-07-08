@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentFormationStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;

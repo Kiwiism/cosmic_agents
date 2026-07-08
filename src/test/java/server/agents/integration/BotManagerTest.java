@@ -72,7 +72,7 @@ import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.integration.AgentMapStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;

@@ -20,7 +20,7 @@ import server.agents.integration.AgentFidgetRuntime;
 import server.agents.integration.AgentFidgetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
