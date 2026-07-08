@@ -4151,7 +4151,7 @@ Recent reconstruction notes:
   same-region guards, and region mob counting are preserved.
 - Public movement mode commands for explicit move, farm-here, and concrete
   target-follow now dispatch through
-  `server.agents.integration.AgentMovementCommandRuntime`; BotManager no
+  `server.agents.capabilities.movement.AgentMovementCommandRuntime`; BotManager no
   longer keeps those compatibility entry points. The same script task clearing,
   shop-visit cancellation, null guards, mode-state transitions,
   and navigation-state clear hooks are preserved.
@@ -6243,6 +6243,12 @@ Current physics correction:
   leader position lookup remains isolated through the temporary
   `AgentRuntimeIdentityRuntime` integration seam; movement behavior is
   unchanged.
+- Movement command orchestration now lives in
+  `server.agents.capabilities.movement.AgentMovementCommandRuntime`. Follow,
+  stop, move-to, farm-here, patrol, and grind commands still use the same
+  prepared-mode ordering, script-task clearing, shop cancellation, navigation
+  state clearing, and missing-patrol-region reply; live identity lookup and
+  visible replies remain temporary integration seams.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -18,7 +18,7 @@ import server.agents.capabilities.build.profiles.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 import server.agents.capabilities.build.AgentBuildRuntime;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
-import server.agents.integration.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

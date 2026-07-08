@@ -6,7 +6,7 @@ import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.function.Consumer;

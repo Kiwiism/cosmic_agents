@@ -1,22 +1,22 @@
-package server.agents.integration;
-
-import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.capabilities.movement.AgentMovementStateRuntime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.shop.AgentShopService;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 
 /**
- * Agent-owned movement command facade.
+ * Agent-owned movement command facade. Live identity lookup and visible reply
+ * delivery remain temporary integration seams.
  */
 public final class AgentMovementCommandRuntime {
     private AgentMovementCommandRuntime() {

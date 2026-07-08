@@ -12,7 +12,7 @@ import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.movement.AgentMovementStatusRuntime;
 import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.integration.AgentFidgetSideEffects;
-import server.agents.integration.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;

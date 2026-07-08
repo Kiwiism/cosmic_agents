@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import client.inventory.InventoryType;
-import server.agents.integration.AgentMovementCommandRuntime;
+import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.plans.AgentScriptItemActionService;
 import server.agents.plans.AgentTask;
 
