@@ -9,14 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentBotCombatGroundRuntimeTest {
+class AgentCombatGroundRuntimeTest {
     @Test
     void findGroundFootholdKeepsNullSafeAdapterBehavior() {
         Character agent = mock(Character.class);
         when(agent.getMap()).thenReturn(null);
 
-        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), agent));
-        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(null, agent));
-        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), null));
+        assertNull(AgentCombatGroundRuntime.findGroundFoothold(new Point(100, 200), agent));
+        assertNull(AgentCombatGroundRuntime.findGroundFoothold(null, agent));
+        assertNull(AgentCombatGroundRuntime.findGroundFoothold(new Point(100, 200), null));
     }
 }

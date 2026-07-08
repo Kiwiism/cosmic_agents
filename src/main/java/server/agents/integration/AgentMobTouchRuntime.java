@@ -9,8 +9,8 @@ import server.life.Monster;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-public final class AgentBotMobTouchRuntime {
-    private AgentBotMobTouchRuntime() {
+public final class AgentMobTouchRuntime {
+    private AgentMobTouchRuntime() {
     }
 
     public static boolean isMobTouchingAgent(AgentRuntimeEntry entry, Character agent, Monster mob, int sweepHeight) {

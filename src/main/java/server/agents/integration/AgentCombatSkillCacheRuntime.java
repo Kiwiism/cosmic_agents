@@ -7,8 +7,8 @@ import server.agents.capabilities.combat.AgentCombatHitCounter;
 import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentBotCombatSkillCacheRuntime {
-    private AgentBotCombatSkillCacheRuntime() {
+public final class AgentCombatSkillCacheRuntime {
+    private AgentCombatSkillCacheRuntime() {
     }
 
     public static void rebuildSkillCacheIfNeeded(AgentRuntimeEntry entry, Character bot) {

@@ -4,8 +4,8 @@ import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentBotCombatFacingRuntime {
-    private AgentBotCombatFacingRuntime() {
+public final class AgentCombatFacingRuntime {
+    private AgentCombatFacingRuntime() {
     }
 
     public static void rememberAttackFacing(AgentRuntimeEntry entry, int attackPacketStance) {

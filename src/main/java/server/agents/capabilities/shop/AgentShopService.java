@@ -28,7 +28,7 @@ import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentShopRuntime;
 import server.agents.integration.AgentShopStateRuntime;
-import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
+import server.agents.integration.AgentCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -337,7 +337,7 @@ public final class AgentShopService {
         if (!sequence.bought().isEmpty()) {
             AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
             AgentPotionService.setupAutopotForBot(sequence.bot());
-            AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(sequence.entry(), sequence.bot(),
+            AgentCombatAmmoCheckRuntime.tickAmmoCheck(sequence.entry(), sequence.bot(),
                     AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
             scheduleShopStep(sequence.entry(), finish);
             return;

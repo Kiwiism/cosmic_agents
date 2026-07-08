@@ -9,12 +9,12 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.inventory.AgentInventoryTickRuntime;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.agents.integration.AgentBotCombatActionLockRuntime;
-import server.agents.integration.AgentBotCombatBuffRuntime;
-import server.agents.integration.AgentBotCombatDamageRuntime;
-import server.agents.integration.AgentBotCombatDeathRuntime;
-import server.agents.integration.AgentBotCombatHealRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheRuntime;
+import server.agents.integration.AgentCombatActionLockRuntime;
+import server.agents.integration.AgentCombatBuffRuntime;
+import server.agents.integration.AgentCombatDamageRuntime;
+import server.agents.integration.AgentCombatDeathRuntime;
+import server.agents.integration.AgentCombatHealRuntime;
+import server.agents.integration.AgentCombatSkillCacheRuntime;
 import server.agents.integration.AgentDeathStateRuntime;
 import server.agents.integration.AgentManagerStatusRuntime;
 
@@ -39,10 +39,10 @@ public final class AgentCommonTickRuntime {
 
     private static AgentCommonTickService.CommonTickHooks hooks(Consumer<AgentRuntimeEntry> tickScriptTasks) {
         return new AgentCommonTickService.CommonTickHooks(
-                (entry, agent) -> AgentBotCombatDamageRuntime.tickMobDamage(
+                (entry, agent) -> AgentCombatDamageRuntime.tickMobDamage(
                         entry, agent, AgentCombatConfig.cfg, AgentMovementTimers::tickDown),
                 (entry, agent) -> AgentDeathStateRuntime.isDead(entry),
-                (entry, agent) -> AgentBotCombatDeathRuntime.enterDeadState(
+                (entry, agent) -> AgentCombatDeathRuntime.enterDeadState(
                         entry, agent, false, AgentCombatConfig.cfg),
                 AgentMonsterControlService::releaseControlledMonsters,
                 (entry, agent) -> AgentInventoryTickRuntime.tickPassiveLoot(entry, agent),
@@ -55,11 +55,11 @@ public final class AgentCommonTickRuntime {
                 AgentPartyQuestHooks::tick,
                 tickScriptTasks,
                 AgentPartyQuestHooks::isNpcLocked,
-                AgentBotCombatActionLockRuntime::tickActionLock,
-                AgentBotCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,
-                (entry, agent) -> AgentBotCombatHealRuntime.tickSupportHealing(
+                AgentCombatActionLockRuntime::tickActionLock,
+                AgentCombatSkillCacheRuntime::rebuildSkillCacheIfNeeded,
+                (entry, agent) -> AgentCombatHealRuntime.tickSupportHealing(
                         entry, agent, AgentCombatConfig.cfg),
-                (entry, agent) -> AgentBotCombatBuffRuntime.tickBuffs(
+                (entry, agent) -> AgentCombatBuffRuntime.tickBuffs(
                         entry, agent, AgentCombatConfig.cfg),
                 AgentBuffService::tick,
                 AgentActionLockPhysicsRuntime::tickActionLocked);

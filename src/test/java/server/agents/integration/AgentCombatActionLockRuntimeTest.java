@@ -3,19 +3,19 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotCombatActionLockRuntime;
+import server.agents.integration.AgentCombatActionLockRuntime;
 import server.agents.integration.AgentCombatCooldownStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class AgentBotCombatActionLockRuntimeTest {
+class AgentCombatActionLockRuntimeTest {
     @Test
     void ticksAttackCooldownBeforeMoveWindow() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 120);
         AgentCombatCooldownStateRuntime.maxMoveWindow(entry, 90);
 
-        AgentBotCombatActionLockRuntime.tickActionLock(entry);
+        AgentCombatActionLockRuntime.tickActionLock(entry);
 
         assertEquals(70, AgentCombatCooldownStateRuntime.attackCooldownMs(entry));
         assertEquals(90, AgentCombatCooldownStateRuntime.moveWindowMs(entry));
@@ -26,7 +26,7 @@ class AgentBotCombatActionLockRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentCombatCooldownStateRuntime.maxMoveWindow(entry, 90);
 
-        AgentBotCombatActionLockRuntime.tickActionLock(entry);
+        AgentCombatActionLockRuntime.tickActionLock(entry);
 
         assertEquals(40, AgentCombatCooldownStateRuntime.moveWindowMs(entry));
     }

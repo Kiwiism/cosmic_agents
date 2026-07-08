@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.integration.AgentAmmoStateRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
+import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -63,7 +63,7 @@ public final class AgentRangedPriorityTargetSelector {
         if (AgentAttackExecutionProvider.shouldDegenerateRangedAttack(weaponType, agentPosition, targetPos)) {
             return false;
         }
-        AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
+        AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
         return plan != null
                 && plan.route == AgentAttackRoute.RANGED
                 && AgentCombatRangePolicy.isTargetInAttackRange(plan, agent, target)

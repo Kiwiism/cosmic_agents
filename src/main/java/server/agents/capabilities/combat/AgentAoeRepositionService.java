@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import server.agents.integration.AgentAoeRepositionStateRuntime;
-import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
+import server.agents.integration.AgentCombatAoeRepositionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -31,7 +31,7 @@ public final class AgentAoeRepositionService {
             }
             return AgentAoeRepositionStateRuntime.anchor(entry);
         }
-        Point anchor = AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
+        Point anchor = AgentCombatAoeRepositionRuntime.aoeRepositionTarget(
                 entry, agent, target, attackPlan, AgentCombatConfig.cfg);
         if (anchor != null) {
             AgentAoeRepositionStateRuntime.setAnchor(

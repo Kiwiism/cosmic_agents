@@ -21,8 +21,8 @@ import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntUnaryOperator;
 
-public final class AgentBotCombatDamageRuntime {
-    private AgentBotCombatDamageRuntime() {
+public final class AgentCombatDamageRuntime {
+    private AgentCombatDamageRuntime() {
     }
 
     public static void applyMobHit(AgentRuntimeEntry entry, Character bot, Monster mob, AgentCombatConfig.Config config) {
@@ -45,13 +45,13 @@ public final class AgentBotCombatDamageRuntime {
 
             for (Monster mob : bot.getMap().getAllMonsters()) {
                 if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
-                if (AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, config.MOB_TOUCH_SWEEP_HEIGHT)) {
+                if (AgentMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, config.MOB_TOUCH_SWEEP_HEIGHT)) {
                     applyMobHit(entry, bot, mob, config);
                     return;
                 }
             }
         } finally {
-            AgentBotMobTouchRuntime.rememberMobTouchCheck(entry, bot, botPos);
+            AgentMobTouchRuntime.rememberMobTouchCheck(entry, bot, botPos);
         }
     }
 
@@ -81,7 +81,7 @@ public final class AgentBotCombatDamageRuntime {
             AgentCombatCooldownStateRuntime.setMobHitCooldownMs(
                     entry,
                     AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
-            AgentBotCombatAlertRuntime.markAlerted(entry);
+            AgentCombatAlertRuntime.markAlerted(entry);
             return;
         }
 
@@ -94,10 +94,10 @@ public final class AgentBotCombatDamageRuntime {
         AgentCombatCooldownStateRuntime.setMobHitCooldownMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
-        AgentBotCombatAlertRuntime.markAlerted(entry);
+        AgentCombatAlertRuntime.markAlerted(entry);
 
         if (bot.getHp() <= 0) {
-            AgentBotCombatDeathRuntime.enterDeadState(entry, bot, true, config);
+            AgentCombatDeathRuntime.enterDeadState(entry, bot, true, config);
             return;
         }
 

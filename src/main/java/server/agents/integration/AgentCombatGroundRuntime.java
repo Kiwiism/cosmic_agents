@@ -6,8 +6,8 @@ import server.maps.Foothold;
 
 import java.awt.Point;
 
-public final class AgentBotCombatGroundRuntime {
-    private AgentBotCombatGroundRuntime() {
+public final class AgentCombatGroundRuntime {
+    private AgentCombatGroundRuntime() {
     }
 
     public static Foothold findGroundFoothold(Point position, Character bot) {

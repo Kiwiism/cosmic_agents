@@ -4,8 +4,8 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentBotCombatActionLockRuntime {
-    private AgentBotCombatActionLockRuntime() {
+public final class AgentCombatActionLockRuntime {
+    private AgentCombatActionLockRuntime() {
     }
 
     public static void tickActionLock(AgentRuntimeEntry entry) {

@@ -3,10 +3,10 @@ package server.agents.integration;
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentBotCombatAlertRuntime {
+public final class AgentCombatAlertRuntime {
     private static final long ALERT_DURATION_MS = 5000L;
 
-    private AgentBotCombatAlertRuntime() {
+    private AgentCombatAlertRuntime() {
     }
 
     public static void markAlerted(AgentRuntimeEntry entry) {
@@ -20,7 +20,7 @@ public final class AgentBotCombatAlertRuntime {
         }
         AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
         long delay = Math.max(50L, AgentCombatCooldownStateRuntime.alertedUntilMs(entry) - System.currentTimeMillis() + 100L);
-        AgentBotCombatRuntime.afterDelay(delay, () -> {
+        AgentCombatRuntime.afterDelay(delay, () -> {
             long now = System.currentTimeMillis();
             if (now < AgentCombatCooldownStateRuntime.alertedUntilMs(entry)) {
                 AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);

@@ -26,7 +26,7 @@ import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentPotionRuntime;
 import server.agents.integration.AgentPotionStateRuntime;
-import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
+import server.agents.integration.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -181,7 +181,7 @@ public final class AgentPotionService {
         AgentPerformanceMonitor.recordSince("potion-autopot", startedAt);
 
         startedAt = AgentPerformanceMonitor.start();
-        AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
+        AgentCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot,
                 AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
         AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 

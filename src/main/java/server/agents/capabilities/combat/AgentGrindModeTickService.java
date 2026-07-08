@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
-import server.agents.integration.AgentBotCombatPlanRuntime;
+import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -39,7 +39,7 @@ public final class AgentGrindModeTickService {
         long now = System.currentTimeMillis();
         AgentAttackPlan attackPlan = target == null
                 ? null
-                : AgentBotCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
+                : AgentCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
 
         AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, agent);
         AgentGrindTargetSearchService.SearchResult searchResult =
@@ -65,7 +65,7 @@ public final class AgentGrindModeTickService {
         attackPlan = commitment.attackPlan();
         Monster rangedPriorityTarget = commitment.rangedPriorityTarget();
         if (attackPlan == null) {
-            attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
+            attackPlan = AgentCombatPlanRuntime.planAttack(entry, agent, target, AgentCombatConfig.cfg);
         }
 
         AgentGrindRangedEngagementService.Result engagement =

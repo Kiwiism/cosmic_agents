@@ -14,8 +14,8 @@ import server.life.Monster;
 
 import java.util.HashMap;
 
-public final class AgentBotCombatAttackRuntime {
-    private AgentBotCombatAttackRuntime() {
+public final class AgentCombatAttackRuntime {
+    private AgentCombatAttackRuntime() {
     }
 
     public static void attackMonster(AgentRuntimeEntry entry, Character bot, AgentAttackPlan attackPlan) {
@@ -61,7 +61,7 @@ public final class AgentBotCombatAttackRuntime {
 
         AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
-        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
-        AgentBotCombatAlertRuntime.markAlerted(entry);
+        AgentCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
+        AgentCombatAlertRuntime.markAlerted(entry);
     }
 }

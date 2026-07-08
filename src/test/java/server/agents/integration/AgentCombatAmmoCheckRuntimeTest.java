@@ -9,8 +9,8 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
 import server.agents.integration.AgentAmmoStateRuntime;
-import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
-import server.agents.integration.AgentBotCombatRuntime;
+import server.agents.integration.AgentCombatAmmoCheckRuntime;
+import server.agents.integration.AgentCombatRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotCombatAmmoCheckRuntimeTest {
+class AgentCombatAmmoCheckRuntimeTest {
     @Test
     void warnsOnceWhenProjectileAmmoIsLow() {
         Character bot = mock(Character.class);
@@ -27,16 +27,16 @@ class AgentBotCombatAmmoCheckRuntimeTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
              MockedStatic<AgentCombatAmmoCounter> ammo = mockStatic(AgentCombatAmmoCounter.class);
-             MockedStatic<AgentBotCombatRuntime> runtime = mockStatic(AgentBotCombatRuntime.class)) {
+             MockedStatic<AgentCombatRuntime> runtime = mockStatic(AgentCombatRuntime.class)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
             ammo.when(() -> AgentCombatAmmoCounter.isRangedAmmoWeapon(WeaponType.BOW)).thenReturn(true);
             ammo.when(() -> AgentCombatAmmoCounter.countAmmo(bot, WeaponType.BOW)).thenReturn(10);
 
-            AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot, 100, 5);
+            AgentCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot, 100, 5);
 
             assertTrue(AgentAmmoStateRuntime.ammoWarnSent(entry));
             assertFalse(AgentAmmoStateRuntime.noAmmo(entry));
-            runtime.verify(() -> AgentBotCombatRuntime.sayMapNow(eq(bot), anyString()));
+            runtime.verify(() -> AgentCombatRuntime.sayMapNow(eq(bot), anyString()));
         }
     }
 
@@ -52,7 +52,7 @@ class AgentBotCombatAmmoCheckRuntimeTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
             ammo.when(() -> AgentCombatAmmoCounter.isRangedAmmoWeapon(WeaponType.SWORD1H)).thenReturn(false);
 
-            AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot, 100, 5);
+            AgentCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot, 100, 5);
 
             assertFalse(AgentAmmoStateRuntime.ammoWarnSent(entry));
             assertFalse(AgentAmmoStateRuntime.noAmmo(entry));

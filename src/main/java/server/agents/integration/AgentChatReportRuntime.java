@@ -185,19 +185,19 @@ public final class AgentChatReportRuntime {
     }
 
     public static void reportDebugStats(AgentRuntimeEntry entry, Character bot) {
-        reportLine(entry, AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
+        reportLine(entry, AgentCombatReportRuntime.debugStatsReport(entry, bot));
     }
 
     public static void reportCritDebug(AgentRuntimeEntry entry, Character bot) {
-        reportLine(entry, AgentBotCombatReportRuntime.critDebugReport(bot));
+        reportLine(entry, AgentCombatReportRuntime.critDebugReport(bot));
     }
 
     public static void reportBuffDebug(AgentRuntimeEntry entry, Character bot) {
-        reportLines(entry, AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
+        reportLines(entry, AgentCombatReportRuntime.buffDebugLines(entry, bot));
     }
 
     public static void reportSkillBuffDebug(AgentRuntimeEntry entry, Character bot) {
-        reportLines(entry, AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot));
+        reportLines(entry, AgentCombatReportRuntime.skillBuffDebugLines(entry, bot));
     }
 
     public static void reportHelp(AgentRuntimeEntry entry) {

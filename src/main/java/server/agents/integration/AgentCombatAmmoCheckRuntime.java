@@ -13,8 +13,8 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentBotCombatAmmoCheckRuntime {
-    private AgentBotCombatAmmoCheckRuntime() {
+public final class AgentCombatAmmoCheckRuntime {
+    private AgentCombatAmmoCheckRuntime() {
     }
 
     public static void tickAmmoCheck(AgentRuntimeEntry entry, Character bot, int ammoLowWarn, int potLowWarn) {
@@ -57,18 +57,18 @@ public final class AgentBotCombatAmmoCheckRuntime {
                 AgentAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentModeStateRuntime.grinding(entry)) {
                     AgentMovementCommandRuntime.followOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
+                    AgentCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
                 }
             }
             case PROJECTILE_LOW_AMMO -> {
                 AgentAmmoStateRuntime.setAmmoWarnSent(entry, true);
-                AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
+                AgentCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
             }
             case PROJECTILE_NO_AMMO -> {
                 AgentAmmoStateRuntime.setNoAmmo(entry, true);
                 if (AgentModeStateRuntime.grinding(entry)) {
                     AgentMovementCommandRuntime.followOwner(entry);
-                    AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
+                    AgentCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
                 }
             }
             case NO_CHANGE -> {

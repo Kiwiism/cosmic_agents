@@ -21,18 +21,18 @@ import java.util.List;
  * Temporary Agent-owned combat report adapter while combat and buff debug data
  * still comes from bot runtime managers.
  */
-public final class AgentBotCombatReportRuntime {
-    private AgentBotCombatReportRuntime() {
+public final class AgentCombatReportRuntime {
+    private AgentCombatReportRuntime() {
     }
 
     public static String debugStatsReport(AgentRuntimeEntry entry, Character bot) {
         Monster target = AgentGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
-            target = AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
+            target = AgentCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
         }
 
         AgentAttackPlan plan = target != null
-                ? AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg)
+                ? AgentCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg)
                 : null;
         String route = plan != null
                 ? plan.route.name().toLowerCase()

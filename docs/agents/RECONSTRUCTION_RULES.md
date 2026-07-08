@@ -58,6 +58,11 @@ Recent reconstruction notes:
   target adapter from `AgentBotCommandParser` to `AgentCommandTargetResolver`
   and replaced bot-named method entry points with Agent-named equivalents.
   Transfer parsing and targeted command matching behavior are unchanged.
+- The final combat semantic cleanup slice renamed combat and mob-touch runtime
+  adapters from `AgentBot*` to neutral `Agent*` names. This was a
+  type/file/import rename only; attack planning, attack packet shape, hitbox
+  selection, ammo gates, damage rolls, heal/buff support, mob-touch handling,
+  and cooldown behavior are unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -1784,7 +1789,7 @@ Recent reconstruction notes:
 - Bot physics reset-only movement and rope cooldown flags now enter through
   `AgentMovementStateRuntime` and `AgentClimbStateRuntime`; full motion
   reset no longer writes `wasMovingX` or `ropeGrabCooldownMs` directly.
-- Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
+- Combat alert reset callbacks now enter through `AgentCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
   runtime for combat-owned alert timing, and alert timing and stance reset
   behavior are unchanged.
@@ -1888,7 +1893,7 @@ Recent reconstruction notes:
   `BotManager.botSay` directly for inventory-owned delayed trade reply
   delivery, while the same reply channel and random reply pools remain intact.
 - Combat death, missing-MP-potion, low-ammo, and out-of-ammo visible replies
-  now enter through `AgentBotCombatRuntime`; `BotCombatManager` no longer calls
+  now enter through `AgentCombatRuntime`; `BotCombatManager` no longer calls
   `BotManager.botSay` directly for combat-owned reply delivery, while the same
   random reply pools, follow-owner fallback, and warning flags remain intact.
 - Shop resupply, approach-timeout, shopping, purchase summary, shortfall,
@@ -2859,7 +2864,7 @@ Recent reconstruction notes:
   BotCombatManager preserves the same SkillFactory lookup and `skill#<id>`
   fallback for AoE reposition logs and skill-buff debug/failure summaries.
 - Combat debug-stat and skill-buff debug report assembly now lives in
-  `AgentBotCombatReportRuntime`; BotCombatManager keeps temporary compatibility
+  `AgentCombatReportRuntime`; BotCombatManager keeps temporary compatibility
   delegates while debug-stat formatting, active-buff, cached-buff, cooldown, and
   last-action report lines are assembled through the Agent integration/reporting
   path. The debug-stat report still reads target/attack-plan inputs from the
@@ -3181,53 +3186,53 @@ Recent reconstruction notes:
   calculation.
 - The unused `BotCombatManager.getSkillBuffDebugLines` reporting wrapper has
   been removed; skill-buff debug lines remain owned by
-  `AgentBotCombatReportRuntime`.
+  `AgentCombatReportRuntime`.
 - Support buff SPECIAL_MOVE dispatch now lives in
   `AgentSupportSpecialMoveExecutor`; `BotCombatManager` calls the Agent-owned
   executor while preserving the same packet builder, timestamp, packet handler
   lookup, validation, and dispatch flow.
-- Attack-facing memory now lives in `AgentBotCombatFacingRuntime`;
+- Attack-facing memory now lives in `AgentCombatFacingRuntime`;
   `BotCombatManager` calls the Agent-owned runtime while preserving the same
   attack-packet stance conversion, facing direction update, and character-state
   sync.
 - Attack/move action-lock countdown routing now lives in
-  `AgentBotCombatActionLockRuntime`; BotManager calls the Agent-owned runtime
+  `AgentCombatActionLockRuntime`; BotManager calls the Agent-owned runtime
   while preserving the same legacy movement tick-down cadence and attack-before-
   move-window priority.
 - Combat alert stance timing and reset scheduling now live in
-  `AgentBotCombatAlertRuntime`; BotCombatManager preserves the same damage,
+  `AgentCombatAlertRuntime`; BotCombatManager preserves the same damage,
   heal, attack, and support-buff alert triggers through the Agent-owned runtime.
 - Mob-touch sweep bounds, lower-body touch checks, and last-check position
-  memory now live in `AgentBotMobTouchRuntime`; BotCombatManager preserves the
+  memory now live in `AgentMobTouchRuntime`; BotCombatManager preserves the
   same hostile-living-monster filtering and damage application path while
   delegating touch detection to Agent runtime.
 - Combat ammo/MP-potion shortage checks now live in
-  `AgentBotCombatAmmoCheckRuntime`; potion and shop flows call the Agent-owned
+  `AgentCombatAmmoCheckRuntime`; potion and shop flows call the Agent-owned
   runtime while preserving the same ammo thresholds, no-ammo state, follow-owner
   fallback, and map-chat replies.
 - Combat debug-stat report assembly now lives in
-  `AgentBotCombatReportRuntime`; `BotCombatManager.describeDebugStats` is a
+  `AgentCombatReportRuntime`; `BotCombatManager.describeDebugStats` is a
   temporary compatibility delegate while the Agent reporting runtime preserves
   the same target lookup, attack route, speed, cooldown, tick, and AI cadence
   output.
 - Combat debug-stat target search and attack-plan lookup now call
-  `AgentBotCombatTargetRuntime` and `AgentBotCombatPlanRuntime` directly from
-  `AgentBotCombatReportRuntime`; the report path no longer calls back through
+  `AgentCombatTargetRuntime` and `AgentCombatPlanRuntime` directly from
+  `AgentCombatReportRuntime`; the report path no longer calls back through
   `BotCombatManager.findGrindTarget` or `BotCombatManager.planAttack` while
   preserving the same shared combat config object and report output.
 - Combat support-buff tick orchestration now lives in
-  `AgentBotCombatBuffRuntime`; `BotCombatManager.tickBuffs` is a temporary
+  `AgentCombatBuffRuntime`; `BotCombatManager.tickBuffs` is a temporary
   compatibility delegate while the Agent runtime preserves the same buff-enable
   gates, living-mob preflight, party-support checks, SPECIAL_MOVE dispatch,
   cooldown windows, and debug summaries.
 - Combat skill-cache rebuild orchestration now lives in
-  `AgentBotCombatSkillCacheRuntime`; `BotCombatManager.rebuildSkillCacheIfNeeded`
+  `AgentCombatSkillCacheRuntime`; `BotCombatManager.rebuildSkillCacheIfNeeded`
   is a temporary compatibility delegate while the Agent runtime preserves the
   same skill signature guard, attack/AoE/heal/summon/support-buff bucket
   selection, best single-target skill ordering, and support-buff next-tick
   initialization.
 - Combat support-heal orchestration now lives in
-  `AgentBotCombatHealRuntime`; `BotCombatManager.tickSupportHealing` is a
+  `AgentCombatHealRuntime`; `BotCombatManager.tickSupportHealing` is a
   temporary compatibility delegate while the Agent runtime preserves the same
   heal-skill gate, HP/undead target decision, jump-heal movement, Heal attack
   packet construction, cooldown, move-window, alert, and movement-broadcast
@@ -3236,22 +3241,22 @@ Recent reconstruction notes:
   `AgentCombatActionStateRuntime`; the damage/death path calls the Agent
   helper while preserving the same grind target, attack cooldown, move window,
   navigation state, and movement broadcast invalidation reset.
-- Combat death-state entry now lives in `AgentBotCombatDeathRuntime`;
+- Combat death-state entry now lives in `AgentCombatDeathRuntime`;
   `BotCombatManager.enterDeadState` is a temporary compatibility delegate while
   the Agent runtime preserves action-state clearing, physics dead stance sync,
   movement broadcast, dead-window timing, and optional death dialogue.
 - Combat mob/fall damage application now lives in
-  `AgentBotCombatDamageRuntime`; `BotCombatManager.applyMobHit` and
+  `AgentCombatDamageRuntime`; `BotCombatManager.applyMobHit` and
   `BotCombatManager.applyFallDamage` are temporary compatibility delegates while
   the Agent runtime preserves DAMAGE_PLAYER packet fields, HP/autopot mutation,
   mob-hit cooldown, alert stance, fatal-death routing, stance-buff knockback
   gating, and air/ground knockback physics dispatch.
-- Combat mob-touch polling now lives in `AgentBotCombatDamageRuntime`;
+- Combat mob-touch polling now lives in `AgentCombatDamageRuntime`;
   `BotCombatManager.tickMobDamage` is a temporary compatibility delegate while
   the Agent runtime preserves mob-hit cooldown countdown, hostile-only contact
   filtering, client-style touch sweep checks, first-hit return behavior, and
   last touch-check position memory.
-- Combat attack execution now lives in `AgentBotCombatAttackRuntime`;
+- Combat attack execution now lives in `AgentCombatAttackRuntime`;
   `BotCombatManager.attackMonster` is a temporary compatibility delegate while
   the Agent runtime preserves attack readiness gates, AttackInfo packet fields,
   shared damage profile/target construction, route dispatch, attack cooldown,
@@ -3267,18 +3272,18 @@ Recent reconstruction notes:
   strike-point AoE primary correction, hitbox calculation, target collection,
   Dragon Roar support safety, packet field selection, timing, cooldown, and
   damage weapon type resolution.
-- Attack-plan orchestration now lives in `AgentBotCombatPlanRuntime`;
+- Attack-plan orchestration now lives in `AgentCombatPlanRuntime`;
   `BotCombatManager.planAttack` is a temporary compatibility adapter while the
   Agent runtime preserves cached skill candidate ordering, basic attack fallback,
   best-plan scoring, and the existing `combat-plan` performance metric.
-- Combat ground foothold lookup now lives in `AgentBotCombatGroundRuntime`;
+- Combat ground foothold lookup now lives in `AgentCombatGroundRuntime`;
   BotCombatManager no longer owns the null guards or physics-engine bridge used
   by grind, patrol, follow, and local target scoring.
-- AoE repositioning now lives in `AgentBotCombatAoeRepositionRuntime`;
+- AoE repositioning now lives in `AgentCombatAoeRepositionRuntime`;
   `BotCombatManager.aoeRepositionTarget` is a temporary compatibility delegate
   while Agent-owned logic preserves the enable gate, cluster geometry, shifted
   hitbox scoring, full-HP kill priority, DPS threshold, and debug log payload.
-- Combat target search now lives in `AgentBotCombatTargetRuntime`;
+- Combat target search now lives in `AgentCombatTargetRuntime`;
   `BotCombatManager.findGrindTarget`, `findPatrolTarget`,
   `findFollowAttackTarget`, and `isReachableGrindTarget` are temporary
   compatibility delegates while Agent-owned logic preserves candidate ranges,
@@ -3286,8 +3291,8 @@ Recent reconstruction notes:
   immediate projectile reach, sibling occupancy penalty, graph fallback, and the
   existing `combat-target-search` performance metric.
 - BotManager grind, local-opportunity, priority-ranged, and AoE reposition paths
-  now call `AgentBotCombatPlanRuntime`, `AgentBotCombatAttackRuntime`,
-  `AgentBotCombatTargetRuntime`, and `AgentBotCombatAoeRepositionRuntime`
+  now call `AgentCombatPlanRuntime`, `AgentCombatAttackRuntime`,
+  `AgentCombatTargetRuntime`, and `AgentCombatAoeRepositionRuntime`
   directly for plan/target/reposition/attack execution. `BotCombatManager`
   remains a temporary compatibility facade for older callers and tests, while
   the main tick path preserves the same config object, target ordering, attack
@@ -3303,22 +3308,22 @@ Recent reconstruction notes:
   metric labels, cooldown/death gates, movement tick-down callback, and shared
   config object are unchanged.
 - BotPhysicsEngine landing fall-damage dispatch now calls
-  `AgentBotCombatDamageRuntime.applyFallDamage` directly. The same
+  `AgentCombatDamageRuntime.applyFallDamage` directly. The same
   peak-to-landing fall distance, threshold behavior, packet side effects, and
   shared combat config are preserved.
 - Skill-cache focused combat tests now call
-  `AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly instead
+  `AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly instead
   of the temporary `BotCombatManager` compatibility delegate. The covered cache
   signature, attack/AOE/heal/support bucket, and rebuild behavior are unchanged.
 - Combat planning, target-search, and AoE-reposition focused tests now call
-  `AgentBotCombatPlanRuntime`, `AgentBotCombatTargetRuntime`, and
-  `AgentBotCombatAoeRepositionRuntime` directly with `AgentAttackPlan` and
+  `AgentCombatPlanRuntime`, `AgentCombatTargetRuntime`, and
+  `AgentCombatAoeRepositionRuntime` directly with `AgentAttackPlan` and
   `AgentCombatConfig.cfg`. The temporary `BotCombatManager.AttackPlan`,
   `planAttack`, `attackMonster`, target-search, reachable-target, and
   AoE-reposition compatibility delegates have been removed because production
   and focused test callers no longer need them.
 - The remaining `BotCombatManager` compatibility facade has been removed after
-  mob-hit tests moved to `AgentBotCombatDamageRuntime` and stale source/test
+  mob-hit tests moved to `AgentCombatDamageRuntime` and stale source/test
   comments stopped referring to the deleted class. Combat behavior remains
   owned by Agent combat runtimes; the legacy `BotCombatManagerTest` class name
   is retained only as the historical focused combat parity suite.

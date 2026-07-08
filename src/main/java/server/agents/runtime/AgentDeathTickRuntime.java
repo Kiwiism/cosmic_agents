@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.integration.AgentBotCombatDeathRuntime;
+import server.agents.integration.AgentCombatDeathRuntime;
 import server.agents.integration.AgentDeathStateRuntime;
 
 import java.util.function.BiConsumer;
@@ -21,7 +21,7 @@ public final class AgentDeathTickRuntime {
                 entry,
                 agent,
                 () -> AgentDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
-                (deadEntry, deadAgent) -> AgentBotCombatDeathRuntime.enterDeadState(
+                (deadEntry, deadAgent) -> AgentCombatDeathRuntime.enterDeadState(
                         deadEntry, deadAgent, false, AgentCombatConfig.cfg),
                 () -> AgentRespawnRuntime.respawnNearLeader(entry, agent, leader),
                 System::currentTimeMillis);

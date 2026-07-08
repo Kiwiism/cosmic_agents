@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentClimbStateRuntime;
-import server.agents.integration.AgentBotCombatDamageRuntime;
+import server.agents.integration.AgentCombatDamageRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -95,7 +95,7 @@ public final class AgentAirbornePhysicsService {
                 0);
         AgentMovementPoseService.syncCharacterState(entry);
 
-        AgentBotCombatDamageRuntime.applyFallDamage(entry, agent, (float) fallDistance, AgentCombatConfig.cfg);
+        AgentCombatDamageRuntime.applyFallDamage(entry, agent, (float) fallDistance, AgentCombatConfig.cfg);
         AgentMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 

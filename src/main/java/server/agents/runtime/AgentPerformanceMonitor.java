@@ -67,12 +67,12 @@ public final class AgentPerformanceMonitor {
         notes.put("combat-target-search", "monster scan, distance filtering, foothold lookup, and candidate sorting");
         notes.put("combat-plan", "skill/basic attack route selection and hitbox construction");
         // Common tick systems (run every tick, instrumented through AgentCommonTickRuntime)
-        notes.put("common-mob-damage", "AgentBotCombatDamageRuntime.tickMobDamage (mob damage decay timers)");
+        notes.put("common-mob-damage", "AgentCombatDamageRuntime.tickMobDamage (mob damage decay timers)");
         notes.put("common-release-mob", "AgentMonsterControlService.releaseControlledMonsters (release stale controlled mobs)");
         notes.put("common-passive-loot", "AgentPassiveLootRuntimeService.tickPassiveLoot (scan drops + pickup + autoEquip)");
         notes.put("common-potion-check", "AgentPotionService.tickPotionCheck (HP/MP potion request)");
         notes.put("potion-autopot", "AgentPotionService.setupAutopotForBot (scan USE bag + choose HP/MP autopot bindings)");
-        notes.put("potion-ammo-check", "AgentBotCombatAmmoCheckRuntime.tickAmmoCheck invoked from potion check");
+        notes.put("potion-ammo-check", "AgentCombatAmmoCheckRuntime.tickAmmoCheck invoked from potion check");
         notes.put("potion-ammo-share", "AgentAmmoService.tickAmmoShareCheck invoked from potion check");
         notes.put("potion-count", "AgentPotionService.countPotions for the active bot");
         notes.put("potion-recovery-scan", "AgentPotionService.recoveryPotions (USE inventory scan + recovery classification)");
@@ -89,10 +89,10 @@ public final class AgentPerformanceMonitor {
         notes.put("common-manual-trade", "AgentManualTradeRuntimeService.tickManualTrade (manual agent/player trade)");
         notes.put("common-pq-hooks", "AgentPartyQuestHooks.tick (KPQ / OPQ / LPQ state machines)");
         notes.put("common-script-tasks", "tickScriptTasks (AgentScriptRunner)");
-        notes.put("common-action-lock", "AgentBotCombatActionLockRuntime.tickActionLock (attack/move cooldown decay)");
-        notes.put("common-skill-cache", "AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded");
-        notes.put("common-support-heal", "AgentBotCombatHealRuntime.tickSupportHealing (cleric heal)");
-        notes.put("common-combat-buffs", "AgentBotCombatBuffRuntime.tickBuffs (player skill rebuff)");
+        notes.put("common-action-lock", "AgentCombatActionLockRuntime.tickActionLock (attack/move cooldown decay)");
+        notes.put("common-skill-cache", "AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded");
+        notes.put("common-support-heal", "AgentCombatHealRuntime.tickSupportHealing (cleric heal)");
+        notes.put("common-combat-buffs", "AgentCombatBuffRuntime.tickBuffs (player skill rebuff)");
         notes.put("common-buff-pots", "AgentBuffService.tick (consumable buff pots)");
         // Dispatch buckets
         notes.put("tick-idle", "tickIdleEntry physics-only idle dispatch");

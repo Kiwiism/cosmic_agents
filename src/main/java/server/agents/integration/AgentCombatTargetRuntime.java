@@ -25,10 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public final class AgentBotCombatTargetRuntime {
+public final class AgentCombatTargetRuntime {
     private static final long UNREACHABLE_GRAPH_COST = Long.MAX_VALUE / 4;
 
-    private AgentBotCombatTargetRuntime() {
+    private AgentCombatTargetRuntime() {
     }
 
     public static Monster findGrindTarget(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
@@ -36,7 +36,7 @@ public final class AgentBotCombatTargetRuntime {
         try {
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
-            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
+            Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) return null;
 
@@ -60,7 +60,7 @@ public final class AgentBotCombatTargetRuntime {
             }
             Point botPos = bot.getPosition();
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
-            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
+            Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
             if (candidates.isEmpty()) {
                 return null;
@@ -115,7 +115,7 @@ public final class AgentBotCombatTargetRuntime {
                 return null;
             }
 
-            Foothold botFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(botPos, bot);
+            Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             GrindGraphContext graphContext = GrindGraphContext.resolve(entry, bot, botPos);
             List<AgentScoredGrindTarget> localTargets = AgentCombatGrindTargetPolicy.scoreFollowLocalTargets(
                     candidates,
@@ -195,7 +195,7 @@ public final class AgentBotCombatTargetRuntime {
                                                Monster target) {
         Foothold targetFoothold = botFoothold == null
                 ? null
-                : AgentBotCombatGroundRuntime.findGroundFoothold(target.getPosition(), bot);
+                : AgentCombatGroundRuntime.findGroundFoothold(target.getPosition(), bot);
         return AgentCombatGrindTargetPolicy.isLocalCombatTarget(
                 botFoothold,
                 targetFoothold,
@@ -274,7 +274,7 @@ public final class AgentBotCombatTargetRuntime {
     private static long grindTargetScore(Character bot, Point botPos, Foothold botFoothold, Monster target,
                                          AgentCombatConfig.Config config) {
         Point targetPos = target.getPosition();
-        Foothold targetFoothold = AgentBotCombatGroundRuntime.findGroundFoothold(targetPos, bot);
+        Foothold targetFoothold = AgentCombatGroundRuntime.findGroundFoothold(targetPos, bot);
 
         boolean sameFoothold = botFoothold != null && targetFoothold != null
                 && botFoothold.getId() == targetFoothold.getId();

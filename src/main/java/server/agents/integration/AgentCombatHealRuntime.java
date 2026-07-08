@@ -22,8 +22,8 @@ import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.List;
 
-public final class AgentBotCombatHealRuntime {
-    private AgentBotCombatHealRuntime() {
+public final class AgentCombatHealRuntime {
+    private AgentCombatHealRuntime() {
     }
 
     public static boolean tickSupportHealing(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
@@ -90,7 +90,7 @@ public final class AgentBotCombatHealRuntime {
         }
 
         sendHealAttack(healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
-        AgentBotCombatAlertRuntime.markAlerted(entry);
+        AgentCombatAlertRuntime.markAlerted(entry);
         AgentCombatCooldownStateRuntime.maxMoveWindow(entry, config.HEAL_MOVE_WINDOW_MS);
         if (!jumpHealing) {
             AgentMovementStateRuntime.clearMoveDirection(entry);

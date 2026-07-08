@@ -14,8 +14,8 @@ import server.life.Monster;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class AgentBotCombatPlanRuntime {
-    private AgentBotCombatPlanRuntime() {
+public final class AgentCombatPlanRuntime {
+    private AgentCombatPlanRuntime() {
     }
 
     public static AgentAttackPlan planAttack(AgentRuntimeEntry entry, Character bot, Monster target,

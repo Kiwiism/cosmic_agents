@@ -52,6 +52,10 @@ Recent map updates:
   `AgentCommandTargetResolver` and replaced bot-named parser entry points with
   Agent-named equivalents. Transfer command parsing and targeted Agent command
   matching are unchanged.
+- The final combat semantic rename slice renamed combat and mob-touch runtime
+  adapters from `AgentBot*` to neutral `Agent*` names. Attack planning, packet
+  route selection, hitbox handling, ammo gates, damage execution, combat
+  reports, support behavior, and mob-touch handling are unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -310,12 +314,12 @@ Recent map updates:
   `AgentPotionDonorPlan<E extends AgentRuntimeHandle>` in the supplies
   capability. Existing potion donor selection and tests now use the Agent-owned
   value object while `AgentPotionService` still adapts with `BotEntry`.
-- `AgentBotCombatHealRuntime.tickSupportHealing` now accepts
+- `AgentCombatHealRuntime.tickSupportHealing` now accepts
   `AgentRuntimeEntry`. Support-heal readiness, heal/undead target selection,
   jump-heal positioning, cooldown application, attack packet emission, and
   movement broadcast are unchanged while sibling lookup remains behind the
   temporary session lifecycle bridge.
-- `AgentBotCombatBuffRuntime.tickBuffs` now accepts `AgentRuntimeEntry`.
+- `AgentCombatBuffRuntime.tickBuffs` now accepts `AgentRuntimeEntry`.
   Skill-buff readiness, living-mob checks, support rebuff detection, support
   skill execution, cooldown updates, alert marking, and legacy debug summaries
   are unchanged while common tick no longer casts for this buff callback.
@@ -328,12 +332,12 @@ Recent map updates:
   action-lock and combat skill-cache callbacks directly. Cooldown decay,
   skill-cache signature checks, cache reset, attack/AOE/heal/summon/support
   bucket selection, and rebuff scheduling are unchanged.
-- `AgentBotCombatDamageRuntime` now accepts `AgentRuntimeEntry` for mob-hit and
+- `AgentCombatDamageRuntime` now accepts `AgentRuntimeEntry` for mob-hit and
   mob-damage ticking. Touch-damage rolling, sweep detection, damage broadcast,
   HP/MP mutation, mob-hit cooldowns, alert marking, death entry, knockback
   gating, and movement broadcast are unchanged; common tick also invokes the
   existing Agent-entry death callbacks directly.
-- `AgentBotCombatTargetRuntime` and `AgentBotCombatReportRuntime` now accept
+- `AgentCombatTargetRuntime` and `AgentCombatReportRuntime` now accept
   `AgentRuntimeEntry`. Grind, patrol, follow-attack, and reachable-target
   selection, graph scoring, region occupancy penalties, debug stats, consumable
   buff debug lines, and skill-buff debug lines are unchanged. Grind-mode target
@@ -566,7 +570,7 @@ Recent map updates:
   keeps the temporary `BotEntry` callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
-  runtimes directly through `AgentBotCombatRuntime`.
+  runtimes directly through `AgentCombatRuntime`.
 - Shop reply and scheduler pass-through bridges were removed. Shop owner/map
   replies and delayed shop callbacks now call the existing Agent reply and
   scheduler runtimes directly through `AgentShopRuntime`.
@@ -2038,8 +2042,8 @@ Recent map updates:
   temporary callbacks for delayed owner-invite accept, one-time greeting,
   completion, and post-trade auto-equip refill.
 - `BotCombatManager` debug-stat target search and attack-plan lookup no longer
-  sit on the report path. `AgentBotCombatReportRuntime` now calls
-  `AgentBotCombatTargetRuntime` and `AgentBotCombatPlanRuntime` directly, while
+  sit on the report path. `AgentCombatReportRuntime` now calls
+  `AgentCombatTargetRuntime` and `AgentCombatPlanRuntime` directly, while
   `BotCombatManager.describeDebugStats` remains only a temporary compatibility
   delegate.
 - `BotManager` grind/local-opportunity combat now uses Agent combat plan,
@@ -2054,10 +2058,10 @@ Recent map updates:
   mob damage, death-state entry, skill-cache rebuild, support healing, and
   combat buff ticks.
 - BotPhysicsEngine fall-damage dispatch now calls
-  `AgentBotCombatDamageRuntime.applyFallDamage` directly instead of the
+  `AgentCombatDamageRuntime.applyFallDamage` directly instead of the
   temporary `BotCombatManager` facade.
 - Combat skill-cache tests now exercise
-  `AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly, reducing
+  `AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded` directly, reducing
   remaining `BotCombatManager` usage to compatibility-specific plan, target,
   damage, and config checks.
 - Combat plan, target-search, and AoE-reposition tests now exercise Agent-owned
@@ -2181,7 +2185,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotBuffManager.java` | `server.agents.capabilities.combat.AgentBuffService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotBuildManager.java` | `server.agents.capabilities.build.AgentBuildService` and `server.agents.capabilities.build.profiles.*` | `MIGRATED_TO_AGENT`; AP/SP/job prompt and assignment orchestration moved unchanged, with later internal splitting still recommended |
 | `src/main/java/server/bots/BotChatManager.java` | `server.agents.capabilities.dialogue.AgentDialogueCatalog`, `server.agents.capabilities.dialogue.AgentChatRuntime`, `server.agents.capabilities.dialogue.AgentChatCommandClassifier`, `server.agents.capabilities.dialogue.AgentTradeDialogueClassifier`, `server.agents.capabilities.dialogue.AgentUtilityDialogueClassifier`, `server.agents.capabilities.dialogue.AgentEquipmentDialogueClassifier`, `server.agents.capabilities.dialogue.AgentSocialDialogueClassifier`, `server.agents.capabilities.dialogue.AgentBuildDialogueClassifier`, `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`, `server.agents.commands.AgentReplyQueue`, `server.agents.events` | `MIGRATED_TO_AGENT`; source file deleted after named random reply pools, reply queue, movement/follow/fidget, supply-request/direct supply, query/toggle, support/heal/buff toggle, logout/relog/away session request and confirmation normalization, report/debug, trade/drop/item and pending drop-choice, trade-invite/shop/maker utility, equipment/autoequip, greeting/fame, build/job/AP/SP classification, skill-tree choice resolution, job advancement resolution, report/AP-build/job-display/skill-tree/learned-skill formatting, upgrade-request classification, handled-state, and top-level chat orchestration moved to Agent-owned modules. Owner-activity, offline-return, AFK-check, airshow-active, manager-status offline-return, manager/movement status checks, movement active-mode preparation, social/fame callbacks, status-check, gear-suggestion, and recommended-gear report state bridge methods now accept `AgentRuntimeEntry`; the chat-status facade no longer imports `BotEntry`, while build/status active-mode backends retain temporary casts until build/offer/supply calls are widened |
-| `src/main/java/server/bots/BotCombatManager.java` | `server.agents.capabilities.combat`, `server.agents.capabilities.dialogue`, and `server.agents.integration.AgentBotCombatReportRuntime` | `MIGRATED_TO_AGENT`; source file deleted after config, combat planning, target search, AoE reposition, damage/death, support, skill-cache, debug-stat, packet execution, and combat reply behavior moved to Agent-owned modules. Combat action-lock ticking, death-state entry, attack-facing memory, skill-cache rebuild, attack planning, and ammo-check runtime now accept `AgentRuntimeEntry` |
+| `src/main/java/server/bots/BotCombatManager.java` | `server.agents.capabilities.combat`, `server.agents.capabilities.dialogue`, and `server.agents.integration.AgentCombatReportRuntime` | `MIGRATED_TO_AGENT`; source file deleted after config, combat planning, target search, AoE reposition, damage/death, support, skill-cache, debug-stat, packet execution, and combat reply behavior moved to Agent-owned modules. Combat action-lock ticking, death-state entry, attack-facing memory, skill-cache rebuild, attack planning, and ammo-check runtime now accept `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotCommandParser.java` | `server.agents.integration.AgentCommandTargetResolver` and `server.agents.commands.AgentCommandParser` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotEntry.java` | `server.agents.runtime.AgentSession` and capability state objects | `SPLIT_TO_MULTIPLE_AGENT_MODULES`; message queue state now lives in `AgentMessageQueueState`, scroll-reaction state now lives in `AgentScrollReactionState`, airshow session state now lives in `AgentAirshowState`, formation offset state now lives in `AgentFormationOffsetState`, pending chat action state now lives in `AgentPendingActionState`, pending loot-offer state now lives in `AgentPendingLootOfferState`, trade retry state now lives in `AgentTradeRetryState`, manual trade invite timing/reference state now lives in `AgentManualTradeState`, pending trade sequence state now lives in `AgentPendingTradeSequenceState` with direct `BotEntry` wrappers removed, owner-given trade item tracking now lives in `AgentOwnerGivenTradeItemState`, farm/sentry anchor state now lives in `AgentFarmAnchorState`, patrol region/wander state now lives in `AgentPatrolState`, active grind target/search cadence state now lives in `AgentGrindTargetState`, grind loot target/retry suppression state now lives in `AgentGrindLootState`, explicit move-here/script/fidget movement target state now lives in `AgentMoveTargetState`, grind no-target wander direction state now lives in `AgentGrindWanderState`, ranged-retreat hold state now lives in `AgentRetreatHoldState` with direct `BotEntry` wrappers removed, surround-breakout commitment state now lives in `AgentBreakoutState` with direct `BotEntry` wrappers removed, AoE reposition commitment state now lives in `AgentAoeRepositionState` with direct `BotEntry` wrappers removed, degenerate close-range attack latch state now lives in `AgentDegenerateAttackState` with direct `BotEntry` wrappers removed, combat skill cache state now lives in `AgentCombatSkillCacheState` with direct `BotEntry` wrappers removed, combat buff/support automation state now lives in `AgentCombatBuffState` with direct `BotEntry` wrappers removed, upgrade-offer/proactive gear suggestion and pending gear-prompt reservation state now lives in `AgentUpgradeOfferState`, inventory cooldown state now lives in `AgentInventoryCooldownState` with direct warning-cooldown wrappers removed, potion supply state now lives in `AgentPotionSupplyState` with direct timer wrappers removed, ammo supply state now lives in `AgentAmmoSupplyState` with direct warning/no-ammo wrappers removed, build prompt/progression state now lives in `AgentBuildState`, portal cooldown state now lives in `AgentPortalCooldownState`, combat cooldown state now lives in `AgentCombatCooldownState`, mob-touch sweep state now lives in `AgentMobTouchState` with direct `BotEntry` wrappers removed, death/respawn window state now lives in `AgentDeathState`, shop visit lifecycle state now lives in `AgentShopState`, buff automation/debug state now lives in `AgentBuffState`, navigation debug/path-log state now lives in `AgentNavigationDebugState`, navigation target waypoint state now lives in `AgentNavigationTargetState`, active navigation edge/jump-launch cache state now lives in `AgentNavigationEdgeState`, leader/owner motion observation state now lives in `AgentOwnerMotionState`, tick/heartbeat/follow-idle metadata now lives in `AgentTickState`, tick failure window metadata now lives in `AgentTickFailureState`, stuck/unstuck movement metadata now lives in `AgentMovementStuckState`, movement broadcast suppression cache state now lives in `AgentMovementBroadcastState`, last-ground foothold cache state now lives in `AgentMovementPhysicsCacheState`, script task queue state now lives in `AgentScriptTaskQueueState`, map tracking state now lives in `AgentMapTrackingState`, leader activity/safety metadata now lives in `AgentLeaderActivityState`, queued message type is Agent-owned, continuous ground-travel snapshots now use `AgentGroundTravelState`, swim mode/input/cooldown state now lives in `AgentSwimIntentState`, down-jump pending/grace-period state now lives in `AgentDownJumpState`, airborne horizontal steering state now lives in `AgentAirborneSteeringState`, movement input/packet-pose state now lives in `AgentMovementInputState`, climb/rope attachment, intent, cooldown, blocked-grab, and queued-entry state now lives in `AgentClimbState`, movement physics scalar state now lives in `AgentMovementPhysicsState`, fidget runtime state now lives in `AgentFidgetState`, tick cadence state now lives in `AgentTickState`, reply-channel state now lives in `AgentReplyChannelState`, KPQ runtime state now lives in `AgentKpqState`, script runtime progress state now lives in `AgentScriptRuntimeState`, follow/grind mode state now lives in `AgentModeState`, and movement profile storage now lives in `AgentMovementProfileState` |
 | `src/main/java/server/bots/BotEquipManager.java` | `server.agents.capabilities.equipment.AgentEquipmentService` and equipment capability classes | `MIGRATED_TO_AGENT`; production callers now enter through `AgentEquipmentService`. Map-damage benchmark snapshot/selection lives in `AgentMapDamageProfile`, production weapon/job compatibility plus self-reserve weapon track labels live in `AgentWeaponCompatibilityPolicy`, slot alias resolution, ring slot detection, DP slot ordering, and display labels live in `AgentEquipmentSlotResolver`, useful-stat and defense-adjusted damage scoring lives in `AgentEquipmentScoringPolicy`, auto-equip duplicate-trigger state lives in `AgentAutoEquipThrottle`, auto-equip execution and debug branch reporting live in `AgentEquipmentAutoEquipService`, auto-equip debug report formatting lives in `AgentEquipmentDebugReportFormatter`, recommendation result data uses `AgentEquipRecommendation`, optimizer result data uses `AgentEquipmentOptimizerResult`, fixed-weapon DP result/score data uses `AgentEquipmentDpResult` and `AgentEquipmentScore`, optimizer stat snapshot data uses `AgentEquipmentStatSnapshot`, optimizer metadata/requirement hooks use `AgentEquipmentOptimizerHooks`, weapon-branch debug score breakdown data uses `AgentWeaponScoreBreakdown`, recommendation candidate eligibility lives in `AgentEquipmentRecommendationPolicy`, recommendation filtering/result construction/summary formatting lives in `AgentEquipmentRecommendationService`, unequip command execution lives in `AgentEquipmentUnequipService`, and owned/incoming equipment reserve, requirement-gate, requirement-comparison, and future-track policy lives in `AgentEquipmentReservePolicy`; production bot file deleted after compile and focused equipment tests passed |
@@ -2266,7 +2270,7 @@ Recent map updates:
 | `src/main/java/server/bots/combat/BotDefenseDataProvider.java` | `server.agents.capabilities.combat.data.AgentDefenseDataProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotMobHitboxProvider.java` | `server.agents.capabilities.combat.data.AgentMobHitboxProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotWzXml.java` | `server.agents.capabilities.combat.data.AgentWzXml` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.runtime.AgentLocalOpportunityAttackRuntime`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.integration.AgentBotCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
+| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.runtime.AgentLocalOpportunityAttackRuntime`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.integration.AgentCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
 | `src/main/java/server/bots/BotManager.java#grind-combat-helpers` | `server.agents.runtime.AgentGrindCombatRuntime` | `MIGRATED_TO_AGENT`; AoE reposition and priority ranged target callbacks now accept `AgentRuntimeEntry` while preserving AoE anchor and ranged-threat selection behavior |
 | `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotLlmReplyManager.java` | `server.agents.capabilities.dialogue.llm.AgentLlmReplyService` | `MIGRATED_TO_AGENT`; LLM reply bridge now accepts `AgentRuntimeEntry` |

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
+import server.agents.integration.AgentCombatAoeRepositionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -35,9 +35,9 @@ class AgentGrindCombatRuntimeTest {
         Point agentPosition = new Point(10, 20);
         Point anchor = new Point(30, 20);
 
-        try (MockedStatic<AgentBotCombatAoeRepositionRuntime> planner =
-                     mockStatic(AgentBotCombatAoeRepositionRuntime.class)) {
-            planner.when(() -> AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
+        try (MockedStatic<AgentCombatAoeRepositionRuntime> planner =
+                     mockStatic(AgentCombatAoeRepositionRuntime.class)) {
+            planner.when(() -> AgentCombatAoeRepositionRuntime.aoeRepositionTarget(
                             entry, agent, target, attackPlan, AgentCombatConfig.cfg))
                     .thenReturn(anchor);
 

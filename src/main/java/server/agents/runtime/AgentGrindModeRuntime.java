@@ -16,8 +16,8 @@ import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
 import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
-import server.agents.integration.AgentBotCombatAttackRuntime;
-import server.agents.integration.AgentBotCombatTargetRuntime;
+import server.agents.integration.AgentCombatAttackRuntime;
+import server.agents.integration.AgentCombatTargetRuntime;
 
 import java.awt.Point;
 
@@ -67,9 +67,9 @@ public final class AgentGrindModeRuntime {
 
     private static AgentGrindTargetSearchService.SearchHooks grindTargetSearchHooks() {
         return new AgentGrindTargetSearchService.SearchHooks(
-                (entry, agent) -> AgentBotCombatTargetRuntime.findPatrolTarget(
+                (entry, agent) -> AgentCombatTargetRuntime.findPatrolTarget(
                         entry, agent, AgentCombatConfig.cfg),
-                (entry, agent) -> AgentBotCombatTargetRuntime.findGrindTarget(
+                (entry, agent) -> AgentCombatTargetRuntime.findGrindTarget(
                         entry, agent, AgentCombatConfig.cfg),
                 AgentCombatConfig.cfg.GRIND_RETARGET_INTERVAL_MS);
     }
@@ -108,7 +108,7 @@ public final class AgentGrindModeRuntime {
                                 entry, agent, target, attackPlan, agentPosition),
                 AgentCombatRangePolicy::canUseAttackPlanNow,
                 (entry, agent, attackPlan) ->
-                        AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan),
+                        AgentCombatAttackRuntime.attackMonster(entry, agent, attackPlan),
                 AgentCombatAmmoCounter::isRangedAmmoWeapon,
                 AgentCombatRangePolicy::isTargetJumpable,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,

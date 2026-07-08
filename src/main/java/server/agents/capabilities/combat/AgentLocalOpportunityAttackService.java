@@ -4,10 +4,10 @@ import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.integration.AgentAmmoStateRuntime;
-import server.agents.integration.AgentBotCombatAttackRuntime;
+import server.agents.integration.AgentCombatAttackRuntime;
 import server.agents.integration.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatTargetRuntime;
+import server.agents.integration.AgentCombatPlanRuntime;
+import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -61,7 +61,7 @@ public final class AgentLocalOpportunityAttackService {
             return new Result(false, targetPos);
         }
 
-        Monster localTarget = AgentBotCombatTargetRuntime.findFollowAttackTarget(entry, agent, AgentCombatConfig.cfg);
+        Monster localTarget = AgentCombatTargetRuntime.findFollowAttackTarget(entry, agent, AgentCombatConfig.cfg);
         if (localTarget == null) {
             return new Result(false, targetPos);
         }
@@ -78,7 +78,7 @@ public final class AgentLocalOpportunityAttackService {
                     false, hooks.grindNavigationTargetSelector().select(entry, agentPos, localTargetPos));
         }
 
-        AgentAttackPlan attackPlan = AgentBotCombatPlanRuntime.planAttack(entry, agent, localTarget, AgentCombatConfig.cfg);
+        AgentAttackPlan attackPlan = AgentCombatPlanRuntime.planAttack(entry, agent, localTarget, AgentCombatConfig.cfg);
         if (attackPlan == null) {
             return new Result(false, targetPos);
         }
@@ -86,7 +86,7 @@ public final class AgentLocalOpportunityAttackService {
             if (AgentCombatRangePolicy.canUseAttackPlanNow(
                     AgentMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
                     && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, agent, localTarget)) {
-                AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
+                AgentCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                         && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
                     AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
@@ -110,7 +110,7 @@ public final class AgentLocalOpportunityAttackService {
 
         if (!AgentCombatCooldownStateRuntime.hasMoveWindow(entry)
                 && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, agent, localTarget)) {
-            AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
+            AgentCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
             hooks.localAttackMoveWindowSetter().set(entry, agentPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                     && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {

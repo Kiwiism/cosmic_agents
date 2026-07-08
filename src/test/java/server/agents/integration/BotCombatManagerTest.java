@@ -59,24 +59,24 @@ import org.mockito.Mockito;
 import org.mockito.ArgumentCaptor;
 import server.StatEffect;
 import server.agents.integration.AgentCombatActionStateRuntime;
-import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
-import server.agents.integration.AgentBotCombatAttackRuntime;
+import server.agents.integration.AgentCombatAoeRepositionRuntime;
+import server.agents.integration.AgentCombatAttackRuntime;
 import server.agents.integration.AgentCombatBuffStateRuntime;
-import server.agents.integration.AgentBotCombatBuffRuntime;
+import server.agents.integration.AgentCombatBuffRuntime;
 import server.agents.integration.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatDamageRuntime;
-import server.agents.integration.AgentBotCombatDeathRuntime;
-import server.agents.integration.AgentBotCombatFacingRuntime;
-import server.agents.integration.AgentBotCombatGroundRuntime;
+import server.agents.integration.AgentCombatDamageRuntime;
+import server.agents.integration.AgentCombatDeathRuntime;
+import server.agents.integration.AgentCombatFacingRuntime;
+import server.agents.integration.AgentCombatGroundRuntime;
 import server.agents.integration.AgentCombatSkillCacheStateRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheRuntime;
-import server.agents.integration.AgentBotCombatHealRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatTargetRuntime;
+import server.agents.integration.AgentCombatSkillCacheRuntime;
+import server.agents.integration.AgentCombatHealRuntime;
+import server.agents.integration.AgentCombatPlanRuntime;
+import server.agents.integration.AgentCombatTargetRuntime;
 import server.agents.integration.AgentDeathStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMobTouchStateRuntime;
-import server.agents.integration.AgentBotMobTouchRuntime;
+import server.agents.integration.AgentMobTouchRuntime;
 import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentSkillBuffDebugStateRuntime;
@@ -211,7 +211,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Warrior.POWER_STRIKE, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(Warrior.SLASH_BLAST, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
@@ -236,7 +236,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(ILWizard.THUNDERBOLT, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
         assertEquals(0, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
@@ -259,7 +259,7 @@ class BotCombatManagerTest {
         when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertFalse(AgentCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(Cleric.MP_EATER));
         assertTrue(AgentCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(Cleric.BLESS));
@@ -287,7 +287,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertTrue(AgentCombatSkillCacheStateRuntime.summonSkillIds(entry).contains(Bowmaster.PHOENIX));
         assertFalse(AgentCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(Bowmaster.PHOENIX));
@@ -313,7 +313,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Magician.MAGIC_CLAW, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -337,7 +337,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Archer.DOUBLE_SHOT, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -361,7 +361,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(Rogue.LUCKY_SEVEN, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
     }
@@ -385,7 +385,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(ILWizard.THUNDERBOLT, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
     }
@@ -414,7 +414,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(0, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(0, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
@@ -436,7 +436,7 @@ class BotCombatManagerTest {
         when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(0, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(0, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));
@@ -503,7 +503,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertTrue(AgentCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(DragonKnight.SPEAR_CRUSHER));
         assertTrue(AgentCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(DragonKnight.SPEAR_DRAGON_FURY));
@@ -539,7 +539,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(0, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertFalse(AgentCombatSkillCacheStateRuntime.attackSkillIds(entry).contains(ILWizard.TELEPORT));
@@ -585,7 +585,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(cheaperAoe.getId())).thenReturn(cheaperAoe);
             skillFactory.when(() -> SkillFactory.getSkill(roar.getId())).thenReturn(roar);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
 
             assertEquals(Warrior.SLASH_BLAST, plan.skillId);
         }
@@ -623,7 +623,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(cheaperAoe.getId())).thenReturn(cheaperAoe);
             skillFactory.when(() -> SkillFactory.getSkill(roar.getId())).thenReturn(roar);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
 
             assertEquals(DragonKnight.DRAGON_ROAR, plan.skillId);
             assertEquals(10, plan.targets.size());
@@ -659,7 +659,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(cheaperAoe.getId())).thenReturn(cheaperAoe);
             skillFactory.when(() -> SkillFactory.getSkill(roar.getId())).thenReturn(roar);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
 
             assertEquals(DragonKnight.DRAGON_ROAR, plan.skillId);
         }
@@ -694,7 +694,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(cheaperAoe.getId())).thenReturn(cheaperAoe);
             skillFactory.when(() -> SkillFactory.getSkill(roar.getId())).thenReturn(roar);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
 
             assertEquals(Warrior.SLASH_BLAST, plan.skillId);
         }
@@ -729,7 +729,7 @@ class BotCombatManagerTest {
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(roar.getId())).thenReturn(roar);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
 
             assertEquals(0, plan.skillId);
         }
@@ -773,7 +773,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
             skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
 
             assertEquals(Warrior.POWER_STRIKE, plan.skillId);
             assertEquals(List.of(primary), plan.targets);
@@ -803,7 +803,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
             skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
 
             assertEquals(Warrior.POWER_STRIKE, plan.skillId);
             assertEquals(List.of(primary), plan.targets);
@@ -839,11 +839,11 @@ class BotCombatManagerTest {
 
             // At the bot's current position the AoE catches only the edge mob, so the single-target
             // skill wins on DPS — this is the fire-now plan that would otherwise trigger immediately.
-            AgentAttackPlan fireNow = AgentBotCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
+            AgentAttackPlan fireNow = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
             assertEquals(Warrior.POWER_STRIKE, fireNow.skillId);
             assertEquals(List.of(primary), fireNow.targets);
 
-            Point reposition = AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg);
+            Point reposition = AgentCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg);
             assertNotNull(reposition, "should defer the single-target shot to step into the cluster");
             assertEquals(200, reposition.x, "should walk to the 3-mob centroid (140+200+260)/3");
         }
@@ -876,8 +876,8 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
             skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
 
-            AgentAttackPlan fireNow = AgentBotCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
-            assertNull(AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
+            AgentAttackPlan fireNow = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
+            assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
         } finally {
             AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = original;
         }
@@ -901,8 +901,8 @@ class BotCombatManagerTest {
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
 
-            AgentAttackPlan fireNow = AgentBotCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
-            assertNull(AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
+            AgentAttackPlan fireNow = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
+            assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
         }
     }
 
@@ -922,7 +922,7 @@ class BotCombatManagerTest {
         AgentAttackPlan aoePlan = new AgentAttackPlan(
                 Warrior.SLASH_BLAST, 1, 1, new Rectangle(20, 170, 160, 60), List.of(primary),
                 AgentAttackRoute.CLOSE, 0, 0, 0, 0, 0, 0, 100, null);
-        assertNull(AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, aoePlan, AgentCombatConfig.cfg));
+        assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, aoePlan, AgentCombatConfig.cfg));
     }
 
     @Test
@@ -948,8 +948,8 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(powerStrike.getId())).thenReturn(powerStrike);
             skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
 
-            AgentAttackPlan fireNow = AgentBotCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
-            assertNull(AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
+            AgentAttackPlan fireNow = AgentCombatPlanRuntime.planAttack(entry, bot, primary, AgentCombatConfig.cfg);
+            assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(entry, bot, primary, fireNow, AgentCombatConfig.cfg));
         }
     }
 
@@ -1068,7 +1068,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(slashBlast.getId())).thenReturn(slashBlast);
             skillFactory.when(() -> SkillFactory.getSkill(roar.getId())).thenReturn(roar);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, mobs.get(0), AgentCombatConfig.cfg);
 
             assertEquals(Warrior.SLASH_BLAST, plan.skillId);
         }
@@ -1102,7 +1102,7 @@ class BotCombatManagerTest {
         try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkill(Cleric.BLESS)).thenReturn(bless);
 
-            AgentBotCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg);
+            AgentCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg);
         }
 
         assertEquals("no skill buff checks yet", AgentSkillBuffDebugStateRuntime.lastActionSummary(entry));
@@ -1117,7 +1117,7 @@ class BotCombatManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentModeStateRuntime.setFollowing(entry, true);
 
-        assertFalse(AgentBotCombatHealRuntime.tickSupportHealing(entry, bot, AgentCombatConfig.cfg));
+        assertFalse(AgentCombatHealRuntime.tickSupportHealing(entry, bot, AgentCombatConfig.cfg));
     }
 
     @Test
@@ -1154,7 +1154,7 @@ class BotCombatManagerTest {
                     any(AgentAttackRoute.class), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)))
                     .thenAnswer(invocation -> null);
 
-            runWithStubbedBotAfter(() -> AgentBotCombatAttackRuntime.attackMonster(entry, bot, plan));
+            runWithStubbedBotAfter(() -> AgentCombatAttackRuntime.attackMonster(entry, bot, plan));
 
             attacks.verify(() -> AgentAttackExecutionProvider.applyAttackRoute(
                     eq(AgentAttackRoute.CLOSE), any(AbstractDealDamageHandler.AttackInfo.class), eq(bot)));
@@ -1228,7 +1228,7 @@ class BotCombatManagerTest {
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg);
 
             assertNotNull(plan);
             assertEquals(0, plan.skillId);
@@ -1241,9 +1241,9 @@ class BotCombatManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(null);
 
-        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), bot));
-        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(null, bot));
-        assertNull(AgentBotCombatGroundRuntime.findGroundFoothold(new Point(100, 200), null));
+        assertNull(AgentCombatGroundRuntime.findGroundFoothold(new Point(100, 200), bot));
+        assertNull(AgentCombatGroundRuntime.findGroundFoothold(null, bot));
+        assertNull(AgentCombatGroundRuntime.findGroundFoothold(new Point(100, 200), null));
     }
 
     @Test
@@ -1259,7 +1259,7 @@ class BotCombatManagerTest {
         boolean original = AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED;
         AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = false;
         try {
-            assertNull(AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
+            assertNull(AgentCombatAoeRepositionRuntime.aoeRepositionTarget(
                     entry, bot, target, fireNow, AgentCombatConfig.cfg));
         } finally {
             AgentCombatConfig.cfg.AOE_REPOSITION_ENABLED = original;
@@ -1272,7 +1272,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         when(map.getAllMonsters()).thenReturn(List.of());
 
-        assertNull(AgentBotCombatTargetRuntime.findGrindTarget(
+        assertNull(AgentCombatTargetRuntime.findGrindTarget(
                 new AgentRuntimeEntry(bot, null, null), bot, AgentCombatConfig.cfg));
     }
 
@@ -1281,7 +1281,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        AgentBotCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
+        AgentCombatDeathRuntime.enterDeadState(entry, bot, false, AgentCombatConfig.cfg);
 
         assertTrue(AgentDeathStateRuntime.deadUntilMs(entry) > System.currentTimeMillis());
     }
@@ -1294,7 +1294,7 @@ class BotCombatManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentMovementStateRuntime.setFacingDirection(entry, 1);
 
-        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
+        runWithStubbedBotAfter(() -> AgentCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertTrue(AgentMovementStateRuntime.inAir(entry));
         assertFalse(AgentClimbStateRuntime.climbing(entry));
@@ -1320,7 +1320,7 @@ class BotCombatManagerTest {
         AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, -4);
         AgentMovementStateRuntime.setFacingDirection(entry, -1);
 
-        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
+        runWithStubbedBotAfter(() -> AgentCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertTrue(AgentMovementStateRuntime.inAir(entry));
         assertTrue(AgentClimbStateRuntime.climbUpIntent(entry));
@@ -1339,7 +1339,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(140, 200), 9300002);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
+        runWithStubbedBotAfter(() -> AgentCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertFalse(AgentMovementStateRuntime.inAir(entry));
         assertFalse(AgentClimbStateRuntime.climbing(entry));
@@ -1357,7 +1357,7 @@ class BotCombatManagerTest {
         AgentMovementStateRuntime.setFacingDirection(entry, -1);
         Monster mob = mockMob(new Point(140, 200), 9300003);
 
-        runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
+        runWithStubbedBotAfter(() -> AgentCombatDamageRuntime.applyMobHit(entry, bot, mob, AgentCombatConfig.cfg));
 
         assertEquals(CharacterStance.DEAD_LEFT_STANCE, bot.getStance());
         assertTrue(AgentDeathStateRuntime.deadUntilMs(entry) > 0);
@@ -1391,11 +1391,11 @@ class BotCombatManagerTest {
         when(map.getAllMonsters()).thenReturn(List.of(friendly));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotMobTouchRuntime> combat =
-                     Mockito.mockStatic(AgentBotMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
-            combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(AgentRuntimeEntry.class), any(Character.class),
+        try (MockedStatic<AgentMobTouchRuntime> combat =
+                     Mockito.mockStatic(AgentMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> AgentMobTouchRuntime.isMobTouchingAgent(any(AgentRuntimeEntry.class), any(Character.class),
                     any(Monster.class), anyInt())).thenReturn(true);
-            runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.tickMobDamage(
+            runWithStubbedBotAfter(() -> AgentCombatDamageRuntime.tickMobDamage(
                     entry, bot, AgentCombatConfig.cfg, AgentMovementTimers::tickDown));
         }
 
@@ -1411,11 +1411,11 @@ class BotCombatManagerTest {
         when(map.getAllMonsters()).thenReturn(List.of(hostile));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotMobTouchRuntime> combat =
-                     Mockito.mockStatic(AgentBotMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
-            combat.when(() -> AgentBotMobTouchRuntime.isMobTouchingAgent(any(AgentRuntimeEntry.class), any(Character.class),
+        try (MockedStatic<AgentMobTouchRuntime> combat =
+                     Mockito.mockStatic(AgentMobTouchRuntime.class, Mockito.CALLS_REAL_METHODS)) {
+            combat.when(() -> AgentMobTouchRuntime.isMobTouchingAgent(any(AgentRuntimeEntry.class), any(Character.class),
                     any(Monster.class), anyInt())).thenReturn(true);
-            runWithStubbedBotAfter(() -> AgentBotCombatDamageRuntime.tickMobDamage(
+            runWithStubbedBotAfter(() -> AgentCombatDamageRuntime.tickMobDamage(
                     entry, bot, AgentCombatConfig.cfg, AgentMovementTimers::tickDown));
         }
 
@@ -1524,7 +1524,7 @@ class BotCombatManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentMovementStateRuntime.setFacingDirection(entry, 1);
 
-        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(true));
+        AgentCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(true));
 
         assertEquals(-1, AgentMovementStateRuntime.facingDirection(entry));
         assertEquals(CharacterStance.STAND_LEFT_STANCE, bot.getStance());
@@ -1536,7 +1536,7 @@ class BotCombatManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         AgentMovementStateRuntime.setFacingDirection(entry, -1);
 
-        AgentBotCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(false));
+        AgentCombatFacingRuntime.rememberAttackFacing(entry, AgentAttackExecutionProvider.attackPacketStance(false));
 
         assertEquals(1, AgentMovementStateRuntime.facingDirection(entry));
         assertEquals(CharacterStance.STAND_RIGHT_STANCE, bot.getStance());
@@ -1562,7 +1562,7 @@ class BotCombatManagerTest {
             skillFactory.when(() -> SkillFactory.getSkill(Hunter.ARROW_BOMB)).thenReturn(arrowBomb);
             attackExecution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
-            AgentAttackPlan plan = AgentBotCombatPlanRuntime.planAttack(entry, bot, farSelected, AgentCombatConfig.cfg);
+            AgentAttackPlan plan = AgentCombatPlanRuntime.planAttack(entry, bot, farSelected, AgentCombatConfig.cfg);
 
             assertEquals(Hunter.ARROW_BOMB, plan.skillId);
             assertEquals(closest, plan.targets.get(0));
@@ -1586,7 +1586,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        Rectangle bounds = AgentBotMobTouchRuntime.agentTouchBounds(entry, bot, AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT);
+        Rectangle bounds = AgentMobTouchRuntime.agentTouchBounds(entry, bot, AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT);
 
         assertEquals(new Rectangle(100, 150, 1, 51), bounds);
     }
@@ -1598,7 +1598,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(122, 200), 100100);
         when(mob.isFacingLeft()).thenReturn(false);
 
-        assertFalse(AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT));
+        assertFalse(AgentMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT));
     }
 
     @Test
@@ -1610,7 +1610,7 @@ class BotCombatManagerTest {
         Monster mob = mockMob(new Point(96, 200), 100100);
         when(mob.isFacingLeft()).thenReturn(false);
 
-        assertTrue(AgentBotMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT));
+        assertTrue(AgentMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, AgentCombatConfig.cfg.MOB_TOUCH_SWEEP_HEIGHT));
     }
 
     @Test
@@ -1627,7 +1627,7 @@ class BotCombatManagerTest {
         Monster otherRegionMob = mockMob(new Point(105, 200), 100100);
         doReturn(List.of(otherRegionMob, currentFootholdMob)).when(map).getAllMonsters();
 
-        Monster target = AgentBotCombatTargetRuntime.findGrindTarget(
+        Monster target = AgentCombatTargetRuntime.findGrindTarget(
                 new AgentRuntimeEntry(bot, null, null), bot, AgentCombatConfig.cfg);
 
         assertEquals(otherRegionMob, target);
@@ -1655,13 +1655,13 @@ class BotCombatManagerTest {
 
         AgentRuntimeEntry noAoeEntry = new AgentRuntimeEntry(bot, null, null);
         // Sanity: without AoE skill, the lone close mob wins on plain distance score.
-        assertEquals(loneClose, AgentBotCombatTargetRuntime.findGrindTarget(noAoeEntry, bot, AgentCombatConfig.cfg));
+        assertEquals(loneClose, AgentCombatTargetRuntime.findGrindTarget(noAoeEntry, bot, AgentCombatConfig.cfg));
 
         AgentRuntimeEntry aoeEntry = new AgentRuntimeEntry(bot, null, null);
         AgentCombatSkillCacheStateRuntime.setAoeSkill(aoeEntry, Hunter.POWER_KNOCKBACK, 6);
         // With AoE skill that hits up to 6, cluster anchor's bonus overcomes the lone
         // mob's distance advantage and the bot switches target to the cluster.
-        assertEquals(clusterAnchor, AgentBotCombatTargetRuntime.findGrindTarget(aoeEntry, bot, AgentCombatConfig.cfg));
+        assertEquals(clusterAnchor, AgentCombatTargetRuntime.findGrindTarget(aoeEntry, bot, AgentCombatConfig.cfg));
     }
 
     @Test
@@ -1716,7 +1716,7 @@ class BotCombatManagerTest {
             graphProvider.when(() -> AgentNavigationGraphService.peekGraph(map, AgentMovementProfile.base()))
                     .thenReturn(graph);
 
-            Monster target = AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
+            Monster target = AgentCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
 
             assertEquals(openTarget, target);
         } finally {
@@ -1743,9 +1743,9 @@ class BotCombatManagerTest {
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
             attackExecution.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
-            assertEquals(otherRegionMob, AgentBotCombatTargetRuntime.findFollowAttackTarget(entry, bot, AgentCombatConfig.cfg));
-            assertEquals(otherRegionMob, AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg));
-            assertTrue(AgentBotCombatTargetRuntime.isReachableGrindTarget(entry, bot, otherRegionMob));
+            assertEquals(otherRegionMob, AgentCombatTargetRuntime.findFollowAttackTarget(entry, bot, AgentCombatConfig.cfg));
+            assertEquals(otherRegionMob, AgentCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg));
+            assertTrue(AgentCombatTargetRuntime.isReachableGrindTarget(entry, bot, otherRegionMob));
         }
     }
 
@@ -1797,7 +1797,7 @@ class BotCombatManagerTest {
             graphProvider.when(() -> AgentNavigationGraphService.peekGraph(map, AgentMovementProfile.base()))
                     .thenReturn(graph);
 
-            Monster target = AgentBotCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg);
+            Monster target = AgentCombatTargetRuntime.findPatrolTarget(entry, bot, AgentCombatConfig.cfg);
 
             assertEquals(returnableTarget, target);
         }
@@ -1987,7 +1987,7 @@ class BotCombatManagerTest {
         }).when(bot).getSkillLevel(any(Skill.class));
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
+        AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, bot);
 
         assertEquals(expectedAttackSkillId, AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         assertEquals(expectedAoeSkillId, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry));

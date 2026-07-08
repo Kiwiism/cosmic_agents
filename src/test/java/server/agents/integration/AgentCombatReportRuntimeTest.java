@@ -13,10 +13,10 @@ import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatReportRuntime;
+import server.agents.integration.AgentCombatPlanRuntime;
+import server.agents.integration.AgentCombatReportRuntime;
 import server.agents.integration.AgentCombatSkillCacheStateRuntime;
-import server.agents.integration.AgentBotCombatTargetRuntime;
+import server.agents.integration.AgentCombatTargetRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentBotCombatReportRuntimeTest {
+class AgentCombatReportRuntimeTest {
     @Test
     void debugStatsReportUsesAgentOwnedReportAssembly() {
         Character bot = mock(Character.class);
@@ -43,15 +43,15 @@ class AgentBotCombatReportRuntimeTest {
         when(target.isAlive()).thenReturn(true);
         when(target.getName()).thenReturn("Slime");
 
-        try (MockedStatic<AgentBotCombatTargetRuntime> targets = mockStatic(AgentBotCombatTargetRuntime.class);
-             MockedStatic<AgentBotCombatPlanRuntime> plans = mockStatic(AgentBotCombatPlanRuntime.class)) {
-            targets.when(() -> AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg))
+        try (MockedStatic<AgentCombatTargetRuntime> targets = mockStatic(AgentCombatTargetRuntime.class);
+             MockedStatic<AgentCombatPlanRuntime> plans = mockStatic(AgentCombatPlanRuntime.class)) {
+            targets.when(() -> AgentCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg))
                     .thenReturn(target);
-            plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
+            plans.when(() -> AgentCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
                     .thenReturn(plan);
 
             assertEquals("debug: route ranged, atk speed 5, atk cd 1.50s, remaining 0.25s, tick 50ms, ai 100ms, target Slime",
-                    AgentBotCombatReportRuntime.debugStatsReport(entry, bot));
+                    AgentCombatReportRuntime.debugStatsReport(entry, bot));
         }
     }
 
@@ -62,7 +62,7 @@ class AgentBotCombatReportRuntimeTest {
 
         try (MockedStatic<AgentBuffService> buffs = mockStatic(AgentBuffService.class)) {
             buffs.when(() -> AgentBuffService.getDebugLines(entry, bot)).thenReturn(List.of("buff"));
-            assertEquals(List.of("buff"), AgentBotCombatReportRuntime.buffDebugLines(entry, bot));
+            assertEquals(List.of("buff"), AgentCombatReportRuntime.buffDebugLines(entry, bot));
         }
     }
 
@@ -85,7 +85,7 @@ class AgentBotCombatReportRuntimeTest {
                             "skill buffs: last: no skill buff checks yet",
                             "active: slash blast 1m1s left",
                             "cached: slash blast (cd)"),
-                    AgentBotCombatReportRuntime.skillBuffDebugLines(entry, bot));
+                    AgentCombatReportRuntime.skillBuffDebugLines(entry, bot));
         }
     }
 
@@ -102,7 +102,7 @@ class AgentBotCombatReportRuntimeTest {
                     .thenReturn(new CombatFormulaProvider.DamageProfile(100, 200, false, false));
 
             assertEquals("crit: 55% chance, 2.00x multiplier | base 100-200 | crit 200-400",
-                    AgentBotCombatReportRuntime.critDebugReport(bot));
+                    AgentCombatReportRuntime.critDebugReport(bot));
         }
     }
 }

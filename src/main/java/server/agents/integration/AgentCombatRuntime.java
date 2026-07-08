@@ -6,8 +6,8 @@ import client.Character;
  * Temporary Agent-owned bridge for combat-owned timing/replies while combat
  * execution still lives in the legacy bot runtime.
  */
-public final class AgentBotCombatRuntime {
-    private AgentBotCombatRuntime() {
+public final class AgentCombatRuntime {
+    private AgentCombatRuntime() {
     }
 
     public static void sayMapNow(Character bot, String message) {

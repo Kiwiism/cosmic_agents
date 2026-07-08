@@ -31,8 +31,8 @@ import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
 import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 
-import server.agents.integration.AgentBotCombatAttackRuntime;
-import server.agents.integration.AgentBotCombatPlanRuntime;
+import server.agents.integration.AgentCombatAttackRuntime;
+import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
@@ -442,10 +442,10 @@ class BotManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<AgentBotCombatPlanRuntime> plans =
-                     mockStatic(AgentBotCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+             MockedStatic<AgentCombatPlanRuntime> plans =
+                     mockStatic(AgentCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
-            plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, rangedMob, AgentCombatConfig.cfg))
+            plans.when(() -> AgentCombatPlanRuntime.planAttack(entry, bot, rangedMob, AgentCombatConfig.cfg))
                     .thenReturn(rangedPlan);
 
             assertEquals(rangedMob, AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
@@ -472,14 +472,14 @@ class BotManagerTest {
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<AgentBotCombatPlanRuntime> plans =
-                     mockStatic(AgentBotCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-             MockedStatic<AgentBotCombatAttackRuntime> attacksRuntime =
-                     mockStatic(AgentBotCombatAttackRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+             MockedStatic<AgentCombatPlanRuntime> plans =
+                     mockStatic(AgentCombatPlanRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+             MockedStatic<AgentCombatAttackRuntime> attacksRuntime =
+                     mockStatic(AgentCombatAttackRuntime.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
-            plans.when(() -> AgentBotCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
+            plans.when(() -> AgentCombatPlanRuntime.planAttack(entry, bot, target, AgentCombatConfig.cfg))
                     .thenReturn(rangedPlan);
-            attacksRuntime.when(() -> AgentBotCombatAttackRuntime.attackMonster(entry, bot, rangedPlan))
+            attacksRuntime.when(() -> AgentCombatAttackRuntime.attackMonster(entry, bot, rangedPlan))
                     .thenAnswer(invocation -> null);
 
             AgentMovementOnlyStepRuntime.stepMovementOnly(entry, target.getPosition(), false);

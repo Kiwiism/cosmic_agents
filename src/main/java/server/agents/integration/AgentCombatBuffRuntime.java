@@ -13,8 +13,8 @@ import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
-public final class AgentBotCombatBuffRuntime {
-    private AgentBotCombatBuffRuntime() {
+public final class AgentCombatBuffRuntime {
+    private AgentCombatBuffRuntime() {
     }
 
     public static void tickBuffs(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
@@ -124,7 +124,7 @@ public final class AgentBotCombatBuffRuntime {
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry,
                 AgentCombatSupportPolicy.supportCastCooldownMs(skillTiming.cooldownMs(), skill.getAnimationTime()));
-        AgentBotCombatAlertRuntime.markAlerted(entry);
+        AgentCombatAlertRuntime.markAlerted(entry);
         AgentSkillBuffDebugStateRuntime.rememberAction(
                 entry,
                 System.currentTimeMillis(),

@@ -17,10 +17,10 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
 
-public final class AgentBotCombatAoeRepositionRuntime {
-    private static final Logger log = LoggerFactory.getLogger(AgentBotCombatAoeRepositionRuntime.class);
+public final class AgentCombatAoeRepositionRuntime {
+    private static final Logger log = LoggerFactory.getLogger(AgentCombatAoeRepositionRuntime.class);
 
-    private AgentBotCombatAoeRepositionRuntime() {
+    private AgentCombatAoeRepositionRuntime() {
     }
 
     public static Point aoeRepositionTarget(AgentRuntimeEntry entry, Character bot, Monster primaryTarget,
