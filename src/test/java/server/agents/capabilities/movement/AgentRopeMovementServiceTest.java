@@ -3,7 +3,6 @@ package server.agents.capabilities.movement;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentSwimStateRuntime;

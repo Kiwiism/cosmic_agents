@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
-import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;

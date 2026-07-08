@@ -1,9 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentClimbStateRuntime;
 import server.maps.Rope;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

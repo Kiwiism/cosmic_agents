@@ -4,7 +4,7 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentWalkOffLanding;
-import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;

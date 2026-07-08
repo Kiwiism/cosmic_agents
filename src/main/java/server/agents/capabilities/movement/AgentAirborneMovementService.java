@@ -2,7 +2,6 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;

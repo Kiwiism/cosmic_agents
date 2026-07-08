@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
-import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 

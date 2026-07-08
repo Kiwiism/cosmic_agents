@@ -14,7 +14,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentFormationStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;

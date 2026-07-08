@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;

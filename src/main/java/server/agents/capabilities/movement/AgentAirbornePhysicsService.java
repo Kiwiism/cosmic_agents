@@ -2,7 +2,6 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.integration.AgentCombatDamageRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;

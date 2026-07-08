@@ -4,7 +4,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import server.agents.integration.AgentFidgetStateRuntime;
 
-import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentClimbStateRuntime;
 
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 

@@ -2,7 +2,6 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import java.awt.Point;
-import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

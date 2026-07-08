@@ -57,6 +57,11 @@ Recent reconstruction notes:
   still only adapt `AgentRuntimeEntry` stuck timing, cooldown, and last-check
   position; recovery jumps, movement execution, and path/log side effects stay
   in the existing movement/runtime callers.
+- Climb/rope state has moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentClimbStateRuntime`. The adapter
+  still only reads/writes the `AgentRuntimeEntry` climb-state fields; rope
+  movement, navigation edge execution, packet-visible movement, and map/rope
+  lookup behavior stay in the existing capability/runtime callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

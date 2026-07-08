@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentClimbState;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
