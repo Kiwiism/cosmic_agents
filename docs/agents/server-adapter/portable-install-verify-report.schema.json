@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/portable-install-verify-report.schema.json",
+  "title": "Portable Agent Install Verify Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "targetRoot",
+    "installedVersion",
+    "checks",
+    "warnings",
+    "errors"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL", "UNKNOWN"] },
+    "targetRoot": { "type": "string", "minLength": 1 },
+    "installedVersion": { "type": ["string", "null"] },
+    "checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/check" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkId", "status", "file"],
+      "properties": {
+        "checkId": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL", "UNKNOWN"] },
+        "file": { "type": ["string", "null"] },
+        "message": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

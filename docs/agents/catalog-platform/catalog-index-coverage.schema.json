@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-index-coverage.schema.json",
+  "title": "Catalog Index Coverage Report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "generatedAt",
+    "overallStatus",
+    "indexes",
+    "highFrequencyQueries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bundleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overallStatus": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "WARN",
+        "FAIL"
+      ]
+    },
+    "indexes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "indexName",
+          "path",
+          "coverage",
+          "status"
+        ],
+        "properties": {
+          "indexName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "coverage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "WARN",
+              "FAIL",
+              "OPTIONAL"
+            ]
+          },
+          "missingKeyCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "highFrequencyQueries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "queryType",
+          "indexName",
+          "status"
+        ],
+        "properties": {
+          "queryType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "indexName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "WARN",
+              "FAIL"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

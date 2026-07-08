@@ -140,15 +140,59 @@ the planner can block, skip, or postpone optional quests intentionally.
 | PlanCardCapability | Legacy `AgentPlan`, `AgentTask`, and script runner exist, but not new objective-card runtime | Partial | JSON schema, loader, objective runner, progress persistence, dependency graph, forbidden action gate |
 | QuestCapability | Party quest sync exists; general quest start/complete API not implemented | Missing | live quest state, requirement checks, start/complete execution, reward selection, result effects |
 | NpcQuestInteractionCapability | NPC package is placeholder; catalog contracts exist | Missing | catalog repository, approach chooser, live validator, delay policy, typed command/result |
-| NavigationCapability | Reconstructed bot navigation, graph, movement, map transition support exists | Mostly present | map/NPC/portal/point objective adapters, stuck retry policy, direct point command |
+| NavigationCapability | Reconstructed bot navigation, graph, movement, map transition support exists | Mostly present as engine, missing as command wrapper | primitive wrapper around existing movement/navigation tick, parity tests, map/NPC/portal/point objective handoffs, stuck retry policy |
 | PortalTravelCapability | Mostly implicit in navigation/map transition | Partial | explicit portal objective, path verification, arrival verification, Shanks/Lith Harbor block |
-| CombatCapability | Reconstructed combat planning/targeting/execution exists | Mostly present | quest-objective targeting mode, stop condition, no-mob backoff, danger result |
-| LootCapability | Reconstructed passive loot, target selection, eligibility exists | Mostly present | quest-required item priority, objective stop condition, unreachable/full inventory result |
+| CombatCapability | Reconstructed combat planning/targeting/execution exists | Mostly present as engine, missing as command wrapper | primitive wrapper around existing grind/combat tick, parity tests, quest-objective targeting mode, stop condition, no-mob backoff, danger result |
+| LootCapability | Reconstructed passive loot, target selection, eligibility exists | Mostly present as engine | quest-required item priority, objective stop condition, unreachable/full inventory result |
 | InventoryCapability | Inventory/trade/drop policies exist; objective read APIs incomplete | Partial | item count, free slots, protected quest/future-quest items, inventory pressure blocker |
 | RecoveryCapability | Death/recovery teleport/return scroll/runtime safety services exist | Partial | MVP retry/block policy, live state refresh, blocker persistence, no-Shanks recovery |
-| Capability Command/Result | No single objective command/result contract | Missing | shared DTOs/status/reason codes/audit logging |
+| Capability Command/Result | Prep enum exists; no active-frame runtime yet | Missing | shared DTOs/status/reason codes/audit logging, single active frame, handoff/resume stack, parity gates |
 | Catalog Runtime | Offline catalog docs/tools exist; runtime repository not wired | Missing | Maple Island slice bundle, fast indexes, read-only repository |
 | Resume/Persistence | Agent runtime state exists; plan objective state not persisted | Missing | plan state persistence and live quest/inventory reconciliation |
+
+## Capability Runtime Shape
+
+The Maple Island MVP should not make objective capabilities call lower-level
+capabilities directly. It should run one active capability frame at a time and
+switch through explicit handoffs.
+
+```text
+Objective capability
+  -> returns NEEDS_CAPABILITY(child command)
+  -> runtime pauses parent frame
+  -> runtime runs child primitive capability
+  -> child returns terminal result
+  -> runtime resumes parent frame
+  -> parent verifies objective exit state
+```
+
+This model is mandatory for Amherst MVP because it proves the same mechanism
+that will later support pause, retry, relog/restart resume, audit, recovery,
+and LLM-safe command routing.
+
+Primitive capabilities:
+
+- NavigationCapability.
+- CombatCapability.
+- NpcInteractionCapability.
+- QuestStateCapability.
+- InventoryCapability.
+- ItemUseCapability.
+- LootCapability.
+- ReactorInteractionCapability.
+
+Objective capabilities:
+
+- NpcQuestObjectiveCapability.
+- CombatQuestObjectiveCapability.
+- ReactorQuestObjectiveCapability.
+- InventoryUseObjectiveCapability.
+- PlanStopObjectiveCapability.
+
+The first NavigationCapability and CombatCapability implementations must be
+thin wrappers over existing reconstructed behavior. Do not alter movement,
+pathfinding, target scoring, attack planning, cooldowns, ammo behavior, AoE
+repositioning, or loot side behavior until wrapper parity is tested.
 
 ## Required Implementation Work
 
@@ -224,6 +268,9 @@ AgentPlanProgress
 AgentPlanCardRepository
 AgentObjectiveRunner
 AgentCapabilityRouter
+AgentCapabilityFrame
+AgentCapabilityHandoff
+AgentCapabilityResumeToken
 ```
 
 Status values:
@@ -232,6 +279,7 @@ Status values:
 PENDING
 READY
 RUNNING
+NEEDS_CAPABILITY
 SUCCEEDED
 FAILED_RETRYABLE
 BLOCKED
@@ -246,6 +294,8 @@ Plan rules:
 - objective dependencies must be resolved before action.
 - Shanks/Lith Harbor forbidden action must be enforced globally.
 - final success requires agent at Southperry and no Shanks travel.
+- only one capability frame can be active for an Agent at a time.
+- objective capabilities can pause while child primitive capabilities run.
 
 ### 3. Shared Capability Command/Result Model
 
@@ -257,6 +307,9 @@ AgentCapabilityResult
 AgentCapabilityStatus
 AgentCapabilityReasonCode
 AgentCapabilityAuditEvent
+AgentCapabilityFrame
+AgentCapabilityHandoff
+AgentCapabilityResumeToken
 ```
 
 Every result must include:
@@ -270,6 +323,9 @@ status
 reasonCode
 durationMs
 retryCount
+phase
+handoff command when status is NEEDS_CAPABILITY
+parent resume token when a child is active
 entity ids: mapId/npcId/questId/itemId/mobId/portalName
 changed state summary
 ```
@@ -357,15 +413,18 @@ Validation:
 
 ### 6. Navigation And Portal Travel
 
-Add objective adapters:
+Add primitive wrappers and objective handoffs:
 
 ```text
-navigateToMapObjective
-navigateToNpcObjective
-navigateToMobAreaObjective
-navigateToPortalObjective
-navigateToPointObjective
+NavigationCapability(NAVIGATE_TO_MAP)
+NavigationCapability(NAVIGATE_TO_NPC)
+NavigationCapability(NAVIGATE_TO_MOB_AREA)
+NavigationCapability(NAVIGATE_TO_PORTAL)
+NavigationCapability(NAVIGATE_TO_POINT)
 ```
+
+The wrapper must delegate to existing reconstructed movement/navigation services
+with the same runtime inputs used by legacy mode ticks.
 
 Add portal travel result:
 
@@ -400,6 +459,17 @@ AgentSpawnPressureTargetPolicy
 AgentFutureQuestLootPolicy
 AgentMobUtilityScorer
 ```
+
+First add:
+
+```text
+CombatCapability(COMBAT_TICK_LEGACY)
+CombatCapability(COMBAT_ALLOWED_MOBS)
+```
+
+`COMBAT_TICK_LEGACY` must preserve existing behavior for parity testing.
+`COMBAT_ALLOWED_MOBS` may add objective constraints only after parity tests
+pass.
 
 Objective types:
 
@@ -505,6 +575,9 @@ Persist:
   "completedObjectiveIds": [],
   "blockedObjective": null,
   "retryState": {},
+  "activeCapabilityFrame": null,
+  "pausedCapabilityFrames": [],
+  "lastCapabilityResult": null,
   "lastKnownMapId": 0,
   "updatedAt": 0
 }
@@ -529,29 +602,35 @@ Do not trust persisted objective completion over live quest status.
 2. Add plan card JSON schema and sample `maple-island-mvp.plan.json`.
 3. Add read-only plan loader.
 4. Add plan progress state model and persistence.
-5. Add shared capability command/result/audit model.
-6. Add QuestCapability read APIs.
-7. Add QuestCapability start/complete validation-only methods.
-8. Add QuestCapability execution methods.
-9. Add NPC catalog repository and fast index loader.
-10. Add NPC approach point chooser.
-11. Add NPC runtime validator.
-12. Add NPC validation-only command.
-13. Add NPC quest start/complete command.
-14. Add navigation objective adapters.
-15. Add portal travel objective and destination verification.
-16. Add Shanks/Lith Harbor forbidden action gate.
-17. Add combat quest-objective mode.
-18. Add loot required-item mode.
-19. Add inventory count/free-slot/protected-item APIs.
-20. Add recovery retry/block policy.
-21. Add objective runner and capability router.
-22. Add `maple-island-mvp` assignment test command.
-23. Add unit tests for every capability result.
-24. Add one-agent full Maple Island integration test.
-25. Add relog/restart resume test.
-26. Add forbidden Shanks interaction test.
-27. Add debug/audit log view for plan progress.
+5. Add shared capability command/result/audit model plus active-frame and
+   handoff/resume stack.
+6. Add primitive NavigationCapability wrapper and movement parity tests.
+7. Add primitive CombatCapability wrapper and combat parity tests.
+8. Add feature-flagged runtime routing: active capability first, legacy fallback
+   when no capability is active.
+9. Add QuestCapability read APIs.
+10. Add QuestCapability start/complete validation-only methods.
+11. Add QuestCapability execution methods.
+12. Add NPC catalog repository and fast index loader.
+13. Add NPC approach point chooser.
+14. Add NPC runtime validator.
+15. Add NPC validation-only command.
+16. Add NPC quest start/complete primitive command.
+17. Add objective capabilities that request handoffs and verify end states.
+18. Add portal travel objective and destination verification.
+19. Add Shanks/Lith Harbor forbidden action gate.
+20. Add combat quest-objective mode.
+21. Add loot required-item mode.
+22. Add inventory count/free-slot/protected-item APIs.
+23. Add recovery retry/block policy.
+24. Wire Amherst sub-phase plan as the first capability-runtime smoke.
+25. Add `maple-island-mvp` assignment test command.
+26. Add unit tests for every capability result.
+27. Add one-agent full Amherst integration test.
+28. Add one-agent full Maple Island integration test.
+29. Add relog/restart resume test.
+30. Add forbidden Shanks interaction test.
+31. Add debug/audit log view for plan progress.
 
 ## Completion Criteria
 
@@ -559,6 +638,8 @@ Do not trust persisted objective completion over live quest status.
 
 - all selected Maple Island quests in the plan card finish.
 - every quest start/complete uses live validation.
+- every objective runs through the capability runtime active-frame and
+  handoff/resume model.
 - every NPC interaction has catalog lookup, approach selection, range check, and
   result audit.
 - every combat/loot objective stops when live quest/inventory state satisfies

@@ -1798,7 +1798,9 @@ Top section:
 - appearance selectors on the right.
 - hair, face, skin, and gender are searchable/selectable fields.
 - changing appearance updates avatar preview immediately in UI.
-- DB changes only happen after `Apply Changes`.
+- current implementation saves each appearance selection immediately.
+- when the character is online, appearance saves route through the live bridge;
+  when offline, they write through the validated DB path.
 
 Lower section:
 
@@ -1841,6 +1843,8 @@ Existing equipment slot behavior:
 - invalid replacement shows warning and cannot apply.
 - equip stats are editable in the inline expansion.
 - full item/source/ownership details stay in right dock.
+- current implementation saves an equipment slot edit from the editor action
+  rather than batching it into a page-level change bar.
 
 Cash equipment behavior:
 
@@ -1848,6 +1852,8 @@ Cash equipment behavior:
 - search replacement should filter to cash-equipment-compatible items.
 - duplicate must not reuse cash id or other unique linkage.
 - right dock shows `Cash`, `Cash Equip`, and source badges.
+- online cash-equipped slot add/modify is supported through the same live
+  bridge path as normal equipped slots.
 
 Equipment hover tooltip:
 
@@ -1873,6 +1879,15 @@ Editable appearance fields:
 
 All appearance fields should use autocomplete/suggest by id and name where a
 name catalog exists.
+
+Live-write scope:
+
+- supported online today: appearance updates and equipped/cash-equipped slot
+  add or modify from `Equipment / Appearance`.
+- still offline-only today: normal bag inventory, storage, item deletes,
+  duplicates, transfers, and IGN rename.
+- if the bridge is unreachable, the UI must show the bridge/offline error
+  rather than silently dropping the save.
 
 Examples:
 
@@ -1928,6 +1943,77 @@ Applying:
 - validate reward pool sums/weights.
 - apply as active override.
 - hardcoded fallback remains available.
+
+## Example: Character Quests And Monster Book
+
+Access:
+
+```text
+Left Nav -> Character -> Quests / Monster Book
+```
+
+The page is character-owned and uses the same account/character selector as
+AP/SP, Inventory, and Equipment. The selected character should persist while
+switching between character pages.
+
+Tabs:
+
+```text
+[Quest Available] [Quest In Progress] [Quest Completed] [Monster Book]
+```
+
+ASCII layout:
+
+```text
+| Character > Quests / Monster Book                                      |
+| [Quest Available] [Quest In Progress] [Quest Completed] [Monster Book] |
+|------------------------------------------------------------------------|
+| Search accounts / characters                        World filter       |
+|------------------------------------------------------------------------|
+| Browse Accounts             | Account's Characters                     |
+| admin                       | Kiwi, Lv 160 Shadower                    |
+|------------------------------------------------------------------------|
+| Quest In Progress                              | Selected Quest         |
+|                                                |                        |
+| [Quest 1009] Mai's Training                    | Status: In Progress    |
+|   3 / 10 Orange Mushroom                       | Completed count: 0     |
+|                                                | Forfeited: 0           |
+| [Quest 1021] Roger's Apple                     | Progress rows          |
+|   Apple in inventory 1 / 1                     | 0: 3                  |
+|                                                |                        |
+|                                                | Technical collapsed    |
+```
+
+Monster Book tab:
+
+```text
+| Monster Book                                      Page 1 / N            |
+| [All] [Beginner] [Basic] [Intermediate] [Advanced] [Master]             |
+|------------------------------------------------------------------------|
+| [icon] Snail              | [icon] Blue Snail       | [icon] Slime       |
+|       100100 / card 238   |       100101 / card ... |       ...          |
+|       4 / 5 collected     |       1 / 5 collected   |       5 / 5        |
+```
+
+Display rules:
+
+- match the character-facing quest window categories.
+- do not flood the page with every raw `NOT_STARTED` database placeholder.
+- show available quests only when the server/catalog eligibility layer can
+  prove they would appear to the character.
+- show in-progress quest details using quest progress rows and live inventory
+  counts where requirements are known.
+- completed quests show completion count/time where available.
+- Monster Book shows mob id, mob name, card id, and collected card count.
+- Monster Book paginates within each book tab/section.
+
+Editing rules:
+
+- status and progress edits require the account/character to be offline unless
+  a future live bridge implements safe online quest updates.
+- raw technical fields remain available but should stay visually secondary.
+- completing a quest from the console should warn that normal quest rewards are
+  not automatically granted unless a future live quest bridge handles it.
 
 ## Example: Quest Rewards And Requirements
 

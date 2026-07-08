@@ -8,14 +8,19 @@ Design behavior lives in:
 
 Route source: `docs/agents/MAPLE_ISLAND_MVP_SEQUENCE.md`.
 
-Initial plan card: `docs/agents/plans/maple-island-mvp.plan.json`.
+First smoke plan card:
+`docs/agents/plans/maple-island-amherst-subphase.plan.json`.
+
+Full MVP plan card: `docs/agents/plans/maple-island-mvp.plan.json`.
 
 ## Scope Boundary
 
 Only implement enough for:
 
 ```text
-One Agent completes the selected Maple Island questline and stops at Southperry.
+One Agent first completes the Amherst sub-phase from the beginning map to
+Amherst, then the same runtime expands to the selected Maple Island questline
+and stops at Southperry.
 ```
 
 Out of scope:
@@ -74,6 +79,7 @@ Cosmic-specific calls should be hidden behind adapter methods where feasible.
 
 Required catalog/runtime inputs:
 
+- `docs/agents/plans/maple-island-amherst-subphase.plan.json`.
 - `docs/agents/plans/maple-island-mvp.plan.json`.
 - Maple Island MVP catalog and fast indexes.
 - NPC placements and approach points.
@@ -525,35 +531,44 @@ agents:
 
 ## Implementation Order
 
-1. Load and validate `maple-island-mvp.plan.json`.
+1. Load and validate `maple-island-amherst-subphase.plan.json`.
 2. Add plan assignment/progress state.
-3. Add objective runner skeleton.
-4. Add journal output.
-5. Add live quest state read.
-6. Add quest requirement read/explain.
-7. Add NPC validation-only interaction.
-8. Add quest start/complete through normal server APIs.
-9. Add navigation objective adapters.
-10. Add inventory count/free-slot/read APIs.
-11. Add `use-item` for Roger apple.
-12. Add combat kill objective stop conditions.
-13. Add loot item objective stop conditions.
-14. Add HP/MP/death/stuck/no-progress recovery.
-15. Add special-case Yoona guide grant.
-16. Add auto-complete handling for known no-complete-NPC quests.
-17. Add Pio reactor interaction or block-with-capability-missing.
-18. Add forbidden Shanks travel guard.
-19. Add exit criteria check.
-20. Add resume/reconciliation.
-21. Add deterministic one-Agent integration test.
-22. Add optional interaction realism `LIGHT`.
-23. Add spawn-pressure clearing after deterministic success.
+3. Add Capability Runtime active frame, paused parent-frame stack, and resume.
+4. Add objective capability dispatch and journal output.
+5. Add primitive navigation wrapper over reconstructed movement/navigation.
+6. Add navigation parity tests before Amherst-specific constraints.
+7. Add primitive combat wrapper over reconstructed grind/combat.
+8. Add combat parity tests before Amherst-specific mob constraints.
+9. Add live quest state read.
+10. Add quest requirement read/explain.
+11. Add NPC validation-only interaction.
+12. Add quest start/complete through normal server APIs.
+13. Add inventory count/free-slot/read APIs.
+14. Add `use-item` for Roger apple.
+15. Add combat kill objective stop conditions.
+16. Add loot item objective stop conditions.
+17. Add HP/MP/death/stuck/no-progress recovery.
+18. Add reactor hit/item objectives for Amherst.
+19. Add exit criteria check for stop at Amherst map `1000000`.
+20. Add resume/reconciliation for parent/child capability frames.
+21. Add deterministic one-Agent Amherst integration test.
+22. Load and validate `maple-island-mvp.plan.json`.
+23. Expand the same capability path to Yoona/Pio/Rain/Maria/Lucas/Mai and
+    Southperry.
+24. Add special-case Yoona guide grant if still required by live scripts.
+25. Add auto-complete handling for known no-complete-NPC quests.
+26. Add forbidden Shanks travel guard.
+27. Add deterministic one-Agent Southperry integration test.
+28. Add optional interaction realism `LIGHT`.
+29. Add spawn-pressure clearing after deterministic success.
 
 ## Tests
 
 Unit tests:
 
-- plan JSON loads.
+- Amherst and full MVP plan JSON load.
+- objective dispatch submits objective capability commands.
+- child capability handoff/resume preserves parent objective state.
 - required quest ids match policy.
 - forbidden `1028` completion rejected.
 - `1046` completion rejected.
@@ -568,6 +583,8 @@ Unit tests:
 Integration tests:
 
 - assign plan to one Agent.
+- complete Amherst sub-phase from `10000` to `1000000` through capability
+  runtime handoff/resume.
 - complete first quests `1000`, `1001`, `1021`.
 - use Roger apple.
 - navigate through route maps.
@@ -592,6 +609,9 @@ Failure tests:
 ## Acceptance Checklist
 
 - Agent can run full plan from `10000` to `2000000`.
+- Amherst sub-phase can run from `10000` to `1000000` before the full plan.
+- Plan Runtime never directly scripts movement, combat, NPC, item, or reactor
+  mutation outside capability commands.
 - every objective is resolved by live state.
 - required quests complete.
 - `1046` active/incomplete.
@@ -600,4 +620,3 @@ Failure tests:
 - no force completion in normal mode.
 - no infinite loop on missing data.
 - journal is sufficient to diagnose failures.
-

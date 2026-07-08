@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/plan-runtime/plan-event.schema.json",
+  "title": "Agent Plan Event",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "eventType",
+    "agentId",
+    "planId",
+    "timestampMs",
+    "reasonCode",
+    "payload",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "eventId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "PLAN_ASSIGNED",
+        "PLAN_STARTED",
+        "PLAN_PAUSED",
+        "PLAN_RESUMED",
+        "PLAN_CANCELLED",
+        "PLAN_COMPLETED",
+        "PLAN_FAILED",
+        "OBJECTIVE_SELECTED",
+        "OBJECTIVE_STARTED",
+        "OBJECTIVE_ALREADY_SATISFIED",
+        "OBJECTIVE_COMPLETED",
+        "OBJECTIVE_BLOCKED",
+        "OBJECTIVE_RETRIED",
+        "SIDETRACK_STARTED",
+        "SIDETRACK_COMPLETED",
+        "FORBIDDEN_ACTION_BLOCKED"
+      ]
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "objectiveId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "timestampMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reasonCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "live": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "profileInfluence": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "catalogSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "correlationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

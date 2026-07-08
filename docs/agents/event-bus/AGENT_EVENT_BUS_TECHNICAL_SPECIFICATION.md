@@ -112,6 +112,10 @@ public interface AgentEventReplay {
 
 ## Event Envelope
 
+Portable JSON contract:
+
+- `docs/agents/event-bus/agent-event.schema.json`
+
 ```java
 record AgentEvent(
     AgentEventId eventId,
@@ -240,6 +244,10 @@ consumer code.
 
 ## Subscription Contract
 
+Portable JSON contract:
+
+- `docs/agents/event-bus/agent-event-subscription.schema.json`
+
 ```java
 record AgentEventSubscription(
     String subscriberName,
@@ -316,6 +324,10 @@ Durable event categories:
 - soak samples.
 
 ## Replay Query
+
+Portable JSON contract:
+
+- `docs/agents/event-bus/agent-event-replay-query.schema.json`
 
 ```java
 record AgentEventReplayQuery(

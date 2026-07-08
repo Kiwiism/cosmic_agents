@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/economy-decision.schema.json",
+  "title": "Economy Decision Proposal",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "decisionId",
+    "agentId",
+    "worldId",
+    "action",
+    "itemId",
+    "itemValuationKey",
+    "quantity",
+    "confidence",
+    "urgency",
+    "summary",
+    "influences",
+    "createdAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decisionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "worldId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "buy",
+        "sell",
+        "hold",
+        "farm",
+        "craft",
+        "vendor",
+        "scan-market",
+        "resupply",
+        "skip",
+        "manual-review"
+      ]
+    },
+    "itemId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "itemValuationKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quantity": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxBuyPrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "minSellPrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["unknown", "few-samples", "observed", "stable", "volatile", "manual"]
+    },
+    "urgency": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "emergency"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "influences": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "rejectedAlternatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["action", "reason"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "validatorHints": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "createdAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

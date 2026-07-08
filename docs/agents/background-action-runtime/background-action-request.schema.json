@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/background-action-runtime/background-action-request.schema.json",
+  "title": "Background Action Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "agentId",
+    "planId",
+    "objectiveId",
+    "capability",
+    "actionKind",
+    "simulationMode",
+    "allowedShortcuts",
+    "payload",
+    "createdAtMs"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "requestId": { "type": "string", "minLength": 1 },
+    "agentId": { "type": ["integer", "string"] },
+    "planId": { "type": ["string", "null"] },
+    "objectiveId": { "type": ["string", "null"] },
+    "capability": { "type": "string", "minLength": 1 },
+    "actionKind": {
+      "type": "string",
+      "enum": [
+        "NAVIGATE_ROUTE",
+        "NAVIGATE_SAME_MAP",
+        "COMBAT_SLICE",
+        "LOOT_PICKUP",
+        "NPC_QUEST_START",
+        "NPC_QUEST_COMPLETE",
+        "SHOP_BUY",
+        "SHOP_SELL",
+        "INVENTORY_RECONCILE",
+        "RECOVERY_REST",
+        "RECOVERY_DEATH",
+        "PLAN_SLICE"
+      ]
+    },
+    "simulationMode": {
+      "type": "string",
+      "enum": ["PRESENTATION", "BACKGROUND_ACTIVE", "BACKGROUND_ABSTRACT", "STRATEGIC_OFFLINE"]
+    },
+    "allowedShortcuts": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "payload": { "type": "object", "additionalProperties": true },
+    "createdAtMs": { "type": "integer", "minimum": 0 }
+  }
+}

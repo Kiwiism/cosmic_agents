@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/economy-market-item-state.schema.json",
+  "title": "Economy Market Item State",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "worldId",
+    "itemValuationKey",
+    "itemId",
+    "window",
+    "sampleCount",
+    "confidence",
+    "updatedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "worldId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "itemValuationKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "itemId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "window": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sampleCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "listingCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "confirmedSaleCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "medianListingPrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "medianSalePrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "trimmedMedianSalePrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "lowPrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "highPrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "movingAveragePrice": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "volatility": {
+      "$ref": "#/$defs/nonNegativeScore"
+    },
+    "liquidity": {
+      "type": "string",
+      "enum": ["unknown", "very-low", "low", "medium", "high", "very-high"]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["unknown", "few-samples", "observed", "stable", "volatile", "manual"]
+    },
+    "trend": {
+      "type": "string",
+      "enum": ["unknown", "down", "flat", "up", "spiking", "crashing"]
+    },
+    "timeToSaleMedianMs": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "unsoldAgeMedianMs": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "expirationRate": {
+      "$ref": "#/$defs/boundedScore"
+    },
+    "manipulationRisk": {
+      "type": "string",
+      "enum": ["unknown", "low", "medium", "high", "manual-review"]
+    },
+    "demandScore": {
+      "$ref": "#/$defs/nonNegativeScore"
+    },
+    "supplyScore": {
+      "$ref": "#/$defs/nonNegativeScore"
+    },
+    "scarcityScore": {
+      "$ref": "#/$defs/nonNegativeScore"
+    },
+    "updatedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "boundedScore": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "nonNegativeScore": {
+      "type": ["number", "null"],
+      "minimum": 0
+    }
+  }
+}

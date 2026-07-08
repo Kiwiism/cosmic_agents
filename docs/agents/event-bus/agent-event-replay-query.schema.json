@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/event-bus/agent-event-replay-query.schema.json",
+  "title": "Agent Event Replay Query",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "fromMs",
+    "toMs",
+    "limit"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agentId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "planId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "objectiveId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "eventTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "priorities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CRITICAL",
+          "HIGH",
+          "NORMAL",
+          "LOW",
+          "TRACE"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "fromMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "toMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

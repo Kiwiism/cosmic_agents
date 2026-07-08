@@ -76,7 +76,7 @@ agent-plan-runtime/
     SidetrackStack.java
   resolver/
     ObjectiveResolver.java
-    CapabilityCommandBuilder.java
+    ObjectiveCapabilityCommandBuilder.java
     CapabilityResultMapper.java
   policy/
     EntryCriteriaValidator.java
@@ -151,7 +151,49 @@ public interface CapabilityCommandGateway {
 }
 ```
 
+The submitted command is an objective-level capability command. The Capability
+Runtime owns active-frame execution and any primitive child handoffs such as
+navigation or combat. Plan Runtime must not decompose one quest objective into
+manual movement/NPC/combat calls.
+
 ## Required DTOs
+
+Portable JSON contract:
+
+- `docs/agents/plan-runtime/plan-card.schema.json`
+- `docs/agents/plan-runtime/plan-bundle-manifest.schema.json`
+- `docs/agents/plan-runtime/plan-progress.schema.json`
+- `docs/agents/plan-runtime/objective-progress.schema.json`
+- `docs/agents/plan-runtime/objective-result.schema.json`
+- `docs/agents/plan-runtime/plan-event.schema.json`
+
+The schema is the pre-runtime validation target for plan card files such as
+`docs/agents/plans/maple-island-mvp.plan.json`. Runtime implementation can
+replace the lightweight prep verifier with a full JSON Schema validator, but
+must keep the same required envelope fields.
+
+The bundle manifest schema is the packaging contract for grouping reusable
+plans, declaring plan file paths, hashes, status, and required runtime/catalog
+compatibility without loading live Agent state.
+
+The progress/result schemas are persistence and observability contracts for
+resume, relog/restart recovery, soak evidence, and future Agent Console views.
+They describe state only; they do not execute objectives.
+
+The plan event schema is the append-only event envelope for Plan Runtime
+state transitions, objective transitions, sidetracks, and forbidden-action
+blocks. It is intended for Event Bus, observability, soak evidence, and replay
+tooling.
+
+Offline prep loader:
+
+- `tools/plan-runtime/Get-PlanCardSummary.ps1`
+
+This loader reads plan-card JSON files, verifies required envelope fields, and
+writes a route/objective summary for implementation handoff. It is intentionally
+read-only and does not assign Agents, execute objectives, or call server
+runtime APIs. The live runtime loader still waits for reconstructed Agent
+boundaries.
 
 ### PlanRuntimeContext
 
@@ -179,6 +221,9 @@ record PlanProgress(
     List<String> completedObjectiveIds,
     Map<String, ObjectiveProgress> objectives,
     List<SidetrackFrame> sidetrackStack,
+    CapabilityFrameRef activeCapabilityFrame,
+    List<CapabilityFrameRef> pausedCapabilityFrames,
+    CapabilityResultSummary lastCapabilityResult,
     int totalRetries,
     int deathCount,
     long assignedAtMs,
@@ -224,19 +269,22 @@ Per tick:
 ```text
 1. Load active PlanProgress.
 2. Refresh live snapshot through Server Adapter.
-3. If active command exists, poll command status.
-4. Map command result to objective result.
-5. Update objective state and emit events.
-6. Evaluate exit criteria.
-7. If complete, close plan.
-8. If blocked, evaluate retry/recovery/sidetrack policy.
-9. Select next eligible objective by objective mode.
-10. Validate forbidden actions and live prerequisites.
-11. Resolve objective into capability command.
-12. Submit command and persist active command id.
+3. If an active objective capability frame exists, tick/poll Capability Runtime.
+4. Let Capability Runtime process primitive handoffs and parent resume.
+5. Map terminal objective capability result to objective result.
+6. Update objective state and emit events.
+7. Evaluate exit criteria.
+8. If complete, close plan.
+9. If blocked, evaluate retry/recovery/sidetrack policy.
+10. Select next eligible objective by objective mode.
+11. Validate forbidden actions and live prerequisites.
+12. Resolve objective into an objective capability command.
+13. Submit command and persist active capability frame reference.
 ```
 
 No step may directly mutate server state except capability command submission.
+Primitive handoff commands are created by the active objective capability, not
+by Plan Runtime.
 
 ## Objective Eligibility
 
@@ -261,7 +309,9 @@ Minimum persistence:
 - plan version/hash.
 - current objective id.
 - objective statuses.
-- active capability command id.
+- active objective capability frame.
+- paused parent capability frame stack.
+- last capability result summary.
 - retry counts.
 - sidetrack stack.
 - terminal blockers.
@@ -276,6 +326,10 @@ The Plan Runtime should tolerate missing or stale active command ids by
 reconciling against live state.
 
 ## Events
+
+Portable JSON contract:
+
+- `docs/agents/plan-runtime/plan-event.schema.json`
 
 Publish events for:
 
@@ -292,6 +346,9 @@ Publish events for:
 - `OBJECTIVE_COMPLETED`
 - `OBJECTIVE_BLOCKED`
 - `OBJECTIVE_RETRIED`
+- `OBJECTIVE_WAITING_ON_CAPABILITY`
+- `CAPABILITY_HANDOFF_REQUESTED`
+- `CAPABILITY_HANDOFF_RESUMED`
 - `SIDETRACK_STARTED`
 - `SIDETRACK_COMPLETED`
 - `FORBIDDEN_ACTION_BLOCKED`
@@ -351,21 +408,27 @@ Runtime validation checks:
 
 First implementation order:
 
-1. Load `docs/agents/plans/maple-island-mvp.plan.json`.
+1. Load `docs/agents/plans/maple-island-amherst-subphase.plan.json`.
 2. Validate schema and forbidden actions.
 3. Assign plan to one Agent in deterministic mode.
-4. Implement objective state model and progress snapshot.
-5. Resolve only these objective kinds first:
+4. Implement objective state model, progress snapshot, active capability frame,
+   and paused capability stack.
+5. Resolve only these Amherst objective kinds first:
    - `quest-start`
    - `quest-complete`
    - `use-item`
    - `navigate-through`
+   - `reactor-hit`
    - `reactor-box-items`
-   - `grant-scripted-item`
    - `stop-plan`
-6. Add unsupported objective handling as `CAPABILITY_MISSING`, not exception.
-7. Add resume after relog/restart.
-8. Add full-route test.
+6. Route each objective through an objective capability command.
+7. Let objective capabilities request primitive handoffs to navigation, combat,
+   NPC interaction, reactor interaction, item use, and live-state verification.
+8. Add unsupported objective handling as `CAPABILITY_MISSING`, not exception.
+9. Add resume after relog/restart.
+10. Add Amherst full-route smoke test.
+11. After Amherst passes, extend the same runtime to
+    `docs/agents/plans/maple-island-mvp.plan.json`.
 
 ## LLM Command Bridge
 
@@ -399,9 +462,18 @@ Unit tests:
 - retry limit blocks objective.
 - sidetrack returns to main plan.
 - unknown objective kind returns `CAPABILITY_MISSING`.
+- objective dispatch submits one objective capability command.
+- primitive navigation/combat handoffs are visible through Capability Runtime
+  events, not Plan Runtime manual calls.
+- child capability success resumes the paused parent objective capability.
+- child capability failure blocks or retries the parent objective according to
+  retry policy.
 
 Maple Island tests:
 
+- Amherst sub-phase starts at map `10000` and stops at `1000000`.
+- Amherst sub-phase uses Plan Runtime plus Capability Runtime for every
+  objective; direct scripted mutation does not satisfy the smoke.
 - Shanks travel is blocked.
 - Shanks quest complete for `1026` is allowed.
 - `1046` start-only rule is respected.
@@ -417,7 +489,9 @@ Expose:
 - current objective.
 - objective status counts.
 - last blocker.
-- last capability command.
+- active objective capability frame.
+- paused capability frame count.
+- last capability command/result.
 - sidetrack stack.
 - retry counts.
 - plan age.
@@ -432,6 +506,10 @@ Do not implement live runtime until:
 
 - Agent reconstruction exposes stable runtime entry points.
 - Capability command/result model exists.
+- Capability Runtime supports one active frame, paused parent stack, explicit
+  handoff, and parent resume.
+- Reconstructed navigation and combat behavior has primitive wrapper parity
+  tests before Amherst objective constraints are added.
 - Server Adapter read-only snapshots exist.
 - Catalog loader can provide required Maple Island facts.
 - Plan JSON schema is finalized.

@@ -96,6 +96,15 @@ for abuse checks, use server-side hashed relationship keys.
 
 ## Data Models
 
+Portable JSON contracts:
+
+- `docs/agents/llm-autonomy/economy-market-observation.schema.json`
+- `docs/agents/llm-autonomy/economy-market-item-state.schema.json`
+- `docs/agents/llm-autonomy/economy-decision.schema.json`
+
+Runtime implementation can add storage indexes and compaction jobs, but these
+wire envelopes should remain portable and free of Cosmic object references.
+
 ### ItemValuationKey
 
 Simple stackable:
@@ -966,4 +975,3 @@ Soak tests:
 - Whether player shop internals expose enough listing lifecycle data.
 - First item categories to support for equip valuation.
 - First tax policy should remain fixed or expose observe-only simulation.
-

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/world-population-plan.schema.json",
+  "title": "World Population Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "version",
+    "seedPolicy",
+    "defaultSeed",
+    "totalTarget",
+    "modes",
+    "targets",
+    "cohorts",
+    "mapCapacityPolicies",
+    "rebalancePolicy",
+    "demandSignalPolicy"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "planId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "seedPolicy": {
+      "type": "string",
+      "enum": ["explicit", "run-id-derived", "operator-selected"]
+    },
+    "defaultSeed": { "type": "integer" },
+    "totalTarget": { "type": "integer", "minimum": 1 },
+    "modes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaultMode", "allowAssignment"],
+      "properties": {
+        "defaultMode": {
+          "type": "string",
+          "enum": ["OFF", "OBSERVE_ONLY", "PLAN_ONLY", "ASSIGNMENT_ALLOWED"]
+        },
+        "allowAssignment": { "type": "boolean" }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "population-target.schema.json" }
+    },
+    "cohorts": {
+      "type": "array",
+      "items": { "$ref": "population-target.schema.json#/$defs/cohort" }
+    },
+    "mapCapacityPolicies": {
+      "type": "array",
+      "items": { "$ref": "map-capacity-policy.schema.json" }
+    },
+    "rebalancePolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "minCooldownMs": { "type": "integer", "minimum": 0 },
+        "maxRebalancePercentPerRun": { "type": "number", "minimum": 0, "maximum": 1 },
+        "avoidThrash": { "type": "boolean" }
+      }
+    },
+    "demandSignalPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "emitJobDemandSignals": { "type": "boolean" },
+        "emitRegionalDemandSignals": { "type": "boolean" },
+        "emitRoleDemandSignals": { "type": "boolean" }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

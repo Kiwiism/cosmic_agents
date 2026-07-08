@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/profile-platform/agent-profile-summary.schema.json",
+  "title": "Agent Profile Summary",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "summaryId",
+    "agentId",
+    "profileVersion",
+    "generatedAtMs",
+    "identitySummary",
+    "hardConstraints",
+    "planPreferences",
+    "riskPreferences",
+    "llmNotes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "summaryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "profileVersion": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "generatedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "identitySummary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["archetype", "mainGoal"],
+      "properties": {
+        "displayName": {
+          "type": "string"
+        },
+        "archetype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mainGoal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classPreference": {
+          "type": "string"
+        },
+        "economyRole": {
+          "type": "string"
+        }
+      }
+    },
+    "hardConstraints": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "planPreferences": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "riskPreferences": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "socialPreferences": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "economyPreferences": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "behaviorTraits": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "buildSummary": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "llmNotes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

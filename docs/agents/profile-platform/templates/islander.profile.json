@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "agentId": "template:islander",
+  "identity": {
+    "displayName": "Islander",
+    "archetype": "islander",
+    "mainGoal": "Live permanently on Maple Island, train locally, mingle, and contribute to island activity.",
+    "classPreference": "beginner",
+    "economyRole": "local-farmer"
+  },
+  "buildIntent": {
+    "targetJobPath": ["beginner", "islander"],
+    "statBuild": {
+      "mode": "islander-flexible",
+      "primaryStat": "str",
+      "secondaryStat": "dex",
+      "notes": "Never take a job advancement path that requires leaving Maple Island."
+    },
+    "equipmentGoals": [
+      {
+        "itemId": 1302000,
+        "name": "Sword",
+        "targetLevel": 0,
+        "priority": "normal"
+      }
+    ]
+  },
+  "traits": {
+    "questFocus": 0.35,
+    "riskTolerance": 0.35,
+    "socialness": 0.55,
+    "marketInterest": 0.25,
+    "selfSufficiency": 0.8,
+    "exploration": 0.45,
+    "patience": 0.75
+  },
+  "timing": {
+    "interactionRealismMode": "LIGHT",
+    "delayProfile": "casual",
+    "seededVariation": true
+  },
+  "preferences": {
+    "preferredPlanIds": ["maple-island-life", "maple-island-farming", "maple-island-town-social"],
+    "allowedSidetrackTypes": ["emergency", "social", "help-request"],
+    "recoveryStyle": "rest-before-resume",
+    "farmingTargets": ["snail-shells", "red-snail-shells", "mushroom-caps"],
+    "townIdleMaps": [1000000, 2000000]
+  },
+  "policy": {
+    "maxDeathRisk": "medium",
+    "minReserveMesos": 500,
+    "maxSinglePurchaseMesos": 5000,
+    "allowPlayerTrade": true,
+    "allowScriptSensitiveNpc": false,
+    "adaptationMode": "OBSERVE_ONLY",
+    "allowForceTestFallbacks": false
+  },
+  "planProfile": {
+    "archetype": "islander",
+    "planSetIds": ["maple-island-life", "maple-island-market"],
+    "selectionMode": "weighted",
+    "categoryWeights": {
+      "questline": 0.2,
+      "training": 0.35,
+      "farming": 0.25,
+      "town-social": 0.15,
+      "market": 0.05
+    },
+    "hardConstraints": {
+      "allowedRegionIds": ["maple-island"],
+      "forbiddenNpcActions": ["shanks.leave-maple-island"],
+      "forbiddenDestinationRegions": ["victoria-island", "lith-harbor", "free-market"],
+      "forbiddenCompletedQuestIds": [1028],
+      "forbidFreeMarket": true
+    },
+    "softPreferences": {
+      "preferLocalFarming": true,
+      "preferSocialTownBreaks": true,
+      "preferHelpingIslandBeginners": true
+    }
+  },
+  "metadata": {
+    "templateId": "islander",
+    "templateVersion": 1,
+    "status": "prep",
+    "safePrepOnly": true,
+    "description": "Data-only profile template for permanent Maple Island islander Agents."
+  }
+}

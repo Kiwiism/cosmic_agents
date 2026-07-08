@@ -224,6 +224,9 @@ Unit tests:
 
 Integration tests:
 
+- one fresh Agent completes the Amherst sub-phase and stops at `1000000`.
+- Amherst objectives run through Plan Runtime plus Capability Runtime, not
+  direct scripted mutation.
 - one fresh Agent completes the route to Southperry.
 - relog/restart resumes without duplicate rewards.
 - missing NPC returns `NPC_MISSING`, not exception.
@@ -247,20 +250,26 @@ These are intentionally deferred until implementation starts:
 
 ## Recommended First Coding Order
 
-1. Load and validate `maple-island-mvp.plan.json`.
-2. Add a dry-run command that prints the route objectives from the catalog.
-3. Add quest state read APIs.
-4. Add NPC validation-only command.
-5. Add quest start/complete command.
-6. Run first three quests: `1000`, `1001`, `1021`.
-7. Add apple-use special objective for `1021`.
-8. Add portal route objectives through `30000`, `30001`, `40000`, `50000`.
-9. Add Rain/Maria/Lucas/Pio/Yoona/Mai chains.
-10. Add Southperry finalization: `1007`, `1026`, start-only `1046`, stop.
-11. Add combat/loot objectives as soon as the first quest requires them.
-12. Add resume test.
-13. Add spawn-pressure combat clearing.
-14. Add interaction realism `LIGHT` and `FULL`.
+1. Load and validate `maple-island-amherst-subphase.plan.json`.
+2. Add Plan Runtime progress state with one active capability frame and a
+   paused-frame stack.
+3. Add objective capability dispatch; do not script movement/NPC/combat
+   directly from Plan Runtime.
+4. Add primitive navigation wrapper over reconstructed movement and prove
+   parity with the legacy route behavior.
+5. Add primitive combat wrapper over reconstructed grind/combat and prove
+   parity before adding quest-specific mob constraints.
+6. Add quest state read APIs and NPC validation-only command.
+7. Add quest start/complete through normal server APIs.
+8. Add item-use, reactor-hit, and reactor-box item objectives for Amherst.
+9. Run the Amherst sub-phase from map `10000` through stop at map `1000000`.
+10. Add resume test for active frame, child handoff, and parent resume.
+11. Load and validate `maple-island-mvp.plan.json`.
+12. Expand the same objective capability path through Rain/Maria/Lucas/Pio/
+    Yoona/Mai chains.
+13. Add Southperry finalization: `1007`, `1026`, start-only `1046`, stop.
+14. Add spawn-pressure combat clearing after deterministic success.
+15. Add interaction realism `LIGHT` and `FULL`.
 
 The first green milestone should be deterministic with interaction realism
 `OFF` and spawn-pressure clearing disabled. The second milestone can make Agents

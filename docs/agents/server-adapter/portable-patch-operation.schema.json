@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/portable-patch-operation.schema.json",
+  "title": "Portable Agent Patch Operation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "patchId",
+    "targetFile",
+    "markerId",
+    "markerPrefix",
+    "anchor",
+    "position",
+    "content",
+    "required"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "patchId": { "type": "string", "minLength": 1 },
+    "targetFile": { "type": "string", "minLength": 1 },
+    "markerId": { "type": "string", "minLength": 1 },
+    "markerPrefix": { "type": "string", "minLength": 1 },
+    "imports": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "anchor": { "type": "string", "minLength": 1 },
+    "fallbackAnchors": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "position": { "type": "string", "enum": ["BEFORE", "AFTER", "REPLACE_MARKER_CONTENT"] },
+    "content": { "type": "string", "minLength": 1 },
+    "required": { "type": "boolean" },
+    "expectedMatchCount": { "type": "integer", "minimum": 1, "default": 1 }
+  }
+}

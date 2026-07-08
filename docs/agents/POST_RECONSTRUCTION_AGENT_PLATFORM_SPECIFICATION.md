@@ -223,11 +223,19 @@ Agent is scheduled
   -> plan runtime chooses active objective
   -> profile runtime supplies preferences
   -> catalog/runtime snapshots supply facts
-  -> capability validates and executes action
+  -> capability runtime ticks one active frame
+  -> objective capability may request explicit primitive handoff
+  -> primitive capability wraps existing movement/combat/server behavior
   -> server adapter commits action if live state allows
   -> event bus records outcome
   -> observability/profile/economy consume outcome
 ```
+
+The capability runtime owns one active capability frame per Agent and a bounded
+paused-frame stack. Objective capabilities do not directly call child
+capabilities. They return handoff requests, the runtime pauses/resumes frames,
+and the plan advances only after the objective capability verifies its own end
+state.
 
 ## Simulation Modes
 
@@ -468,9 +476,23 @@ Owns:
 
 - command/result contracts.
 - validators.
+- active capability frame.
+- paused parent-frame handoff stack.
+- child-result resume.
 - timeout/stuck handling.
 - capability audit events.
 - action routing.
+
+Required first migration:
+
+- primitive NavigationCapability wrapper over existing reconstructed
+  movement/navigation behavior.
+- primitive CombatCapability wrapper over existing reconstructed grind/combat
+  behavior.
+- parity tests proving wrappers preserve legacy behavior before objective
+  constraints are added.
+- feature-flagged tick routing: active capability frame first, legacy fallback
+  when no frame is active.
 
 ### NPC Quest Capability
 
@@ -501,6 +523,24 @@ Owns:
 - objective sequence.
 - Shanks/off-island guard.
 - one-Agent integration test.
+
+The first gameplay smoke after primitive wrapper parity is the Amherst
+sub-phase:
+
+```text
+start: 10000 Mushroom Town
+stop: 1000000 Amherst
+plan: docs/agents/plans/maple-island-amherst-subphase.plan.json
+```
+
+This smoke must use the full capability runtime path:
+
+```text
+Plan objective -> objective capability -> primitive handoff -> live validation
+```
+
+Direct scripted calls around the capability runtime do not satisfy the
+post-reconstruction gameplay acceptance criteria.
 
 ## Profile And Autonomy Layer
 
@@ -615,6 +655,8 @@ Agent runtime state:
 - route ETA state.
 - perception snapshot reference.
 - capability active state.
+- paused capability frames.
+- last child capability result.
 - lifecycle cleanup handles.
 
 Profile state:
@@ -755,9 +797,13 @@ Implement:
 
 - plan runtime.
 - capability command/result model.
+- active-frame and handoff/resume capability runtime.
+- primitive NavigationCapability and CombatCapability wrappers with parity
+  tests.
 - NPC/quest capability.
 - recovery policy.
-- Maple Island MVP.
+- Amherst sub-phase MVP.
+- full Maple Island MVP.
 
 ### Phase 4 - Profile/Economy/LLM Expansion
 

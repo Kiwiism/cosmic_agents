@@ -233,6 +233,27 @@ Production can use DB tables or SQLite while keeping the same API.
 
 All model objects must serialize to stable JSON.
 
+Portable JSON contracts:
+
+- `docs/agents/profile-platform/agent-profile.schema.json`
+- `docs/agents/profile-platform/decision-journal-entry.schema.json`
+- `docs/agents/profile-platform/relationship-memory.schema.json`
+- `docs/agents/profile-platform/agent-experience-event.schema.json`
+- `docs/agents/profile-platform/profile-patch.schema.json`
+
+These schemas define the portable profile, strategic decision journal,
+relationship memory, experience event, and bounded profile patch envelopes.
+They are data contracts only and do not implement adaptation, plan selection,
+social behavior, or server-side actions.
+
+Patch safety verifier:
+
+- `tools/agent-contracts/Test-ProfilePatchSafety.ps1`
+
+The verifier checks that profile patches cannot declare hard-policy mutation
+and that default blocked paths include `/policy` and
+`/planProfile/hardConstraints`.
+
 Rules:
 
 - include `schemaVersion`.
@@ -648,6 +669,7 @@ Recommended future schema files:
 ```text
 docs/agents/profile-platform/schema/
   agent-profile.schema.json
+  agent-profile-summary.schema.json
   dynamic-profile-state.schema.json
   profile-template.schema.json
   plan-profile.schema.json
@@ -657,7 +679,7 @@ docs/agents/profile-platform/schema/
   agent-experience-event.schema.json
   profile-patch.schema.json
   profile-decision-request.schema.json
-  profile-decision.schema.json
+  profile-decision-result.schema.json
   profile-decision-record.schema.json
 ```
 
@@ -772,6 +794,18 @@ Phase 2: Maple Island MVP support
    - reward choice.
 4. Keep adaptation `OFF` or `OBSERVE_ONLY` for deterministic testing.
 
+Current safe-prep templates:
+
+- `docs/agents/profile-platform/templates/maple-island-mvp-tester.profile.json`
+- `docs/agents/profile-platform/templates/islander.profile.json`
+
+Current safe-prep verifier:
+
+- `tools/profile-platform/Test-AgentProfileTemplates.ps1`
+
+These templates are data-only and are not loaded into live Agents until the
+Profile Runtime boundary exists.
+
 Phase 3: Event and journal foundation
 
 1. Add `AgentExperienceEvent`.
@@ -794,6 +828,18 @@ Phase 5: LLM readiness
 2. Add LLM-safe journal query.
 3. Add patch preview and request APIs.
 4. Add operator approval mode for sensitive profile changes.
+
+Current safe-prep LLM summary contract:
+
+- `docs/agents/profile-platform/agent-profile-summary.schema.json`
+
+Current safe-prep summary generator:
+
+- `tools/profile-platform/New-AgentProfileSummary.ps1`
+
+The generator reads a profile/template JSON file and emits a compact summary for
+future LLM context. It does not inspect live Agent state or mutate profile
+storage.
 
 ## Recommended Enhancements
 

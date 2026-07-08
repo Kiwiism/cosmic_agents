@@ -25,6 +25,11 @@ The Plan Runtime must not directly move an Agent, attack a mob, mutate
 inventory, start a quest, complete a quest, buy items, or call raw Cosmic APIs.
 It chooses and tracks objectives, then submits typed capability commands.
 
+Plan Runtime should submit objective capability commands, not manually
+micromanage every movement/NPC/combat sub-step. Objective capabilities may
+request primitive capability handoffs through Capability Runtime. Plan Runtime
+advances only after the objective capability verifies the objective end state.
+
 ## Goals
 
 - Load reusable Plan Cards from a portable bundle.
@@ -66,11 +71,12 @@ Plan Scheduler
   chooses which active plan/objective should run next
 
 Objective Resolver
-  converts plan objectives into capability command requests
+  converts plan objectives into objective capability command requests
 
 Capability Router
-  dispatches commands to navigation, NPC, quest, combat, loot, inventory,
-  recovery, shop, economy, or direct-control capabilities
+  dispatches objective commands through Capability Runtime. Capability Runtime
+  owns primitive handoffs such as navigation, NPC interaction, combat, loot,
+  inventory, item use, and reactor interaction.
 
 Event Bus
   publishes objective started/completed/blocked/retried/sidetracked events
@@ -99,6 +105,8 @@ State meanings:
   forbidden actions, and catalog availability.
 - `active`: plan can advance objectives.
 - `objective-running`: a capability command is in progress.
+- `objective-waiting-on-capability`: an objective capability is paused while a
+  child primitive capability frame runs.
 - `sidetracked`: another temporary plan is stacked above this plan.
 - `paused`: no objective should advance until resumed.
 - `completed`: exit criteria passed.
@@ -238,6 +246,12 @@ Failure should produce structured blockers:
 Recovery is not embedded inside every objective. The Plan Runtime should call a
 Recovery Policy package when the objective result is recoverable.
 
+Capability handoff failures remain visible to Plan Runtime as objective
+results. For example, a navigation child failure should resume or block the
+parent objective, then the parent objective reports `BLOCKED` or
+`FAILED_RETRYABLE` with evidence. Plan Runtime should not inspect primitive
+movement internals to decide objective success.
+
 ## Relationship To Other Packages
 
 Catalog Platform:
@@ -271,7 +285,10 @@ LLM Gateway:
 
 The first implementation must support:
 
+- load and run `maple-island-amherst-subphase.plan.json` as the first smoke
+  before the full Southperry plan.
 - load `maple-island-mvp.plan.json`.
+- objective capability commands with explicit primitive handoff/resume.
 - ordered route mode.
 - live quest validation before each quest start/complete.
 - forbidden Shanks travel rule.
@@ -291,6 +308,10 @@ The Plan Runtime is ready when:
 - objective progress is persisted and resumable.
 - objective runner emits structured results.
 - forbidden actions are enforced before capability dispatch.
+- one active capability frame and child handoff/resume are visible in objective
+  journal output.
+- Amherst sub-phase runs fully through Plan Runtime plus Capability Runtime,
+  without direct scripted bypass around capabilities.
 - Maple Island MVP can run through the Plan Runtime without hardcoded route
   logic outside the plan card and catalog.
 - LLM can assign or sidetrack plans through typed commands without direct server

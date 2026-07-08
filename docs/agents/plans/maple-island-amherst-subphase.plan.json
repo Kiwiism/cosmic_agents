@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "planId": "maple-island-amherst-subphase",
+  "title": "Maple Island Amherst Sub-phase MVP",
+  "category": "questline",
+  "priority": "high",
+  "status": "draft",
+  "objectiveMode": "ordered-with-live-quest-validation",
+  "focusPolicy": {
+    "focusLevel": "locked",
+    "allowSidetracks": false,
+    "allowedSidetrackTypes": ["emergency"],
+    "returnToPlan": "always"
+  },
+  "entryCriteria": {
+    "requiredStartMapId": 10000,
+    "requiredRegion": "maple-island",
+    "requiredCharacterState": "clean-lv1-start"
+  },
+  "exitCriteria": {
+    "completeWhen": "all-required-objectives-cleared",
+    "finalMapId": 1000000,
+    "blockedCompletedQuestIds": [1018, 1035, 1028],
+    "forbiddenActions": [
+      {
+        "type": "npc-travel",
+        "npcId": 22000,
+        "npcName": "Shanks",
+        "reason": "Stop at Amherst and do not leave Maple Island."
+      },
+      {
+        "type": "map-travel",
+        "mapId": 1010000,
+        "reason": "Training Center and later Maple Island maps are outside this sub-phase."
+      }
+    ]
+  },
+  "catalogHints": {
+    "catalogClass": "server.agents.capabilities.quest.AmherstQuestCatalog",
+    "scopePolicyClass": "server.agents.capabilities.quest.AmherstScopePolicy",
+    "sequenceDoc": "docs/agents/MAPLE_ISLAND_AMHERST_SUBPHASE_MVP.md",
+    "testPlanDoc": "docs/agents/MAPLE_ISLAND_AMHERST_SUBPHASE_TEST_PLAN.md"
+  },
+  "questPolicy": {
+    "requiredQuestIds": [
+      1000, 1001, 1003, 1004, 1005, 1006, 1008, 1009,
+      1010, 1011, 1012, 1013, 1014, 1015, 1020, 1021,
+      1025, 1029, 1030, 1031, 1032, 1033, 1034, 1037,
+      1038, 8031
+    ],
+    "excludedQuestIds": [
+      1007, 1016, 1017, 1018, 1019, 1022, 1026, 1027,
+      1028, 1035, 1039, 1040, 1041, 1042, 1043, 1044,
+      1046, 8020, 8021, 8022, 8023, 8024, 8025, 8142
+    ]
+  },
+  "route": [
+    {
+      "mapId": 10000,
+      "label": "Mushroom Town",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1000, "npcId": 2101 },
+        { "kind": "quest-complete", "questId": 1000, "npcId": 2100 },
+        { "kind": "quest-start", "questId": 1001, "npcId": 2100 },
+        { "kind": "quest-complete", "questId": 1001, "npcId": 2101 },
+        { "kind": "quest-chain-if-available", "questIds": [1031], "npcIds": [2101, 2100] }
+      ]
+    },
+    {
+      "mapId": 20000,
+      "label": "Snail Garden",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1021, "npcId": 2000 },
+        { "kind": "use-item", "itemId": 2010007, "forQuestId": 1021 },
+        { "kind": "quest-complete", "questId": 1021, "npcId": 2000 }
+      ]
+    },
+    {
+      "mapId": 30000,
+      "label": "Snail Field of Flowers",
+      "objectives": [
+        { "kind": "quest-chain", "questIds": [1003, 1032], "npcIds": [2102, 2001] },
+        { "kind": "quest-chain-if-available", "questIds": [1033, 1034], "npcIds": [2001, 2102] }
+      ]
+    },
+    {
+      "mapId": 30001,
+      "label": "Mushroom Town Townstreet",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1003, "npcId": 2001 },
+        { "kind": "quest-start", "questId": 1004, "npcId": 2001 }
+      ]
+    },
+    {
+      "mapId": 30000,
+      "label": "Snail Field of Flowers",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1004, "npcId": 2102 }
+      ]
+    },
+    {
+      "mapId": 50000,
+      "label": "Dangerous Forest",
+      "objectives": [
+        { "kind": "quest-start", "questId": 1029, "npcId": 2005 },
+        { "kind": "quest-complete", "questId": 1029, "npcId": 2005 },
+        { "kind": "quest-start", "questId": 1037, "npcId": 2005 },
+        { "kind": "kill-mobs", "forQuestId": 1037, "mobIds": [100100], "counts": [10] }
+      ]
+    },
+    {
+      "mapId": 1000000,
+      "label": "Amherst",
+      "objectives": [
+        { "kind": "quest-complete", "questId": 1037, "npcId": 2103 },
+        { "kind": "quest-chain", "questIds": [1038, 1005, 1006, 1025, 1030], "npcIds": [2103, 12000] },
+        { "kind": "quest-chain", "questIds": [1009, 1010, 1011, 1012, 1013, 1014, 1015], "npcId": 12101 },
+        { "kind": "reactor-hit", "forQuestId": 1008, "npcId": 10000, "mode": "hit" },
+        { "kind": "reactor-box-items", "forQuestId": 1008, "itemIds": [4031161, 4031162] },
+        { "kind": "quest-chain", "questIds": [1008, 1020], "npcId": 10000 },
+        { "kind": "quest-start", "questId": 8031, "npcId": 12000 },
+        { "kind": "kill-mobs", "forQuestId": 8031, "mobIds": [100100, 100101, 130101], "counts": [5, 5, 5] },
+        { "kind": "quest-complete", "questId": 8031, "npcId": 12000 },
+        { "kind": "stop-plan", "reason": "Amherst sub-phase ends in Amherst before Training Center, Southperry, or Shanks travel." }
+      ]
+    }
+  ]
+}

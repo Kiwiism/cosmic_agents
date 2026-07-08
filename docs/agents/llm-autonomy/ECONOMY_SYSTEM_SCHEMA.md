@@ -3,6 +3,16 @@
 The economy layer lets agents farm, buy, sell, craft, and discover Free Market
 prices without giving the LLM unsafe direct control over server state.
 
+Portable JSON contracts:
+
+- `docs/agents/llm-autonomy/economy-market-observation.schema.json`
+- `docs/agents/llm-autonomy/economy-market-item-state.schema.json`
+- `docs/agents/llm-autonomy/economy-decision.schema.json`
+
+These schemas describe observations, compact market state, and decision
+proposals. They do not execute buys, sells, trades, listings, or inventory
+mutations.
+
 Implementation backlog: `docs/agents/llm-autonomy/ECONOMY_ENGINE_TODO.md`.
 
 Layered adaptive market architecture:

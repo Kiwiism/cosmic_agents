@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/plan-runtime/plan-bundle-manifest.schema.json",
+  "title": "Agent Plan Bundle Manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "title",
+    "generatedAt",
+    "plans",
+    "compatibility",
+    "sources"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bundleId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plans": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "planId",
+          "path",
+          "schemaVersion",
+          "status",
+          "category"
+        ],
+        "properties": {
+          "planId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "review",
+              "ready",
+              "deprecated"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "requiresPlanRuntimeVersion",
+        "requiresCapabilityRuntimeVersion",
+        "requiresCatalogBundle"
+      ],
+      "properties": {
+        "requiresPlanRuntimeVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiresCapabilityRuntimeVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiresCatalogBundle": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "kind",
+          "path"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

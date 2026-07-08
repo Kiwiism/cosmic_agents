@@ -16,6 +16,15 @@ Keep the architecture ready for gameplay packages, but do not let gameplay
 feature work block scaling hardening after reconstruction.
 ```
 
+Current sequencing decision:
+
+```text
+Before scaling work starts, prove the reconstructed Agent engine through the
+Capability Runtime, Amherst MVP, and Maple Island MVP. Then decide which
+NuTNNuT-original behaviors are retained, gated, or disabled as legacy. Scaling
+starts after that stable gameplay baseline exists.
+```
+
 ## Track Split
 
 ### Track A - Optimization And Scaling
@@ -64,7 +73,25 @@ Success:
 
 ## Recommended Post-Reconstruction Priority
 
-After reconstruction is stable, implement scaling foundations first:
+After reconstruction is stable, do not start the scaling track immediately.
+First prove that the reconstructed engine has a stable capability boundary and
+can complete real gameplay.
+
+Capability-first baseline order:
+
+1. reconstruction closeout.
+2. `agent-capability-runtime` foundation.
+3. minimal `agent-plan-runtime` loader and objective runner.
+4. minimal server adapter action boundary.
+5. Amherst catalog/runtime slice.
+6. NPC/quest, inventory/item-use, combat/loot, reactor, and recovery capability
+   adapters.
+7. Amherst MVP smoke test.
+8. full Maple Island MVP.
+9. NuTNNuT-original behavior review and gating.
+10. stable Agent engine baseline.
+
+Then start scaling foundations:
 
 1. `agent-observability`
 2. `agent-event-bus`
@@ -77,20 +104,15 @@ After reconstruction is stable, implement scaling foundations first:
 9. `agent-memory-lifecycle-runtime`
 10. scale soak tests
 
-Then return to gameplay packages:
-
-1. `agent-plan-runtime`
-2. `agent-capability-runtime`
-3. `agent-npc-quest-capability`
-4. `agent-recovery-policy`
-5. `maple-island-mvp`
-
 Reason:
 
-- Gameplay features multiply Agent work.
-- Scaling foundations should exist before many Agents start running complex
-  plan/capability loops.
-- Observability should come before optimization so bottlenecks are measurable.
+- Scaling before capability proof optimizes an engine whose gameplay contract is
+  still unstable.
+- Amherst and Maple Island provide concrete acceptance tests for navigation,
+  NPC quest interaction, item use, combat, loot, reactor handling, recovery, and
+  plan execution.
+- Once the gameplay baseline is proven, scaling work can optimize a known-good
+  behavior surface instead of chasing behavior drift.
 
 ## Agent Runtime Bottleneck Backlog
 

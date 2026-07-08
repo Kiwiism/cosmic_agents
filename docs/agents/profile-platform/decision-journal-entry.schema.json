@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/decision-journal-entry.schema.json",
+  "title": "Agent Decision Journal Entry",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "decisionId",
+    "agentId",
+    "timestamp",
+    "decisionKind",
+    "intention",
+    "chosenAction",
+    "overview",
+    "details"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "decisionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "profileVersion": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "planId": {
+      "type": ["string", "null"]
+    },
+    "objectiveId": {
+      "type": ["string", "null"]
+    },
+    "decisionKind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intention": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chosenAction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overview": {
+      "$ref": "#/$defs/overview"
+    },
+    "details": {
+      "$ref": "#/$defs/details"
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "overview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary", "mainReasons", "confidence"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mainReasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "details": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["context", "influenceBreakdown", "alternativesConsidered"],
+      "properties": {
+        "context": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "influenceBreakdown": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/influence"
+          }
+        },
+        "alternativesConsidered": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/alternative"
+          }
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "influence": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["source", "key", "direction", "weight"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["build", "profile", "policy", "catalog", "economy", "memory", "live", "social", "llm", "system"]
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {},
+        "direction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "effect": {
+          "type": "string"
+        }
+      }
+    },
+    "alternative": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["action", "score"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rejectedBecause": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

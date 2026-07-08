@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "catalog": "drop-source-classifications",
+  "purpose": "Reviewed classification for generated drop source IDs that are not normal mob IDs. This is offline planning metadata only and must not be treated as runtime authority.",
+  "runtimePolicy": {
+    "defaultForReviewedNonMobSource": "do-not-plan-combat-target",
+    "plannerNote": "A source ID listed here is intentionally not required to exist in the mob catalog. Agent and LLM planners must not assume it is a killable mob unless a future server adapter proves a live target exists."
+  },
+  "sources": [
+    {
+      "sourceId": 2000,
+      "classification": "low-id-special-source",
+      "reviewStatus": "reviewed-non-mob-source",
+      "planningPolicy": "do-not-plan-combat-target",
+      "notes": "Used by generated drop data for Pio-style reactor/box item rewards, not a normal mob catalog entry."
+    },
+    {
+      "sourceId": 2070010,
+      "classification": "item-id-as-source",
+      "reviewStatus": "reviewed-non-mob-source",
+      "planningPolicy": "do-not-plan-combat-target",
+      "notes": "SQL source uses an item-id-like source convention."
+    },
+    {
+      "sourceId": 2230112,
+      "classification": "item-id-range",
+      "reviewStatus": "reviewed-non-mob-source",
+      "planningPolicy": "do-not-plan-combat-target",
+      "notes": "SQL source uses an item-id-range source convention with multiple affected drop rows."
+    },
+    {
+      "sourceId": 4000077,
+      "classification": "item-id-as-source",
+      "reviewStatus": "reviewed-non-mob-source",
+      "planningPolicy": "do-not-plan-combat-target",
+      "notes": "SQL source uses an item-id-like source convention."
+    },
+    {
+      "sourceId": 5030107,
+      "classification": "item-id-range",
+      "reviewStatus": "reviewed-non-mob-source",
+      "planningPolicy": "do-not-plan-combat-target",
+      "notes": "SQL source uses an item-id-range source convention."
+    },
+    {
+      "sourceId": 6130218,
+      "classification": "unknown",
+      "reviewStatus": "reviewed-needs-source-follow-up",
+      "planningPolicy": "do-not-plan-combat-target",
+      "notes": "Unknown non-mob source. Keep visible for later source review before any runtime planner uses it."
+    },
+    {
+      "sourceId": 9101000,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9101001,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9101002,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9300333,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9300384,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9301000,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9301003,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9301004,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9400409,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9400532,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9410016,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9410018,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9410019,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9410020,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9420515,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9420516,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9420517,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9420519,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    },
+    {
+      "sourceId": 9420522,
+      "classification": "event-or-special-mob-range",
+      "reviewStatus": "reviewed-non-normal-mob-source",
+      "planningPolicy": "requires-live-target-validation",
+      "notes": "Event/special range source not present in current generated mob catalog."
+    }
+  ]
+}

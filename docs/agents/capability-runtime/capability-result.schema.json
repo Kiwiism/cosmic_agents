@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/capability-result.schema.json",
+  "title": "Agent Capability Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "commandId",
+    "status",
+    "reasonCode",
+    "message",
+    "liveStateChanged",
+    "retryable",
+    "terminal",
+    "durationMs",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "commandId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "VALIDATING",
+        "QUEUED",
+        "RUNNING",
+        "WAITING",
+        "SUCCEEDED",
+        "FAILED_RETRYABLE",
+        "BLOCKED",
+        "CANCELLED",
+        "TIMED_OUT",
+        "CAPABILITY_MISSING",
+        "VALIDATION_FAILED",
+        "ERROR"
+      ]
+    },
+    "reasonCode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string"
+    },
+    "liveStateChanged": {
+      "type": "boolean"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "terminal": {
+      "type": "boolean"
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidence"
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "flags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "strings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "preset": "victoria_lt30_living_world_v1",
+  "description": "Seeded, ratio-based population preset for pre-30 Maple Island and Victoria Island Agent soak tests.",
+  "seedPolicy": "explicit",
+  "defaultSeed": 831942,
+  "targetAgentCount": 2000,
+  "levelBands": [
+    {
+      "name": "maple-island-beginner",
+      "ratio": 0.1,
+      "minLevel": 1,
+      "maxLevel": 10
+    },
+    {
+      "name": "islander",
+      "ratio": 0.15,
+      "minLevel": 8,
+      "maxLevel": 30
+    },
+    {
+      "name": "fresh-victoria-8-15",
+      "ratio": 0.2,
+      "minLevel": 8,
+      "maxLevel": 15
+    },
+    {
+      "name": "early-first-job-15-22",
+      "ratio": 0.35,
+      "minLevel": 15,
+      "maxLevel": 22
+    },
+    {
+      "name": "late-first-job-22-30",
+      "ratio": 0.2,
+      "minLevel": 22,
+      "maxLevel": 30
+    }
+  ],
+  "regions": [
+    {
+      "regionId": "maple-island",
+      "ratio": 0.25,
+      "homeMapIds": [
+        10000,
+        2000000
+      ]
+    },
+    {
+      "regionId": "henesys",
+      "ratio": 0.22,
+      "homeMapIds": [
+        100000000,
+        100010000
+      ]
+    },
+    {
+      "regionId": "ellinia",
+      "ratio": 0.16,
+      "homeMapIds": [
+        101000000,
+        101010000
+      ]
+    },
+    {
+      "regionId": "perion",
+      "ratio": 0.16,
+      "homeMapIds": [
+        102000000,
+        102010000
+      ]
+    },
+    {
+      "regionId": "kerning-city",
+      "ratio": 0.16,
+      "homeMapIds": [
+        103000000,
+        103010000
+      ]
+    },
+    {
+      "regionId": "lith-harbor",
+      "ratio": 0.05,
+      "homeMapIds": [
+        104000000
+      ]
+    }
+  ],
+  "jobs": [
+    {
+      "name": "beginner",
+      "ratio": 0.25
+    },
+    {
+      "name": "warrior",
+      "ratio": 0.2
+    },
+    {
+      "name": "magician",
+      "ratio": 0.2
+    },
+    {
+      "name": "bowman",
+      "ratio": 0.16
+    },
+    {
+      "name": "thief",
+      "ratio": 0.19
+    }
+  ],
+  "archetypes": [
+    {
+      "name": "quester",
+      "ratio": 0.25
+    },
+    {
+      "name": "grinder",
+      "ratio": 0.25
+    },
+    {
+      "name": "farmer",
+      "ratio": 0.15
+    },
+    {
+      "name": "casual",
+      "ratio": 0.15
+    },
+    {
+      "name": "social-idler",
+      "ratio": 0.1
+    },
+    {
+      "name": "merchant",
+      "ratio": 0.05
+    },
+    {
+      "name": "islander",
+      "ratio": 0.05
+    }
+  ],
+  "roles": [
+    {
+      "name": "quest",
+      "ratio": 0.24
+    },
+    {
+      "name": "train",
+      "ratio": 0.24
+    },
+    {
+      "name": "farm",
+      "ratio": 0.17
+    },
+    {
+      "name": "town-mingle",
+      "ratio": 0.13
+    },
+    {
+      "name": "market-scout",
+      "ratio": 0.07
+    },
+    {
+      "name": "supply-seller",
+      "ratio": 0.07
+    },
+    {
+      "name": "helper",
+      "ratio": 0.08
+    }
+  ],
+  "cohorts": [
+    {
+      "cohortId": "maple-island-questline",
+      "ratio": 0.1,
+      "profileTemplateIds": [
+        "beginner_quester",
+        "beginner_casual"
+      ],
+      "planSetIds": [
+        "maple-island-mvp"
+      ],
+      "hardConstraintRefs": [],
+      "preferredMapIds": [
+        10000,
+        2000000
+      ],
+      "forbiddenMapIds": [],
+      "economicRoleTags": [
+        "starter_supply_consumer"
+      ]
+    },
+    {
+      "cohortId": "maple-island-islander",
+      "ratio": 0.15,
+      "profileTemplateIds": [
+        "islander_basic",
+        "islander_farmer",
+        "islander_social"
+      ],
+      "planSetIds": [
+        "islander-loop"
+      ],
+      "hardConstraintRefs": [
+        "never_leave_maple_island"
+      ],
+      "preferredMapIds": [
+        10000,
+        2000000
+      ],
+      "forbiddenMapIds": [
+        104000000
+      ],
+      "economicRoleTags": [
+        "low_level_supplier"
+      ]
+    },
+    {
+      "cohortId": "victoria-questers",
+      "ratio": 0.3,
+      "profileTemplateIds": [
+        "victoria_quester",
+        "victoria_balanced"
+      ],
+      "planSetIds": [
+        "victoria-lt30-quest-mix"
+      ],
+      "hardConstraintRefs": [],
+      "preferredMapIds": [
+        100000000,
+        101000000,
+        102000000,
+        103000000
+      ],
+      "forbiddenMapIds": [],
+      "economicRoleTags": [
+        "quest_item_consumer"
+      ]
+    },
+    {
+      "cohortId": "victoria-grinders",
+      "ratio": 0.25,
+      "profileTemplateIds": [
+        "efficient_grinder",
+        "casual_grinder"
+      ],
+      "planSetIds": [
+        "victoria-lt30-training"
+      ],
+      "hardConstraintRefs": [],
+      "preferredMapIds": [
+        100010000,
+        101010000,
+        102010000,
+        103010000
+      ],
+      "forbiddenMapIds": [],
+      "economicRoleTags": [
+        "meso_generator",
+        "common_drop_supplier"
+      ]
+    },
+    {
+      "cohortId": "victoria-town-and-market",
+      "ratio": 0.2,
+      "profileTemplateIds": [
+        "town_social",
+        "market_scout",
+        "light_merchant"
+      ],
+      "planSetIds": [
+        "town-mingle",
+        "market-scout-lite"
+      ],
+      "hardConstraintRefs": [],
+      "preferredMapIds": [
+        100000000,
+        101000000,
+        102000000,
+        103000000,
+        910000000
+      ],
+      "forbiddenMapIds": [],
+      "economicRoleTags": [
+        "market_observer",
+        "social_presence"
+      ]
+    }
+  ],
+  "mapCapacityPolicy": {
+    "defaultSoftAgentCap": 20,
+    "defaultHardAgentCap": 40,
+    "townSoftAgentCap": 80,
+    "trainingMapSoftAgentCap": 25,
+    "respectCatalogCaps": true
+  },
+  "validation": {
+    "ratioTolerance": 0.0001,
+    "requiresMapCatalog": true,
+    "requiresPlanCatalog": true,
+    "requiresProfileTemplates": false
+  },
+  "notes": [
+    "This preset is documentation and soak-planning data only until Agent reconstruction exposes safe spawn/control hooks.",
+    "Ratios intentionally keep Maple Island populated while spreading most Agents across Victoria Island to avoid same-route behavior.",
+    "Profile template and plan set ids are future references; validation should treat them as review targets until their packages are implemented."
+  ]
+}

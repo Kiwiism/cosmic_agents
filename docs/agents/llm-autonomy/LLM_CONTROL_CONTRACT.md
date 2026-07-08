@@ -33,6 +33,15 @@ The LLM should primarily use strategic and task commands.
 
 All commands should use a shared envelope.
 
+Portable JSON contracts:
+
+- `docs/agents/llm-autonomy/llm-control-command.schema.json`
+- `docs/agents/llm-autonomy/llm-control-result.schema.json`
+
+These schemas define the control-plane envelope only. They do not grant the LLM
+direct access to quest, shop, inventory, market, script, or server mutation
+functions.
+
 ```json
 {
   "commandId": "cmd-uuid",

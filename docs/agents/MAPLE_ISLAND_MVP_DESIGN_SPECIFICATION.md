@@ -1,12 +1,14 @@
 # Maple Island MVP Design Specification
 
-This document defines the design for the first post-reconstruction Agent
-milestone:
+This document defines the design for the Maple Island post-reconstruction Agent
+milestone. The first smoke slice is Amherst; the full MVP expands the same
+runtime to Southperry.
 
 ```text
 Spawn one Agent with a Maple Island plan card.
-Agent completes the selected Maple Island questline.
-Agent stops at Southperry.
+Agent first completes the Amherst sub-phase.
+Agent then completes the selected Maple Island questline.
+Agent stops at Southperry for the full MVP.
 Agent does not use Shanks to leave Maple Island.
 ```
 
@@ -15,12 +17,16 @@ Technical implementation details live in:
 
 Route source: `docs/agents/MAPLE_ISLAND_MVP_SEQUENCE.md`.
 
-Initial plan card: `docs/agents/plans/maple-island-mvp.plan.json`.
+First smoke plan card:
+`docs/agents/plans/maple-island-amherst-subphase.plan.json`.
+
+Full MVP plan card: `docs/agents/plans/maple-island-mvp.plan.json`.
 
 ## Scope
 
 In scope:
 
+- Amherst sub-phase as the first deterministic smoke.
 - Maple Island ordered questline only.
 - Plan card runner and objective state.
 - quest start/complete through validated server APIs.
@@ -48,6 +54,8 @@ Out of scope:
 
 The MVP succeeds when:
 
+- the Amherst smoke starts from `10000 Mushroom Town` and stops at
+  `1000000 Amherst` through Plan Runtime plus Capability Runtime.
 - Agent starts from `10000 Mushroom Town`.
 - Agent ends at `2000000 Southperry`.
 - selected required Maple Island quests are complete.
@@ -467,4 +475,3 @@ agents:
     maxObjectiveRetries: 3
     maxDeathsPerObjective: 3
 ```
-

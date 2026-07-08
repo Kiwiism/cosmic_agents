@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/simulation-tier-runtime/materialization-plan.schema.json",
+  "title": "Materialization Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "mapId",
+    "fromMode",
+    "toMode",
+    "reason",
+    "visiblePosition",
+    "mutationsToCommit",
+    "mutationsToDiscard",
+    "warnings",
+    "createdAtMs"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "agentId": { "type": ["integer", "string"] },
+    "mapId": { "type": "integer", "minimum": 0 },
+    "fromMode": {
+      "type": "string",
+      "enum": ["PRESENTATION", "BACKGROUND_ACTIVE", "BACKGROUND_ABSTRACT", "STRATEGIC_OFFLINE"]
+    },
+    "toMode": {
+      "type": "string",
+      "enum": ["PRESENTATION", "BACKGROUND_ACTIVE", "BACKGROUND_ABSTRACT", "STRATEGIC_OFFLINE"]
+    },
+    "reason": { "type": "string", "minLength": 1 },
+    "visiblePosition": { "$ref": "#/$defs/position" },
+    "mutationsToCommit": {
+      "type": "array",
+      "items": { "$ref": "virtual-agent-state.schema.json#/$defs/virtualMutation" }
+    },
+    "mutationsToDiscard": {
+      "type": "array",
+      "items": { "$ref": "virtual-agent-state.schema.json#/$defs/virtualMutation" }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "createdAtMs": { "type": "integer", "minimum": 0 }
+  },
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "footholdId": { "type": ["integer", "null"] }
+      }
+    }
+  }
+}

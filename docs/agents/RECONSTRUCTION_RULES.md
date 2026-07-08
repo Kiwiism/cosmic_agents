@@ -128,6 +128,12 @@ Recent reconstruction notes:
   `server.agents.capabilities.llm.AgentLlmRuntime`. It still delegates actual
   reply delivery through `AgentReplyRuntime`, so chat packet/reply-channel
   behavior is unchanged while LLM orchestration gains an Agent capability home.
+- Inventory/trade/drop reply and delay bridge access has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.inventory.AgentInventoryRuntime`. It still
+  delegates reply delivery and delayed callbacks through the existing
+  integration seams, so chat output, timers, trade replies, drop replies, and
+  inventory behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,
@@ -4763,8 +4769,10 @@ Current physics correction:
   bot physics shell.
 - The final bot-physics compatibility shell has been removed. Physics
   regression coverage now lives under `server.agents.capabilities.movement` and
-  calls Agent movement/navigation services directly. Production
-  `src/main/java/server/bots` now contains only `BotEntry`.
+  calls Agent movement/navigation services directly. Production/test
+  `src/main/java/server/bots/**` and `src/test/java/server/bots/**` have been
+  removed; remaining `server.bots` references in reconstruction docs are
+  historical baseline paths or migration map rows.
 - Reply queue storage now lives in `AgentMessageQueueState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while the Agent integration
   adapter delegates queue locking, enqueue/poll/peek, snapshots, sending-state,

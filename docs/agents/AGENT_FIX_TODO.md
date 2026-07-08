@@ -5,6 +5,80 @@ not server-scale items.
 
 Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
 
+## Upstream nutnnut Branch Items To Carry Forward
+
+- [ ] Port/review `nutnnut/Cosmic` `fix-queststatus-notstarted-bloat`.
+  - Category: agent quest hardening, server save pressure, DB bloat reduction.
+  - Source branch: `source/fix-queststatus-notstarted-bloat`.
+  - Useful patch: skip saving empty `QuestStatus.Status.NOT_STARTED`
+    placeholders when they have no forfeits, no progress, and no medal map
+    data.
+  - Why it matters for agents: catalog lookups, quest eligibility checks, and
+    plan-card requirement scans can touch many quests. If those lookups create
+    placeholder quest records, agent saves can bloat the `queststatus` tables
+    and increase autosave/database pressure.
+  - Fix direction:
+    - keep normal STARTED/COMPLETED quest persistence unchanged.
+    - skip only pure placeholder NOT_STARTED statuses.
+    - add a cleanup/migration note for existing bloated rows if the database
+      has already accumulated them.
+  - Validation later:
+    - looking up a quest without starting it does not create a saved row.
+    - forfeited NOT_STARTED records still save.
+    - NOT_STARTED records with progress or medal map data still save.
+    - started/completed quest saves remain unchanged.
+- [ ] Review `nutnnut/Cosmic` dev navigation / physics fixes before finalizing
+  reconstructed movement capability.
+  - Category: agent navigation correctness and movement realism.
+  - Source branch: `source/dev`.
+  - Useful upstream areas:
+    - overlapped foothold ground continuity.
+    - client-true wall collidability using `zMass` groups.
+    - teleport movement fragment layout.
+    - off-graph travel fall recovery.
+    - stable walk-off/drop-edge authoring and steering checks.
+    - hardened bot world-map WZ loading.
+  - Why it matters for agents: Amherst/Maple Island MVP can pass with simple
+    navigation, but future Victoria Island pathing, vertical maps, ropes,
+    portals, Teleport, Flash Jump, and abstract movement tiers need movement
+    behavior that matches client/server geometry closely.
+  - Fix direction:
+    - mine these as tests and reference behavior after reconstruction.
+    - do not merge the legacy bot branch wholesale.
+    - convert useful pieces into movement/navigation capability services,
+      catalog validation checks, or graph-builder tests.
+  - Validation later:
+    - overlapped footholds do not create false stuck states.
+    - wall collision matches the client on representative maps.
+    - teleport/flash-jump route fragments are packet-safe.
+    - fall recovery returns to a valid foothold without infinite loops.
+- [ ] Review `nutnnut/Cosmic` dev combat / buff fixes before finalizing combat
+  capability parity.
+  - Category: agent combat correctness, buff parity, and capability tests.
+  - Source branch: `source/dev` plus already-merged upstream experimental
+    combat fixes.
+  - Useful upstream areas:
+    - Magic Guard MP/HP damage split for bot damage.
+    - Shadow Partner damage-line handling.
+    - magic passive damage cache behavior.
+    - special-scroll/combat valuation side effects only where they affect
+      combat decisions.
+  - Why it matters for agents: reconstructed agents should not merely cast
+    buffs; their damage taken, damage dealt, and survivability decisions must
+    match what the server would do for a comparable player.
+  - Fix direction:
+    - use upstream behavior as reference, not as a direct merge target.
+    - fold defensive buff behavior into the planned incoming damage policy.
+    - add per-buff and per-skill regression tests before enabling autonomous
+      combat plans that depend on those buffs.
+  - Validation later:
+    - Magic Guard reduces HP damage and consumes MP.
+    - Meso Guard, Power Guard, Achilles, Combo Barrier, and similar mitigation
+      paths match the chosen player-parity rules.
+    - Shadow Partner adds the expected extra lines without rerolling original
+      damage incorrectly.
+    - supported attack/buff skills have explicit capability status.
+
 ## Server/Economy Fixes To Coordinate
 
 - [x] Manually port the useful parts of `P0nk/Cosmic` PR [#277](https://github.com/P0nk/Cosmic/pull/277): hired merchant duplicate guard and Store Remote Controller validation.

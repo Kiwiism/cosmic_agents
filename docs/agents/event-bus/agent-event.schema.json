@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/event-bus/agent-event.schema.json",
+  "title": "Agent Event",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "occurredAtMs",
+    "priority",
+    "eventType",
+    "source",
+    "context",
+    "payload",
+    "deliveryMode"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "eventId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "occurredAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "HIGH",
+        "NORMAL",
+        "LOW",
+        "TRACE"
+      ]
+    },
+    "eventType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "package",
+        "component"
+      ],
+      "properties": {
+        "package": {
+          "type": "string",
+          "minLength": 1
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instanceId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "agentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "profileId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "planId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "objectiveId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commandId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "worldId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "channelId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "mapId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "ids": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "counters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "deliveryMode": {
+      "type": "string",
+      "enum": [
+        "INLINE_COUNTER_ONLY",
+        "ASYNC",
+        "DURABLE",
+        "ASYNC_AND_DURABLE"
+      ]
+    },
+    "dedupeKey": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "correlationId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

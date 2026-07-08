@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/portable-install-manifest.schema.json",
+  "title": "Portable Agent Install Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "installerVersion",
+    "targetFamily",
+    "agentPlatformVersion",
+    "markerPrefix",
+    "defaultEnabled",
+    "installedFiles",
+    "patchedFiles",
+    "configKeys"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "installerVersion": { "type": "integer", "minimum": 1 },
+    "targetFamily": { "type": "string", "minLength": 1 },
+    "agentPlatformVersion": { "type": "string", "minLength": 1 },
+    "markerPrefix": { "type": "string", "minLength": 1 },
+    "defaultEnabled": { "type": "boolean", "const": false },
+    "installedFiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/installedFile" },
+      "uniqueItems": true
+    },
+    "patchedFiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/patchedFile" },
+      "uniqueItems": true
+    },
+    "configKeys": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/configKey" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "installedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePath", "targetPath", "hash"],
+      "properties": {
+        "sourcePath": { "type": "string", "minLength": 1 },
+        "targetPath": { "type": "string", "minLength": 1 },
+        "hash": { "type": ["string", "null"] },
+        "optional": { "type": "boolean" }
+      }
+    },
+    "patchedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetPath", "markerIds"],
+      "properties": {
+        "targetPath": { "type": "string", "minLength": 1 },
+        "markerIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "configKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "defaultValue", "preserveExisting"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "defaultValue": true,
+        "preserveExisting": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

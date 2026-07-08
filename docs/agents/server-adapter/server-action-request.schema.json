@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/server-action-request.schema.json",
+  "title": "Server Action Request",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "actionId",
+    "agentId",
+    "source",
+    "actionType",
+    "target",
+    "payload",
+    "validation",
+    "createdAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "actionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "PLAN",
+        "CAPABILITY",
+        "LLM",
+        "RECOVERY",
+        "TEST",
+        "SYSTEM"
+      ]
+    },
+    "actionType": {
+      "type": "string",
+      "enum": [
+        "VALIDATE_ONLY",
+        "NAVIGATE",
+        "NPC_INTERACT",
+        "QUEST_START",
+        "QUEST_COMPLETE",
+        "SHOP_BUY",
+        "SHOP_SELL",
+        "USE_ITEM",
+        "EQUIP_ITEM",
+        "LOOT_ITEM",
+        "COMBAT_ACTION",
+        "PROFILE_PATCH",
+        "ECONOMY_OBSERVE",
+        "NO_OP"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "STRICT",
+            "DRY_RUN",
+            "BEST_EFFORT"
+          ]
+        },
+        "requiredChecks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowScriptSensitive": {
+          "type": "boolean"
+        }
+      }
+    },
+    "idempotencyKey": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

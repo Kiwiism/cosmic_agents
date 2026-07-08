@@ -1,8 +1,8 @@
 # Agent Gameplay Track
 
 This track contains Agent gameplay capability, correctness, and autonomy work.
-It is intentionally separated from the scaling track so the post-reconstruction
-focus can be 2000-Agent runtime stability first.
+It is intentionally separated from the scaling track. The current
+post-reconstruction order is capability proof first, then scaling.
 
 ## Gameplay Scope
 
@@ -23,10 +23,10 @@ Gameplay packages include:
 
 ## First Gameplay Milestone
 
-After scaling foundations are in place, the first gameplay milestone remains:
+Before scaling starts, the first gameplay milestone is:
 
 ```text
-Maple Island questline MVP
+Amherst MVP smoke test, then Maple Island questline MVP
 ```
 
 Required package cut:
@@ -48,6 +48,63 @@ Required package cut:
 - resume/reconcile.
 - objective journal.
 - full one-Agent integration test.
+
+## Capability-First Baseline
+
+The capability-first baseline is the required bridge between reconstruction and
+scaling.
+
+Implementation order:
+
+1. common capability command/result/status/reason-code contracts.
+2. capability frame runtime with validation, timeout, retry, cancellation, and
+   explicit child-capability handoff.
+3. minimal Plan Runtime loader/objective runner.
+4. live state reader and server adapter boundaries.
+5. Amherst static catalog/runtime slice.
+6. primitive capability adapters that delegate to existing reconstructed
+   behavior.
+7. Amherst MVP smoke run.
+8. Maple Island MVP full run.
+9. NuTNNuT-original behavior review and gating.
+10. stable Agent engine baseline for scaling.
+
+Capability adapter rule:
+
+```text
+Capability = typed command/result wrapper around existing reconstructed
+behavior. Do not rewrite movement, combat, loot, or quest internals during the
+first extraction unless a test proves a behavior gap.
+```
+
+Amherst validates:
+
+- reset/create test Agent flow.
+- NPC quest start/complete.
+- Roger apple item use.
+- combat kill objectives.
+- loot item objectives.
+- Pio reactor boxes or a clean explicit blocker.
+- auto-complete quest handling.
+- Shanks/off-island travel guard.
+- objective journal and blocker reasons.
+
+Maple Island validates:
+
+- full selected quest sequence.
+- Biggs quest start-only behavior.
+- Yoona before Mai ordering.
+- Southperry stop condition.
+- no Shanks/Lith Harbor transition before MVP exit.
+- death, no potion, no meso, no item drop, full inventory, and stuck fallbacks.
+
+NuTNNuT-original behavior review happens after the MVPs prove the capability
+path. Behaviors should be classified as:
+
+- core retained behavior.
+- profile/config-gated behavior.
+- legacy-off by default.
+- removal candidate after replacement.
 
 ## Gameplay Backlog
 

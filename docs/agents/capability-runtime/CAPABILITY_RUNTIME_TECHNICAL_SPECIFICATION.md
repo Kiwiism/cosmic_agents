@@ -24,6 +24,8 @@ Common runtime owns:
 
 - command envelope.
 - result envelope.
+- active capability frame state.
+- paused parent-frame stack for explicit handoff/resume.
 - validation pipeline.
 - capability registry.
 - command status tracking.
@@ -62,6 +64,9 @@ agent-capability-runtime/
     CapabilityReasonCode.java
     CapabilityTarget.java
     CapabilityEvidence.java
+    CapabilityFrame.java
+    CapabilityHandoff.java
+    CapabilityResumeToken.java
     CapabilityRetryPolicy.java
     CapabilityTimeoutPolicy.java
   validation/
@@ -72,6 +77,7 @@ agent-capability-runtime/
   runtime/
     CapabilityCommandRuntime.java
     CapabilityCommandTracker.java
+    CapabilityFrameStack.java
     CapabilityCancellationToken.java
     CapabilityTimeoutService.java
   events/
@@ -100,10 +106,13 @@ public interface CapabilityHandler {
     CapabilityFamily family();
     Set<String> supportedCommandTypes();
     CapabilityResult validate(CapabilityContext context, CapabilityCommand command);
-    CapabilityResult execute(CapabilityContext context, CapabilityCommand command);
+    CapabilityResult tick(CapabilityContext context, CapabilityFrame frame);
     CapabilityResult cancel(CapabilityCommandId commandId, String reason);
 }
 ```
+
+Handlers should be tick-oriented for long-running actions. A command that can
+complete immediately may return `SUCCEEDED` from its first tick.
 
 ### CapabilityRegistry
 
@@ -129,6 +138,15 @@ record CapabilityContext(
 ```
 
 ## Command Envelope
+
+Portable JSON contracts:
+
+- `docs/agents/capability-runtime/capability-command.schema.json`
+- `docs/agents/capability-runtime/capability-result.schema.json`
+
+These schemas define the data envelope shared by Plan Runtime, LLM command
+gateway, tests, and future capability packages. They do not implement any live
+capability behavior.
 
 ```java
 record CapabilityCommand(
@@ -170,9 +188,62 @@ record CapabilityResult(
     boolean retryable,
     boolean terminal,
     long durationMs,
-    CapabilityEvidence evidence
+    CapabilityEvidence evidence,
+    CapabilityHandoff handoff
 ) {}
 ```
+
+`handoff` must be null unless `status == NEEDS_CAPABILITY`.
+
+## Frame And Handoff Model
+
+The runtime stores one active frame per Agent and a bounded stack of paused
+parent frames.
+
+```java
+record CapabilityFrame(
+    CapabilityCommand command,
+    String phase,
+    Map<String, Object> localState,
+    int attempt,
+    long startedAtMs,
+    long lastProgressAtMs,
+    CapabilityResult lastChildResult
+) {}
+```
+
+```java
+record CapabilityHandoff(
+    CapabilityCommand childCommand,
+    CapabilityResumeToken resumeToken,
+    boolean required
+) {}
+```
+
+```java
+record CapabilityResumeToken(
+    CapabilityCommandId parentCommandId,
+    String resumePhase,
+    Map<String, Object> parentLocalState
+) {}
+```
+
+Runtime behavior:
+
+```text
+active frame returns NEEDS_CAPABILITY with handoff
+  -> push parent frame using resume token
+  -> active frame = child command frame
+child frame returns terminal result
+  -> pop parent frame
+  -> set parent.lastChildResult = child result
+  -> resume parent at resumePhase
+parent returns SUCCEEDED/BLOCKED/FAILED
+  -> Plan Runtime advances, retries, or blocks
+```
+
+Only the runtime mutates the active-frame stack. Capability handlers must return
+handoff requests, not call other handlers directly.
 
 ## Status Values
 
@@ -182,6 +253,7 @@ VALIDATING
 QUEUED
 RUNNING
 WAITING
+NEEDS_CAPABILITY
 SUCCEEDED
 FAILED_RETRYABLE
 BLOCKED
@@ -256,7 +328,10 @@ submit(command)
   -> static validation
   -> live validation
   -> forbidden-action validation
-  -> queue or execute
+  -> create active frame or reject if an incompatible frame is active
+  -> tick active frame
+  -> if NEEDS_CAPABILITY, push parent and start child frame
+  -> if child terminal, resume parent with child result
   -> commit validation before mutation
   -> map handler output to CapabilityResult
   -> emit event and audit
@@ -338,6 +413,55 @@ TRIGGER_REACTOR_FOR_ITEMS
 
 Unsupported commands should return `CAPABILITY_MISSING` until implemented.
 
+## Primitive Capability Wrapper Commands
+
+The first post-reconstruction gameplay implementation must wrap existing
+nutnnut/reconstructed behavior before adding quest-specific constraints.
+
+Navigation primitive:
+
+```text
+NAVIGATE_TO_POINT
+NAVIGATE_TO_MAP
+NAVIGATE_TO_NPC
+NAVIGATE_TO_REACTOR
+```
+
+Implementation rule:
+
+```text
+call existing AgentMovementTickRuntime / AgentNavigationTargetService with the
+same BotEntry, Character, target point, runAiTick, unstuck flag, stop distance,
+movement config, and runtime state objects used by legacy mode ticks.
+```
+
+Combat primitive:
+
+```text
+COMBAT_TICK_LEGACY
+COMBAT_ALLOWED_MOBS
+```
+
+Implementation rule:
+
+```text
+first wrap existing AgentGrindModeTickService and attack planning/execution
+without changing scoring, timing, cooldown, ammo, AoE, or movement target
+behavior. Add allowed-mob and quest stop conditions only after parity tests
+pass.
+```
+
+Required parity tests:
+
+- legacy movement tick versus NavigationCapability tick for the same target.
+- legacy grind/combat tick versus CombatCapability tick for the same map,
+  Agent, mobs, config, and state.
+- capability runtime disabled path still uses the old fallback mode.
+- capability runtime enabled with no active frame still uses the old fallback
+  mode.
+- active capability path does not call legacy fallback mode in the same tick
+  unless the capability explicitly yields that behavior.
+
 ## Cancellation Model
 
 `CapabilityCancellationToken`:
@@ -382,6 +506,8 @@ Event types:
 - `CAPABILITY_VALIDATION_FAILED`
 - `CAPABILITY_STARTED`
 - `CAPABILITY_PROGRESS`
+- `CAPABILITY_HANDOFF_REQUESTED`
+- `CAPABILITY_HANDOFF_RESUMED`
 - `CAPABILITY_SUCCEEDED`
 - `CAPABILITY_BLOCKED`
 - `CAPABILITY_FAILED_RETRYABLE`
@@ -437,6 +563,11 @@ Common runtime tests:
 - missing handler returns `CAPABILITY_MISSING`.
 - invalid command returns `INVALID_COMMAND`.
 - forbidden action blocks before handler execution.
+- one active frame is enforced per Agent.
+- `NEEDS_CAPABILITY` pushes a child frame and pauses the parent.
+- child `SUCCEEDED` resumes the parent with child evidence.
+- child `BLOCKED`/`FAILED` resumes or blocks parent according to handoff
+  required flag.
 - cancellation clears tracked command.
 - timeout returns `TIMED_OUT`.
 - handler exception maps to `ERROR` and emits audit event.

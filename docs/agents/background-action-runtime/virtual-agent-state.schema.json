@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/background-action-runtime/virtual-agent-state.schema.json",
+  "title": "Virtual Agent State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "mapId",
+    "virtualPosition",
+    "lootBuffer",
+    "pendingMutations",
+    "updatedAtMs",
+    "flags"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "agentId": { "type": ["integer", "string"] },
+    "mapId": { "type": "integer", "minimum": 0 },
+    "virtualPosition": { "$ref": "#/$defs/position" },
+    "virtualFootholdId": { "type": ["integer", "null"] },
+    "lootBuffer": { "$ref": "#/$defs/lootBuffer" },
+    "pendingMutations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/virtualMutation" }
+    },
+    "updatedAtMs": { "type": "integer", "minimum": 0 },
+    "flags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "footholdId": { "type": ["integer", "null"] }
+      }
+    },
+    "lootBuffer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["itemCounts", "mesos", "rareItems", "updatedAtMs"],
+      "properties": {
+        "itemCounts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "mesos": { "type": "integer", "minimum": 0 },
+        "rareItems": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/virtualMutation" }
+        },
+        "updatedAtMs": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "virtualMutation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["mutationId", "mutationType", "createdAtMs"],
+      "properties": {
+        "mutationId": { "type": "string", "minLength": 1 },
+        "mutationType": {
+          "type": "string",
+          "enum": ["POSITION", "KILL", "EXP", "MESO", "ITEM", "QUEST", "POTION", "DEATH", "RECOVERY"]
+        },
+        "createdAtMs": { "type": "integer", "minimum": 0 },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

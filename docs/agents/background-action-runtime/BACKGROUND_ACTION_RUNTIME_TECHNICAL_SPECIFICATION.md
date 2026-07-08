@@ -16,6 +16,16 @@ agent-background-action-runtime
 
 This specification is documentation only until Agent reconstruction is stable.
 
+Portable JSON contracts:
+
+- `docs/agents/background-action-runtime/background-action-request.schema.json`
+- `docs/agents/background-action-runtime/background-action-result.schema.json`
+- `docs/agents/background-action-runtime/virtual-agent-state.schema.json`
+
+Contract verifier:
+
+- `tools/agent-contracts/Test-AgentScalingContracts.ps1`
+
 ## Package Boundary
 
 Background Action Runtime owns:

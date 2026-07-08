@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/plan-runtime/objective-result.schema.json",
+  "title": "Agent Objective Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "objectiveId",
+    "status",
+    "reasonCode",
+    "message",
+    "liveStateChanged",
+    "retryable",
+    "requiresRecovery",
+    "requiresReplan",
+    "evidence",
+    "completedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "objectiveId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "blocked",
+        "failed",
+        "skipped",
+        "cancelled",
+        "already-satisfied",
+        "capability-missing",
+        "manual-review-required"
+      ]
+    },
+    "reasonCode": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "liveStateChanged": {
+      "type": "boolean"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "requiresRecovery": {
+      "type": "boolean"
+    },
+    "requiresReplan": {
+      "type": "boolean"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "completedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/llm-control-command.schema.json",
+  "title": "LLM Control Command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "commandId",
+    "issuedBy",
+    "type",
+    "priority",
+    "payload",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "commandId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issuedBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["string", "integer", "null"]
+    },
+    "agentIds": {
+      "type": "array",
+      "items": {
+        "type": ["string", "integer"]
+      },
+      "uniqueItems": true
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["emergency", "high", "normal", "low", "background"]
+    },
+    "deadlineMs": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "idempotencyKey": {
+      "type": ["string", "null"]
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "ASSIGN_GOAL",
+        "ASSIGN_TASK",
+        "BATCH_ASSIGN",
+        "PAUSE_AGENT",
+        "RESUME_AGENT",
+        "CANCEL_TASK",
+        "SET_BEHAVIOR_PROFILE",
+        "REQUEST_STATUS",
+        "REQUEST_PLAN",
+        "REQUEST_BATCH_STATUS",
+        "SUBMIT_CAPABILITY_COMMAND"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "safety": {
+      "$ref": "#/$defs/safetyEnvelope"
+    },
+    "auditTags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "BATCH_ASSIGN"
+          }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": ["commands"],
+            "properties": {
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "safetyEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowScriptSensitive",
+        "allowTradeWithPlayers",
+        "allowMarketSpendMesos"
+      ],
+      "properties": {
+        "allowScriptSensitive": {
+          "type": "boolean"
+        },
+        "allowTradeWithPlayers": {
+          "type": "boolean"
+        },
+        "allowMarketSpendMesos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allowInventoryMutation": {
+          "type": "boolean",
+          "default": false
+        },
+        "allowQuestMutation": {
+          "type": "boolean",
+          "default": false
+        },
+        "allowDirectCapability": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxAgentsAffected": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requiresHumanApproval": {
+          "type": "boolean",
+          "default": false
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

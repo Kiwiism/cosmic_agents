@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-query-result.schema.json",
+  "title": "Catalog Query Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "status",
+    "confidence",
+    "requiresLiveValidation",
+    "results",
+    "diagnostics",
+    "completedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OK",
+        "EMPTY",
+        "PARTIAL",
+        "AMBIGUOUS",
+        "BLOCKED",
+        "INVALID_QUERY",
+        "ERROR"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "generated",
+        "derived",
+        "manual",
+        "runtime-observed",
+        "low-confidence",
+        "blocked"
+      ]
+    },
+    "requiresLiveValidation": {
+      "type": "boolean"
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nextCursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "bundleId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "indexUsed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sourceCatalogs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scanAvoided": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "completedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

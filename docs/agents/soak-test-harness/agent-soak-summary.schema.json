@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/agent-soak-summary.schema.json",
+  "title": "Agent Soak Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "status",
+    "stage",
+    "scenario",
+    "targetAgentCount",
+    "startedAtMs",
+    "updatedAtMs",
+    "durationMs",
+    "latestMetrics",
+    "modeCounts",
+    "failureCounts",
+    "failures",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "prepared",
+        "running",
+        "paused",
+        "stopped",
+        "completed",
+        "failed",
+        "aborted",
+        "incomplete"
+      ]
+    },
+    "stage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preset": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "targetAgentCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "spawnedAgentCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "activeAgentCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "startedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updatedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "completedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "latestMetrics": {
+      "$ref": "#/$defs/latestMetrics"
+    },
+    "modeCounts": {
+      "$ref": "#/$defs/modeCounts"
+    },
+    "failureCounts": {
+      "$ref": "#/$defs/failureCounts"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/failure"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outputDirectory",
+        "snapshotsJsonl",
+        "metricsCsv",
+        "eventsJsonl",
+        "summaryJson",
+        "failuresJson"
+      ],
+      "properties": {
+        "outputDirectory": { "type": "string", "minLength": 1 },
+        "snapshotsJsonl": { "type": "string", "minLength": 1 },
+        "metricsCsv": { "type": "string", "minLength": 1 },
+        "eventsJsonl": { "type": "string", "minLength": 1 },
+        "summaryJson": { "type": "string", "minLength": 1 },
+        "failuresJson": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "latestMetrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "integer",
+          "number",
+          "string",
+          "boolean",
+          "null"
+        ]
+      },
+      "required": [
+        "timestampMs",
+        "onlinePlayers",
+        "onlineAgents",
+        "heapUsedMb",
+        "heapMaxMb",
+        "dbWaiting",
+        "schedulerDelayP99Ms",
+        "agentTickP95Ms"
+      ],
+      "properties": {
+        "timestampMs": { "type": "integer", "minimum": 0 },
+        "onlinePlayers": { "type": "integer", "minimum": 0 },
+        "onlineAgents": { "type": "integer", "minimum": 0 },
+        "heapUsedMb": { "type": "integer", "minimum": 0 },
+        "heapMaxMb": { "type": "integer", "minimum": 0 },
+        "dbWaiting": { "type": "integer", "minimum": 0 },
+        "schedulerDelayP99Ms": { "type": "integer", "minimum": 0 },
+        "agentTickP95Ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "modeCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presentation",
+        "backgroundActive",
+        "backgroundAbstract",
+        "strategicOffline"
+      ],
+      "properties": {
+        "presentation": { "type": "integer", "minimum": 0 },
+        "backgroundActive": { "type": "integer", "minimum": 0 },
+        "backgroundAbstract": { "type": "integer", "minimum": 0 },
+        "strategicOffline": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "failureCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "info",
+        "warn",
+        "fail",
+        "abort"
+      ],
+      "properties": {
+        "info": { "type": "integer", "minimum": 0 },
+        "warn": { "type": "integer", "minimum": 0 },
+        "fail": { "type": "integer", "minimum": 0 },
+        "abort": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "code",
+        "message",
+        "observedAtMs"
+      ],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": [
+            "INFO",
+            "WARN",
+            "FAIL",
+            "ABORT"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observedAtMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

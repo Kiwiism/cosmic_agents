@@ -34,8 +34,9 @@ Before reconstruction is stable:
 | --- | --- | --- | --- |
 | Server-only hardening and diagnostics | Ready for current phase | `docs/SERVER_HARDENING_DIAGNOSTICS.md`, `docs/SERVER_SCALE_TODO.md`, `docs/SERVER_PLAYER_SCALE_IMPLEMENTATION_PLAN.md` | Run baseline/player soak and archive `!serverhealth` / scale-health samples. |
 | Agent scaling prep | Ready as strategy/specs | `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`, `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`, simulation/background/perception specs | Implement after reconstruction, then run staged Agent soak. |
-| Catalog prep | Ready as contract and partial tooling | `docs/agents/catalog-platform/*`, `tools/game-catalog`, `tools/npc-catalog`, `tools/agent-llm-catalog` | Implement unified bundle builder and validation reports. |
-| Maple Island MVP prep | Ready as first gameplay package | `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`, `docs/agents/MAPLE_ISLAND_MVP_DESIGN_SPECIFICATION.md`, `docs/agents/MAPLE_ISLAND_MVP_TECHNICAL_SPECIFICATION.md`, `docs/agents/plans/maple-island-mvp.plan.json` | Implement after reconstructed Plan/Capability runtime is stable. |
+| Catalog prep | Ready as contract and standalone verifier tooling | `docs/agents/catalog-platform/*`, `tools/game-catalog`, `tools/npc-catalog`, `tools/agent-llm-catalog`, `tools/catalog`, `docs/agents/catalog-overrides/drop-source-classifications.catalog.json` | Implement unified runtime bundle loader/query API after reconstruction boundaries are stable. Reactor/field-object catalog remains an optional deferred extension. |
+| Maple Island MVP prep | Ready as first gameplay package | `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`, `docs/agents/MAPLE_ISLAND_MVP_DESIGN_SPECIFICATION.md`, `docs/agents/MAPLE_ISLAND_MVP_TECHNICAL_SPECIFICATION.md`, Amherst sub-phase scope/test docs, `docs/agents/plans/maple-island-mvp.plan.json` | Run Amherst smoke first, then full Maple Island MVP after reconstructed Plan/Capability runtime is stable. |
+| Amherst inactive implementation prep | Ready as non-live contracts and unit-tested selectors | `server.agents.capabilities.quest.AmherstQuestCatalog`, `server.agents.capabilities.quest.AmherstScopePolicy`, `server.agents.capabilities.quest.GuardedAmherstTestResetHarness`, `server.agents.capabilities.reactor.*`, `docs/agents/plans/maple-island-amherst-subphase.plan.json` | Wire only after single-active-capability runtime, primitive wrappers, and live adapters exist. |
 | Portable platform package specs | Ready as contracts | `docs/agents/PACKAGE_REGISTRY.md` and each package directory | Implement packages after reconstruction boundaries are stable. |
 | Plan Card prep | Ready as contract | `docs/agents/llm-autonomy/PLAN_CARD_SYSTEM.md`, `docs/agents/plan-runtime/*` | Add schema/code after reconstruction. |
 | Profile prep | Ready as contract | `docs/agents/profile-platform/*`, `docs/agents/social-relationship-runtime/*` | Add schema/store/adaptation implementation later. |
@@ -132,6 +133,91 @@ Scaffold command:
 The scaffold only creates local evidence files and templates. It does not start
 the server, change config, or modify runtime behavior.
 
+## Catalog Verification Evidence
+
+Standalone catalog verification is now part of the safe-prep gate. The combined
+entry point is:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\catalog\Test-AllCatalogs.ps1
+```
+
+Additional catalog-readiness entry points:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\catalog\Get-CatalogRuntimeReadiness.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\catalog\Test-CatalogBundlePrep.ps1
+```
+
+The pre-reconstruction verifier also runs the combined catalog gate, runtime
+readiness gate, and bundle-prep gate:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\pre-reconstruction\Test-PreReconstructionPrep.ps1
+```
+
+Current standalone catalog checks cover:
+
+- game knowledge catalog shape, source references, item/drop/shop/gachapon
+  indexes, and reviewed non-mob drop source classifications.
+- NPC catalog shape and interaction metadata.
+- Agent/LLM catalog shape and runtime lookup expectations.
+- generated catalog files mapped into future portable bundle categories.
+- explicit deferred marker for the optional reactor/field-object catalog.
+
+Reviewed non-mob drop source IDs are recorded in:
+
+```text
+docs/agents/catalog-overrides/drop-source-classifications.catalog.json
+```
+
+This keeps ambiguous drop-source data out of direct combat planning unless a
+later live validation pass proves that the source is a normal mob target.
+
+## Amherst Prep Evidence
+
+The Amherst sub-phase now has inactive Java prep in addition to documentation.
+This is not live behavior and does not satisfy the post-reconstruction gameplay
+acceptance criteria by itself.
+
+Prepared artifacts:
+
+- static Amherst quest catalog.
+- Amherst scope policy for covered quests, excluded legacy quests, later-map
+  quests, forbidden maps, and Shanks/off-island travel.
+- guarded test reset harness shell for allowlisted test Agents.
+- reactor interaction request/result/target contracts.
+- reactor scope policy for Pio quest `1008` in Amherst.
+- reactor target selector and execution-port seam.
+- Amherst sub-phase plan card ending at `1000000 Amherst`.
+
+Verified focused tests:
+
+```powershell
+.\mvnw.cmd -q "-Dtest=server.agents.capabilities.reactor.*Test,server.agents.capabilities.quest.AmherstQuestCatalogTest" test
+```
+
+Post-reconstruction proof still required:
+
+- capability runtime active-frame and handoff/resume stack.
+- parity tests proving primitive NavigationCapability and CombatCapability wrap
+  existing reconstructed behavior without behavior drift.
+- live NPC, reactor, reset, inventory-use, loot, and quest-state adapters.
+- full Amherst smoke run from a clean allowlisted test Agent.
+
+Latest catalog bundle-prep status:
+
+```text
+READY_WITH_DEFERRED_ITEMS
+Ready entries: 33
+Missing required entries: 0
+Deferred optional entries: 1
+```
+
+The deferred optional entry is `reactors`, which remains a future catalog
+extension. Maple Island Pio's reactor-box requirement is still documented as a
+special rule for the MVP package until a full reactor catalog is built.
+
 Current local scaffold:
 
 ```text
@@ -143,13 +229,56 @@ Current scaffold status:
 ```text
 Baseline evidence verification: INCOMPLETE
 Failures: 0
-Warnings: 7
+Warnings: 3
 ```
 
-The scaffold is structurally valid and includes provenance logs. The remaining
-warnings are expected until a real server run fills startup, interval
-serverhealth, scale-health, slow-operation, shutdown, checklist, and final
-summary evidence.
+The scaffold is structurally valid and includes provenance logs, startup and
+shutdown content, and a completed summary shape. The remaining warnings are
+expected until a real server run fills interval serverhealth samples and the
+checklist.
+
+Current warning IDs:
+
+```text
+evidence:serverhealth
+evidence:serverhealth-sample-count
+evidence:checklist
+```
+
+Use the status helper to print the current warning messages and recommended
+commands:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Get-BaselineSoakStatus.ps1
+```
+
+Use the next-step helper to print the current required step ids and
+per-checklist commands:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\soak\Get-BaselineSoakNextSteps.ps1
+```
+
+Current next-step ids:
+
+```text
+add-serverhealth-sample
+review-checklist
+```
+
+The compact prep, handoff, remaining-work, and goal-audit reports also mirror
+the next required evidence command as `baselineSoakNextRequiredCommand`, with
+the required ids under `baselineSoakRequiredNextStepIds`. Use those fields when
+automation needs the current evidence task without loading the full next-step
+row list.
+
+The goal-audit summary additionally exposes `completionBlockerIds`,
+`primaryRemainingExternalBlocker`,
+`completionReadyExceptExternalEvidence`, and
+`completionNextRequiredCommand`, plus `completionProgressEstimatePercent`.
+When the only stable blocker is baseline soak evidence,
+`completionReadyExceptExternalEvidence` is `true`, progress is estimated at
+`95`, and the next command points at the remaining evidence-capture task.
 
 Operator runbook:
 
@@ -263,6 +392,7 @@ Safe actions:
 Unsafe before reconstruction:
 
 - implement live Agent plan/capability behavior from these specs.
+- wire inactive Amherst prep classes into Agent tick/core runtime.
 - add packet suppression or Agent-specific broadcast shortcuts.
 - add Agent persistence shortcuts.
 - add LLM command execution.
@@ -281,6 +411,14 @@ Current verifier interpretation:
 
 ```text
 Pre-reconstruction prep verification: INCOMPLETE
+```
+
+Goal-audit completion handoff:
+
+```text
+primaryRemainingExternalBlocker: baseline-soak-evidence
+completionReadyExceptExternalEvidence: true
+completionProgressEstimatePercent: 95
 ```
 
 Expected stable blocker:

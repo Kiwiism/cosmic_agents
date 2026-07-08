@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-bundle-manifest.schema.json",
+  "title": "Catalog Bundle Manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "builder",
+    "game",
+    "generatedAt",
+    "sources",
+    "catalogs",
+    "indexes",
+    "compatibility"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bundleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "builder": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "game": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "family",
+        "version",
+        "serverFamily",
+        "locale"
+      ],
+      "properties": {
+        "family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "serverFamily": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locale": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "wzRootHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sqlRootHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scriptRootHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "overrideHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "catalogs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/fileEntry"
+      }
+    },
+    "indexes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/fileEntry"
+      }
+    },
+    "summaries": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/fileEntry"
+      }
+    },
+    "reports": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/fileEntry"
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/fileEntry"
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "requiresServerAdapterVersion",
+        "requiresCatalogRuntimeVersion"
+      ],
+      "properties": {
+        "requiresServerAdapterVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiresCatalogRuntimeVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fileEntry": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "path",
+        "schemaVersion"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rowCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

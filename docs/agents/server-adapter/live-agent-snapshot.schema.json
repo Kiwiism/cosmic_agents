@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/live-agent-snapshot.schema.json",
+  "title": "Live Agent Snapshot",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "worldId",
+    "channelId",
+    "mapId",
+    "position",
+    "timestampMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "characterId": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "worldId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "channelId": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mapId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "footholdId": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "level": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "jobId": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "hp": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "maxHp": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "mp": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "maxMp": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "mesos": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "busyState": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "alive": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "questStates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "buffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "nearby": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "timestampMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

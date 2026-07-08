@@ -23,6 +23,40 @@ Result is structured, auditable, and cancellable.
 Capabilities are the only normal path from plans/LLM/profile/economy into
 mutating Agent actions.
 
+## Execution Model
+
+The runtime should execute at most one active capability frame per Agent at a
+time.
+
+Capabilities may require another capability, but they must not call it directly
+as an opaque nested Java call. Instead, they return an explicit handoff request
+to the runtime:
+
+```text
+Objective capability returns NEEDS_CAPABILITY(child command)
+  -> runtime pauses parent frame
+  -> runtime starts child frame
+  -> child returns SUCCEEDED/BLOCKED/FAILED
+  -> runtime resumes parent with child result
+```
+
+This produces nesting behavior through a visible continuation stack. It keeps
+state serializable, makes pause/resume/relog recovery practical, and gives the
+plan journal a complete trace of navigation, NPC, combat, loot, and reactor
+handoffs.
+
+The dependency direction is:
+
+```text
+Plan Runtime
+  -> Objective capability
+      -> primitive capability handoff
+          -> existing reconstructed movement/combat/server services
+```
+
+Primitive movement/combat services must not depend on quest, NPC, or plan
+logic.
+
 ## Goals
 
 - Provide one command/result model for navigation, combat, looting, inventory,
@@ -98,6 +132,7 @@ State meanings:
 - `QUEUED`: waiting for scheduler/budget/action lock.
 - `RUNNING`: capability is actively working.
 - `WAITING`: waiting for movement, animation, server state, or cooldown.
+- `NEEDS_CAPABILITY`: current frame is blocked on a child capability handoff.
 - `SUCCEEDED`: live exit criteria are satisfied.
 - `FAILED_RETRYABLE`: retry may succeed.
 - `BLOCKED`: policy or live state prevents progress.
@@ -145,6 +180,15 @@ Every result must contain:
 
 Results should be compact enough for logs and rich enough for plan/profile
 journals.
+
+When a capability needs another capability, the result must include:
+
+- child capability family.
+- child command type.
+- child target and inputs.
+- parent resume phase.
+- bounded parent local state.
+- whether the child result should be treated as mandatory or optional.
 
 ## Validation Layers
 
@@ -252,6 +296,9 @@ Capability Runtime:
 
 - validates command.
 - executes or delegates execution.
+- owns the active capability frame and paused parent-frame stack.
+- starts child handoff commands requested by objective capabilities.
+- resumes the parent frame after a child reaches a terminal state.
 - returns result.
 - emits events.
 
@@ -286,3 +333,9 @@ Capability Runtime is ready when:
 - unknown/missing capabilities return `CAPABILITY_MISSING`.
 - Plan Runtime can route Maple Island MVP objectives through capability
   commands without calling concrete implementations directly.
+- Objective capabilities can request child primitive capabilities through
+  explicit handoffs.
+- Primitive NavigationCapability and CombatCapability wrappers can call existing
+  reconstructed movement/combat services with parity-preserving inputs.
+- No live movement/combat behavior changes when capability runtime is disabled
+  or when no active capability frame exists.

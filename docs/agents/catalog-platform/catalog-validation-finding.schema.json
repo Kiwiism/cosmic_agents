@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-validation-finding.schema.json",
+  "title": "Catalog Validation Finding",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "findingId",
+    "severity",
+    "category",
+    "catalog",
+    "key",
+    "message",
+    "sources",
+    "recommendedAction",
+    "acceptedGapId"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "findingId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "INFO",
+        "WARN",
+        "REVIEW",
+        "ERROR",
+        "BLOCKER"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "catalog": {
+      "type": "string",
+      "minLength": 1
+    },
+    "key": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "kind",
+          "path"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "recommendedAction": {
+      "type": "string"
+    },
+    "acceptedGapId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

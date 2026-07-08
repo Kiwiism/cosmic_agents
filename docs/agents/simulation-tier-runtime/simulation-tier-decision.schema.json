@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/simulation-tier-runtime/simulation-tier-decision.schema.json",
+  "title": "Simulation Tier Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "mapId",
+    "mode",
+    "allowedShortcuts",
+    "costBudget",
+    "materializationRequired",
+    "reasons",
+    "warnings",
+    "decidedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "agentId": { "type": ["integer", "string"] },
+    "mapId": { "type": "integer", "minimum": 0 },
+    "mode": {
+      "type": "string",
+      "enum": ["PRESENTATION", "BACKGROUND_ACTIVE", "BACKGROUND_ABSTRACT", "STRATEGIC_OFFLINE"]
+    },
+    "allowedShortcuts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suppressVisualPackets",
+        "routeEtaMovement",
+        "sameMapEtaMovement",
+        "abstractCombat",
+        "directLootCredit",
+        "virtualLootBuffer",
+        "batchedInventoryReconcile",
+        "directNpcQuestAction",
+        "directShopAction",
+        "deferredAgentSave"
+      ],
+      "properties": {
+        "suppressVisualPackets": { "type": "boolean" },
+        "routeEtaMovement": { "type": "boolean" },
+        "sameMapEtaMovement": { "type": "boolean" },
+        "abstractCombat": { "type": "boolean" },
+        "directLootCredit": { "type": "boolean" },
+        "virtualLootBuffer": { "type": "boolean" },
+        "batchedInventoryReconcile": { "type": "boolean" },
+        "directNpcQuestAction": { "type": "boolean" },
+        "directShopAction": { "type": "boolean" },
+        "deferredAgentSave": { "type": "boolean" }
+      }
+    },
+    "costBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nextTickDelayMs",
+        "maxCapabilitySteps",
+        "maxPerceptionRefreshes",
+        "maxCombatRounds",
+        "maxInventoryMutations",
+        "allowExpensivePathfinding"
+      ],
+      "properties": {
+        "nextTickDelayMs": { "type": "integer", "minimum": 0 },
+        "maxCapabilitySteps": { "type": "integer", "minimum": 0 },
+        "maxPerceptionRefreshes": { "type": "integer", "minimum": 0 },
+        "maxCombatRounds": { "type": "integer", "minimum": 0 },
+        "maxInventoryMutations": { "type": "integer", "minimum": 0 },
+        "allowExpensivePathfinding": { "type": "boolean" }
+      }
+    },
+    "materializationRequired": { "type": "boolean" },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "decidedAtMs": { "type": "integer", "minimum": 0 }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/portable-install-plan.schema.json",
+  "title": "Portable Agent Install Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "mode",
+    "targetRoot",
+    "agentRoot",
+    "status",
+    "filesToCopy",
+    "patchesToApply",
+    "configChanges",
+    "risks"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "planId": { "type": "string", "minLength": 1 },
+    "mode": { "type": "string", "enum": ["PLAN", "INSTALL", "VERIFY", "UPDATE", "UNINSTALL"] },
+    "targetRoot": { "type": "string", "minLength": 1 },
+    "agentRoot": { "type": ["string", "null"] },
+    "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL", "UNKNOWN"] },
+    "filesToCopy": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fileCopy" }
+    },
+    "patchesToApply": {
+      "type": "array",
+      "items": { "$ref": "portable-patch-operation.schema.json" }
+    },
+    "configChanges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/configChange" }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "fileCopy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePath", "targetPath", "action"],
+      "properties": {
+        "sourcePath": { "type": "string", "minLength": 1 },
+        "targetPath": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "enum": ["COPY", "SKIP_EXISTS", "UPDATE", "REMOVE"] },
+        "hash": { "type": ["string", "null"] }
+      }
+    },
+    "configChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "action", "preserveExisting"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "enum": ["ADD_DEFAULT", "VERIFY_EXISTS", "PRESERVE", "REMOVE"] },
+        "defaultValue": true,
+        "preserveExisting": { "type": "boolean" }
+      }
+    }
+  }
+}

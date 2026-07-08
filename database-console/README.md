@@ -29,6 +29,30 @@ Stop them with `.\database-console\stop-database-console.cmd`.
 The launcher uses a system Node.js 22 installation when available and otherwise uses the Codex
 bundled Node runtime already installed on this workstation. Docker deployments include both runtimes.
 
+The live Cosmic bridge starts by default on loopback (`127.0.0.1`) so local
+console edits can reach online character memory without disconnecting the
+character. The bridge still requires a bearer token. Set a local token before
+starting both the game server and the Console:
+
+```powershell
+$env:COSMIC_BRIDGE_TOKEN = "change-this-local-token"
+```
+
+Use the same `COSMIC_BRIDGE_TOKEN` value in `database-console/.env`. If the
+bridge is not enabled, the Console still works for offline database edits and
+shows the live bridge as offline.
+
+To disable the bridge for a local server run, set:
+
+```powershell
+$env:COSMIC_DATABASE_CONSOLE_BRIDGE_ENABLED = "false"
+```
+
+Current live-write scope is intentionally narrow: online appearance changes
+and equipped/cash-equipped slot add or modify operations are routed through the
+bridge. Normal bag inventory, storage, deletes, and IGN rename remain
+offline-only until their live memory paths are implemented.
+
 On first startup, the JDBC connection creates `cosmic_database_console` when it does not exist,
 then Liquibase creates every required table and applies all migrations. The configured MySQL
 user must have `CREATE` permission for databases and tables. Existing schemas and records are

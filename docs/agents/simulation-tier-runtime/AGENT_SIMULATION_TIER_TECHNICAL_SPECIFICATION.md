@@ -16,6 +16,15 @@ agent-simulation-tier-runtime
 This specification is documentation only until the Agent reconstruction is
 stable. It must not be wired into the current live Agent runtime yet.
 
+Portable JSON contracts:
+
+- `docs/agents/simulation-tier-runtime/simulation-tier-decision.schema.json`
+- `docs/agents/simulation-tier-runtime/materialization-plan.schema.json`
+
+Contract verifier:
+
+- `tools/agent-contracts/Test-AgentScalingContracts.ps1`
+
 ## Package Boundary
 
 Simulation Tier Runtime owns:

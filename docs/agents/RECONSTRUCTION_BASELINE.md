@@ -16,14 +16,14 @@ Comparison baseline:
 - Ref: `cosmic/master`
 - Commit: `fec53bc7714dc0f1ae3f50b2986cdf2727e0912a`
 
-Current bot inventory:
+Original bot inventory at this baseline:
 
-- Production bot files: 63 under `src/main/java/server/bots`.
-- Bot tests and harnesses: 30 under `src/test/java/server/bots`.
+- Original production bot files: 63 under `src/main/java/server/bots`.
+- Original bot tests and harnesses: 30 under `src/test/java/server/bots`.
 - Bot client/command integration files exist outside `server.bots`.
 - `src/main/java/server/agents` is a new neutral reconstruction target created on this branch.
 
-Reconstruction progress:
+Reconstruction progress captured by this baseline snapshot:
 
 - Foundation package skeleton exists.
 - Command parser behavior now lives in `server.agents.commands.AgentCommandParser`.
@@ -47,7 +47,16 @@ Reconstruction progress:
 - Help, report, buff-list, and debug query classification now lives in `server.agents.capabilities.dialogue.AgentChatCommandClassifier`.
 - Stats/range/build/crit/EXP/supply/meso/movement, drop-or-trade prompt, selected catalog-template text, AP-build replies, job display, skill-tree prompt, and learned-skill report formatting now lives in `server.agents.capabilities.dialogue.AgentDialogueReportFormatter`.
 - Chat parsing, direct response strings, dialogue classification, report formatting, and reply runtime ownership have moved into Agent-owned dialogue and integration modules. Remaining bot-side chat references are compatibility entry points or historical parity tests.
-- Bot runtime behavior still lives under `server.bots` and has not been functionally changed.
+- At this snapshot, bot runtime behavior still lived under `server.bots` and
+  had not been functionally changed.
+
+Current state note:
+
+- The active reconstruction has since removed production/test
+  `src/main/java/server/bots/**` and `src/test/java/server/bots/**`.
+  Runtime/session code now uses `server.agents.runtime.AgentRuntimeEntry`
+  directly, while historical `server.bots` paths remain in this document only
+  as baseline references.
 
 Important baseline note:
 

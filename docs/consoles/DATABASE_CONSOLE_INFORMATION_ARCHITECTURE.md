@@ -429,6 +429,15 @@ Sections:
 - replace item in occupied slot.
 - duplicate item into a new unique item instance.
 
+Current implementation note:
+
+- Normal bag inventory, account storage, deletes, duplicates, and storage
+  transfers are offline-only while the character/account is online.
+- Online character memory writes are currently limited to the
+  `Equipment / Appearance` workspace: appearance updates and equipped or
+  cash-equipped slot add/modify operations route through the game-server live
+  bridge.
+
 ### Equipment / Cash Equipment
 
 - equipped gear slots.
@@ -451,6 +460,14 @@ Sections:
 - compact equipment stat tooltip on hover.
 - duplicate prevention for globally unique ids.
 
+Current implementation note:
+
+- The live bridge mutates the online character first, refreshes the client
+  immediately, then forces a character save so the Console can re-read the
+  saved row.
+- Legacy character saves can rewrite `inventoryitemid`; UI merge logic should
+  treat equipped position as the stable slot identity for live equipment saves.
+
 ### Skills
 
 - skill id/name.
@@ -461,15 +478,48 @@ Sections:
 
 ### Quests / Monster Book
 
-- quest status.
-- quest progress.
-- completion time.
-- forfeits.
-- medal maps.
-- area info.
-- event stats.
-- monster cards.
-- monster book cover.
+This is a character-owned workspace, not a global quest catalog. It appears in
+the left navigation under `Character` as `Quests / Monster Book`.
+
+Top-level tabs:
+
+- `Quest Available`.
+- `Quest In Progress`.
+- `Quest Completed`.
+- `Monster Book`.
+
+Quest display should follow the in-game quest window rather than raw database
+tables:
+
+- `Quest Available` shows quests the selected character can currently start.
+  Empty `NOT_STARTED` placeholders that would not appear in the character's
+  quest window should stay hidden.
+- `Quest In Progress` shows started quests and progress details:
+  - mob kill progress such as `3 / 10`.
+  - collected-item progress based on live inventory where requirements are
+    known.
+  - stored `questprogress` rows where the server tracks script or mob state.
+- `Quest Completed` shows completed quests and completion time/count where the
+  database exposes it.
+
+Editing scope:
+
+- allow changing a selected character's quest status between available,
+  in-progress, and completed.
+- allow editing progress rows.
+- keep raw `queststatusid`, `questprogress`, `medalmaps`, `time`, `expires`,
+  `forfeited`, `completed`, and `info` available in technical details, but do
+  not lead with them.
+- warn before dangerous edits such as clearing progress from an active quest or
+  marking a quest completed without granting rewards.
+
+Monster Book:
+
+- show monster card entries by monster book section/tab.
+- each row/card shows mob id, mob name, card id, and cards collected.
+- paginate inside each monster book tab the same way the client paginates
+  monsters within a section.
+- expose monster book cover as a technical/detail field.
 
 ### Social
 

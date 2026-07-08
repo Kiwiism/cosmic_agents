@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "agentId": "template:maple-island-mvp-tester",
+  "identity": {
+    "displayName": "Maple Island MVP Tester",
+    "archetype": "maple-island-mvp-tester",
+    "mainGoal": "Complete the Maple Island MVP route deterministically and stop at Southperry.",
+    "classPreference": "beginner",
+    "economyRole": "none"
+  },
+  "buildIntent": {
+    "targetJobPath": ["beginner"],
+    "statBuild": {
+      "mode": "mvp-neutral",
+      "primaryStat": "none",
+      "notes": "Do not optimize job path during the first Maple Island MVP proof."
+    },
+    "equipmentGoals": []
+  },
+  "traits": {
+    "questFocus": 1.0,
+    "riskTolerance": 0.15,
+    "socialness": 0.05,
+    "marketInterest": 0.0,
+    "selfSufficiency": 0.55,
+    "exploration": 0.1,
+    "patience": 0.85
+  },
+  "timing": {
+    "interactionRealismMode": "OFF",
+    "delayProfile": "fast-test",
+    "seededVariation": false
+  },
+  "preferences": {
+    "preferredPlanIds": ["maple-island-mvp"],
+    "allowedSidetrackTypes": ["emergency"],
+    "recoveryStyle": "rest-or-chair-before-force-fallback",
+    "targetMobFallback": "quest-relevant-map-pressure"
+  },
+  "policy": {
+    "maxDeathRisk": "low",
+    "minReserveMesos": 0,
+    "maxSinglePurchaseMesos": 0,
+    "allowPlayerTrade": false,
+    "allowScriptSensitiveNpc": false,
+    "adaptationMode": "OFF",
+    "allowForceTestFallbacks": true
+  },
+  "planProfile": {
+    "archetype": "maple-island-mvp-tester",
+    "planSetIds": ["maple-island-mvp-test"],
+    "selectionMode": "fixed",
+    "fixedPlanId": "maple-island-mvp",
+    "hardConstraints": {
+      "allowedRegionIds": ["maple-island"],
+      "requiredFinalMapId": 2000000,
+      "forbiddenNpcActions": ["shanks.leave-maple-island"],
+      "forbiddenCompletedQuestIds": [1028],
+      "allowedIncompleteQuestIds": [1046],
+      "forbidFreeMarket": true,
+      "forbidPlayerTrade": true
+    },
+    "softPreferences": {
+      "preferShortestVerifiedRoute": true,
+      "preferQuestObjectivesOverGrinding": true,
+      "preferDeterministicRecovery": true
+    }
+  },
+  "metadata": {
+    "templateId": "maple-island-mvp-tester",
+    "templateVersion": 1,
+    "status": "prep",
+    "safePrepOnly": true,
+    "description": "Data-only profile template for the first deterministic Maple Island MVP run after Agent reconstruction."
+  }
+}

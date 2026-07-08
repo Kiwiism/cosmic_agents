@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/capability-command.schema.json",
+  "title": "Agent Capability Command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "commandId",
+    "agentId",
+    "family",
+    "commandType",
+    "source",
+    "target",
+    "inputs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "commandId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "navigation",
+        "combat",
+        "loot",
+        "npc",
+        "quest",
+        "shop",
+        "inventory",
+        "skill",
+        "social",
+        "recovery",
+        "system"
+      ]
+    },
+    "commandType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "enum": ["PLAN", "LLM", "MANUAL", "RECOVERY", "PROFILE", "ECONOMY", "TEST", "SYSTEM"]
+    },
+    "planId": {
+      "type": ["string", "null"]
+    },
+    "objectiveId": {
+      "type": ["string", "null"]
+    },
+    "target": {
+      "$ref": "#/$defs/capabilityTarget"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "retryPolicy": {
+      "$ref": "#/$defs/retryPolicy"
+    },
+    "timeoutPolicy": {
+      "$ref": "#/$defs/timeoutPolicy"
+    },
+    "auditTags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "capabilityTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mapId": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "x": {
+          "type": ["integer", "null"]
+        },
+        "y": {
+          "type": ["integer", "null"]
+        },
+        "npcId": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "mobId": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "itemId": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "questId": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "portalName": {
+          "type": ["string", "null"]
+        },
+        "freeform": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxAttempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retryDelayMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retryableReasonCodes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "timeoutPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hardTimeoutMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "noProgressTimeoutMs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

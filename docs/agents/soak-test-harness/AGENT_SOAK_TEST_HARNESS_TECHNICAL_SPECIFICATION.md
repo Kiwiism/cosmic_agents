@@ -182,6 +182,10 @@ Command rules:
 
 ## Scenario Manifest
 
+Portable schema:
+
+- `docs/agents/soak-test-harness/agent-soak-scenario-manifest.schema.json`
+
 ```json
 {
   "scenario": "hidden_simulation",
@@ -211,6 +215,11 @@ Command rules:
 ```
 
 ## Population Preset
+
+Portable schema and first preset:
+
+- `docs/agents/soak-test-harness/agent-soak-population-preset.schema.json`
+- `docs/agents/soak-test-harness/presets/victoria_lt30_living_world_v1.population-preset.json`
 
 ```json
 {
@@ -347,6 +356,10 @@ Writers:
 - `events.jsonl`: run events and scenario actions.
 - `summary.json`: latest/final rollup.
 - `failures.json`: pass/fail evidence.
+
+Portable summary schema:
+
+- `docs/agents/soak-test-harness/agent-soak-summary.schema.json`
 
 Writers must flush periodically so a crashed soak run still leaves useful
 evidence.

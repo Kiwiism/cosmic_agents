@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/plan-runtime/plan-progress.schema.json",
+  "title": "Agent Plan Progress",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "planId",
+    "status",
+    "currentObjectiveId",
+    "completedObjectiveIds",
+    "objectives",
+    "sidetrackStack",
+    "totalRetries",
+    "deathCount",
+    "assignedAtMs",
+    "updatedAtMs",
+    "planVersion"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "assigned",
+        "running",
+        "paused",
+        "completed",
+        "blocked",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "currentObjectiveId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "completedObjectiveIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "objectives": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "sidetrackStack": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "totalRetries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "deathCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "assignedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updatedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "planVersion": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

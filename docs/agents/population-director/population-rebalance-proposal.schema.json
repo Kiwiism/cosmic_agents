@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/population-rebalance-proposal.schema.json",
+  "title": "Population Rebalance Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "proposalId",
+    "agentId",
+    "changeType",
+    "from",
+    "to",
+    "priority",
+    "cooldownUntilMs",
+    "reasonCodes"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "proposalId": { "type": "string", "minLength": 1 },
+    "agentId": { "type": ["integer", "string"] },
+    "changeType": {
+      "type": "string",
+      "enum": ["PLAN_SET_SHIFT", "HOME_REGION_SHIFT", "ROLE_SHIFT", "SIMULATION_TIER_SHIFT", "PAUSE_ASSIGNMENT"]
+    },
+    "from": { "type": "object", "additionalProperties": true },
+    "to": { "type": "object", "additionalProperties": true },
+    "priority": { "type": "number", "minimum": 0, "maximum": 1 },
+    "cooldownUntilMs": { "type": "integer", "minimum": 0 },
+    "reasonCodes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

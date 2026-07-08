@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/profile-patch.schema.json",
+  "title": "Profile Patch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "patchId",
+    "agentId",
+    "createdAtMs",
+    "source",
+    "reason",
+    "operations",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "patchId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "createdAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "experience-event",
+            "operator",
+            "llm-proposal",
+            "import",
+            "migration"
+          ]
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "requestedBy": {
+          "type": "string"
+        }
+      }
+    },
+    "reason": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["summary", "reasonCode"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasonCode": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["op", "path"],
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "add",
+              "replace",
+              "remove",
+              "increment",
+              "clamp"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "JSON Pointer-style path relative to the Agent Profile root."
+          },
+          "value": {},
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hardPolicyMutation",
+        "requiresOperatorApproval",
+        "requiresLlmReview",
+        "boundedNumericMutation"
+      ],
+      "properties": {
+        "hardPolicyMutation": {
+          "type": "boolean",
+          "const": false
+        },
+        "requiresOperatorApproval": {
+          "type": "boolean"
+        },
+        "requiresLlmReview": {
+          "type": "boolean"
+        },
+        "boundedNumericMutation": {
+          "type": "boolean"
+        },
+        "blockedPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "/policy",
+            "/planProfile/hardConstraints"
+          ]
+        }
+      }
+    },
+    "expectedProfileVersion": {
+      "type": ["integer", "string", "null"]
+    }
+  }
+}

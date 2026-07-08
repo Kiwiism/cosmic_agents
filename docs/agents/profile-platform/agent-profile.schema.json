@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/agent-profile.schema.json",
+  "title": "Agent Profile",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "identity",
+    "traits",
+    "policy",
+    "planProfile"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["archetype"],
+      "properties": {
+        "displayName": {
+          "type": "string"
+        },
+        "archetype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mainGoal": {
+          "type": "string"
+        },
+        "classPreference": {
+          "type": "string"
+        },
+        "economyRole": {
+          "type": "string"
+        }
+      }
+    },
+    "buildIntent": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "targetJobPath": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "statBuild": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "equipmentGoals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["itemId", "priority"],
+            "properties": {
+              "itemId": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "name": {
+                "type": "string"
+              },
+              "targetLevel": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "normal", "medium", "high", "critical"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "traits": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "preferences": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "maxDeathRisk": {
+          "type": "string"
+        },
+        "minReserveMesos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxSinglePurchaseMesos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allowPlayerTrade": {
+          "type": "boolean"
+        },
+        "allowScriptSensitiveNpc": {
+          "type": "boolean"
+        }
+      }
+    },
+    "planProfile": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["selectionMode"],
+      "properties": {
+        "archetype": {
+          "type": "string"
+        },
+        "planSetIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "selectionMode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hardConstraints": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "softPreferences": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

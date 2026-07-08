@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/population-assignment.schema.json",
+  "title": "Population Assignment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "assignmentId",
+    "targetId",
+    "cohortId",
+    "profileTemplateId",
+    "startingMapId",
+    "startingLevel",
+    "jobId",
+    "planSetIds",
+    "reasonCodes"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "assignmentId": { "type": "string", "minLength": 1 },
+    "agentId": { "type": ["integer", "string", "null"] },
+    "targetId": { "type": "string", "minLength": 1 },
+    "cohortId": { "type": "string", "minLength": 1 },
+    "profileTemplateId": { "type": "string", "minLength": 1 },
+    "startingMapId": { "type": "integer", "minimum": 0 },
+    "startingLevel": { "type": "integer", "minimum": 1 },
+    "jobId": { "type": "integer", "minimum": 0 },
+    "planSetIds": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "reasonCodes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

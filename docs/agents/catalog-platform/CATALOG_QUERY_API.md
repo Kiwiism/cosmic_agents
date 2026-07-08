@@ -35,6 +35,10 @@ public interface GameCatalog {
     List<QuestRewardChoice> findQuestRewardChoices(int questId);
     List<DialogueOptionInfo> findDialogueOptions(int npcId);
     List<ReactorPlacement> findReactorsInMap(int mapId);
+    List<ReactorPlacement> findReactorsById(int reactorId);
+    List<ReactorPlacement> findReactorsForQuest(int questId);
+    List<ReactorPlacement> findReactorsDroppingItem(int itemId);
+    List<ReactorPlacement> findMapleIslandPioReactors();
     List<SafePoint> findSafePoints(int mapId, SafePointQuery query);
     List<ResupplyOption> findResupplyOptions(int fromMapId, ResupplyQuery query);
     List<TrainingMapOption> findTrainingOptions(TrainingQuery query);
@@ -47,6 +51,22 @@ public interface GameCatalog {
     CatalogSearchResult search(CatalogSearchRequest request);
 }
 ```
+
+Current Java prep API:
+
+```java
+CatalogQueryService queries = AgentCatalogService.loadFromRepoRoot(Path.of(".")).queries();
+
+queries.reactor().reactorsInMap(1000000);
+queries.reactor().findReactorById(2001);
+queries.reactor().findReactorsForQuest(1008);
+queries.reactor().findReactorsDroppingItem(4031161);
+queries.reactor().mapleIslandPioReactors();
+```
+
+These methods return immutable `CatalogRecord` lists. They are static lookup
+inputs only. Future Amherst/Maple Island Reactor Capability must still confirm
+live map, range, quest state, and reactor alive/active state before execution.
 
 ## LLM-Safe Query Layer
 
@@ -70,6 +90,15 @@ public interface LlmKnowledgeTools {
 ```
 
 ## Query Result Rules
+
+Portable query envelopes are tracked as:
+
+- `docs/agents/catalog-platform/catalog-query-request.schema.json`
+- `docs/agents/catalog-platform/catalog-query-result.schema.json`
+
+These contracts are transport-neutral. They can be used by a local runtime API,
+an Agent Console endpoint, an LLM tool gateway, or a standalone catalog test
+tool without exposing server classes or mutating live state.
 
 Every query result should include confidence:
 

@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/plan-card.schema.json",
+  "title": "Agent Plan Card",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "title",
+    "category",
+    "status",
+    "objectiveMode",
+    "focusPolicy",
+    "entryCriteria",
+    "exitCriteria",
+    "route"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "planId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "medium", "high", "critical"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "review", "ready", "deprecated"]
+    },
+    "objectiveMode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "focusPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["focusLevel", "allowSidetracks"],
+      "properties": {
+        "focusLevel": {
+          "type": "string",
+          "enum": ["low", "normal", "medium", "high", "locked"]
+        },
+        "allowSidetracks": {
+          "type": "boolean"
+        },
+        "allowedSidetrackTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "returnToPlan": {
+          "type": "string",
+          "enum": ["never", "if-still-useful", "always"]
+        }
+      }
+    },
+    "entryCriteria": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "exitCriteria": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["completeWhen"],
+      "properties": {
+        "completeWhen": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finalMapId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allowedIncompleteQuestIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "blockedCompletedQuestIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "forbiddenActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/forbiddenAction"
+          }
+        }
+      }
+    },
+    "catalogHints": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "integer", "boolean", "array", "object", "null"]
+      }
+    },
+    "questPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "requiredQuestIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "startOnlyQuestIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "excludedQuestIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "optionalReviewQuestIds": {
+          "$ref": "#/$defs/idArray"
+        }
+      }
+    },
+    "route": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/routeStep"
+      }
+    }
+  },
+  "$defs": {
+    "idArray": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "uniqueItems": true
+    },
+    "forbiddenAction": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["type", "reason"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "npcId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "npcName": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "routeStep": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["mapId", "objectives"],
+      "properties": {
+        "mapId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "label": {
+          "type": "string"
+        },
+        "objectives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/objective"
+          }
+        }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind"],
+      "properties": {
+        "objectiveId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "questId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "questIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "npcId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "npcIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "itemId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "itemIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "forQuestId": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "forbiddenFollowUpActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

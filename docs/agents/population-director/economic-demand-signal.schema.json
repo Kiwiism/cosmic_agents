@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/economic-demand-signal.schema.json",
+  "title": "Economic Demand Signal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "signalId",
+    "signalType",
+    "strength",
+    "reasonCodes",
+    "createdAtMs"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "signalId": { "type": "string", "minLength": 1 },
+    "signalType": {
+      "type": "string",
+      "enum": ["CLASS_POPULATION_DEMAND", "REGIONAL_DEMAND", "ROLE_DEMAND", "LEVEL_BAND_DEMAND", "EVENT_PRESSURE"]
+    },
+    "itemTags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "jobGroup": { "type": ["string", "null"] },
+    "regionId": { "type": ["string", "null"] },
+    "levelRange": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "type": "integer", "minimum": 1 },
+        "max": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "strength": { "type": "number", "minimum": 0, "maximum": 1 },
+    "reasonCodes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "createdAtMs": { "type": "integer", "minimum": 0 }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-query-request.schema.json",
+  "title": "Catalog Query Request",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "queryType",
+    "target",
+    "constraints",
+    "responseMode",
+    "createdAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "queryType": {
+      "type": "string",
+      "enum": [
+        "GET_BY_ID",
+        "SEARCH",
+        "FIND_NPC_PLACEMENTS",
+        "FIND_MOB_LOCATIONS",
+        "FIND_DROP_SOURCES",
+        "FIND_SHOP_SOURCES",
+        "FIND_CRAFTING_SOURCES",
+        "FIND_REWARD_SOURCES",
+        "FIND_QUESTS_FOR_NPC",
+        "FIND_QUESTS_REQUIRING_ITEM",
+        "FIND_QUESTS_REQUIRING_MOB",
+        "FIND_QUEST_REWARD_CHOICES",
+        "FIND_DIALOGUE_OPTIONS",
+        "FIND_REACTORS_IN_MAP",
+        "FIND_SAFE_POINTS",
+        "FIND_RESUPPLY_OPTIONS",
+        "FIND_TRAINING_OPTIONS",
+        "FIND_RISK_FLAGS",
+        "PLAN_STATIC_ROUTE",
+        "ESTIMATE_ROUTE_ETA",
+        "FIND_ACQUISITION_OPTIONS",
+        "LLM_SUMMARY"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "entityType": {
+          "type": "string",
+          "enum": [
+            "map",
+            "npc",
+            "item",
+            "mob",
+            "quest",
+            "skill",
+            "reactor",
+            "shop",
+            "travelService",
+            "serverRules",
+            "unknown"
+          ]
+        },
+        "id": {
+          "type": [
+            "integer",
+            "string",
+            "null"
+          ]
+        },
+        "nameOrId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "responseMode": {
+      "type": "string",
+      "enum": [
+        "RAW",
+        "SUMMARY",
+        "LLM_SAFE",
+        "IDS_ONLY",
+        "COUNT_ONLY"
+      ]
+    },
+    "agentContext": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    },
+    "limit": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -115,7 +115,39 @@ catalog-bundle/
 Small servers may omit optional catalogs, but `manifest.json` must list what is
 present.
 
+Current generated reactor source:
+
+```text
+tmp/reactor-catalog/generated_reactor_catalog.json
+tmp/reactor-catalog/REACTOR_CATALOG_SUMMARY.md
+```
+
+The reactor catalog is currently emitted as an envelope with `schemaVersion`,
+`source`, `counts`, `acceptedGaps`, and `entries`. Each entry represents a map
+reactor placement and includes map id/name, reactor id/name, x/y, foothold when
+available, source paths, inferred quest/item links, drops, confidence, and
+flags. The final portable bundle can rename this file to `catalogs/reactors.json`
+while preserving the row shape.
+
 ## Manifest
+
+The portable manifest contract is tracked as:
+
+- `docs/agents/catalog-platform/catalog-bundle-manifest.schema.json`
+
+Current safe-prep tooling can write a draft manifest for the generated catalog
+outputs:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\catalog\Test-CatalogBundlePrep.ps1 `
+  -OutputPath tmp\catalog-bundle-prep-report.md `
+  -OutputManifestPath tmp\draft-catalog-bundle-manifest.json
+```
+
+The draft manifest includes SHA-256 hashes for generated files. Full source-root
+hashing is available during catalog refresh runs, or by passing
+`-OutputSourceHashesPath` to the bundle-prep tool. This is still prep tooling,
+not the final portable runtime bundle builder.
 
 ```json
 {

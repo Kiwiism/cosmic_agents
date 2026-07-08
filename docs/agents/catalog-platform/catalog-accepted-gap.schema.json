@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-accepted-gap.schema.json",
+  "title": "Catalog Accepted Gap",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "acceptedGapId",
+    "findingIdPattern",
+    "severityAllowed",
+    "reason",
+    "expiresOnSourceHashChange",
+    "source",
+    "review"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "acceptedGapId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "findingIdPattern": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severityAllowed": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "INFO",
+          "WARN",
+          "REVIEW",
+          "ERROR",
+          "BLOCKER"
+        ]
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expiresOnSourceHashChange": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "kind",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "status",
+        "reviewedAt",
+        "reviewedBy"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "expired",
+            "needs-review",
+            "rejected"
+          ]
+        },
+        "reviewedAt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "pinned": {
+      "type": "boolean"
+    }
+  }
+}

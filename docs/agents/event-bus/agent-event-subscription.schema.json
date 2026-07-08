@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/event-bus/agent-event-subscription.schema.json",
+  "title": "Agent Event Subscription",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "subscriberName",
+    "eventTypes",
+    "priorities",
+    "budget",
+    "dropPolicy",
+    "durableReplayRequired"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "subscriberName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eventTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "priorities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CRITICAL",
+          "HIGH",
+          "NORMAL",
+          "LOW",
+          "TRACE"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "maxEventsPerDispatch",
+        "maxEventsPerSecond",
+        "maxProcessingMsPerDispatch",
+        "maxQueueDepth"
+      ],
+      "properties": {
+        "maxEventsPerDispatch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxEventsPerSecond": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxProcessingMsPerDispatch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxQueueDepth": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "dropPolicy": {
+      "type": "string",
+      "enum": [
+        "NEVER_DROP",
+        "DROP_OLDEST",
+        "DROP_NEWEST",
+        "COMPACT_BY_DEDUPE_KEY",
+        "SAMPLE",
+        "SUMMARY_ONLY"
+      ]
+    },
+    "durableReplayRequired": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    }
+  }
+}

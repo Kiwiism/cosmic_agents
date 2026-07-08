@@ -180,6 +180,36 @@ Statuses:
 - `blocked`
 - `manual-review-required`
 
+## Portable JSON Contracts
+
+These schemas are prep-only contracts. They define the portable data envelopes
+that future adapter code should emit or accept after reconstruction is stable:
+
+- `docs/agents/server-adapter/live-agent-snapshot.schema.json`
+  - live state snapshot for one Agent, including map, position, vitals,
+    inventory/quest/buff summaries, nearby summaries, and timestamp.
+- `docs/agents/server-adapter/server-action-request.schema.json`
+  - validated intent-level server action request from plan, capability, LLM,
+    recovery, test, or system sources.
+- `docs/agents/server-adapter/server-action-result.schema.json`
+  - adapter action result with status, reason code, live-state-change marker,
+    optional post-action snapshot, effects, and evidence.
+- `docs/agents/server-adapter/portable-install-manifest.schema.json`
+  - portable installer ownership manifest for copied files, marker-blocked
+    patches, config keys, marker prefix, and disabled-by-default install state.
+- `docs/agents/server-adapter/portable-install-plan.schema.json`
+  - dry-run install/update/uninstall plan for copied files, patch operations,
+    config changes, status, and risks.
+- `docs/agents/server-adapter/portable-patch-operation.schema.json`
+  - anchor-based, marker-blocked patch operation contract.
+- `docs/agents/server-adapter/portable-install-verify-report.schema.json`
+  - installer verify report contract for marker, file, config, and compile
+    checks.
+
+The adapter implementation must still re-check live server state before
+executing anything. Catalog facts, LLM commands, and plan objectives are never
+trusted as direct permission to mutate server state.
+
 ## Porting Checklist
 
 To port the platform to another server:

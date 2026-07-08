@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/llm-control-result.schema.json",
+  "title": "LLM Control Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "commandId",
+    "status",
+    "preconditions",
+    "message"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "commandId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "accepted",
+        "rejected",
+        "queued",
+        "running",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "needs-planning",
+        "blocked",
+        "manual-review-required"
+      ]
+    },
+    "agentId": {
+      "type": ["string", "integer", "null"]
+    },
+    "taskId": {
+      "type": ["string", "null"]
+    },
+    "planId": {
+      "type": ["string", "null"]
+    },
+    "capabilityCommandId": {
+      "type": ["string", "null"]
+    },
+    "estimatedDurationMs": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "preconditions": {
+      "$ref": "#/$defs/preconditions"
+    },
+    "message": {
+      "type": "string"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "preconditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["met", "warnings"],
+      "properties": {
+        "met": {
+          "type": "boolean"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missingCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "blockedByPolicy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/agent-experience-event.schema.json",
+  "title": "Agent Experience Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "agentId",
+    "occurredAtMs",
+    "eventType",
+    "source",
+    "subject",
+    "outcome",
+    "influences",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "eventId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "occurredAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "plan.completed",
+        "plan.failed",
+        "objective.completed",
+        "objective.failed",
+        "combat.death",
+        "combat.danger",
+        "loot.dry_streak",
+        "market.purchase",
+        "market.sale",
+        "market.missed_opportunity",
+        "relationship.met",
+        "relationship.party_success",
+        "relationship.help_given",
+        "relationship.help_received",
+        "relationship.trade_good",
+        "relationship.trade_bad",
+        "relationship.conflict",
+        "map.crowded",
+        "map.profitable",
+        "operator.note",
+        "llm.suggestion"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "plan-runtime",
+            "capability-runtime",
+            "economy-engine",
+            "relationship-runtime",
+            "operator",
+            "llm",
+            "soak-harness",
+            "import"
+          ]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "self",
+            "plan",
+            "objective",
+            "map",
+            "mob",
+            "item",
+            "quest",
+            "agent",
+            "player",
+            "market",
+            "system"
+          ]
+        },
+        "id": {
+          "type": ["integer", "string", "null"]
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status", "summary"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "positive",
+            "neutral",
+            "negative",
+            "mixed",
+            "blocked",
+            "unknown"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "magnitude": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "influences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["kind", "weight"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "weight": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "ttlMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -140,6 +140,21 @@ Statuses:
 - `needs-llm-review`
 - `needs-engine-validation`
 
+## Portable JSON Contracts
+
+The reconstruction-safe prep layer currently defines the API payload contracts
+without binding them to the live Agent runtime:
+
+- `profile-decision-request.schema.json`: request envelope for Agent engine,
+  capability, plan, economy, relationship, or LLM callers.
+- `profile-decision-result.schema.json`: bounded decision response with
+  status, summary, reason codes, weighted influences, confidence, and journal
+  intent.
+
+These schemas are portable package contracts. The future implementation can
+wrap them with Java services, MCP tools, or an external profile service without
+changing the stored profile documents.
+
 ## Common Decisions
 
 ### NPC Interaction

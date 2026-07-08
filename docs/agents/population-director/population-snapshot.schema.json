@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/population-snapshot.schema.json",
+  "title": "Population Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "worldId",
+    "channelId",
+    "timestampMs",
+    "agentCount",
+    "byRegion",
+    "byMap",
+    "byLevelBracket",
+    "byJobGroup",
+    "byArchetype",
+    "byRole",
+    "simulationTierCounts",
+    "playerCountsByMap"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "worldId": { "type": "integer", "minimum": 0 },
+    "channelId": { "type": ["integer", "null"], "minimum": 0 },
+    "timestampMs": { "type": "integer", "minimum": 0 },
+    "agentCount": { "type": "integer", "minimum": 0 },
+    "byRegion": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "byMap": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "byLevelBracket": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "byJobGroup": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "byArchetype": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "byRole": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "simulationTierCounts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "playerCountsByMap": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "stuckOrRecoveryCounts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+  }
+}

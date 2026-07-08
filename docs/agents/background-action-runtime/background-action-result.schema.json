@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/background-action-runtime/background-action-result.schema.json",
+  "title": "Background Action Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "success",
+    "resultCode",
+    "virtualState",
+    "pendingMutations",
+    "elapsedVirtualMs",
+    "auditReasons",
+    "warnings",
+    "completedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "requestId": { "type": "string", "minLength": 1 },
+    "success": { "type": "boolean" },
+    "resultCode": {
+      "type": "string",
+      "enum": [
+        "COMPLETED",
+        "SCHEDULED",
+        "PARTIAL_PROGRESS",
+        "REQUIRES_PRESENTATION",
+        "REQUIRES_RECONCILIATION",
+        "BLOCKED_BY_VALIDATION",
+        "BLOCKED_BY_FAIRNESS_BUDGET",
+        "BLOCKED_BY_SENSITIVE_MAP",
+        "FAILED_CLOSED"
+      ]
+    },
+    "virtualState": {
+      "oneOf": [
+        { "$ref": "virtual-agent-state.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "pendingMutations": {
+      "type": "array",
+      "items": { "$ref": "virtual-agent-state.schema.json#/$defs/virtualMutation" }
+    },
+    "elapsedVirtualMs": { "type": "integer", "minimum": 0 },
+    "auditReasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "completedAtMs": { "type": "integer", "minimum": 0 }
+  }
+}

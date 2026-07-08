@@ -38,6 +38,9 @@ Hard Rules:
 - Do not modify live Agent runtime behavior.
 - Do not edit `src/main/java/server/agents` or `src/main/java/server/bots`
   unless explicitly requested.
+- When explicitly requested, Java work under `server/agents` must be inactive
+  prep only: contracts, static catalogs, scope policies, selectors, guarded
+  test harnesses, or tests that are not wired into live ticks.
 - Do not change BotClient behavior.
 - Do not implement live Agent navigation, combat, looting, NPC, quest, shop,
   economy, LLM, or plan execution behavior yet.
@@ -126,7 +129,9 @@ remain marked for review.
 Before finishing any implementation work:
 
 - Run `git diff --check`.
-- Check no Agent reconstruction files were modified or staged.
+- Check no active Agent reconstruction files were modified or staged unless
+  explicitly requested. Inactive capability prep under `server/agents` must be
+  listed separately from live runtime wiring.
 - Check `config.yaml` was not changed unless requested.
 - Compile/test where feasible.
 - If compile fails due to existing reconstruction work, document the blocker

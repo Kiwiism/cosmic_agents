@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/profile-platform/profile-decision-result.schema.json",
+  "title": "Profile Decision Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "decisionId",
+    "agentId",
+    "decisionKind",
+    "status",
+    "summary",
+    "reasons",
+    "influences",
+    "confidence",
+    "shouldRecordDecision",
+    "decidedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decisionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "decisionKind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "allowed",
+        "discouraged",
+        "blocked-by-policy",
+        "needs-llm-review",
+        "needs-engine-validation"
+      ]
+    },
+    "style": {
+      "type": "string"
+    },
+    "chosenAction": {
+      "type": "string"
+    },
+    "delayMsRange": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "approachPreference": {
+      "type": "string"
+    },
+    "riskTolerance": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "influences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/influence"
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "shouldRecordDecision": {
+      "type": "boolean"
+    },
+    "decidedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "influence": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["source", "key", "weight"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

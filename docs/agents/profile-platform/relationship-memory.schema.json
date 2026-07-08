@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/relationship-memory.schema.json",
+  "title": "Agent Relationship Memory",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "agentId",
+    "subject",
+    "relationship",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "agentId": {
+      "type": ["integer", "string"]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subjectType", "subjectId"],
+      "properties": {
+        "subjectType": {
+          "type": "string",
+          "enum": ["agent", "player", "party", "guild", "unknown"]
+        },
+        "subjectId": {
+          "type": ["integer", "string"]
+        },
+        "displayNameHash": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "familiarity",
+        "trust",
+        "affinity",
+        "helpfulnessDebt",
+        "tradeReliability",
+        "partyCompatibility",
+        "annoyance",
+        "avoidance"
+      ],
+      "properties": {
+        "familiarity": {
+          "$ref": "#/$defs/boundedScore"
+        },
+        "trust": {
+          "$ref": "#/$defs/boundedScore"
+        },
+        "affinity": {
+          "$ref": "#/$defs/boundedScore"
+        },
+        "helpfulnessDebt": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "tradeReliability": {
+          "$ref": "#/$defs/boundedScore"
+        },
+        "partyCompatibility": {
+          "$ref": "#/$defs/boundedScore"
+        },
+        "annoyance": {
+          "$ref": "#/$defs/boundedScore"
+        },
+        "avoidance": {
+          "$ref": "#/$defs/boundedScore"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "summary": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "interactionCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lastInteractionAt": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "positiveEventCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "negativeEventCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "updatedAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$defs": {
+    "boundedScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

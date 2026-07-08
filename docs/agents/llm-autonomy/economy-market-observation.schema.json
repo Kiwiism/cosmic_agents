@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/economy-market-observation.schema.json",
+  "title": "Economy Market Observation",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "observationId",
+    "eventType",
+    "worldId",
+    "itemId",
+    "itemValuationKey",
+    "quantity",
+    "unitPrice",
+    "totalPrice",
+    "observedAtMs",
+    "source"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "observationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "listing_seen",
+        "listing_price_changed",
+        "listing_quantity_changed",
+        "listing_cancelled",
+        "listing_expired",
+        "listing_sold_partial",
+        "listing_sold_full",
+        "trade_proposed",
+        "trade_completed",
+        "trade_cancelled",
+        "npc_shop_seen",
+        "agent_item_looted",
+        "agent_item_consumed",
+        "agent_item_vendored",
+        "agent_item_listed",
+        "agent_item_bought"
+      ]
+    },
+    "worldId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "channelId": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "mapId": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "fmRoom": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "itemId": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "itemValuationKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quantity": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unitPrice": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "totalPrice": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "listingId": {
+      "type": ["string", "null"]
+    },
+    "sellerKind": {
+      "type": ["string", "null"],
+      "enum": ["player", "agent", "npc", "system", "unknown", null]
+    },
+    "buyerKind": {
+      "type": ["string", "null"],
+      "enum": ["player", "agent", "npc", "system", "unknown", null]
+    },
+    "sellerIdentityHash": {
+      "type": ["string", "null"]
+    },
+    "buyerIdentityHash": {
+      "type": ["string", "null"]
+    },
+    "observedByAgentId": {
+      "type": ["integer", "string", "null"]
+    },
+    "listingCreatedAtMs": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "observedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "listingAgeMs": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -13,6 +13,55 @@ powershell -ExecutionPolicy Bypass -File tools\game-catalog\Export-GameKnowledge
 
 The export parses WZ XML and SQL seed files. It can take a few minutes.
 
+Machine-readable compact export summary:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\game-catalog\Export-GameKnowledgeCatalog.ps1 -SummaryOnly -Json
+```
+
+The exporter JSON includes `summaryOnly`, `rowsOmitted`, `outputFileCount`,
+`returnedOutputFileCount`, and a compact counts object for maps, mobs,
+drops, items, shops, quests, and skills. Summary mode omits detailed output
+file rows while still writing the same generated catalog artifacts.
+
+## Verify
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\game-catalog\Test-GameKnowledgeCatalog.ps1
+powershell -ExecutionPolicy Bypass -File tools\game-catalog\Test-GameKnowledgeCatalog.ps1 -SummaryOnly -Json
+```
+
+The verifier checks generated files, JSON validity, required row shapes,
+cross-catalog references, and key Maple Island MVP source facts before derived
+Agent/LLM catalogs consume this bundle. Known non-mob drop source conventions
+are reviewed in `docs/agents/catalog-overrides/drop-source-classifications.catalog.json`.
+Compact JSON sets `summaryOnly`, `rowsOmitted`, `checkCount`, `passCount`,
+`warningIds`, `failureIds`, and `returnedCheckCount`, preserves catalog
+`counts`, and omits detailed check rows.
+
+## Drop Source Gap Report
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\game-catalog\New-DropSourceGapReport.ps1 `
+  -OutputPath tmp\drop-source-gap-report.md
+```
+
+This explains drop source IDs that are not present in the generated mob catalog,
+classifying them as item-id-like, reactor/global, event/special, low-id, or
+unknown source conventions for review.
+
+Compact machine-readable report:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\game-catalog\New-DropSourceGapReport.ps1 -SummaryOnly -Json
+```
+
+Summary mode includes `summaryOnly`, `rowsOmitted`, `sourceCount`,
+`returnedSourceCount`, `classCount`, and `returnedClassCount`. It keeps
+classification rows and the compact `summary` object, and omits detailed
+missing source rows.
+Compact drop-source output omits detailed missing source rows by design.
+
 ## Outputs
 
 Generated files are written to `tmp/game-catalog/`:

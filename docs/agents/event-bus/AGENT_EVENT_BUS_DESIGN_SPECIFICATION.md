@@ -199,6 +199,10 @@ Backpressure should emit its own compact observability event.
 
 ## Event Payload Rules
 
+Portable JSON contract:
+
+- `docs/agents/event-bus/agent-event.schema.json`
+
 Event payloads must be:
 
 - small.

@@ -50,6 +50,15 @@ Primary docs:
 - `docs/agents/catalog-platform/CATALOG_BUNDLE_SPEC.md`
 - `docs/agents/catalog-platform/CATALOG_QUERY_API.md`
 - `docs/agents/catalog-platform/CATALOG_BUILDER_VALIDATION_REPORT_SPEC.md`
+- `docs/agents/catalog-platform/catalog-accepted-gap.schema.json`
+- `docs/agents/catalog-platform/catalog-bundle-manifest.schema.json`
+- `docs/agents/catalog-platform/catalog-query-request.schema.json`
+- `docs/agents/catalog-platform/catalog-query-result.schema.json`
+- `docs/agents/catalog-platform/catalog-source-hashes.schema.json`
+- `docs/agents/catalog-platform/catalog-compatibility-report.schema.json`
+- `docs/agents/catalog-platform/catalog-index-coverage.schema.json`
+- `docs/agents/catalog-platform/catalog-validation-finding.schema.json`
+- `docs/agents/catalog-platform/catalog-validation-summary.schema.json`
 - `docs/agents/catalog-platform/PORTABLE_PLATFORM_TODO.md`
 - `docs/agents/llm-autonomy/GAME_KNOWLEDGE_CATALOGS.md`
 
@@ -75,6 +84,13 @@ Implementation focus:
 3. Implement validation report generator and accepted-gap workflow.
 4. Add read-only runtime.
 5. Add fast query APIs and zero-scan rule.
+
+Current prep helper:
+
+- `tools/catalog/Test-CatalogBundlePrep.ps1` maps the current generated
+  catalog files into the future bundle categories and can emit a draft manifest
+  for review. It is read-only and leaves source hashing/row counts to the
+  future bundle builder.
 
 ### 2. NPC Catalog Package
 
@@ -129,6 +145,11 @@ Primary docs:
 - `docs/agents/profile-platform/PROFILE_RUNTIME_ARCHITECTURE.md`
 - `docs/agents/profile-platform/PROFILE_DECISION_API.md`
 - `docs/agents/profile-platform/PROFILE_ADAPTATION_SYSTEM.md`
+- `docs/agents/profile-platform/agent-profile.schema.json`
+- `docs/agents/profile-platform/decision-journal-entry.schema.json`
+- `docs/agents/profile-platform/relationship-memory.schema.json`
+- `docs/agents/profile-platform/agent-experience-event.schema.json`
+- `docs/agents/profile-platform/profile-patch.schema.json`
 - `docs/agents/llm-autonomy/AGENT_PROFILE_SCHEMA.md`
 - `docs/agents/llm-autonomy/PROFILE_PLAN_SET_SYSTEM.md`
 
@@ -175,6 +196,9 @@ Primary docs:
 - `docs/agents/llm-autonomy/ECONOMY_TECHNICAL_IMPLEMENTATION_SPECIFICATION.md`
 - `docs/agents/llm-autonomy/ADAPTIVE_ECONOMY_SYSTEM_PLAN.md`
 - `docs/agents/llm-autonomy/ECONOMY_SYSTEM_SCHEMA.md`
+- `docs/agents/llm-autonomy/economy-market-observation.schema.json`
+- `docs/agents/llm-autonomy/economy-market-item-state.schema.json`
+- `docs/agents/llm-autonomy/economy-decision.schema.json`
 - `docs/agents/llm-autonomy/ECONOMY_ENGINE_TODO.md`
 
 Owns:
@@ -218,6 +242,9 @@ Primary docs:
 
 - `docs/agents/server-adapter/SERVER_ADAPTER_CONTRACT.md`
 - `docs/agents/server-adapter/MINIMAL_COSMIC_EDIT_INSTALL_TARGET.md`
+- `docs/agents/server-adapter/live-agent-snapshot.schema.json`
+- `docs/agents/server-adapter/server-action-request.schema.json`
+- `docs/agents/server-adapter/server-action-result.schema.json`
 
 Owns:
 
@@ -261,6 +288,8 @@ Primary docs:
 - `docs/agents/MAPLE_ISLAND_MVP_IMPLEMENTATION_PLAN.md`
 - `docs/agents/MAPLE_ISLAND_MVP_HANDOFF.md`
 - `docs/agents/MAPLE_ISLAND_CAPABILITY_COMPLETION_PLAN.md`
+- `docs/agents/MAPLE_ISLAND_AMHERST_SUBPHASE_MVP.md`
+- `docs/agents/MAPLE_ISLAND_AMHERST_SUBPHASE_TEST_PLAN.md`
 - `docs/agents/plans/maple-island-mvp.plan.json`
 
 Owns:
@@ -285,6 +314,11 @@ Implementation focus:
 5. recovery fallback.
 6. full-run integration test.
 
+The Amherst sub-phase documents define a smaller first run that stops at
+`1000000 Amherst`. Use that sub-phase to validate reset, NPC quest, item-use,
+combat, loot, quiz, reactor, auto-complete, scope-safety, and journal behavior
+before attempting the full Maple Island MVP route.
+
 ### 7. Plan Runtime Package
 
 Status: well defined.
@@ -293,6 +327,12 @@ Existing docs:
 
 - `docs/agents/plan-runtime/PLAN_RUNTIME_DESIGN_SPECIFICATION.md`
 - `docs/agents/plan-runtime/PLAN_RUNTIME_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/plan-runtime/plan-card.schema.json`
+- `docs/agents/plan-runtime/plan-bundle-manifest.schema.json`
+- `docs/agents/plan-runtime/plan-progress.schema.json`
+- `docs/agents/plan-runtime/objective-progress.schema.json`
+- `docs/agents/plan-runtime/objective-result.schema.json`
+- `docs/agents/plan-runtime/plan-event.schema.json`
 - `docs/agents/llm-autonomy/PLAN_CARD_SYSTEM.md`
 - `docs/agents/llm-autonomy/PROFILE_PLAN_SET_SYSTEM.md`
 - `docs/agents/plans/maple-island-mvp.plan.json`
@@ -330,6 +370,8 @@ Existing docs:
 
 - `docs/agents/capability-runtime/CAPABILITY_RUNTIME_DESIGN_SPECIFICATION.md`
 - `docs/agents/capability-runtime/CAPABILITY_RUNTIME_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/capability-runtime/capability-command.schema.json`
+- `docs/agents/capability-runtime/capability-result.schema.json`
 - `docs/agents/BOT_TO_AGENT_RECONSTRUCTION_MAP.md`
 - `docs/agents/RECONSTRUCTION_RULES.md`
 - `docs/agents/AGENT_FIX_TODO.md`
@@ -355,6 +397,38 @@ Recommended package:
 
 ```text
 agent-capability-runtime
+```
+
+### LLM Control Gateway Contract
+
+Status: well defined as a portable control contract; runtime implementation
+waits for reconstruction.
+
+Primary docs:
+
+- `docs/agents/llm-autonomy/LLM_CONTROL_CONTRACT.md`
+- `docs/agents/llm-autonomy/llm-control-command.schema.json`
+- `docs/agents/llm-autonomy/llm-control-result.schema.json`
+
+Owns:
+
+- LLM command envelope.
+- LLM result envelope.
+- safety envelope for script, trade, market spend, and direct capability use.
+- batch command shape.
+- bridge into Plan Runtime and Capability Runtime validators.
+
+Does not own:
+
+- direct server mutation.
+- direct quest/script/shop execution.
+- capability implementation.
+- profile or economy decision internals.
+
+Recommended package:
+
+```text
+agent-llm-control-gateway
 ```
 
 ### 9. NPC / Quest Interaction Capability Package
@@ -400,6 +474,9 @@ Primary docs:
 
 - `docs/agents/event-bus/AGENT_EVENT_BUS_DESIGN_SPECIFICATION.md`
 - `docs/agents/event-bus/AGENT_EVENT_BUS_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/event-bus/agent-event.schema.json`
+- `docs/agents/event-bus/agent-event-subscription.schema.json`
+- `docs/agents/event-bus/agent-event-replay-query.schema.json`
 
 Purpose:
 
@@ -581,6 +658,12 @@ Primary docs:
 - `docs/agents/AGENT_ENGINE_OPTIMIZATION.md`
 - `docs/agents/simulation-tier-runtime/AGENT_SIMULATION_TIER_DESIGN_SPECIFICATION.md`
 - `docs/agents/simulation-tier-runtime/AGENT_SIMULATION_TIER_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/simulation-tier-runtime/simulation-tier-decision.schema.json`
+- `docs/agents/simulation-tier-runtime/materialization-plan.schema.json`
+
+Verifier:
+
+- `tools/agent-contracts/Test-AgentScalingContracts.ps1`
 
 Owns:
 
@@ -673,6 +756,13 @@ Primary docs:
 - `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
 - `docs/agents/background-action-runtime/BACKGROUND_ACTION_RUNTIME_DESIGN_SPECIFICATION.md`
 - `docs/agents/background-action-runtime/BACKGROUND_ACTION_RUNTIME_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/background-action-runtime/background-action-request.schema.json`
+- `docs/agents/background-action-runtime/background-action-result.schema.json`
+- `docs/agents/background-action-runtime/virtual-agent-state.schema.json`
+
+Verifier:
+
+- `tools/agent-contracts/Test-AgentScalingContracts.ps1`
 
 Owns:
 
@@ -726,6 +816,10 @@ Primary docs:
 - `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
 - `docs/agents/soak-test-harness/AGENT_SOAK_TEST_HARNESS_DESIGN_SPECIFICATION.md`
 - `docs/agents/soak-test-harness/AGENT_SOAK_TEST_HARNESS_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/soak-test-harness/agent-soak-scenario-manifest.schema.json`
+- `docs/agents/soak-test-harness/agent-soak-summary.schema.json`
+- `docs/agents/soak-test-harness/agent-soak-population-preset.schema.json`
+- `docs/agents/soak-test-harness/presets/victoria_lt30_living_world_v1.population-preset.json`
 
 Owns:
 
@@ -825,6 +919,13 @@ Primary docs:
 
 - `docs/agents/population-director/AGENT_POPULATION_DIRECTOR_DESIGN_SPECIFICATION.md`
 - `docs/agents/population-director/AGENT_POPULATION_DIRECTOR_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/population-director/world-population-plan.schema.json`
+- `docs/agents/population-director/population-target.schema.json`
+- `docs/agents/population-director/map-capacity-policy.schema.json`
+- `docs/agents/population-director/population-snapshot.schema.json`
+- `docs/agents/population-director/population-assignment.schema.json`
+- `docs/agents/population-director/population-rebalance-proposal.schema.json`
+- `docs/agents/population-director/economic-demand-signal.schema.json`
 
 Owns:
 
@@ -849,12 +950,14 @@ Does not own:
 Implementation focus:
 
 1. add portable population plan schema.
-2. add population snapshot interface.
-3. add target-vs-current gap planner.
-4. add capacity-aware assignment proposal builder.
-5. add stable rebalance proposal builder with anti-thrash rules.
-6. add population demand signal output.
-7. add seeded soak-test population presets.
+2. add population snapshot, assignment, rebalance proposal, and demand signal
+   contracts.
+3. add population snapshot interface.
+4. add target-vs-current gap planner.
+5. add capacity-aware assignment proposal builder.
+6. add stable rebalance proposal builder with anti-thrash rules.
+7. add population demand signal output.
+8. add seeded soak-test population presets.
 
 ### 20. Portable Installer / Patcher
 
@@ -872,6 +975,10 @@ Primary docs:
 
 - `docs/agents/server-adapter/MINIMAL_COSMIC_EDIT_INSTALL_TARGET.md`
 - `docs/agents/server-adapter/PORTABLE_INSTALLER_TECHNICAL_SPECIFICATION.md`
+- `docs/agents/server-adapter/portable-install-manifest.schema.json`
+- `docs/agents/server-adapter/portable-install-plan.schema.json`
+- `docs/agents/server-adapter/portable-patch-operation.schema.json`
+- `docs/agents/server-adapter/portable-install-verify-report.schema.json`
 
 Owns:
 
@@ -895,11 +1002,12 @@ Does not own:
 
 Implementation focus:
 
-1. add install manifest format.
+1. add install manifest, install plan, patch operation, and verify report
+   contracts.
 2. add dry-run planner.
 3. add marker-block patch engine.
 4. add file copy and config merge helpers.
-5. add verify report.
+5. add verify report writer.
 6. add uninstall/update flows.
 7. add golden file tests and clean-clone compile verification.
 
@@ -1018,8 +1126,42 @@ There are now two implementation tracks:
 - scaling-first track: `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`.
 - gameplay track: `docs/agents/AGENT_GAMEPLAY_TRACK.md`.
 
-If the immediate post-reconstruction goal is 2000 concurrent Agents, follow the
-scaling-first order before gameplay-heavy packages.
+Current sequencing decision:
+
+```text
+Capability proof comes before scaling. The reconstructed Agent engine should
+first complete Amherst MVP and Maple Island MVP through the Capability Runtime,
+then review/gate NuTNNuT-original behavior, then start scaling.
+```
+
+The old scaling-first order remains useful after the stable gameplay baseline
+exists.
+
+### Capability-First Baseline Order
+
+1. reconstruction closeout.
+2. `agent-capability-runtime` common command/result/status/reason-code
+   contracts.
+3. `agent-capability-runtime` frame runner with validation, timeout, retry,
+   cancellation, and explicit child-capability handoff.
+4. minimal `agent-plan-runtime` loader and objective runner.
+5. server adapter and live state reader boundaries.
+6. Amherst catalog/runtime slice.
+7. capability adapter shells for:
+   - navigation.
+   - portal travel.
+   - NPC interaction.
+   - quest read/start/complete.
+   - inventory read/free-slot/item-count.
+   - item use.
+   - combat objective.
+   - loot objective.
+   - reactor interaction.
+   - recovery.
+8. Amherst MVP smoke test.
+9. full Maple Island MVP.
+10. NuTNNuT-original behavior review and gating.
+11. stable Agent engine baseline.
 
 ### Scaling-First Order
 

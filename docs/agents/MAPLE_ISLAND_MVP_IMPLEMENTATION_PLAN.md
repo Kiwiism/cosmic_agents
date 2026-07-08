@@ -102,12 +102,18 @@ Existing nutnnut-derived behavior already covers parts of navigation, combat,
 and looting. This milestone should finish the gaps that prevent autonomous
 quest completion.
 
+The implementation must use a single-active-capability runtime. Objective
+capabilities may request child primitive capabilities through explicit
+handoffs, but they must not directly nest lower-level capability calls.
+
 ## Core Design
 
 ```text
 Maple Island Plan Card
   -> Objective Runner
   -> Capability Router
+  -> active capability frame
+  -> explicit handoff/resume stack
   -> capability validators
   -> Cosmic adapter/gateways
   -> server quest/navigation/combat/loot operations
@@ -118,6 +124,21 @@ Maple Island Plan Card
 Capabilities must not directly decide the whole questline. They execute one
 validated objective at a time and report result/state back to the Objective
 Runner.
+
+Objective capabilities own phase state and final objective verification.
+Primitive capabilities execute one action to one end state.
+
+Required split:
+
+| Objective capability | Child handoffs |
+| --- | --- |
+| `NpcQuestObjectiveCapability` | NavigationCapability, NpcInteractionCapability, QuestStateCapability |
+| `CombatQuestObjectiveCapability` | NavigationCapability, CombatCapability, QuestProgressCapability |
+| `ReactorQuestObjectiveCapability` | NavigationCapability, ReactorInteractionCapability, LootCapability, InventoryCapability |
+| `InventoryUseObjectiveCapability` | InventoryCapability, ItemUseCapability, QuestStateCapability |
+
+The Objective Runner advances the plan only when the objective capability
+returns `SUCCEEDED`.
 
 ## Quest Interaction Rule
 
@@ -266,6 +287,8 @@ navigateToPoint(agentId, mapId, x, y, tolerance)
 
 Gaps to finish:
 
+- primitive wrapper command over existing reconstructed movement/navigation
+  behavior with parity tests before any quest-specific changes.
 - portal-chain reliability
 - valid stop points near NPC
 - same-map target recovery
@@ -298,6 +321,9 @@ Required validations:
 
 Responsibilities:
 
+- Wrap existing reconstructed grind/combat behavior first without changing
+  target scoring, attack planning, cooldown, ammo, AoE, loot side behavior, or
+  movement target behavior.
 - Target only quest-relevant mobs when running quest objectives.
 - Attack until kill count or drop requirement is satisfied.
 - Stop combat when the objective completes.
@@ -318,6 +344,8 @@ clearThreatsNear(agentId, point)
 
 Gaps to finish:
 
+- primitive wrapper parity tests against the existing legacy-mode grind/combat
+  tick.
 - mob objective awareness
 - objective stop condition
 - objective focus state
@@ -481,6 +509,39 @@ Minimum plan skeleton:
 Objective generation should come from catalog data where possible, then be
 manually overridden where Cosmic scripts/WZ data are ambiguous.
 
+## Amherst Sub-Phase First
+
+The first live gameplay run after primitive wrapper parity should be the
+Amherst sub-phase, not the full Southperry MVP.
+
+Plan card:
+
+```text
+docs/agents/plans/maple-island-amherst-subphase.plan.json
+```
+
+Completion target:
+
+```text
+start map = 10000 Mushroom Town
+final map = 1000000 Amherst
+covered Amherst quests complete
+no Training Center, Southperry, Shanks, or Lith Harbor travel
+```
+
+The Amherst run must fully use the capability runtime:
+
+```text
+Plan objective
+  -> objective capability
+  -> primitive capability handoff
+  -> live state verification
+  -> objective success
+```
+
+Do not run Amherst by scripting direct calls around the capability runtime. That
+would not prove the post-reconstruction architecture.
+
 ## Catalog Requirements
 
 The runtime needs read-only catalog data for:
@@ -544,23 +605,36 @@ Do not trust persisted objective state over live quest state.
 1. Add read-only plan card loader.
 2. Add plan progress state model.
 3. Add objective status model.
-4. Add capability command/result model.
-5. Add QuestCapability read APIs.
-6. Add NpcQuestInteractionCapability validation-only path.
-7. Add direct quest start/complete execution path using `Quest.start/complete`.
-8. Add navigation objective adapters for NPC, map, portal, point.
-9. Add portal travel verification.
-10. Add inventory count/free-slot APIs.
-11. Add loot objective stop conditions.
-12. Add combat objective stop conditions.
-13. Add RecoveryCapability basic retry/block policy.
-14. Build Maple Island catalog slice.
-15. Generate or write Maple Island MVP plan card.
-16. Add test command to assign `maple-island-mvp` to one agent.
-17. Add objective progress logging.
-18. Add integration test script for one full run.
-19. Add resume test from partial progress.
-20. Add forbidden Shanks interaction test.
+4. Add capability command/result model with active frame and handoff/resume
+   stack.
+5. Add primitive NavigationCapability wrapper over existing reconstructed
+   movement/navigation behavior.
+6. Add movement parity tests.
+7. Add primitive CombatCapability wrapper over existing reconstructed
+   grind/combat behavior.
+8. Add combat parity tests.
+9. Add capability runtime tick routing behind a feature flag:
+   capability frame first, legacy fallback when no active frame.
+10. Add QuestCapability read APIs.
+11. Add NpcQuestInteractionCapability validation-only path.
+12. Add direct quest start/complete execution path using `Quest.start/complete`.
+13. Add objective capabilities that request primitive handoffs:
+   NPC quest, combat quest, reactor quest, inventory-use.
+14. Add portal travel verification.
+15. Add inventory count/free-slot APIs.
+16. Add loot objective stop conditions.
+17. Add combat objective stop conditions.
+18. Add RecoveryCapability basic retry/block policy.
+19. Wire the Amherst sub-phase plan to capability runtime and run it from a
+   clean allowlisted test Agent.
+20. Build Maple Island catalog slice.
+21. Generate or update full Maple Island MVP plan card.
+22. Add test command to assign `maple-island-mvp` to one agent.
+23. Add objective progress logging.
+24. Add integration test script for one full Amherst run, then one full
+   Southperry run.
+25. Add resume test from partial progress.
+26. Add forbidden Shanks interaction test.
 
 ## Verification Checklist
 

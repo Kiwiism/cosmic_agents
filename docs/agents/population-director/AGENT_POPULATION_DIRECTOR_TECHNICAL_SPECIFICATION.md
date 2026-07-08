@@ -11,6 +11,20 @@ This document is implementation-ready guidance for after Agent reconstruction.
 It must not be implemented against the live Agent runtime until the
 reconstructed runtime boundaries are stable.
 
+Portable JSON contracts:
+
+- `docs/agents/population-director/world-population-plan.schema.json`
+- `docs/agents/population-director/population-target.schema.json`
+- `docs/agents/population-director/map-capacity-policy.schema.json`
+- `docs/agents/population-director/population-snapshot.schema.json`
+- `docs/agents/population-director/population-assignment.schema.json`
+- `docs/agents/population-director/population-rebalance-proposal.schema.json`
+- `docs/agents/population-director/economic-demand-signal.schema.json`
+
+Contract verifier:
+
+- `tools/agent-contracts/Test-PopulationDirectorContracts.ps1`
+
 ## Suggested Package Layout
 
 ```text

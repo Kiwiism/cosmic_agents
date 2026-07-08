@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/plan-runtime/objective-progress.schema.json",
+  "title": "Agent Objective Progress",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "objectiveId",
+    "status",
+    "attempts",
+    "activeCommandId",
+    "lastReasonCode",
+    "lastMessage",
+    "startedAtMs",
+    "updatedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "objectiveId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "eligible",
+        "running",
+        "completed",
+        "blocked",
+        "failed",
+        "skipped",
+        "cancelled"
+      ]
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "activeCommandId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lastReasonCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lastMessage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "startedAtMs": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "updatedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

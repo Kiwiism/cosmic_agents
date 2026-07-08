@@ -14,6 +14,17 @@ Related target contract:
 
 - `docs/agents/server-adapter/MINIMAL_COSMIC_EDIT_INSTALL_TARGET.md`
 
+Portable JSON contracts:
+
+- `docs/agents/server-adapter/portable-install-manifest.schema.json`
+- `docs/agents/server-adapter/portable-install-plan.schema.json`
+- `docs/agents/server-adapter/portable-patch-operation.schema.json`
+- `docs/agents/server-adapter/portable-install-verify-report.schema.json`
+
+Contract verifier:
+
+- `tools/agent-contracts/Test-PortableInstallerContracts.ps1`
+
 Recommended package:
 
 ```text

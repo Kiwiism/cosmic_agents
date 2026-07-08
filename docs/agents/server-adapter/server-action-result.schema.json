@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/server-adapter/server-action-result.schema.json",
+  "title": "Server Action Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "actionId",
+    "status",
+    "reasonCode",
+    "message",
+    "liveStateChanged",
+    "completedAtMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "actionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "VALIDATED",
+        "REJECTED",
+        "QUEUED",
+        "RUNNING",
+        "SUCCEEDED",
+        "FAILED",
+        "BLOCKED",
+        "CANCELLED",
+        "TIMED_OUT",
+        "ERROR"
+      ]
+    },
+    "reasonCode": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "liveStateChanged": {
+      "type": "boolean"
+    },
+    "snapshotAfter": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "completedAtMs": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

@@ -68,6 +68,12 @@ step.
 
 ## Required Output Files
 
+Portable schemas for the machine-readable reports:
+
+- `docs/agents/catalog-platform/catalog-source-hashes.schema.json`
+- `docs/agents/catalog-platform/catalog-compatibility-report.schema.json`
+- `docs/agents/catalog-platform/catalog-index-coverage.schema.json`
+
 ```text
 catalog-bundle/
   manifest.json
@@ -130,6 +136,10 @@ REVIEW rows are allowed but must be indexed as manual-review/action-risk flags.
 
 ## Validation Finding Schema
 
+Portable schema:
+
+- `docs/agents/catalog-platform/catalog-validation-finding.schema.json`
+
 ```json
 {
   "schemaVersion": 1,
@@ -154,6 +164,10 @@ REVIEW rows are allowed but must be indexed as manual-review/action-risk flags.
 ```
 
 ## Report Summary Schema
+
+Portable schema:
+
+- `docs/agents/catalog-platform/catalog-validation-summary.schema.json`
 
 ```json
 {
@@ -348,10 +362,15 @@ Checks:
 
 Accepted gaps are explicit waivers for known server-specific data issues.
 
+Portable schema:
+
+- `docs/agents/catalog-platform/catalog-accepted-gap.schema.json`
+
 Example:
 
 ```json
 {
+  "schemaVersion": 1,
   "acceptedGapId": "victoria-lt30-old-map-quest-2001",
   "findingIdPattern": "quest-complete-npc-missing-placement:2001:*",
   "severityAllowed": ["ERROR"],

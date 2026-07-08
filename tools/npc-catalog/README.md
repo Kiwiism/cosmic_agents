@@ -11,6 +11,32 @@ powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Export-NpcCatalog.ps1
 
 The full export parses map footholds and can take several minutes.
 
+Machine-readable compact export summary:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Export-NpcCatalog.ps1 -SummaryOnly -Json
+```
+
+The exporter JSON includes `summaryOnly`, `rowsOmitted`, `outputFileCount`,
+`returnedOutputFileCount`, compact NPC `counts`, and compact `reviewCounts`
+for missing names, missing approach candidates, no-placement quest/shop NPCs,
+do-not-auto-use NPCs, high-placement NPCs, and inferred interaction types.
+Summary mode omits detailed output file rows while still writing the same generated NPC catalog artifacts.
+
+## Verify
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Test-NpcCatalog.ps1
+powershell -ExecutionPolicy Bypass -File tools\npc-catalog\Test-NpcCatalog.ps1 -SummaryOnly -Json
+```
+
+The verifier checks generated NPC files, JSON validity, row shapes, NPC
+cross-references, generated approach candidates, dialogue timing rows, fast
+indexes, review gates, and Maple Island route NPC placement coverage.
+Compact JSON sets `summaryOnly`, `rowsOmitted`, `checkCount`, `passCount`,
+`warningIds`, `failureIds`, and `returnedCheckCount`, preserves catalog
+`counts`, and omits detailed check rows.
+
 ## Outputs
 
 Generated files are written to `tmp/npc-catalog/`:

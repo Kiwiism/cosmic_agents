@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/catalog-platform/catalog-validation-summary.schema.json",
+  "title": "Catalog Validation Summary",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "generatedAt",
+    "runtimeReady",
+    "counts",
+    "catalogRowCounts",
+    "indexCoverage",
+    "acceptedGapCount",
+    "newUnacceptedFindingCount"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bundleId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtimeReady": {
+      "type": "boolean"
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "info",
+        "warn",
+        "review",
+        "error",
+        "blocker"
+      ],
+      "properties": {
+        "info": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "review": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "error": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocker": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "catalogRowCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "indexCoverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "acceptedGapCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "newUnacceptedFindingCount": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

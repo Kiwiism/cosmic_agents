@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cosmic-agents.local/schemas/map-capacity-policy.schema.json",
+  "title": "Map Capacity Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mapId",
+    "softAgentCap",
+    "hardAgentCap",
+    "visibleFullSimulationCap",
+    "backgroundSimulationCap",
+    "roleCaps",
+    "crowdingPenalty"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "mapId": { "type": "integer", "minimum": 0 },
+    "softAgentCap": { "type": "integer", "minimum": 0 },
+    "hardAgentCap": { "type": "integer", "minimum": 0 },
+    "visibleFullSimulationCap": { "type": "integer", "minimum": 0 },
+    "backgroundSimulationCap": { "type": "integer", "minimum": 0 },
+    "roleCaps": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "crowdingPenalty": { "type": "number", "minimum": 0, "maximum": 1 },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
