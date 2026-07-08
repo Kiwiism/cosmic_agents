@@ -105,6 +105,13 @@ Recent reconstruction notes:
   clears the current grind target through the existing target-state seam,
   clears attack and movement cooldown windows, clears navigation state, and
   invalidates movement broadcasts in the same order.
+- Navigation debug/path-log state access has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime`.
+  It remains a behavior-preserving adapter over `AgentRuntimeEntry`
+  navigation debug, target, portal cooldown, and active-edge state; path-log
+  file creation, live Agent identity reads, and navigation execution behavior
+  are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

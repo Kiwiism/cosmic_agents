@@ -33,7 +33,7 @@ import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.mockito.MockedStatic;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.maps.MapleMap;
 import server.maps.Foothold;

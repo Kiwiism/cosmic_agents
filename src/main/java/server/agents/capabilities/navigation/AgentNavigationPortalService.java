@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Portal;
 

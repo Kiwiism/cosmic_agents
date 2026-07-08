@@ -4,7 +4,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentTargetSnapshot;

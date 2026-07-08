@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.navigation;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -7,7 +7,6 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
 
 import java.awt.Point;
 

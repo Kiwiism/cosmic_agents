@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

@@ -1,6 +1,6 @@
 package server.agents.capabilities.navigation;
 
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

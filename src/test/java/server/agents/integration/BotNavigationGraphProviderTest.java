@@ -27,7 +27,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;

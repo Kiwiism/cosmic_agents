@@ -34,7 +34,7 @@ import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentMapStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;

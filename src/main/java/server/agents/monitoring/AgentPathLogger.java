@@ -20,7 +20,7 @@ import server.agents.runtime.AgentFormationStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;

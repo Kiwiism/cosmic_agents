@@ -13,7 +13,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 

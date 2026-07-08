@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 
 import java.awt.Point;

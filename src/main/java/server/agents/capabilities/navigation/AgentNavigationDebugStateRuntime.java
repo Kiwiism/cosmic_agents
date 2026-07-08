@@ -1,7 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentPathLogger;
 import server.agents.runtime.AgentRuntimeEntry;
 

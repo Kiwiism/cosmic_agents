@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 
 import java.awt.Point;
 

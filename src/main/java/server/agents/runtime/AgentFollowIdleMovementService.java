@@ -6,7 +6,7 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
-import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
 
