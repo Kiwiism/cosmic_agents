@@ -2347,3 +2347,6 @@ Recent capability extraction notes:
 - `AgentMobTouchRuntime` now lives in `server.agents.capabilities.combat`. It
   preserves the same touch-sweep bounds, hitbox lookup, lower-half
   intersection policy, and checkpoint state behavior.
+- `AgentCombatBuffRuntime` now lives in `server.agents.capabilities.combat`.
+  It preserves the same support-buff readiness, party-support selection,
+  special-move dispatch, cooldown, alert, and legacy debug behavior.

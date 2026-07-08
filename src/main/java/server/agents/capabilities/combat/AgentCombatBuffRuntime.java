@@ -1,22 +1,9 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatAlertRuntime;
-import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
-
-import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
-
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
-import server.agents.capabilities.combat.AgentSkillBuffDebugStateRuntime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
 import client.SkillFactory;
 import server.StatEffect;
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatSkillClassifier;
-import server.agents.capabilities.combat.AgentCombatSupportPolicy;
-import server.agents.capabilities.combat.AgentSupportSpecialMoveExecutor;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

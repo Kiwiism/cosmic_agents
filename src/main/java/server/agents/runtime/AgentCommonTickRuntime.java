@@ -10,7 +10,7 @@ import server.agents.capabilities.inventory.AgentInventoryTickRuntime;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.combat.AgentCombatActionLockRuntime;
-import server.agents.integration.AgentCombatBuffRuntime;
+import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.integration.AgentCombatDamageRuntime;
 import server.agents.integration.AgentCombatDeathRuntime;
 import server.agents.integration.AgentCombatHealRuntime;

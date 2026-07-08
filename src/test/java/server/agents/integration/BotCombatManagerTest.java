@@ -62,7 +62,7 @@ import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
 import server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime;
 import server.agents.integration.AgentCombatAttackRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
-import server.agents.integration.AgentCombatBuffRuntime;
+import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentCombatDamageRuntime;
 import server.agents.integration.AgentCombatDeathRuntime;

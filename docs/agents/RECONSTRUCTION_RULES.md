@@ -6259,6 +6259,11 @@ Current physics correction:
   `server.agents.capabilities.combat.AgentMobTouchRuntime`. It preserves the
   same previous-position sweep bounds, mob hitbox lookup, lower-half
   intersection policy, and per-map checkpoint memory.
+- Combat support-buff orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatBuffRuntime`. It preserves the
+  same buff tick readiness, living-mob gate, party-support selection, skill
+  cost checks, special-move dispatch, cooldown updates, alert marking, and
+  legacy debug summaries.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
