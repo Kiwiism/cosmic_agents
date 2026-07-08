@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import net.server.world.Party;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

@@ -112,6 +112,11 @@ Recent map updates:
   `server.agents.runtime`. It only adapts live leader activity/AFK/away command
   fields on `AgentRuntimeEntry`; status replies and delayed return actions stay
   in integration-facing adapters.
+- Movement-mode state adapters `AgentModeStateRuntime`,
+  `AgentFarmAnchorStateRuntime`, and `AgentPatrolStateRuntime` have moved from
+  `server.agents.integration` to `server.agents.runtime`. They only adapt
+  follow/grind/farm-anchor/patrol fields on `AgentRuntimeEntry`; combat,
+  movement packets, map navigation, and recovery side effects remain unchanged.
 - `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout

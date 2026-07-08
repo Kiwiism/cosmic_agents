@@ -2,9 +2,9 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentTickCadenceStateRuntime;
-import server.agents.integration.AgentTickFailureStateRuntime;
-import server.agents.integration.AgentTickStateRuntime;
+import server.agents.runtime.AgentTickCadenceStateRuntime;
+import server.agents.runtime.AgentTickFailureStateRuntime;
+import server.agents.runtime.AgentTickStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

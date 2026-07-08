@@ -4,8 +4,8 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
-import server.agents.integration.AgentPatrolStateRuntime;
-import server.agents.integration.AgentTickFailureStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentTickFailureStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

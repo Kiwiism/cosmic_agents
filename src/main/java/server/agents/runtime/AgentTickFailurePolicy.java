@@ -3,10 +3,10 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
-import server.agents.integration.AgentModeStateRuntime;
-import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentTickFailureStateRuntime;
+import server.agents.runtime.AgentTickFailureStateRuntime;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

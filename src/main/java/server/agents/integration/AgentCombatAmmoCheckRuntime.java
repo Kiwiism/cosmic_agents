@@ -11,6 +11,7 @@ import server.agents.capabilities.combat.AgentCombatAmmoPolicy;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentCombatAmmoCheckRuntime {

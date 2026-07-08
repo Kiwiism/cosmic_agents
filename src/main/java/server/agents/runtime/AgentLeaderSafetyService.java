@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.integration.AgentBuffStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;

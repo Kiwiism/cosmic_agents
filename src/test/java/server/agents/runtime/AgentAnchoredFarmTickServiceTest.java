@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 
 import java.awt.Point;

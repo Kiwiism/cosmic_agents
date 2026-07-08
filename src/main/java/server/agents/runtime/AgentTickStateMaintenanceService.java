@@ -1,11 +1,11 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
-import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;

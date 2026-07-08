@@ -20,7 +20,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;

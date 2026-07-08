@@ -16,6 +16,8 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
+import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;

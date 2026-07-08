@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentClimbStateRuntime;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;

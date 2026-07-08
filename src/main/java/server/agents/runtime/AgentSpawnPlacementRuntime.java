@@ -13,7 +13,7 @@ import server.agents.integration.AgentMapStateRuntime;
 import server.agents.integration.AgentMovementBroadcastStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentTickCadenceStateRuntime;
+import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;

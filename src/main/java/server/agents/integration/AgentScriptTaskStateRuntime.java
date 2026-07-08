@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.plans.AgentTask;
 import server.agents.plans.AgentScriptRuntimeState;
 

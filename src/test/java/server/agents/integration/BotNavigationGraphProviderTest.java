@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentClimbStateRuntime;
 
 
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationEdgeReadinessService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;

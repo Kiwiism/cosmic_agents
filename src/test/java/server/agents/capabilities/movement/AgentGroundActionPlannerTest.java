@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

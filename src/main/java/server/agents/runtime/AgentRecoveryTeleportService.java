@@ -1,8 +1,8 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentFarmAnchorStateRuntime;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentShopStateRuntime;
 import server.maps.MapleMap;

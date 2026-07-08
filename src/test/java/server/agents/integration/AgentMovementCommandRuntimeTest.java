@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 

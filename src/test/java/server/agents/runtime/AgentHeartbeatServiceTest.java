@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentTickStateRuntime;
+import server.agents.runtime.AgentTickStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentFidgetStateRuntime;
 
 
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 
 import server.agents.capabilities.trade.AgentOfferService;

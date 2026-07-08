@@ -8,7 +8,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindWanderStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;

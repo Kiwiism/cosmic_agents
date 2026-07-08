@@ -10,6 +10,7 @@ import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentSupportSpecialMoveExecutor;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 

@@ -3,7 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentTickStateRuntime;
+import server.agents.runtime.AgentTickStateRuntime;
 
 import java.awt.Point;
 

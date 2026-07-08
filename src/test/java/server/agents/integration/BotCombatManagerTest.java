@@ -7,7 +7,7 @@ import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 
 
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -77,7 +77,7 @@ import server.agents.integration.AgentDeathStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMobTouchStateRuntime;
 import server.agents.integration.AgentMobTouchRuntime;
-import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentSkillBuffDebugStateRuntime;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;

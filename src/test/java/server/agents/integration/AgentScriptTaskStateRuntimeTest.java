@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;

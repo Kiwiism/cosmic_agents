@@ -2,14 +2,14 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentFidgetRuntime;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentShopStateRuntime;
-import server.agents.integration.AgentTickStateRuntime;
+import server.agents.runtime.AgentTickStateRuntime;
 
 import java.awt.Point;
 

@@ -14,6 +14,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatSupportPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.runtime.AgentFollowAnchorService;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;

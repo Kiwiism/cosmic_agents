@@ -1,7 +1,4 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentModeState;
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.runtime;
 
 /**
  * Agent-owned adapter for AgentRuntimeEntry-backed high-level movement mode state.

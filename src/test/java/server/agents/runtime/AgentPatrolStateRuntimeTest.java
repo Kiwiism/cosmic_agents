@@ -1,9 +1,9 @@
-package server.agents.integration;
+package server.agents.runtime;
 
-import server.agents.runtime.AgentRuntimeEntry;
+
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 
 import java.awt.Point;
 

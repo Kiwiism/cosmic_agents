@@ -7,7 +7,7 @@ import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentMovementPhysicsStateRuntime;
 
 
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;

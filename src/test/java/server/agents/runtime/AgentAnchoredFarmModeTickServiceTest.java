@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentFarmAnchorStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;

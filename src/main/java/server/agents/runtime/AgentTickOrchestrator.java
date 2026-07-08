@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentTickCadenceStateRuntime;
-import server.agents.integration.AgentTickStateRuntime;
+import server.agents.runtime.AgentTickCadenceStateRuntime;
+import server.agents.runtime.AgentTickStateRuntime;
 
 /**
  * Agent-owned tick orchestration helpers over AgentRuntimeEntry-backed state.

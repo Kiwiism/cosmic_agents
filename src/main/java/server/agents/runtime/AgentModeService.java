@@ -3,14 +3,14 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
-import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentGrindLootStateRuntime;
 import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentGrindWanderStateRuntime;
-import server.agents.integration.AgentModeStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRetreatHoldStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
