@@ -2357,3 +2357,7 @@ Recent capability extraction notes:
 - `AgentStatusRuntime` now lives in `server.agents.capabilities.dialogue`. It
   preserves the same offline-return and AFK-return status action adapters while
   keeping live identity and reply delivery as integration seams.
+- `AgentSocialRuntime` now lives in `server.agents.capabilities.social`. It
+  preserves the same delayed fame command handling, target lookup, fame
+  eligibility/mutation, and reply behavior while keeping live identity and
+  reply delivery as integration seams.

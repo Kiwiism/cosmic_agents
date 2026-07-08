@@ -6273,6 +6273,11 @@ Current physics correction:
   same map-name lookup, random delay scheduling, face expression changes,
   party speech, and reply behavior while keeping live identity and reply
   delivery behind integration seams.
+- Fame/social chat callback orchestration now lives in
+  `server.agents.capabilities.social.AgentSocialRuntime`. It preserves the
+  same delayed fame command handling, self-target resolution, same-map target
+  lookup, fame eligibility checks, fame mutation, and replies while keeping
+  live identity and reply delivery behind integration seams.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

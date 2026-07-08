@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.social;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.integration.AgentSocialRuntime;
 import server.maps.MapleMap;
 
 import java.util.List;

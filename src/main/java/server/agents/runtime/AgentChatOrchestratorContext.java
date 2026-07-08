@@ -26,7 +26,7 @@ import server.agents.capabilities.movement.AgentMovementRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionRuntime;
-import server.agents.integration.AgentSocialRuntime;
+import server.agents.capabilities.social.AgentSocialRuntime;
 import server.agents.capabilities.supplies.AgentSupplyRuntime;
 import server.agents.capabilities.trade.AgentTransferRuntime;
 import server.agents.capabilities.dialogue.AgentUtilityRuntime;

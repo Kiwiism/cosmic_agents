@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.social;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -6,11 +6,13 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatSocialFlow;
 import server.agents.capabilities.dialogue.AgentFameDialogueFlow;
 import server.agents.capabilities.dialogue.AgentSocialDialogueClassifier;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
- * Agent-owned social chat callback facade over temporary bot-side fame side
- * effects.
+ * Agent-owned social chat callback facade. Live identity and reply delivery
+ * remain integration seams.
  */
 public final class AgentSocialRuntime {
     private AgentSocialRuntime() {
