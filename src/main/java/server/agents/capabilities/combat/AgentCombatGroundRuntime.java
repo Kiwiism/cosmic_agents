@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentGroundingService;

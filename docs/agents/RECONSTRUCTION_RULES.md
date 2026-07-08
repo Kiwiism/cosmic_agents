@@ -3462,7 +3462,8 @@ Recent reconstruction notes:
   `BotCombatManager.planAttack` is a temporary compatibility adapter while the
   Agent runtime preserves cached skill candidate ordering, basic attack fallback,
   best-plan scoring, and the existing `combat-plan` performance metric.
-- Combat ground foothold lookup now lives in `AgentCombatGroundRuntime`;
+- Combat ground foothold lookup now lives in
+  `server.agents.capabilities.combat.AgentCombatGroundRuntime`;
   BotCombatManager no longer owns the null guards or physics-engine bridge used
   by grind, patrol, follow, and local target scoring.
 - AoE repositioning now lives in `AgentCombatAoeRepositionRuntime`;
