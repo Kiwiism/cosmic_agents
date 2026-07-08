@@ -1,9 +1,10 @@
 package server.agents.runtime;
 
+import server.agents.plans.AgentScriptTaskStateRuntime;
+
 import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 import server.agents.runtime.AgentRuntimeEntry;
 

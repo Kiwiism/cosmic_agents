@@ -1,5 +1,7 @@
 package server.agents.capabilities.build;
 
+import server.agents.plans.AgentScriptTaskStateRuntime;
+
 import client.Character;
 import client.Client;
 import client.inventory.Equip;
@@ -11,7 +13,6 @@ import server.ItemInformationProvider;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentMakerRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;

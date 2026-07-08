@@ -1,11 +1,10 @@
-package server.agents.integration;
+package server.agents.plans;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 
 import java.awt.Point;

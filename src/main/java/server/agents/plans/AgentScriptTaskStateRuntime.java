@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.plans;
 
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

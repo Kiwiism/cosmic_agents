@@ -3,7 +3,6 @@ package server.agents.plans;
 import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

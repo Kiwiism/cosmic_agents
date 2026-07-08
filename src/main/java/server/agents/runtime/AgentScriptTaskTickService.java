@@ -1,7 +1,8 @@
 package server.agents.runtime;
 
+import server.agents.plans.AgentScriptTaskStateRuntime;
+
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 
 import java.util.function.BiConsumer;

@@ -113,6 +113,11 @@ Recent reconstruction notes:
   adapts the previous sweep position per map on `AgentRuntimeEntry`; live
   character/map reads and touch-damage side effects remain in
   `AgentMobTouchRuntime`.
+- Script task queue/runtime state has moved from `server.agents.integration` to
+  `server.agents.plans.AgentScriptTaskStateRuntime`. It still only adapts
+  queued task, active task, script id, step, scratch int, and wait-until fields
+  on `AgentRuntimeEntry`; script execution, movement decisions, PQ hooks, and
+  command side effects stay in existing plan/runtime callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

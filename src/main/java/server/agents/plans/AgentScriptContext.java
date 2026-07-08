@@ -2,7 +2,6 @@ package server.agents.plans;
 
 import client.Character;
 import client.inventory.InventoryType;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentRuntimeEntry;
 

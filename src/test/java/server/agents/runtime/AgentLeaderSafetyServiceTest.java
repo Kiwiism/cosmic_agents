@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.plans.AgentScriptTaskStateRuntime;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentActivityStateRuntime;
@@ -7,7 +9,6 @@ import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 import server.life.Monster;
 import server.maps.MapleMap;
