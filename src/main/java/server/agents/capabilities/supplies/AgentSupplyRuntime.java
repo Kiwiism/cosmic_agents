@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.supplies;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -8,14 +8,15 @@ import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
-import server.agents.capabilities.supplies.AgentAmmoService;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.supplies.AgentPotionService;
 
 /**
- * Agent-owned supply chat callback facade over temporary bot-side potion,
- * ammo, and upgrade-offer side effects.
+ * Agent-owned supply chat callback facade over potion, ammo, and upgrade-offer
+ * services while reply delivery and live identity lookup remain runtime
+ * boundaries.
  */
 public final class AgentSupplyRuntime {
     private AgentSupplyRuntime() {

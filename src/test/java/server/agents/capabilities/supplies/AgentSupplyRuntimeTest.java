@@ -1,10 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.supplies;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import server.agents.capabilities.trade.AgentOfferService;
-
-import server.agents.capabilities.supplies.AgentPotionService;
 
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
@@ -16,7 +14,6 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.integration.AgentSupplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;

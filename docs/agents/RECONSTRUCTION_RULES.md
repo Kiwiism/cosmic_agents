@@ -6175,6 +6175,11 @@ Current physics correction:
   visible replies to `AgentReplyRuntime`, owner-idle checks to the status
   runtime, and delayed callbacks to `AgentSchedulerRuntime`; offer prompt,
   auto-accept, and recommended-gear behavior is unchanged.
+- Supply request and upgrade-request orchestration now lives in
+  `server.agents.capabilities.supplies.AgentSupplyRuntime`. It still delegates
+  live leader lookup to `AgentRuntimeIdentityRuntime`, visible replies to
+  `AgentReplyRuntime`, and delayed callbacks to `AgentSchedulerRuntime`; HP/MP
+  potion, ammo, and upgrade-request behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

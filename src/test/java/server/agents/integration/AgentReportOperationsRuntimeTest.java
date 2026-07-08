@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentSupplyRuntime;
+import server.agents.capabilities.supplies.AgentSupplyRuntime;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
