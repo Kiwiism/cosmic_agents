@@ -37,8 +37,8 @@ public final class AgentBotCombatDamageRuntime {
                                      IntUnaryOperator cooldownTickDown) {
         Point botPos = bot.getPosition();
         try {
-            if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) {
-                AgentBotCombatCooldownStateRuntime.tickMobHitCooldown(entry, cooldownTickDown);
+            if (AgentCombatCooldownStateRuntime.hasMobHitCooldown(entry)) {
+                AgentCombatCooldownStateRuntime.tickMobHitCooldown(entry, cooldownTickDown);
                 return;
             }
             if (bot.getHp() <= 0) return;
@@ -59,10 +59,10 @@ public final class AgentBotCombatDamageRuntime {
                                        float fallDistancePx,
                                        AgentCombatConfig.Config config) {
         if (bot.getHp() <= 0) return;
-        if (AgentBotCombatCooldownStateRuntime.hasMobHitCooldown(entry)) return;
+        if (AgentCombatCooldownStateRuntime.hasMobHitCooldown(entry)) return;
         int dmg = AgentFallDamageCalculator.fallDamageFromDistance(fallDistancePx);
         if (dmg <= 0) return;
-        int dirSign = AgentBotMovementStateRuntime.facingDirectionSign(entry);
+        int dirSign = AgentMovementStateRuntime.facingDirectionSign(entry);
         int airVelX = Math.round(-dirSign
                 * AgentMobKnockbackPolicy.scaledOpenStoryStep(config.KNOCKBACK_HSPEED, AgentMovementPhysicsConfig.configuredMovementTickMs()));
         applyDamage(entry, bot, dmg, -3, 0, 0, airVelX, config);
@@ -78,7 +78,7 @@ public final class AgentBotCombatDamageRuntime {
             bot.getMap().broadcastMessage(bot,
                     PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), 0, 0,
                             broadcastDirection, false, 0, false, 0, 0, 0), false);
-            AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
+            AgentCombatCooldownStateRuntime.setMobHitCooldownMs(
                     entry,
                     AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
             AgentBotCombatAlertRuntime.markAlerted(entry);
@@ -91,7 +91,7 @@ public final class AgentBotCombatDamageRuntime {
                 PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), dmg, 0,
                         broadcastDirection, false, 0, false, 0, 0, 0), false);
 
-        AgentBotCombatCooldownStateRuntime.setMobHitCooldownMs(
+        AgentCombatCooldownStateRuntime.setMobHitCooldownMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
         AgentBotCombatAlertRuntime.markAlerted(entry);
@@ -102,15 +102,15 @@ public final class AgentBotCombatDamageRuntime {
         }
 
         if (!AgentMobKnockbackPolicy.shouldApplyMobKnockback(
-                AgentBotMovementStateRuntime.climbing(entry),
+                AgentMovementStateRuntime.climbing(entry),
                 bot.getHp(),
                 bot.getBuffedValue(BuffStat.STANCE),
                 ThreadLocalRandom.current().nextFloat())) {
             return;
         }
 
-        AgentBotCombatActionStateRuntime.clearActionState(entry);
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
+        AgentCombatActionStateRuntime.clearActionState(entry);
+        if (AgentMovementStateRuntime.inAir(entry)) {
             AgentKnockbackMovementService.applyAirKnockback(entry, bot, knockbackAirVelX);
         } else {
             AgentKnockbackMovementService.beginKnockback(entry, bot, botPos,

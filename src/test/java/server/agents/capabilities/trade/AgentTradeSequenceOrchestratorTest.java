@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -42,7 +42,7 @@ class AgentTradeSequenceOrchestratorTest {
                     entry,
                     AgentDialogueCatalog.tradeRecipientNotFoundReply()));
             assertFalse(callbacks.started.get());
-            assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
+            assertFalse(AgentPendingTradeStateRuntime.hasActiveSequence(entry));
         }
     }
 
@@ -66,11 +66,11 @@ class AgentTradeSequenceOrchestratorTest {
                 agent,
                 callbacks);
 
-        assertEquals("scrolls", AgentBotPendingTradeStateRuntime.category(entry));
-        assertEquals(91, AgentBotPendingTradeStateRuntime.recipientId(entry));
-        assertEquals(false, AgentBotPendingTradeStateRuntime.singleBatch(entry));
-        assertEquals(List.of(item), AgentBotPendingTradeStateRuntime.items(entry));
-        assertEquals(250, AgentBotPendingTradeStateRuntime.meso(entry));
+        assertEquals("scrolls", AgentPendingTradeStateRuntime.category(entry));
+        assertEquals(91, AgentPendingTradeStateRuntime.recipientId(entry));
+        assertEquals(false, AgentPendingTradeStateRuntime.singleBatch(entry));
+        assertEquals(List.of(item), AgentPendingTradeStateRuntime.items(entry));
+        assertEquals(250, AgentPendingTradeStateRuntime.meso(entry));
         assertTrue(callbacks.started.get());
         assertSame(agent, callbacks.inviteAgent.get());
         assertSame(recipient, callbacks.inviteRecipient.get());

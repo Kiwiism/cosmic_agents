@@ -20,9 +20,9 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.integration.AgentBotOfferRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
@@ -51,21 +51,21 @@ public final class AgentOfferService {
     private AgentOfferService() {}
 
     public static boolean hasOfferReservation(AgentRuntimeEntry entry) {
-        return AgentBotOfferStateRuntime.hasOfferReservation(entry);
+        return AgentOfferStateRuntime.hasOfferReservation(entry);
     }
 
     public static boolean hasPendingOffer(AgentRuntimeEntry entry) {
-        return AgentBotOfferStateRuntime.hasPendingOffer(entry);
+        return AgentOfferStateRuntime.hasPendingOffer(entry);
     }
 
     public static void notifyOwnerGainedEquip(AgentRuntimeEntry entry, Character bot, Item item) {
         if (AgentBotOfferRuntime.isOwnerIdleForOffer(entry)) {
             return;
         }
-        if (AgentBotOfferStateRuntime.hasRequestedUpgradeItem(entry, item.getItemId())) {
+        if (AgentOfferStateRuntime.hasRequestedUpgradeItem(entry, item.getItemId())) {
             return;
         }
-        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
+        if (AgentPendingActionStateRuntime.hasPendingAction(entry) || AgentPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
             return;
         }
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
@@ -77,7 +77,7 @@ public final class AgentOfferService {
             return;
         }
 
-        AgentBotOfferStateRuntime.rememberRequestedUpgradeItem(entry, item.getItemId());
+        AgentOfferStateRuntime.rememberRequestedUpgradeItem(entry, item.getItemId());
         createOwnerUpgradeRequest(entry, bot, owner, item);
     }
 
@@ -86,7 +86,7 @@ public final class AgentOfferService {
         if (owner == null) {
             return;
         }
-        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
+        if (AgentPendingActionStateRuntime.hasPendingAction(entry) || AgentPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
             AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerBusyReply());
             return;
         }
@@ -96,7 +96,7 @@ public final class AgentOfferService {
             return;
         }
         Item candidate = recs.get(0).candidate();
-        AgentBotOfferStateRuntime.rememberRequestedUpgradeItem(entry, candidate.getItemId());
+        AgentOfferStateRuntime.rememberRequestedUpgradeItem(entry, candidate.getItemId());
         createOwnerUpgradeRequest(entry, bot, owner, candidate);
     }
 
@@ -107,7 +107,7 @@ public final class AgentOfferService {
 
         // Self-equip first so any item that would upgrade the bot stays on the bot
         // rather than being offered to the owner.
-        AgentEquipmentService.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        AgentEquipmentService.autoEquip(bot, owner, AgentOfferStateRuntime.pendingLootOfferItem(entry));
 
         GearOfferChoice choice = findBestGearOffer(entry, owner, bot);
         if (choice != null) {
@@ -126,7 +126,7 @@ public final class AgentOfferService {
 
         // Self-equip first: priority is self → owner → sibling, so don't hand gear
         // to a sibling if this bot could actually wear it.
-        AgentEquipmentService.autoEquip(bot, owner, AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+        AgentEquipmentService.autoEquip(bot, owner, AgentOfferStateRuntime.pendingLootOfferItem(entry));
 
         List<? extends AgentRuntimeEntry> siblings = AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
         for (AgentRuntimeEntry sibling : siblings) {
@@ -157,10 +157,10 @@ public final class AgentOfferService {
         long now = System.currentTimeMillis();
         if (owner == null
                 || item == null
-                || AgentBotOfferStateRuntime.hasPendingGearPromptAfter(entry, now)
+                || AgentOfferStateRuntime.hasPendingGearPromptAfter(entry, now)
                 || AgentBotOfferRuntime.isOwnerIdleForOffer(entry)
-                || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
-                || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
+                || AgentPendingActionStateRuntime.hasPendingAction(entry)
+                || AgentPendingTradeStateRuntime.hasActiveSequence(entry)
                 || hasOfferReservation(entry)
                 || !AgentInventoryItemPolicy.hasItem(bot, item)) {
             return;
@@ -171,11 +171,11 @@ public final class AgentOfferService {
             return;
         }
 
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), 0L, false);
+        AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+        AgentOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), 0L, false);
 
         long scheduledAt = now + Math.max(0L, delayMs);
-        AgentBotOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
+        AgentOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
         AgentBotOfferRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
@@ -183,21 +183,21 @@ public final class AgentOfferService {
         expirePendingOffer(entry);
         if (!hasPendingOffer(entry)
                 || speaker == null
-                || !AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)) {
+                || !AgentOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)) {
             return false;
         }
 
         if (POSITIVE_CONFIRM_PATTERN.matcher(message).find()) {
-            if (AgentBotOfferStateRuntime.pendingLootOfferBotRequesting(entry)) {
+            if (AgentOfferStateRuntime.pendingLootOfferBotRequesting(entry)) {
                 clearPendingOffer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(400, 600, () ->
                         AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerOwnerRequestingTradeReply()));
             } else {
-                Item item = AgentBotOfferStateRuntime.pendingLootOfferItem(entry);
-                AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-                AgentBotOfferStateRuntime.clearPendingOfferForAcceptedTransfer(entry);
+                Item item = AgentOfferStateRuntime.pendingLootOfferItem(entry);
+                AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+                AgentOfferStateRuntime.clearPendingOfferForAcceptedTransfer(entry);
                 AgentBotOfferRuntime.afterRandomDelay(900, 1100, () -> {
-                    AgentBotOfferStateRuntime.clearPendingOfferItem(entry);
+                    AgentOfferStateRuntime.clearPendingOfferItem(entry);
                     AgentInventoryTransferService.startTradeTransfer(
                             item, speaker, entry, AgentRuntimeIdentityRuntime.bot(entry));
                 });
@@ -221,7 +221,7 @@ public final class AgentOfferService {
     }
 
     public static void expirePendingOffer(AgentRuntimeEntry entry) {
-        if (AgentBotOfferStateRuntime.pendingOfferExpired(entry, System.currentTimeMillis())) {
+        if (AgentOfferStateRuntime.pendingOfferExpired(entry, System.currentTimeMillis())) {
             clearPendingOffer(entry);
         }
     }
@@ -235,8 +235,8 @@ public final class AgentOfferService {
         // is good for it, so format stats relative to the bot's job.
         String itemDesc = formatItemSpecifier(ownerItem, bot);
 
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotOfferStateRuntime.setPendingLootOffer(entry, ownerItem, owner.getId(), System.currentTimeMillis() + 45_000L, true);
+        AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+        AgentOfferStateRuntime.setPendingLootOffer(entry, ownerItem, owner.getId(), System.currentTimeMillis() + 45_000L, true);
 
         String promptTemplate = AgentDialogueSelector.randomReply(AgentDialogueCatalog.ownerUpgradeRequestPromptTemplates());
         AgentBotOfferRuntime.queueSay(entry, AgentDialogueCatalog.formatOwnerUpgradeRequestPrompt(promptTemplate, itemDesc));
@@ -244,12 +244,12 @@ public final class AgentOfferService {
 
     private static boolean offerGearItem(AgentRuntimeEntry entry, Character bot, Character recipient, Item item,
                                          GearOfferNeed need) {
-        if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)
+        if (AgentPendingActionStateRuntime.hasPendingAction(entry) || AgentPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)
                 || !AgentInventoryItemPolicy.hasItem(bot, item)) {
             return false;
         }
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
+        AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+        AgentOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
         long promptDelayMs = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, AgentRuntimeIdentityRuntime.owner(entry), item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
@@ -257,12 +257,12 @@ public final class AgentOfferService {
     }
 
     private static void promptLootOfferAfterLoot(AgentRuntimeEntry entry, Character bot, Item item, int recipientId, long scheduledAt) {
-        if (!AgentBotOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt)) {
+        if (!AgentOfferStateRuntime.isReservedGearPrompt(entry, scheduledAt)) {
             return;
         }
-        AgentBotOfferStateRuntime.clearGearPrompt(entry);
+        AgentOfferStateRuntime.clearGearPrompt(entry);
 
-        if (!AgentBotOfferStateRuntime.pendingOfferMatches(entry, item, recipientId)) {
+        if (!AgentOfferStateRuntime.pendingOfferMatches(entry, item, recipientId)) {
             clearPendingOffer(entry);
             return;
         }
@@ -270,8 +270,8 @@ public final class AgentOfferService {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Character recipient = resolveReservedOfferRecipient(entry, bot, recipientId);
         if (owner == null
-                || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
-                || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
+                || AgentPendingActionStateRuntime.hasPendingAction(entry)
+                || AgentPendingTradeStateRuntime.hasActiveSequence(entry)
                 || recipient == null
                 || !AgentInventoryItemPolicy.hasItem(bot, item)) {
             clearPendingOffer(entry);
@@ -288,8 +288,8 @@ public final class AgentOfferService {
             clearPendingOffer(entry);
             return;
         }
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
+        AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+        AgentOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
         long promptDelayMs = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry,
                 buildLootOfferPrompt(recipient, owner, item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
@@ -304,7 +304,7 @@ public final class AgentOfferService {
     }
 
     private static void autoAcceptLootOffer(AgentRuntimeEntry entry, Character recipientBot) {
-        if (!hasPendingOffer(entry) || !AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, recipientBot)) {
+        if (!hasPendingOffer(entry) || !AgentOfferStateRuntime.pendingOfferRecipientIs(entry, recipientBot)) {
             return;
         }
         AgentBotOfferRuntime.sayNow(recipientBot,
@@ -454,7 +454,7 @@ public final class AgentOfferService {
         if (!current.isEmpty()) {
             return new GearOfferChoice(current.get(0).candidate(), GearOfferNeed.CURRENT);
         }
-        if (AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry)) {
+        if (AgentOfferStateRuntime.proactiveUpgradeOffers(entry)) {
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Equip equip : offerable) {
                 if (AgentEquipmentService.wouldReserveIncomingItem(recipient, ii, equip)) {
@@ -490,7 +490,7 @@ public final class AgentOfferService {
         if (AgentEquipmentService.findRecommendationForItem(recipient, donor, item) != null) {
             return GearOfferNeed.CURRENT;
         }
-        if (AgentBotOfferStateRuntime.proactiveUpgradeOffers(entry) && item instanceof Equip equip) {
+        if (AgentOfferStateRuntime.proactiveUpgradeOffers(entry) && item instanceof Equip equip) {
             if (AgentEquipmentService.wouldReserveIncomingItem(recipient, ItemInformationProvider.getInstance(), equip)) {
                 return GearOfferNeed.FUTURE;
             }
@@ -678,8 +678,8 @@ public final class AgentOfferService {
     }
 
     private static void clearPendingOffer(AgentRuntimeEntry entry) {
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotOfferStateRuntime.clearPendingOffer(entry);
-        AgentBotOfferStateRuntime.clearGearPrompt(entry);
+        AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+        AgentOfferStateRuntime.clearPendingOffer(entry);
+        AgentOfferStateRuntime.clearGearPrompt(entry);
     }
 }

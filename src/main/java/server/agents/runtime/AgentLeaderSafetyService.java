@@ -3,12 +3,12 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotBuffStateRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.integration.AgentBuffStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 import server.life.Monster;
@@ -91,28 +91,28 @@ public final class AgentLeaderSafetyService {
         clearScriptTasks.run();
         cancelShopVisit.run();
         clearMode.run();
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotDegenerateAttackStateRuntime.clear(entry);
-        AgentBotBuffStateRuntime.disable(entry);
-        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentGrindTargetStateRuntime.clear(entry);
+        AgentDegenerateAttackStateRuntime.clear(entry);
+        AgentBuffStateRuntime.disable(entry);
+        AgentActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
     }
 
     public static void handleActiveLeaderReturn(AgentRuntimeEntry entry,
                                                 Runnable clearMoveTarget,
                                                 Supplier<Point> removeTownClusterAnchor,
                                                 Runnable announceReturnedFromTown) {
-        if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
-                && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+        if (AgentActivityStateRuntime.ownerAwaySafeMode(entry)
+                && !AgentActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
             return;
         }
-        if (!AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)
-                && !AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
+        if (!AgentActivityStateRuntime.ownerInactiveTimerStarted(entry)
+                && !AgentActivityStateRuntime.ownerReturnedToTown(entry)) {
             return;
         }
 
-        boolean justReturnedFromTown = AgentBotActivityStateRuntime.ownerReturnedToTown(entry);
-        AgentBotActivityStateRuntime.clearOwnerInactiveState(entry);
+        boolean justReturnedFromTown = AgentActivityStateRuntime.ownerReturnedToTown(entry);
+        AgentActivityStateRuntime.clearOwnerInactiveState(entry);
         clearMoveTarget.run();
         Point removedAnchor = removeTownClusterAnchor.get();
         if (justReturnedFromTown && removedAnchor != null) {
@@ -121,20 +121,20 @@ public final class AgentLeaderSafetyService {
     }
 
     public static boolean shouldEnterInactiveSafeMode(AgentRuntimeEntry entry, long nowMs, long inactiveTownReturnMs) {
-        if (AgentBotActivityStateRuntime.ownerReturnedToTown(entry)) {
-            if (AgentBotActivityStateRuntime.ownerAwaySafeMode(entry)
-                    && !AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
-                AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
+        if (AgentActivityStateRuntime.ownerReturnedToTown(entry)) {
+            if (AgentActivityStateRuntime.ownerAwaySafeMode(entry)
+                    && !AgentActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+                AgentActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
             }
             return false;
         }
 
-        if (!AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
-            AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
+        if (!AgentActivityStateRuntime.ownerInactiveTimerStarted(entry)) {
+            AgentActivityStateRuntime.startOwnerInactiveTimer(entry, nowMs);
             return false;
         }
 
-        return nowMs - AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry) >= inactiveTownReturnMs;
+        return nowMs - AgentActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry) >= inactiveTownReturnMs;
     }
 
     public static boolean handleInactiveLeaderTick(AgentRuntimeEntry entry,
@@ -160,7 +160,7 @@ public final class AgentLeaderSafetyService {
                                                 Runnable broadcastMovement) {
         idleOnGround.run();
         broadcastMovement.run();
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentActivityStateRuntime.setOwnerReturnedToTown(entry, true);
     }
 
     public static Point resolveTownClusterTarget(AgentRuntimeEntry entry,
@@ -187,7 +187,7 @@ public final class AgentLeaderSafetyService {
         int targetX = base.x + offsetX;
 
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(
-                map, AgentBotMovementStateRuntime.movementProfile(entry));
+                map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph != null) {
             int anchorRegionId = graph.findRegionId(map, base);
             AgentNavigationGraph.Region anchorRegion = graph.getRegion(anchorRegionId);
@@ -222,7 +222,7 @@ public final class AgentLeaderSafetyService {
     }
 
     public static void markInactiveTownReturnHandled(AgentRuntimeEntry entry) {
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentActivityStateRuntime.setOwnerReturnedToTown(entry, true);
     }
 
     public static void startInactiveTownClusterMove(AgentRuntimeEntry entry,

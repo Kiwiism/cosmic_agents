@@ -12,10 +12,10 @@ import server.agents.capabilities.combat.AgentAttackPlan;
 import server.agents.capabilities.combat.AgentAttackRoute;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatReportRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentCombatSkillCacheStateRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
@@ -39,7 +39,7 @@ class AgentBotCombatReportRuntimeTest {
                 0, 0, 1, new Rectangle(), List.of(target),
                 AgentAttackRoute.RANGED, 0, 0, 0, 0, 5,
                 0, 1500, WeaponType.BOW);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, 250);
+        AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 250);
         when(target.isAlive()).thenReturn(true);
         when(target.getName()).thenReturn("Slime");
 
@@ -76,7 +76,7 @@ class AgentBotCombatReportRuntimeTest {
         when(activeEffect.getDuration()).thenReturn(61_000);
         when(bot.getAllBuffs()).thenReturn(List.of(new PlayerBuffValueHolder(0, activeEffect)));
         when(bot.skillIsCooling(1001005)).thenReturn(true);
-        AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, 1001005);
+        AgentCombatSkillCacheStateRuntime.addBuffSkillId(entry, 1001005);
 
         try (MockedStatic<SkillFactory> skillFactory = mockStatic(SkillFactory.class)) {
             skillFactory.when(() -> SkillFactory.getSkillName(1001005)).thenReturn("Slash Blast");

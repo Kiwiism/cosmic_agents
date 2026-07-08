@@ -25,7 +25,7 @@ public final class AgentBotMobTouchRuntime {
     public static Rectangle agentTouchBounds(AgentRuntimeEntry entry, Character agent, int sweepHeight) {
         Point currentPos = agent.getPosition();
         Point previousPos = currentPos;
-        Point rememberedPos = AgentBotMobTouchStateRuntime.previousCheckPositionOnMap(entry, agent.getMapId());
+        Point rememberedPos = AgentMobTouchStateRuntime.previousCheckPositionOnMap(entry, agent.getMapId());
         if (rememberedPos != null) {
             previousPos = rememberedPos;
         }
@@ -38,6 +38,6 @@ public final class AgentBotMobTouchRuntime {
             return;
         }
 
-        AgentBotMobTouchStateRuntime.rememberCheck(entry, position, agent.getMapId());
+        AgentMobTouchStateRuntime.rememberCheck(entry, position, agent.getMapId());
     }
 }

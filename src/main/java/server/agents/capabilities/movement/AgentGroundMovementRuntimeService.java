@@ -2,11 +2,11 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import java.awt.Point;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
+import server.agents.integration.AgentSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -18,7 +18,7 @@ public final class AgentGroundMovementRuntimeService {
     public static void tickGrounded(AgentRuntimeEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
-            AgentBotSwimStateRuntime.setSwimming(entry, false);
+            AgentSwimStateRuntime.setSwimming(entry, false);
             Character bot = AgentRuntimeIdentityRuntime.bot(entry);
 
             AgentMotionTimerService.tickMotionTimers(entry);
@@ -30,17 +30,17 @@ public final class AgentGroundMovementRuntimeService {
             }
 
             Point botPos = bot.getPosition();
-            if (AgentBotClimbStateRuntime.ropeEntryPending(entry)) {
+            if (AgentClimbStateRuntime.ropeEntryPending(entry)) {
                 performTopRopeEntry(entry);
                 return;
             }
-            if (AgentBotMovementStateRuntime.hasDownJumpPending(entry)) {
+            if (AgentMovementStateRuntime.hasDownJumpPending(entry)) {
                 performDownJump(entry);
                 return;
             }
 
             targetPos = AgentGroundTargetService.adjustGrindingTargetPosition(entry, currentFoothold, targetPos);
-            if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
+            if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
                 if (AgentFallbackMovementService.tryImmediateAction(entry, botPos, targetPos)) {
                     return;
                 }

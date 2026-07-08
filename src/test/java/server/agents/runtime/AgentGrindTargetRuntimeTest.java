@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
 
 import java.awt.Point;
 
@@ -17,7 +17,7 @@ class AgentGrindTargetRuntimeTest {
         Point agentPosition = new Point(100, 100);
 
         Point target = AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, agentPosition, null);
-        int direction = AgentBotGrindWanderStateRuntime.wanderDirection(entry);
+        int direction = AgentGrindWanderStateRuntime.wanderDirection(entry);
 
         assertTrue(direction == -1 || direction == 1);
         assertEquals(new Point(100 + direction * 200, 100), target);

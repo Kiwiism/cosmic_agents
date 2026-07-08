@@ -21,7 +21,7 @@ public final class AgentBotControlRuntime {
             @Override
             public void setSupport(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    AgentBotCombatBuffStateRuntime.setSkillBuffsEnabled(entry, enabled);
+                    AgentCombatBuffStateRuntime.setSkillBuffsEnabled(entry, enabled);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
                 });
             }
@@ -29,7 +29,7 @@ public final class AgentBotControlRuntime {
             @Override
             public void setHeals(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    AgentBotCombatBuffStateRuntime.setSupportHealsEnabled(entry, enabled);
+                    AgentCombatBuffStateRuntime.setSupportHealsEnabled(entry, enabled);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.healsReply(enabled));
                 });
             }
@@ -37,18 +37,18 @@ public final class AgentBotControlRuntime {
             @Override
             public void setBuffConsumables(boolean enabled) {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    AgentBotBuffStateRuntime.setEnabled(entry, enabled);
-                    AgentBotBuffStateRuntime.resetScan(entry);
+                    AgentBuffStateRuntime.setEnabled(entry, enabled);
+                    AgentBuffStateRuntime.resetScan(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesReply(
-                            enabled, AgentBotBuffStateRuntime.cheapMode(entry)));
+                            enabled, AgentBuffStateRuntime.cheapMode(entry)));
                 });
             }
 
             @Override
             public void setBuffConsumablesCheapMode(boolean cheapMode) {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
-                    AgentBotBuffStateRuntime.setCheapMode(entry, cheapMode);
-                    AgentBotBuffStateRuntime.resetScan(entry);
+                    AgentBuffStateRuntime.setCheapMode(entry, cheapMode);
+                    AgentBuffStateRuntime.resetScan(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
                 });
             }
@@ -69,8 +69,8 @@ public final class AgentBotControlRuntime {
             public void reportBuffList() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     String summary = AgentBuffService.getChatSummary(
-                            AgentBotBuffStateRuntime.enabled(entry),
-                            AgentBotBuffStateRuntime.cheapMode(entry),
+                            AgentBuffStateRuntime.enabled(entry),
+                            AgentBuffStateRuntime.cheapMode(entry),
                             bot(entry));
                     AgentReplyRuntime.replyNow(entry, summary);
                 });

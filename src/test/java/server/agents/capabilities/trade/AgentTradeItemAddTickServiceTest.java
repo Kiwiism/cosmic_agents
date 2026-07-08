@@ -5,7 +5,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -24,7 +24,7 @@ class AgentTradeItemAddTickServiceTest {
     @Test
     void returnsFalseWhenAllItemsAlreadyAdded() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
+        AgentPendingTradeStateRuntime.markAllItemsAdded(entry);
 
         assertFalse(AgentTradeItemAddTickService.tickAddingItems(
                 entry,
@@ -36,7 +36,7 @@ class AgentTradeItemAddTickServiceTest {
     @Test
     void ticksTimerBeforeOtherWork() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, 500);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, 500);
 
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
                 entry,
@@ -44,7 +44,7 @@ class AgentTradeItemAddTickServiceTest {
                 mock(Trade.class),
                 callbacks()));
 
-        assertEquals(400, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertEquals(400, AgentPendingTradeStateRuntime.timerMs(entry));
     }
 
     @Test
@@ -53,7 +53,7 @@ class AgentTradeItemAddTickServiceTest {
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean cancelled = new AtomicBoolean(false);
-        AgentBotPendingTradeStateRuntime.setMeso(entry, 1_000);
+        AgentPendingTradeStateRuntime.setMeso(entry, 1_000);
         when(agent.getMeso()).thenReturn(500);
 
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
@@ -69,7 +69,7 @@ class AgentTradeItemAddTickServiceTest {
     void marksCompleteWhenNoMoreItemsRemain() {
         AgentRuntimeEntry entry = entry();
         Trade trade = mock(Trade.class);
-        AgentBotPendingTradeStateRuntime.setItems(entry, List.of());
+        AgentPendingTradeStateRuntime.setItems(entry, List.of());
 
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
                 entry,
@@ -77,7 +77,7 @@ class AgentTradeItemAddTickServiceTest {
                 trade,
                 callbacks()));
 
-        assertTrue(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
+        assertTrue(AgentPendingTradeStateRuntime.allItemsAdded(entry));
         verify(trade).chat("done");
     }
 
@@ -85,8 +85,8 @@ class AgentTradeItemAddTickServiceTest {
     void announcesCategoryBeforeFirstItem() {
         AgentRuntimeEntry entry = entry();
         Trade trade = mock(Trade.class);
-        AgentBotPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
-        AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "scrolls here");
+        AgentPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
+        AgentPendingTradeStateRuntime.setCategoryMessage(entry, "scrolls here");
 
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
                 entry,
@@ -95,7 +95,7 @@ class AgentTradeItemAddTickServiceTest {
                 callbacks()));
 
         verify(trade).chat("scrolls here");
-        assertEquals(600, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertEquals(600, AgentPendingTradeStateRuntime.timerMs(entry));
     }
 
     @Test
@@ -103,7 +103,7 @@ class AgentTradeItemAddTickServiceTest {
         AgentRuntimeEntry entry = entry();
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
-        AgentBotPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
+        AgentPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
 
         try (MockedStatic<AgentTradeItemAddService> addService = mockStatic(AgentTradeItemAddService.class)) {
             assertTrue(AgentTradeItemAddTickService.tickAddingItems(entry, agent, trade, callbacks()));

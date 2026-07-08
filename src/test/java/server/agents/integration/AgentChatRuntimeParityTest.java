@@ -2,10 +2,10 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentBotFidgetStateRuntime;
+import server.agents.integration.AgentFidgetStateRuntime;
 
 
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.capabilities.equipment.AgentMapDamageProfile;
 
 import server.agents.capabilities.trade.AgentOfferService;
@@ -26,12 +26,12 @@ import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.integration.AgentBotChatReportRuntime;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotBuffStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.integration.AgentBuffStateRuntime;
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;
@@ -193,22 +193,22 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldTriggerGreetingFidgetHalfTheTimeWhileFollowing() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
-        assertFalse(AgentBotFidgetStateRuntime.mode(entry) == AgentFidgetMode.NONE);
-        assertEquals(AgentFidgetTrigger.SOCIAL, AgentBotFidgetStateRuntime.trigger(entry));
+        assertFalse(AgentFidgetStateRuntime.mode(entry) == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, AgentFidgetStateRuntime.trigger(entry));
 
         AgentFidgetService.clear(entry);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 99));
-        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
+        assertEquals(AgentFidgetMode.NONE, AgentFidgetStateRuntime.mode(entry));
     }
 
     @Test
     void shouldTriggerFidgetCommandWithoutGreetingRoll() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget"));
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
@@ -218,8 +218,8 @@ class AgentChatRuntimeParityTest {
         }
 
         assertTrue(AgentFidgetService.maybeStartSocialFidget(entry));
-        assertFalse(AgentBotFidgetStateRuntime.mode(entry) == AgentFidgetMode.NONE);
-        assertEquals(AgentFidgetTrigger.SOCIAL, AgentBotFidgetStateRuntime.trigger(entry));
+        assertFalse(AgentFidgetStateRuntime.mode(entry) == AgentFidgetMode.NONE);
+        assertEquals(AgentFidgetTrigger.SOCIAL, AgentFidgetStateRuntime.trigger(entry));
     }
 
     @Test
@@ -243,23 +243,23 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldNotTriggerGreetingFidgetWhileOwnerIsAfk() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertFalse(AgentFidgetService.maybeStartGreetingFidget(entry, 0));
-        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
+        assertEquals(AgentFidgetMode.NONE, AgentFidgetStateRuntime.mode(entry));
     }
 
     @Test
     void shouldShowBuffDebugStateWithEnabledAndMode() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        AgentBotBuffStateRuntime.setEnabled(entry, true);
-        AgentBotBuffStateRuntime.setCheapMode(entry, true);
+        AgentBuffStateRuntime.setEnabled(entry, true);
+        AgentBuffStateRuntime.setCheapMode(entry, true);
         assertEquals("buff on(cheap)", AgentBuffService.formatDebugState(entry));
 
-        AgentBotBuffStateRuntime.setEnabled(entry, false);
-        AgentBotBuffStateRuntime.setCheapMode(entry, false);
+        AgentBuffStateRuntime.setEnabled(entry, false);
+        AgentBuffStateRuntime.setCheapMode(entry, false);
         assertEquals("buff off(best)", AgentBuffService.formatDebugState(entry));
     }
 
@@ -428,18 +428,18 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldClearPendingOfferStateForOwnerAsk() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
-        AgentBotOfferStateRuntime.setPendingLootOffer(
+        AgentPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
+        AgentOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 123, Long.MAX_VALUE, true);
-        AgentBotOfferStateRuntime.reserveGearPrompt(entry, Long.MAX_VALUE);
+        AgentOfferStateRuntime.reserveGearPrompt(entry, Long.MAX_VALUE);
 
         AgentOfferService.clearPendingOfferForOwnerAsk(entry);
 
-        assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
-        assertNull(AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
-        assertEquals(0, AgentBotOfferStateRuntime.pendingLootOfferRecipientId(entry));
-        assertEquals(0L, AgentBotOfferStateRuntime.pendingLootOfferExpiresAt(entry));
-        assertFalse(AgentBotOfferStateRuntime.pendingLootOfferBotRequesting(entry));
-        assertEquals(0L, AgentBotOfferStateRuntime.pendingGearPromptAt(entry));
+        assertNull(AgentPendingActionStateRuntime.pendingDropCategory(entry));
+        assertNull(AgentOfferStateRuntime.pendingLootOfferItem(entry));
+        assertEquals(0, AgentOfferStateRuntime.pendingLootOfferRecipientId(entry));
+        assertEquals(0L, AgentOfferStateRuntime.pendingLootOfferExpiresAt(entry));
+        assertFalse(AgentOfferStateRuntime.pendingLootOfferBotRequesting(entry));
+        assertEquals(0L, AgentOfferStateRuntime.pendingGearPromptAt(entry));
     }
 }

@@ -2,11 +2,11 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
-import server.agents.integration.AgentBotTickFailureStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.integration.AgentTickFailureStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -41,11 +41,11 @@ class AgentTickFailurePolicyTest {
         Character agent = character("Alpha", 100000000);
         Character leader = character("Leader", 100000000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop");
-        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equip");
-        AgentBotGrindTargetStateRuntime.setTarget(entry, mock(server.life.Monster.class));
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, mock(server.maps.MapItem.class));
-        AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, new Point(1, 2));
+        AgentPendingActionStateRuntime.setPendingAction(entry, "drop");
+        AgentPendingActionStateRuntime.setPendingDropCategory(entry, "equip");
+        AgentGrindTargetStateRuntime.setTarget(entry, mock(server.life.Monster.class));
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, mock(server.maps.MapItem.class));
+        AgentPatrolStateRuntime.setPatrolWanderTarget(entry, new Point(1, 2));
         AtomicInteger clearMovement = new AtomicInteger();
         AtomicInteger warnings = new AtomicInteger();
 
@@ -58,11 +58,11 @@ class AgentTickFailurePolicyTest {
                 hooks(new AtomicInteger(), clearMovement, new AtomicInteger(), new AtomicInteger(),
                         new AtomicInteger(), warnings));
 
-        assertFalse(AgentBotPendingActionStateRuntime.hasPendingAction(entry));
-        assertFalse(AgentBotPendingActionStateRuntime.pendingDropCategory(entry) != null);
-        assertFalse(AgentBotGrindTargetStateRuntime.target(entry) != null);
-        assertFalse(AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry));
-        assertFalse(AgentBotPatrolStateRuntime.patrolWanderTarget(entry) != null);
+        assertFalse(AgentPendingActionStateRuntime.hasPendingAction(entry));
+        assertFalse(AgentPendingActionStateRuntime.pendingDropCategory(entry) != null);
+        assertFalse(AgentGrindTargetStateRuntime.target(entry) != null);
+        assertFalse(AgentGrindLootStateRuntime.hasGrindLootTarget(entry));
+        assertFalse(AgentPatrolStateRuntime.patrolWanderTarget(entry) != null);
         assertEquals(1, clearMovement.get());
         assertEquals(1, warnings.get());
     }
@@ -128,7 +128,7 @@ class AgentTickFailurePolicyTest {
 
         AgentTickFailurePolicy.resetFailures(entry);
 
-        assertFalse(AgentBotTickFailureStateRuntime.hasFailures(entry));
+        assertFalse(AgentTickFailureStateRuntime.hasFailures(entry));
     }
 
     private static Character character(String name, int mapId) {

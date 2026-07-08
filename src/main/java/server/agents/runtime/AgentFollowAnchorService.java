@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public final class AgentFollowAnchorService {
             return null;
         }
 
-        return resolveTarget(entry, leader, AgentBotModeStateRuntime.followTargetId(entry), siblingEntries);
+        return resolveTarget(entry, leader, AgentModeStateRuntime.followTargetId(entry), siblingEntries);
     }
 
     public static Character resolveTarget(AgentRuntimeEntry entry,

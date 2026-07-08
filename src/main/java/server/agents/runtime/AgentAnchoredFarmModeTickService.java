@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
 
 import java.awt.Point;
 
@@ -22,7 +22,7 @@ public final class AgentAnchoredFarmModeTickService {
                                              Point agentPosition,
                                              boolean runAiTick,
                                              Hooks hooks) {
-        if (!AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
+        if (!AgentFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return false;
         }
         hooks.anchoredFarmTick().tick(entry, agent, agentPosition, runAiTick);

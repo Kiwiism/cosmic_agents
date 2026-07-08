@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,13 +30,13 @@ class AgentTradeCategoryAnnouncementServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, java.util.List.of(), 0);
-        AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "reserved");
-        AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
+        AgentPendingTradeStateRuntime.setCategoryMessage(entry, "reserved");
+        AgentPendingTradeStateRuntime.incrementItemIndex(entry);
 
         boolean handled = AgentTradeCategoryAnnouncementService.announceBeforeFirstItem(entry, trade, () -> 600);
 
         assertFalse(handled);
-        assertEquals("reserved", AgentBotPendingTradeStateRuntime.categoryMessage(entry));
+        assertEquals("reserved", AgentPendingTradeStateRuntime.categoryMessage(entry));
         verify(trade, never()).chat(org.mockito.ArgumentMatchers.anyString());
     }
 
@@ -45,13 +45,13 @@ class AgentTradeCategoryAnnouncementServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, java.util.List.of(), 0);
-        AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, "reserved");
+        AgentPendingTradeStateRuntime.setCategoryMessage(entry, "reserved");
 
         boolean handled = AgentTradeCategoryAnnouncementService.announceBeforeFirstItem(entry, trade, () -> 650);
 
         assertTrue(handled);
         verify(trade).chat("reserved");
-        assertNull(AgentBotPendingTradeStateRuntime.categoryMessage(entry));
-        assertEquals(650, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertNull(AgentPendingTradeStateRuntime.categoryMessage(entry));
+        assertEquals(650, AgentPendingTradeStateRuntime.timerMs(entry));
     }
 }

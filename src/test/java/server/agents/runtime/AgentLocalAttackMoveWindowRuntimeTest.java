@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
 
 import java.awt.Point;
 
@@ -13,13 +13,13 @@ class AgentLocalAttackMoveWindowRuntimeTest {
     @Test
     void clearsSettledMoveWindowUsingRuntimeMovementConfig() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 200);
+        AgentCombatCooldownStateRuntime.setMoveWindowMs(entry, 200);
 
         AgentLocalAttackMoveWindowRuntime.clearActionMoveWindowIfSettled(
                 entry,
                 new Point(100, 100),
                 new Point(100, 100));
 
-        assertFalse(AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry));
+        assertFalse(AgentCombatCooldownStateRuntime.hasMoveWindow(entry));
     }
 }

@@ -3,7 +3,7 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentClimbMovementPolicy;
 import server.agents.capabilities.movement.AgentClimbMovementService;
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
@@ -29,7 +29,7 @@ public final class AgentNavigationClimbExitExecutionService {
 
         if (toRegion != null && toRegion.isRopeRegion) {
             Rope targetRope = AgentNavigationGraphService.findRopeFromRegion(agent.getMap(), toRegion);
-            if (targetRope == null || AgentClimbMovementPolicy.sameRope(AgentBotClimbStateRuntime.climbRope(entry), targetRope)) {
+            if (targetRope == null || AgentClimbMovementPolicy.sameRope(AgentClimbStateRuntime.climbRope(entry), targetRope)) {
                 return false;
             }
             AgentClimbMovementService.jumpToRope(entry, agent, edge.launchStepX);

@@ -6,7 +6,7 @@ import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotChatOrchestratorContext;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,8 +22,8 @@ class AgentBotChatOrchestratorContextTest {
         when(bot.getJob()).thenReturn(Job.FIGHTER);
         when(bot.getLevel()).thenReturn(34);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotPendingActionStateRuntime.setPendingAction(entry, "item-choice");
-        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
+        AgentPendingActionStateRuntime.setPendingAction(entry, "item-choice");
+        AgentPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
 
         AgentBotChatOrchestratorContext context = new AgentBotChatOrchestratorContext(entry);
 

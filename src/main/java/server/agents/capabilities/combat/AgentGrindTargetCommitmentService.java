@@ -1,9 +1,9 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -39,16 +39,16 @@ public final class AgentGrindTargetCommitmentService {
                                       Monster target,
                                       AgentAttackPlan attackPlan,
                                       Hooks hooks) {
-        AgentBotGrindTargetStateRuntime.setTarget(entry, target);
-        AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
-        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
+        AgentGrindTargetStateRuntime.setTarget(entry, target);
+        AgentGrindWanderStateRuntime.clearWanderDirection(entry);
+        AgentPatrolStateRuntime.clearPatrolWanderTarget(entry);
         Point targetPosition = target.getPosition();
 
         Monster rangedPriorityTarget = hooks.rangedPriorityTargetSelector().select(
                 entry, agent, agentPosition, target);
         if (rangedPriorityTarget != null && rangedPriorityTarget != target) {
             target = rangedPriorityTarget;
-            AgentBotGrindTargetStateRuntime.setTarget(entry, rangedPriorityTarget);
+            AgentGrindTargetStateRuntime.setTarget(entry, rangedPriorityTarget);
             targetPosition = target.getPosition();
             attackPlan = null;
         }
@@ -58,7 +58,7 @@ public final class AgentGrindTargetCommitmentService {
                 : null;
         if (closerThreat != null && closerThreat != target) {
             target = closerThreat;
-            AgentBotGrindTargetStateRuntime.setTarget(entry, closerThreat);
+            AgentGrindTargetStateRuntime.setTarget(entry, closerThreat);
             targetPosition = target.getPosition();
             attackPlan = null;
         }

@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 
 import java.awt.Point;
 
@@ -19,12 +19,12 @@ public final class AgentLocalAttackMoveWindowService {
                                                 int stopDistance,
                                                 int followYCap) {
         if (agentPosition == null || referencePosition == null) {
-            AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
+            AgentCombatCooldownStateRuntime.clearMoveWindow(entry);
             return;
         }
 
         int dx = Math.abs(agentPosition.x - referencePosition.x);
-        AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry,
+        AgentCombatCooldownStateRuntime.setMoveWindowMs(entry,
                 dx > followDistance * 3 ? 1000
                         : dx > followDistance ? 200
                         : 0);
@@ -37,7 +37,7 @@ public final class AgentLocalAttackMoveWindowService {
                                                             int followDistance,
                                                             int stopDistance,
                                                             int followYCap) {
-        if (entry == null || !AgentBotModeStateRuntime.following(entry) || targetSnapshot == null) {
+        if (entry == null || !AgentModeStateRuntime.following(entry) || targetSnapshot == null) {
             return;
         }
         clearActionMoveWindowIfSettled(
@@ -55,7 +55,7 @@ public final class AgentLocalAttackMoveWindowService {
                                                       int followDistance,
                                                       int stopDistance,
                                                       int followYCap) {
-        if (entry == null || !AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
+        if (entry == null || !AgentCombatCooldownStateRuntime.hasMoveWindow(entry)
                 || agentPosition == null || targetPosition == null) {
             return;
         }
@@ -63,7 +63,7 @@ public final class AgentLocalAttackMoveWindowService {
         int followStopBand = Math.max(stopDistance, followDistance);
         if (Math.abs(agentPosition.x - targetPosition.x) <= followStopBand
                 && Math.abs(agentPosition.y - targetPosition.y) <= followYCap) {
-            AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
+            AgentCombatCooldownStateRuntime.clearMoveWindow(entry);
         }
     }
 }

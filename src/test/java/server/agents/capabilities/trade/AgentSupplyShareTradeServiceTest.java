@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -21,8 +21,8 @@ class AgentSupplyShareTradeServiceTest {
         AgentSupplyShareTradeService.startPotShareTransfer(
                 List.of(), mock(Character.class), entry, mock(Character.class), 10);
 
-        assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
-        assertFalse(AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry));
+        assertFalse(AgentPendingTradeStateRuntime.hasActiveSequence(entry));
+        assertFalse(AgentPendingTradeStateRuntime.hasQueuedRetry(entry));
     }
 
     @Test
@@ -30,13 +30,13 @@ class AgentSupplyShareTradeServiceTest {
         Character recipient = mock(Character.class);
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, recipient, null);
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "pot_share");
+        AgentPendingTradeStateRuntime.setCategory(entry, "pot_share");
 
         AgentSupplyShareTradeService.startAmmoShareTransfer(
                 List.of(mock(Item.class)), recipient, entry, agent, 10);
 
-        assertTrue(AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry));
-        assertNotNull(AgentBotPendingTradeStateRuntime.takeRetry(entry));
+        assertTrue(AgentPendingTradeStateRuntime.hasQueuedRetry(entry));
+        assertNotNull(AgentPendingTradeStateRuntime.takeRetry(entry));
     }
 }
 

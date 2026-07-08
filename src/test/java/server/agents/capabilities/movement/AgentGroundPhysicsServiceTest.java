@@ -2,8 +2,8 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
@@ -25,14 +25,14 @@ class AgentGroundPhysicsServiceTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 2.5);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry, 7, 3);
+        AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 2.5);
+        AgentMovementStateRuntime.setMovementVelocity(entry, 7, 3);
 
         AgentGroundPhysicsService.stopGroundMotion(entry);
 
-        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry));
-        assertEquals(7, AgentBotMovementStateRuntime.movementVelocityX(entry));
-        assertEquals(3, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.horizontalSpeed(entry));
+        assertEquals(7, AgentMovementStateRuntime.movementVelocityX(entry));
+        assertEquals(3, AgentMovementStateRuntime.movementVelocityY(entry));
     }
 
     @Test
@@ -49,15 +49,15 @@ class AgentGroundPhysicsServiceTest {
         map.getFootholds().insert(foothold);
         Character agent = mockAgent(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
-        AgentBotMovementStateRuntime.setMoveDirection(entry, 1);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
+        AgentMovementStateRuntime.setMoveDirection(entry, 1);
 
         AgentGroundMotion motion = AgentGroundPhysicsService.applyGroundMotion(entry, agent, foothold);
 
         assertFalse(motion.lostGround());
         assertTrue(motion.stepX() > 0);
-        assertTrue(AgentBotMovementStateRuntime.movementVelocityX(entry) > 0);
-        assertEquals(0, AgentBotMovementStateRuntime.movementVelocityY(entry));
+        assertTrue(AgentMovementStateRuntime.movementVelocityX(entry) > 0);
+        assertEquals(0, AgentMovementStateRuntime.movementVelocityY(entry));
     }
 
     @Test
@@ -69,7 +69,7 @@ class AgentGroundPhysicsServiceTest {
         Foothold foothold = AgentGroundPhysicsService.syncAndDetectGround(entry, agent);
 
         assertEquals(null, foothold);
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
         verify(agent).setPosition(new Point(100, 100));
     }
 

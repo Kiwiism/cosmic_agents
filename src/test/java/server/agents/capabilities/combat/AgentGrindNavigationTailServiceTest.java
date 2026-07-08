@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -75,7 +75,7 @@ class AgentGrindNavigationTailServiceTest {
     @Test
     void clearsDegenerateLatchAfterLeavingRetreatBand() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+        AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
 
         AgentGrindNavigationTailService.resolveNavigationTarget(
                 entry,
@@ -87,7 +87,7 @@ class AgentGrindNavigationTailServiceTest {
                 false,
                 hooks(new AtomicInteger(), null, false));
 
-        assertFalse(AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry));
+        assertFalse(AgentDegenerateAttackStateRuntime.degenAttackDone(entry));
     }
 
     private static AgentGrindNavigationTailService.Hooks hooks(AtomicInteger navigationCalls,

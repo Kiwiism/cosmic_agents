@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -35,7 +35,7 @@ class AgentTradeBatchServiceTest {
                 message -> {});
 
         assertTrue(cancelled.get());
-        assertTrue(AgentBotPendingTradeStateRuntime.isBetweenBatches(entry));
+        assertTrue(AgentPendingTradeStateRuntime.isBetweenBatches(entry));
     }
 
     @Test
@@ -64,12 +64,12 @@ class AgentTradeBatchServiceTest {
                 () -> "invite",
                 reply::set);
 
-        assertEquals(List.of(item), AgentBotPendingTradeStateRuntime.items(entry));
-        assertEquals(123, AgentBotPendingTradeStateRuntime.meso(entry));
+        assertEquals(List.of(item), AgentPendingTradeStateRuntime.items(entry));
+        assertEquals(123, AgentPendingTradeStateRuntime.meso(entry));
         assertTrue(started.get());
         assertSame(agent, inviteAgent.get());
         assertSame(recipient, inviteRecipient.get());
-        assertTrue(AgentBotPendingTradeStateRuntime.inviteAnnounced(entry));
+        assertTrue(AgentPendingTradeStateRuntime.inviteAnnounced(entry));
         assertEquals("invite", reply.get());
     }
 
@@ -90,7 +90,7 @@ class AgentTradeBatchServiceTest {
                 () -> "invite",
                 message -> {});
 
-        assertFalse(AgentBotPendingTradeStateRuntime.inviteAnnounced(entry));
+        assertFalse(AgentPendingTradeStateRuntime.inviteAnnounced(entry));
     }
 
     private static Item item(int itemId) {

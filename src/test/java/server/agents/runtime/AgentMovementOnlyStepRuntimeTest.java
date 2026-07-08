@@ -3,8 +3,8 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -62,8 +62,8 @@ class AgentMovementOnlyStepRuntimeTest {
             boolean runAiTick = AgentMovementOnlyStepRuntime.stepMovementOnly(entry, 1_000L, config());
 
             assertFalse(runAiTick);
-            assertTrue(AgentBotTickStateRuntime.lastTickAtMs(entry) > 0);
-            assertTrue(AgentBotOwnerMotionStateRuntime.lastOwnerPosition(entry).equals(new Point(10, 20)));
+            assertTrue(AgentTickStateRuntime.lastTickAtMs(entry) > 0);
+            assertTrue(AgentOwnerMotionStateRuntime.lastOwnerPosition(entry).equals(new Point(10, 20)));
             movementOnly.verify(() -> AgentMovementOnlyRuntime.stepMovementOnly(
                     eq(entry),
                     eq(new Point(30, 40)),

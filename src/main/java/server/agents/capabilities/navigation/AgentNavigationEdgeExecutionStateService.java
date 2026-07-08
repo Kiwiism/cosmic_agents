@@ -1,6 +1,6 @@
 package server.agents.capabilities.navigation;
 
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -11,6 +11,6 @@ public final class AgentNavigationEdgeExecutionStateService {
     }
 
     public static void setEdgeExecutionTarget(AgentRuntimeEntry entry, AgentNavigationGraph.Edge edge) {
-        AgentBotNavigationDebugStateRuntime.setNavWaypoint(entry, edge.endPoint, false);
+        AgentNavigationDebugStateRuntime.setNavWaypoint(entry, edge.endPoint, false);
     }
 }

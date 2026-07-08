@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotAoeRepositionStateRuntime;
+import server.agents.integration.AgentAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -23,7 +23,7 @@ class AgentAoeRepositionServiceTest {
     void existingLiveAnchorIsReusedUntilArrivalOrExpiry() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Point anchor = new Point(300, 100);
-        AgentBotAoeRepositionStateRuntime.setAnchor(
+        AgentAoeRepositionStateRuntime.setAnchor(
                 entry,
                 anchor,
                 System.currentTimeMillis() + AgentCombatConfig.cfg.AOE_REPOSITION_MAX_MS);
@@ -38,13 +38,13 @@ class AgentAoeRepositionServiceTest {
                 new Point(100, 100));
 
         assertEquals(anchor, result);
-        assertTrue(AgentBotAoeRepositionStateRuntime.hasAnchor(entry));
+        assertTrue(AgentAoeRepositionStateRuntime.hasAnchor(entry));
     }
 
     @Test
     void deadTargetClearsExistingAnchor() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotAoeRepositionStateRuntime.setAnchor(
+        AgentAoeRepositionStateRuntime.setAnchor(
                 entry,
                 new Point(300, 100),
                 System.currentTimeMillis() + AgentCombatConfig.cfg.AOE_REPOSITION_MAX_MS);
@@ -59,7 +59,7 @@ class AgentAoeRepositionServiceTest {
                 new Point(100, 100));
 
         assertNull(result);
-        assertFalse(AgentBotAoeRepositionStateRuntime.hasAnchor(entry));
+        assertFalse(AgentAoeRepositionStateRuntime.hasAnchor(entry));
     }
 
     @Test
@@ -84,8 +84,8 @@ class AgentAoeRepositionServiceTest {
                     new Point(100, 100));
 
             assertEquals(anchor, result);
-            assertEquals(anchor, AgentBotAoeRepositionStateRuntime.anchor(entry));
-            assertTrue(AgentBotAoeRepositionStateRuntime.deadlineMs(entry) > System.currentTimeMillis());
+            assertEquals(anchor, AgentAoeRepositionStateRuntime.anchor(entry));
+            assertTrue(AgentAoeRepositionStateRuntime.deadlineMs(entry) > System.currentTimeMillis());
         }
     }
 }

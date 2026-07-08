@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -34,7 +34,7 @@ class AgentTradeTickRuntimeServiceTest {
         AgentRuntimeEntry entry = entry();
         AtomicInteger retryRuns = new AtomicInteger();
         AtomicInteger tradeLookups = new AtomicInteger();
-        AgentBotPendingTradeStateRuntime.queueRetry(entry, retryRuns::incrementAndGet, 0);
+        AgentPendingTradeStateRuntime.queueRetry(entry, retryRuns::incrementAndGet, 0);
 
         AgentTradeTickRuntimeService.tickTrade(
                 entry,

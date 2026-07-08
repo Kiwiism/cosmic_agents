@@ -18,7 +18,7 @@ public final class AgentBotSessionRuntime {
             @Override
             public void requestRelog() {
                 AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
+                    AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
                     AgentBotMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
                 });
@@ -27,7 +27,7 @@ public final class AgentBotSessionRuntime {
             @Override
             public void requestLogout() {
                 AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
-                    AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
+                    AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
                     AgentBotMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
                 });
@@ -93,7 +93,7 @@ public final class AgentBotSessionRuntime {
         return new AgentChatAwayFlow.AwayPromptCallbacks() {
             @Override
             public void setPendingOwnerAway() {
-                AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
+                AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
             }
 
             @Override
@@ -117,7 +117,7 @@ public final class AgentBotSessionRuntime {
         return new AgentChatAwayFlow.AwayChoiceCallbacks() {
             @Override
             public void clearPendingAction() {
-                AgentBotPendingActionStateRuntime.clearPendingAction(entry);
+                AgentPendingActionStateRuntime.clearPendingAction(entry);
             }
 
             @Override

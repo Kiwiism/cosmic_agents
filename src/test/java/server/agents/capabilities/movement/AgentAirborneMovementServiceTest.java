@@ -1,8 +1,8 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,7 +19,7 @@ class AgentAirborneMovementServiceTest {
     @Test
     void fixedAirArcSuppressesAirSteering() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
+        AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, true);
 
         assertFalse(AgentAirborneMovementService.shouldApplyAirSteering(entry));
     }
@@ -27,7 +27,7 @@ class AgentAirborneMovementServiceTest {
     @Test
     void downJumpGraceSuppressesAirSteering() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 10L);
+        AgentMovementStateRuntime.setDownJumpGracePeriodMs(entry, 10L);
 
         assertFalse(AgentAirborneMovementService.shouldApplyAirSteering(entry));
     }

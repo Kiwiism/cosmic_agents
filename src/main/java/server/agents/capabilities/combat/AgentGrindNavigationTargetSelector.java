@@ -3,10 +3,10 @@ package server.agents.capabilities.combat;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotBreakoutStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRetreatHoldStateRuntime;
+import server.agents.integration.AgentBreakoutStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentRetreatHoldStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -71,26 +71,26 @@ public final class AgentGrindNavigationTargetSelector {
         boolean retreatNeeded = AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(
                 AgentAttackExecutionProvider.getEquippedWeaponType(agent), agentPosition, combatTargetPosition);
 
-        if (AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry)) {
-            if (AgentBotBreakoutStateRuntime.isExpired(entry, now)
+        if (AgentBreakoutStateRuntime.hasBreakoutCommitment(entry)) {
+            if (AgentBreakoutStateRuntime.isExpired(entry, now)
                     || !AgentAttackExecutionProvider.isSurrounded(agent, agentPosition)) {
-                AgentBotBreakoutStateRuntime.clear(entry);
+                AgentBreakoutStateRuntime.clear(entry);
             } else {
-                return breakoutStep(agentPosition, AgentBotBreakoutStateRuntime.direction(entry));
+                return breakoutStep(agentPosition, AgentBreakoutStateRuntime.direction(entry));
             }
         }
 
-        if (AgentBotRetreatHoldStateRuntime.hasActiveHold(entry, now)) {
-            int dxHold = AgentBotRetreatHoldStateRuntime.distanceFromHoldX(entry, agentPosition);
+        if (AgentRetreatHoldStateRuntime.hasActiveHold(entry, now)) {
+            int dxHold = AgentRetreatHoldStateRuntime.distanceFromHoldX(entry, agentPosition);
             if (dxHold <= RETREAT_ARRIVAL_TOLERANCE_X) {
-                AgentBotRetreatHoldStateRuntime.clear(entry);
+                AgentRetreatHoldStateRuntime.clear(entry);
             } else if (dxHold > AgentCombatConfig.cfg.RANGED_RETREAT_DISTANCE_X * 2) {
-                AgentBotRetreatHoldStateRuntime.clear(entry);
+                AgentRetreatHoldStateRuntime.clear(entry);
             } else {
-                return AgentBotRetreatHoldStateRuntime.holdPosition(entry);
+                return AgentRetreatHoldStateRuntime.holdPosition(entry);
             }
-        } else if (AgentBotRetreatHoldStateRuntime.hasHold(entry)) {
-            AgentBotRetreatHoldStateRuntime.clear(entry);
+        } else if (AgentRetreatHoldStateRuntime.hasHold(entry)) {
+            AgentRetreatHoldStateRuntime.clear(entry);
         }
 
         if (!retreatNeeded) {
@@ -106,15 +106,15 @@ public final class AgentGrindNavigationTargetSelector {
 
         if (AgentAttackExecutionProvider.isSurrounded(agent, agentPosition)) {
             int dir = pickBreakoutDirection(entry, agentPosition, combatTargetPosition, hooks);
-            AgentBotBreakoutStateRuntime.setBreakoutCommitment(
+            AgentBreakoutStateRuntime.setBreakoutCommitment(
                     entry, dir, now + AgentCombatConfig.cfg.BREAKOUT_MAX_MS);
-            AgentBotRetreatHoldStateRuntime.clear(entry);
+            AgentRetreatHoldStateRuntime.clear(entry);
             return breakoutStep(agentPosition, dir);
         }
 
         Point retreatPos = AgentAttackExecutionProvider.retreatTargetPosition(agent, agentPosition, combatTargetPosition);
         if (shouldUseLocalCombatRetreatTarget(entry, agentPosition, combatTargetPosition, retreatPos, hooks)) {
-            AgentBotRetreatHoldStateRuntime.setHold(entry, retreatPos, now + RETREAT_HOLD_MS);
+            AgentRetreatHoldStateRuntime.setHold(entry, retreatPos, now + RETREAT_HOLD_MS);
             return retreatPos;
         }
         return combatTargetPosition;
@@ -134,7 +134,7 @@ public final class AgentGrindNavigationTargetSelector {
         if (map == null || map.getFootholds() == null) {
             return base;
         }
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return base;
         }
@@ -173,9 +173,9 @@ public final class AgentGrindNavigationTargetSelector {
         if (entry == null || agentPosition == null || combatTargetPosition == null) {
             return null;
         }
-        if (AgentBotMovementStateRuntime.climbing(entry)
-                || AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+        if (AgentMovementStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return null;
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
@@ -183,9 +183,9 @@ public final class AgentGrindNavigationTargetSelector {
         if (map == null || map.getFootholds() == null) {
             return null;
         }
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, AgentBotMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraphService.warmGraphAsync(map, AgentMovementStateRuntime.movementProfile(entry));
             return null;
         }
 
@@ -401,9 +401,9 @@ public final class AgentGrindNavigationTargetSelector {
         if (entry == null || agentPosition == null || combatTargetPosition == null || retreatPosition == null) {
             return false;
         }
-        if (AgentBotMovementStateRuntime.climbing(entry)
-                || AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+        if (AgentMovementStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return false;
         }
 
@@ -413,9 +413,9 @@ public final class AgentGrindNavigationTargetSelector {
             return false;
         }
 
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, AgentBotMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraphService.warmGraphAsync(map, AgentMovementStateRuntime.movementProfile(entry));
             return false;
         }
         int agentRegionId = hooks.currentRegionResolver().resolve(graph, entry, map, agentPosition);

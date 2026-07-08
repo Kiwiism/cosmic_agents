@@ -5,8 +5,8 @@ import io.netty.buffer.Unpooled;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
-import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementBroadcastStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -41,12 +41,12 @@ public final class AgentMovementBroadcastService {
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
         int fhId = resolveBroadcastFhId(entry, bot);
 
-        if (AgentBotMovementBroadcastStateRuntime.matches(
+        if (AgentMovementBroadcastStateRuntime.matches(
                 entry, x, y, snapshot.velX(), snapshot.velY(), snapshot.stance(), fhId)) {
             return;
         }
 
-        AgentBotMovementBroadcastStateRuntime.record(
+        AgentMovementBroadcastStateRuntime.record(
                 entry, x, y, snapshot.velX(), snapshot.velY(), snapshot.stance(), fhId);
         sendMovementPacket(bot, snapshot, fhId);
     }
@@ -58,9 +58,9 @@ public final class AgentMovementBroadcastService {
     private static int resolveBroadcastFhId(AgentRuntimeEntry entry, Character bot) {
         Foothold fh = AgentGroundingService.findGroundFoothold(bot.getMap(), bot.getPosition());
         if (fh != null) {
-            AgentBotMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());
+            AgentMovementPhysicsStateRuntime.setLastGroundFhId(entry, fh.getId());
         }
-        return AgentBotMovementPhysicsStateRuntime.lastGroundFhId(entry);
+        return AgentMovementPhysicsStateRuntime.lastGroundFhId(entry);
     }
 
     private static void sendMovementPacket(Character bot, AgentMovementPacketSnapshot snapshot, int fhId) {

@@ -61,7 +61,7 @@ public final class AgentBotPqRuntime {
 
     public static void resetKpqStage1(AgentRuntimeEntry entry, int idleState) {
         state(entry).resetStage1(idleState);
-        AgentBotScriptTaskStateRuntime.resetScript(entry, null);
+        AgentScriptTaskStateRuntime.resetScript(entry, null);
     }
 
     private static AgentKpqState state(AgentRuntimeEntry entry) {

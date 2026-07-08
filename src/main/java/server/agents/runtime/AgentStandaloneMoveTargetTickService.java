@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 
 import java.awt.Point;
 
@@ -38,6 +38,6 @@ public final class AgentStandaloneMoveTargetTickService {
         }
 
         hooks.movementProfileRefresher().refresh(entry);
-        hooks.movementCore().step(entry, AgentBotMoveTargetStateRuntime.moveTarget(entry), runAiTick);
+        hooks.movementCore().step(entry, AgentMoveTargetStateRuntime.moveTarget(entry), runAiTick);
     }
 }

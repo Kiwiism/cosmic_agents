@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMapStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -26,7 +26,7 @@ class AgentMovementOnlyMapChangeServiceTest {
         when(agent.getMapId()).thenReturn(1000);
         when(agent.getMap()).thenReturn(map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotMapStateRuntime.setMapTracking(entry, 1000, Collections.emptyMap());
+        AgentMapStateRuntime.setMapTracking(entry, 1000, Collections.emptyMap());
         AtomicInteger teleports = new AtomicInteger();
 
         boolean handled = AgentMovementOnlyMapChangeService.handleMapChange(
@@ -55,7 +55,7 @@ class AgentMovementOnlyMapChangeServiceTest {
                 hooks(new Point(50, 90), teleports, teleportedTo));
 
         assertTrue(handled);
-        assertTrue(AgentBotMapStateRuntime.isTrackingMap(entry, 2000));
+        assertTrue(AgentMapStateRuntime.isTrackingMap(entry, 2000));
         assertEquals(1, teleports.get());
         assertEquals(new Point(50, 90), teleportedTo.get());
     }

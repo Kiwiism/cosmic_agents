@@ -2,16 +2,16 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentBotFidgetStateRuntime;
+import server.agents.integration.AgentFidgetStateRuntime;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
 
 
 
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentAirborneMovementService;
 import server.agents.capabilities.movement.AgentClimbMovementService;
@@ -36,9 +36,9 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -74,7 +74,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(100, 100), map);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
 
         Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, foothold, new Point(190, 100));
 
@@ -95,7 +95,7 @@ class BotMovementManagerTest {
         Character bot = mockBot(new Point(-100, 100), map);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
 
         Point targetPos = new Point(190, 100);
         Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, leftFoothold, targetPos);
@@ -118,7 +118,7 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(-150, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
 
         Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, leftFoothold, new Point(190, 100));
 
@@ -136,7 +136,7 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(20, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
 
         Point targetPos = new Point(55, 100);
         Point adjusted = AgentGroundTargetService.adjustGrindingTargetPosition(entry, foothold, targetPos);
@@ -150,12 +150,12 @@ class BotMovementManagerTest {
         map.setFootholds(new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));
         Character bot = mockBot(new Point(0, 0), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, -10f);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, -10f);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
@@ -163,13 +163,13 @@ class BotMovementManagerTest {
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(300, 0));
 
-        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry));
     }
 
     @Test
     void shouldNotHoldClimbIdleWhileCommittedClimbEdgeIsActive() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(0, 0), new Point(0, -100),
                 0, 0, 10, -100, 40, 100
@@ -216,8 +216,8 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(668, 1727, 1980, false));
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(668, 1727, 1980, false));
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 68, 54, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(668, 1757), new Point(796, 2025),
                 8, 0, 668, 1727, 1980, 650
@@ -243,13 +243,13 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(-437, -1471, 84, false));
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(-437, -1471, 84, false));
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -1141), new Point(-477, -1166),
                 -8, 0, -437, -1471, 84, 250
         ));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentClimbMovementService.tickClimbing(entry, new Point(-437, -1141), true);
 
@@ -260,8 +260,8 @@ class BotMovementManagerTest {
     @Test
     void shouldNotSnapPreciseClimbTargetOutsideRopeSpan() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(3398, 126, 332, false));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(3398, 126, 332, false));
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Above the rope (y <= topY) and strictly below it (y > bottomY) must reject snap.
         // Snap AT bottomY is allowed for rope-exit launch anchors authored at the rope bottom
@@ -279,8 +279,8 @@ class BotMovementManagerTest {
         // mechanism — it just refused to fire at bottomY because of an over-strict bounds check.
         Rope rope = new Rope(2352, 662, 863, false);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, rope);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         // Bot within one climbStep of the anchor — natural step would overshoot bottomY.
         int dyWithin = AgentMovementKinematicsService.climbStepPerTick() - 2;
@@ -312,19 +312,19 @@ class BotMovementManagerTest {
         });
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(3398, 126, 332, false));
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(3398, 126, 332, false));
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 53, 25, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(3398, 156), new Point(3443, 124),
                 0, 0, 3398, 126, 332, 400
         ));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentClimbMovementService.tickClimbing(entry, new Point(3398, 124), true);
 
         assertEquals(new Point(3398, 124), bot.getPosition());
-        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
     }
 
     @Test
@@ -385,16 +385,16 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.WALK,
                 new Point(8, 100), new Point(60, 100),
                 0, 0, 0, 0, 0, 100
         ));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(60, 100));
 
-        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
+        assertNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
         assertEquals(new Point(8, 100), bot.getPosition());
     }
 
@@ -409,16 +409,16 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(250, 100));
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "grounded follow movement should jump over a mob blocking the walk lane");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry), "grounded follow movement should jump over a mob blocking the walk lane");
+        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentMovementStateRuntime.movementProfile(entry)), AgentMovementPhysicsStateRuntime.airVelocityX(entry));
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(250, 100));
 
-        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry), 0.0001,
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry), 0.0001,
                 "mob-avoid jumps should keep the simulated fixed forward arc");
     }
 
@@ -433,11 +433,11 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(190, 100));
 
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry), "mob-avoid jump should be skipped when simulation would leave the current platform region");
+        assertFalse(AgentMovementStateRuntime.inAir(entry), "mob-avoid jump should be skipped when simulation would leave the current platform region");
     }
 
     @Test
@@ -455,8 +455,8 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(-157, -115, 118, false));
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(-157, -115, 118, false));
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 47, 39, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-157, -25), new Point(-61, 121),
                 8, 0, -157, -115, 118, 650
@@ -487,16 +487,16 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertEquals(new Point(4, 102), bot.getPosition());
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
     }
 
     @Test
@@ -519,16 +519,16 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
 
         AgentAirborneMovementService.tickAirborne(entry, null);
 
         assertTrue(bot.getPosition().x < 0);
-        assertEquals(-8, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertEquals(-8, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -541,12 +541,12 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(36, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(110, 100));
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "graph warmup fallback should jump small same-level gaps instead of freezing");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry), "graph warmup fallback should jump small same-level gaps instead of freezing");
+        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentMovementStateRuntime.movementProfile(entry)), AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -565,12 +565,12 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(44, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(90, 60));
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "fallback should jump when a wall blocks walking but a platform is reachable");
-        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry)), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry), "fallback should jump when a wall blocks walking but a platform is reachable");
+        assertEquals(AgentMovementKinematicsService.walkStep(map, AgentMovementStateRuntime.movementProfile(entry)), AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -583,11 +583,11 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 120), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 40));
 
-        assertTrue(AgentBotClimbStateRuntime.climbing(entry), "graph warmup fallback should use a nearby rope for vertical travel");
+        assertTrue(AgentClimbStateRuntime.climbing(entry), "graph warmup fallback should use a nearby rope for vertical travel");
         assertEquals(new Point(100, 120), bot.getPosition());
     }
 
@@ -600,17 +600,17 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(0, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(0, 0));
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(0, 0));
+        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
 
         int stoppedStep = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(20, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
         assertEquals(0, stoppedStep,
                 "follow should stop anywhere inside STOP_DIST instead of micro-throttling to an exact point");
 
-        int walkStep = AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(map, AgentMovementStateRuntime.movementProfile(entry));
         int followStep = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(90, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
@@ -627,13 +627,13 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(0, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setWasMovingX(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setWasMovingX(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
 
-        int walkStep = AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(map, AgentMovementStateRuntime.movementProfile(entry));
         int step = AgentGroundMovementService.resolveGroundStepX(
                 entry, new Point(0, 100), new Point(60, 100), AgentMovementPhysicsConfig.configuredStopDist(), AgentMovementPhysicsConfig.configuredFollowDist());
 
@@ -646,10 +646,10 @@ class BotMovementManagerTest {
         MapleMap map = new MapleMap(910000035, 0, 0, 910000035, 1.0f);
         Character bot = mockBot(new Point(0, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, false);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry, 80, AgentBotMovementStateRuntime.movementVelocityY(entry));
-        AgentBotMovementStateRuntime.setMoveDirection(entry, 0);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
+        AgentMovementStateRuntime.setInAir(entry, false);
+        AgentMovementStateRuntime.setMovementVelocity(entry, 80, AgentMovementStateRuntime.movementVelocityY(entry));
+        AgentMovementStateRuntime.setMoveDirection(entry, 0);
+        AgentMovementStateRuntime.setFacingDirection(entry, 1);
 
         assertTrue(AgentMovementPoseService.isStandingResolvedStance(entry),
                 "residual ground velocity should not force a walking stance when no move key is held");
@@ -660,15 +660,15 @@ class BotMovementManagerTest {
         MapleMap map = new MapleMap(910000041, 0, 0, 910000041, 1.0f);
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
-        AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
 
         assertFalse(AgentFidgetService.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
                 "idle owners should use the long idle-fidget roll, not the active follow speed-mismatch fidget");
 
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
+        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(4, 0));
 
         assertTrue(AgentFidgetService.shouldStartSpeedMismatchFidget(entry, new Point(100, 100), new Point(110, 100)),
                 "slow-but-moving owners remain eligible for speed-mismatch follow fidgets");
@@ -683,12 +683,12 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementStateRuntime.crouching(entry));
+        assertTrue(AgentMovementStateRuntime.crouching(entry));
     }
 
     @Test
@@ -700,22 +700,22 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setFacingDirection(entry, -1);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry), "prone fidget should keep the current facing direction");
+        assertEquals(-1, AgentMovementStateRuntime.facingDirection(entry), "prone fidget should keep the current facing direction");
         assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
                 "prone fidget should send left-facing prone stance");
 
         AgentFidgetService.clear(entry);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
+        AgentMovementStateRuntime.setFacingDirection(entry, -1);
+        AgentMovementStateRuntime.setCrouching(entry, false);
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_PRONE, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry), "spam-prone fidget should not synthesize a turn input");
+        assertEquals(-1, AgentMovementStateRuntime.facingDirection(entry), "spam-prone fidget should not synthesize a turn input");
         assertEquals(CharacterStance.PRONE_LEFT_STANCE, bot.getStance(),
                 "spam-prone fidget should send left-facing prone stance");
     }
@@ -729,12 +729,12 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(100, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(100, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.SOCIAL);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementStateRuntime.crouching(entry));
+        assertTrue(AgentMovementStateRuntime.crouching(entry));
     }
 
     @Test
@@ -746,12 +746,12 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(100, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(100, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.PRONE, System.currentTimeMillis(), 3000, AgentFidgetTrigger.AUTO_FOLLOW);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementStateRuntime.crouching(entry), "base-speed follow fidgets should not be blocked by a speed-stat guard");
+        assertTrue(AgentMovementStateRuntime.crouching(entry), "base-speed follow fidgets should not be blocked by a speed-stat guard");
     }
 
     @Test
@@ -763,19 +763,19 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.DIAGONAL_JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        int firstJumpVelX = AgentBotMovementPhysicsStateRuntime.airVelocityX(entry);
+        int firstJumpVelX = AgentMovementPhysicsStateRuntime.airVelocityX(entry);
         assertTrue(firstJumpVelX != 0, "diagonal jump fidget should launch with horizontal momentum");
 
         AgentMovementPoseService.idleOnGround(entry, bot);
         entry.fidgetState().setNextJumpAtMs(0L);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)),
+        assertEquals(-Integer.signum(firstJumpVelX), Integer.signum(AgentMovementPhysicsStateRuntime.airVelocityX(entry)),
                 "diagonal jump fidget should alternate jump direction on the next grounded launch");
     }
 
@@ -788,16 +788,16 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
 
         bot.setPosition(new Point(100, 0));
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(AgentFidgetMode.JUMP, AgentBotFidgetStateRuntime.mode(entry),
+        assertEquals(AgentFidgetMode.JUMP, AgentFidgetStateRuntime.mode(entry),
                 "jump fidgets should not clear themselves while airborne above the ground target");
     }
 
@@ -810,19 +810,19 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
 
         AgentMovementPoseService.idleOnGround(entry, bot);
         entry.fidgetState().setNextActionAtMs(Long.MAX_VALUE);
         entry.fidgetState().setNextJumpAtMs(0L);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "grounded jump fidgets should launch again even if air steering is cooling down");
+        assertTrue(AgentMovementStateRuntime.inAir(entry), "grounded jump fidgets should launch again even if air steering is cooling down");
     }
 
     @Test
@@ -834,31 +834,31 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.JUMP, System.currentTimeMillis(), 3000);
         AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true);
 
         entry.fidgetState().setSpamAirSteer(false);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         entry.fidgetState().setNextActionAtMs(0L);
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry),
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry),
                 "non-spam jump fidgets should not reroll random air steering every airborne tick");
 
         entry.fidgetState().setSpamAirSteer(true);
         entry.fidgetState().setActionBaseDelayMs(100);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
         entry.fidgetState().setNextActionAtMs(0L);
         long before = System.currentTimeMillis();
 
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertTrue(AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry) != 0.0,
+        assertTrue(AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry) != 0.0,
                 "spam-air-steer jump fidgets should press random side input on their own delay");
         long after = System.currentTimeMillis();
-        assertTrue(AgentBotFidgetStateRuntime.nextActionAtMs(entry) >= before + 100
-                        && AgentBotFidgetStateRuntime.nextActionAtMs(entry) <= after + 150,
+        assertTrue(AgentFidgetStateRuntime.nextActionAtMs(entry) >= before + 100
+                        && AgentFidgetStateRuntime.nextActionAtMs(entry) <= after + 150,
                 "air-steer spam should use a tick-aligned 0/50ms jitter");
     }
 
@@ -871,22 +871,22 @@ class BotMovementManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, System.currentTimeMillis(), 3000);
-        assertTrue(AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) >= 100 && AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) <= 250);
-        assertEquals(0, AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) % AgentMovementPhysicsConfig.configuredMovementTickMs());
+        assertTrue(AgentFidgetStateRuntime.actionBaseDelayMs(entry) >= 100 && AgentFidgetStateRuntime.actionBaseDelayMs(entry) <= 250);
+        assertEquals(0, AgentFidgetStateRuntime.actionBaseDelayMs(entry) % AgentMovementPhysicsConfig.configuredMovementTickMs());
 
         long before = System.currentTimeMillis();
         assertTrue(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(AgentFidgetMode.SPAM_SIDEWAYS, AgentBotFidgetStateRuntime.mode(entry));
-        assertTrue(AgentBotFidgetStateRuntime.moveDir(entry) != 0, "sideway spam should keep an active sideways fidget direction");
+        assertEquals(AgentFidgetMode.SPAM_SIDEWAYS, AgentFidgetStateRuntime.mode(entry));
+        assertTrue(AgentFidgetStateRuntime.moveDir(entry) != 0, "sideway spam should keep an active sideways fidget direction");
         assertTrue(bot.getPosition().x != 100, "sideway spam should cause sideways motion during the tick");
         long after = System.currentTimeMillis();
-        assertTrue(AgentBotFidgetStateRuntime.nextActionAtMs(entry) >= before + AgentBotFidgetStateRuntime.actionBaseDelayMs(entry)
-                        && AgentBotFidgetStateRuntime.nextActionAtMs(entry) <= after + AgentBotFidgetStateRuntime.actionBaseDelayMs(entry) + 50,
+        assertTrue(AgentFidgetStateRuntime.nextActionAtMs(entry) >= before + AgentFidgetStateRuntime.actionBaseDelayMs(entry)
+                        && AgentFidgetStateRuntime.nextActionAtMs(entry) <= after + AgentFidgetStateRuntime.actionBaseDelayMs(entry) + 50,
                 "sideway spam should use tick-aligned 0/50ms jitter around its per-fidget base interval");
-        assertTrue(AgentBotModeStateRuntime.following(entry), "sideway spam should not convert follow mode into a manual move command");
+        assertTrue(AgentModeStateRuntime.following(entry), "sideway spam should not convert follow mode into a manual move command");
     }
 
     @Test
@@ -894,18 +894,18 @@ class BotMovementManagerTest {
         MapleMap map = new MapleMap(910000044, 0, 0, 910000044, 1.0f);
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         long now = System.currentTimeMillis();
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000);
         bot.setPosition(new Point(130, 100));
         entry.fidgetState().setUntilMs(now - 1);
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(AgentFidgetMode.NONE, AgentBotFidgetStateRuntime.mode(entry));
-        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry),
+        assertEquals(AgentFidgetMode.NONE, AgentFidgetStateRuntime.mode(entry));
+        assertNull(AgentMoveTargetStateRuntime.moveTarget(entry),
                 "speed-mismatch follow fidgets should resume following immediately");
-        assertFalse(AgentBotMoveTargetStateRuntime.isPrecise(entry));
+        assertFalse(AgentMoveTargetStateRuntime.isPrecise(entry));
     }
 
     @Test
@@ -913,28 +913,28 @@ class BotMovementManagerTest {
         MapleMap map = new MapleMap(910000045, 0, 0, 910000045, 1.0f);
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(140, 100));
         long now = System.currentTimeMillis();
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000, AgentFidgetTrigger.SOCIAL);
         bot.setPosition(new Point(130, 100));
         entry.fidgetState().setUntilMs(now - 1);
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(new Point(100, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry),
+        assertEquals(new Point(100, 100), AgentMoveTargetStateRuntime.moveTarget(entry),
                 "social fidget cleanup should reuse the precise move-target path from the here command");
-        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
+        assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
 
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
         bot.setPosition(new Point(130, 100));
         AgentFidgetService.startFidget(entry, AgentFidgetMode.SPAM_SIDEWAYS, now, 2000, AgentFidgetTrigger.IDLE);
         bot.setPosition(new Point(160, 100));
         entry.fidgetState().setUntilMs(now - 1);
 
         assertFalse(AgentFidgetService.tryHandleTick(entry, new Point(110, 100), true));
-        assertEquals(new Point(130, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry),
+        assertEquals(new Point(130, 100), AgentMoveTargetStateRuntime.moveTarget(entry),
                 "idle fidget cleanup should return to its own recorded origin");
-        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
+        assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
     }
 
     @Test
@@ -949,8 +949,8 @@ class BotMovementManagerTest {
 
         AgentMovementRecoveryService.tickUnstuck(entry);
 
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry), "unstuck recovery should only use lateral jumps");
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry), "unstuck recovery should launch the bot instead of crouching in place");
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry), "unstuck recovery should only use lateral jumps");
+        assertTrue(AgentMovementStateRuntime.inAir(entry), "unstuck recovery should launch the bot instead of crouching in place");
     }
 
     @Test
@@ -972,12 +972,12 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 100);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(100, 100), new Point(50, 50),
                 -8, 0, 0, 0, 0, 300
@@ -985,7 +985,7 @@ class BotMovementManagerTest {
 
         AgentAirborneMovementService.tickAirborne(entry, new Point(-300, 100));
 
-        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry), 0.0001);
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry), 0.0001);
         assertEquals(new Point(92, 103), bot.getPosition());
     }
 
@@ -998,14 +998,14 @@ class BotMovementManagerTest {
         when(bot.getHp()).thenReturn(100);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(668, 1727, 1980, false));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(668, 1727, 1980, false));
 
         AgentClimbMovementService.jumpToRope(entry, bot, 8);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
-        assertEquals(0, AgentBotClimbStateRuntime.ropeGrabCooldownMs(entry));
-        assertEquals(668, AgentBotClimbStateRuntime.blockedRopeGrab(entry).x());
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertTrue(AgentClimbStateRuntime.climbUpIntent(entry));
+        assertEquals(0, AgentClimbStateRuntime.ropeGrabCooldownMs(entry));
+        assertEquals(668, AgentClimbStateRuntime.blockedRopeGrab(entry).x());
     }
 
     @Test
@@ -1021,26 +1021,26 @@ class BotMovementManagerTest {
         when(bot.getTotalJumpStat()).thenReturn(107);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
 
         AgentMovementProfile targetProfile = AgentMovementProfile.fromCharacter(bot);
         assertEquals(new AgentMovementProfile(105, 105), targetProfile);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(20, 100), new Point(80, 40),
                 8, 0, 0, 0, 0, 300
         ));
-        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(20, 100));
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(20, 100));
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         assertTrue(AgentMovementProfileService.refreshMovementProfile(entry),
                 "profile swap should commit immediately and let nav use closest graph while the exact graph warms");
-        assertEquals(targetProfile, AgentBotMovementStateRuntime.movementProfile(entry));
-        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
-        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertEquals(-1, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
-        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
+        assertEquals(targetProfile, AgentMovementStateRuntime.movementProfile(entry));
+        assertNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
+        assertNull(AgentNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertEquals(-1, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertFalse(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
     private static Character mockBot(Point startPosition, MapleMap map) {

@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -31,24 +31,24 @@ class AgentScriptTaskTickServiceTest {
     void activatesAndStartsNextTaskWhenNoneActive() {
         AgentRuntimeEntry entry = entry();
         AgentTask task = AgentTask.stop();
-        AgentBotScriptTaskStateRuntime.queueTask(entry, task);
+        AgentScriptTaskStateRuntime.queueTask(entry, task);
         List<AgentTask> started = new ArrayList<>();
 
         AgentScriptTaskTickService.tick(entry, (ignoredEntry, startedTask) -> started.add(startedTask), (ignoredEntry, ignoredTask) -> false);
 
         assertEquals(List.of(task), started);
-        assertSame(task, AgentBotScriptTaskStateRuntime.activeTask(entry));
+        assertSame(task, AgentScriptTaskStateRuntime.activeTask(entry));
     }
 
     @Test
     void keepsIncompleteActiveTask() {
         AgentRuntimeEntry entry = entry();
         AgentTask task = AgentTask.grind();
-        AgentBotScriptTaskStateRuntime.queueTask(entry, task);
+        AgentScriptTaskStateRuntime.queueTask(entry, task);
 
         AgentScriptTaskTickService.tick(entry, (ignoredEntry, ignoredTask) -> {}, (ignoredEntry, ignoredTask) -> false);
 
-        assertSame(task, AgentBotScriptTaskStateRuntime.activeTask(entry));
+        assertSame(task, AgentScriptTaskStateRuntime.activeTask(entry));
     }
 
     @Test
@@ -56,14 +56,14 @@ class AgentScriptTaskTickServiceTest {
         AgentRuntimeEntry entry = entry();
         AgentTask first = AgentTask.stop();
         AgentTask second = AgentTask.grind();
-        AgentBotScriptTaskStateRuntime.queueTask(entry, first);
-        AgentBotScriptTaskStateRuntime.queueTask(entry, second);
+        AgentScriptTaskStateRuntime.queueTask(entry, first);
+        AgentScriptTaskStateRuntime.queueTask(entry, second);
         List<AgentTask> started = new ArrayList<>();
 
         AgentScriptTaskTickService.tick(entry, (ignoredEntry, task) -> started.add(task), (ignoredEntry, ignoredTask) -> true);
 
         assertEquals(List.of(first, second), started);
-        assertNull(AgentBotScriptTaskStateRuntime.activeTask(entry));
+        assertNull(AgentScriptTaskStateRuntime.activeTask(entry));
     }
 
     private static AgentRuntimeEntry entry() {

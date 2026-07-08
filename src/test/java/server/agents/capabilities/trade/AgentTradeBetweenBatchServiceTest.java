@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ class AgentTradeBetweenBatchServiceTest {
     @Test
     void ignoresNonBetweenBatchState() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
-        AgentBotPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
+        AgentPendingTradeStateRuntime.setCategory(entry, "scrolls");
+        AgentPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
         TraceCallbacks callbacks = new TraceCallbacks();
 
         assertEquals(false, AgentTradeBetweenBatchService.tickBetweenBatches(entry, callbacks));
@@ -31,8 +31,8 @@ class AgentTradeBetweenBatchServiceTest {
     @Test
     void resetsSingleBatchBetweenBatchState() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
-        AgentBotPendingTradeStateRuntime.setSingleBatch(entry, true);
+        AgentPendingTradeStateRuntime.setCategory(entry, "scrolls");
+        AgentPendingTradeStateRuntime.setSingleBatch(entry, true);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         assertEquals(true, AgentTradeBetweenBatchService.tickBetweenBatches(entry, callbacks));
@@ -42,19 +42,19 @@ class AgentTradeBetweenBatchServiceTest {
     @Test
     void ticksTimerBeforeCollectingNextBatch() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, 500);
+        AgentPendingTradeStateRuntime.setCategory(entry, "scrolls");
+        AgentPendingTradeStateRuntime.setTimerMs(entry, 500);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         assertEquals(true, AgentTradeBetweenBatchService.tickBetweenBatches(entry, callbacks));
-        assertEquals(400, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertEquals(400, AgentPendingTradeStateRuntime.timerMs(entry));
         assertTrue(callbacks.collectedCategories.isEmpty());
     }
 
     @Test
     void opensNextBatchForSameCategoryWhenItemsRemain() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
+        AgentPendingTradeStateRuntime.setCategory(entry, "scrolls");
         Item item = mock(Item.class);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.nextItems = List.of(item);
@@ -69,7 +69,7 @@ class AgentTradeBetweenBatchServiceTest {
     @Test
     void advancesCategoryWhenCurrentCategoryIsEmpty() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "equips");
+        AgentPendingTradeStateRuntime.setCategory(entry, "equips");
         Item item = mock(Item.class);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.advancedEquip = "equips:reserved:1";
@@ -78,8 +78,8 @@ class AgentTradeBetweenBatchServiceTest {
 
         assertEquals(true, AgentTradeBetweenBatchService.tickBetweenBatches(entry, callbacks));
 
-        assertEquals("equips:reserved:1", AgentBotPendingTradeStateRuntime.category(entry));
-        assertEquals("reserved stuff", AgentBotPendingTradeStateRuntime.categoryMessage(entry));
+        assertEquals("equips:reserved:1", AgentPendingTradeStateRuntime.category(entry));
+        assertEquals("reserved stuff", AgentPendingTradeStateRuntime.categoryMessage(entry));
         assertEquals(List.of("equips", "equips:reserved:1"), callbacks.collectedCategories);
         assertSame(item, callbacks.opened.get(0).get(0));
     }
@@ -87,7 +87,7 @@ class AgentTradeBetweenBatchServiceTest {
     @Test
     void resetsWhenNoItemsOrAdvancedCategoryRemain() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "equips");
+        AgentPendingTradeStateRuntime.setCategory(entry, "equips");
         TraceCallbacks callbacks = new TraceCallbacks();
 
         assertEquals(true, AgentTradeBetweenBatchService.tickBetweenBatches(entry, callbacks));

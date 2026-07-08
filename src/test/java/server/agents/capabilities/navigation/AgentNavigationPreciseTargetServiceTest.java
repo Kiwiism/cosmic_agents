@@ -1,8 +1,8 @@
 package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -14,7 +14,7 @@ class AgentNavigationPreciseTargetServiceTest {
     @Test
     void airborneNeverUsesPreciseTarget() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
 
         assertFalse(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
                 null, entry, new Point(0, 0), edge(AgentNavigationGraph.EdgeType.WALK, 0), readiness(false)));
@@ -61,7 +61,7 @@ class AgentNavigationPreciseTargetServiceTest {
     @Test
     void climbingJumpExitUsesPreciseUntilExitReady() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new server.maps.Rope(100, 0, 100, false));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new server.maps.Rope(100, 0, 100, false));
 
         assertTrue(AgentNavigationPreciseTargetService.shouldUsePreciseTarget(
                 null, entry, new Point(0, 0), edge(AgentNavigationGraph.EdgeType.CLIMB, 1), readiness(false)));

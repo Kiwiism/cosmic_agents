@@ -29,6 +29,9 @@ Recent reconstruction notes:
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and
   reply timing are unchanged.
+- The next semantic cleanup slice renamed state adapters from
+  `AgentBot*StateRuntime` to `Agent*StateRuntime`. This was a type/file/import
+  rename only; state ownership and behavior are unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -134,31 +137,31 @@ Recent reconstruction notes:
   triggering, and cooldown behavior are unchanged.
 - Combat cooldown compatibility wrappers were removed from `BotEntry`.
   Combat, movement-lock, damage, and alert callers already use
-  `AgentBotCombatCooldownStateRuntime` over `AgentCombatCooldownState`.
+  `AgentCombatCooldownStateRuntime` over `AgentCombatCooldownState`.
 - Grind wander and grind-loot compatibility wrappers were removed from
   `BotEntry`. Grind fallback and loot targeting callers already use
-  `AgentBotGrindWanderStateRuntime` and `AgentBotGrindLootStateRuntime` over
+  `AgentGrindWanderStateRuntime` and `AgentGrindLootStateRuntime` over
   Agent-owned state.
 - Move target, farm-anchor, and patrol compatibility wrappers were removed
   from `BotEntry`. Movement mode callers already use
-  `AgentBotMoveTargetStateRuntime`, `AgentBotFarmAnchorStateRuntime`, and
-  `AgentBotPatrolStateRuntime` over the Agent-owned runtime state objects.
+  `AgentMoveTargetStateRuntime`, `AgentFarmAnchorStateRuntime`, and
+  `AgentPatrolStateRuntime` over the Agent-owned runtime state objects.
 - Death window and portal cooldown compatibility wrappers were removed from
-  `BotEntry`. Runtime callers already use `AgentBotDeathStateRuntime` and
-  `AgentBotNavigationDebugStateRuntime` over Agent-owned state.
+  `BotEntry`. Runtime callers already use `AgentDeathStateRuntime` and
+  `AgentNavigationDebugStateRuntime` over Agent-owned state.
 - Shop transition compatibility wrappers were removed from `BotEntry`.
   Shop visit/sequence callers already enter through
-  `AgentBotShopStateRuntime`, backed by the Agent-owned `AgentShopState`.
+  `AgentShopStateRuntime`, backed by the Agent-owned `AgentShopState`.
 - Pending loot-offer and bot trade-retry compatibility wrappers were removed
   from `BotEntry`. Offer/trade callers now use
-  `AgentBotOfferStateRuntime` and `AgentBotPendingTradeStateRuntime` over the
+  `AgentOfferStateRuntime` and `AgentPendingTradeStateRuntime` over the
   Agent-owned trade state objects.
 - Message queue compatibility wrappers were removed from `BotEntry`.
   Chat/reply queue callers already use `AgentMessageQueueStateRuntime` over
   the Agent-owned `AgentMessageQueueState`.
 - Pending chat action compatibility wrappers were removed from `BotEntry`.
   Pending action reads/writes now enter through
-  `AgentBotPendingActionStateRuntime` and the Agent-owned
+  `AgentPendingActionStateRuntime` and the Agent-owned
   `AgentPendingActionState` hosted temporarily by the shell.
 - Live Agent/leader character identity moved to
   `server.agents.runtime.AgentRuntimeIdentityState`. `BotEntry` temporarily
@@ -1184,7 +1187,7 @@ Recent reconstruction notes:
   movement, idle-physics, and action-lock paths call the Agent runtime helper
   while preserving the same null-map and `MapleMap.isSwim()` behavior.
 - Grind-loot retry suppression now uses
-  `AgentBotGrindLootStateRuntime::isRetrySuppressed` directly; BotManager no
+  `AgentGrindLootStateRuntime::isRetrySuppressed` directly; BotManager no
   longer owns the pass-through predicate used by Agent loot targeting.
 - Script-driven item dropping now lives in `AgentScriptItemActionService`;
   the former BotManager `issueDropItem` compatibility wrapper was removed,
@@ -1610,7 +1613,7 @@ Recent reconstruction notes:
   temporary movement-command wrapper methods.
 - Read-only movement state snapshots now have Agent-owned types in
   `AgentMovementSnapshot`/`AgentMovementMode` and an integration facade in
-  `AgentBotMovementStateRuntime`; `BotEntry` remains the temporary state source.
+  `AgentMovementStateRuntime`; `BotEntry` remains the temporary state source.
 - Read-only target/formation snapshots now have an Agent-owned type in
   `AgentMovementTargetSnapshot` and an integration facade in
   `AgentBotMovementTargetRuntime`; `BotManager.TargetSnapshot` remains the
@@ -1691,69 +1694,69 @@ Recent reconstruction notes:
   while the same BotEntry-backed character reference and movement behavior are
   preserved.
 - Bot physics stance and movement-snapshot reads now enter through
-  `AgentBotMovementStateRuntime`, `AgentBotClimbStateRuntime`, and
-  `AgentBotSwimStateRuntime`; `BotPhysicsEngine` still owns the legacy physics
+  `AgentMovementStateRuntime`, `AgentClimbStateRuntime`, and
+  `AgentSwimStateRuntime`; `BotPhysicsEngine` still owns the legacy physics
   calculations, but stance selection no longer directly reads BotEntry movement,
   climb, or swim fields.
 - Bot physics movement-profile reads now enter through
-  `AgentBotMovementStateRuntime.movementProfile`; jump, rope-jump, swim-burst,
+  `AgentMovementStateRuntime.movementProfile`; jump, rope-jump, swim-burst,
   landing-speed, and ground-motion calculations still use the same non-null
   BotEntry-backed profile semantics.
 - Bot physics coordinate and horizontal-speed helper access now enters through
-  `AgentBotMovementPhysicsStateRuntime`; ground-position sync, stop-ground
+  `AgentMovementPhysicsStateRuntime`; ground-position sync, stop-ground
   motion, and rounded airborne position reads no longer touch `physX`,
   `physY`, or `hspeed` directly.
 - Bot physics movement-packet velocity writes now enter through
-  `AgentBotMovementStateRuntime.setMovementVelocity`; the legacy behavior that
+  `AgentMovementStateRuntime.setMovementVelocity`; the legacy behavior that
   non-zero horizontal velocity also updates facing direction is preserved behind
   the Agent movement-state boundary.
 - Bot physics top-rope entry intent now enters through
-  `AgentBotClimbStateRuntime`; queue, consume, and clear operations no longer
+  `AgentClimbStateRuntime`; queue, consume, and clear operations no longer
   access `ropeEntryPending`, `ropeEntryRope`, or `ropeEntryY` directly.
 - Bot physics down-jump and crouch state now enters through
-  `AgentBotMovementStateRuntime`; prone, queued down-jump, down-jump failure,
+  `AgentMovementStateRuntime`; prone, queued down-jump, down-jump failure,
   grace-period timer, landing, swim, airborne, climb, and reset paths no longer
   write `downJumpPending`, `downJumpGracePeriodMS`, or `crouching` directly.
 - Bot physics blocked-rope-grab state now enters through
-  `AgentBotClimbStateRuntime`; jump, fall, knockback, landing, and reset paths
+  `AgentClimbStateRuntime`; jump, fall, knockback, landing, and reset paths
   no longer write `blockedRopeGrab` directly.
 - Bot physics climb attachment and climb-direction state now enters through
-  `AgentBotClimbStateRuntime`; idle, airborne, landing, climb, collision, and
+  `AgentClimbStateRuntime`; idle, airborne, landing, climb, collision, and
   reset paths no longer directly read or write `climbing`, `climbRope`, or
   `climbVerticalDir`.
 - Bot physics airborne/grounded state now enters through
-  `AgentBotMovementStateRuntime.setInAir`; movement transitions no longer write
+  `AgentMovementStateRuntime.setInAir`; movement transitions no longer write
   the `inAir` field directly.
 - Bot physics swim mode and swim intent state now enters through
-  `AgentBotSwimStateRuntime`; water jump launch, swim integration, landing
+  `AgentSwimStateRuntime`; water jump launch, swim integration, landing
   handoff, swim input reads, swim-jump consumption, swim cooldown, and swim
   facing updates no longer access swim fields directly in `BotPhysicsEngine`.
 - Bot physics fixed-air-arc state now enters through
-  `AgentBotMovementPhysicsStateRuntime.setFixedAirArc`; grounded, swim,
+  `AgentMovementPhysicsStateRuntime.setFixedAirArc`; grounded, swim,
   landing, collision, airborne launch, climb, and reset paths no longer clear
   `fixedAirArc` directly.
 - Bot physics movement-direction intent now enters through
-  `AgentBotMovementStateRuntime`; ground motion, air steering, airborne launch,
+  `AgentMovementStateRuntime`; ground motion, air steering, airborne launch,
   idle, and reset paths no longer read or clear `moveDir` directly.
 - Bot physics facing-direction preservation and air-steering facing updates now
-  enter through `AgentBotMovementStateRuntime`; knockback and airborne steering
+  enter through `AgentMovementStateRuntime`; knockback and airborne steering
   paths no longer access `facingDir` directly.
 - Bot physics vertical velocity now enters through
-  `AgentBotMovementPhysicsStateRuntime`; jump launch, swim integration,
+  `AgentMovementPhysicsStateRuntime`; jump launch, swim integration,
   airborne integration, collision, climb, landing, and reset paths no longer
   access `velY` directly.
 - Bot physics committed air velocity and air-steering velocity now enter
-  through `AgentBotMovementPhysicsStateRuntime`; swim entry, knockback,
+  through `AgentMovementPhysicsStateRuntime`; swim entry, knockback,
   airborne launch, air steering, collision, climb, and reset paths no longer
   access `airVelX` or `airSteerVelX` directly.
-- Bot physics climb-up intent now enters through `AgentBotClimbStateRuntime`;
+- Bot physics climb-up intent now enters through `AgentClimbStateRuntime`;
   idle, swim launch, knockback, landing, ground motion, airborne launch, climb,
   and reset paths no longer access `climbUpIntent` directly.
 - Bot physics fall-peak tracking now enters through
-  `AgentBotMovementPhysicsStateRuntime`; fall-distance calculation, airborne
+  `AgentMovementPhysicsStateRuntime`; fall-distance calculation, airborne
   peak recording, and landing reset no longer access `fallPeakPhysY` directly.
 - Bot physics reset-only movement and rope cooldown flags now enter through
-  `AgentBotMovementStateRuntime` and `AgentBotClimbStateRuntime`; full motion
+  `AgentMovementStateRuntime` and `AgentClimbStateRuntime`; full motion
   reset no longer writes `wasMovingX` or `ropeGrabCooldownMs` directly.
 - Combat alert reset callbacks now enter through `AgentBotCombatRuntime`;
   `BotCombatManager` no longer reaches directly into the lower-level scheduler
@@ -1970,15 +1973,15 @@ Recent reconstruction notes:
   `AgentSchedulerRuntime` directly; the pure movement reply/scheduler
   pass-through adapters were removed while preserving movement chat behavior.
 - Gear-prompt reservation state now enters through the narrow
-  `AgentBotOfferStateRuntime` adapter; offer scheduling keeps BotEntry as the
+  `AgentOfferStateRuntime` adapter; offer scheduling keeps BotEntry as the
   temporary backing store but no longer owns the pending gear prompt field
   directly in offer orchestration.
 - Pending action and pending drop-choice state now enter through the narrow
-  `AgentBotPendingActionStateRuntime` adapter; chat, transfer, manager cleanup,
+  `AgentPendingActionStateRuntime` adapter; chat, transfer, manager cleanup,
   and offer orchestration keep BotEntry as the temporary backing store but no
   longer read or clear those fields directly.
 - AP-build prompt state and SP-variant prompt state now enter through the
-  narrow `AgentBotBuildStateRuntime` adapter; build orchestration keeps BotEntry
+  narrow `AgentBuildStateRuntime` adapter; build orchestration keeps BotEntry
   as the temporary backing store but no longer reads or mutates AP/SP prompt
   fields directly.
 - Chat message queue and message-sending state now enter through the narrow
@@ -1986,166 +1989,166 @@ Recent reconstruction notes:
   scroll-reaction readiness checks keep BotEntry as the temporary backing store
   but no longer read queue fields directly.
 - Scroll reaction cooldown, load, and per-scroller streak state now enter
-  through the narrow `AgentBotScrollReactionStateRuntime` adapter; scroll
+  through the narrow `AgentScrollReactionStateRuntime` adapter; scroll
   reaction orchestration keeps BotEntry as the temporary backing store but no
   longer reads or mutates those fields directly.
 - Owner activity and AFK/welcome-back state now enter through the narrow
-  `AgentBotActivityStateRuntime` adapter; status and welcome-back orchestration
+  `AgentActivityStateRuntime` adapter; status and welcome-back orchestration
   keep BotEntry as the temporary backing store but no longer read or mutate AFK
   fields directly.
 - Last matched owner-command state now enters through the narrow
-  `AgentBotActivityStateRuntime` adapter; command handling and LLM situation
+  `AgentActivityStateRuntime` adapter; command handling and LLM situation
   building keep BotEntry as the temporary backing store but no longer read or
   write `lastOwnerCommand` or `lastOwnerCommandAtMs` directly.
 - Ammo share request episode state now enters through the narrow
-  `AgentBotAmmoStateRuntime` adapter; ammo sharing keeps BotEntry as the
+  `AgentAmmoStateRuntime` adapter; ammo sharing keeps BotEntry as the
   temporary backing store but no longer reads or mutates the request flag
   directly.
 - HP/MP potion share request episode state now enters through the narrow
-  `AgentBotPotionStateRuntime` adapter; potion sharing keeps BotEntry as the
+  `AgentPotionStateRuntime` adapter; potion sharing keeps BotEntry as the
   temporary backing store but no longer reads or mutates the request flags
   directly.
 - Build level-sync and job-prompt milestone state now enter through
-  `AgentBotBuildStateRuntime`; build progression keeps BotEntry as the
+  `AgentBuildStateRuntime`; build progression keeps BotEntry as the
   temporary backing store but no longer reads or mutates `lastKnownLevel` or
   `jobPromptSent` directly.
 - Consumable buff scan and last-action summary state now enter through
-  `AgentBotBuffStateRuntime`; buff consumable automation keeps BotEntry as the
+  `AgentBuffStateRuntime`; buff consumable automation keeps BotEntry as the
   temporary backing store but no longer reads or mutates those fields directly.
 - Manual trade invite accept-delay, trade reference, and timeout state now enter
-  through `AgentBotManualTradeStateRuntime`; manual trade handling keeps
+  through `AgentManualTradeStateRuntime`; manual trade handling keeps
   BotEntry as the temporary backing store but no longer reads or mutates those
   fields directly.
 - Pending trade active/idle guard checks now enter through
-  `AgentBotPendingTradeStateRuntime`; ammo, potion, offer, utility, and
+  `AgentPendingTradeStateRuntime`; ammo, potion, offer, utility, and
   inventory orchestration keep BotEntry as the temporary backing store but no
   longer scatter direct `pendingTradeCategory` null checks.
 - Bot-initiated trade retry callback and delay state now enter through
-  `AgentBotPendingTradeStateRuntime`; loot-offer, potion-share, and ammo-share
+  `AgentPendingTradeStateRuntime`; loot-offer, potion-share, and ammo-share
   retry scheduling keep BotEntry as the temporary backing store but no longer
   read, write, or clear retry fields directly.
 - Potion/ammo share trade quantity budget state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade item quantity capping and trade
+  `AgentPendingTradeStateRuntime`; trade item quantity capping and trade
   reset keep BotEntry as the temporary backing store but no longer read,
   decrement, or clear the budget field directly.
 - Pending trade category message state now enters through
-  `AgentBotPendingTradeStateRuntime`; reserved/equip group trade announcements
+  `AgentPendingTradeStateRuntime`; reserved/equip group trade announcements
   keep BotEntry as the temporary backing store but no longer set, read, or clear
   the message field directly.
 - Pending trade recipient id state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade setup, reset, and recipient
+  `AgentPendingTradeStateRuntime`; trade setup, reset, and recipient
   resolution keep BotEntry as the temporary backing store but no longer set,
   read, or clear the recipient id field directly.
 - Pending trade invite-announced state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade batch opening and reset keep
+  `AgentPendingTradeStateRuntime`; trade batch opening and reset keep
   BotEntry as the temporary backing store but no longer read, mark, or clear
   the invitation announcement flag directly.
 - Pending trade timer state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade accept, batch pause, item-add, and
+  `AgentPendingTradeStateRuntime`; trade accept, batch pause, item-add, and
   confirmation timeout handling keep BotEntry as the temporary backing store
   but no longer read, increment, tick down, set, or clear the timer field
   directly.
 - Pending trade single-batch state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade setup, batch-completion decisions,
+  `AgentPendingTradeStateRuntime`; trade setup, batch-completion decisions,
   and reset keep BotEntry as the temporary backing store but no longer read,
   set, or clear the single-batch field directly.
 - Pending trade meso amount and meso-added state now enter through
-  `AgentBotPendingTradeStateRuntime`; trade setup, meso-add, insufficient-meso
+  `AgentPendingTradeStateRuntime`; trade setup, meso-add, insufficient-meso
   checks, and reset keep BotEntry as the temporary backing store but no longer
   read, set, mark, or clear meso trade fields directly.
 - Pending trade all-items-added and bot-done completion flags now enter through
-  `AgentBotPendingTradeStateRuntime`; trade completion, cancel, timeout, and
+  `AgentPendingTradeStateRuntime`; trade completion, cancel, timeout, and
   reset handling keep BotEntry as the temporary backing store but no longer
   read, mark, or clear completion fields directly.
 - Pending trade item index state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade batch setup, item-add progression,
+  `AgentPendingTradeStateRuntime`; trade batch setup, item-add progression,
   and reset keep BotEntry as the temporary backing store but no longer read,
   increment, or clear the item index field directly.
 - Pending trade item-list state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade batch setup, between-batch pause,
+  `AgentPendingTradeStateRuntime`; trade batch setup, between-batch pause,
   item-add progression, and reset keep BotEntry as the temporary backing store
   but no longer set, read, null-check, or clear the batch item list directly.
 - Pending trade category state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade setup, group advancement, supply
+  `AgentPendingTradeStateRuntime`; trade setup, group advancement, supply
   share invitation suppression, and reset keep BotEntry as the temporary
   backing store but no longer set, read, compare, or clear the category field
   directly.
 - Pending trade temporary equipment restore-slot state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade preparation, trade-window item
+  `AgentPendingTradeStateRuntime`; trade preparation, trade-window item
   remapping, restore checks, restore snapshots, and cleanup keep BotEntry as the
   temporary backing store but no longer operate on the restore map directly.
 - Inventory full-warning cooldown and post-drop loot-inhibit cooldown state now
-  enter through `AgentBotInventoryStateRuntime`; passive loot and drop-choice
+  enter through `AgentInventoryStateRuntime`; passive loot and drop-choice
   handling keep BotEntry as the temporary backing store but no longer read,
   tick down, or set those cooldown fields directly.
 - Potion check and passive MP/HP recovery timer state now enter through
-  `AgentBotPotionStateRuntime`; potion check retry, autopot cadence, and
+  `AgentPotionStateRuntime`; potion check retry, autopot cadence, and
   passive recovery keep BotEntry as the temporary backing store but no longer
   read, shorten, tick down, clear, or set those timer fields directly.
 - Owner-inactive safe-mode state now enters through
-  `AgentBotActivityStateRuntime`; offline/dead owner recovery keeps BotEntry as
+  `AgentActivityStateRuntime`; offline/dead owner recovery keeps BotEntry as
   the temporary backing store but no longer reads, starts, clears, or sets the
   inactive timer, town-return flag, or away-safe-mode flag directly.
 - Gear-prompt test assertions now read the reserved prompt timestamp through
-  `AgentBotOfferStateRuntime`, keeping tests on the Agent-owned offer state
+  `AgentOfferStateRuntime`, keeping tests on the Agent-owned offer state
   boundary instead of the temporary BotEntry backing field.
 - Session-request tests now assert pending chat action through
-  `AgentBotPendingActionStateRuntime`, keeping relog/away prompt state checks on
+  `AgentPendingActionStateRuntime`, keeping relog/away prompt state checks on
   the Agent-owned pending-action boundary instead of the temporary BotEntry
   backing field.
 - Combat attack-lock, post-attack movement-window, and mob-hit invulnerability
-  cooldown state now enter through `AgentBotCombatCooldownStateRuntime`; combat,
+  cooldown state now enter through `AgentCombatCooldownStateRuntime`; combat,
   movement, and local attack orchestration keep BotEntry as the temporary backing
   store but no longer read, extend, tick down, clear, or set those cooldown fields
   directly.
 - Movement broadcast duplicate-suppression cache state now enters through
-  `AgentBotMovementBroadcastStateRuntime`; movement, combat, airshow, and mode
+  `AgentMovementBroadcastStateRuntime`; movement, combat, airshow, and mode
   reset paths keep BotEntry as the temporary backing store but no longer invalidate,
   compare, or record the last broadcast snapshot fields directly.
 - Navigation debug path logger lifecycle and per-tick recording now enter
-  through `AgentBotNavigationDebugStateRuntime`; navigation debug overlay and
+  through `AgentNavigationDebugStateRuntime`; navigation debug overlay and
   navigation resolution keep BotEntry as the temporary backing store but no
   longer create, clear, or record the path logger field directly.
 - Navigation debug decision and edge-block reason state now enter through
-  `AgentBotNavigationDebugStateRuntime`; navigation resolution, idle fast-path
+  `AgentNavigationDebugStateRuntime`; navigation resolution, idle fast-path
   status, path logging, and focused tests keep BotEntry as the temporary backing
   store but no longer read or write those debug fields directly.
 - Navigation graph warmup fallback state now enters through
-  `AgentBotNavigationDebugStateRuntime`; navigation, movement, fallback steering,
+  `AgentNavigationDebugStateRuntime`; navigation, movement, fallback steering,
   fidget gating, stuck checks, path logging, and focused tests keep BotEntry as
   the temporary backing store but no longer read or write the fallback flag
   directly.
 - Navigation waypoint target state now enters through
-  `AgentBotNavigationDebugStateRuntime`; navigation planning, committed-edge
+  `AgentNavigationDebugStateRuntime`; navigation planning, committed-edge
   reuse, movement precision gates, fidget gates, target snapshots, debug overlay,
   path logging, simulation helpers, and focused tests keep BotEntry as the
   temporary backing store but no longer read or write `navTargetPos`,
   `navTargetRegionId`, or `navPreciseTarget` directly.
 - Portal-use cooldown state now enters through
-  `AgentBotNavigationDebugStateRuntime`; portal execution keeps BotEntry as the
+  `AgentNavigationDebugStateRuntime`; portal execution keeps BotEntry as the
   temporary backing store but no longer reads or writes `portalUseCooldownUntilMs`
   directly.
 - Navigation jump-launch cache state now enters through
-  `AgentBotNavigationDebugStateRuntime`; movement reset and jump waypoint
+  `AgentNavigationDebugStateRuntime`; movement reset and jump waypoint
   selection keep BotEntry as the temporary backing store but no longer read or
   write `navJumpLaunchEdge` or `navJumpLaunchX` directly.
 - Movement stuck/unstuck tracking now enters through
-  `AgentBotMovementStuckStateRuntime`; stuck detection, path logging, and
+  `AgentMovementStuckStateRuntime`; stuck detection, path logging, and
   recovery cooldown setup keep BotEntry as the temporary backing store but no
   longer read or write `stuckMs`, `stuckCheckX`, `stuckCheckY`, or
   `unstuckCooldownMs` directly.
 - Tick heartbeat, last-tick metadata, and follow-idle check timing now enter
-  through `AgentBotTickStateRuntime`; BotManager, fidget eligibility, and path
+  through `AgentTickStateRuntime`; BotManager, fidget eligibility, and path
   logging keep BotEntry as the temporary backing store but no longer read or
   write `lastTickWasAi`, `lastTickAtMs`, `lastHeartbeatAtMs`, or
   `nextFollowIdleMovementCheckAtMs` directly in production.
 - Owner/leader motion observation now enters through
-  `AgentBotOwnerMotionStateRuntime`; BotManager follow tracking, movement reset,
+  `AgentOwnerMotionStateRuntime`; BotManager follow tracking, movement reset,
   and fidget decisions keep BotEntry as the temporary backing store but no
   longer read or write `lastOwnerPos`, `observedOwnerStepX`, or
   `observedOwnerStepY` directly in production.
 - Explicit movement target state now enters through
-  `AgentBotMoveTargetStateRuntime`; BotManager scripted movement, standalone
+  `AgentMoveTargetStateRuntime`; BotManager scripted movement, standalone
   move-target ticks, idle/follow gating, precise arrival checks, farm-anchor map
   cleanup, fidget gating, and navigation keep BotEntry as the temporary backing
   store but no longer read or write `moveTarget` or `moveTargetPrecise` directly
@@ -2154,68 +2157,68 @@ Recent reconstruction notes:
   `Deque` through the integration adapter; callers use narrow queue operations
   or a read-only snapshot while `BotEntry.messageQueue()` remains only the
   temporary backing accessor.
-- Farm/sentry anchor state now enters through `AgentBotFarmAnchorStateRuntime`;
+- Farm/sentry anchor state now enters through `AgentFarmAnchorStateRuntime`;
   BotManager target snapshots, anchored-farm ticks, follow/active-mode cleanup,
   navigation gating, and LLM situation reporting keep BotEntry as the temporary
   backing store but no longer read or write `farmAnchor` or `farmAnchorMapId`
   directly in production.
 - Patrol region and wander-target state now enters through
-  `AgentBotPatrolStateRuntime`; BotManager patrol wandering, patrol loot
+  `AgentPatrolStateRuntime`; BotManager patrol wandering, patrol loot
   steering, grind/combat patrol targeting, movement snapshots, map-change
   cleanup, and focused tests keep BotEntry as the temporary backing store but no
   longer read or write `patrolRegionId`, `patrolMapId`, or
   `patrolWanderTarget` directly outside the adapter.
 - No-target grind wander direction now enters through
-  `AgentBotGrindWanderStateRuntime`; BotManager no-target grind movement and
+  `AgentGrindWanderStateRuntime`; BotManager no-target grind movement and
   focused tests keep BotEntry as the temporary backing store but no longer read,
   choose, or clear `wanderDirection` directly outside the adapter.
 - Grind loot target and retry-suppression state now enters through
-  `AgentBotGrindLootStateRuntime`; BotManager active grind-loot steering,
+  `AgentGrindLootStateRuntime`; BotManager active grind-loot steering,
   passive-radius retry suppression, mode cleanup, tick-failure cleanup, and
   focused tests keep BotEntry as the temporary backing store but no longer read
   or write `grindLootTarget`, `ignoredGrindLootObjectId`, or
   `ignoredGrindLootUntilMs` directly outside the adapter.
 - AoE reposition commitment state now enters through
-  `AgentBotAoeRepositionStateRuntime`; BotManager AoE pre-attack movement keeps
+  `AgentAoeRepositionStateRuntime`; BotManager AoE pre-attack movement keeps
   BotEntry as the temporary backing store but no longer reads or writes
   `aoeRepositionAnchor` or `aoeRepositionDeadlineMs` directly outside the
   adapter.
 - Surround-breakout commitment state now enters through
-  `AgentBotBreakoutStateRuntime`; BotManager ranged retreat breakout movement
+  `AgentBreakoutStateRuntime`; BotManager ranged retreat breakout movement
   keeps BotEntry as the temporary backing store but no longer reads or writes
   `breakoutDirection` or `breakoutUntilMs` directly outside the adapter.
 - Ranged retreat-hold commitment state now enters through
-  `AgentBotRetreatHoldStateRuntime`; BotManager ranged retreat hysteresis,
+  `AgentRetreatHoldStateRuntime`; BotManager ranged retreat hysteresis,
   breakout cleanup, and grind-start cleanup keep BotEntry as the temporary
   backing store but no longer read or write `retreatHoldPos` or
   `retreatHoldUntilMs` directly outside the adapter.
 - Combat skill-cache state now enters through
-  `AgentBotCombatSkillCacheStateRuntime`; BotCombatManager skill cache rebuild,
+  `AgentCombatSkillCacheStateRuntime`; BotCombatManager skill cache rebuild,
   buff/heal selection, attack planning, projectile checks, AoE scoring, and
   focused tests keep BotEntry as the temporary backing store but no longer read
   or write cached attack, AoE, heal, buff, or summon skill fields directly.
 - Combat buff/support toggle and cooldown state now enters through
-  `AgentBotCombatBuffStateRuntime`; BotCombatManager skill-buff gating,
+  `AgentCombatBuffStateRuntime`; BotCombatManager skill-buff gating,
   per-skill rebuff cadence, support-heal gating, support-buff cadence, and
   focused tests keep BotEntry as the temporary backing store but no longer read
   or write `skillBuffsEnabled`, `supportHealsEnabled`, `nextBuffAt`, or
   `nextSupportBuffAt` directly.
 - Ranged degenerate-hit retreat latch state now enters through
-  `AgentBotDegenerateAttackStateRuntime`; BotManager grind combat and local
+  `AgentDegenerateAttackStateRuntime`; BotManager grind combat and local
   opportunity combat keep BotEntry as the temporary backing store but no longer
   read or write `degenAttackDone` directly outside the adapter.
 - Grind retarget-search cooldown state now enters through
-  `AgentBotGrindSearchStateRuntime`; BotManager target-search cadence,
+  `AgentGrindSearchStateRuntime`; BotManager target-search cadence,
   BotMovementManager teleport/reset cleanup, and focused tests keep BotEntry as
   the temporary backing store but no longer read or write
   `nextGrindTargetSearchAtMs` directly outside the adapter.
 - Active grind target state now enters through
-  `AgentBotGrindTargetStateRuntime`; BotManager target snapshots, grind combat
+  `AgentGrindTargetStateRuntime`; BotManager target snapshots, grind combat
   selection, failure/owner-idle cleanup, BotMovementManager reset cleanup,
   BotCombatManager death/debug handling, and BotBuffManager ACC reference
   selection keep BotEntry as the temporary backing store but no longer read or
   write `grindTarget` directly outside the adapter.
-- High-level mode state now enters through `AgentBotModeStateRuntime`;
+- High-level mode state now enters through `AgentModeStateRuntime`;
   BotManager follow/grind/stop transitions, BotMovementManager movement gates,
   AgentFidgetService social fidget gates, BotCombatManager buff/heal/ammo gates,
   AgentPotionService share/low-pot gates, BotNavigationManager follow/grind
@@ -2224,7 +2227,7 @@ Recent reconstruction notes:
   store but no longer read or write `following`, `grinding`, or
   `followTargetId` directly outside the adapter.
 - Tick-failure window state now enters through
-  `AgentBotTickFailureStateRuntime`; BotManager tick exception handling and
+  `AgentTickFailureStateRuntime`; BotManager tick exception handling and
   recovery reset keep BotEntry as the temporary backing store but no longer read
   or write `tickFailureCount` or `tickFailureWindowStartedAtMs` directly outside
   the adapter.
@@ -2232,39 +2235,39 @@ Recent reconstruction notes:
   BotManager command routing/reply delivery, Agent reply runtime delivery, and
   AgentOfferService auto-accept replies keep BotEntry as the temporary backing
   store but no longer read or write `replyChannel` directly outside the adapter.
-- Tick cadence state now enters through `AgentBotTickCadenceStateRuntime`;
+- Tick cadence state now enters through `AgentTickCadenceStateRuntime`;
   BotManager spawn/normalize reset, tick skip-delay handling, AI tick cadence
   consumption, BotPathLogger cadence reporting, and focused tests keep BotEntry
   as the temporary backing store but no longer read or write `skipDelayMs` or
   `aiTickAccumulatorMs` directly outside the adapter.
-- Death/respawn window state now enters through `AgentBotDeathStateRuntime`;
+- Death/respawn window state now enters through `AgentDeathStateRuntime`;
   BotManager spawn/normalize reset, dead-tick handling, common-tick death
   handling, respawn cleanup, BotCombatManager fatal-hit handling, and focused
   tests keep BotEntry as the temporary backing store but no longer read or write
   `deadUntil` directly outside the adapter.
-- Map/foothold tracking state now enters through `AgentBotMapStateRuntime`;
+- Map/foothold tracking state now enters through `AgentMapStateRuntime`;
   BotManager spawn/normalize map tracking, follow/grind map-change detection,
   standalone move-target map-change grounding, shop-mode map-change grounding,
   and focused tests keep BotEntry as the temporary backing store but no longer
   read or write `lastMapId` or `fhIndex` directly in production.
 - Script task queue and activity-epoch state now enter through
-  `AgentBotScriptTaskStateRuntime`; BotManager task clearing, queueing,
+  `AgentScriptTaskStateRuntime`; BotManager task clearing, queueing,
   active-task activation/completion, scripted local-combat checks, AgentMakerService
   batch-interruption checks, and focused tests keep BotEntry as the temporary
   backing store but no longer read or write `activityEpoch`, `scriptTasks`, or
   `activeScriptTask` directly in production.
-- Formation spacing state now enters through `AgentBotFormationStateRuntime`;
+- Formation spacing state now enters through `AgentFormationStateRuntime`;
   BotManager registration/reconfiguration offset assignment, follow-target
   snapshot construction, BotPathLogger reporting, and focused tests keep
   BotEntry as the temporary backing store but no longer read or write
   `followOffsetX` directly in production.
 - Consumable buff toggle/mode state now enters through
-  `AgentBotBuffStateRuntime`; BotManager owner-away safe-mode cleanup,
+  `AgentBuffStateRuntime`; BotManager owner-away safe-mode cleanup,
   BotBuffManager tick/debug/report paths, Agent control callbacks, and focused
   tests keep BotEntry as the temporary backing store but no longer read or write
   `buffConsumablesEnabled` or `buffCheapMode` directly outside the adapter.
 - Pending loot-offer tuple state now enters through
-  `AgentBotOfferStateRuntime`; BotManager offer-recipient checks, AgentOfferService
+  `AgentOfferStateRuntime`; BotManager offer-recipient checks, AgentOfferService
   reservation/prompt/expiry/accepted-transfer cleanup, BotInventoryManager
   pickup auto-equip, Agent active/equipment bridges, and focused tests keep
   BotEntry as the temporary backing store but no longer read or write
@@ -2272,44 +2275,44 @@ Recent reconstruction notes:
   `pendingLootOfferExpiresAt`, or `pendingLootOfferBotRequesting` directly
   outside the adapter.
 - Live leader/anchor reference refresh now enters through
-  `AgentBotLeaderStateRuntime`; BotManager tick-owner refresh and focused tests
+  `AgentLeaderStateRuntime`; BotManager tick-owner refresh and focused tests
   keep BotEntry as the temporary backing store but no longer assign `owner`
   directly in production.
-- Movement profile state now enters through `AgentBotMovementStateRuntime`;
+- Movement profile state now enters through `AgentMovementStateRuntime`;
   BotManager registration, spawn/map-change graph warmup, graph lookup, patrol
   region selection, retreat planning, and jumpability checks keep BotEntry as
   the temporary backing store but no longer read or write `movementProfile`
   directly in production.
 - Horizontal movement intent state now enters through
-  `AgentBotMovementStateRuntime`; BotManager spawn normalization and follow-idle
+  `AgentMovementStateRuntime`; BotManager spawn normalization and follow-idle
   fast-path gating keep BotEntry as the temporary backing store but no longer
   read or write `moveDir` directly in production.
 - Active navigation-edge presence now enters through
-  `AgentBotNavigationDebugStateRuntime`; BotManager retreat eligibility,
+  `AgentNavigationDebugStateRuntime`; BotManager retreat eligibility,
   follow-idle fast-path gating, precise-target setup, and stuck detection keep
   BotEntry as the temporary backing store but no longer check `navEdge`
   directly in production.
-- Shop transition read state now enters through `AgentBotShopStateRuntime`;
+- Shop transition read state now enters through `AgentShopStateRuntime`;
   BotManager target snapshots, shop detour ticks, idle gating, map-sync gating,
   party-teleport recovery, and follow-idle fast-path gating keep BotEntry as the
   temporary backing store but no longer read `shopVisitPending`,
   `shopTargetPos`, `shopNpcPos`, `shopApproachDelayMs`, or
   `shopSequenceActive` directly in production.
-- Physical movement status now enters through `AgentBotMovementStateRuntime`;
+- Physical movement status now enters through `AgentMovementStateRuntime`;
   BotManager retreat eligibility, local combat, trade/idle physics, follow idle
   gating, movement-phase dispatch, stuck detection, and action-lock physics
   keep BotEntry as the temporary backing store but no longer read `inAir`,
   `climbing`, `downJumpPending`, `wasMovingX`, `movementVelX`, or
   `movementVelY` directly in production.
 - Movement physics flag state now enters through
-  `AgentBotMovementPhysicsStateRuntime`; BotMovementManager landing cooldown
+  `AgentMovementPhysicsStateRuntime`; BotMovementManager landing cooldown
   reset, fixed-air-arc gating/setup, and broadcast foothold caching keep
   BotEntry as the temporary backing store but no longer read or write
   `jumpCooldownMs`, `fixedAirArc`, or `lastGroundFhId` directly in production.
 - Fidget mode presence now enters through `AgentBotFidgetRuntime`; BotManager
   follow-idle fast-path gating keeps BotEntry as the temporary backing store but
   no longer reads `fidgetMode` directly in production.
-- No-ammo combat gate state now enters through `AgentBotAmmoStateRuntime`;
+- No-ammo combat gate state now enters through `AgentAmmoStateRuntime`;
   BotManager local combat opportunity checks keep BotEntry as the temporary
   backing store but no longer read `noAmmo` directly in production.
 - KPQ Stage 5 claim reset state now enters through `AgentBotPqRuntime`;
@@ -2359,17 +2362,17 @@ Recent reconstruction notes:
   resolution, unstuck jumps, and movement broadcast keep BotEntry as the
   temporary backing store but no longer read `entry.bot` directly in production.
 - Active navigation-edge state in BotNavigationManager now enters through
-  `AgentBotNavigationDebugStateRuntime`; path planning, committed-edge reuse,
+  `AgentNavigationDebugStateRuntime`; path planning, committed-edge reuse,
   climb-exit refresh, ground-edge refresh, and post-ground edge execution keep
   BotEntry as the temporary backing store but no longer read or write
   `navEdge` directly in production.
 - Navigation movement-profile reads now enter through
-  `AgentBotMovementStateRuntime`; BotNavigationManager graph resolution,
+  `AgentMovementStateRuntime`; BotNavigationManager graph resolution,
   warmup, jump/drop planning, tolerance checks, and platform-margin calculation
   keep BotEntry as the temporary backing store but no longer read
   `movementProfile` directly in production.
 - Navigation movement-phase reads now enter through
-  `AgentBotMovementStateRuntime` and `AgentBotClimbStateRuntime`;
+  `AgentMovementStateRuntime` and `AgentClimbStateRuntime`;
   BotNavigationManager committed-edge guards, edge reuse, portal/jump/drop/climb
   execution, waypoint selection, and current-region resolution keep BotEntry as
   the temporary backing store but no longer read `inAir`, `climbing`,
@@ -2381,7 +2384,7 @@ Recent reconstruction notes:
   temporary backing store but no longer read `entry.bot` or `entry.owner`
   directly in production.
 - Remaining BotNavigationManager state reads now enter through
-  `AgentBotMovementPhysicsStateRuntime` and `AgentBotShopStateRuntime`;
+  `AgentMovementPhysicsStateRuntime` and `AgentShopStateRuntime`;
   directional-drop live landing simulation and follow-rope region targeting keep
   BotEntry as the temporary backing store but no longer read `physX`, `hspeed`,
   `groundPhysicsCarryMs`, or `shopVisitPending` directly in production.
@@ -2392,34 +2395,34 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer read `entry.bot` or
   `entry.owner` directly in production.
 - BotInventoryManager patrol-loot graph lookup now reads movement profile
-  through `AgentBotMovementStateRuntime`; BotEntry remains the temporary backing
+  through `AgentMovementStateRuntime`; BotEntry remains the temporary backing
   store but inventory patrol-loot selection no longer reads `movementProfile`
   directly in production.
 - BotInventoryManager owner-given trade item state now enters through
-  `AgentBotPendingTradeStateRuntime`; trade reset and owner-given equipment
+  `AgentPendingTradeStateRuntime`; trade reset and owner-given equipment
   capture keep BotEntry as the temporary backing store but no longer mutate
   `ownerGivenItems` directly in production.
 - Combat animation/cooldown and alert-reset state now enters through
-  `AgentBotCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
+  `AgentCombatCooldownStateRuntime`; BotCombatManager attack cooldown,
   movement-window, alerted-stance timeout, and alert-reset scheduling keep
   BotEntry as the temporary backing store but no longer read or write
   `attackCooldownMs`, `moveWindowMs`, `alertedUntilMs`, or
   `alertResetScheduled` directly in production.
 - Ammo/no-ammo combat gate state now enters through
-  `AgentBotAmmoStateRuntime`; BotCombatManager attack gating and ammo/potion
+  `AgentAmmoStateRuntime`; BotCombatManager attack gating and ammo/potion
   warning checks keep BotEntry as the temporary backing store but no longer read
   or write `noAmmo` or `ammoWarnSent` directly in production.
 - Mob-touch sweep checkpoint state now enters through
-  `AgentBotMobTouchStateRuntime`; BotCombatManager touch-damage sweep checks
+  `AgentMobTouchStateRuntime`; BotCombatManager touch-damage sweep checks
   keep BotEntry as the temporary backing store but no longer read or write
   `lastMobTouchCheckPos` or `lastMobTouchMapId` directly in production.
 - Skill-buff debug decision state now enters through
-  `AgentBotSkillBuffDebugStateRuntime`; BotCombatManager buff decision logging
+  `AgentSkillBuffDebugStateRuntime`; BotCombatManager buff decision logging
   and debug-line generation keep BotEntry as the temporary backing store but no
   longer read or write `lastSkillBuffActionAtMs` or
   `lastSkillBuffActionSummary` directly in production.
 - Combat movement-facing state reads now enter through
-  `AgentBotMovementStateRuntime`; BotCombatManager fall knockback, mob
+  `AgentMovementStateRuntime`; BotCombatManager fall knockback, mob
   knockback, support-heal movement gating, attack-plan gating, attack-facing,
   action-lock movement, and grind graph profile selection keep BotEntry as the
   temporary backing store but no longer read or write `facingDir`, `inAir`,
@@ -2430,53 +2433,53 @@ Recent reconstruction notes:
   backing store but no longer read `entry.owner` or `entry.bot` directly in
   production.
 - Movement intent and down-jump gate reads now enter through
-  `AgentBotMovementStateRuntime`; BotMovementManager air steering, ground-action
+  `AgentMovementStateRuntime`; BotMovementManager air steering, ground-action
   movement intent, down-jump grace gating, and pending down-jump dispatch keep
   BotEntry as the temporary backing store but no longer read or write
   `moveDir`, `downJumpPending`, or `downJumpGracePeriodMS` directly in
   production.
-- Movement profile state now enters through `AgentBotMovementStateRuntime`;
+- Movement profile state now enters through `AgentMovementStateRuntime`;
   BotMovementManager profile refresh, graph lookup/warmup, jump velocity,
   walk-step, mob-avoidance, and unstuck calculations keep BotEntry as the
   temporary backing store but no longer read or write `movementProfile` directly
   in production.
 - Horizontal movement hysteresis state now enters through
-  `AgentBotMovementStateRuntime`; BotMovementManager idle-on-ground checks and
+  `AgentMovementStateRuntime`; BotMovementManager idle-on-ground checks and
   follow-step hysteresis keep BotEntry as the temporary backing store but no
   longer read or write `movementVelX` or `wasMovingX` directly in production.
 - Climb and rope movement state now enters through
-  `AgentBotClimbStateRuntime`; BotMovementManager climb target steering,
+  `AgentClimbStateRuntime`; BotMovementManager climb target steering,
   climb direction intent, rope transfer, rope snap, rope-grab filtering, and
   rope-entry dispatch keep BotEntry as the temporary backing store but no
   longer read or write `climbRope`, `climbVerticalDir`, `climbing`,
   `climbUpIntent`, `blockedRopeGrab`, or `ropeEntryPending` directly in
   production.
-- Swim movement intent state now enters through `AgentBotSwimStateRuntime`;
+- Swim movement intent state now enters through `AgentSwimStateRuntime`;
   BotMovementManager airborne/grounded swim-mode clearing and swim input
   calculation keep BotEntry as the temporary backing store but no longer read
   or write `swimming`, `swimMoveDir`, `swimVerticalHold`,
   `swimJumpRequested`, or `swimNextJumpAtMs` directly in production.
 - Active navigation edge state now enters through
-  `AgentBotNavigationDebugStateRuntime`; BotMovementManager navigation-state
+  `AgentNavigationDebugStateRuntime`; BotMovementManager navigation-state
   clearing, climb steering, air-steering gating, grind target adjustment,
   ground action planning, wall-block recovery, directional drop execution, and
   mob-avoidance checks keep BotEntry as the temporary backing store but no
   longer read or write `navEdge` directly in production.
-- Shop visit lifecycle state now enters through `AgentBotShopStateRuntime`;
+- Shop visit lifecycle state now enters through `AgentShopStateRuntime`;
   AgentShopService resupply/sell-trash visit setup, approach delay, sequence
   activation, stuck fallback, sequence validation, scheduled-step guard, abort,
   and cleanup keep BotEntry as the temporary backing store but no longer read or
   write shop visit fields directly in production. Shop approach graph profile
-  lookup now reads through `AgentBotMovementStateRuntime`, and delayed abort
+  lookup now reads through `AgentMovementStateRuntime`, and delayed abort
   identity reads through `AgentRuntimeIdentityRuntime`.
 - Offer request/proactive-offer state now enters through
-  `AgentBotOfferStateRuntime`; AgentOfferService owner upgrade request memory,
+  `AgentOfferStateRuntime`; AgentOfferService owner upgrade request memory,
   proactive shared-loot offer checks, accepted/declined offer callbacks, sibling
   recipient scans, and reserved-offer recipient resolution keep BotEntry as the
   temporary backing store but no longer read `requestedUpgradeItemIds`,
   `proactiveUpgradeOffers`, `owner`, or `bot` directly in production.
 - Potion sharing and passive recovery gates now enter through
-  `AgentRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentMovementStateRuntime`;
   AgentPotionService owner lookup, donor bot selection, delayed low-supply
   replies, transfer donor identity, and standing-still recovery checks keep
   BotEntry as the temporary backing store but no longer read `owner`, `bot`,
@@ -2499,19 +2502,19 @@ Recent reconstruction notes:
   delayed reaction eligibility, and emote side effects keep BotEntry as the
   temporary backing store but no longer read `bot` directly in production.
 - Fidget bot identity and movement profile reads now enter through
-  `AgentRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentMovementStateRuntime`;
   AgentFidgetService tick eligibility, fidget origin capture, walk-step
   calculations, grounded execution, diagonal/sideways direction selection, and
   prone visual broadcast keep BotEntry as the temporary backing store but no
   longer read `bot` or `movementProfile` directly in production.
 - Fidget movement/nav gate state now enters through
-  `AgentBotMovementStateRuntime` and `AgentBotNavigationDebugStateRuntime`;
+  `AgentMovementStateRuntime` and `AgentNavigationDebugStateRuntime`;
   AgentFidgetService social fidget eligibility, active fidget eligibility,
   airborne/climb dispatch, air-steer movement intent, grounded sideways
   movement intent, and prone visual facing keep BotEntry as the temporary
   backing store but no longer read or write `inAir`, `climbing`, `navEdge`,
   `downJumpPending`, `moveDir`, or `facingDir` directly in production.
-- Fidget state-machine fields now enter through `AgentBotFidgetStateRuntime`;
+- Fidget state-machine fields now enter through `AgentFidgetStateRuntime`;
   AgentFidgetService fidget mode/trigger, timers, origin position, spam-air-steer,
   jump/sideways direction, crouch checks, visual cooldown, and idle/speed-roll
   scheduling keep BotEntry as the temporary backing store but no longer read or
@@ -2537,26 +2540,26 @@ Recent reconstruction notes:
   thresholds, snapshots, and legacy perf command toggles are unchanged.
 - Chat/social face-expression enum ownership moved to `AgentEmote` under the
   Agent dialogue capability. Numeric expression ids are unchanged.
-- Airshow state now enters through `AgentBotAirshowStateRuntime`;
+- Airshow state now enters through `AgentAirshowStateRuntime`;
   BotAirshowManager active/trail timing, scripted frame physics fields, bot
   identity lookup, restore checks, and trail foothold reads keep BotEntry as the
   temporary backing store but no longer read or write BotEntry fields directly
   in production.
 - Navigation debug overlay identity and active-edge reads now enter through
-  `AgentRuntimeIdentityRuntime` and `AgentBotNavigationDebugStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentNavigationDebugStateRuntime`;
   BotNavigationDebugOverlay path rendering, path-log messages, multi-bot
   selection names, and committed-edge status keep BotEntry as the temporary
   backing store but no longer read `bot` or `navEdge` directly in production.
 - Path logger identity, map, and movement-profile reads now enter through
-  `AgentRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentMovementStateRuntime`;
   BotPathLogger tick capture, graph snapshot resolution, region resolution,
   movement graph summaries, walk-step calculation, and path query calls keep
   BotEntry as the temporary backing store but no longer read `bot` or
   `movementProfile` directly in production.
 - Path logger movement-formatting state now enters through
-  `AgentBotClimbStateRuntime`, `AgentBotMovementStateRuntime`,
-  `AgentBotMovementPhysicsStateRuntime`, and
-  `AgentBotNavigationDebugStateRuntime`; BotPathLogger physics-state and
+  `AgentClimbStateRuntime`, `AgentMovementStateRuntime`,
+  `AgentMovementPhysicsStateRuntime`, and
+  `AgentNavigationDebugStateRuntime`; BotPathLogger physics-state and
   nav-edge summaries keep BotEntry as the temporary backing store but no longer
   read climb, airborne, crouch, down-jump, velocity, or active-edge fields
   directly in production.
@@ -2584,7 +2587,7 @@ Recent reconstruction notes:
   preserve reply gating, prompt wording, memory keys, and relation resolution
   while no longer reading bot, owner, map, or reply-channel state directly from
   BotEntry in production.
-- Script runtime state now enters through `AgentBotScriptTaskStateRuntime`;
+- Script runtime state now enters through `AgentScriptTaskStateRuntime`;
   BotScriptContext and BotScriptRunner preserve script id reset, step entry,
   step advancement, script-local ints, wait timers, and queued-task behavior
   while no longer reading or writing `entry.script` directly in production.
@@ -2595,7 +2598,7 @@ Recent reconstruction notes:
   production.
 - Fallback movement identity, map, movement-profile, and movement-gate reads
   now enter through `AgentRuntimeIdentityRuntime`,
-  `AgentBotMovementStateRuntime`, and `AgentBotMovementPhysicsStateRuntime`;
+  `AgentMovementStateRuntime`, and `AgentMovementPhysicsStateRuntime`;
   `AgentFallbackMovementService` preserves rope attach/jump, swim jump-up,
   down-jump, ledge walk-off, and fallback jump behavior while no longer reading
   BotEntry runtime fields directly in production. The old
@@ -2683,12 +2686,12 @@ Recent reconstruction notes:
   Agent-owned while the temporary bot seam still supplies cached item-name
   lookup and command-side trade/drop wiring.
 - Physics position, horizontal-speed, and ground-travel carry state now enter
-  through `AgentBotMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
+  through `AgentMovementPhysicsStateRuntime`; BotPhysicsEngine preserves
   landing, grounded travel, swim, airborne collision, climb-position, and reset
   behavior while no longer reading or writing `physX`, `physY`, `hspeed`, or
   `groundPhysicsCarryMs` directly in production.
 - Combat grind-region sibling occupancy and sibling gear-offer targeting now
-  enter through `AgentRuntimeIdentityRuntime` and `AgentBotModeStateRuntime`;
+  enter through `AgentRuntimeIdentityRuntime` and `AgentModeStateRuntime`;
   BotCombatManager and AgentOfferService preserve sibling filtering, map matching,
   and recipient selection while no longer reading sibling bot/owner/grinding
   fields directly in those paths.
@@ -3139,7 +3142,7 @@ Recent reconstruction notes:
   overload has been removed; combat debug fallback target search now uses the
   entry-aware target-search path available to the caller.
 - Skill-buff debug decision recording now calls
-  `AgentBotSkillBuffDebugStateRuntime.rememberAction` directly from the
+  `AgentSkillBuffDebugStateRuntime.rememberAction` directly from the
   remaining support-buff flow; the temporary `BotCombatManager` reporting helper
   has been removed while preserving the same timestamp source and summary text.
 - AoE cluster target bias now calls
@@ -3204,7 +3207,7 @@ Recent reconstruction notes:
   packet construction, cooldown, move-window, alert, and movement-broadcast
   behavior.
 - Combat action-state clearing now lives in
-  `AgentBotCombatActionStateRuntime`; the damage/death path calls the Agent
+  `AgentCombatActionStateRuntime`; the damage/death path calls the Agent
   helper while preserving the same grind target, attack cooldown, move window,
   navigation state, and movement broadcast invalidation reset.
 - Combat death-state entry now lives in `AgentBotCombatDeathRuntime`;
@@ -3469,7 +3472,7 @@ Recent reconstruction notes:
   compatibility method delegates to it, while ammo-share trade execution remains
   a later inventory/trade migration slice.
 - Trade-window share quantity capping and restore-slot transfer now call
-  `AgentBotPendingTradeStateRuntime` directly; the old `BotInventoryManager`
+  `AgentPendingTradeStateRuntime` directly; the old `BotInventoryManager`
   pass-through helpers have been removed while preserving split-stack and
   temporarily-unequipped restore behavior.
 - Potion/ammo supply-share trade startup and busy-retry scheduling now live in
@@ -4754,7 +4757,7 @@ Current physics correction:
   route through the Agent combat capability.
 - Combat buff/support and combat skill-cache state wrappers have been removed
   from `BotEntry`. Agent runtime code now reaches those state objects through
-  `AgentBotCombatBuffStateRuntime` and `AgentBotCombatSkillCacheStateRuntime`,
+  `AgentCombatBuffStateRuntime` and `AgentCombatSkillCacheStateRuntime`,
   leaving `BotEntry` as a temporary state-object host only for these combat
   surfaces.
 - Supply and combat positioning state wrappers have been removed from
@@ -4764,46 +4767,46 @@ Current physics correction:
   adapters or direct Agent-owned state accessors.
 - Pending trade sequence wrappers have been removed from `BotEntry`. Trade
   category, recipient, item batch, meso, timer, invite, completion, budget, and
-  restore-slot state now route through `AgentBotPendingTradeStateRuntime` and
+  restore-slot state now route through `AgentPendingTradeStateRuntime` and
   the Agent-owned `AgentPendingTradeSequenceState`.
 - Build prompt/progression wrappers have been removed from `BotEntry`. AP
   build selection, AP/SP prompt flags, SP variant, job prompt level, and last
-  known level now route through `AgentBotBuildStateRuntime` and
+  known level now route through `AgentBuildStateRuntime` and
   `AgentBuildState`.
 - Follow/grind mode wrappers have been removed from `BotEntry`. Following,
   grinding, and follow-target id reads/writes now route through
-  `AgentBotModeStateRuntime` and the Agent-owned `AgentModeState`.
+  `AgentModeStateRuntime` and the Agent-owned `AgentModeState`.
 - Potion/ammo share and loot-inhibit wrappers have been removed from
-  `BotEntry`. These now route through `AgentBotPotionStateRuntime`,
-  `AgentBotAmmoStateRuntime`, `AgentBotInventoryStateRuntime`, and their
+  `BotEntry`. These now route through `AgentPotionStateRuntime`,
+  `AgentAmmoStateRuntime`, `AgentInventoryStateRuntime`, and their
   Agent-owned supply/inventory state objects.
 - Scheduled-task and script-task queue wrappers have been removed from
   `BotEntry`. Scheduler handles route through `AgentScheduledTaskState` and
   `AgentScheduledTaskRuntime`; script task queue operations route through
-  `AgentBotScriptTaskStateRuntime` and `AgentScriptTaskQueueState`.
+  `AgentScriptTaskStateRuntime` and `AgentScriptTaskQueueState`.
 - Airshow state wrappers have been removed from `BotEntry`. Airshow active
-  state and trail timing now route through `AgentBotAirshowStateRuntime` and
+  state and trail timing now route through `AgentAirshowStateRuntime` and
   `AgentAirshowState`.
 - Manual trade invite wrappers have been removed from `BotEntry`. Manual trade
   reference, accept delay, and timeout state now route through
-  `AgentBotManualTradeStateRuntime` and `AgentManualTradeState`.
+  `AgentManualTradeStateRuntime` and `AgentManualTradeState`.
 - Map tracking and formation offset wrappers have been removed from `BotEntry`.
-  Last-map/foothold tracking routes through `AgentBotMapStateRuntime`; follow
-  spacing routes through `AgentBotFormationStateRuntime`.
+  Last-map/foothold tracking routes through `AgentMapStateRuntime`; follow
+  spacing routes through `AgentFormationStateRuntime`.
 - Leader motion observation wrappers have been removed from `BotEntry`. Last
   leader position and observed step deltas now route through
-  `AgentBotOwnerMotionStateRuntime` and `AgentOwnerMotionState`.
+  `AgentOwnerMotionStateRuntime` and `AgentOwnerMotionState`.
 - Upgrade-offer and gear-suggestion wrappers have been removed from
   `BotEntry`. Proactive-offer toggles, requested upgrade item tracking,
   spawn-upgrade checks, next suggestion cooldowns, and pending gear prompts now
-  route through `AgentBotOfferStateRuntime` and `AgentUpgradeOfferState`.
+  route through `AgentOfferStateRuntime` and `AgentUpgradeOfferState`.
 - Consumable-buff and skill-buff debug wrappers have been removed from
   `BotEntry`. Buff enablement, cheap mode, scan timestamps, action summaries,
-  and skill-buff debug summaries now route through `AgentBotBuffStateRuntime`
+  and skill-buff debug summaries now route through `AgentBuffStateRuntime`
   and Agent-owned buff state adapters.
 - Scroll reaction wrappers have been removed from `BotEntry`. Cooldown, recent
   load, observation timestamp, streak map, and prune timing now route through
-  `AgentBotScrollReactionStateRuntime` and `AgentScrollReactionState`.
+  `AgentScrollReactionStateRuntime` and `AgentScrollReactionState`.
 - Reply-channel wrappers have been removed from `BotEntry`. Map/party/whisper
   routing and null-to-map normalization now route through
   `AgentReplyChannelStateRuntime` and the Agent-owned
@@ -4811,11 +4814,11 @@ Current physics correction:
 - Navigation debug, target, and active-edge wrappers have been removed from
   `BotEntry`. Path logging, last decision/block reason, graph-warmup fallback,
   waypoint target, precise-target flag, active edge, and jump-launch cache now
-  route through `AgentBotNavigationDebugStateRuntime` over Agent-owned
+  route through `AgentNavigationDebugStateRuntime` over Agent-owned
   navigation state objects.
 - Movement stuck, last-ground foothold, and movement-broadcast cache wrappers
   have been removed from `BotEntry`. Stuck/unstuck progress routes through
-  `AgentBotMovementStuckStateRuntime`; broadcast suppression and last-ground
+  `AgentMovementStuckStateRuntime`; broadcast suppression and last-ground
   foothold cache route through Agent movement state runtimes over Agent-owned
   state objects.
 - Dead KPQ reset, owner-given item set, and pending gear-prompt compatibility
@@ -4824,42 +4827,42 @@ Current physics correction:
   callers already use Agent-owned state adapters.
 - Tick cadence and leader activity wrappers have been removed from `BotEntry`.
   Skip-delay and AI accumulator setup now routes through
-  `AgentBotTickCadenceStateRuntime`; AFK, inactive, returned-to-town, and last
-  leader-command state route through `AgentBotActivityStateRuntime`.
+  `AgentTickCadenceStateRuntime`; AFK, inactive, returned-to-town, and last
+  leader-command state route through `AgentActivityStateRuntime`.
 - Tick metadata and tick-failure wrappers have been removed from `BotEntry`.
   Last-tick, heartbeat, follow-idle, failure-count, and failure-window state
-  now route through `AgentBotTickStateRuntime` and
-  `AgentBotTickFailureStateRuntime`.
+  now route through `AgentTickStateRuntime` and
+  `AgentTickFailureStateRuntime`.
 - Movement scalar physics wrappers have been removed from `BotEntry`. Vertical
   velocity, fall peak, horizontal speed, physics position, ground carry, and
   jump cooldown reads/writes now route through
-  `AgentBotMovementPhysicsStateRuntime` over `AgentMovementPhysicsState`.
+  `AgentMovementPhysicsStateRuntime` over `AgentMovementPhysicsState`.
 - Movement input and facing wrappers have been removed from `BotEntry`.
   Movement velocity, movement direction, and facing direction reads/writes now
-  route through `AgentBotMovementStateRuntime` over `AgentMovementInputState`.
+  route through `AgentMovementStateRuntime` over `AgentMovementInputState`.
 - Swim mode/input/cooldown state now lives in `AgentSwimIntentState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while swimming
   mode, horizontal swim intent, vertical hold, one-shot swim jump requests, and
-  swim-jump cooldown route through `AgentBotSwimStateRuntime` and the Agent
+  swim-jump cooldown route through `AgentSwimStateRuntime` and the Agent
   movement capability.
 - Climb, rope-entry, blocked-rope, rope cooldown, and down-jump wrappers have
   been removed from `BotEntry`. Those reads/writes now route through
-  `AgentBotClimbStateRuntime` and `AgentBotMovementStateRuntime` over the
+  `AgentClimbStateRuntime` and `AgentMovementStateRuntime` over the
   Agent-owned movement state objects.
 - Airborne steering, horizontal air velocity, fixed-air-arc, crouch, and
   horizontal movement hysteresis wrappers have been removed from `BotEntry`.
-  Those reads/writes now route through `AgentBotMovementPhysicsStateRuntime`
-  and `AgentBotMovementStateRuntime`.
+  Those reads/writes now route through `AgentMovementPhysicsStateRuntime`
+  and `AgentMovementStateRuntime`.
 - Fidget state wrappers have been removed from `BotEntry`. Fidget mode,
   trigger, timing, movement directions, visual timing, idle roll scheduling, and
-  active-state mutation now route through `AgentBotFidgetStateRuntime`.
+  active-state mutation now route through `AgentFidgetStateRuntime`.
 - Grind target and grind retarget-search wrappers have been removed from
   `BotEntry`. Active target state now routes through
-  `AgentBotGrindTargetStateRuntime`, and search cadence routes through
-  `AgentBotGrindSearchStateRuntime`.
+  `AgentGrindTargetStateRuntime`, and search cadence routes through
+  `AgentGrindSearchStateRuntime`.
 - Movement profile and in-air passthrough wrappers have been removed from
   `BotEntry`. Movement profile reads/writes and in-air state now route through
-  `AgentBotMovementStateRuntime`.
+  `AgentMovementStateRuntime`.
 - Legacy JavaBean identity aliases `BotEntry.getBot()` and
   `BotEntry.getOwner()` have been removed. Agent identity reads now route
   through `AgentRuntimeIdentityRuntime`.
@@ -4913,7 +4916,7 @@ Current physics correction:
   bucketing, and null-to-base normalization route through the Agent movement
   state runtime adapter.
 - Chat status and leader integration now read/write live Agent identity through
-  `AgentRuntimeIdentityRuntime` and `AgentBotLeaderStateRuntime` rather than
+  `AgentRuntimeIdentityRuntime` and `AgentLeaderStateRuntime` rather than
   direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
   calls. The temporary shell methods remain only until all legacy-shaped callers
   are migrated.

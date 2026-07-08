@@ -1,9 +1,9 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotMovementStuckStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentMovementStuckStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
@@ -42,37 +42,37 @@ public final class AgentStuckDetectionService {
     }
 
     static void doStuckDetection(AgentRuntimeEntry entry, StuckDetectionHooks hooks) {
-        AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(
+        AgentMovementStuckStateRuntime.setUnstuckCooldownMs(
                 entry,
-                hooks.tickDown().applyAsInt(AgentBotMovementStuckStateRuntime.unstuckCooldownMs(entry)));
+                hooks.tickDown().applyAsInt(AgentMovementStuckStateRuntime.unstuckCooldownMs(entry)));
 
-        if (AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotMovementStateRuntime.climbing(entry)
-                || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)
-                || (!AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                        && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry))) {
-            AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
+        if (AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)
+                || (!AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                        && !AgentMoveTargetStateRuntime.hasMoveTarget(entry))) {
+            AgentMovementStuckStateRuntime.resetStuckProgress(entry);
             return;
         }
 
         Point agentPosition = AgentRuntimeIdentityRuntime.botPosition(entry);
-        if (!AgentBotMovementStuckStateRuntime.hasStuckCheckPosition(entry)) {
-            AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, agentPosition);
+        if (!AgentMovementStuckStateRuntime.hasStuckCheckPosition(entry)) {
+            AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, agentPosition);
             return;
         }
 
-        boolean moved = AgentBotMovementStuckStateRuntime.movedSinceStuckCheck(entry, agentPosition, 8);
+        boolean moved = AgentMovementStuckStateRuntime.movedSinceStuckCheck(entry, agentPosition, 8);
         if (moved) {
-            AgentBotMovementStuckStateRuntime.resetStuckMs(entry);
-            AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, agentPosition);
+            AgentMovementStuckStateRuntime.resetStuckMs(entry);
+            AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, agentPosition);
         } else {
-            AgentBotMovementStuckStateRuntime.addStuckMs(entry, hooks.movementTickMs());
+            AgentMovementStuckStateRuntime.addStuckMs(entry, hooks.movementTickMs());
         }
 
         if (hooks.enableUnstuck()
-                && AgentBotMovementStuckStateRuntime.stuckForAtLeast(entry, 500)
-                && !AgentBotMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
-            AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
+                && AgentMovementStuckStateRuntime.stuckForAtLeast(entry, 500)
+                && !AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry)) {
+            AgentMovementStuckStateRuntime.resetStuckProgress(entry);
             hooks.unstuckAction().tick(entry);
         }
     }

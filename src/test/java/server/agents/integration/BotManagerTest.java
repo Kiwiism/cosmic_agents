@@ -1,10 +1,10 @@
 package server.agents.integration;
 
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -33,8 +33,8 @@ import server.agents.capabilities.trade.AgentOwnerItemNotificationService;
 
 import server.agents.integration.AgentBotCombatAttackRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentFollowIdleMovementRuntime;
 import server.agents.runtime.AgentGrindTargetRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
@@ -63,21 +63,21 @@ import server.agents.capabilities.supplies.AgentAmmoDonorPlan;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
 import server.agents.integration.AgentBotCommandParser;
-import server.agents.integration.AgentBotBreakoutStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.agents.integration.AgentBotMapStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentBreakoutStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindSearchStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPqRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.StatEffect;
 import server.TimerManager;
 import server.life.Monster;
@@ -345,7 +345,7 @@ class BotManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 40, 100, false));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 40, 100, false));
 
         assertFalse(AgentGrindNavigationTargetSelector.shouldUseLocalCombatRetreatTarget(
                 entry,
@@ -363,13 +363,13 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(100, 100), map);
         Character bot = mockMovingBot(new Point(100, 1700), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
 
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, bot.getPosition(), true);
 
         assertEquals(new Point(100, 100), bot.getPosition());
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
     }
 
     @Test
@@ -462,9 +462,9 @@ class BotManagerTest {
         when(target.getMap()).thenReturn(map);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
-        AgentBotGrindTargetStateRuntime.setTarget(entry, target);
-        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
+        AgentModeStateRuntime.setGrinding(entry, true);
+        AgentGrindTargetStateRuntime.setTarget(entry, target);
+        AgentMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
         AgentAttackPlan rangedPlan = new AgentAttackPlan(
                 0, 0, 1, new Rectangle(-200, 50, 300, 100),
                 List.of(target), AgentAttackRoute.RANGED,
@@ -511,7 +511,7 @@ class BotManagerTest {
             Point first = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             int dir1 = Integer.signum(first.x - botPos.x);
             assertTrue(dir1 != 0);
-            assertTrue(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
+            assertTrue(AgentBreakoutStateRuntime.hasBreakoutCommitment(entry));
 
             // Crowding-swap points the active target at the OTHER flank on later ticks; the
             // committed breakout must not reverse (that flip is the oscillation we are fixing).
@@ -532,7 +532,7 @@ class BotManagerTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getPosition()).thenReturn(new Point(botPos));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotBreakoutStateRuntime.setBreakoutCommitment(entry, -1, System.currentTimeMillis() + 5_000L);
+        AgentBreakoutStateRuntime.setBreakoutCommitment(entry, -1, System.currentTimeMillis() + 5_000L);
 
         // Only one flank occupied -> not surrounded -> the breakout latch must release.
         Monster rightMob = mockMob(new Point(160, 100), 9300602);
@@ -543,7 +543,7 @@ class BotManagerTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.BOW);
 
             AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
-            assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
+            assertFalse(AgentBreakoutStateRuntime.hasBreakoutCommitment(entry));
         }
     }
 
@@ -567,7 +567,7 @@ class BotManagerTest {
 
             Point nav = AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(entry, botPos, rightMob.getPosition(), grindNavigationHooks());
             // Single mob -> ordinary local kiting (retreat away from the mob), no breakout latch.
-            assertFalse(AgentBotBreakoutStateRuntime.hasBreakoutCommitment(entry));
+            assertFalse(AgentBreakoutStateRuntime.hasBreakoutCommitment(entry));
             assertEquals(AgentAttackExecutionProvider.retreatTargetPosition(bot, botPos, rightMob.getPosition()), nav);
         }
     }
@@ -578,22 +578,22 @@ class BotManagerTest {
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         Character bot = mockMovingBot(new Point(20, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, -999);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, -999);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 20f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 6);
-        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, -999);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, -999);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 20f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 6);
+        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
         AgentSpawnPlacementRuntime.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
 
         assertEquals(new Point(80, 100), bot.getPosition());
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
-        assertEquals(80.0, AgentBotMovementPhysicsStateRuntime.physicsX(entry));
-        assertEquals(100.0, AgentBotMovementPhysicsStateRuntime.physicsY(entry));
-        assertEquals(0, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
-        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertEquals(map.getId(), AgentBotMapStateRuntime.lastMapId(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+        assertEquals(80.0, AgentMovementPhysicsStateRuntime.physicsX(entry));
+        assertEquals(100.0, AgentMovementPhysicsStateRuntime.physicsY(entry));
+        assertEquals(0, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertNull(AgentNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertEquals(map.getId(), AgentMapStateRuntime.lastMapId(entry));
     }
 
     @Test
@@ -653,29 +653,29 @@ class BotManagerTest {
         when(bot.getMapId()).thenReturn(100000000);
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, task);
-        AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop");
-        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, mock(MapItem.class));
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
+        AgentPendingActionStateRuntime.setPendingAction(entry, "drop");
+        AgentPendingActionStateRuntime.setPendingDropCategory(entry, "equips");
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, mock(MapItem.class));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
         bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
         try {
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
-            assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
-            assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
-            assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
-            assertTrue(AgentBotModeStateRuntime.following(entry));
-            assertTrue(AgentBotModeStateRuntime.grinding(entry));
+            assertNull(AgentPendingActionStateRuntime.pendingAction(entry));
+            assertNull(AgentPendingActionStateRuntime.pendingDropCategory(entry));
+            assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+            assertTrue(AgentModeStateRuntime.following(entry));
+            assertTrue(AgentModeStateRuntime.grinding(entry));
 
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
-            assertFalse(AgentBotModeStateRuntime.following(entry));
-            assertFalse(AgentBotModeStateRuntime.grinding(entry));
-            assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+            assertFalse(AgentModeStateRuntime.following(entry));
+            assertFalse(AgentModeStateRuntime.grinding(entry));
+            assertNull(AgentMoveTargetStateRuntime.moveTarget(entry));
 
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertFalse(bots.containsKey(owner.getId()));
@@ -691,17 +691,17 @@ class BotManagerTest {
         map.getFootholds().insert(new Foothold(new Point(0, 100), new Point(200, 100), 1));
         Character bot = mockMovingBot(new Point(80, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_000L));
-        assertEquals("idle-fast", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
+        assertEquals("idle-fast", AgentNavigationDebugStateRuntime.lastDecision(entry));
         assertTrue(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 1_500L),
                 "idle follow bots should skip per-tick nav/ground movement between periodic checks");
         assertFalse(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_000L),
                 "idle fast path should allow a periodic full movement/nav check");
 
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(1, 0));
+        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(0, 0));
+        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, new Point(1, 0));
         assertFalse(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(entry, bot, new Point(100, 100), 2_100L),
                 "owner movement should force normal movement resolution");
     }
@@ -711,7 +711,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000028);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
+        AgentGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(140, 100));
         AgentAttackPlan plan = basicClosePlan(target);
@@ -724,7 +724,7 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000029);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
+        AgentGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(300, 100));
         AgentAttackPlan plan = basicClosePlan(target);
@@ -737,9 +737,9 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000128);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
-        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, constants.skills.Warrior.SLASH_BLAST, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
+        AgentGrindSearchStateRuntime.scheduleNextSearch(entry, 1_000L);
+        AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, constants.skills.Warrior.SLASH_BLAST, AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
         Monster target = mock(Monster.class);
         when(target.getPosition()).thenReturn(new Point(140, 100));
         AgentAttackPlan singleTargetPlan = basicClosePlan(target);
@@ -767,8 +767,8 @@ class BotManagerTest {
         MapleMap map = createEmptyTestMap(910000130);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, constants.skills.Warrior.SLASH_BLAST, AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
-        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
+        AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, constants.skills.Warrior.SLASH_BLAST, AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+        AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, AgentCombatSkillCacheStateRuntime.aoeSkillId(entry), 6);
         Monster current = mock(Monster.class);
         when(current.getPosition()).thenReturn(new Point(140, 100)); // in basic range
         Monster searched = mock(Monster.class);
@@ -785,7 +785,7 @@ class BotManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
 
         Point first = AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, bot.getPosition());
-        int direction = AgentBotGrindWanderStateRuntime.wanderDirection(entry);
+        int direction = AgentGrindWanderStateRuntime.wanderDirection(entry);
         Point second = AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, bot.getPosition());
 
         assertTrue(direction == -1 || direction == 1);
@@ -797,14 +797,14 @@ class BotManagerTest {
     void shouldIgnoreCachedGrindLootInsidePassiveLootRadiusWhenNoMobTarget() {
         Character bot = mockMovingBot(new Point(100, 100), createEmptyTestMap(910000034));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
-        AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
+        AgentGrindWanderStateRuntime.setWanderDirection(entry, 1);
         MapItem nearbyLoot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS, 100));
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, nearbyLoot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, nearbyLoot);
 
         Point target = AgentGrindTargetRuntime.resolveNoGrindTargetPosition(entry, bot.getPosition());
 
         assertEquals(new Point(300, 100), target);
-        assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
     }
 
     @Test
@@ -821,7 +821,7 @@ class BotManagerTest {
         doReturn(activeLoot).when(map).getMapObject(activeLootObjectId);
 
         assertEquals(activeLoot, AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -845,7 +845,7 @@ class BotManagerTest {
         try {
 
             assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                    entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                    entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
@@ -861,7 +861,7 @@ class BotManagerTest {
         Character dropBotOwner = mock(Character.class);
         Character dropBot = mock(Character.class);
 
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         when(dropBot.getId()).thenReturn(99);
         when(loot.getOwnerId()).thenReturn(99);
         when(loot.isPlayerDrop()).thenReturn(true);
@@ -872,7 +872,7 @@ class BotManagerTest {
         try {
 
             assertNull(AgentGrindTargetRuntime.convenientLootTarget(entry, bot.getPosition(), new Point(500, 100)));
-            assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
+            assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
@@ -885,8 +885,8 @@ class BotManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), null);
         MapItem loot = mockLoot(1, new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS, 100));
         int lootObjectId = loot.getObjectId();
-        AgentBotGrindWanderStateRuntime.setWanderDirection(entry, 1);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        AgentGrindWanderStateRuntime.setWanderDirection(entry, 1);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         doReturn(List.of(loot)).when(map).getDroppedItems();
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
@@ -894,7 +894,7 @@ class BotManagerTest {
         bot.setPosition(new Point(99, 100));
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -909,7 +909,7 @@ class BotManagerTest {
         doReturn(List.of(loot)).when(map).getDroppedItems();
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -923,7 +923,7 @@ class BotManagerTest {
         doReturn(pass).when(map).getMapObject(passObjectId);
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -938,7 +938,7 @@ class BotManagerTest {
         doReturn(coupon).when(map).getMapObject(couponObjectId);
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -953,7 +953,7 @@ class BotManagerTest {
         doReturn(questDrop).when(map).getMapObject(questDropObjectId);
 
         assertNull(AgentLootTargetService.findNearestGrindLootTarget(
-                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 
     @Test
@@ -966,7 +966,7 @@ class BotManagerTest {
         Point lootPos = new Point(100 + AgentRuntimeConfig.cfg.LOOT_RADIUS + 21, 100);
         MapItem loot = mockLoot(1, lootPos);
         int lootObjectId = loot.getObjectId();
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
         assertEquals(lootPos, AgentGrindTargetRuntime.convenientLootTarget(entry, botPos, mobPos));
@@ -994,8 +994,8 @@ class BotManagerTest {
         when(followAnchor.isLoggedinWorld()).thenReturn(true);
 
         AgentRuntimeEntry followerEntry = new AgentRuntimeEntry(follower, owner, null);
-        AgentBotModeStateRuntime.setFollowing(followerEntry, true);
-        AgentBotModeStateRuntime.setFollowTargetId(followerEntry, followAnchor.getId());
+        AgentModeStateRuntime.setFollowing(followerEntry, true);
+        AgentModeStateRuntime.setFollowTargetId(followerEntry, followAnchor.getId());
         AgentRuntimeEntry anchorEntry = new AgentRuntimeEntry(followAnchor, owner, null);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
@@ -1021,8 +1021,8 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
 
@@ -1039,12 +1039,12 @@ class BotManagerTest {
 
         AgentBotMovementCommandRuntime.farmHere(entry, new Point(300, 100));
 
-        assertEquals(new Point(300, 100), AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
-        assertEquals(map.getId(), AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
-        assertEquals(new Point(300, 100), AgentBotMoveTargetStateRuntime.moveTarget(entry));
-        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertTrue(AgentBotModeStateRuntime.grinding(entry));
+        assertEquals(new Point(300, 100), AgentFarmAnchorStateRuntime.farmAnchor(entry));
+        assertEquals(map.getId(), AgentFarmAnchorStateRuntime.farmAnchorMapId(entry));
+        assertEquals(new Point(300, 100), AgentMoveTargetStateRuntime.moveTarget(entry));
+        assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertTrue(AgentModeStateRuntime.grinding(entry));
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
@@ -1057,7 +1057,7 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(300, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
 
@@ -1071,16 +1071,16 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
-        AgentBotShopStateRuntime.markShopSequenceActive(entry, 2_000L);
+        AgentShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
+        AgentShopStateRuntime.markShopSequenceActive(entry, 2_000L);
 
         AgentBotMovementCommandRuntime.followOwner(entry);
 
-        assertFalse(AgentBotShopStateRuntime.shopVisitPending(entry));
-        assertFalse(AgentBotShopStateRuntime.shopSequenceActive(entry));
-        assertNull(AgentBotShopStateRuntime.shopNpcPosition(entry));
-        assertNull(AgentBotShopStateRuntime.shopTargetPosition(entry));
-        assertTrue(AgentBotModeStateRuntime.following(entry));
+        assertFalse(AgentShopStateRuntime.shopVisitPending(entry));
+        assertFalse(AgentShopStateRuntime.shopSequenceActive(entry));
+        assertNull(AgentShopStateRuntime.shopNpcPosition(entry));
+        assertNull(AgentShopStateRuntime.shopTargetPosition(entry));
+        assertTrue(AgentModeStateRuntime.following(entry));
     }
 
     @Test
@@ -1089,16 +1089,16 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
         AgentBotMovementCommandRuntime.followOwner(entry);
 
-        assertNull(AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
-        assertEquals(-1, AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
-        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.isPrecise(entry));
-        assertTrue(AgentBotModeStateRuntime.following(entry));
+        assertNull(AgentFarmAnchorStateRuntime.farmAnchor(entry));
+        assertEquals(-1, AgentFarmAnchorStateRuntime.farmAnchorMapId(entry));
+        assertNull(AgentMoveTargetStateRuntime.moveTarget(entry));
+        assertFalse(AgentMoveTargetStateRuntime.isPrecise(entry));
+        assertTrue(AgentModeStateRuntime.following(entry));
     }
 
     @Test
@@ -1107,19 +1107,19 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
-        AgentBotShopStateRuntime.markShopSequenceActive(entry, 2_000L);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
+        AgentShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
+        AgentShopStateRuntime.markShopSequenceActive(entry, 2_000L);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
         AgentBotMovementCommandRuntime.stop(entry);
 
-        assertFalse(AgentBotShopStateRuntime.shopVisitPending(entry));
-        assertFalse(AgentBotShopStateRuntime.shopSequenceActive(entry));
-        assertNull(AgentBotShopStateRuntime.shopNpcPosition(entry));
-        assertNull(AgentBotShopStateRuntime.shopTargetPosition(entry));
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+        assertFalse(AgentShopStateRuntime.shopVisitPending(entry));
+        assertFalse(AgentShopStateRuntime.shopSequenceActive(entry));
+        assertNull(AgentShopStateRuntime.shopNpcPosition(entry));
+        assertNull(AgentShopStateRuntime.shopTargetPosition(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertNull(AgentMoveTargetStateRuntime.moveTarget(entry));
     }
 
     @Test
@@ -1128,14 +1128,14 @@ class BotManagerTest {
         Character owner = mockMovingBot(new Point(50, 100), map);
         Character bot = mockMovingBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 100));
 
         AgentBotMovementCommandRuntime.grind(entry);
 
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertTrue(AgentBotModeStateRuntime.grinding(entry));
-        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertTrue(AgentModeStateRuntime.grinding(entry));
+        assertNull(AgentMoveTargetStateRuntime.moveTarget(entry));
     }
 
     @Test
@@ -1386,12 +1386,12 @@ class BotManagerTest {
     @Test
     void shouldSplitSingleAmmoStackByShareBudget() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotPendingTradeStateRuntime.setShareBudget(entry, 2250);
+        AgentPendingTradeStateRuntime.setShareBudget(entry, 2250);
 
-        short tradeQty = AgentBotPendingTradeStateRuntime.capShareQuantity(entry, (short) 5000);
+        short tradeQty = AgentPendingTradeStateRuntime.capShareQuantity(entry, (short) 5000);
 
         assertEquals(2250, tradeQty);
-        assertEquals(0, AgentBotPendingTradeStateRuntime.shareBudget(entry));
+        assertEquals(0, AgentPendingTradeStateRuntime.shareBudget(entry));
     }
 
     @Test
@@ -1400,13 +1400,13 @@ class BotManagerTest {
         Item equippedItem = new Item(1040000, (short) 1, (short) 1);
         Item tradeWindowCopy = equippedItem.copy();
 
-        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, equippedItem, (short) -5);
+        AgentPendingTradeStateRuntime.rememberRestoreSlot(entry, equippedItem, (short) -5);
 
-        AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, equippedItem, tradeWindowCopy);
+        AgentPendingTradeStateRuntime.transferRestoreSlot(entry, equippedItem, tradeWindowCopy);
 
-        assertFalse(AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
+        assertFalse(AgentPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
                 .anyMatch(restore -> restore.getKey() == equippedItem));
-        assertEquals((short) -5, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
+        assertEquals((short) -5, AgentPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
                 .filter(restore -> restore.getKey() == tradeWindowCopy)
                 .findFirst()
                 .orElseThrow()

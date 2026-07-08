@@ -27,12 +27,12 @@ public final class AgentBotCombatHealRuntime {
     }
 
     public static boolean tickSupportHealing(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
-        int healSkillId = AgentBotCombatSkillCacheStateRuntime.healSkillId(entry);
+        int healSkillId = AgentCombatSkillCacheStateRuntime.healSkillId(entry);
         if (!AgentCombatSupportPolicy.shouldTickSupportHealing(
-                AgentBotCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentBotMovementStateRuntime.inAir(entry)),
-                AgentBotCombatBuffStateRuntime.supportHealsEnabled(entry),
-                AgentBotModeStateRuntime.following(entry),
-                AgentBotModeStateRuntime.grinding(entry),
+                AgentCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentMovementStateRuntime.inAir(entry)),
+                AgentCombatBuffStateRuntime.supportHealsEnabled(entry),
+                AgentModeStateRuntime.following(entry),
+                AgentModeStateRuntime.grinding(entry),
                 healSkillId,
                 bot.skillIsCooling(healSkillId))) {
             return false;
@@ -57,9 +57,9 @@ public final class AgentBotCombatHealRuntime {
         if (!AgentCombatSupportPolicy.shouldCastSupportHeal(partyNeedsHeal, !undeadTargets.isEmpty())) return false;
 
         boolean jumpHealing = false;
-        if (AgentBotModeStateRuntime.following(entry)
-                && AgentBotMovementStateRuntime.grounded(entry)
-                && AgentBotMovementStateRuntime.notClimbing(entry)
+        if (AgentModeStateRuntime.following(entry)
+                && AgentMovementStateRuntime.grounded(entry)
+                && AgentMovementStateRuntime.notClimbing(entry)
                 && config.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
             Character leader = AgentRuntimeIdentityRuntime.owner(entry);
             Character anchor = AgentFollowAnchorService.resolve(
@@ -84,16 +84,16 @@ public final class AgentBotCombatHealRuntime {
                 AgentAttackExecutionProvider.getEquippedWeaponType(bot));
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, skillTiming.cooldownMs());
+        AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, skillTiming.cooldownMs());
         if (partyNeedsHeal && fx.getCooldown() > 0) {
             bot.addCooldown(healSkillId, now, fx.getCooldown() * 1000L);
         }
 
         sendHealAttack(healSkillId, lvl, bot, undeadTargets, fallbackAttackData, skillTiming);
         AgentBotCombatAlertRuntime.markAlerted(entry);
-        AgentBotCombatCooldownStateRuntime.maxMoveWindow(entry, config.HEAL_MOVE_WINDOW_MS);
+        AgentCombatCooldownStateRuntime.maxMoveWindow(entry, config.HEAL_MOVE_WINDOW_MS);
         if (!jumpHealing) {
-            AgentBotMovementStateRuntime.clearMoveDirection(entry);
+            AgentMovementStateRuntime.clearMoveDirection(entry);
             AgentMovementBroadcastService.broadcastMovement(entry);
         }
         return true;

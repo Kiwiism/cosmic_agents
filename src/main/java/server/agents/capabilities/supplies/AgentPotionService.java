@@ -20,12 +20,12 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.AutopotChoice;
 import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentBotPotionRuntime;
-import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentPotionStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
@@ -168,11 +168,11 @@ public final class AgentPotionService {
     }
 
     public static void tickPotionCheck(AgentRuntimeEntry entry, Character bot) {
-        if (AgentBotPotionStateRuntime.hasPotCheckDelay(entry)) {
-            AgentBotPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
+        if (AgentPotionStateRuntime.hasPotCheckDelay(entry)) {
+            AgentPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
             return;
         }
-        AgentBotPotionStateRuntime.setPotCheckTimerMs(
+        AgentPotionStateRuntime.setPotCheckTimerMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.POT_CHECK_INTERVAL_MS));
 
@@ -185,7 +185,7 @@ public final class AgentPotionService {
                 AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
         AgentPerformanceMonitor.recordSince("potion-ammo-check", startedAt);
 
-        if (!AgentBotModeStateRuntime.grinding(entry) && !AgentBotModeStateRuntime.following(entry)) {
+        if (!AgentModeStateRuntime.grinding(entry) && !AgentModeStateRuntime.following(entry)) {
             return;
         }
         startedAt = AgentPerformanceMonitor.start();
@@ -204,7 +204,7 @@ public final class AgentPotionService {
         requestLowPotShare(entry, bot, pots[1], false, false);
         AgentPerformanceMonitor.recordSince("potion-share-mp", startedAt);
 
-        if (!AgentBotModeStateRuntime.grinding(entry)) {
+        if (!AgentModeStateRuntime.grinding(entry)) {
             return;
         }
         startedAt = AgentPerformanceMonitor.start();
@@ -217,7 +217,7 @@ public final class AgentPotionService {
     }
 
     public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
-        AgentBotPotionStateRuntime.clearAllPotShareRequests(entry);
+        AgentPotionStateRuntime.clearAllPotShareRequests(entry);
         AgentAmmoService.checkAmmoShareOnModeStart(entry, bot);
         requestLowPotShares(entry, bot, false);
     }
@@ -244,16 +244,16 @@ public final class AgentPotionService {
                                               boolean forHp,
                                               boolean bypassShareLimits) {
         if (count >= AgentRuntimeConfig.cfg.POT_LOW_WARN) {
-            AgentBotPotionStateRuntime.clearPotShareRequested(entry, forHp);
+            AgentPotionStateRuntime.clearPotShareRequested(entry, forHp);
             return false;
         }
 
-        boolean alreadyRequested = AgentBotPotionStateRuntime.potShareRequested(entry, forHp);
+        boolean alreadyRequested = AgentPotionStateRuntime.potShareRequested(entry, forHp);
         if ((alreadyRequested && !bypassShareLimits)
                 || !requestPotShare(entry, bot, forHp, bypassShareLimits)) {
             return false;
         }
-        AgentBotPotionStateRuntime.setPotShareRequested(entry, forHp, true);
+        AgentPotionStateRuntime.setPotShareRequested(entry, forHp, true);
         return true;
     }
 
@@ -261,15 +261,15 @@ public final class AgentPotionService {
         boolean hpFull = bot.getHp() >= bot.getCurrentMaxHp();
         boolean mpFull = bot.getMp() >= bot.getCurrentMaxMp();
         if (hpFull && mpFull) {
-            AgentBotPotionStateRuntime.clearMpRecoveryTimer(entry);
+            AgentPotionStateRuntime.clearMpRecoveryTimer(entry);
             return;
         }
-        if (AgentBotPotionStateRuntime.hasMpRecoveryDelay(entry)) {
-            AgentBotPotionStateRuntime.tickMpRecoveryDelay(entry, AgentMovementTimers::tickDown);
+        if (AgentPotionStateRuntime.hasMpRecoveryDelay(entry)) {
+            AgentPotionStateRuntime.tickMpRecoveryDelay(entry, AgentMovementTimers::tickDown);
             return;
         }
 
-        AgentBotPotionStateRuntime.setMpRecoveryTimerMs(
+        AgentPotionStateRuntime.setMpRecoveryTimerMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.MP_RECOVERY_INTERVAL_MS));
 
@@ -289,7 +289,7 @@ public final class AgentPotionService {
     public static boolean requestPotShare(AgentRuntimeEntry entry, Character bot, boolean forHp, boolean bypassShareLimits) {
         long startedAt = AgentPerformanceMonitor.start();
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
+        if (owner == null || bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             AgentPerformanceMonitor.recordSince("potion-request", startedAt);
             return false;
         }
@@ -384,7 +384,7 @@ public final class AgentPotionService {
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentBotPotionRuntime.afterDelay(initialDelayMs, () -> {
-            if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
+            if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
             List<Item> items = collectPotShareItems(donorBot, forHp, maxQty);
@@ -419,10 +419,10 @@ public final class AgentPotionService {
     }
 
     private static boolean isStandingStillForRecovery(AgentRuntimeEntry entry) {
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.climbing(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.climbing(entry)) {
             return false;
         }
-        return !AgentBotMovementStateRuntime.hasMoveDirection(entry)
+        return !AgentMovementStateRuntime.hasMoveDirection(entry)
                 && AgentMovementPoseService.isStandingResolvedStance(entry);
     }
 

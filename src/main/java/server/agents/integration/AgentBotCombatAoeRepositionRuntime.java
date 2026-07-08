@@ -25,9 +25,9 @@ public final class AgentBotCombatAoeRepositionRuntime {
 
     public static Point aoeRepositionTarget(AgentRuntimeEntry entry, Character bot, Monster primaryTarget,
                                             AgentAttackPlan fireNowBest, AgentCombatConfig.Config config) {
-        boolean hasMultiMobAoeSkill = entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry);
-        int aoeSkillId = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry);
-        int aoeSkillMobs = entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
+        boolean hasMultiMobAoeSkill = entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry);
+        int aoeSkillId = entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillId(entry);
+        int aoeSkillMobs = entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry);
         if (!AgentCombatScoringPolicy.shouldConsiderAoeReposition(
                 config.AOE_REPOSITION_ENABLED,
                 entry != null && bot != null,

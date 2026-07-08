@@ -1,9 +1,9 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -56,7 +56,7 @@ public final class AgentNavigationCommittedEdgeService {
                                                                         NextEdgeFinder nextEdgeFinder) {
         if (!runAiTick
                 || edge == null
-                || !AgentBotClimbStateRuntime.climbing(entry)
+                || !AgentClimbStateRuntime.climbing(entry)
                 || edge.type != AgentNavigationGraph.EdgeType.CLIMB
                 || edge.launchStepX == 0
                 || startRegionId < 0
@@ -74,10 +74,10 @@ public final class AgentNavigationCommittedEdgeService {
             return edge;
         }
 
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentNavigationDebugStateRuntime.clearNavTargetPosition(entry);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
         return bestEdge;
     }
 
@@ -92,8 +92,8 @@ public final class AgentNavigationCommittedEdgeService {
                                                                        NextEdgeFinder nextEdgeFinder) {
         if (!runAiTick
                 || edge == null
-                || AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotClimbStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentClimbStateRuntime.climbing(entry)
                 || startRegionId < 0
                 || targetRegionId < 0
                 || startRegionId == targetRegionId) {
@@ -108,10 +108,10 @@ public final class AgentNavigationCommittedEdgeService {
             return edge;
         }
 
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        AgentBotNavigationDebugStateRuntime.clearNavTargetPosition(entry);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentNavigationDebugStateRuntime.clearNavTargetPosition(entry);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
         return bestEdge;
     }
 
@@ -134,26 +134,26 @@ public final class AgentNavigationCommittedEdgeService {
                                                                int targetRegionId,
                                                                EdgeUsabilityChecker edgeUsabilityChecker,
                                                                RopeEntryChecker ropeEntryChecker) {
-        AgentNavigationGraph.Edge edge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge edge = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (edge == null) {
             return null;
         }
         if (targetRegionId < 0) {
             return null;
         }
-        int previousTargetRegionId = AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry);
+        int previousTargetRegionId = AgentNavigationDebugStateRuntime.navTargetRegionId(entry);
         // Update stored target in-place rather than discarding. The Y-snap offset causes
         // followBase.x to differ between AI and non-AI ticks, making targetRegionId fluctuate
         // even when the owner hasn't meaningfully moved. Relying on structural checks below
         // (start-region match, usability, arrival) is sufficient to detect actual invalidity.
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         if (!edgeUsabilityChecker.isUsable(graph, AgentRuntimeIdentityRuntime.bot(entry), edge)) {
             return null;
         }
-        if (AgentBotClimbStateRuntime.climbing(entry) && ropeEntryChecker.isRopeEntry(graph, edge)) {
+        if (AgentClimbStateRuntime.climbing(entry) && ropeEntryChecker.isRopeEntry(graph, edge)) {
             return null;
         }
-        if (startRegionId == edge.toRegionId && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotClimbStateRuntime.climbing(entry)
+        if (startRegionId == edge.toRegionId && !AgentMovementStateRuntime.inAir(entry) && !AgentClimbStateRuntime.climbing(entry)
                 && edge.fromRegionId != edge.toRegionId) {
             // Self-loop edges (intra-region portals) inherently start and end in the same
             // region. Completion is signalled by execution, not by a region change.
@@ -163,13 +163,13 @@ public final class AgentNavigationCommittedEdgeService {
         // would leave that region is stale. Keeping it causes follow/formation loops where the
         // bot repeatedly runs toward an old jump/drop/portal after the live follow target has
         // snapped back onto the current platform.
-        if (!AgentBotMovementStateRuntime.inAir(entry) && !AgentBotClimbStateRuntime.climbing(entry)
+        if (!AgentMovementStateRuntime.inAir(entry) && !AgentClimbStateRuntime.climbing(entry)
                 && startRegionId >= 0 && startRegionId == targetRegionId
                 && edge.toRegionId != startRegionId) {
             return null;
         }
         if (startRegionId == edge.fromRegionId) {
-            if (!AgentBotMovementStateRuntime.inAir(entry) && !AgentBotClimbStateRuntime.climbing(entry)
+            if (!AgentMovementStateRuntime.inAir(entry) && !AgentClimbStateRuntime.climbing(entry)
                     && previousTargetRegionId >= 0
                     && previousTargetRegionId != targetRegionId
                     && edge.toRegionId != targetRegionId) {
@@ -179,17 +179,17 @@ public final class AgentNavigationCommittedEdgeService {
         }
         // While climbing, always keep the edge. Ground foothold lookup can report the platform
         // below/behind the rope as current region and otherwise drop the exit edge too early.
-        if (AgentBotClimbStateRuntime.climbing(entry) && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
+        if (AgentClimbStateRuntime.climbing(entry) && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
             return edge;
         }
         // DROP/JUMP arcs may enter the destination region before the bot touches down. Keep the
         // edge until landing when the bot is in a region consistent with this arc.
-        if (AgentBotMovementStateRuntime.inAir(entry) && (startRegionId < 0 || startRegionId == edge.toRegionId)
+        if (AgentMovementStateRuntime.inAir(entry) && (startRegionId < 0 || startRegionId == edge.toRegionId)
                 && (edge.type == AgentNavigationGraph.EdgeType.DROP
                     || edge.type == AgentNavigationGraph.EdgeType.JUMP)) {
             return edge;
         }
-        if (AgentBotMovementStateRuntime.inAir(entry) && edge.type == AgentNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {
+        if (AgentMovementStateRuntime.inAir(entry) && edge.type == AgentNavigationGraph.EdgeType.CLIMB && edge.launchStepX != 0) {
             // Rope-exit jump arcs use the same sampled ballistic model as JUMP/DROP edges.
             return edge;
         }

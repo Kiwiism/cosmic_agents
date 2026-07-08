@@ -20,14 +20,14 @@ public final class AgentBotCombatBuffRuntime {
     public static void tickBuffs(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         AgentCombatSupportPolicy.SkillBuffTickDecision tickDecision =
                 AgentCombatSupportPolicy.skillBuffTickDecision(
-                        AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
-                        AgentBotCombatBuffStateRuntime.skillBuffsEnabled(entry),
-                        AgentBotModeStateRuntime.following(entry),
-                        AgentBotModeStateRuntime.grinding(entry),
-                        AgentBotCombatSkillCacheStateRuntime.hasBuffSkillIds(entry));
+                        AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
+                        AgentCombatBuffStateRuntime.skillBuffsEnabled(entry),
+                        AgentModeStateRuntime.following(entry),
+                        AgentModeStateRuntime.grinding(entry),
+                        AgentCombatSkillCacheStateRuntime.hasBuffSkillIds(entry));
         if (tickDecision != AgentCombatSupportPolicy.SkillBuffTickDecision.READY) {
             if (tickDecision.legacyDebugSummary() != null) {
-                AgentBotSkillBuffDebugStateRuntime.rememberAction(
+                AgentSkillBuffDebugStateRuntime.rememberAction(
                         entry, System.currentTimeMillis(), tickDecision.legacyDebugSummary());
             }
             return;
@@ -40,8 +40,8 @@ public final class AgentBotCombatBuffRuntime {
             return;
         }
 
-        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
-            if (now < AgentBotCombatBuffStateRuntime.nextBuffAt(entry, skillId)) continue;
+        for (int skillId : AgentCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
+            if (now < AgentCombatBuffStateRuntime.nextBuffAt(entry, skillId)) continue;
             if (bot.skillIsCooling(skillId)) continue;
 
             Skill skill = SkillFactory.getSkill(skillId);
@@ -57,16 +57,16 @@ public final class AgentBotCombatBuffRuntime {
                 return;
             }
         }
-        AgentBotSkillBuffDebugStateRuntime.rememberAction(
+        AgentSkillBuffDebugStateRuntime.rememberAction(
                 entry, System.currentTimeMillis(), AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
     private static boolean trySupportBuff(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config, long now) {
-        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
+        for (int skillId : AgentCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (!AgentCombatSupportPolicy.shouldConsiderSupportBuff(
                     AgentCombatSkillClassifier.isPartySupportSkill(skillId),
                     bot.skillIsCooling(skillId),
-                    AgentBotCombatBuffStateRuntime.supportBuffOnCooldown(entry, skillId, now))) {
+                    AgentCombatBuffStateRuntime.supportBuffOnCooldown(entry, skillId, now))) {
                 continue;
             }
 
@@ -83,7 +83,7 @@ public final class AgentBotCombatBuffRuntime {
             }
 
             if (castSupportSkill(entry, bot, skill, fx, now)) {
-                AgentBotCombatBuffStateRuntime.setNextSupportBuffAt(
+                AgentCombatBuffStateRuntime.setNextSupportBuffAt(
                         entry, skillId, now + config.SUPPORT_REBUFF_CD_MS);
                 return true;
             }
@@ -99,11 +99,11 @@ public final class AgentBotCombatBuffRuntime {
         String readinessSummary = readiness.legacyDebugSummary(
                 AgentCombatDialogueReporter.combatSkillLabel(skill.getId()));
         if (readinessSummary != null) {
-            AgentBotSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), readinessSummary);
+            AgentSkillBuffDebugStateRuntime.rememberAction(entry, System.currentTimeMillis(), readinessSummary);
             return false;
         }
         if (!AgentSupportSpecialMoveExecutor.dispatch(bot, skill, skillLevel)) {
-            AgentBotSkillBuffDebugStateRuntime.rememberAction(
+            AgentSkillBuffDebugStateRuntime.rememberAction(
                     entry,
                     System.currentTimeMillis(),
                     AgentCombatSupportPolicy.supportSpecialMoveFailedSummary(
@@ -113,7 +113,7 @@ public final class AgentBotCombatBuffRuntime {
 
         long dur = fx.getDuration();
         if (dur > 0) {
-            AgentBotCombatBuffStateRuntime.setNextBuffAt(
+            AgentCombatBuffStateRuntime.setNextBuffAt(
                     entry, skill.getId(), AgentCombatSupportPolicy.nextSupportBuffRefreshAt(now, dur));
         }
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =
@@ -122,10 +122,10 @@ public final class AgentBotCombatBuffRuntime {
                 AgentAttackExecutionProvider.getEquippedWeaponType(bot));
         AgentAttackExecutionProvider.SkillAttackTiming skillTiming =
                 AgentAttackExecutionProvider.resolveSkillAttackTiming(skill, action, bot, fallbackAttackData);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry,
+        AgentCombatCooldownStateRuntime.maxAttackCooldown(entry,
                 AgentCombatSupportPolicy.supportCastCooldownMs(skillTiming.cooldownMs(), skill.getAnimationTime()));
         AgentBotCombatAlertRuntime.markAlerted(entry);
-        AgentBotSkillBuffDebugStateRuntime.rememberAction(
+        AgentSkillBuffDebugStateRuntime.rememberAction(
                 entry,
                 System.currentTimeMillis(),
                 AgentCombatSupportPolicy.supportCastSummary(

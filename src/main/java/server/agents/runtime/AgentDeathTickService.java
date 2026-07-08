@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentDeathStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -45,17 +45,17 @@ public final class AgentDeathTickService {
         if (shouldEnterDeadState.getAsBoolean()) {
             enterDeadState.accept(entry, agent);
         }
-        if (!AgentBotDeathStateRuntime.isDead(entry)) {
+        if (!AgentDeathStateRuntime.isDead(entry)) {
             return false;
         }
-        if (AgentBotDeathStateRuntime.isRespawnDue(entry, nowMs)) {
+        if (AgentDeathStateRuntime.isRespawnDue(entry, nowMs)) {
             respawnAction.run();
         }
         return true;
     }
 
     public static void respawnNearLeader(AgentRuntimeEntry entry, Character agent, Character leader, RespawnHooks hooks) {
-        AgentBotDeathStateRuntime.clear(entry);
+        AgentDeathStateRuntime.clear(entry);
         agent.updateHp(agent.getMaxHp());
 
         if (agent.getMapId() != leader.getMapId()) {

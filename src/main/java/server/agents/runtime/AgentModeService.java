@@ -1,17 +1,17 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotRetreatHoldStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindSearchStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.integration.AgentRetreatHoldStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
@@ -23,14 +23,14 @@ public final class AgentModeService {
 
     public static void startFollow(AgentRuntimeEntry entry, Character target) {
         Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        AgentBotModeStateRuntime.setFollowTargetId(entry,
+        AgentModeStateRuntime.setFollowTargetId(entry,
                 leader != null && target != null && leader.getId() != target.getId()
                         ? target.getId()
                         : 0);
-        AgentBotModeStateRuntime.setGrinding(entry, false);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, false);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentFarmAnchorStateRuntime.clearFarmAnchor(entry);
+        AgentModeStateRuntime.setFollowing(entry, true);
     }
 
     public static void startGrind(AgentRuntimeEntry entry, Consumer<AgentRuntimeEntry> navigationClearer) {
@@ -39,45 +39,45 @@ public final class AgentModeService {
 
     public static void startStop(AgentRuntimeEntry entry) {
         clearMode(entry);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
     public static void startMoveTo(AgentRuntimeEntry entry, Point destination, boolean precise) {
         clearMode(entry);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, destination, precise);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, destination, precise);
     }
 
     public static void startFarmHere(AgentRuntimeEntry entry, Point destination, Consumer<AgentRuntimeEntry> navigationClearer) {
         enterActiveMode(entry, navigationClearer);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, destination, AgentRuntimeIdentityRuntime.botMapId(entry));
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, destination);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, destination, AgentRuntimeIdentityRuntime.botMapId(entry));
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, destination);
     }
 
     public static void startPatrol(AgentRuntimeEntry entry, int regionId, Consumer<AgentRuntimeEntry> navigationClearer) {
         enterActiveMode(entry, navigationClearer);
-        AgentBotPatrolStateRuntime.startPatrol(entry, regionId, AgentRuntimeIdentityRuntime.botMapId(entry));
+        AgentPatrolStateRuntime.startPatrol(entry, regionId, AgentRuntimeIdentityRuntime.botMapId(entry));
     }
 
     public static void enterActiveMode(AgentRuntimeEntry entry, Consumer<AgentRuntimeEntry> navigationClearer) {
-        AgentBotModeStateRuntime.stopFollowing(entry);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        AgentBotPatrolStateRuntime.clearPatrol(entry);
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-        AgentBotGrindSearchStateRuntime.clear(entry);
-        AgentBotCombatCooldownStateRuntime.clearMoveWindow(entry);
-        AgentBotDegenerateAttackStateRuntime.clear(entry);
-        AgentBotRetreatHoldStateRuntime.clear(entry);
-        AgentBotGrindWanderStateRuntime.clearWanderDirection(entry);
+        AgentModeStateRuntime.stopFollowing(entry);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentFarmAnchorStateRuntime.clearFarmAnchor(entry);
+        AgentPatrolStateRuntime.clearPatrol(entry);
+        AgentGrindTargetStateRuntime.clear(entry);
+        AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
+        AgentGrindSearchStateRuntime.clear(entry);
+        AgentCombatCooldownStateRuntime.clearMoveWindow(entry);
+        AgentDegenerateAttackStateRuntime.clear(entry);
+        AgentRetreatHoldStateRuntime.clear(entry);
+        AgentGrindWanderStateRuntime.clearWanderDirection(entry);
         navigationClearer.accept(entry);
-        AgentBotModeStateRuntime.startGrinding(entry);
+        AgentModeStateRuntime.startGrinding(entry);
     }
 
     public static void clearMode(AgentRuntimeEntry entry) {
-        AgentBotModeStateRuntime.stopMovementModes(entry);
-        AgentBotFarmAnchorStateRuntime.clearFarmAnchor(entry);
-        AgentBotPatrolStateRuntime.clearPatrol(entry);
-        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+        AgentModeStateRuntime.stopMovementModes(entry);
+        AgentFarmAnchorStateRuntime.clearFarmAnchor(entry);
+        AgentPatrolStateRuntime.clearPatrol(entry);
+        AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
     }
 }

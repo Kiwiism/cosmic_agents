@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
@@ -28,34 +28,34 @@ public final class AgentNavigationClimbEntryExecutionService {
             return false;
         }
         if (!AgentNavigationRopeEdgeService.canExecuteClimbEntryFromCurrentPosition(agentPos, edge, rope)) {
-            AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-pos");
+            AgentNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-pos");
             return false;
         }
 
         if (AgentNavigationRopeEdgeService.canGrabRopeAtCurrentPosition(agentPos, rope)) {
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
+            AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, agentPos.y);
             return true;
         }
         if (AgentNavigationRopeEdgeService.canAttachToRopeFromTopPlatform(edge, agentPos, rope)) {
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
+            AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             AgentNavigationClimbExecutionService.startClimbing(entry, agent, rope, edge.endPoint.y);
             return true;
         }
         if (AgentNavigationRopeEdgeService.canGrabRopeFromTopPlatform(edge, agentPos, rope)) {
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
+            AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             AgentQueuedMovementActionService.queueTopRopeEntry(entry, agent, rope, edge.endPoint.y);
             AgentMovementBroadcastService.broadcastMovement(entry);
             return true;
         }
 
         if (AgentNavigationRopeEdgeService.canExecuteGroundRopeJumpEntryFromCurrentPosition(agentPos, edge)) {
-            AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
+            AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
             AgentJumpActionService.initiateRopeJump(entry, agent, edge.launchStepX);
             return true;
         }
 
-        AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-reach");
+        AgentNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "climb-reach");
         return false;
     }
 }

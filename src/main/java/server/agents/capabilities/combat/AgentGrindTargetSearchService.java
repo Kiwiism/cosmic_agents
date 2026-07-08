@@ -1,8 +1,8 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentGrindSearchStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -35,7 +35,7 @@ public final class AgentGrindTargetSearchService {
             return new SearchResult(currentTarget, currentAttackPlan);
         }
 
-        Monster searchedTarget = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
+        Monster searchedTarget = AgentPatrolStateRuntime.hasPatrolRegion(entry)
                 ? hooks.patrolTargetFinder().find(entry, agent)
                 : hooks.grindTargetFinder().find(entry, agent);
         if (AgentGrindTargetSearchPolicy.shouldSwitchToSearchedTarget(
@@ -43,7 +43,7 @@ public final class AgentGrindTargetSearchService {
             currentTarget = searchedTarget;
             currentAttackPlan = null;
         }
-        AgentBotGrindSearchStateRuntime.scheduleNextSearch(entry, nowMs + hooks.retargetIntervalMs());
+        AgentGrindSearchStateRuntime.scheduleNextSearch(entry, nowMs + hooks.retargetIntervalMs());
         return new SearchResult(currentTarget, currentAttackPlan);
     }
 }

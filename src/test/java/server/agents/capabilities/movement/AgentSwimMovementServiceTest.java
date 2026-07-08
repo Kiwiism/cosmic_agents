@@ -2,8 +2,8 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentSwimStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -21,24 +21,24 @@ class AgentSwimMovementServiceTest {
 
         AgentSwimMovementService.computeSwimIntents(entry, null);
 
-        assertEquals(-1, AgentBotSwimStateRuntime.swimVerticalHold(entry));
-        assertEquals(0, AgentBotSwimStateRuntime.swimMoveDirection(entry));
-        assertFalse(AgentBotSwimStateRuntime.swimJumpRequested(entry));
+        assertEquals(-1, AgentSwimStateRuntime.swimVerticalHold(entry));
+        assertEquals(0, AgentSwimStateRuntime.swimMoveDirection(entry));
+        assertFalse(AgentSwimStateRuntime.swimJumpRequested(entry));
     }
 
     @Test
     void attackCooldownClearsInputAndDoesNotSetIntent() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
-        AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
-        AgentBotSwimStateRuntime.setSwimJumpRequested(entry, true);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, 500);
+        AgentSwimStateRuntime.setSwimMoveDirection(entry, 1);
+        AgentSwimStateRuntime.setSwimVerticalHold(entry, -1);
+        AgentSwimStateRuntime.setSwimJumpRequested(entry, true);
+        AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 500);
 
         AgentSwimMovementService.computeSwimIntents(entry, new Point(100, 100));
 
-        assertEquals(0, AgentBotSwimStateRuntime.swimMoveDirection(entry));
-        assertEquals(0, AgentBotSwimStateRuntime.swimVerticalHold(entry));
-        assertFalse(AgentBotSwimStateRuntime.swimJumpRequested(entry));
+        assertEquals(0, AgentSwimStateRuntime.swimMoveDirection(entry));
+        assertEquals(0, AgentSwimStateRuntime.swimVerticalHold(entry));
+        assertFalse(AgentSwimStateRuntime.swimJumpRequested(entry));
     }
 
     @Test
@@ -49,9 +49,9 @@ class AgentSwimMovementServiceTest {
 
         AgentSwimMovementService.computeSwimIntents(entry, new Point(104, 110));
 
-        assertEquals(0, AgentBotSwimStateRuntime.swimMoveDirection(entry));
-        assertEquals(-1, AgentBotSwimStateRuntime.swimVerticalHold(entry));
-        assertFalse(AgentBotSwimStateRuntime.swimJumpRequested(entry));
+        assertEquals(0, AgentSwimStateRuntime.swimMoveDirection(entry));
+        assertEquals(-1, AgentSwimStateRuntime.swimVerticalHold(entry));
+        assertFalse(AgentSwimStateRuntime.swimJumpRequested(entry));
     }
 
     @Test
@@ -62,7 +62,7 @@ class AgentSwimMovementServiceTest {
 
         AgentSwimMovementService.computeSwimIntents(entry, new Point(100, 50));
 
-        assertTrue(AgentBotSwimStateRuntime.swimJumpRequested(entry));
-        assertEquals(-1, AgentBotSwimStateRuntime.swimVerticalHold(entry));
+        assertTrue(AgentSwimStateRuntime.swimJumpRequested(entry));
+        assertEquals(-1, AgentSwimStateRuntime.swimVerticalHold(entry));
     }
 }

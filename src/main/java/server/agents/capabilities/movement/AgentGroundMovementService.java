@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -16,7 +16,7 @@ public final class AgentGroundMovementService {
         if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return 0;
         }
-        if (AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
+        if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             int localStopDist = Math.min(stopDist, 12);
             return updateStepX(entry, AgentRuntimeIdentityRuntime.botMap(entry), botPos.x, targetPos.x, localStopDist, localStopDist);
         }
@@ -54,13 +54,13 @@ public final class AgentGroundMovementService {
     }
 
     public static int updateStepX(AgentRuntimeEntry entry, MapleMap map, int botX, int targetX, int stopDist, int followDist) {
-        int stepX = calcStepX(map, AgentBotMovementStateRuntime.movementProfile(entry), botX, targetX,
-                AgentBotMovementStateRuntime.wasMovingX(entry), stopDist, followDist);
+        int stepX = calcStepX(map, AgentMovementStateRuntime.movementProfile(entry), botX, targetX,
+                AgentMovementStateRuntime.wasMovingX(entry), stopDist, followDist);
         if (stepX == 0) {
-            AgentBotMovementStateRuntime.setWasMovingX(entry, false);
+            AgentMovementStateRuntime.setWasMovingX(entry, false);
             return 0;
         }
-        AgentBotMovementStateRuntime.setWasMovingX(entry, true);
+        AgentMovementStateRuntime.setWasMovingX(entry, true);
         return stepX;
     }
 }

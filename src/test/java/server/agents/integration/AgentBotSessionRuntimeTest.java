@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotSessionControlRuntime;
 import server.agents.integration.AgentBotSessionRuntime;
@@ -38,7 +38,7 @@ class AgentBotSessionRuntimeTest {
 
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
 
-            assertEquals(AgentChatPendingAction.RELOG, AgentBotPendingActionStateRuntime.pendingAction(entry));
+            assertEquals(AgentChatPendingAction.RELOG, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
         }
@@ -62,7 +62,7 @@ class AgentBotSessionRuntimeTest {
 
             AgentBotSessionRuntime.sessionRequestCallbacks(entry).requestAway();
 
-            assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentBotPendingActionStateRuntime.pendingAction(entry));
+            assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentBotMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrLogoutPrompt()));
         }
@@ -73,7 +73,7 @@ class AgentBotSessionRuntimeTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(123);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
-        AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
+        AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.OWNER_AWAY);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentBotSessionControlRuntime> sessionControl = mockStatic(AgentBotSessionControlRuntime.class);
@@ -87,7 +87,7 @@ class AgentBotSessionRuntimeTest {
 
             AgentBotSessionRuntime.handleOwnerAwayChoice(entry, "stay");
 
-            assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
+            assertNull(AgentPendingActionStateRuntime.pendingAction(entry));
             sessionControl.verify(() -> AgentBotSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, false));
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
         }

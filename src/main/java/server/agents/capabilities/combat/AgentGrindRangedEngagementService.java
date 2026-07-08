@@ -3,9 +3,9 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -126,7 +126,7 @@ public final class AgentGrindRangedEngagementService {
         WeaponType weaponType = hooks.weaponTypeResolver().resolve(agent);
         boolean targetInDegenerateBand = hooks.degenerateAttackPolicy().shouldDegenerate(
                 weaponType, agentPosition, targetPosition);
-        boolean degenAttackDone = AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry);
+        boolean degenAttackDone = AgentDegenerateAttackStateRuntime.degenAttackDone(entry);
         boolean allowOneDegenerateAttack = targetInDegenerateBand && !degenAttackDone && rangedPriorityTarget == null;
         boolean shouldRetreatForRangedSpacing = degenAttackDone
                 || (hooks.retreatPolicy().shouldRetreat(weaponType, agentPosition, targetPosition)
@@ -143,31 +143,31 @@ public final class AgentGrindRangedEngagementService {
                 : null;
 
         boolean attackAttemptedInRange = false;
-        if (!AgentBotMovementStateRuntime.climbing(entry)) {
+        if (!AgentMovementStateRuntime.climbing(entry)) {
             if (aoeRepositionPos == null
                     && attackGateOpen && hooks.targetRangePolicy().isInRange(attackPlan, agent, target)
                     && hooks.attackPlanUsabilityPolicy().canUse(
-                    AgentBotMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)) {
+                    AgentMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)) {
                 attackAttemptedInRange = true;
-                int prevCooldown = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry);
+                int prevCooldown = AgentCombatCooldownStateRuntime.attackCooldownMs(entry);
                 hooks.attackExecutor().attack(entry, agent, attackPlan);
-                boolean attacked = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
+                boolean attacked = AgentCombatCooldownStateRuntime.attackCooldownMs(entry) != prevCooldown;
                 if (attacked && attackPlan.isCloseRangeRoute()
                         && hooks.rangedAmmoWeaponPolicy().isRangedAmmoWeapon(weaponType)) {
-                    AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+                    AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
-                if (attacked && !AgentBotMovementStateRuntime.inAir(entry) && crossRegionRetreatPos == null) {
+                if (attacked && !AgentMovementStateRuntime.inAir(entry) && crossRegionRetreatPos == null) {
                     return new Result(true, currentMovementTarget, crossRegionRetreatPos, aoeRepositionPos,
                             shouldRetreatForRangedSpacing, attackAttemptedInRange, weaponType);
                 }
-            } else if (!AgentBotMovementStateRuntime.inAir(entry)
+            } else if (!AgentMovementStateRuntime.inAir(entry)
                     && attackPlan != null
                     && hooks.targetJumpablePolicy().isJumpable(
-                    AgentBotMovementStateRuntime.movementProfile(entry),
+                    AgentMovementStateRuntime.movementProfile(entry),
                     attackPlan.isCloseRangeRoute(),
                     agentPosition,
                     targetPosition,
-                    hooks.jumpHeightCalculator().calculate(AgentBotMovementStateRuntime.movementProfile(entry)))
+                    hooks.jumpHeightCalculator().calculate(AgentMovementStateRuntime.movementProfile(entry)))
                     && weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW
                     && weaponType != WeaponType.WAND && weaponType != WeaponType.STAFF) {
                 hooks.jumpInitiator().initiate(entry, agent, targetPosition.x - agentPosition.x);
@@ -176,7 +176,7 @@ public final class AgentGrindRangedEngagementService {
             }
         }
 
-        if (target != null && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)
+        if (target != null && !AgentMovementStateRuntime.inAir(entry) && !AgentMovementStateRuntime.climbing(entry)
                 && !shouldRetreatForRangedSpacing && crossRegionRetreatPos == null
                 && aoeRepositionPos == null
                 && !attackAttemptedInRange

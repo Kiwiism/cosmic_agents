@@ -1,13 +1,13 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotTickFailureStateRuntime;
+import server.agents.integration.AgentTickFailureStateRuntime;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -77,22 +77,22 @@ public final class AgentTickFailurePolicy {
     }
 
     public static Decision recordFailure(AgentRuntimeEntry entry, long nowMs) {
-        int failureCount = AgentBotTickFailureStateRuntime.recordFailure(entry, nowMs, FAILURE_WINDOW_MS);
+        int failureCount = AgentTickFailureStateRuntime.recordFailure(entry, nowMs, FAILURE_WINDOW_MS);
         return new Decision(failureCount, failureCount == 2, failureCount >= FAILURE_LIMIT);
     }
 
     public static void resetFailures(AgentRuntimeEntry entry) {
-        if (entry != null && AgentBotTickFailureStateRuntime.hasFailures(entry)) {
-            AgentBotTickFailureStateRuntime.clear(entry);
+        if (entry != null && AgentTickFailureStateRuntime.hasFailures(entry)) {
+            AgentTickFailureStateRuntime.clear(entry);
         }
     }
 
     public static void clearVolatileActions(AgentRuntimeEntry entry) {
-        AgentBotPendingActionStateRuntime.clearPendingAction(entry);
-        AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
-        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
+        AgentPendingActionStateRuntime.clearPendingAction(entry);
+        AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
+        AgentGrindTargetStateRuntime.clear(entry);
+        AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
+        AgentPatrolStateRuntime.clearPatrolWanderTarget(entry);
     }
 
     private static FailureContext failureContext(AgentRuntimeEntry entry, int failureCount, Throwable failure) {
@@ -103,8 +103,8 @@ public final class AgentTickFailurePolicy {
                 leader != null ? leader.getName() : "?",
                 agent != null ? agent.getMapId() : -1,
                 failureCount,
-                AgentBotModeStateRuntime.grinding(entry),
-                AgentBotModeStateRuntime.following(entry),
+                AgentModeStateRuntime.grinding(entry),
+                AgentModeStateRuntime.following(entry),
                 failure);
     }
 }

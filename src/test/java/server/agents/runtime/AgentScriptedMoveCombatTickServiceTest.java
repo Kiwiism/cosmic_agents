@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 
 import java.awt.Point;
@@ -85,12 +85,12 @@ class AgentScriptedMoveCombatTickServiceTest {
 
     private static AgentRuntimeEntry localOpportunityMoveEntry(Point target) {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotScriptTaskStateRuntime.queueTask(entry, AgentTask.moveTo(
+        AgentScriptTaskStateRuntime.queueTask(entry, AgentTask.moveTo(
                 target,
                 true,
                 AgentTask.MoveCombatMode.LOCAL_OPPORTUNITY));
-        AgentBotScriptTaskStateRuntime.activateNextTask(entry);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, target, true);
+        AgentScriptTaskStateRuntime.activateNextTask(entry);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, target, true);
         return entry;
     }
 

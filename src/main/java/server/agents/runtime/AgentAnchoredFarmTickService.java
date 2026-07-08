@@ -1,9 +1,9 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.awt.Point;
 
@@ -54,13 +54,13 @@ public final class AgentAnchoredFarmTickService {
                                         Point agentPosition,
                                         boolean runAiTick,
                                         AnchoredFarmHooks hooks) {
-        if (!AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, agent.getMapId())) {
+        if (!AgentFarmAnchorStateRuntime.isFarmAnchorInMap(entry, agent.getMapId())) {
             AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
             hooks.idleTick().tick(entry, agent);
             return;
         }
 
-        Point anchor = AgentBotFarmAnchorStateRuntime.farmAnchor(entry);
+        Point anchor = AgentFarmAnchorStateRuntime.farmAnchor(entry);
         if (runAiTick) {
             LocalOpportunityResult attackResult = hooks.localOpportunityAttack().tryAttack(
                     entry, agent, agentPosition, anchor, anchor, false, false);
@@ -70,14 +70,14 @@ public final class AgentAnchoredFarmTickService {
         }
 
         if (AgentPositionService.isNear(agentPosition, anchor, 8)
-                && !AgentBotMovementStateRuntime.inAir(entry)
-                && !AgentBotMovementStateRuntime.climbing(entry)) {
-            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+                && !AgentMovementStateRuntime.inAir(entry)
+                && !AgentMovementStateRuntime.climbing(entry)) {
+            AgentMoveTargetStateRuntime.clearMoveTarget(entry);
             hooks.groundIdleTick().tick(entry, agent);
             return;
         }
 
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, anchor);
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, anchor);
         hooks.movementCore().step(entry, anchor, runAiTick);
     }
 }

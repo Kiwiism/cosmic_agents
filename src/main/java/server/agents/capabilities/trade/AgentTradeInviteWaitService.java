@@ -4,7 +4,7 @@ import client.Character;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeInviteWaitService {
@@ -17,8 +17,8 @@ public final class AgentTradeInviteWaitService {
                                             Character agent,
                                             int tickMs,
                                             Runnable resetTradeState) {
-        AgentBotPendingTradeStateRuntime.addTimerMs(entry, tickMs);
-        if (AgentBotPendingTradeStateRuntime.timerMs(entry) > REQUEST_TIMEOUT_MS) {
+        AgentPendingTradeStateRuntime.addTimerMs(entry, tickMs);
+        if (AgentPendingTradeStateRuntime.timerMs(entry) > REQUEST_TIMEOUT_MS) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRequestTimeoutReply());
             Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE);
             resetTradeState.run();

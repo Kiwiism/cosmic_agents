@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
@@ -56,7 +56,7 @@ class AgentGroundTargetServiceTest {
         when(agent.getPosition()).thenReturn(position);
         when(agent.getMap()).thenReturn(map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
         return entry;
     }
 

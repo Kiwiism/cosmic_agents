@@ -1,10 +1,10 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
+import server.agents.integration.AgentSwimStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -36,31 +36,31 @@ public final class AgentSwimPhysicsService {
         Point position = agent.getPosition();
         double tickSeconds = AgentMovementPhysicsConfig.configuredMovementTickMs() / 1000.0;
 
-        if (!AgentBotSwimStateRuntime.swimming(entry)) {
-            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-            AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-            AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-            AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
-        } else if (Math.abs(AgentBotMovementPhysicsStateRuntime.physicsX(entry) - position.x) > 2
-                || Math.abs(AgentBotMovementPhysicsStateRuntime.physicsY(entry) - position.y) > 2) {
-            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        if (!AgentSwimStateRuntime.swimming(entry)) {
+            AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+            AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+            AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+            AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+            AgentMovementStateRuntime.setDownJumpPending(entry, false);
+            AgentMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+        } else if (Math.abs(AgentMovementPhysicsStateRuntime.physicsX(entry) - position.x) > 2
+                || Math.abs(AgentMovementPhysicsStateRuntime.physicsY(entry) - position.y) > 2) {
+            AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
         }
 
-        double velocityX = AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry);
-        double velocityY = AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry);
+        double velocityX = AgentMovementPhysicsStateRuntime.horizontalSpeed(entry);
+        double velocityY = AgentMovementPhysicsStateRuntime.verticalVelocity(entry);
 
-        if (AgentBotSwimStateRuntime.swimJumpRequested(entry)) {
+        if (AgentSwimStateRuntime.swimJumpRequested(entry)) {
             float burst = SWIM_JUMP_BURST_PXS;
-            burst *= (float) AgentBotMovementStateRuntime.movementProfile(entry).speedMultiplier();
+            burst *= (float) AgentMovementStateRuntime.movementProfile(entry).speedMultiplier();
             velocityY = -burst;
-            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, false);
+            AgentSwimStateRuntime.setSwimJumpRequested(entry, false);
         }
 
-        if (AgentBotSwimStateRuntime.swimMoveDirection(entry) != 0) {
+        if (AgentSwimStateRuntime.swimMoveDirection(entry) != 0) {
             double accelerationStep = SWIM_ACCEL_PXS2 * tickSeconds
-                    * Integer.signum(AgentBotSwimStateRuntime.swimMoveDirection(entry));
+                    * Integer.signum(AgentSwimStateRuntime.swimMoveDirection(entry));
             velocityX += accelerationStep;
         }
 
@@ -70,38 +70,38 @@ public final class AgentSwimPhysicsService {
 
         velocityY += SWIM_GRAVITY_PXS2 * tickSeconds;
 
-        if (AgentBotSwimStateRuntime.swimVerticalHold(entry) < 0) {
+        if (AgentSwimStateRuntime.swimVerticalHold(entry) < 0) {
             velocityY -= SWIM_UP_THRUST_PXS2 * tickSeconds;
-        } else if (AgentBotSwimStateRuntime.swimVerticalHold(entry) > 0) {
+        } else if (AgentSwimStateRuntime.swimVerticalHold(entry) > 0) {
             velocityY += SWIM_DOWN_THRUST_PXS2 * tickSeconds;
         }
 
         velocityX = Math.max(-SWIM_MAX_SPEED_PXS, Math.min(SWIM_MAX_SPEED_PXS, velocityX));
-        if (AgentBotSwimStateRuntime.swimMoveDirection(entry) != 0) {
+        if (AgentSwimStateRuntime.swimMoveDirection(entry) != 0) {
             double cap = SWIM_VEL_PXS;
-            if (velocityX > cap && AgentBotSwimStateRuntime.swimMoveDirection(entry) > 0) {
+            if (velocityX > cap && AgentSwimStateRuntime.swimMoveDirection(entry) > 0) {
                 velocityX = cap;
             }
-            if (velocityX < -cap && AgentBotSwimStateRuntime.swimMoveDirection(entry) < 0) {
+            if (velocityX < -cap && AgentSwimStateRuntime.swimMoveDirection(entry) < 0) {
                 velocityX = -cap;
             }
         }
 
-        double sinkCap = switch (Integer.signum(AgentBotSwimStateRuntime.swimVerticalHold(entry))) {
+        double sinkCap = switch (Integer.signum(AgentSwimStateRuntime.swimVerticalHold(entry))) {
             case -1 -> SWIM_UP_MAX_SINK_PXS;
             case 1 -> SWIM_DOWN_MAX_SPEED_PXS;
             default -> SWIM_FREE_MAX_SINK_PXS;
         };
         velocityY = Math.max(-SWIM_MAX_SPEED_PXS, Math.min(sinkCap, velocityY));
 
-        double nextX = AgentBotMovementPhysicsStateRuntime.physicsX(entry) + velocityX * tickSeconds;
-        double nextY = AgentBotMovementPhysicsStateRuntime.physicsY(entry) + velocityY * tickSeconds;
+        double nextX = AgentMovementPhysicsStateRuntime.physicsX(entry) + velocityX * tickSeconds;
+        double nextY = AgentMovementPhysicsStateRuntime.physicsY(entry) + velocityY * tickSeconds;
 
         boolean landed = false;
         Foothold landingFoothold = null;
         double landingDeltaX = 0.0;
         double landingDeltaY = 0.0;
-        Point previousPoint = AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
+        Point previousPoint = AgentMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
         Point nextPoint = new Point((int) Math.round(nextX), (int) Math.round(nextY));
         AgentJumpProbeService.AirCollision collision =
                 AgentJumpProbeService.resolveAirCollision(map, previousPoint, nextPoint);
@@ -118,27 +118,27 @@ public final class AgentSwimPhysicsService {
             velocityX = 0.0;
         }
 
-        if (AgentBotSwimStateRuntime.swimMoveDirection(entry) > 0) {
-            AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
-        } else if (AgentBotSwimStateRuntime.swimMoveDirection(entry) < 0) {
-            AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        if (AgentSwimStateRuntime.swimMoveDirection(entry) > 0) {
+            AgentMovementStateRuntime.setFacingDirection(entry, 1);
+        } else if (AgentSwimStateRuntime.swimMoveDirection(entry) < 0) {
+            AgentMovementStateRuntime.setFacingDirection(entry, -1);
         }
 
         if (landed) {
-            AgentBotSwimStateRuntime.setSwimming(entry, false);
+            AgentSwimStateRuntime.setSwimming(entry, false);
             AgentAirbornePhysicsService.landOnGround(entry, agent,
                     new Point((int) Math.round(nextX), (int) Math.round(nextY)),
                     landingFoothold, landingDeltaX, landingDeltaY);
             return;
         }
 
-        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, velocityX);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, (float) velocityY);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, nextX, nextY);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry, (int) Math.round(velocityX), (int) Math.round(velocityY));
-        AgentBotSwimStateRuntime.setSwimming(entry, true);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, velocityX);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, (float) velocityY);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, nextX, nextY);
+        AgentMovementStateRuntime.setCrouching(entry, false);
+        AgentMovementStateRuntime.setMovementVelocity(entry, (int) Math.round(velocityX), (int) Math.round(velocityY));
+        AgentSwimStateRuntime.setSwimming(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
 
         agent.setPosition(new Point((int) Math.round(nextX), (int) Math.round(nextY)));
     }

@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntSupplier;
@@ -16,18 +16,18 @@ public final class AgentTradeMesoAddService {
                                             Trade trade,
                                             Runnable insufficientMesoCancel,
                                             IntSupplier addDelayMs) {
-        if (!AgentBotPendingTradeStateRuntime.hasMesoToAdd(entry)) {
+        if (!AgentPendingTradeStateRuntime.hasMesoToAdd(entry)) {
             return false;
         }
-        int mesos = AgentBotPendingTradeStateRuntime.meso(entry);
+        int mesos = AgentPendingTradeStateRuntime.meso(entry);
         if (agent.getMeso() < mesos) {
             insufficientMesoCancel.run();
             return true;
         }
 
         trade.setMeso(mesos);
-        AgentBotPendingTradeStateRuntime.markMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, addDelayMs.getAsInt());
+        AgentPendingTradeStateRuntime.markMesoAdded(entry);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, addDelayMs.getAsInt());
         return true;
     }
 }

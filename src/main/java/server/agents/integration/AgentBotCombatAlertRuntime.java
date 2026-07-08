@@ -10,24 +10,24 @@ public final class AgentBotCombatAlertRuntime {
     }
 
     public static void markAlerted(AgentRuntimeEntry entry) {
-        AgentBotCombatCooldownStateRuntime.setAlertedUntilMs(entry, System.currentTimeMillis() + ALERT_DURATION_MS);
+        AgentCombatCooldownStateRuntime.setAlertedUntilMs(entry, System.currentTimeMillis() + ALERT_DURATION_MS);
         scheduleAlertReset(entry);
     }
 
     private static void scheduleAlertReset(AgentRuntimeEntry entry) {
-        if (AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry)) {
+        if (AgentCombatCooldownStateRuntime.alertResetScheduled(entry)) {
             return;
         }
-        AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
-        long delay = Math.max(50L, AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry) - System.currentTimeMillis() + 100L);
+        AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
+        long delay = Math.max(50L, AgentCombatCooldownStateRuntime.alertedUntilMs(entry) - System.currentTimeMillis() + 100L);
         AgentBotCombatRuntime.afterDelay(delay, () -> {
             long now = System.currentTimeMillis();
-            if (now < AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
-                AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
+            if (now < AgentCombatCooldownStateRuntime.alertedUntilMs(entry)) {
+                AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
                 scheduleAlertReset(entry);
                 return;
             }
-            AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
+            AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
             try {
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (bot != null) {

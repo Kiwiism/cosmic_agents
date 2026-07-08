@@ -2,7 +2,7 @@ package server.agents.plans;
 
 import client.Character;
 import server.agents.integration.AgentBotScriptMoveTargetRuntime;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -14,20 +14,20 @@ public final class AgentScriptRunner {
     public static void tick(AgentRuntimeEntry entry, Character bot, Character owner, List<AgentScript> scripts) {
         AgentScript script = findScript(entry, bot, owner, scripts);
         if (script == null) {
-            if (AgentBotScriptTaskStateRuntime.hasScriptId(entry)) {
+            if (AgentScriptTaskStateRuntime.hasScriptId(entry)) {
                 AgentScriptTaskQueueService.clearTasks(entry);
-                AgentBotScriptTaskStateRuntime.resetScript(entry, null);
+                AgentScriptTaskStateRuntime.resetScript(entry, null);
             }
             return;
         }
 
-        if (!script.id().equals(AgentBotScriptTaskStateRuntime.scriptId(entry))) {
+        if (!script.id().equals(AgentScriptTaskStateRuntime.scriptId(entry))) {
             AgentScriptTaskQueueService.clearTasks(entry);
-            AgentBotScriptTaskStateRuntime.resetScript(entry, script.id());
+            AgentScriptTaskStateRuntime.resetScript(entry, script.id());
         }
 
         List<AgentScriptStep> steps = script.steps();
-        if (AgentBotScriptTaskStateRuntime.scriptStepIndex(entry) >= steps.size()) {
+        if (AgentScriptTaskStateRuntime.scriptStepIndex(entry) >= steps.size()) {
             return;
         }
 
@@ -37,14 +37,14 @@ public final class AgentScriptRunner {
                 owner,
                 AgentBotScriptMoveTargetRuntime::isCheapMoveTarget,
                 AgentScriptItemActionService::dropItem);
-        AgentScriptStep step = steps.get(AgentBotScriptTaskStateRuntime.scriptStepIndex(entry));
-        if (!AgentBotScriptTaskStateRuntime.scriptStepEntered(entry)) {
+        AgentScriptStep step = steps.get(AgentScriptTaskStateRuntime.scriptStepIndex(entry));
+        if (!AgentScriptTaskStateRuntime.scriptStepEntered(entry)) {
             step.enter(ctx);
-            AgentBotScriptTaskStateRuntime.markScriptStepEntered(entry);
+            AgentScriptTaskStateRuntime.markScriptStepEntered(entry);
         }
         step.tick(ctx);
         if (step.complete(ctx)) {
-            AgentBotScriptTaskStateRuntime.advanceScriptStep(entry);
+            AgentScriptTaskStateRuntime.advanceScriptStep(entry);
         }
     }
 

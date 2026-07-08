@@ -9,7 +9,7 @@ public final class AgentBotCombatFacingRuntime {
     }
 
     public static void rememberAttackFacing(AgentRuntimeEntry entry, int attackPacketStance) {
-        AgentBotMovementStateRuntime.setFacingDirection(entry,
+        AgentMovementStateRuntime.setFacingDirection(entry,
                 AgentAttackExecutionProvider.facingDirFromAttackPacketStance(attackPacketStance));
         AgentMovementPoseService.syncCharacterState(entry);
     }

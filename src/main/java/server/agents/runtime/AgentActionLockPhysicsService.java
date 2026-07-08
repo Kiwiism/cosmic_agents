@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -15,16 +15,16 @@ public final class AgentActionLockPhysicsService {
                                            Consumer<AgentRuntimeEntry> swimmingTick,
                                            Consumer<AgentRuntimeEntry> airborneTick,
                                            Consumer<AgentRuntimeEntry> groundedTick) {
-        if (!AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
+        if (!AgentCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return false;
         }
         if (swimMap.test(entry)
-                && AgentBotMovementStateRuntime.inAir(entry)
-                && !AgentBotMovementStateRuntime.climbing(entry)) {
+                && AgentMovementStateRuntime.inAir(entry)
+                && !AgentMovementStateRuntime.climbing(entry)) {
             swimmingTick.accept(entry);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
+        } else if (AgentMovementStateRuntime.inAir(entry)) {
             airborneTick.accept(entry);
-        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
+        } else if (!AgentMovementStateRuntime.climbing(entry)) {
             groundedTick.accept(entry);
         }
         return true;

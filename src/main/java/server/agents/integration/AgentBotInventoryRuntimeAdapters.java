@@ -38,18 +38,18 @@ public final class AgentBotInventoryRuntimeAdapters {
 
     public static AgentPassiveLootRuntimeService.RuntimeCallbacks passiveLootRuntimeCallbacks() {
         return AgentPassiveLootRuntimeService.RuntimeCallbacks.of(
-                AgentBotInventoryStateRuntime::hasLootInhibit,
-                entry -> AgentBotInventoryStateRuntime.tickLootInhibit(entry, AgentMovementTimers::tickDown),
-                AgentBotPendingTradeStateRuntime::hasActiveSequence,
-                entry -> AgentBotInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, AgentMovementTimers::tickDown),
+                AgentInventoryStateRuntime::hasLootInhibit,
+                entry -> AgentInventoryStateRuntime.tickLootInhibit(entry, AgentMovementTimers::tickDown),
+                AgentPendingTradeStateRuntime::hasActiveSequence,
+                entry -> AgentInventoryStateRuntime.tickInventoryFullWarnCooldown(entry, AgentMovementTimers::tickDown),
                 System::currentTimeMillis,
                 () -> AgentRuntimeConfig.cfg.LOOT_RADIUS,
-                AgentBotInventoryStateRuntime::canWarnInventoryFull,
+                AgentInventoryStateRuntime::canWarnInventoryFull,
                 AgentBotInventoryRuntime::replyNow,
                 () -> AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
-                AgentBotInventoryStateRuntime::setInventoryFullWarnCooldownMs,
+                AgentInventoryStateRuntime::setInventoryFullWarnCooldownMs,
                 AgentRuntimeIdentityRuntime::owner,
-                AgentBotOfferStateRuntime::pendingLootOfferItem,
+                AgentOfferStateRuntime::pendingLootOfferItem,
                 AgentInventoryItemPolicy::hasItem,
                 AgentEquipmentService::autoEquip,
                 AgentOfferService::scheduleLootOfferPrompt,
@@ -59,7 +59,7 @@ public final class AgentBotInventoryRuntimeAdapters {
 
     public static AgentManualTradeRuntimeService.RuntimeCallbacks manualTradeRuntimeCallbacks(AgentRuntimeEntry entry) {
         return AgentManualTradeRuntimeService.RuntimeCallbacks.of(
-                () -> AgentBotPendingTradeStateRuntime.hasActiveSequence(entry),
+                () -> AgentPendingTradeStateRuntime.hasActiveSequence(entry),
                 AgentMovementTimers::tickDown,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
                 peer -> peer.getClient() instanceof client.BotClient,

@@ -25,7 +25,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotManualTradeStateRuntime;
+import server.agents.integration.AgentManualTradeStateRuntime;
 import server.Trade;
 import server.maps.Foothold;
 import server.maps.MapItem;
@@ -109,14 +109,14 @@ class AgentInventoryLegacyParityTest {
         when(bot.getTrade()).thenReturn(trade);
 
         AgentInventoryTickRuntime.tickManualTrade(entry, bot);
-        AgentBotManualTradeStateRuntime.setTimeoutMs(entry, AgentMovementPhysicsConfig.configuredMovementTickMs());
+        AgentManualTradeStateRuntime.setTimeoutMs(entry, AgentMovementPhysicsConfig.configuredMovementTickMs());
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             AgentInventoryTickRuntime.tickManualTrade(entry, bot);
 
             trades.verify(() -> Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE));
-            assertNull(AgentBotManualTradeStateRuntime.tradeRef(entry));
-            assertEquals(0, AgentBotManualTradeStateRuntime.timeoutMs(entry));
+            assertNull(AgentManualTradeStateRuntime.tradeRef(entry));
+            assertEquals(0, AgentManualTradeStateRuntime.timeoutMs(entry));
         }
     }
 

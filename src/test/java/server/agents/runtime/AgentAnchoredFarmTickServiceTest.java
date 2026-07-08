@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ class AgentAnchoredFarmTickServiceTest {
     void mapMismatchClearsAnchorAndIdles() {
         AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(200);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
         List<String> calls = new ArrayList<>();
 
         AgentAnchoredFarmTickService.tickAnchoredFarm(
@@ -30,7 +30,7 @@ class AgentAnchoredFarmTickServiceTest {
                 true,
                 hooks(calls, false));
 
-        assertFalse(AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry));
+        assertFalse(AgentFarmAnchorStateRuntime.hasFarmAnchor(entry));
         assertEquals(List.of("idle"), calls);
     }
 
@@ -38,7 +38,7 @@ class AgentAnchoredFarmTickServiceTest {
     void consumedOpportunityAttackStopsTick() {
         AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
         List<String> calls = new ArrayList<>();
 
         AgentAnchoredFarmTickService.tickAnchoredFarm(
@@ -55,8 +55,8 @@ class AgentAnchoredFarmTickServiceTest {
     void alreadyAtAnchorClearsMoveTargetAndGroundIdles() {
         AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
-        AgentBotMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 300));
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 100), 100);
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(300, 300));
         List<String> calls = new ArrayList<>();
 
         AgentAnchoredFarmTickService.tickAnchoredFarm(
@@ -66,7 +66,7 @@ class AgentAnchoredFarmTickServiceTest {
                 false,
                 hooks(calls, false));
 
-        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry));
+        assertNull(AgentMoveTargetStateRuntime.moveTarget(entry));
         assertEquals(List.of("groundIdle"), calls);
     }
 
@@ -75,7 +75,7 @@ class AgentAnchoredFarmTickServiceTest {
         AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100);
         Point anchor = new Point(100, 100);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, anchor, 100);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, anchor, 100);
         List<String> calls = new ArrayList<>();
 
         AgentAnchoredFarmTickService.tickAnchoredFarm(
@@ -85,7 +85,7 @@ class AgentAnchoredFarmTickServiceTest {
                 false,
                 hooks(calls, false));
 
-        assertEquals(anchor, AgentBotMoveTargetStateRuntime.moveTarget(entry));
+        assertEquals(anchor, AgentMoveTargetStateRuntime.moveTarget(entry));
         assertEquals(List.of("move:100,100:false"), calls);
     }
 

@@ -3,7 +3,7 @@ package server.agents.plans;
 import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -22,10 +22,10 @@ class AgentScriptContextTest {
         AgentScriptContext context = context();
 
         context.queueMoveTo(new Point(10, 20), true);
-        AgentTask move = AgentBotScriptTaskStateRuntime.activateNextTask(context.entry());
-        AgentBotScriptTaskStateRuntime.clearActiveTask(context.entry());
+        AgentTask move = AgentScriptTaskStateRuntime.activateNextTask(context.entry());
+        AgentScriptTaskStateRuntime.clearActiveTask(context.entry());
         context.queueMoveToWithLocalCombat(new Point(30, 40), false);
-        AgentTask localMove = AgentBotScriptTaskStateRuntime.activateNextTask(context.entry());
+        AgentTask localMove = AgentScriptTaskStateRuntime.activateNextTask(context.entry());
 
         assertEquals(AgentTask.Type.MOVE_TO, move.type());
         assertTrue(move.precise());
@@ -112,8 +112,8 @@ class AgentScriptContextTest {
     }
 
     private static AgentTask nextTask(AgentScriptContext context) {
-        AgentTask task = AgentBotScriptTaskStateRuntime.activateNextTask(context.entry());
-        AgentBotScriptTaskStateRuntime.clearActiveTask(context.entry());
+        AgentTask task = AgentScriptTaskStateRuntime.activateNextTask(context.entry());
+        AgentScriptTaskStateRuntime.clearActiveTask(context.entry());
         return task;
     }
 

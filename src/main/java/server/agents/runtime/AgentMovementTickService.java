@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.awt.Point;
 
@@ -63,7 +63,7 @@ public final class AgentMovementTickService {
         }
 
         hooks.movementPhaseTick().tick(entry, steeringTarget, runAiTick);
-        if (runAiTick && !AgentBotMovementStateRuntime.inAir(entry) && !AgentBotMovementStateRuntime.climbing(entry)) {
+        if (runAiTick && !AgentMovementStateRuntime.inAir(entry) && !AgentMovementStateRuntime.climbing(entry)) {
             hooks.committedEdgeExecutor().tryExecute(entry, targetPosition);
         }
         hooks.stuckDetection().run(entry);

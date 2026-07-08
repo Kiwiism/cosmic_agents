@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -18,7 +18,7 @@ class AgentIdlePhysicsServiceTest {
     void tickIdleReturnsFalseWithoutPhysicsWhenAgentIsInActiveMode() {
         Character agent = characterWithStance(0);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
         Counters counters = new Counters();
 
         boolean consumed = AgentIdlePhysicsService.tickIdleEntry(entry, agent, hooks(counters, false, 0, 0));
@@ -31,7 +31,7 @@ class AgentIdlePhysicsServiceTest {
     void tickIdleConsumesAndTicksSwimmingWhenInAirOnSwimMap() {
         Character agent = characterWithStance(0);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
         boolean consumed = AgentIdlePhysicsService.tickIdleEntry(entry, agent, hooks(counters, true, 0, 0));
@@ -45,7 +45,7 @@ class AgentIdlePhysicsServiceTest {
     void physicsOnlyTicksAirborneWhenInAirOutsideSwimMap() {
         Character agent = characterWithStance(0);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
         AgentIdlePhysicsService.tickPhysicsOnly(entry, agent, hooks(counters, false, 0, 0));

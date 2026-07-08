@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFormationStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
@@ -65,7 +65,7 @@ public final class AgentFormationService {
             return;
         }
         for (int i = 0; i < entries.size(); i++) {
-            AgentBotFormationStateRuntime.setFollowOffsetX(entries.get(i), formation.offsetFor(i, entries.size()));
+            AgentFormationStateRuntime.setFollowOffsetX(entries.get(i), formation.offsetFor(i, entries.size()));
         }
     }
 }

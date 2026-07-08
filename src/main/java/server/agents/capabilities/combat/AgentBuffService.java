@@ -11,8 +11,8 @@ import net.server.channel.handlers.UseItemHandler;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.integration.AgentBotBuffStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
+import server.agents.integration.AgentBuffStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.StatEffect;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
@@ -54,15 +54,15 @@ public final class AgentBuffService {
     private AgentBuffService() {}
 
     public static void tick(AgentRuntimeEntry entry, Character bot) {
-        if (!AgentBotBuffStateRuntime.enabled(entry)) return;
+        if (!AgentBuffStateRuntime.enabled(entry)) return;
 
         long now = System.currentTimeMillis();
-        if (!AgentBotBuffStateRuntime.scanDue(entry, now, TICK_MS)) return;
-        AgentBotBuffStateRuntime.markScanned(entry, now);
+        if (!AgentBuffStateRuntime.scanDue(entry, now, TICK_MS)) return;
+        AgentBuffStateRuntime.markScanned(entry, now);
 
         if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
 
-        List<SelectedBuff> selected = buildSelection(bot, AgentBotBuffStateRuntime.cheapMode(entry));
+        List<SelectedBuff> selected = buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry));
         if (selected.isEmpty()) {
             noteDecision(entry, "no buff pots in bag");
             return;
@@ -103,16 +103,16 @@ public final class AgentBuffService {
 
     public static List<String> getDebugLines(AgentRuntimeEntry entry, Character bot) {
         return AgentBuffDialogueReporter.debugLines(
-                AgentBotBuffStateRuntime.enabled(entry),
-                AgentBotBuffStateRuntime.cheapMode(entry),
+                AgentBuffStateRuntime.enabled(entry),
+                AgentBuffStateRuntime.cheapMode(entry),
                 summarizeActive(collectActiveItemBuffs(bot), 5, bot),
-                summarizeAvailable(buildSelection(bot, AgentBotBuffStateRuntime.cheapMode(entry)), 5, bot));
+                summarizeAvailable(buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry)), 5, bot));
     }
 
     public static String formatDebugState(AgentRuntimeEntry entry) {
         return AgentBuffDialogueReporter.debugState(
-                AgentBotBuffStateRuntime.enabled(entry),
-                AgentBotBuffStateRuntime.cheapMode(entry));
+                AgentBuffStateRuntime.enabled(entry),
+                AgentBuffStateRuntime.cheapMode(entry));
     }
 
     private static List<SelectedBuff> buildSelection(Character bot, boolean cheapMode) {
@@ -172,7 +172,7 @@ public final class AgentBuffService {
     }
 
     private static boolean needsAccBuff(AgentRuntimeEntry entry, Character bot) {
-        Monster ref = AgentBotGrindTargetStateRuntime.target(entry);
+        Monster ref = AgentGrindTargetStateRuntime.target(entry);
         if (ref == null) {
             for (Monster monster : bot.getMap().getAllMonsters()) {
                 if (monster.isAlive()) {
@@ -337,7 +337,7 @@ public final class AgentBuffService {
     }
 
     private static void noteDecision(AgentRuntimeEntry entry, String summary) {
-        AgentBotBuffStateRuntime.noteDecision(entry, System.currentTimeMillis(), summary);
+        AgentBuffStateRuntime.noteDecision(entry, System.currentTimeMillis(), summary);
     }
 
     private static String itemName(int itemId) {

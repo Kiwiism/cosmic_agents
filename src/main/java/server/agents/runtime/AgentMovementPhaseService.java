@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.awt.Point;
 import java.util.function.BiPredicate;
@@ -33,11 +33,11 @@ public final class AgentMovementPhaseService {
                                          Point targetPosition,
                                          boolean runAiTick,
                                          MovementPhaseHooks hooks) {
-        if (AgentBotMovementStateRuntime.climbing(entry)) {
+        if (AgentMovementStateRuntime.climbing(entry)) {
             hooks.climbingTick().tick(entry, targetPosition, runAiTick);
-        } else if (hooks.swimMap().test(entry, targetPosition) && AgentBotMovementStateRuntime.inAir(entry)) {
+        } else if (hooks.swimMap().test(entry, targetPosition) && AgentMovementStateRuntime.inAir(entry)) {
             hooks.swimmingTick().tick(entry, targetPosition);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
+        } else if (AgentMovementStateRuntime.inAir(entry)) {
             hooks.airborneTick().tick(entry, targetPosition);
         } else {
             hooks.groundedTick().tick(entry, targetPosition);

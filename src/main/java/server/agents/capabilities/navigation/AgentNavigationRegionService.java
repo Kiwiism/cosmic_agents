@@ -3,14 +3,14 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import constants.game.CharacterStance;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -30,18 +30,18 @@ public final class AgentNavigationRegionService {
                                              AgentRuntimeEntry entry,
                                              MapleMap map,
                                              Point botPos) {
-        if (AgentBotClimbStateRuntime.climbing(entry) || (AgentRuntimeIdentityRuntime.hasBot(entry) && CharacterStance.isClimbing(AgentRuntimeIdentityRuntime.bot(entry).getStance()))) {
+        if (AgentClimbStateRuntime.climbing(entry) || (AgentRuntimeIdentityRuntime.hasBot(entry) && CharacterStance.isClimbing(AgentRuntimeIdentityRuntime.bot(entry).getStance()))) {
             // Rope climbing state is authoritative. Ground lookup below a rope often resolves to
             // the nearby platform instead of the rope region, which can replan from the wrong side
             // of the rope and bounce between entry/exit climb edges.
-            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+            Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             int ropeX = climbRope != null ? climbRope.x() : botPos.x;
             int ropeRegionId = graph.findRopeRegionId(new Point(ropeX, botPos.y));
             if (ropeRegionId >= 0) {
                 return ropeRegionId;
             }
         }
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)) {
             // Airborne points do not have a meaningful "current region". A ground lookup from an
             // in-flight point resolves to whatever foothold is below the arc, which can be an
             // unrelated upper platform. That makes runtime navigation discard the committed jump
@@ -64,11 +64,11 @@ public final class AgentNavigationRegionService {
                 ? List.of()
                 : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());
         Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
-        if (AgentBotModeStateRuntime.following(entry)
-                && !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                && !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)
-                && !AgentBotShopStateRuntime.shopVisitPending(entry)
-                && !AgentBotModeStateRuntime.grinding(entry)
+        if (AgentModeStateRuntime.following(entry)
+                && !AgentMoveTargetStateRuntime.hasMoveTarget(entry)
+                && !AgentFarmAnchorStateRuntime.hasFarmAnchor(entry)
+                && !AgentShopStateRuntime.shopVisitPending(entry)
+                && !AgentModeStateRuntime.grinding(entry)
                 && followAnchor != null
                 && followAnchor.getMap() == map) {
             // Follow mode + owner climbing: prioritise a rope target. The follow

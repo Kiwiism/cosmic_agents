@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentDeathStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,7 +43,7 @@ class AgentDeathTickRuntimeTest {
                 () -> true,
                 (deadEntry, deadAgent) -> {
                     deadEntries.incrementAndGet();
-                    AgentBotDeathStateRuntime.enterDeadState(deadEntry, 1_000L, 500L);
+                    AgentDeathStateRuntime.enterDeadState(deadEntry, 1_000L, 500L);
                 },
                 respawns::incrementAndGet,
                 () -> 1_500L);

@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotFormationStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
 import server.agents.runtime.AgentFormationService.FormationState;
 import server.agents.runtime.AgentFormationService.FormationType;
 
@@ -37,8 +37,8 @@ class AgentFormationServiceTest {
         AgentFormationService.applyOffsets(
                 List.of(first, second), new FormationState(FormationType.STAGGER, 60, 120));
 
-        assertEquals(60, AgentBotFormationStateRuntime.followOffsetX(first));
-        assertEquals(-60, AgentBotFormationStateRuntime.followOffsetX(second));
+        assertEquals(60, AgentFormationStateRuntime.followOffsetX(first));
+        assertEquals(-60, AgentFormationStateRuntime.followOffsetX(second));
     }
 
     @Test

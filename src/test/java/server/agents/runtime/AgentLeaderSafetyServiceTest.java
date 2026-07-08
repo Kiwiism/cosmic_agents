@@ -2,12 +2,12 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotBuffStateRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.integration.AgentBuffStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -81,64 +81,64 @@ class AgentLeaderSafetyServiceTest {
     @Test
     void preparesInactiveIdleWithLegacyResetOrderAndState() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
-        AgentBotGrindTargetStateRuntime.setTarget(entry, livingMonster());
-        AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
-        AgentBotBuffStateRuntime.setEnabled(entry, true);
-        AgentBotScriptTaskStateRuntime.queueTask(entry, AgentTask.stop());
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        AgentGrindTargetStateRuntime.setTarget(entry, livingMonster());
+        AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+        AgentBuffStateRuntime.setEnabled(entry, true);
+        AgentScriptTaskStateRuntime.queueTask(entry, AgentTask.stop());
         AtomicInteger order = new AtomicInteger();
 
         AgentLeaderSafetyService.prepareInactiveIdle(
                 entry,
                 () -> {
                     assertEquals(0, order.getAndIncrement());
-                    AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
+                    AgentScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
                 },
                 () -> assertEquals(1, order.getAndIncrement()),
                 () -> assertEquals(2, order.getAndIncrement()));
 
         assertEquals(3, order.get());
-        assertFalse(AgentBotScriptTaskStateRuntime.hasQueuedTasks(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
-        assertNull(AgentBotGrindTargetStateRuntime.target(entry));
-        assertFalse(AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry));
-        assertFalse(AgentBotBuffStateRuntime.enabled(entry));
-        assertTrue(AgentBotActivityStateRuntime.ownerAwaySafeMode(entry));
+        assertFalse(AgentScriptTaskStateRuntime.hasQueuedTasks(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertNull(AgentGrindTargetStateRuntime.target(entry));
+        assertFalse(AgentDegenerateAttackStateRuntime.degenAttackDone(entry));
+        assertFalse(AgentBuffStateRuntime.enabled(entry));
+        assertTrue(AgentActivityStateRuntime.ownerAwaySafeMode(entry));
     }
 
     @Test
     void activeLeaderReturnDoesNothingForAwaySafeModeWithoutTimer() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+        AgentActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
         Counters counters = new Counters();
 
         AgentLeaderSafetyService.handleActiveLeaderReturn(
                 entry, () -> clearMoveTarget(entry, counters), counters::removeAnchor, counters::announce);
 
         counters.assertCounts(0, 0, 0);
-        assertTrue(AgentBotActivityStateRuntime.ownerAwaySafeMode(entry));
+        assertTrue(AgentActivityStateRuntime.ownerAwaySafeMode(entry));
     }
 
     @Test
     void activeLeaderReturnClearsTimerAndMoveTargetWithoutAnnouncementWhenNotReturnedToTown() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        AgentActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
         Counters counters = new Counters();
 
         AgentLeaderSafetyService.handleActiveLeaderReturn(
                 entry, () -> clearMoveTarget(entry, counters), counters::removeAnchor, counters::announce);
 
         counters.assertCounts(1, 1, 0);
-        assertFalse(AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertFalse(AgentActivityStateRuntime.ownerInactiveTimerStarted(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
     }
 
     @Test
     void activeLeaderReturnAnnouncesOnlyWhenReturnedToTownAnchorWasRemoved() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        AgentActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
         Counters counters = new Counters();
         counters.anchor.set(new Point(50, 60));
 
@@ -146,8 +146,8 @@ class AgentLeaderSafetyServiceTest {
                 entry, () -> clearMoveTarget(entry, counters), counters::removeAnchor, counters::announce);
 
         counters.assertCounts(1, 1, 1);
-        assertFalse(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertFalse(AgentActivityStateRuntime.ownerReturnedToTown(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
     }
 
     @Test
@@ -157,13 +157,13 @@ class AgentLeaderSafetyServiceTest {
         boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 1_000L, 5_000L);
 
         assertFalse(enterSafeMode);
-        assertEquals(1_000L, AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
+        assertEquals(1_000L, AgentActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
     }
 
     @Test
     void inactiveLeaderWaitsUntilConfiguredDelayElapses() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
+        AgentActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
 
         assertFalse(AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 5_999L, 5_000L));
         assertTrue(AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 6_000L, 5_000L));
@@ -219,7 +219,7 @@ class AgentLeaderSafetyServiceTest {
 
         assertFalse(consumed);
         assertEquals(0, safeModes.get());
-        assertEquals(1_000L, AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
+        assertEquals(1_000L, AgentActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
     }
 
     @Test
@@ -227,7 +227,7 @@ class AgentLeaderSafetyServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character leader = mock(Character.class);
         when(leader.getHp()).thenReturn(0);
-        AgentBotActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
+        AgentActivityStateRuntime.startOwnerInactiveTimer(entry, 1_000L);
         AtomicReference<Boolean> townDecisionSeen = new AtomicReference<>();
 
         boolean consumed = AgentLeaderSafetyService.handleInactiveLeaderTick(
@@ -252,24 +252,24 @@ class AgentLeaderSafetyServiceTest {
     @Test
     void returnedToTownAwaySafeModeStartsTimerButDoesNotReenterSafeMode() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
-        AgentBotActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
+        AgentActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentActivityStateRuntime.setOwnerAwaySafeMode(entry, true);
 
         boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 2_000L, 5_000L);
 
         assertFalse(enterSafeMode);
-        assertEquals(2_000L, AgentBotActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
+        assertEquals(2_000L, AgentActivityStateRuntime.ownerOfflineOrDeadSinceMs(entry));
     }
 
     @Test
     void returnedToTownWithoutAwaySafeModeDoesNotStartTimer() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotActivityStateRuntime.setOwnerReturnedToTown(entry, true);
+        AgentActivityStateRuntime.setOwnerReturnedToTown(entry, true);
 
         boolean enterSafeMode = AgentLeaderSafetyService.shouldEnterInactiveSafeMode(entry, 2_000L, 5_000L);
 
         assertFalse(enterSafeMode);
-        assertFalse(AgentBotActivityStateRuntime.ownerInactiveTimerStarted(entry));
+        assertFalse(AgentActivityStateRuntime.ownerInactiveTimerStarted(entry));
     }
 
     @Test
@@ -283,7 +283,7 @@ class AgentLeaderSafetyServiceTest {
                 () -> assertEquals(1, order.getAndIncrement()));
 
         assertEquals(2, order.get());
-        assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
+        assertTrue(AgentActivityStateRuntime.ownerReturnedToTown(entry));
     }
 
     @Test
@@ -351,7 +351,7 @@ class AgentLeaderSafetyServiceTest {
 
         AgentLeaderSafetyService.markInactiveTownReturnHandled(entry);
 
-        assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
+        assertTrue(AgentActivityStateRuntime.ownerReturnedToTown(entry));
     }
 
     @Test
@@ -365,7 +365,7 @@ class AgentLeaderSafetyServiceTest {
                 () -> assertEquals(1, order.getAndIncrement()));
 
         assertEquals(2, order.get());
-        assertTrue(AgentBotActivityStateRuntime.ownerReturnedToTown(entry));
+        assertTrue(AgentActivityStateRuntime.ownerReturnedToTown(entry));
     }
 
     @Test
@@ -583,7 +583,7 @@ class AgentLeaderSafetyServiceTest {
 
     private static void clearMoveTarget(AgentRuntimeEntry entry, Counters counters) {
         counters.clearMoveTarget();
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
     private static final class Counters {

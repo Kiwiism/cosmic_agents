@@ -7,7 +7,7 @@ import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -40,15 +40,15 @@ public final class AgentSupplyShareTradeService {
                                                  int maxQty) {
         if (items.isEmpty()) return;
         if (agent.getTrade() != null
-                || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)
+                || AgentPendingTradeStateRuntime.hasActiveSequence(entry)
                 || recipient.getTrade() != null) {
-            AgentBotPendingTradeStateRuntime.queueRetry(
+            AgentPendingTradeStateRuntime.queueRetry(
                     entry,
                     () -> startSupplyShareTransfer(category, items, recipient, entry, agent, maxQty),
                     AgentMovementTimers.delayAfterCurrentTick(10_000));
             return;
         }
-        AgentBotPendingTradeStateRuntime.setShareBudget(entry, maxQty);
+        AgentPendingTradeStateRuntime.setShareBudget(entry, maxQty);
         startTradeSequence(category, recipient, items, entry, agent);
     }
 

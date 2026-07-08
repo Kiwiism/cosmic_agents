@@ -8,9 +8,9 @@ import server.agents.capabilities.combat.data.AgentMobHitboxProvider;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -26,9 +26,9 @@ public final class AgentMobAvoidanceService {
                 || currentFoothold == null || botPos == null || stepX == 0) {
             return false;
         }
-        if ((!AgentBotModeStateRuntime.following(entry) && !AgentBotModeStateRuntime.grinding(entry))
-                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)) {
+        if ((!AgentModeStateRuntime.following(entry) && !AgentModeStateRuntime.grinding(entry))
+                || AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || AgentNavigationDebugStateRuntime.navPreciseTarget(entry)) {
             return false;
         }
 
@@ -44,7 +44,7 @@ public final class AgentMobAvoidanceService {
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         int direction = Integer.signum(stepX);
         int lookahead = Math.max(Math.abs(stepX),
-                AgentMovementKinematicsService.walkStep(map, AgentBotMovementStateRuntime.movementProfile(entry))
+                AgentMovementKinematicsService.walkStep(map, AgentMovementStateRuntime.movementProfile(entry))
                         * Math.max(1, AgentMovementPhysicsConfig.configuredMobAvoidLookaheadSteps()));
         int laneEndX = botPos.x + direction * lookahead;
         Rectangle lane = inclusiveRectangle(
@@ -86,7 +86,7 @@ public final class AgentMobAvoidanceService {
         }
 
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(
-                map, AgentBotMovementStateRuntime.movementProfile(entry));
+                map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return false;
         }
@@ -99,14 +99,14 @@ public final class AgentMobAvoidanceService {
 
     static boolean simulatedJumpLandsInCurrentRegion(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, int stepX) {
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
-        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
+        AgentMovementProfile profile = AgentMovementStateRuntime.movementProfile(entry);
         int airVelX = AgentJumpActionService.resolveAirVelocityX(map, profile, stepX);
         AgentJumpLanding landing = AgentJumpProbeService.simulateJumpLanding(map, botPos, airVelX, profile);
         if (landing == null || landing.point() == null || landing.foothold() == null) {
             return false;
         }
 
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return landing.foothold().getId() == currentFoothold.getId();
         }

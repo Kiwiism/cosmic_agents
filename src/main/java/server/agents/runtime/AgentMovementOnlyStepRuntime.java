@@ -1,9 +1,9 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 
 import java.awt.Point;
 
@@ -32,7 +32,7 @@ public final class AgentMovementOnlyStepRuntime {
         AgentTargetSnapshot targetSnapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
         Point leaderPosition = targetSnapshot.rawOwnerPos();
         AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, leaderPosition);
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, leaderPosition);
+        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, leaderPosition);
         stepMovementOnly(entry, targetSnapshot.primaryTargetPos(), runAiTick, config);
         return runAiTick;
     }
@@ -51,7 +51,7 @@ public final class AgentMovementOnlyStepRuntime {
                 entry,
                 targetPosition,
                 runAiTick,
-                AgentBotTickStateRuntime.lastTickAtMs(entry),
+                AgentTickStateRuntime.lastTickAtMs(entry),
                 AgentTargetSnapshotRuntime::resolveFollowAnchor,
                 config.movementOnlyConfig());
     }

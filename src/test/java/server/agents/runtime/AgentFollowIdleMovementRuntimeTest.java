@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 
 import java.awt.Point;
 
@@ -16,7 +16,7 @@ class AgentFollowIdleMovementRuntimeTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(80, 100));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         assertTrue(AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(
                 entry,

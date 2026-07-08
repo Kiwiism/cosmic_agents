@@ -8,12 +8,12 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotDeathStateRuntime;
-import server.agents.integration.AgentBotMapStateRuntime;
-import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentDeathStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
+import server.agents.integration.AgentMovementBroadcastStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
+import server.agents.integration.AgentTickCadenceStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -41,17 +41,17 @@ public final class AgentSpawnPlacementRuntime {
                 AgentSpawnPositionService::resolveSpawnPosition,
                 AgentMovementPoseService::teleportTo,
                 AgentMovementStateResetService::resetEntryStateAfterTeleport,
-                AgentBotDeathStateRuntime::clear,
-                (entry, map, mapId) -> AgentBotMapStateRuntime.setMapTracking(
+                AgentDeathStateRuntime::clear,
+                (entry, map, mapId) -> AgentMapStateRuntime.setMapTracking(
                         entry,
                         mapId,
                         map != null && map.getFootholds() != null ? AgentFootholdIndexService.buildFhIndex(map) : null),
                 (entry, map) -> AgentNavigationGraphService.warmGraphAsync(
                         map,
-                        AgentBotMovementStateRuntime.movementProfile(entry)),
-                AgentBotTickCadenceStateRuntime::reset,
-                AgentBotMovementStateRuntime::clearMoveDirection,
-                AgentBotMovementBroadcastStateRuntime::invalidate,
+                        AgentMovementStateRuntime.movementProfile(entry)),
+                AgentTickCadenceStateRuntime::reset,
+                AgentMovementStateRuntime::clearMoveDirection,
+                AgentMovementBroadcastStateRuntime::invalidate,
                 AgentMovementBroadcastService::broadcastMovement,
                 Character::updatePartyMemberHP,
                 AgentPartyLifecycleService::joinAgentToLeaderParty);

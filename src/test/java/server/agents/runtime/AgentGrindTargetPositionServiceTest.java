@@ -3,8 +3,8 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.looting.AgentLootEligibility;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -34,7 +34,7 @@ class AgentGrindTargetPositionServiceTest {
                 STOP_DISTANCE,
                 RETRY_SUPPRESS_MS,
                 (graph, e, map, position) -> -1);
-        int direction = AgentBotGrindWanderStateRuntime.wanderDirection(entry);
+        int direction = AgentGrindWanderStateRuntime.wanderDirection(entry);
         Point second = AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
                 entry,
                 agentPosition,
@@ -56,7 +56,7 @@ class AgentGrindTargetPositionServiceTest {
         when(agent.getMap()).thenReturn(map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem loot = mockLoot(7, new Point(100 + LOOT_RADIUS, 100));
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         when(map.getMapObject(7)).thenReturn(loot);
 
         Point target = AgentGrindTargetPositionService.activeGrindLootPosition(
@@ -66,8 +66,8 @@ class AgentGrindTargetPositionServiceTest {
                 RETRY_SUPPRESS_MS);
 
         assertNull(target);
-        assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(entry));
-        assertTrue(AgentBotGrindLootStateRuntime.isRetrySuppressed(entry, loot, System.currentTimeMillis()));
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
+        assertTrue(AgentGrindLootStateRuntime.isRetrySuppressed(entry, loot, System.currentTimeMillis()));
     }
 
     @Test
@@ -90,7 +90,7 @@ class AgentGrindTargetPositionServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Point lootPosition = new Point(221, 100);
         MapItem loot = mockLoot(8, lootPosition);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, loot);
         when(map.getMapObject(8)).thenReturn(loot);
 
         assertEquals(lootPosition, AgentGrindTargetPositionService.convenientLootTarget(

@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Portal;
 
@@ -18,14 +18,14 @@ public final class AgentNavigationPortalService {
     }
 
     public static boolean tryExecutePortal(AgentRuntimeEntry entry, Character agent, int portalId) {
-        if (AgentBotNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
+        if (AgentNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
             return false;
         }
         if (!usePortal(agent, portalId)) {
             return false;
         }
 
-        AgentBotNavigationDebugStateRuntime.setPortalUseCooldownUntilMs(
+        AgentNavigationDebugStateRuntime.setPortalUseCooldownUntilMs(
                 entry, System.currentTimeMillis() + PORTAL_USE_COOLDOWN_MS);
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentMovementStateResetService.resetEntryState(entry);

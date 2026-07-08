@@ -49,24 +49,24 @@ public final class AgentBotCombatAmmoCheckRuntime {
                 mpPotionCount,
                 ammo,
                 ammoLowWarn,
-                AgentBotAmmoStateRuntime.ammoWarnSent(entry),
-                AgentBotAmmoStateRuntime.noAmmo(entry));
+                AgentAmmoStateRuntime.ammoWarnSent(entry),
+                AgentAmmoStateRuntime.noAmmo(entry));
         switch (decision) {
-            case CLEAR_WARNING_STATE -> AgentBotAmmoStateRuntime.clearAmmoWarningState(entry);
+            case CLEAR_WARNING_STATE -> AgentAmmoStateRuntime.clearAmmoWarningState(entry);
             case MAGE_NO_MP_POTS -> {
-                AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
-                if (AgentBotModeStateRuntime.grinding(entry)) {
+                AgentAmmoStateRuntime.setNoAmmo(entry, true);
+                if (AgentModeStateRuntime.grinding(entry)) {
                     AgentBotMovementCommandRuntime.followOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatMpPotsOutReplies()));
                 }
             }
             case PROJECTILE_LOW_AMMO -> {
-                AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
+                AgentAmmoStateRuntime.setAmmoWarnSent(entry, true);
                 AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoLowReplies()));
             }
             case PROJECTILE_NO_AMMO -> {
-                AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
-                if (AgentBotModeStateRuntime.grinding(entry)) {
+                AgentAmmoStateRuntime.setNoAmmo(entry, true);
+                if (AgentModeStateRuntime.grinding(entry)) {
                     AgentBotMovementCommandRuntime.followOwner(entry);
                     AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatAmmoOutReplies()));
                 }

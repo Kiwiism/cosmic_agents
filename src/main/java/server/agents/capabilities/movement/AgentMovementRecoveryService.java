@@ -2,8 +2,8 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotMovementStuckStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentMovementStuckStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -18,13 +18,13 @@ public final class AgentMovementRecoveryService {
      */
     public static void tickUnstuck(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
-        int walkStep = AgentMovementKinematicsService.walkStep(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        int walkStep = AgentMovementKinematicsService.walkStep(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         switch (ThreadLocalRandom.current().nextInt(2)) {
             case 0 -> AgentRopeMovementService.beginGroundJump(entry, agent, -walkStep);
             default -> AgentRopeMovementService.beginGroundJump(entry, agent, walkStep);
         }
         AgentMovementStateResetService.clearNavigationState(entry);
-        AgentBotMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
+        AgentMovementStuckStateRuntime.setUnstuckCooldownMs(entry, AgentMovementTimers.delayAfterCurrentTick(5000));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 }

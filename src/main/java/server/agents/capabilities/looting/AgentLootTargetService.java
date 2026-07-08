@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
@@ -82,7 +82,7 @@ public final class AgentLootTargetService {
 
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
                 map,
-                AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) return null;
 
         Set<Integer> allowed = new HashSet<>();

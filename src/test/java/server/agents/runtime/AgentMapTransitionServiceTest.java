@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMapStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -24,7 +24,7 @@ class AgentMapTransitionServiceTest {
         MapleMap map = map(100000000);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
+        AgentMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
         Counters counters = new Counters();
 
         boolean grounded = AgentMapTransitionService.groundAfterMapChange(entry, agent, hooks(counters, null));
@@ -44,7 +44,7 @@ class AgentMapTransitionServiceTest {
         boolean grounded = AgentMapTransitionService.groundAfterMapChange(entry, agent, hooks(counters, ground));
 
         assertTrue(grounded);
-        assertTrue(AgentBotMapStateRuntime.isTrackingMap(entry, map.getId()));
+        assertTrue(AgentMapStateRuntime.isTrackingMap(entry, map.getId()));
         assertEquals(new Point(10, 19), counters.groundQuery.get());
         assertEquals(ground, counters.teleportPoint.get());
         assertEquals(1, counters.resets.get());
@@ -122,7 +122,7 @@ class AgentMapTransitionServiceTest {
         MapleMap map = map(100000006);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
+        AgentMapStateRuntime.setMapTracking(entry, map.getId(), Map.of());
         Counters counters = new Counters();
 
         boolean handled = AgentMapTransitionService.handleTrackedMapChange(

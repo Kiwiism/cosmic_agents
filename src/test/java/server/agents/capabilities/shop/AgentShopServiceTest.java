@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentBotShopRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -79,7 +79,7 @@ class AgentShopServiceTest {
             AgentShopService.onMapChange(entry, bot);
         }
 
-        assertFalse(AgentBotShopStateRuntime.shopVisitPending(entry));
+        assertFalse(AgentShopStateRuntime.shopVisitPending(entry));
     }
 
     @Test
@@ -107,7 +107,7 @@ class AgentShopServiceTest {
             AgentShopService.onMapChange(entry, bot);
         }
 
-        assertTrue(AgentBotShopStateRuntime.shopVisitPending(entry));
+        assertTrue(AgentShopStateRuntime.shopVisitPending(entry));
     }
 
     @Test
@@ -174,9 +174,9 @@ class AgentShopServiceTest {
             AgentShopService.requestSellTrashVisit(entry, bot);
         }
 
-        assertTrue(AgentBotShopStateRuntime.shopVisitPending(entry));
-        assertTrue(AgentBotShopStateRuntime.shopSellTrashPending(entry));
-        assertEquals(new Point(20, 0), AgentBotShopStateRuntime.shopNpcPosition(entry));
+        assertTrue(AgentShopStateRuntime.shopVisitPending(entry));
+        assertTrue(AgentShopStateRuntime.shopSellTrashPending(entry));
+        assertEquals(new Point(20, 0), AgentShopStateRuntime.shopNpcPosition(entry));
     }
 
     private static Character clawBotWithStars(int... quantities) {
@@ -253,7 +253,7 @@ class AgentShopServiceTest {
             AgentShopService.onMapChange(entry, bot);
         }
 
-        return AgentBotShopStateRuntime.shopVisitPending(entry);
+        return AgentShopStateRuntime.shopVisitPending(entry);
     }
 
     private static NPC shopNpc(Point position) {

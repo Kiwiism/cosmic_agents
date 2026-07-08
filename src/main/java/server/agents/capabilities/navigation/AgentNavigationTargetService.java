@@ -3,11 +3,11 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -31,7 +31,7 @@ public final class AgentNavigationTargetService {
         try {
             Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             if (bot.getMap().getFootholds() == null) {
-                AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
+                AgentNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
                 AgentMovementStateResetService.clearNavigationState(entry);
                 return new NavigationDirective(rawTargetPos, false);
             }
@@ -42,29 +42,29 @@ public final class AgentNavigationTargetService {
                 // it walks off ledges into water, picks up nearby ropes, and jumps onto
                 // higher platforms when useful. tickSwimming consults targetPos directly,
                 // so the same rawTargetPos works for both grounded and airborne paths.
-                AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+                AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 AgentMovementStateResetService.clearNavigationState(entry);
                 return new NavigationDirective(rawTargetPos, false);
             }
 
-            AgentNavigationGraph graph = resolveActiveGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraph graph = resolveActiveGraph(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
             if (graph == null) {
-                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-                AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+                AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 AgentNavigationWarmupService.notifyWarmup(entry, bot);
-                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
                 AgentMovementStateResetService.clearNavigationState(entry);
                 Point fallbackTarget = rawTargetPos != null ? new Point(rawTargetPos) : bot.getPosition();
-                AgentBotNavigationDebugStateRuntime.recordPathLog(entry,
+                AgentNavigationDebugStateRuntime.recordPathLog(entry,
                         AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
                         -1, false, runAiTick);
                 return new NavigationDirective(fallbackTarget, false);
             }
-            if (AgentNavigationGraphService.peekGraph(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry)) == null) {
-                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
-                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
+            if (AgentNavigationGraphService.peekGraph(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry)) == null) {
+                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
             }
-            AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
+            AgentNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
             Point botPos = bot.getPosition();
             int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, bot.getMap(), botPos);
             int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
@@ -95,17 +95,17 @@ public final class AgentNavigationTargetService {
                 // an empty path when direct walk wins, falling through to direct steering.
                 edge = AgentNavigationPathService.findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
-                    AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
-                    AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+                    AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+                    AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
                 }
             }
 
             if (edge == null) {
-                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, !runAiTick ? "no-ai"
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, !runAiTick ? "no-ai"
                         : startRegionId < 0 || targetRegionId < 0 ? "no-region"
                         : startRegionId == targetRegionId ? "same-region" : "no-path");
                 AgentMovementStateResetService.clearNavigationState(entry);
-                AgentBotNavigationDebugStateRuntime.recordPathLog(entry,
+                AgentNavigationDebugStateRuntime.recordPathLog(entry,
                         AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
                         startRegionId, false, runAiTick);
                 return new NavigationDirective(rawTargetPos, false);
@@ -113,22 +113,22 @@ public final class AgentNavigationTargetService {
 
             NavigationDirective executionDirective = tryExecuteEdge(graph, entry, bot, botPos, rawTargetPos, edge, runAiTick);
             if (executionDirective != null) {
-                AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "exec");
-                AgentBotNavigationDebugStateRuntime.recordPathLog(entry,
+                AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
+                AgentNavigationDebugStateRuntime.recordPathLog(entry,
                         AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
                         startRegionId, true, runAiTick);
                 return executionDirective;
             }
 
-            AgentBotNavigationDebugStateRuntime.setLastDecision(entry, edgeReused ? "reuse" : "new");
-            AgentBotNavigationDebugStateRuntime.setNavWaypoint(
+            AgentNavigationDebugStateRuntime.setLastDecision(entry, edgeReused ? "reuse" : "new");
+            AgentNavigationDebugStateRuntime.setNavWaypoint(
                     entry,
                     selectWaypoint(entry, graph, botPos, edge),
                     shouldUsePreciseTarget(graph, entry, botPos, edge));
-            AgentBotNavigationDebugStateRuntime.recordPathLog(entry,
+            AgentNavigationDebugStateRuntime.recordPathLog(entry,
                     AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
                     startRegionId, false, runAiTick);
-            return new NavigationDirective(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry), false);
+            return new NavigationDirective(AgentNavigationDebugStateRuntime.navTargetPosition(entry), false);
         } finally {
             AgentPerformanceMonitor.record("nav-resolve", System.nanoTime() - startedAt);
         }
@@ -137,9 +137,9 @@ public final class AgentNavigationTargetService {
     public static boolean tryExecuteCommittedEdgeAfterGroundMovement(AgentRuntimeEntry entry, Point rawTargetPos) {
         if (entry == null
                 || !AgentRuntimeIdentityRuntime.hasBot(entry)
-                || !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                || AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotClimbStateRuntime.climbing(entry)) {
+                || !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentClimbStateRuntime.climbing(entry)) {
             return false;
         }
 
@@ -151,18 +151,18 @@ public final class AgentNavigationTargetService {
         // sending the bot out of the map.
         AgentNavigationGraph graph = resolveActiveGraph(
                 AgentRuntimeIdentityRuntime.botMap(entry),
-                AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             AgentNavigationGraphService.warmGraphAsync(
                     AgentRuntimeIdentityRuntime.botMap(entry),
-                    AgentBotMovementStateRuntime.movementProfile(entry));
+                    AgentMovementStateRuntime.movementProfile(entry));
             return false;
         }
         Point botPos = AgentRuntimeIdentityRuntime.bot(entry).getPosition();
         int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(
                 graph, entry, AgentRuntimeIdentityRuntime.botMap(entry), botPos);
         AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
-                AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
+                AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
         if (edge == null) {
             AgentMovementStateResetService.clearNavigationState(entry);
             return false;
@@ -174,7 +174,7 @@ public final class AgentNavigationTargetService {
             return false;
         }
 
-        AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "exec");
+        AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
         return true;
     }
 
@@ -297,10 +297,10 @@ public final class AgentNavigationTargetService {
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
             case CLIMB -> AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);
-            case JUMP -> AgentBotMovementStateRuntime.inAir(entry)
+            case JUMP -> AgentMovementStateRuntime.inAir(entry)
                     ? new Point(edge.endPoint) : selectJumpWaypoint(graph, entry, botPos, edge);
             case DROP -> AgentNavigationWaypointService.selectDropWaypoint(entry, graph, botPos, edge);
-            case PORTAL -> AgentBotMovementStateRuntime.inAir(entry)
+            case PORTAL -> AgentMovementStateRuntime.inAir(entry)
                     ? new Point(edge.endPoint) : new Point(edge.startPoint);
         };
     }
@@ -332,7 +332,7 @@ public final class AgentNavigationTargetService {
         }
         int launchX = AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, edge);
         int tolerance = Math.max(1, AgentMovementKinematicsService.walkStep(map,
-                entry != null ? AgentBotMovementStateRuntime.movementProfile(entry) : null));
+                entry != null ? AgentMovementStateRuntime.movementProfile(entry) : null));
         return AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
                 graph, botPos, edge, launchX, tolerance);
     }
@@ -350,7 +350,7 @@ public final class AgentNavigationTargetService {
                                           int targetRegionId,
                                           Point rawTargetPos) {
         return AgentNavigationGrindTargetService.adjustPathTarget(
-                AgentBotModeStateRuntime.grinding(entry), graph, targetRegionId, rawTargetPos);
+                AgentModeStateRuntime.grinding(entry), graph, targetRegionId, rawTargetPos);
     }
 
     private static Rope findRopeForRegion(MapleMap map, AgentNavigationGraph.Region region) {

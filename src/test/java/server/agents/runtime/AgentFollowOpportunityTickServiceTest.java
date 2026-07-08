@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,8 +43,8 @@ class AgentFollowOpportunityTickServiceTest {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, mock(server.maps.Rope.class));
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(server.maps.Rope.class));
         AtomicInteger attacks = new AtomicInteger();
 
         AgentFollowOpportunityTickService.Result result = AgentFollowOpportunityTickService.tickFollowOpportunity(
@@ -69,7 +69,7 @@ class AgentFollowOpportunityTickServiceTest {
         when(leader.getMapId()).thenReturn(100);
         when(leader.getPosition()).thenReturn(new Point(40, 0));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
         Point newTarget = new Point(80, 0);
         AtomicInteger attacks = new AtomicInteger();
 

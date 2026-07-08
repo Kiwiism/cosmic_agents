@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -25,7 +25,7 @@ class AgentGrindNoTargetFallbackServiceTest {
         when(agent.getMap()).thenReturn(map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         Monster staleTarget = mock(Monster.class);
-        AgentBotGrindTargetStateRuntime.setTarget(entry, staleTarget);
+        AgentGrindTargetStateRuntime.setTarget(entry, staleTarget);
         Point resolved = new Point(300, 100);
         AtomicReference<Point> steppedTarget = new AtomicReference<>();
         AtomicInteger noGrindResolves = new AtomicInteger();
@@ -53,14 +53,14 @@ class AgentGrindNoTargetFallbackServiceTest {
         assertEquals(resolved, result.targetPos());
         assertEquals(resolved, steppedTarget.get());
         assertEquals(1, noGrindResolves.get());
-        assertNull(AgentBotGrindTargetStateRuntime.target(entry));
+        assertNull(AgentGrindTargetStateRuntime.target(entry));
     }
 
     @Test
     void airborneFallbackTicksAirborneAndDoesNotStepMovement() {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         Point currentTarget = new Point(150, 100);
         AtomicInteger airborneTicks = new AtomicInteger();
         AtomicInteger movementSteps = new AtomicInteger();

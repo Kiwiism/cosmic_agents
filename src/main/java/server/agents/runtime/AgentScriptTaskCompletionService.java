@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.plans.AgentTask;
 
@@ -17,7 +17,7 @@ public final class AgentScriptTaskCompletionService {
                                      int normalMoveArrivalDistance,
                                      IntFunction<Character> followTargetResolver) {
         return switch (task.type()) {
-            case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
+            case MOVE_TO -> !AgentMoveTargetStateRuntime.hasMoveTarget(entry)
                     || isNear(AgentRuntimeIdentityRuntime.botPosition(entry), task.point(),
                     task.precise() ? 8 : normalMoveArrivalDistance);
             case FOLLOW_UNTIL_NEAR -> {

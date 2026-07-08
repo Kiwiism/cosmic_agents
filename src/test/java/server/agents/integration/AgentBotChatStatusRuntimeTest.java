@@ -4,7 +4,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 
 import java.awt.Point;
@@ -23,19 +23,19 @@ class AgentBotChatStatusRuntimeTest {
         Point position = new Point(12, 34);
         when(owner.getPosition()).thenReturn(position);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
-        AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
+        AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         AgentBotChatStatusRuntime.markOwnerActive(entry);
 
-        assertFalse(AgentBotActivityStateRuntime.ownerWasAfk(entry));
-        assertEquals(position, AgentBotActivityStateRuntime.ownerAfkPosition(entry));
-        assertTrue(AgentBotActivityStateRuntime.ownerAfkSinceMs(entry) > 0L);
+        assertFalse(AgentActivityStateRuntime.ownerWasAfk(entry));
+        assertEquals(position, AgentActivityStateRuntime.ownerAfkPosition(entry));
+        assertTrue(AgentActivityStateRuntime.ownerAfkSinceMs(entry) > 0L);
     }
 
     @Test
     void ownerIdleAndFidgetExpressionDelegateToAgentStatusRuntime() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
+        AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
         assertTrue(AgentBotChatStatusRuntime.isOwnerIdle(entry));
         assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentBotChatStatusRuntime.randomFidgetExpression()));

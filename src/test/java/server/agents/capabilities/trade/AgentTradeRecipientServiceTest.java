@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -29,7 +29,7 @@ class AgentTradeRecipientServiceTest {
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         when(owner.getId()).thenReturn(42);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, 42);
+        AgentPendingTradeStateRuntime.setRecipientId(entry, 42);
 
         assertSame(owner, AgentTradeRecipientService.resolveTradeRecipient(entry, agent));
     }
@@ -43,7 +43,7 @@ class AgentTradeRecipientServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
         when(agent.getMap()).thenReturn(map);
         when(map.getCharacterById(99)).thenReturn(mapRecipient);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, 99);
+        AgentPendingTradeStateRuntime.setRecipientId(entry, 99);
 
         assertSame(mapRecipient, AgentTradeRecipientService.resolveTradeRecipient(entry, agent));
     }
@@ -59,7 +59,7 @@ class AgentTradeRecipientServiceTest {
         when(owner.getParty()).thenReturn(mock(net.server.world.Party.class));
         when(owner.getPartyMembersOnline()).thenReturn(List.of(partyRecipient));
         when(partyRecipient.getId()).thenReturn(77);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, 77);
+        AgentPendingTradeStateRuntime.setRecipientId(entry, 77);
 
         assertSame(partyRecipient, AgentTradeRecipientService.resolveTradeRecipient(entry, agent));
     }
@@ -69,7 +69,7 @@ class AgentTradeRecipientServiceTest {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, owner, null);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, 123);
+        AgentPendingTradeStateRuntime.setRecipientId(entry, 123);
 
         assertNull(AgentTradeRecipientService.resolveTradeRecipient(entry, agent));
     }

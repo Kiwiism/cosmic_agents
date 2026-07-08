@@ -65,7 +65,7 @@ public final class AgentBotMovementCommandRuntime {
         }
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
-                map, AgentBotMovementStateRuntime.movementProfile(entry));
+                map, AgentMovementStateRuntime.movementProfile(entry));
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
             AgentReplyRuntime.replyNow(entry, "can't find a patrol region here");

@@ -9,10 +9,10 @@ public final class AgentBotCombatActionLockRuntime {
     }
 
     public static void tickActionLock(AgentRuntimeEntry entry) {
-        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
-            AgentBotCombatCooldownStateRuntime.tickAttackCooldown(entry, AgentMovementTimers::tickDown);
-        } else if (AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)) {
-            AgentBotCombatCooldownStateRuntime.tickMoveWindow(entry, AgentMovementTimers::tickDown);
+        if (AgentCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
+            AgentCombatCooldownStateRuntime.tickAttackCooldown(entry, AgentMovementTimers::tickDown);
+        } else if (AgentCombatCooldownStateRuntime.hasMoveWindow(entry)) {
+            AgentCombatCooldownStateRuntime.tickMoveWindow(entry, AgentMovementTimers::tickDown);
         }
     }
 }

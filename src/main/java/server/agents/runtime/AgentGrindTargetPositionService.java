@@ -5,10 +5,10 @@ import server.agents.capabilities.looting.AgentLootEligibility;
 import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -38,7 +38,7 @@ public final class AgentGrindTargetPositionService {
         if (entry == null || agentPosition == null) {
             return agentPosition;
         }
-        if (AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
+        if (AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             Point lootPos = activeGrindLootPosition(entry, agentPosition, lootRadius, grindLootRetrySuppressMs);
             if (lootPos != null) {
                 return lootPos;
@@ -46,23 +46,23 @@ public final class AgentGrindTargetPositionService {
         }
 
         AgentNavigationGraph graph = map != null
-                ? AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry))
+                ? AgentNavigationGraphService.peekBestGraph(map, AgentMovementStateRuntime.movementProfile(entry))
                 : null;
         int regionId = graph != null ? regionResolver.resolve(graph, entry, map, agentPosition) : -1;
         AgentNavigationGraph.Region region = graph != null ? graph.getRegion(regionId) : null;
         if (region != null && !region.isRopeRegion && region.width() > 0) {
-            Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
+            Point wander = AgentPatrolStateRuntime.patrolWanderTarget(entry);
             if (wander == null || AgentPositionService.isNear(agentPosition, wander, stopDistance)) {
                 int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
                 wander = region.pointAt(x);
-                AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
+                AgentPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
             }
             return wander;
         }
 
-        AgentBotPatrolStateRuntime.clearPatrolWanderTarget(entry);
+        AgentPatrolStateRuntime.clearPatrolWanderTarget(entry);
         return new Point(
-                agentPosition.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200,
+                agentPosition.x + AgentGrindWanderStateRuntime.ensureWanderDirection(entry) * 200,
                 agentPosition.y);
     }
 
@@ -88,26 +88,26 @@ public final class AgentGrindTargetPositionService {
                                                 Point agentPosition,
                                                 int lootRadius,
                                                 int grindLootRetrySuppressMs) {
-        MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
+        MapItem loot = AgentGrindLootStateRuntime.grindLootTarget(entry);
         if (loot == null || agentPosition == null) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (loot.isPickedUp() || agent == null || agent.getMap() == null
                 || agent.getMap().getMapObject(loot.getObjectId()) != loot) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         if (!AgentLootEligibility.canBotTargetLoot(entry, agent, agent.getMap(), loot, System.currentTimeMillis())) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         Point lootPos = loot.getPosition();
         if (Math.abs(lootPos.x - agentPosition.x) <= lootRadius
                 && Math.abs(lootPos.y - agentPosition.y) <= lootRadius) {
             suppressGrindLootRetry(entry, loot, grindLootRetrySuppressMs);
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
         return lootPos;
@@ -117,7 +117,7 @@ public final class AgentGrindTargetPositionService {
         if (entry == null || loot == null) {
             return;
         }
-        AgentBotGrindLootStateRuntime.suppressRetry(
+        AgentGrindLootStateRuntime.suppressRetry(
                 entry,
                 loot,
                 System.currentTimeMillis() + grindLootRetrySuppressMs);
@@ -156,8 +156,8 @@ public final class AgentGrindTargetPositionService {
                                                   RegionResolver regionResolver) {
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
                 map,
-                AgentBotMovementStateRuntime.movementProfile(entry));
-        int patrolRegionId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
+                AgentMovementStateRuntime.movementProfile(entry));
+        int patrolRegionId = AgentPatrolStateRuntime.patrolRegionId(entry);
         AgentNavigationGraph.Region region = graph != null ? graph.getRegion(patrolRegionId) : null;
         if (region == null || region.isRopeRegion || region.width() == 0) {
             return resolveNoGrindTargetPosition(
@@ -171,14 +171,14 @@ public final class AgentGrindTargetPositionService {
         }
         Point lootTarget = AgentLootTargetService.findNearestPatrolLootTarget(entry, patrolRegionId);
         if (lootTarget != null) {
-            AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, lootTarget);
+            AgentPatrolStateRuntime.setPatrolWanderTarget(entry, lootTarget);
             return lootTarget;
         }
-        Point wander = AgentBotPatrolStateRuntime.patrolWanderTarget(entry);
+        Point wander = AgentPatrolStateRuntime.patrolWanderTarget(entry);
         if (wander == null || AgentPositionService.isNear(agentPosition, wander, stopDistance)) {
             int x = ThreadLocalRandom.current().nextInt(region.minX, region.maxX + 1);
             wander = region.pointAt(x);
-            AgentBotPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
+            AgentPatrolStateRuntime.setPatrolWanderTarget(entry, wander);
         }
         return wander;
     }

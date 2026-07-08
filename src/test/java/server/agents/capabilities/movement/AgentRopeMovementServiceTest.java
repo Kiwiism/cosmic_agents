@@ -3,10 +3,10 @@ package server.agents.capabilities.movement;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentSwimStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;
@@ -33,8 +33,8 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.attachToRope(entry, agent, rope, 30);
 
-        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
-        assertSame(rope, AgentBotClimbStateRuntime.climbRope(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
+        assertSame(rope, AgentClimbStateRuntime.climbRope(entry));
         verify(agent).setPosition(new Point(100, 30));
         verify(agent, atLeastOnce()).setStance(CharacterStance.ROPE_STANCE);
     }
@@ -50,7 +50,7 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.holdClimb(entry, agent);
 
-        assertEquals(0, AgentBotClimbStateRuntime.climbVerticalDirection(entry));
+        assertEquals(0, AgentClimbStateRuntime.climbVerticalDirection(entry));
         verify(agent, atLeastOnce()).setStance(CharacterStance.ROPE_STANCE);
     }
 
@@ -62,13 +62,13 @@ class AgentRopeMovementServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         Rope rope = new Rope(100, 0, 80, false);
         AgentRopeMovementService.attachToRope(entry, agent, rope, 30);
-        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, 1);
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, 1);
 
         AgentRopeMovementService.advanceClimb(entry, agent);
 
         verify(agent).setPosition(new Point(100, 30 + AgentMovementKinematicsService.climbStepPerTick()));
-        assertSame(rope, AgentBotClimbStateRuntime.climbRope(entry));
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
+        assertSame(rope, AgentClimbStateRuntime.climbRope(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
     }
 
     @Test
@@ -80,11 +80,11 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.beginGroundJump(entry, agent, 4);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
-        assertEquals(4, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
-        assertEquals(-AgentMovementKinematicsService.jumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)),
-                AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentClimbStateRuntime.climbUpIntent(entry));
+        assertEquals(4, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertEquals(-AgentMovementKinematicsService.jumpForcePerTick(AgentMovementStateRuntime.movementProfile(entry)),
+                AgentMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
     }
 
     @Test
@@ -96,9 +96,9 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.beginClimbUpJump(entry, agent, -3);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
-        assertEquals(-3, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertTrue(AgentClimbStateRuntime.climbUpIntent(entry));
+        assertEquals(-3, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -110,11 +110,11 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.beginJumpOffRope(entry, agent, 2);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotClimbStateRuntime.climbUpIntent(entry));
-        assertEquals(2, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
-        assertEquals(-AgentMovementKinematicsService.ropeJumpForcePerTick(AgentBotMovementStateRuntime.movementProfile(entry)),
-                AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentClimbStateRuntime.climbUpIntent(entry));
+        assertEquals(2, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertEquals(-AgentMovementKinematicsService.ropeJumpForcePerTick(AgentMovementStateRuntime.movementProfile(entry)),
+                AgentMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
     }
 
     @Test
@@ -127,9 +127,9 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.beginRopeTransferJump(entry, agent, sourceRope, 1);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
-        assertSame(sourceRope, AgentBotClimbStateRuntime.blockedRopeGrab(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertTrue(AgentClimbStateRuntime.climbUpIntent(entry));
+        assertSame(sourceRope, AgentClimbStateRuntime.blockedRopeGrab(entry));
     }
 
     @Test
@@ -144,13 +144,13 @@ class AgentRopeMovementServiceTest {
 
         AgentRopeMovementService.beginGroundJump(entry, agent, 9);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertTrue(AgentBotSwimStateRuntime.swimming(entry));
-        assertEquals(0, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertTrue(AgentSwimStateRuntime.swimming(entry));
+        assertEquals(0, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
         assertEquals(-AgentMovementProfile.base().jumpSpeedPxs(),
-                AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
-        assertEquals(Math.round(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)),
-                AgentBotMovementStateRuntime.movementVelocityY(entry));
-        assertTrue(AgentBotSwimStateRuntime.swimNextJumpAtMs(entry) > 0L);
+                AgentMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
+        assertEquals(Math.round(AgentMovementPhysicsStateRuntime.verticalVelocity(entry)),
+                AgentMovementStateRuntime.movementVelocityY(entry));
+        assertTrue(AgentSwimStateRuntime.swimNextJumpAtMs(entry) > 0L);
     }
 }

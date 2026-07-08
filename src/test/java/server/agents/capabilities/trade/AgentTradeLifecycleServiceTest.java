@@ -5,7 +5,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +28,7 @@ class AgentTradeLifecycleServiceTest {
         callbacks.owner.set(owner);
 
         AgentTradeStateService.initializeSequence(entry, "pots", 7, false);
-        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(
+        AgentPendingTradeStateRuntime.rememberRestoreSlot(
                 entry,
                 new Item(1002000, (short) 1, (short) 1),
                 (short) -1);

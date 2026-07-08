@@ -1,8 +1,8 @@
 package server.agents.capabilities.movement;
 
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
+import server.agents.integration.AgentSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -25,15 +25,15 @@ public final class AgentSwimMovementService {
     }
 
     static void computeSwimIntents(AgentRuntimeEntry entry, Point targetPos) {
-        int prevVerticalHold = AgentBotSwimStateRuntime.swimVerticalHold(entry);
-        AgentBotSwimStateRuntime.clearSwimInput(entry);
+        int prevVerticalHold = AgentSwimStateRuntime.swimVerticalHold(entry);
+        AgentSwimStateRuntime.clearSwimInput(entry);
 
-        if (AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
+        if (AgentCombatCooldownStateRuntime.hasAttackCooldown(entry)) {
             return;
         }
 
         if (targetPos == null) {
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, -1);
             return;
         }
 
@@ -43,31 +43,31 @@ public final class AgentSwimMovementService {
 
         int hRadius = AgentMovementPhysicsConfig.configuredSwimArrivalRadiusPx();
         if (dx > hRadius) {
-            AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 1);
+            AgentSwimStateRuntime.setSwimMoveDirection(entry, 1);
         } else if (dx < -hRadius) {
-            AgentBotSwimStateRuntime.setSwimMoveDirection(entry, -1);
+            AgentSwimStateRuntime.setSwimMoveDirection(entry, -1);
         }
 
         int levelBand = AgentMovementPhysicsConfig.configuredSwimLevelBandPx();
         if (Math.abs(dx) <= hRadius && Math.abs(dy) <= levelBand) {
-            AgentBotSwimStateRuntime.setSwimMoveDirection(entry, 0);
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
+            AgentSwimStateRuntime.setSwimMoveDirection(entry, 0);
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, -1);
             return;
         }
 
         long now = System.currentTimeMillis();
         int jumpTrigger = AgentMovementPhysicsConfig.configuredSwimJumpTriggerDyPx();
         int downBand = AgentMovementPhysicsConfig.configuredSwimDownBandPx();
-        if (dy <= -jumpTrigger && now >= AgentBotSwimStateRuntime.swimNextJumpAtMs(entry)) {
-            AgentBotSwimStateRuntime.setSwimJumpRequested(entry, true);
-            AgentBotSwimStateRuntime.setSwimNextJumpAtMs(entry, now + AgentMovementPhysicsConfig.configuredSwimJumpCooldownMs());
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
+        if (dy <= -jumpTrigger && now >= AgentSwimStateRuntime.swimNextJumpAtMs(entry)) {
+            AgentSwimStateRuntime.setSwimJumpRequested(entry, true);
+            AgentSwimStateRuntime.setSwimNextJumpAtMs(entry, now + AgentMovementPhysicsConfig.configuredSwimJumpCooldownMs());
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, -1);
         } else if (dy <= levelBand) {
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, -1);
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, -1);
         } else if (dy > downBand) {
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, 1);
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, 1);
         } else {
-            AgentBotSwimStateRuntime.setSwimVerticalHold(entry, prevVerticalHold > 0 ? 1 : 0);
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, prevVerticalHold > 0 ? 1 : 0);
         }
     }
 }

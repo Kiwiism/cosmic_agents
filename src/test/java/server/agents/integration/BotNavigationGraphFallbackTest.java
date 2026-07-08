@@ -3,7 +3,7 @@ package server.agents.integration;
 import server.agents.runtime.AgentRuntimeEntry;
 
 
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
 
@@ -13,7 +13,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -42,17 +42,17 @@ class AgentNavigationGraphFallbackTest {
 
         Character bot = mockBot(new Point(60, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(125, 110));
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(125, 110));
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, new Point(180, 160), true);
 
-        assertFalse(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry), "closest cached graph should be used before heuristics");
-        assertFalse(directive.consumedTick() && AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry) == null
-                        && "graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
+        assertFalse(AgentNavigationDebugStateRuntime.graphWarmupFallback(entry), "closest cached graph should be used before heuristics");
+        assertFalse(directive.consumedTick() && AgentNavigationDebugStateRuntime.activeNavigationEdge(entry) == null
+                        && "graph-warmup".equals(AgentNavigationDebugStateRuntime.lastDecision(entry)),
                 "cached fallback graph should route with a graph edge, not heuristic warmup");
-        assertNotNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry), "cached fallback graph should provide a real nav edge");
-        assertFalse("graph-warmup".equals(AgentBotNavigationDebugStateRuntime.lastDecision(entry)),
+        assertNotNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry), "cached fallback graph should provide a real nav edge");
+        assertFalse("graph-warmup".equals(AgentNavigationDebugStateRuntime.lastDecision(entry)),
                 "nav should stay on graph-based routing instead of dropping straight into heuristics");
     }
 

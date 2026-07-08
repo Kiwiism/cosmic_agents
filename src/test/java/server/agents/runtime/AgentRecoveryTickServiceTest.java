@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -36,7 +36,7 @@ class AgentRecoveryTickServiceTest {
     @Test
     void skipsFollowSyncDuringShopVisitAndRunsPartyRecovery() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotShopStateRuntime.startShopVisit(entry, new Point(1, 1), new Point(2, 2), 0, 1_000L);
+        AgentShopStateRuntime.startShopVisit(entry, new Point(1, 1), new Point(2, 2), 0, 1_000L);
         List<String> calls = new ArrayList<>();
 
         boolean consumed = AgentRecoveryTickService.tickRecovery(

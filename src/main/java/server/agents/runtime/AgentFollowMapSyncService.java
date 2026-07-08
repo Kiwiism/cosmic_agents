@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -31,7 +31,7 @@ public final class AgentFollowMapSyncService {
                                         Character agent,
                                         Character followAnchor,
                                         FollowMapSyncHooks hooks) {
-        if (!AgentBotModeStateRuntime.following(entry)
+        if (!AgentModeStateRuntime.following(entry)
                 || followAnchor == null
                 || agent.getMapId() == followAnchor.getMapId()) {
             return false;

@@ -21,13 +21,13 @@ public final class AgentBotCombatAttackRuntime {
     public static void attackMonster(AgentRuntimeEntry entry, Character bot, AgentAttackPlan attackPlan) {
         AgentCombatAttackExecutionPolicy.AttackExecutionReadiness readiness =
                 AgentCombatAttackExecutionPolicy.attackExecutionReadiness(
-                        AgentBotCombatCooldownStateRuntime.hasAttackCooldown(entry),
-                        AgentBotAmmoStateRuntime.noAmmo(entry),
+                        AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
+                        AgentAmmoStateRuntime.noAmmo(entry),
                         attackPlan.skillId,
                         () -> AgentCombatSkillUsePolicy.canPaySkillCost(
                                 bot, attackPlan.skillId, attackPlan.skillLevel),
                         () -> entry != null && attackPlan != null && AgentCombatRangePolicy.canUseAttackPlanNow(
-                                AgentBotMovementStateRuntime.grounded(entry),
+                                AgentMovementStateRuntime.grounded(entry),
                                 AgentAttackExecutionProvider.getEquippedWeaponType(bot),
                                 attackPlan.route));
         if (readiness != AgentCombatAttackExecutionPolicy.AttackExecutionReadiness.READY) {
@@ -60,7 +60,7 @@ public final class AgentBotCombatAttackRuntime {
         }
 
         AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
+        AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         AgentBotCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);
         AgentBotCombatAlertRuntime.markAlerted(entry);
     }

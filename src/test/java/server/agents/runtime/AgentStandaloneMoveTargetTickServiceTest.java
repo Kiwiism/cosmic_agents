@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +37,7 @@ class AgentStandaloneMoveTargetTickServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
         Point moveTarget = new Point(120, 45);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, moveTarget, false);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, moveTarget, false);
         AtomicInteger refreshes = new AtomicInteger();
         AtomicReference<Point> movementTarget = new AtomicReference<>();
         AtomicReference<Boolean> runAiTickSeen = new AtomicReference<>();

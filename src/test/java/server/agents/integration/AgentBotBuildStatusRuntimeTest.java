@@ -10,7 +10,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
-import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -71,7 +71,7 @@ class AgentBotBuildStatusRuntimeTest {
 
             assertTrue(actions.canOfferSpawnUpgrade());
 
-            AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
+            AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
             assertFalse(actions.canOfferSpawnUpgrade());
         }

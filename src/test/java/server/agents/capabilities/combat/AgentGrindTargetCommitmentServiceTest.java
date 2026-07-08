@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -34,7 +34,7 @@ class AgentGrindTargetCommitmentServiceTest {
         assertSame(target.getPosition(), result.targetPosition());
         assertSame(plan, result.attackPlan());
         assertNull(result.rangedPriorityTarget());
-        assertSame(target, AgentBotGrindTargetStateRuntime.target(entry));
+        assertSame(target, AgentGrindTargetStateRuntime.target(entry));
     }
 
     @Test
@@ -58,7 +58,7 @@ class AgentGrindTargetCommitmentServiceTest {
         assertSame(priority.getPosition(), result.targetPosition());
         assertNull(result.attackPlan());
         assertSame(priority, result.rangedPriorityTarget());
-        assertSame(priority, AgentBotGrindTargetStateRuntime.target(entry));
+        assertSame(priority, AgentGrindTargetStateRuntime.target(entry));
     }
 
     @Test
@@ -82,7 +82,7 @@ class AgentGrindTargetCommitmentServiceTest {
         assertSame(closerThreat.getPosition(), result.targetPosition());
         assertNull(result.attackPlan());
         assertNull(result.rangedPriorityTarget());
-        assertSame(closerThreat, AgentBotGrindTargetStateRuntime.target(entry));
+        assertSame(closerThreat, AgentGrindTargetStateRuntime.target(entry));
     }
 
     private static AgentGrindTargetCommitmentService.Hooks hooks(Monster rangedPriority, Monster closerThreat) {

@@ -7,7 +7,7 @@ import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BooleanSupplier;
@@ -30,7 +30,7 @@ public final class AgentTradeCompletionService {
         if (trade.getPartner() != null) {
             for (Item item : trade.getPartner().getItems()) {
                 if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP) {
-                    AgentBotPendingTradeStateRuntime.addOwnerGivenItem(entry, item);
+                    AgentPendingTradeStateRuntime.addOwnerGivenItem(entry, item);
                 }
             }
         }

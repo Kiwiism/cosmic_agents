@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentBotManualTradeStateRuntime;
+import server.agents.integration.AgentManualTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,8 +28,8 @@ class AgentManualTradeServiceTest {
         boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, 60_000, value -> value);
 
         assertFalse(cancelled);
-        assertSame(trade, AgentBotManualTradeStateRuntime.tradeRef(entry));
-        assertEquals(60_000, AgentBotManualTradeStateRuntime.timeoutMs(entry));
+        assertSame(trade, AgentManualTradeStateRuntime.tradeRef(entry));
+        assertEquals(60_000, AgentManualTradeStateRuntime.timeoutMs(entry));
     }
 
     @Test
@@ -41,8 +41,8 @@ class AgentManualTradeServiceTest {
         boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, value -> value);
 
         assertFalse(cancelled);
-        assertSame(trade, AgentBotManualTradeStateRuntime.tradeRef(entry));
-        assertEquals(60_000, AgentBotManualTradeStateRuntime.timeoutMs(entry));
+        assertSame(trade, AgentManualTradeStateRuntime.tradeRef(entry));
+        assertEquals(60_000, AgentManualTradeStateRuntime.timeoutMs(entry));
     }
 
     @Test
@@ -51,15 +51,15 @@ class AgentManualTradeServiceTest {
         when(bot.getId()).thenReturn(88);
         Trade trade = mock(Trade.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotManualTradeStateRuntime.beginTrade(entry, trade, 100);
+        AgentManualTradeStateRuntime.beginTrade(entry, trade, 100);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, 60_000, value -> 0);
 
             assertTrue(cancelled);
             trades.verify(() -> Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE));
-            assertNull(AgentBotManualTradeStateRuntime.tradeRef(entry));
-            assertEquals(0, AgentBotManualTradeStateRuntime.timeoutMs(entry));
+            assertNull(AgentManualTradeStateRuntime.tradeRef(entry));
+            assertEquals(0, AgentManualTradeStateRuntime.timeoutMs(entry));
         }
     }
 
@@ -92,7 +92,7 @@ class AgentManualTradeServiceTest {
         Trade result = AgentManualTradeService.acceptInviteWhenReady(entry, bot, inviter, trade, 600, value -> 100);
 
         assertSame(trade, result);
-        assertEquals(100, AgentBotManualTradeStateRuntime.acceptDelayMs(entry));
+        assertEquals(100, AgentManualTradeStateRuntime.acceptDelayMs(entry));
     }
 
     @Test

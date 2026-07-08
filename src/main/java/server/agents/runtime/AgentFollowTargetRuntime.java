@@ -6,7 +6,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -67,7 +67,7 @@ public final class AgentFollowTargetRuntime {
         AgentEquipmentService.autoEquip(
                 AgentRuntimeIdentityRuntime.bot(entry),
                 AgentRuntimeIdentityRuntime.owner(entry),
-                AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+                AgentOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
     private static void checkPotShareForFollow(AgentRuntimeEntry entry) {

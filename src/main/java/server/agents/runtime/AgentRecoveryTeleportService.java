@@ -1,10 +1,10 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -58,11 +58,11 @@ public final class AgentRecoveryTeleportService {
                                                             int outOfBoundsTeleportDistance,
                                                             int multiplier,
                                                             RecoveryHooks hooks) {
-        if (entry == null || agent == null || partyAnchor == null || !AgentBotModeStateRuntime.grinding(entry)
-                || AgentBotShopStateRuntime.shopVisitPending(entry)) {
+        if (entry == null || agent == null || partyAnchor == null || !AgentModeStateRuntime.grinding(entry)
+                || AgentShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
-        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry) || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
+        if (AgentMoveTargetStateRuntime.hasMoveTarget(entry) || AgentFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return false;
         }
         if (agent.getMap() == null || partyAnchor.getMap() != agent.getMap()) {

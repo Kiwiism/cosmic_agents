@@ -4,7 +4,7 @@ import client.Character;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.Predicate;
@@ -24,14 +24,14 @@ public final class AgentTradeConfirmWaitService {
                                                      Predicate<Character> botRecipient,
                                                      Runnable completeTrade,
                                                      Runnable resetTradeState) {
-        AgentBotPendingTradeStateRuntime.addTimerMs(entry, tickMs);
+        AgentPendingTradeStateRuntime.addTimerMs(entry, tickMs);
         Character recipient = recipientResolver.get();
         boolean recipientIsBot = recipient != null && botRecipient.test(recipient);
         if (recipientIsBot || trade.isPartnerConfirmed()) {
             completeTrade.run();
-            AgentBotPendingTradeStateRuntime.markBotDone(entry);
-            AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        } else if (AgentBotPendingTradeStateRuntime.timerMs(entry) > CONFIRM_TIMEOUT_MS) {
+            AgentPendingTradeStateRuntime.markBotDone(entry);
+            AgentPendingTradeStateRuntime.clearTimer(entry);
+        } else if (AgentPendingTradeStateRuntime.timerMs(entry) > CONFIRM_TIMEOUT_MS) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeConfirmTimeoutReply());
             Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE);
             resetTradeState.run();

@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeResetService {
@@ -13,7 +13,7 @@ public final class AgentTradeResetService {
                              Runnable restoreTemporarilyUnequippedItems,
                              Runnable clearManualTradeState,
                              Runnable refillEquipmentSlots) {
-        boolean hadRestores = AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry);
+        boolean hadRestores = AgentPendingTradeStateRuntime.hasRestoreSlots(entry);
         restoreTemporarilyUnequippedItems.run();
         clearManualTradeState.run();
         AgentTradeStateService.clearSequence(entry);

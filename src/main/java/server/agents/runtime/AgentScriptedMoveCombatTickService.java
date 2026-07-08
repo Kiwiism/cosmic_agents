@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 
 import java.awt.Point;
 
@@ -36,7 +36,7 @@ public final class AgentScriptedMoveCombatTickService {
     }
 
     public static boolean shouldUseScriptedMoveLocalCombat(AgentRuntimeEntry entry, Point targetPos) {
-        return AgentBotScriptTaskStateRuntime.isActiveLocalOpportunityMoveTo(entry, targetPos);
+        return AgentScriptTaskStateRuntime.isActiveLocalOpportunityMoveTo(entry, targetPos);
     }
 
     public static Result tickScriptedMoveCombat(AgentRuntimeEntry entry,

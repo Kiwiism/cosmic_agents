@@ -24,10 +24,10 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotShopRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -126,14 +126,14 @@ public final class AgentShopService {
             return;
         }
 
-        AgentBotShopStateRuntime.setShopSellTrashPending(entry, true);
-        if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
+        AgentShopStateRuntime.setShopSellTrashPending(entry, true);
+        if (AgentShopStateRuntime.shopVisitPending(entry)) {
             return;
         }
 
         NpcShopMatch match = findBestShop(bot, true);
         if (match == null) {
-            AgentBotShopStateRuntime.setShopSellTrashPending(entry, false);
+            AgentShopStateRuntime.setShopSellTrashPending(entry, false);
             AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNotFoundReply());
             return;
         }
@@ -143,7 +143,7 @@ public final class AgentShopService {
     }
 
     private static void startShopVisit(AgentRuntimeEntry entry, Character bot, NpcShopMatch match) {
-        AgentBotShopStateRuntime.startShopVisit(
+        AgentShopStateRuntime.startShopVisit(
                 entry,
                 match.npcPos,
                 pickShopApproachPoint(match.npcPos, entry, bot),
@@ -152,41 +152,41 @@ public final class AgentShopService {
     }
 
     public static boolean tickShopVisit(AgentRuntimeEntry entry, Character bot) {
-        if (!AgentBotShopStateRuntime.shopVisitPending(entry)) {
+        if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
-        if (!AgentBotShopStateRuntime.hasShopNpcPosition(entry)) {
+        if (!AgentShopStateRuntime.hasShopNpcPosition(entry)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopLostReply());
             return false;
         }
         long now = System.currentTimeMillis();
-        if (AgentBotShopStateRuntime.visitTimedOut(entry, now, SHOP_VISIT_TIMEOUT_MS)) {
+        if (AgentShopStateRuntime.visitTimedOut(entry, now, SHOP_VISIT_TIMEOUT_MS)) {
             AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopReachTimeoutReply());
             clearShopState(entry);
             return false;
         }
-        if (AgentBotShopStateRuntime.sequenceTimedOut(entry, now, SHOP_SEQUENCE_TIMEOUT_MS)) {
+        if (AgentShopStateRuntime.sequenceTimedOut(entry, now, SHOP_SEQUENCE_TIMEOUT_MS)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopSequenceTimeoutReply());
             return false;
         }
-        if (AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
-            AgentBotShopStateRuntime.setShopApproachDelayMs(
+        if (AgentShopStateRuntime.shopApproachDelayMs(entry) > 0) {
+            AgentShopStateRuntime.setShopApproachDelayMs(
                     entry,
-                    AgentMovementTimers.tickDown(AgentBotShopStateRuntime.shopApproachDelayMs(entry)));
+                    AgentMovementTimers.tickDown(AgentShopStateRuntime.shopApproachDelayMs(entry)));
             return false;
         }
 
         Point botPos = bot.getPosition();
-        Point target = AgentBotShopStateRuntime.shopTargetOrNpcPosition(entry);
+        Point target = AgentShopStateRuntime.shopTargetOrNpcPosition(entry);
         boolean reachedApproach = manhattan(botPos, target) <= SHOP_ARRIVE_DIST;
-        boolean stuckAtNpc = !AgentBotShopStateRuntime.shopSequenceActive(entry)
+        boolean stuckAtNpc = !AgentShopStateRuntime.shopSequenceActive(entry)
                 && !reachedApproach
                 && isStuckNearNpc(entry, botPos, now);
         if (reachedApproach || stuckAtNpc) {
-            if (!AgentBotShopStateRuntime.shopSequenceActive(entry)) {
-                AgentBotShopStateRuntime.markShopSequenceActive(entry, System.currentTimeMillis());
+            if (!AgentShopStateRuntime.shopSequenceActive(entry)) {
+                AgentShopStateRuntime.markShopSequenceActive(entry, System.currentTimeMillis());
                 AgentBotShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shoppingReplies()));
-                Point npcPos = AgentBotShopStateRuntime.shopNpcPosition(entry);
+                Point npcPos = AgentShopStateRuntime.shopNpcPosition(entry);
                 scheduleShopStep(entry, () -> executePurchases(entry, bot, npcPos));
             }
             return true;
@@ -196,7 +196,7 @@ public final class AgentShopService {
     }
 
     private static boolean isStuckNearNpc(AgentRuntimeEntry entry, Point botPos, long now) {
-        return AgentBotShopStateRuntime.stuckNearNpc(
+        return AgentShopStateRuntime.stuckNearNpc(
                 entry, botPos, now, SHOP_STUCK_FALLBACK_MS, SHOP_STUCK_MOVE_TOLERANCE_PX, SHOP_ARRIVE_DIST);
     }
 
@@ -291,7 +291,7 @@ public final class AgentShopService {
             return;
         }
         if (index >= sequence.actions().size()) {
-            if (AgentBotShopStateRuntime.shopSellTrashPending(sequence.entry())) {
+            if (AgentShopStateRuntime.shopSellTrashPending(sequence.entry())) {
                 startSellTrashSequence(sequence);
             } else {
                 finishPurchaseSequence(sequence, true);
@@ -349,7 +349,7 @@ public final class AgentShopService {
     private static void startSellTrashSequence(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence) {
         List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
-            AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
+            AgentShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
             AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());
             finishPurchaseSequence(sequence, false);
             return;
@@ -380,7 +380,7 @@ public final class AgentShopService {
                 .filter(item -> !failedItems.contains(item))
                 .toList();
         if (items.isEmpty()) {
-            AgentBotShopStateRuntime.setShopSellTrashPending(entry, false);
+            AgentShopStateRuntime.setShopSellTrashPending(entry, false);
             if (soldCount > 0) {
                 AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSoldTrashReply(soldCount));
             }
@@ -647,7 +647,7 @@ public final class AgentShopService {
         }
         // Accept proximity to the approach point OR the NPC itself: the sequence can start
         // via the stuck-at-NPC fallback, where the bot is near the NPC but not the approach point.
-        return AgentBotShopStateRuntime.sequenceValid(entry, bot.getPosition(), npcPos, SHOP_ARRIVE_DIST)
+        return AgentShopStateRuntime.sequenceValid(entry, bot.getPosition(), npcPos, SHOP_ARRIVE_DIST)
                 && findNpcNear(bot, npcPos) != null;
     }
 
@@ -659,14 +659,14 @@ public final class AgentShopService {
     // cancelShopVisit (which clears shopVisitPending) and scheduleShopStep guards on
     // that flag, so a cleared flag here means a concurrent player cancel — stay silent.
     private static void abortShop(AgentRuntimeEntry entry, Character bot, String reason) {
-        if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
+        if (AgentShopStateRuntime.shopVisitPending(entry)) {
             AgentBotShopRuntime.sayMapNow(bot, reason);
         }
         clearShopState(entry);
     }
 
     private static void clearShopState(AgentRuntimeEntry entry) {
-        AgentBotShopStateRuntime.clearShopState(entry);
+        AgentShopStateRuntime.clearShopState(entry);
     }
 
     private static long stepDelayMs() {
@@ -679,7 +679,7 @@ public final class AgentShopService {
 
     private static void scheduleShopStep(AgentRuntimeEntry entry, long delayMs, Runnable step) {
         AgentBotShopRuntime.afterDelay(delayMs, () -> {
-            if (!AgentBotShopStateRuntime.shouldRunScheduledShopStep(entry)) {
+            if (!AgentShopStateRuntime.shouldRunScheduledShopStep(entry)) {
                 return;
             }
             try {
@@ -701,7 +701,7 @@ public final class AgentShopService {
         if (candidates.isEmpty()) {
             return npcPos;
         }
-        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+        AgentMovementProfile profile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, bot);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(bot.getMap(), profile);
         if (graph != null) {
             Point botPos = bot.getPosition();

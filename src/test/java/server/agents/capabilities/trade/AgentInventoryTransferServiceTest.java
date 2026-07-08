@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
-import server.agents.integration.AgentBotInventoryStateRuntime;
+import server.agents.integration.AgentInventoryStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiFunction;
@@ -52,7 +52,7 @@ class AgentInventoryTransferServiceTest {
                     eq(bot),
                     any(BiFunction.class)));
             assertEquals(AgentMovementTimers.delayAfterCurrentTick(20_000),
-                    AgentBotInventoryStateRuntime.lootInhibitMs(entry));
+                    AgentInventoryStateRuntime.lootInhibitMs(entry));
         }
     }
 

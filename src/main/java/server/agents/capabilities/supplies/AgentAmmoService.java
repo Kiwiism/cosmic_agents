@@ -14,8 +14,8 @@ import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.integration.AgentBotAmmoRuntime;
-import server.agents.integration.AgentBotAmmoStateRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentAmmoStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -38,26 +38,26 @@ public final class AgentAmmoService {
     public static boolean requestLowAmmoShare(AgentRuntimeEntry entry, Character bot, boolean bypassShareLimits) {
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (!canRequestShare(weaponType)) {
-            AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
+            AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
 
         int ammo = AgentCombatAmmoCounter.countAmmo(bot, weaponType);
         if (ammo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
-            AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
+            AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
             return false;
         }
 
-        if ((!AgentBotAmmoStateRuntime.ammoShareRequested(entry) || bypassShareLimits)
+        if ((!AgentAmmoStateRuntime.ammoShareRequested(entry) || bypassShareLimits)
                 && requestAmmoShare(entry, bot, weaponType, ammo, bypassShareLimits)) {
-            AgentBotAmmoStateRuntime.setAmmoShareRequested(entry, true);
+            AgentAmmoStateRuntime.setAmmoShareRequested(entry, true);
             return true;
         }
         return false;
     }
 
     public static void checkAmmoShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
-        AgentBotAmmoStateRuntime.clearAmmoShareRequested(entry);
+        AgentAmmoStateRuntime.clearAmmoShareRequested(entry);
         requestLowAmmoShare(entry, bot, false);
     }
 
@@ -67,7 +67,7 @@ public final class AgentAmmoService {
 
     public static boolean requestAmmoShare(AgentRuntimeEntry entry, Character bot, WeaponType weaponType, int currentAmmo, boolean bypassShareLimits) {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        if (owner == null || bot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry)) {
+        if (owner == null || bot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(entry)) {
             return false;
         }
         if (!canRequestShare(weaponType) || currentAmmo >= AgentCombatConfig.cfg.AMMO_LOW_WARN) {
@@ -172,7 +172,7 @@ public final class AgentAmmoService {
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
         AgentBotAmmoRuntime.afterDelay(initialDelayMs, () -> {
-            if (donorBot.getTrade() != null || AgentBotPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
+            if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
             List<Item> items = collectAmmoShareItems(donorBot, weaponType, maxQty);

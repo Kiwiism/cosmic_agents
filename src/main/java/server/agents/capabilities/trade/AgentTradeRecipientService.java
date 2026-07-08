@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -10,7 +10,7 @@ public final class AgentTradeRecipientService {
     }
 
     public static Character resolveTradeRecipient(AgentRuntimeEntry entry, Character agent) {
-        int recipientId = AgentBotPendingTradeStateRuntime.recipientId(entry);
+        int recipientId = AgentPendingTradeStateRuntime.recipientId(entry);
         if (recipientId <= 0) {
             return AgentRuntimeIdentityRuntime.owner(entry);
         }

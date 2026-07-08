@@ -1,10 +1,10 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -29,10 +29,10 @@ public final class AgentClimbMovementService {
             AgentMotionTimerService.tickMotionTimers(entry);
             Point agentPosition = agent.getPosition();
             int dy = targetPos.y - agentPosition.y;
-            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+            Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             int dxOwner = targetPos.x - climbRope.x();
 
-            if (runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+            if (runAiTick && !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                     && Math.abs(dxOwner) > AgentMovementPhysicsConfig.configuredFollowDist()
                     && climbRope.bottomY() < targetPos.y) {
                 jumpOffRope(entry, agent, dxOwner);
@@ -51,8 +51,8 @@ public final class AgentClimbMovementService {
                 return;
             }
 
-            if (!runAiTick && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-                if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
+            if (!runAiTick && !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+                if (!AgentClimbStateRuntime.hasClimbVerticalDirection(entry)) {
                     AgentRopeMovementService.holdClimb(entry, agent);
                 } else {
                     AgentRopeMovementService.advanceClimb(entry, agent);
@@ -72,27 +72,27 @@ public final class AgentClimbMovementService {
 
     public static void jumpOffRope(AgentRuntimeEntry entry, Character agent, int dx) {
         int airVelX = AgentJumpActionService.resolveAirVelocityX(
-                agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
+                agent.getMap(), AgentMovementStateRuntime.movementProfile(entry), dx);
         AgentRopeMovementService.beginJumpOffRope(entry, agent, airVelX);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     public static void jumpToRope(AgentRuntimeEntry entry, Character agent, int dx) {
-        Rope sourceRope = AgentBotClimbStateRuntime.climbRope(entry);
+        Rope sourceRope = AgentClimbStateRuntime.climbRope(entry);
         int airVelX = AgentJumpActionService.resolveAirVelocityX(
-                agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry), dx);
+                agent.getMap(), AgentMovementStateRuntime.movementProfile(entry), dx);
         AgentRopeMovementService.beginRopeTransferJump(entry, agent, sourceRope, airVelX);
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     private static void applyClimbAction(AgentRuntimeEntry entry, Character agent, ClimbAction action) {
-        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, switch (action) {
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, switch (action) {
             case CLIMB_UP -> -1;
             case CLIMB_DOWN -> 1;
             default -> 0;
         });
 
-        if (!AgentBotClimbStateRuntime.hasClimbVerticalDirection(entry)) {
+        if (!AgentClimbStateRuntime.hasClimbVerticalDirection(entry)) {
             AgentRopeMovementService.holdClimb(entry, agent);
         } else {
             AgentRopeMovementService.advanceClimb(entry, agent);
@@ -102,8 +102,8 @@ public final class AgentClimbMovementService {
 
     public static boolean shouldHoldClimbIdle(AgentRuntimeEntry entry, int dy, int dxOwner) {
         return AgentClimbMovementPolicy.shouldHoldClimbIdle(
-                AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry),
-                AgentBotModeStateRuntime.grinding(entry),
+                AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry),
+                AgentModeStateRuntime.grinding(entry),
                 dy,
                 dxOwner,
                 AgentMovementPhysicsConfig.configuredStopDist(),
@@ -115,11 +115,11 @@ public final class AgentClimbMovementService {
             return false;
         }
         return AgentClimbMovementPolicy.shouldSnapToClimbTarget(
-                AgentBotClimbStateRuntime.climbing(entry),
-                AgentBotClimbStateRuntime.climbRope(entry),
+                AgentClimbStateRuntime.climbing(entry),
+                AgentClimbStateRuntime.climbRope(entry),
                 targetPos,
                 dy,
-                AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry),
+                AgentNavigationDebugStateRuntime.navPreciseTarget(entry),
                 AgentMovementKinematicsService.climbStepPerTick());
     }
 }

@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.inventory.Item;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -13,19 +13,19 @@ public final class AgentTradeBetweenBatchService {
     }
 
     public static boolean tickBetweenBatches(AgentRuntimeEntry entry, BetweenBatchCallbacks callbacks) {
-        if (!AgentBotPendingTradeStateRuntime.isBetweenBatches(entry)) {
+        if (!AgentPendingTradeStateRuntime.isBetweenBatches(entry)) {
             return false;
         }
-        if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
+        if (AgentPendingTradeStateRuntime.singleBatch(entry)) {
             callbacks.resetTradeState();
             return true;
         }
-        if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 0) {
-            AgentBotPendingTradeStateRuntime.tickTimerDown(entry, callbacks.tickDown());
+        if (AgentPendingTradeStateRuntime.timerMs(entry) > 0) {
+            AgentPendingTradeStateRuntime.tickTimerDown(entry, callbacks.tickDown());
             return true;
         }
 
-        String category = AgentBotPendingTradeStateRuntime.category(entry);
+        String category = AgentPendingTradeStateRuntime.category(entry);
         List<Item> next = callbacks.collectItems(category);
         if (next.isEmpty()) {
             String advanced = callbacks.nextEquipsGroup(category);
@@ -33,8 +33,8 @@ public final class AgentTradeBetweenBatchService {
                 advanced = callbacks.nextAmmoGroup(category);
             }
             if (advanced != null) {
-                AgentBotPendingTradeStateRuntime.setCategory(entry, advanced);
-                AgentBotPendingTradeStateRuntime.setCategoryMessage(entry, callbacks.equipsGroupMessage(advanced));
+                AgentPendingTradeStateRuntime.setCategory(entry, advanced);
+                AgentPendingTradeStateRuntime.setCategoryMessage(entry, callbacks.equipsGroupMessage(advanced));
                 callbacks.openTradeBatch(callbacks.collectItems(advanced));
             } else {
                 callbacks.resetTradeState();

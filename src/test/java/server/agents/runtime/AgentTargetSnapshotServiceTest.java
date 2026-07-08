@@ -2,9 +2,9 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotFormationStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -21,7 +21,7 @@ class AgentTargetSnapshotServiceTest {
         Character owner = character(100, "Leader", new Point(10, 20));
         Character bot = character(200, "Agent", new Point(1, 2));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotFormationStateRuntime.setFollowOffsetX(entry, 60);
+        AgentFormationStateRuntime.setFollowOffsetX(entry, 60);
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotService.capture(
                 entry,
@@ -40,9 +40,9 @@ class AgentTargetSnapshotServiceTest {
         Character owner = character(100, "Leader", new Point(10, 20));
         Character bot = character(200, "Agent", new Point(1, 2));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotFormationStateRuntime.setFollowOffsetX(entry, -60);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(300, 400), false);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentFormationStateRuntime.setFollowOffsetX(entry, -60);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(300, 400), false);
 
         AgentTargetSnapshot snapshot = AgentTargetSnapshotService.capture(
                 entry,
@@ -62,10 +62,10 @@ class AgentTargetSnapshotServiceTest {
         Character sibling = character(300, "Sibling", new Point(50, 60));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, owner, null);
-        AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());
+        AgentModeStateRuntime.startFollowing(entry, sibling.getId());
         AgentFormationService.FormationState customFormation =
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 40, 120);
-        AgentBotFormationStateRuntime.setFollowOffsetX(entry, customFormation.offsetFor(0, 1));
+        AgentFormationStateRuntime.setFollowOffsetX(entry, customFormation.offsetFor(0, 1));
         AgentTargetSnapshot snapshot = AgentTargetSnapshotService.capture(
                 entry,
                 List.of(entry, siblingEntry),

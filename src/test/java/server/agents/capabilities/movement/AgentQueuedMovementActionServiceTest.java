@@ -2,8 +2,8 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
@@ -27,8 +27,8 @@ class AgentQueuedMovementActionServiceTest {
 
         AgentQueuedMovementActionService.queueDownJump(entry, agent);
 
-        assertTrue(AgentBotMovementStateRuntime.downJumpPending(entry));
-        assertTrue(AgentBotMovementStateRuntime.crouching(entry));
+        assertTrue(AgentMovementStateRuntime.downJumpPending(entry));
+        assertTrue(AgentMovementStateRuntime.crouching(entry));
     }
 
     @Test
@@ -38,14 +38,14 @@ class AgentQueuedMovementActionServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
-        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentMovementStateRuntime.setDownJumpPending(entry, true);
+        AgentMovementStateRuntime.setCrouching(entry, true);
 
         AgentQueuedMovementActionService.beginDownJump(entry, agent);
 
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
-        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
-        assertEquals(0L, AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentMovementStateRuntime.crouching(entry));
+        assertEquals(0L, AgentMovementStateRuntime.downJumpGracePeriodMs(entry));
     }
 
     @Test
@@ -65,17 +65,17 @@ class AgentQueuedMovementActionServiceTest {
         when(agent.getPosition()).thenReturn(position);
         when(agent.getHp()).thenReturn(1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
-        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentMovementStateRuntime.setDownJumpPending(entry, true);
+        AgentMovementStateRuntime.setCrouching(entry, true);
 
         AgentQueuedMovementActionService.beginDownJump(entry, agent);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
-        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentMovementStateRuntime.crouching(entry));
         assertEquals(-AgentAirborneLaunchService.downJumpForcePerTick(),
-                AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
+                AgentMovementPhysicsStateRuntime.verticalVelocity(entry), 0.0001f);
         assertEquals(AgentMovementPhysicsConfig.configuredDownJumpGraceMs(),
-                AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry));
+                AgentMovementStateRuntime.downJumpGracePeriodMs(entry));
     }
 }

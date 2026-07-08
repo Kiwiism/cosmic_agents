@@ -1,10 +1,10 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.maps.Rope;
 
 import java.awt.Point;
@@ -19,8 +19,8 @@ class AgentMovementPhaseServiceTest {
     void climbingTakesPriorityOverAirAndSwim() {
         AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(10, 0, 100, false));
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(10, 0, 100, false));
         List<String> calls = new ArrayList<>();
 
         AgentMovementPhaseService.tickMovementPhase(entry, target, true, hooks(calls, true));
@@ -32,7 +32,7 @@ class AgentMovementPhaseServiceTest {
     void swimmingRunsOnlyWhenInAirOnSwimMap() {
         AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         List<String> calls = new ArrayList<>();
 
         AgentMovementPhaseService.tickMovementPhase(entry, target, false, hooks(calls, true));
@@ -44,7 +44,7 @@ class AgentMovementPhaseServiceTest {
     void airborneRunsWhenInAirOutsideSwimMap() {
         AgentRuntimeEntry entry = entry();
         Point target = new Point(10, 20);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         List<String> calls = new ArrayList<>();
 
         AgentMovementPhaseService.tickMovementPhase(entry, target, false, hooks(calls, false));

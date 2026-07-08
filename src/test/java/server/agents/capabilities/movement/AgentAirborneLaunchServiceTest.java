@@ -2,9 +2,9 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -22,14 +22,14 @@ class AgentAirborneLaunchServiceTest {
 
         AgentAirborneLaunchService.launchAirborne(entry, launchPosition, -4.5f, 3, true);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
-        assertEquals(launchPosition, AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry));
-        assertEquals(-4.5f, AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry));
-        assertEquals(3, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
-        assertEquals(0.0, AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry));
-        assertFalse(AgentBotMovementPhysicsStateRuntime.fixedAirArc(entry));
-        assertTrue(AgentBotClimbStateRuntime.climbUpIntent(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentMovementStateRuntime.crouching(entry));
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
+        assertEquals(launchPosition, AgentMovementPhysicsStateRuntime.roundedPhysicsPosition(entry));
+        assertEquals(-4.5f, AgentMovementPhysicsStateRuntime.verticalVelocity(entry));
+        assertEquals(3, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertEquals(0.0, AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry));
+        assertFalse(AgentMovementPhysicsStateRuntime.fixedAirArc(entry));
+        assertTrue(AgentClimbStateRuntime.climbUpIntent(entry));
     }
 }

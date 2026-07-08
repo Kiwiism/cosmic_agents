@@ -2,8 +2,8 @@ package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
 import client.Character;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -85,7 +85,7 @@ class AgentNavigationWaypointServiceTest {
     @Test
     void climbWaypointUsesEndPointWhenAirborne() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(100, 200), new Point(100, 120), 0, 0, 0);
 
@@ -97,7 +97,7 @@ class AgentNavigationWaypointServiceTest {
     @Test
     void climbWaypointHoldsPositionOnlyWhenJumpExitReady() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 80, 220, false));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(100, 80, 220, false));
         AgentNavigationGraph graph = graphWithRopeRegion(1);
         AgentNavigationGraph.Edge jumpExit = edge(AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(100, 120), new Point(150, 80), 0, 0, 4);
@@ -115,7 +115,7 @@ class AgentNavigationWaypointServiceTest {
     void climbWaypointKeepsRopeXForZeroStepExitWhileClimbing() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Rope rope = new Rope(300, 100, 240, false);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, rope);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, rope);
         AgentNavigationGraph.Edge edge = edge(AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(300, 100), new Point(260, 90), 0, 0, 0);
 

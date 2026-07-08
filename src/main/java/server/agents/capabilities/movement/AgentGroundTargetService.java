@@ -3,9 +3,9 @@ package server.agents.capabilities.movement;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -18,15 +18,15 @@ public final class AgentGroundTargetService {
     }
 
     public static Point adjustGrindingTargetPosition(AgentRuntimeEntry entry, Foothold currentFoothold, Point targetPos) {
-        if (!AgentBotModeStateRuntime.grinding(entry)
-                || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+        if (!AgentModeStateRuntime.grinding(entry)
+                || AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 || currentFoothold == null
                 || targetPos == null) {
             return targetPos;
         }
 
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
-        AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
+        AgentMovementProfile profile = AgentMovementStateRuntime.movementProfile(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
         if (graph == null) {
             AgentNavigationGraphService.warmGraphAsync(map, profile);

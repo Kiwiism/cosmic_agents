@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -21,13 +21,13 @@ class AgentMovementPoseServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setCrouching(entry, true);
 
         AgentMovementPoseService.idleOnGround(entry, agent);
 
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentMovementStateRuntime.crouching(entry));
         verify(agent).setStance(CharacterStance.STAND_RIGHT_STANCE);
     }
 

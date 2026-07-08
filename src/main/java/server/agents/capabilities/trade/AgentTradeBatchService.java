@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -33,9 +33,9 @@ public final class AgentTradeBatchService {
         AgentTradeStateService.initializeBatch(entry, items, mesos);
         startTrade.run();
         inviteTrade.accept(agent, recipient);
-        if (!AgentBotPendingTradeStateRuntime.inviteAnnounced(entry)
-                && !AgentBotPendingTradeStateRuntime.isSupplyShareCategory(entry)) {
-            AgentBotPendingTradeStateRuntime.markInviteAnnounced(entry);
+        if (!AgentPendingTradeStateRuntime.inviteAnnounced(entry)
+                && !AgentPendingTradeStateRuntime.isSupplyShareCategory(entry)) {
+            AgentPendingTradeStateRuntime.markInviteAnnounced(entry);
             reply.accept(invitationReply.get());
         }
     }

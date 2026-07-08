@@ -25,9 +25,9 @@ class AgentBotMovementCommandRuntimeTest {
 
         AgentBotMovementCommandRuntime.followOwner(entry);
 
-        assertTrue(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
+        assertTrue(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
+        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
     }
 
     @Test
@@ -37,22 +37,22 @@ class AgentBotMovementCommandRuntimeTest {
 
         AgentBotMovementCommandRuntime.follow(entry, target);
 
-        assertTrue(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(target.getId(), AgentBotModeStateRuntime.followTargetId(entry));
+        assertTrue(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
+        assertEquals(target.getId(), AgentModeStateRuntime.followTargetId(entry));
     }
 
     @Test
     void stopUsesAgentModeStateDirectly() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), character(100, 100000000), null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
 
         AgentBotMovementCommandRuntime.stop(entry);
 
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
     }
 
     @Test
@@ -62,10 +62,10 @@ class AgentBotMovementCommandRuntimeTest {
 
         AgentBotMovementCommandRuntime.moveTo(entry, dest, true);
 
-        assertEquals(dest, AgentBotMoveTargetStateRuntime.moveTarget(entry));
-        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
+        assertEquals(dest, AgentMoveTargetStateRuntime.moveTarget(entry));
+        assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
     }
 
     @Test
@@ -75,14 +75,14 @@ class AgentBotMovementCommandRuntimeTest {
 
         AgentBotMovementCommandRuntime.farmHere(farmEntry, dest);
 
-        assertTrue(AgentBotModeStateRuntime.grinding(farmEntry));
-        assertEquals(dest, AgentBotMoveTargetStateRuntime.moveTarget(farmEntry));
+        assertTrue(AgentModeStateRuntime.grinding(farmEntry));
+        assertEquals(dest, AgentMoveTargetStateRuntime.moveTarget(farmEntry));
 
         AgentRuntimeEntry grindEntry = new AgentRuntimeEntry(character(201, 100000000), character(100, 100000000), null);
         AgentBotMovementCommandRuntime.grind(grindEntry);
 
-        assertTrue(AgentBotModeStateRuntime.grinding(grindEntry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(grindEntry));
+        assertTrue(AgentModeStateRuntime.grinding(grindEntry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(grindEntry));
     }
 
     @Test
@@ -95,13 +95,13 @@ class AgentBotMovementCommandRuntimeTest {
 
         try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry)))
+            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentMovementStateRuntime.movementProfile(entry)))
                     .thenReturn(null);
 
             AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "can't find a patrol region here"));
-            assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
+            assertFalse(AgentPatrolStateRuntime.hasPatrolRegion(entry));
         }
     }
 
@@ -116,15 +116,15 @@ class AgentBotMovementCommandRuntimeTest {
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
         try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class)) {
-            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry)))
+            graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentMovementStateRuntime.movementProfile(entry)))
                     .thenReturn(graph);
             when(graph.findRegionId(map, patrolPos)).thenReturn(7);
 
             AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
 
-            assertTrue(AgentBotModeStateRuntime.grinding(entry));
-            assertEquals(7, AgentBotPatrolStateRuntime.patrolRegionId(entry));
-            assertEquals(100000000, AgentBotPatrolStateRuntime.patrolMapId(entry));
+            assertTrue(AgentModeStateRuntime.grinding(entry));
+            assertEquals(7, AgentPatrolStateRuntime.patrolRegionId(entry));
+            assertEquals(100000000, AgentPatrolStateRuntime.patrolMapId(entry));
         }
     }
 

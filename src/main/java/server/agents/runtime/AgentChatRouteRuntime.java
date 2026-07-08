@@ -14,7 +14,7 @@ import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotActivityStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentBotChatOrchestratorContext;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentReplyRuntime;
@@ -134,7 +134,7 @@ public final class AgentChatRouteRuntime {
                 AgentChatRuntime::wasLastChatHandled,
                 System::currentTimeMillis,
                 AgentRuntimeIdentityRuntime::owner,
-                AgentBotActivityStateRuntime::recordLastOwnerCommand,
+                AgentActivityStateRuntime::recordLastOwnerCommand,
                 () -> AgentLlmConfig.enabled,
                 AgentLlmReplyRuntime::maybeRespond,
                 Character::yellowMessage);

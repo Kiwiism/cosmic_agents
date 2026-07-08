@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,7 +35,7 @@ class AgentAnchoredFarmModeTickServiceTest {
     void runsAnchoredFarmTickWhenAnchorExists() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
         Character agent = mock(Character.class);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 50), 1000);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(100, 50), 1000);
         AtomicInteger ticks = new AtomicInteger();
 
         boolean consumed = AgentAnchoredFarmModeTickService.tickIfAnchoredFarm(

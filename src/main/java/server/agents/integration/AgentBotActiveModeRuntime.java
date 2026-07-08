@@ -64,11 +64,11 @@ public final class AgentBotActiveModeRuntime {
         AgentEquipmentService.autoEquip(
                 bot(entry),
                 AgentRuntimeIdentityRuntime.owner(entry),
-                AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
+                AgentOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
     private static void resetGearSuggestionCooldown(AgentRuntimeEntry entry) {
-        AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, 0);
+        AgentOfferStateRuntime.setNextGearSuggestionAt(entry, 0);
     }
 
     private static Character bot(AgentRuntimeEntry entry) {

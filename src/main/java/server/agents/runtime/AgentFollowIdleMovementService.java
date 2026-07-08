@@ -2,14 +2,14 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotFidgetRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotMovementStuckStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentMovementStuckStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 
 import java.awt.Point;
 
@@ -32,15 +32,15 @@ public final class AgentFollowIdleMovementService {
             return false;
         }
 
-        if (AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry) == 0L) {
-            AgentBotTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + FOLLOW_IDLE_RECHECK_MS);
-        } else if (nowMs >= AgentBotTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry)) {
-            AgentBotTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + FOLLOW_IDLE_RECHECK_MS);
+        if (AgentTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry) == 0L) {
+            AgentTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + FOLLOW_IDLE_RECHECK_MS);
+        } else if (nowMs >= AgentTickStateRuntime.nextFollowIdleMovementCheckAtMs(entry)) {
+            AgentTickStateRuntime.setNextFollowIdleMovementCheckAtMs(entry, nowMs + FOLLOW_IDLE_RECHECK_MS);
             return false;
         }
 
-        AgentBotNavigationDebugStateRuntime.setLastDecision(entry, "idle-fast");
-        AgentBotMovementStuckStateRuntime.resetStuckProgress(entry);
+        AgentNavigationDebugStateRuntime.setLastDecision(entry, "idle-fast");
+        AgentMovementStuckStateRuntime.resetStuckProgress(entry);
         return true;
     }
 
@@ -52,31 +52,31 @@ public final class AgentFollowIdleMovementService {
         if (entry == null || agent == null || targetPosition == null) {
             return false;
         }
-        if (!AgentBotModeStateRuntime.following(entry)
-                || AgentBotModeStateRuntime.grinding(entry)
-                || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
+        if (!AgentModeStateRuntime.following(entry)
+                || AgentModeStateRuntime.grinding(entry)
+                || AgentMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return false;
         }
-        if (AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotMovementStateRuntime.climbing(entry)
-                || AgentBotMovementStateRuntime.downJumpPending(entry)
-                || AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.downJumpPending(entry)
+                || AgentNavigationDebugStateRuntime.graphWarmupFallback(entry)) {
             return false;
         }
-        if (AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
-                || AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry)
+        if (AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
+                || AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
                 || AgentBotFidgetRuntime.hasActiveFidgetMode(entry)) {
             return false;
         }
-        if (AgentBotShopStateRuntime.hasActiveShopTransition(entry)) {
+        if (AgentShopStateRuntime.hasActiveShopTransition(entry)) {
             return false;
         }
-        if (AgentBotMovementStateRuntime.wasMovingX(entry)
-                || AgentBotMovementStateRuntime.hasMoveDirection(entry)
-                || AgentBotMovementStateRuntime.hasMovementVelocity(entry)) {
+        if (AgentMovementStateRuntime.wasMovingX(entry)
+                || AgentMovementStateRuntime.hasMoveDirection(entry)
+                || AgentMovementStateRuntime.hasMovementVelocity(entry)) {
             return false;
         }
-        if (AgentBotOwnerMotionStateRuntime.observedOwnerMoved(entry)) {
+        if (AgentOwnerMotionStateRuntime.observedOwnerMoved(entry)) {
             return false;
         }
 

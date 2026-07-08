@@ -6,7 +6,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotCombatAlertRuntime;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +23,7 @@ class BotCombatAlertSchedulerTest {
         try (MockedStatic<AgentBotCombatRuntime> scheduler = mockStatic(AgentBotCombatRuntime.class)) {
             AgentBotCombatAlertRuntime.markAlerted(entry);
 
-            assertTrue(AgentBotCombatCooldownStateRuntime.alertResetScheduled(entry));
+            assertTrue(AgentCombatCooldownStateRuntime.alertResetScheduled(entry));
             scheduler.verify(() -> AgentBotCombatRuntime.afterDelay(
                     longThat(delay -> delay >= 50L && delay <= 5200L),
                     any(Runnable.class)));

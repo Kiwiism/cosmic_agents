@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -21,7 +21,7 @@ class AgentOwnerlessTickServiceTest {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         AgentOwnerlessTickService.tickOwnerless(
                 entry, agent, true, (ignoredEntry, ignoredAgent) -> true,
@@ -31,7 +31,7 @@ class AgentOwnerlessTickServiceTest {
                     return false;
                 });
 
-        assertFalse(AgentBotModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
         assertEquals(0, moves.get());
         assertEquals(0, idles.get());
     }
@@ -42,7 +42,7 @@ class AgentOwnerlessTickServiceTest {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(1, 2), true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(1, 2), true);
 
         AgentOwnerlessTickService.tickOwnerless(
                 entry, agent, true, (ignoredEntry, ignoredAgent) -> false,

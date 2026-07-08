@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,7 +21,7 @@ class AgentTradeClosedWindowServiceTest {
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
         AgentTradeStateService.initializeSequence(entry, "scrolls", 1, true);
-        AgentBotPendingTradeStateRuntime.markBotDone(entry);
+        AgentPendingTradeStateRuntime.markBotDone(entry);
 
         boolean handled = AgentTradeClosedWindowService.handleClosedTrade(
                 entry,
@@ -41,7 +41,7 @@ class AgentTradeClosedWindowServiceTest {
         AtomicBoolean refill = new AtomicBoolean(false);
         AgentTradeStateService.initializeSequence(entry, "scrolls", 1, false);
         AgentTradeStateService.initializeBatch(entry, java.util.List.of(), 0);
-        AgentBotPendingTradeStateRuntime.markBotDone(entry);
+        AgentPendingTradeStateRuntime.markBotDone(entry);
 
         boolean handled = AgentTradeClosedWindowService.handleClosedTrade(
                 entry,
@@ -50,8 +50,8 @@ class AgentTradeClosedWindowServiceTest {
                 () -> refill.set(true));
 
         assertTrue(handled);
-        assertNull(AgentBotPendingTradeStateRuntime.items(entry));
-        assertEquals(1_050, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertNull(AgentPendingTradeStateRuntime.items(entry));
+        assertEquals(1_050, AgentPendingTradeStateRuntime.timerMs(entry));
         assertTrue(!reset.get());
         assertTrue(!refill.get());
     }
@@ -61,7 +61,7 @@ class AgentTradeClosedWindowServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
-        AgentBotPendingTradeStateRuntime.markAllItemsAdded(entry);
+        AgentPendingTradeStateRuntime.markAllItemsAdded(entry);
 
         try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
             boolean handled = AgentTradeClosedWindowService.handleClosedTrade(

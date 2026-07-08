@@ -2,10 +2,10 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 import server.agents.integration.AgentBotCombatDamageRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -29,8 +29,8 @@ public final class AgentAirbornePhysicsService {
     }
 
     public static AgentAirborneStepResult stepAirborne(AgentRuntimeEntry entry, Character agent) {
-        if (AgentBotMovementStateRuntime.hasMoveDirection(entry)) {
-            applyAirSteering(entry, AgentBotMovementStateRuntime.moveDirection(entry));
+        if (AgentMovementStateRuntime.hasMoveDirection(entry)) {
+            applyAirSteering(entry, AgentMovementStateRuntime.moveDirection(entry));
         }
 
         Point previousPosition = roundedAirPosition(entry);
@@ -55,7 +55,7 @@ public final class AgentAirbornePhysicsService {
     }
 
     public static boolean canLand(AgentRuntimeEntry entry) {
-        return AgentBotMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
+        return AgentMovementStateRuntime.downJumpGracePeriodMs(entry) == 0L;
     }
 
     static void landOnGround(AgentRuntimeEntry entry, Character agent, Point position) {
@@ -68,35 +68,35 @@ public final class AgentAirbornePhysicsService {
                              Foothold foothold,
                              double incomingDeltaX,
                              double incomingDeltaY) {
-        double fallDistance = AgentBotMovementPhysicsStateRuntime.hasFallPeakPhysicsY(entry)
-                ? Math.max(0.0, position.y - AgentBotMovementPhysicsStateRuntime.fallPeakPhysicsY(entry))
+        double fallDistance = AgentMovementPhysicsStateRuntime.hasFallPeakPhysicsY(entry)
+                ? Math.max(0.0, position.y - AgentMovementPhysicsStateRuntime.fallPeakPhysicsY(entry))
                 : 0.0;
         agent.setPosition(position);
-        AgentBotMovementStateRuntime.setInAir(entry, false);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotClimbStateRuntime.setClimbUpIntent(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-        AgentBotClimbStateRuntime.clearRopeEntry(entry);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
-        AgentBotMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
-        AgentBotMovementPhysicsStateRuntime.setHorizontalSpeed(entry, landingGroundHSpeed(agent.getMap(), foothold,
-                incomingDeltaX, incomingDeltaY, AgentBotMovementStateRuntime.movementProfile(entry)));
-        AgentBotMovementStateRuntime.setMovementVelocity(entry,
+        AgentMovementStateRuntime.setInAir(entry, false);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentMovementStateRuntime.setCrouching(entry, false);
+        AgentClimbStateRuntime.setClimbUpIntent(entry, false);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentClimbStateRuntime.clearRopeEntry(entry);
+        AgentMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+        AgentMovementPhysicsStateRuntime.setGroundPhysicsCarryMs(entry, 0.0);
+        AgentClimbStateRuntime.clearBlockedRopeGrab(entry);
+        AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, landingGroundHSpeed(agent.getMap(), foothold,
+                incomingDeltaX, incomingDeltaY, AgentMovementStateRuntime.movementProfile(entry)));
+        AgentMovementStateRuntime.setMovementVelocity(entry,
                 AgentMovementKinematicsService.velocityFromDeltaX(tickDeltaFromGroundHSpeed(agent.getMap(),
-                        AgentBotMovementPhysicsStateRuntime.horizontalSpeed(entry),
-                        AgentBotMovementStateRuntime.movementProfile(entry))),
+                        AgentMovementPhysicsStateRuntime.horizontalSpeed(entry),
+                        AgentMovementStateRuntime.movementProfile(entry))),
                 0);
         AgentMovementPoseService.syncCharacterState(entry);
 
         AgentBotCombatDamageRuntime.applyFallDamage(entry, agent, (float) fallDistance, AgentCombatConfig.cfg);
-        AgentBotMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
+        AgentMovementPhysicsStateRuntime.resetFallPeakPhysicsY(entry);
     }
 
     private static void applyAirSteering(AgentRuntimeEntry entry, int steerDirection) {
@@ -104,69 +104,69 @@ public final class AgentAirbornePhysicsService {
             return;
         }
         double acceleration = steerDirection > 0 ? AIR_STEER_ACCEL : -AIR_STEER_ACCEL;
-        AgentBotMovementPhysicsStateRuntime.addClampedAirSteerVelocityX(entry, acceleration, AIR_STEER_MAX);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, steerDirection > 0 ? 1 : -1);
+        AgentMovementPhysicsStateRuntime.addClampedAirSteerVelocityX(entry, acceleration, AIR_STEER_MAX);
+        AgentMovementStateRuntime.setFacingDirection(entry, steerDirection > 0 ? 1 : -1);
     }
 
     private static Point advanceAirbornePosition(AgentRuntimeEntry entry) {
-        double deltaX = AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
-                + AgentBotMovementPhysicsStateRuntime.airSteerVelocityX(entry);
+        double deltaX = AgentMovementPhysicsStateRuntime.airVelocityX(entry)
+                + AgentMovementPhysicsStateRuntime.airSteerVelocityX(entry);
         float gravity = AgentMovementKinematicsService.gravityPerTick();
-        double deltaY = AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
-        AgentBotMovementPhysicsStateRuntime.addPhysicsPosition(entry, deltaX, deltaY);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry,
-                Math.min(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry) + gravity, maxFallPerTick()));
-        AgentBotMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry,
-                AgentBotMovementPhysicsStateRuntime.physicsY(entry));
+        double deltaY = AgentMovementPhysicsStateRuntime.verticalVelocity(entry) + 0.5f * gravity;
+        AgentMovementPhysicsStateRuntime.addPhysicsPosition(entry, deltaX, deltaY);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry,
+                Math.min(AgentMovementPhysicsStateRuntime.verticalVelocity(entry) + gravity, maxFallPerTick()));
+        AgentMovementPhysicsStateRuntime.recordFallPeakPhysicsY(entry,
+                AgentMovementPhysicsStateRuntime.physicsY(entry));
 
         return roundedAirPosition(entry);
     }
 
     private static void applyAirbornePosition(AgentRuntimeEntry entry, Character agent, Point position) {
         agent.setPosition(position);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        int facingDirection = AgentBotMovementStateRuntime.facingDirection(entry);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry,
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentMovementStateRuntime.setCrouching(entry, false);
+        int facingDirection = AgentMovementStateRuntime.facingDirection(entry);
+        AgentMovementStateRuntime.setMovementVelocity(entry,
                 AgentMovementKinematicsService.velocityFromDeltaX(
-                        AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)),
-                velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
-        AgentBotMovementStateRuntime.setFacingDirection(entry, facingDirection);
+                        AgentMovementPhysicsStateRuntime.airVelocityX(entry)),
+                velocityFromAirStep(AgentMovementPhysicsStateRuntime.verticalVelocity(entry)));
+        AgentMovementStateRuntime.setFacingDirection(entry, facingDirection);
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
     private static void collideWithAirWall(AgentRuntimeEntry entry, Character agent, Point collisionPoint) {
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
         agent.setPosition(collisionPoint);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry, 0,
-                velocityFromAirStep(AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry)));
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentMovementStateRuntime.setCrouching(entry, false);
+        AgentMovementStateRuntime.setMovementVelocity(entry, 0,
+                velocityFromAirStep(AgentMovementPhysicsStateRuntime.verticalVelocity(entry)));
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
     private static void collideWithAirCeiling(AgentRuntimeEntry entry, Character agent, Point collisionPoint) {
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, collisionPoint);
         agent.setPosition(collisionPoint);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry,
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentMovementStateRuntime.setCrouching(entry, false);
+        AgentMovementStateRuntime.setMovementVelocity(entry,
                 AgentMovementKinematicsService.velocityFromDeltaX(
-                        AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)),
+                        AgentMovementPhysicsStateRuntime.airVelocityX(entry)),
                 0);
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
     private static Point roundedAirPosition(AgentRuntimeEntry entry) {
-        return AgentBotMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
+        return AgentMovementPhysicsStateRuntime.roundedPhysicsPosition(entry);
     }
 
     private static int velocityFromAirStep(float airVelocityPerTick) {

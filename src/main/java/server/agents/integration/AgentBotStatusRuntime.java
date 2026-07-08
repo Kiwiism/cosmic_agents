@@ -20,22 +20,22 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.StatusState() {
             @Override
             public void setOwnerAfkPosition(Point position) {
-                AgentBotActivityStateRuntime.setOwnerAfkPosition(entry, position);
+                AgentActivityStateRuntime.setOwnerAfkPosition(entry, position);
             }
 
             @Override
             public void setOwnerAfkSinceMs(long sinceMs) {
-                AgentBotActivityStateRuntime.setOwnerAfkSinceMs(entry, sinceMs);
+                AgentActivityStateRuntime.setOwnerAfkSinceMs(entry, sinceMs);
             }
 
             @Override
             public boolean ownerWasAfk() {
-                return AgentBotActivityStateRuntime.ownerWasAfk(entry);
+                return AgentActivityStateRuntime.ownerWasAfk(entry);
             }
 
             @Override
             public void setOwnerWasAfk(boolean wasAfk) {
-                AgentBotActivityStateRuntime.setOwnerWasAfk(entry, wasAfk);
+                AgentActivityStateRuntime.setOwnerWasAfk(entry, wasAfk);
             }
         };
     }
@@ -44,32 +44,32 @@ public final class AgentBotStatusRuntime {
         return new AgentChatWelcomeBackFlow.AfkState() {
             @Override
             public Point ownerAfkPosition() {
-                return AgentBotActivityStateRuntime.ownerAfkPosition(entry);
+                return AgentActivityStateRuntime.ownerAfkPosition(entry);
             }
 
             @Override
             public void setOwnerAfkPosition(Point position) {
-                AgentBotActivityStateRuntime.setOwnerAfkPosition(entry, position);
+                AgentActivityStateRuntime.setOwnerAfkPosition(entry, position);
             }
 
             @Override
             public long ownerAfkSinceMs() {
-                return AgentBotActivityStateRuntime.ownerAfkSinceMs(entry);
+                return AgentActivityStateRuntime.ownerAfkSinceMs(entry);
             }
 
             @Override
             public void setOwnerAfkSinceMs(long sinceMs) {
-                AgentBotActivityStateRuntime.setOwnerAfkSinceMs(entry, sinceMs);
+                AgentActivityStateRuntime.setOwnerAfkSinceMs(entry, sinceMs);
             }
 
             @Override
             public boolean ownerWasAfk() {
-                return AgentBotActivityStateRuntime.ownerWasAfk(entry);
+                return AgentActivityStateRuntime.ownerWasAfk(entry);
             }
 
             @Override
             public void setOwnerWasAfk(boolean wasAfk) {
-                AgentBotActivityStateRuntime.setOwnerWasAfk(entry, wasAfk);
+                AgentActivityStateRuntime.setOwnerWasAfk(entry, wasAfk);
             }
         };
     }
@@ -78,12 +78,12 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.StatusCheckState() {
             @Override
             public boolean spawnUpgradeCheckDone() {
-                return AgentBotOfferStateRuntime.spawnUpgradeCheckDone(entry);
+                return AgentOfferStateRuntime.spawnUpgradeCheckDone(entry);
             }
 
             @Override
             public void setSpawnUpgradeCheckDone(boolean done) {
-                AgentBotOfferStateRuntime.setSpawnUpgradeCheckDone(entry, done);
+                AgentOfferStateRuntime.setSpawnUpgradeCheckDone(entry, done);
             }
         };
     }
@@ -92,18 +92,18 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.GearSuggestionState() {
             @Override
             public long nextGearSuggestionAt() {
-                return AgentBotOfferStateRuntime.nextGearSuggestionAt(entry);
+                return AgentOfferStateRuntime.nextGearSuggestionAt(entry);
             }
 
             @Override
             public void setNextGearSuggestionAt(long nextGearSuggestionAt) {
-                AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
+                AgentOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
             }
         };
     }
 
     public static AgentChatReportRuntime.RecommendedGearState recommendedGearReportState(AgentRuntimeEntry entry) {
-        return nextGearSuggestionAt -> AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
+        return nextGearSuggestionAt -> AgentOfferStateRuntime.setNextGearSuggestionAt(entry, nextGearSuggestionAt);
     }
 
     public static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(Character bot) {

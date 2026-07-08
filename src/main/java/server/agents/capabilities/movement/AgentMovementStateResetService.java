@@ -1,12 +1,12 @@
 package server.agents.capabilities.movement;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentGrindSearchStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentMovementBroadcastStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -27,19 +27,19 @@ public final class AgentMovementStateResetService {
     }
 
     public static void clearTransientState(AgentRuntimeEntry entry) {
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        AgentBotGrindSearchStateRuntime.clear(entry);
-        AgentBotCombatCooldownStateRuntime.clearAttackCooldown(entry);
-        AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
-        AgentBotOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
+        AgentGrindTargetStateRuntime.clear(entry);
+        AgentGrindSearchStateRuntime.clear(entry);
+        AgentCombatCooldownStateRuntime.clearAttackCooldown(entry);
+        AgentNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
+        AgentOwnerMotionStateRuntime.clearObservedOwnerStep(entry);
         AgentFidgetService.clear(entry);
         clearNavigationState(entry);
-        AgentBotMovementBroadcastStateRuntime.invalidate(entry);
+        AgentMovementBroadcastStateRuntime.invalidate(entry);
     }
 
     public static void clearNavigationState(AgentRuntimeEntry entry) {
-        AgentBotNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
-        AgentBotNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
-        AgentBotNavigationDebugStateRuntime.clearNavTarget(entry);
+        AgentNavigationDebugStateRuntime.clearActiveNavigationEdge(entry);
+        AgentNavigationDebugStateRuntime.clearNavJumpLaunch(entry);
+        AgentNavigationDebugStateRuntime.clearNavTarget(entry);
     }
 }

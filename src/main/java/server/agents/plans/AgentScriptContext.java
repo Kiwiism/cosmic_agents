@@ -2,7 +2,7 @@ package server.agents.plans;
 
 import client.Character;
 import client.inventory.InventoryType;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentScriptTaskQueueService;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -50,19 +50,19 @@ public final class AgentScriptContext {
     }
 
     public int getInt(String key) {
-        return AgentBotScriptTaskStateRuntime.scriptInt(entry, key);
+        return AgentScriptTaskStateRuntime.scriptInt(entry, key);
     }
 
     public void setInt(String key, int value) {
-        AgentBotScriptTaskStateRuntime.setScriptInt(entry, key, value);
+        AgentScriptTaskStateRuntime.setScriptInt(entry, key, value);
     }
 
     public void waitMs(long ms) {
-        AgentBotScriptTaskStateRuntime.waitScriptUntil(entry, System.currentTimeMillis() + ms);
+        AgentScriptTaskStateRuntime.waitScriptUntil(entry, System.currentTimeMillis() + ms);
     }
 
     public boolean waitDone() {
-        return AgentBotScriptTaskStateRuntime.scriptWaitDone(entry, System.currentTimeMillis());
+        return AgentScriptTaskStateRuntime.scriptWaitDone(entry, System.currentTimeMillis());
     }
 
     public void queueMoveTo(Point point, boolean precise) {

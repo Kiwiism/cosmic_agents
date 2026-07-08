@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 
 import java.awt.Point;
 import java.util.function.BiFunction;
@@ -30,7 +30,7 @@ public final class AgentMovementOnlyRuntime {
             MovementOnlyConfig config) {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
                 AgentIdlePhysicsRuntime::tickIdleEntry,
-                (entry, agent) -> AgentBotShopStateRuntime.shopVisitPending(entry),
+                (entry, agent) -> AgentShopStateRuntime.shopVisitPending(entry),
                 AgentFollowMapSyncRuntime::syncFollowMap,
                 followAnchorResolver::apply,
                 (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
@@ -48,8 +48,8 @@ public final class AgentMovementOnlyRuntime {
                         config.outOfBoundsTeleportDistance()),
                 AgentMovementOnlyMapChangeRuntime::handleMapChange,
                 AgentShopService::tickShopVisit,
-                AgentBotShopStateRuntime::activeShopTargetPosition,
-                AgentBotShopStateRuntime::shopApproachDelayMs,
+                AgentShopStateRuntime::activeShopTargetPosition,
+                AgentShopStateRuntime::shopApproachDelayMs,
                 (entry, agent, target, nowMs) -> AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
                         entry,
                         agent,

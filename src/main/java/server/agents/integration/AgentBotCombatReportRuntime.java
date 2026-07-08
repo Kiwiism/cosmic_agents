@@ -26,7 +26,7 @@ public final class AgentBotCombatReportRuntime {
     }
 
     public static String debugStatsReport(AgentRuntimeEntry entry, Character bot) {
-        Monster target = AgentBotGrindTargetStateRuntime.target(entry);
+        Monster target = AgentGrindTargetStateRuntime.target(entry);
         if (target == null || !target.isAlive()) {
             target = AgentBotCombatTargetRuntime.findGrindTarget(entry, bot, AgentCombatConfig.cfg);
         }
@@ -41,7 +41,7 @@ public final class AgentBotCombatReportRuntime {
                 ? plan.speed
                 : AgentAttackExecutionProvider.buildBasicAttackData(bot, bot.getPosition()).speed();
         double cooldownSeconds = (plan != null ? plan.cooldownMs : 0) / 1000.0;
-        double remainingSeconds = AgentBotCombatCooldownStateRuntime.attackCooldownMs(entry) / 1000.0;
+        double remainingSeconds = AgentCombatCooldownStateRuntime.attackCooldownMs(entry) / 1000.0;
         String targetName = target != null ? target.getName() : "none";
 
         return AgentCombatDialogueReporter.debugStatsReport(
@@ -63,7 +63,7 @@ public final class AgentBotCombatReportRuntime {
     public static List<String> skillBuffDebugLines(AgentRuntimeEntry entry, Character bot) {
         long now = System.currentTimeMillis();
 
-        long lastActionAgeMs = AgentBotSkillBuffDebugStateRuntime.lastActionAgeMs(entry, now);
+        long lastActionAgeMs = AgentSkillBuffDebugStateRuntime.lastActionAgeMs(entry, now);
         List<AgentCombatDialogueReporter.ActiveSkillBuffDebugLine> activeBuffs = new ArrayList<>();
         for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
             StatEffect effect = holder.effect;
@@ -79,9 +79,9 @@ public final class AgentBotCombatReportRuntime {
         }
 
         List<AgentCombatDialogueReporter.CachedSkillBuffDebugLine> cachedBuffs = new ArrayList<>();
-        for (int skillId : AgentBotCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
+        for (int skillId : AgentCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             boolean cooling = bot.skillIsCooling(skillId);
-            long nextAt = AgentBotCombatBuffStateRuntime.nextBuffAt(entry, skillId);
+            long nextAt = AgentCombatBuffStateRuntime.nextBuffAt(entry, skillId);
             String status;
             if (cooling) {
                 status = "cd";
@@ -95,6 +95,6 @@ public final class AgentBotCombatReportRuntime {
         }
 
         return AgentCombatDialogueReporter.skillBuffDebugLines(
-                AgentBotSkillBuffDebugStateRuntime.lastActionSummary(entry), lastActionAgeMs, activeBuffs, cachedBuffs);
+                AgentSkillBuffDebugStateRuntime.lastActionSummary(entry), lastActionAgeMs, activeBuffs, cachedBuffs);
     }
 }

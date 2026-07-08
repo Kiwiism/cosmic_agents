@@ -6,7 +6,7 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotManagerStatusRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.maps.MapleMap;
@@ -223,8 +223,8 @@ public final class AgentLifecycleService {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, task);
         ref[0] = entry;
 
-        AgentBotMovementStateRuntime.refreshMovementProfile(entry, agent);
-        AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentMovementStateRuntime.refreshMovementProfile(entry, agent);
+        AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         entries.add(entry);
 
         AgentFormationService.FormationState formation = AgentFormationService.stateForLeader(

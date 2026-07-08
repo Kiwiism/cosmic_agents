@@ -12,7 +12,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentBotActiveModeRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,7 +25,7 @@ class AgentBotActiveModeRuntimeTest {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, 99L);
+        AgentOfferStateRuntime.setNextGearSuggestionAt(entry, 99L);
         AgentChatStatusRuntime.ActiveModeActions actions = AgentBotActiveModeRuntime.activeModeActions(entry);
 
         try (MockedStatic<AgentEquipmentService> equips = mockStatic(AgentEquipmentService.class);
@@ -40,7 +40,7 @@ class AgentBotActiveModeRuntimeTest {
             actions.checkPotShareOnModeStart();
 
             equips.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
-            assertTrue(AgentBotOfferStateRuntime.nextGearSuggestionAt(entry) > System.currentTimeMillis());
+            assertTrue(AgentOfferStateRuntime.nextGearSuggestionAt(entry) > System.currentTimeMillis());
             offers.verify(() -> AgentOfferService.offerBestGearToSibling(entry, bot));
             potions.verify(() -> AgentPotionService.setupAutopotForBot(bot));
             potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(entry, bot));
@@ -52,7 +52,7 @@ class AgentBotActiveModeRuntimeTest {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotOfferStateRuntime.setNextGearSuggestionAt(entry, 44L);
+        AgentOfferStateRuntime.setNextGearSuggestionAt(entry, 44L);
 
         try (MockedStatic<AgentEquipmentService> equips = mockStatic(AgentEquipmentService.class);
              MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
@@ -62,7 +62,7 @@ class AgentBotActiveModeRuntimeTest {
 
             equips.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
             offers.verify(() -> AgentOfferService.offerBestGearToSibling(entry, bot));
-            assertEquals(0L, AgentBotOfferStateRuntime.nextGearSuggestionAt(entry));
+            assertEquals(0L, AgentOfferStateRuntime.nextGearSuggestionAt(entry));
         }
     }
 }

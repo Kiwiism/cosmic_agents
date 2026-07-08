@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import net.server.world.Party;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -35,10 +35,10 @@ class AgentFollowAnchorServiceTest {
         Character agent = character(200, true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
 
-        AgentBotModeStateRuntime.setFollowTargetId(entry, leader.getId());
+        AgentModeStateRuntime.setFollowTargetId(entry, leader.getId());
         assertSame(leader, AgentFollowAnchorService.resolve(entry, leader, List.of()));
 
-        AgentBotModeStateRuntime.setFollowTargetId(entry, agent.getId());
+        AgentModeStateRuntime.setFollowTargetId(entry, agent.getId());
         assertSame(leader, AgentFollowAnchorService.resolve(entry, leader, List.of()));
     }
 
@@ -48,7 +48,7 @@ class AgentFollowAnchorServiceTest {
         Character partyMember = character(300, true);
         Character siblingAgent = character(300, true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
-        AgentBotModeStateRuntime.setFollowTargetId(entry, partyMember.getId());
+        AgentModeStateRuntime.setFollowTargetId(entry, partyMember.getId());
         when(leader.getParty()).thenReturn(mock(Party.class));
         when(leader.getPartyMembersOnline()).thenReturn(List.of(partyMember));
 
@@ -65,7 +65,7 @@ class AgentFollowAnchorServiceTest {
         Character leader = character(100, true);
         Character siblingAgent = character(300, true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
-        AgentBotModeStateRuntime.setFollowTargetId(entry, siblingAgent.getId());
+        AgentModeStateRuntime.setFollowTargetId(entry, siblingAgent.getId());
 
         Character resolved = AgentFollowAnchorService.resolve(
                 entry,
@@ -80,7 +80,7 @@ class AgentFollowAnchorServiceTest {
         Character leader = character(100, true);
         Character offlineSibling = character(300, false);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
-        AgentBotModeStateRuntime.setFollowTargetId(entry, offlineSibling.getId());
+        AgentModeStateRuntime.setFollowTargetId(entry, offlineSibling.getId());
 
         Character resolved = AgentFollowAnchorService.resolve(
                 entry,

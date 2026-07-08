@@ -7,7 +7,7 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -93,7 +93,7 @@ public final class AgentEquippedSlotTradeService {
                 return new PreparedTradeItems(List.of(), AgentDialogueCatalog.tradeEquippedItemPrepareFailedReply());
             }
 
-            AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, moved, srcSlot);
+            AgentPendingTradeStateRuntime.rememberRestoreSlot(entry, moved, srcSlot);
             result.add(moved);
         }
 
@@ -101,13 +101,13 @@ public final class AgentEquippedSlotTradeService {
     }
 
     public static void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent) {
-        if (agent == null || !AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry)) {
-            AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
+        if (agent == null || !AgentPendingTradeStateRuntime.hasRestoreSlots(entry)) {
+            AgentPendingTradeStateRuntime.clearRestoreSlots(entry);
             return;
         }
 
         Inventory equipped = agent.getInventory(InventoryType.EQUIPPED);
-        List<Map.Entry<Item, Short>> restoreEntries = AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry);
+        List<Map.Entry<Item, Short>> restoreEntries = AgentPendingTradeStateRuntime.restoreSlotEntries(entry);
         restoreEntries.sort(Comparator.comparingInt(Map.Entry::getValue));
         for (Map.Entry<Item, Short> restoreEntry : restoreEntries) {
             Item item = restoreEntry.getKey();
@@ -117,6 +117,6 @@ public final class AgentEquippedSlotTradeService {
             }
             InventoryManipulator.handleItemMove(agent.getClient(), InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
         }
-        AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
+        AgentPendingTradeStateRuntime.clearRestoreSlots(entry);
     }
 }

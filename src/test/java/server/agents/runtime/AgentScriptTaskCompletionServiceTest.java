@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.plans.AgentTask;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -26,7 +26,7 @@ class AgentScriptTaskCompletionServiceTest {
     @Test
     void moveToCompletesWhenAgentIsNearTarget() {
         AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(110, 105), false);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(110, 105), false);
 
         assertTrue(AgentScriptTaskCompletionService.isComplete(
                 entry, AgentTask.moveTo(new Point(110, 105), false), 50, ignored -> null));
@@ -35,7 +35,7 @@ class AgentScriptTaskCompletionServiceTest {
     @Test
     void preciseMoveToUsesLegacyEightPixelDistance() {
         AgentRuntimeEntry entry = entryAt(100000000, new Point(100, 100));
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(109, 100), true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(109, 100), true);
 
         assertFalse(AgentScriptTaskCompletionService.isComplete(
                 entry, AgentTask.moveTo(new Point(109, 100), true), 50, ignored -> null));

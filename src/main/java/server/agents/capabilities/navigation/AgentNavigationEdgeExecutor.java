@@ -1,8 +1,8 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -47,11 +47,11 @@ public final class AgentNavigationEdgeExecutor {
                                                        Point agentPos,
                                                        Point rawTargetPos,
                                                        AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotMovementStateRuntime.downJumpPending(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry) || AgentMovementStateRuntime.downJumpPending(entry)) {
             return null;
         }
 
-        boolean executed = AgentBotClimbStateRuntime.climbing(entry)
+        boolean executed = AgentClimbStateRuntime.climbing(entry)
                 ? AgentNavigationClimbExitExecutionService.tryExecuteClimbExit(graph, entry, agent, agentPos, edge)
                 : AgentNavigationClimbEntryExecutionService.tryExecuteClimbEntry(graph, entry, agent, agentPos, edge);
         return executed ? new NavigationDirective(rawTargetPos, true) : null;

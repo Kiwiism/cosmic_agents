@@ -6,7 +6,7 @@ import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,7 +26,7 @@ class AgentTradeConfirmWaitServiceTest {
         Trade trade = mock(Trade.class);
         AtomicBoolean completed = new AtomicBoolean(false);
         AtomicBoolean reset = new AtomicBoolean(false);
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, 500);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, 500);
         when(trade.isPartnerConfirmed()).thenReturn(true);
 
         boolean handled = AgentTradeConfirmWaitService.tickWaitingForConfirmation(
@@ -42,8 +42,8 @@ class AgentTradeConfirmWaitServiceTest {
         assertTrue(handled);
         assertTrue(completed.get());
         assertFalse(reset.get());
-        assertTrue(AgentBotPendingTradeStateRuntime.botDone(entry));
-        assertEquals(0, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertTrue(AgentPendingTradeStateRuntime.botDone(entry));
+        assertEquals(0, AgentPendingTradeStateRuntime.timerMs(entry));
     }
 
     @Test
@@ -65,8 +65,8 @@ class AgentTradeConfirmWaitServiceTest {
                 () -> {});
 
         assertTrue(completed.get());
-        assertTrue(AgentBotPendingTradeStateRuntime.botDone(entry));
-        assertEquals(0, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertTrue(AgentPendingTradeStateRuntime.botDone(entry));
+        assertEquals(0, AgentPendingTradeStateRuntime.timerMs(entry));
     }
 
     @Test
@@ -89,7 +89,7 @@ class AgentTradeConfirmWaitServiceTest {
                     () -> completed.set(true),
                     () -> reset.set(true));
 
-            assertEquals(100, AgentBotPendingTradeStateRuntime.timerMs(entry));
+            assertEquals(100, AgentPendingTradeStateRuntime.timerMs(entry));
             assertFalse(completed.get());
             assertFalse(reset.get());
             replies.verifyNoInteractions();
@@ -103,7 +103,7 @@ class AgentTradeConfirmWaitServiceTest {
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
         AtomicBoolean reset = new AtomicBoolean(false);
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, 59_950);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, 59_950);
 
         try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
              MockedStatic<Trade> tradeStatic = mockStatic(Trade.class)) {
@@ -117,7 +117,7 @@ class AgentTradeConfirmWaitServiceTest {
                     () -> {},
                     () -> reset.set(true));
 
-            assertEquals(60_050, AgentBotPendingTradeStateRuntime.timerMs(entry));
+            assertEquals(60_050, AgentPendingTradeStateRuntime.timerMs(entry));
             assertTrue(reset.get());
             replies.verify(() -> AgentBotInventoryRuntime.replyNow(
                     entry,

@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotFormationStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -24,7 +24,7 @@ class AgentTargetSnapshotRuntimeTest {
         AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, leader, null);
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
-        AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());
+        AgentModeStateRuntime.startFollowing(entry, sibling.getId());
 
         try {
             assertSame(sibling, AgentTargetSnapshotRuntime.resolveFollowAnchor(entry, leader));
@@ -46,8 +46,8 @@ class AgentTargetSnapshotRuntimeTest {
         AgentFormationService.formationsByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
         AgentFormationService.formationsByLeaderId().put(leader.getId(), formation);
-        AgentBotModeStateRuntime.startFollowing(entry, sibling.getId());
-        AgentBotFormationStateRuntime.setFollowOffsetX(entry, formation.offsetFor(0, 1));
+        AgentModeStateRuntime.startFollowing(entry, sibling.getId());
+        AgentFormationStateRuntime.setFollowOffsetX(entry, formation.offsetFor(0, 1));
 
         try {
             AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);

@@ -27,6 +27,6 @@ public final class AgentBotManagerStatusRuntime {
     }
 
     public static boolean airshowActive(AgentRuntimeEntry entry) {
-        return AgentBotAirshowStateRuntime.active(entry);
+        return AgentAirshowStateRuntime.active(entry);
     }
 }

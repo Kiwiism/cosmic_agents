@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 
 import java.util.function.BiConsumer;
@@ -19,9 +19,9 @@ public final class AgentScriptTaskTickService {
         }
 
         while (true) {
-            AgentTask activeScriptTask = AgentBotScriptTaskStateRuntime.activeTask(entry);
+            AgentTask activeScriptTask = AgentScriptTaskStateRuntime.activeTask(entry);
             if (activeScriptTask == null) {
-                activeScriptTask = AgentBotScriptTaskStateRuntime.activateNextTask(entry);
+                activeScriptTask = AgentScriptTaskStateRuntime.activateNextTask(entry);
                 if (activeScriptTask == null) {
                     return;
                 }
@@ -31,7 +31,7 @@ public final class AgentScriptTaskTickService {
             if (!isTaskComplete.test(entry, activeScriptTask)) {
                 return;
             }
-            AgentBotScriptTaskStateRuntime.clearActiveTask(entry);
+            AgentScriptTaskStateRuntime.clearActiveTask(entry);
         }
     }
 }

@@ -1,7 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.integration.AgentBotAoeRepositionStateRuntime;
+import server.agents.integration.AgentAoeRepositionStateRuntime;
 import server.agents.integration.AgentBotCombatAoeRepositionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -21,20 +21,20 @@ public final class AgentAoeRepositionService {
                                              AgentAttackPlan attackPlan,
                                              Point agentPosition) {
         long now = System.currentTimeMillis();
-        if (AgentBotAoeRepositionStateRuntime.hasAnchor(entry)) {
-            boolean done = AgentBotAoeRepositionStateRuntime.isExpiredOrArrived(
+        if (AgentAoeRepositionStateRuntime.hasAnchor(entry)) {
+            boolean done = AgentAoeRepositionStateRuntime.isExpiredOrArrived(
                     entry, agentPosition, now, AgentCombatConfig.cfg.AOE_REPOSITION_ARRIVAL_X)
                     || target == null || !target.isAlive();
             if (done) {
-                AgentBotAoeRepositionStateRuntime.clear(entry);
+                AgentAoeRepositionStateRuntime.clear(entry);
                 return null;
             }
-            return AgentBotAoeRepositionStateRuntime.anchor(entry);
+            return AgentAoeRepositionStateRuntime.anchor(entry);
         }
         Point anchor = AgentBotCombatAoeRepositionRuntime.aoeRepositionTarget(
                 entry, agent, target, attackPlan, AgentCombatConfig.cfg);
         if (anchor != null) {
-            AgentBotAoeRepositionStateRuntime.setAnchor(
+            AgentAoeRepositionStateRuntime.setAnchor(
                     entry, anchor, now + AgentCombatConfig.cfg.AOE_REPOSITION_MAX_MS);
         }
         return anchor;

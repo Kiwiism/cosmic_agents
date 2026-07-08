@@ -13,12 +13,12 @@ public final class AgentBotCombatSkillCacheRuntime {
 
     public static void rebuildSkillCacheIfNeeded(AgentRuntimeEntry entry, Character bot) {
         int skillSignature = AgentCombatSkillClassifier.skillCacheSignature(bot);
-        if (AgentBotCombatSkillCacheStateRuntime.matches(
+        if (AgentCombatSkillCacheStateRuntime.matches(
                 entry, bot.getJob().getId(), bot.getLevel(), skillSignature)) {
             return;
         }
 
-        AgentBotCombatSkillCacheStateRuntime.reset(entry, bot.getJob().getId(), bot.getLevel(), skillSignature);
+        AgentCombatSkillCacheStateRuntime.reset(entry, bot.getJob().getId(), bot.getLevel(), skillSignature);
 
         int bestAtkHits = 0;
         int bestAtkPriority = Integer.MIN_VALUE;
@@ -37,39 +37,39 @@ public final class AgentBotCombatSkillCacheRuntime {
 
             if (AgentCombatSkillClassifier.shouldStopCacheScanAfterHealSkill(skill)) {
                 if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_HEAL) {
-                    AgentBotCombatSkillCacheStateRuntime.setHealSkillId(entry, skill.getId());
+                    AgentCombatSkillCacheStateRuntime.setHealSkillId(entry, skill.getId());
                 }
                 continue;  // not an attack skill; offensive use against undead handled in tickSupportHealing
             }
 
             if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.ACTIVE_ATTACK) {
-                AgentBotCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());
+                AgentCombatSkillCacheStateRuntime.addAttackSkillId(entry, skill.getId());
                 if (mobs >= 2) {
                     long score = AgentCombatSkillClassifier.aoeSkillScore(fx, atk, mobs);
                     if (score > bestAoeScore) {
                         bestAoeScore = score;
-                        AgentBotCombatSkillCacheStateRuntime.setAoeSkill(entry, skill.getId(), mobs);
+                        AgentCombatSkillCacheStateRuntime.setAoeSkill(entry, skill.getId(), mobs);
                     }
                 } else if (AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(bot, skill, fx, atk,
                         bestAtkHits, bestAtkPriority, bestAtkDamage,
-                        AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry))) {
+                        AgentCombatSkillCacheStateRuntime.attackSkillId(entry))) {
                     bestAtkHits = atk;
                     bestAtkPriority = AgentCombatSkillClassifier.singleTargetSkillPriority(bot, skill);
                     bestAtkDamage = fx.getDamage();
-                    AgentBotCombatSkillCacheStateRuntime.setAttackSkillId(entry, skill.getId());
+                    AgentCombatSkillCacheStateRuntime.setAttackSkillId(entry, skill.getId());
                 }
                 continue;
             }
 
             if (cacheBucket == AgentCombatSkillClassifier.SkillCacheBucket.SUMMON) {
                 // Own bucket, not rebuffable - see AgentCombatSkillCacheState.summonSkillIds.
-                AgentBotCombatSkillCacheStateRuntime.addSummonSkillId(entry, skill.getId());
+                AgentCombatSkillCacheStateRuntime.addSummonSkillId(entry, skill.getId());
                 continue;
             }
 
             if (cacheBucket != AgentCombatSkillClassifier.SkillCacheBucket.SUPPORT_BUFF) continue;
-            AgentBotCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
-            AgentBotCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
+            AgentCombatSkillCacheStateRuntime.addBuffSkillId(entry, skill.getId());
+            AgentCombatBuffStateRuntime.ensureNextBuffAt(entry, skill.getId(), 0L);
         }
     }
 }

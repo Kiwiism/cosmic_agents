@@ -1,11 +1,11 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -26,11 +26,11 @@ public final class AgentIdlePhysicsService {
     }
 
     public static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent, PhysicsHooks hooks) {
-        if (AgentBotModeStateRuntime.following(entry)
-                || AgentBotModeStateRuntime.grinding(entry)
-                || AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                || AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)
-                || AgentBotShopStateRuntime.shopVisitPending(entry)) {
+        if (AgentModeStateRuntime.following(entry)
+                || AgentModeStateRuntime.grinding(entry)
+                || AgentMoveTargetStateRuntime.hasMoveTarget(entry)
+                || AgentFarmAnchorStateRuntime.hasFarmAnchor(entry)
+                || AgentShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
         tickPhysicsOnly(entry, agent, hooks);
@@ -39,12 +39,12 @@ public final class AgentIdlePhysicsService {
 
     public static void tickPhysicsOnly(AgentRuntimeEntry entry, Character agent, PhysicsHooks hooks) {
         if (hooks.swimMap().test(entry)
-                && AgentBotMovementStateRuntime.inAir(entry)
-                && !AgentBotMovementStateRuntime.climbing(entry)) {
+                && AgentMovementStateRuntime.inAir(entry)
+                && !AgentMovementStateRuntime.climbing(entry)) {
             hooks.swimmingTick().accept(entry);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
+        } else if (AgentMovementStateRuntime.inAir(entry)) {
             hooks.airborneTick().accept(entry);
-        } else if (!AgentBotMovementStateRuntime.climbing(entry)) {
+        } else if (!AgentMovementStateRuntime.climbing(entry)) {
             int expectedIdleStance = hooks.idleGroundStanceResolver().applyAsInt(entry);
             if (hooks.stanceResolver().applyAsInt(entry) != expectedIdleStance
                     || agent.getStance() != expectedIdleStance) {

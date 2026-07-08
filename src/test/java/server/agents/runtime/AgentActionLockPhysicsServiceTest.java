@@ -2,8 +2,8 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,7 +29,7 @@ class AgentActionLockPhysicsServiceTest {
     @Test
     void swimsWhenLockedInAirOnSwimMap() {
         AgentRuntimeEntry entry = lockedEntry();
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
         boolean locked = AgentActionLockPhysicsService.tickActionLocked(
@@ -45,7 +45,7 @@ class AgentActionLockPhysicsServiceTest {
     @Test
     void ticksAirborneWhenLockedInAirOutsideSwimMap() {
         AgentRuntimeEntry entry = lockedEntry();
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         Counters counters = new Counters();
 
         boolean locked = AgentActionLockPhysicsService.tickActionLocked(
@@ -91,7 +91,7 @@ class AgentActionLockPhysicsServiceTest {
 
     private static AgentRuntimeEntry lockedEntry() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotCombatCooldownStateRuntime.maxAttackCooldown(entry, 500);
+        AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, 500);
         return entry;
     }
 

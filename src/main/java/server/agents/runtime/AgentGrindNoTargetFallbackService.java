@@ -1,10 +1,10 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -49,11 +49,11 @@ public final class AgentGrindNoTargetFallbackService {
                                         Point currentTargetPos,
                                         boolean runAiTick,
                                         Hooks hooks) {
-        AgentBotGrindTargetStateRuntime.clear(entry);
-        if (AgentMapEnvironmentService.isSwimMap(entry) && AgentBotMovementStateRuntime.inAir(entry)) {
+        AgentGrindTargetStateRuntime.clear(entry);
+        if (AgentMapEnvironmentService.isSwimMap(entry) && AgentMovementStateRuntime.inAir(entry)) {
             hooks.swimTick().tick(entry, currentTargetPos);
             return new Result(true, currentTargetPos);
-        } else if (AgentBotMovementStateRuntime.inAir(entry)) {
+        } else if (AgentMovementStateRuntime.inAir(entry)) {
             hooks.airborneTick().tick(entry, currentTargetPos);
             return new Result(true, currentTargetPos);
         }
@@ -61,10 +61,10 @@ public final class AgentGrindNoTargetFallbackService {
         // Preserve the legacy pre-resolve wander-direction side effect before
         // the shared no-target resolver recomputes the concrete target.
         Point fallbackTargetPos = new Point(
-                agentPosition.x + AgentBotGrindWanderStateRuntime.ensureWanderDirection(entry) * 200,
+                agentPosition.x + AgentGrindWanderStateRuntime.ensureWanderDirection(entry) * 200,
                 agentPosition.y);
         MapleMap map = agent.getMap();
-        fallbackTargetPos = AgentBotPatrolStateRuntime.hasPatrolRegion(entry)
+        fallbackTargetPos = AgentPatrolStateRuntime.hasPatrolRegion(entry)
                 ? hooks.patrolWanderTargetResolver().resolve(entry, agentPosition, map)
                 : hooks.noGrindTargetResolver().resolve(entry, agentPosition, map);
         hooks.movementStep().step(entry, fallbackTargetPos, runAiTick);

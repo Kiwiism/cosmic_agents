@@ -22,7 +22,7 @@ public final class AgentBotUtilityRuntime {
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
-                        && AgentBotPendingTradeStateRuntime.isIdle(entry)) {
+                        && AgentPendingTradeStateRuntime.isIdle(entry)) {
                     AgentSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
                         AgentReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
                         AgentSchedulerRuntime.afterRandomDelay(800, 1200, () -> {

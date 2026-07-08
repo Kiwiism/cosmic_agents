@@ -1,8 +1,8 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
@@ -20,11 +20,11 @@ public final class AgentOwnerlessTickService {
                                      BiPredicate<AgentRuntimeEntry, Character> groundAfterMapChange,
                                      OwnerlessMoveTick standaloneMoveTick,
                                      BooleanSupplier idleTick) {
-        AgentBotModeStateRuntime.setFollowing(entry, false);
+        AgentModeStateRuntime.setFollowing(entry, false);
         if (groundAfterMapChange.test(entry, agent)) {
             return;
         }
-        if (AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
+        if (AgentMoveTargetStateRuntime.hasMoveTarget(entry)) {
             standaloneMoveTick.tick(entry, agent, runAiTick);
         } else {
             idleTick.getAsBoolean();

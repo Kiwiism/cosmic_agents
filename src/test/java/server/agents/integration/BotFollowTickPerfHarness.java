@@ -4,8 +4,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 
 
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -35,11 +35,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentBotMapStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.integration.AgentTickCadenceStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -143,9 +143,9 @@ public class BotFollowTickPerfHarness {
             for (int i = 0; i < botCount; i++) {
                 Character bot = mockCharacter("bot" + i, 1000 + i, map, new Point(30 * i, -200));
                 AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-                AgentBotModeStateRuntime.setFollowing(entry, true);
-                AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
-                AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.fromCharacter(bot));
+                AgentModeStateRuntime.setFollowing(entry, true);
+                AgentMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
+                AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.fromCharacter(bot));
                 AgentMovementPoseService.teleportTo(entry, bot, bot.getPosition());
                 AgentMovementStateResetService.resetEntryStateAfterTeleport(entry);
                 entries.add(entry);
@@ -196,7 +196,7 @@ public class BotFollowTickPerfHarness {
             long startedAt = AgentPerformanceMonitor.start();
             try {
                 boolean runAiTick = consumeAiTick(entry);
-                AgentBotTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
+                AgentTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
                 try {
                     AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, AgentScriptTaskRuntime::tick);
                 } catch (Throwable t) {
@@ -206,7 +206,7 @@ public class BotFollowTickPerfHarness {
                 try {
                     AgentMovementTargetSnapshot snap = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
                     Point ownerPos = snap.rawOwnerPosition();
-                    AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
+                    AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
                     AgentMovementOnlyStepRuntime.stepMovementOnly(entry, snap.primaryTargetPosition(), runAiTick);
                 } catch (Throwable t) {
                     // ignore
@@ -217,14 +217,14 @@ public class BotFollowTickPerfHarness {
         }
 
         private static boolean consumeAiTick(AgentRuntimeEntry entry) {
-            AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
-                    AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)
+            AgentTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                    AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry)
                             + AgentMovementPhysicsConfig.configuredMovementTickMs());
-            if (AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) < AgentRuntimeConfig.cfg.AI_TICK_MS) {
+            if (AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry) < AgentRuntimeConfig.cfg.AI_TICK_MS) {
                 return false;
             }
-            AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
-                    AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) - AgentRuntimeConfig.cfg.AI_TICK_MS);
+            AgentTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                    AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry) - AgentRuntimeConfig.cfg.AI_TICK_MS);
             return true;
         }
     }

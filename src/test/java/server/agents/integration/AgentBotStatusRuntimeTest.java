@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
@@ -32,10 +32,10 @@ class AgentBotStatusRuntimeTest {
         state.setOwnerAfkSinceMs(1234L);
         state.setOwnerWasAfk(true);
 
-        assertEquals(position, AgentBotActivityStateRuntime.ownerAfkPosition(entry));
-        assertEquals(1234L, AgentBotActivityStateRuntime.ownerAfkSinceMs(entry));
+        assertEquals(position, AgentActivityStateRuntime.ownerAfkPosition(entry));
+        assertEquals(1234L, AgentActivityStateRuntime.ownerAfkSinceMs(entry));
         assertTrue(state.ownerWasAfk());
-        assertTrue(AgentBotActivityStateRuntime.ownerWasAfk(entry));
+        assertTrue(AgentActivityStateRuntime.ownerWasAfk(entry));
     }
 
     @Test
@@ -58,13 +58,13 @@ class AgentBotStatusRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Point position = new Point(50, 60);
 
-        AgentBotActivityStateRuntime.setOwnerAfkPosition(entry, position);
-        AgentBotActivityStateRuntime.setOwnerAfkSinceMs(entry, 4321L);
-        AgentBotActivityStateRuntime.setOwnerWasAfk(entry, true);
+        AgentActivityStateRuntime.setOwnerAfkPosition(entry, position);
+        AgentActivityStateRuntime.setOwnerAfkSinceMs(entry, 4321L);
+        AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
-        assertEquals(position, AgentBotActivityStateRuntime.ownerAfkPosition(entry));
-        assertEquals(4321L, AgentBotActivityStateRuntime.ownerAfkSinceMs(entry));
-        assertTrue(AgentBotActivityStateRuntime.ownerWasAfk(entry));
+        assertEquals(position, AgentActivityStateRuntime.ownerAfkPosition(entry));
+        assertEquals(4321L, AgentActivityStateRuntime.ownerAfkSinceMs(entry));
+        assertTrue(AgentActivityStateRuntime.ownerWasAfk(entry));
     }
 
     @Test
@@ -76,7 +76,7 @@ class AgentBotStatusRuntimeTest {
 
         state.setSpawnUpgradeCheckDone(true);
 
-        assertTrue(AgentBotOfferStateRuntime.spawnUpgradeCheckDone(entry));
+        assertTrue(AgentOfferStateRuntime.spawnUpgradeCheckDone(entry));
         assertTrue(state.spawnUpgradeCheckDone());
     }
 
@@ -87,7 +87,7 @@ class AgentBotStatusRuntimeTest {
 
         state.setNextGearSuggestionAt(9000L);
 
-        assertEquals(9000L, AgentBotOfferStateRuntime.nextGearSuggestionAt(entry));
+        assertEquals(9000L, AgentOfferStateRuntime.nextGearSuggestionAt(entry));
         assertEquals(9000L, state.nextGearSuggestionAt());
     }
 
@@ -97,7 +97,7 @@ class AgentBotStatusRuntimeTest {
 
         AgentBotStatusRuntime.recommendedGearReportState(entry).setNextGearSuggestionAt(12_000L);
 
-        assertEquals(12_000L, AgentBotOfferStateRuntime.nextGearSuggestionAt(entry));
+        assertEquals(12_000L, AgentOfferStateRuntime.nextGearSuggestionAt(entry));
     }
 
     @Test

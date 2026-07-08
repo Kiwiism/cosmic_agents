@@ -83,7 +83,7 @@ public final class AgentBotBuildStatusRuntime {
             public boolean canOfferSpawnUpgrade() {
                 return AgentRuntimeIdentityRuntime.owner(entry) != null
                         && !AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry))
-                        && !AgentBotPendingActionStateRuntime.hasPendingAction(entry)
+                        && !AgentPendingActionStateRuntime.hasPendingAction(entry)
                         && !AgentOfferService.hasPendingOffer(entry);
             }
 

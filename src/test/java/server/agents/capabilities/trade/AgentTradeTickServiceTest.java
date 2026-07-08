@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ class AgentTradeTickServiceTest {
     void queuedRetryRunsBeforeTradeLookup() {
         AgentRuntimeEntry entry = entry();
         List<String> events = new ArrayList<>();
-        AgentBotPendingTradeStateRuntime.queueRetry(entry, () -> events.add("retry"), 0);
+        AgentPendingTradeStateRuntime.queueRetry(entry, () -> events.add("retry"), 0);
 
         AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, null));
 
@@ -100,7 +100,7 @@ class AgentTradeTickServiceTest {
         AgentRuntimeEntry entry = activeEntry();
         Trade trade = mock(Trade.class);
         when(trade.isFullTrade()).thenReturn(true);
-        AgentBotPendingTradeStateRuntime.markBotDone(entry);
+        AgentPendingTradeStateRuntime.markBotDone(entry);
         List<String> events = new ArrayList<>();
 
         AgentTradeTickService.tickTrade(entry, mock(Character.class), callbacks(events, trade));
@@ -114,7 +114,7 @@ class AgentTradeTickServiceTest {
 
     private static AgentRuntimeEntry activeEntry() {
         AgentRuntimeEntry entry = entry();
-        AgentBotPendingTradeStateRuntime.setCategory(entry, "scrolls");
+        AgentPendingTradeStateRuntime.setCategory(entry, "scrolls");
         return entry;
     }
 

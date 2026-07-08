@@ -2,15 +2,15 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
 
 
 
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotFormationStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -32,13 +32,13 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentBotMapStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.integration.AgentTickCadenceStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentFormationRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
@@ -91,9 +91,9 @@ final class BotMovementSimulationLab {
     AgentRuntimeEntry spawnBot(String name, int id, MapleMap map, Point startPosition) {
         Character bot = spawnActor(name, id, map, startPosition);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotTickCadenceStateRuntime.setSkipDelayMs(entry, 0);
-        AgentBotMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.fromCharacter(bot));
+        AgentTickCadenceStateRuntime.setSkipDelayMs(entry, 0);
+        AgentMapStateRuntime.setMapTracking(entry, map.getId(), AgentFootholdIndexService.buildFhIndex(map));
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.fromCharacter(bot));
         bots.put(name, entry);
         return entry;
     }
@@ -102,26 +102,26 @@ final class BotMovementSimulationLab {
         AgentRuntimeEntry entry = requireBot(botName);
         Character owner = requireActor(ownerName);
         entry.setOwner(owner);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotModeStateRuntime.setGrinding(entry, false);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, false);
         refreshFormation(owner);
     }
 
     void clearFollow(String botName) {
         AgentRuntimeEntry entry = requireBot(botName);
-        AgentBotModeStateRuntime.setFollowing(entry, false);
+        AgentModeStateRuntime.setFollowing(entry, false);
         entry.setOwner(null);
-        AgentBotFormationStateRuntime.setFollowOffsetX(entry, 0);
+        AgentFormationStateRuntime.setFollowOffsetX(entry, 0);
     }
 
     void setMoveTarget(String botName, Point target, boolean precise) {
         AgentRuntimeEntry entry = requireBot(botName);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, target, precise);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, target, precise);
     }
 
     void clearMoveTarget(String botName) {
         AgentRuntimeEntry entry = requireBot(botName);
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
     }
 
     void teleport(String actorName, Point position) {
@@ -140,16 +140,16 @@ final class BotMovementSimulationLab {
     }
 
     void setFollowOffset(String botName, int offsetX) {
-        AgentBotFormationStateRuntime.setFollowOffsetX(requireBot(botName), offsetX);
+        AgentFormationStateRuntime.setFollowOffsetX(requireBot(botName), offsetX);
     }
 
     void setAiAccumulator(String botName, int accumulatorMs) {
-        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(requireBot(botName), accumulatorMs);
+        AgentTickCadenceStateRuntime.setAiTickAccumulatorMs(requireBot(botName), accumulatorMs);
     }
 
     void primeMapState(String botName) {
         AgentRuntimeEntry entry = requireBot(botName);
-        AgentBotMapStateRuntime.setMapTracking(
+        AgentMapStateRuntime.setMapTracking(
                 entry,
                 entry.bot().getMapId(),
                 AgentFootholdIndexService.buildFhIndex(entry.bot().getMap()));
@@ -163,10 +163,10 @@ final class BotMovementSimulationLab {
 
     void setNavState(String botName, AgentNavigationGraph.Edge edge, int targetRegionId, boolean preciseTarget) {
         AgentRuntimeEntry entry = requireBot(botName);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, preciseTarget);
-        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, edge == null ? null : edge.startPoint);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, preciseTarget);
+        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, edge == null ? null : edge.startPoint);
     }
 
     void step(int ticks) {
@@ -179,8 +179,8 @@ final class BotMovementSimulationLab {
                 boolean runAiTick = consumeAiTick(entry);
                 AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
                 Point ownerPos = targetSnapshot.rawOwnerPosition();
-                AgentBotTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
-                AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
+                AgentTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
+                AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
                 pending.add(new PendingStep(AgentRuntimeEntry.getKey(), entry, runAiTick, targetSnapshot));
             }
 
@@ -202,11 +202,11 @@ final class BotMovementSimulationLab {
     void stepRaw(String botName, Point targetPos, boolean runAiTick) {
         AgentRuntimeEntry entry = requireBot(botName);
         elapsedMs += AgentMovementPhysicsConfig.configuredMovementTickMs();
-        AgentBotTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
+        AgentTickStateRuntime.recordTick(entry, runAiTick, elapsedMs);
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPosition();
-        AgentBotOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
+        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
         AgentMovementOnlyStepRuntime.stepMovementOnly(entry, new Point(targetPos), runAiTick);
         trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry,
                 AgentBotMovementTargetSideEffects.captureTargetSnapshot(entry)));
@@ -280,15 +280,15 @@ final class BotMovementSimulationLab {
     }
 
     private static boolean consumeAiTick(AgentRuntimeEntry entry) {
-        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
-                AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)
+        AgentTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry)
                         + AgentMovementPhysicsConfig.configuredMovementTickMs());
-        if (AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) < AgentRuntimeConfig.cfg.AI_TICK_MS) {
+        if (AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry) < AgentRuntimeConfig.cfg.AI_TICK_MS) {
             return false;
         }
 
-        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
-                AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry) - AgentRuntimeConfig.cfg.AI_TICK_MS);
+        AgentTickCadenceStateRuntime.setAiTickAccumulatorMs(entry,
+                AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry) - AgentRuntimeConfig.cfg.AI_TICK_MS);
         return true;
     }
 
@@ -373,14 +373,14 @@ final class BotMovementSimulationLab {
                     index,
                     elapsedMs,
                     botName,
-                    AgentBotTickStateRuntime.lastTickWasAi(entry),
+                    AgentTickStateRuntime.lastTickWasAi(entry),
                     new Point(botPos),
                     new Point(ownerPos),
                     new Point(goalPos),
                     new Point(steeringPos),
-                    AgentBotNavigationDebugStateRuntime.lastDecision(entry),
+                    AgentNavigationDebugStateRuntime.lastDecision(entry),
                     describePhysics(entry),
-                    describeEdge((AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry)));
+                    describeEdge((AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry)));
         }
 
         String format() {
@@ -399,11 +399,11 @@ final class BotMovementSimulationLab {
         }
 
         private static String describePhysics(AgentRuntimeEntry entry) {
-            if (AgentBotClimbStateRuntime.climbing(entry) && AgentBotClimbStateRuntime.climbRope(entry) != null) {
-                return String.format("ROPE(x=%d top=%d bot=%d)", AgentBotClimbStateRuntime.climbRope(entry).x(), AgentBotClimbStateRuntime.climbRope(entry).topY(), AgentBotClimbStateRuntime.climbRope(entry).bottomY());
+            if (AgentClimbStateRuntime.climbing(entry) && AgentClimbStateRuntime.climbRope(entry) != null) {
+                return String.format("ROPE(x=%d top=%d bot=%d)", AgentClimbStateRuntime.climbRope(entry).x(), AgentClimbStateRuntime.climbRope(entry).topY(), AgentClimbStateRuntime.climbRope(entry).bottomY());
             }
-            if (AgentBotMovementStateRuntime.inAir(entry)) {
-                return String.format("AIR(velY=%.1f airVelX=%d)", AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry), AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+            if (AgentMovementStateRuntime.inAir(entry)) {
+                return String.format("AIR(velY=%.1f airVelX=%d)", AgentMovementPhysicsStateRuntime.verticalVelocity(entry), AgentMovementPhysicsStateRuntime.airVelocityX(entry));
             }
             return "GND";
         }

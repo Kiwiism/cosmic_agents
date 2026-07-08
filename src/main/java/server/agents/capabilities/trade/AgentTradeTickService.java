@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntUnaryOperator;
@@ -16,7 +16,7 @@ public final class AgentTradeTickService {
         if (AgentTradeQueuedRetryService.tickQueuedRetry(entry, callbacks.tickDown())) {
             return;
         }
-        if (AgentBotPendingTradeStateRuntime.isIdle(entry)) {
+        if (AgentPendingTradeStateRuntime.isIdle(entry)) {
             return;
         }
 
@@ -40,7 +40,7 @@ public final class AgentTradeTickService {
             return;
         }
 
-        if (!AgentBotPendingTradeStateRuntime.botDone(entry)) {
+        if (!AgentPendingTradeStateRuntime.botDone(entry)) {
             callbacks.tickWaitingForConfirmation(trade);
         }
     }

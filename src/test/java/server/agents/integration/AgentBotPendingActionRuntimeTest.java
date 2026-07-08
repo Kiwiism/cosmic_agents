@@ -9,7 +9,7 @@ import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentBotPendingActionRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
@@ -26,8 +26,8 @@ class AgentBotPendingActionRuntimeTest {
     @Test
     void pendingActionStateAdaptsAgentRuntimeEntryFields() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotPendingActionStateRuntime.setPendingAction(entry, "drop_scrolls");
-        AgentBotPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
+        AgentPendingActionStateRuntime.setPendingAction(entry, "drop_scrolls");
+        AgentPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
 
         AgentPendingChatActionFlow.PendingActionState state =
                 AgentBotPendingActionRuntime.pendingActionState(entry);
@@ -38,8 +38,8 @@ class AgentBotPendingActionRuntimeTest {
         state.clearPendingAction();
         state.clearPendingDropCategory();
 
-        assertNull(AgentBotPendingActionStateRuntime.pendingAction(entry));
-        assertNull(AgentBotPendingActionStateRuntime.pendingDropCategory(entry));
+        assertNull(AgentPendingActionStateRuntime.pendingAction(entry));
+        assertNull(AgentPendingActionStateRuntime.pendingDropCategory(entry));
     }
 
     @Test
@@ -94,7 +94,7 @@ class AgentBotPendingActionRuntimeTest {
 
         AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision);
 
-        assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentBotPendingActionStateRuntime.pendingAction(entry));
+        assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentPendingActionStateRuntime.pendingAction(entry));
         assertEquals("pick tree", AgentMessageQueueStateRuntime.peek(entry).text());
     }
 

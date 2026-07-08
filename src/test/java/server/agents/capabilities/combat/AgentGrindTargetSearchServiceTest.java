@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
+import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -34,7 +34,7 @@ class AgentGrindTargetSearchServiceTest {
         assertSame(current, result.target());
         assertSame(plan, result.attackPlan());
         assertEquals(0, searches.get());
-        assertEquals(0L, AgentBotGrindSearchStateRuntime.nextSearchAtMs(entry));
+        assertEquals(0L, AgentGrindSearchStateRuntime.nextSearchAtMs(entry));
     }
 
     @Test
@@ -56,7 +56,7 @@ class AgentGrindTargetSearchServiceTest {
         assertSame(searched, result.target());
         assertNull(result.attackPlan());
         assertEquals(1, searches.get());
-        assertEquals(1_250L, AgentBotGrindSearchStateRuntime.nextSearchAtMs(entry));
+        assertEquals(1_250L, AgentGrindSearchStateRuntime.nextSearchAtMs(entry));
     }
 
     private static AgentGrindTargetSearchService.SearchHooks hooks(AtomicInteger searches, Monster target) {

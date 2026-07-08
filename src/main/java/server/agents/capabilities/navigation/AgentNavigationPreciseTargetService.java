@@ -1,7 +1,7 @@
 package server.agents.capabilities.navigation;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -19,14 +19,14 @@ public final class AgentNavigationPreciseTargetService {
                                                  Point botPos,
                                                  AgentNavigationGraph.Edge edge,
                                                  EdgeReadiness readiness) {
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)) {
             return false;
         }
         return switch (edge.type) {
             case WALK -> AgentNavigationPathService.shouldUsePreciseWalkTarget(edge);
             case JUMP -> !readiness.canExecuteSelectedJump(graph, entry, botPos, edge);
             case DROP -> edge.launchStepX == 0 && !readiness.canExecuteDrop(graph, entry, botPos, edge);
-            case CLIMB -> AgentBotClimbStateRuntime.climbing(entry)
+            case CLIMB -> AgentClimbStateRuntime.climbing(entry)
                     ? edge.launchStepX != 0 && !readiness.canExecuteClimbExit(graph, entry, botPos, edge)
                     : !readiness.canExecuteClimbEntry(graph, entry, botPos, edge);
             case PORTAL -> !AgentNavigationEdgeReadinessService.isReadyForEdge(botPos, edge);

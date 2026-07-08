@@ -1,6 +1,6 @@
 package server.agents.capabilities.trade;
 
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntUnaryOperator;
@@ -10,17 +10,17 @@ public final class AgentTradeQueuedRetryService {
     }
 
     public static boolean tickQueuedRetry(AgentRuntimeEntry entry, IntUnaryOperator tickDown) {
-        if (!AgentBotPendingTradeStateRuntime.isIdle(entry)
-                || !AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry)) {
+        if (!AgentPendingTradeStateRuntime.isIdle(entry)
+                || !AgentPendingTradeStateRuntime.hasQueuedRetry(entry)) {
             return false;
         }
-        if (AgentBotPendingTradeStateRuntime.retryDelayMs(entry) > 0) {
-            AgentBotPendingTradeStateRuntime.setRetryDelayMs(
+        if (AgentPendingTradeStateRuntime.retryDelayMs(entry) > 0) {
+            AgentPendingTradeStateRuntime.setRetryDelayMs(
                     entry,
-                    tickDown.applyAsInt(AgentBotPendingTradeStateRuntime.retryDelayMs(entry)));
+                    tickDown.applyAsInt(AgentPendingTradeStateRuntime.retryDelayMs(entry)));
             return true;
         }
-        Runnable retry = AgentBotPendingTradeStateRuntime.takeRetry(entry);
+        Runnable retry = AgentPendingTradeStateRuntime.takeRetry(entry);
         retry.run();
         return true;
     }

@@ -7,7 +7,7 @@ import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -53,7 +53,7 @@ class AgentTradeCompletionServiceTest {
                     () -> 99,
                     () -> true);
 
-            assertTrue(AgentBotPendingTradeStateRuntime.hasOwnerGivenItems(entry));
+            assertTrue(AgentPendingTradeStateRuntime.hasOwnerGivenItems(entry));
             verify(agent).changeFaceExpression(AgentEmote.HAPPY.getValue());
             tradeStatic.verify(() -> Trade.completeTrade(agent));
             inventory.verify(() -> AgentBotInventoryRuntime.visibleSayNow(entry, "thanks"));
@@ -85,7 +85,7 @@ class AgentTradeCompletionServiceTest {
                     () -> 0,
                     () -> false);
 
-            assertFalse(AgentBotPendingTradeStateRuntime.hasOwnerGivenItems(entry));
+            assertFalse(AgentPendingTradeStateRuntime.hasOwnerGivenItems(entry));
             verify(agent).changeFaceExpression(AgentEmote.ANNOYED.getValue());
             tradeStatic.verify(() -> Trade.completeTrade(agent));
             inventory.verify(() -> AgentBotInventoryRuntime.visibleSayNow(entry, "freebie"));

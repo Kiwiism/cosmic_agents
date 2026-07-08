@@ -1,8 +1,8 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
@@ -15,41 +15,41 @@ public final class AgentQueuedMovementActionService {
 
     public static void queueDownJump(AgentRuntimeEntry entry, Character agent) {
         AgentMovementPoseService.idleOnGround(entry, agent);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, true);
-        AgentBotMovementStateRuntime.setCrouching(entry, true);
+        AgentMovementStateRuntime.setDownJumpPending(entry, true);
+        AgentMovementStateRuntime.setCrouching(entry, true);
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
     public static void queueTopRopeEntry(AgentRuntimeEntry entry, Character agent, Rope rope, int y) {
         AgentMovementPoseService.idleOnGround(entry, agent);
-        AgentBotClimbStateRuntime.queueRopeEntry(entry, rope, y);
+        AgentClimbStateRuntime.queueRopeEntry(entry, rope, y);
         AgentMovementPoseService.syncCharacterState(entry);
     }
 
     public static void beginDownJump(AgentRuntimeEntry entry, Character agent) {
         if (!AgentGroundCollisionService.canStartDownJump(agent.getMap(), agent.getPosition())) {
-            AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-            AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
-            AgentBotMovementStateRuntime.setCrouching(entry, false);
+            AgentMovementStateRuntime.setDownJumpPending(entry, false);
+            AgentMovementStateRuntime.setDownJumpGracePeriodMs(entry, 0L);
+            AgentMovementStateRuntime.setCrouching(entry, false);
             AgentMovementPoseService.syncCharacterState(entry);
             return;
         }
-        AgentBotClimbStateRuntime.clearBlockedRopeGrab(entry);
+        AgentClimbStateRuntime.clearBlockedRopeGrab(entry);
         AgentAirborneLaunchService.launchAirborne(
                 entry,
                 agent.getPosition(),
                 -AgentAirborneLaunchService.downJumpForcePerTick(),
                 0,
                 false);
-        AgentBotMovementStateRuntime.setDownJumpGracePeriodMs(
+        AgentMovementStateRuntime.setDownJumpGracePeriodMs(
                 entry,
                 AgentMovementPhysicsConfig.configuredDownJumpGraceMs());
     }
 
     public static void beginTopRopeEntry(AgentRuntimeEntry entry, Character agent) {
-        Rope rope = AgentBotClimbStateRuntime.ropeEntryRope(entry);
-        int ropeY = AgentBotClimbStateRuntime.ropeEntryY(entry);
-        AgentBotClimbStateRuntime.clearRopeEntry(entry);
+        Rope rope = AgentClimbStateRuntime.ropeEntryRope(entry);
+        int ropeY = AgentClimbStateRuntime.ropeEntryY(entry);
+        AgentClimbStateRuntime.clearRopeEntry(entry);
         if (rope == null || agent == null) {
             AgentMovementPoseService.syncCharacterState(entry);
             return;

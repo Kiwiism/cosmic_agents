@@ -1,11 +1,11 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
@@ -21,41 +21,41 @@ public final class AgentTickStateMaintenanceService {
         if (entry == null || leaderPosition == null) {
             return;
         }
-        AgentBotOwnerMotionStateRuntime.updateObservedOwnerStep(entry, leaderPosition);
+        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, leaderPosition);
     }
 
     public static void clearFarmAnchorOnMapChange(AgentRuntimeEntry entry, Character agent) {
-        if (entry == null || agent == null || !AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
+        if (entry == null || agent == null || !AgentFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return;
         }
-        if (AgentBotFarmAnchorStateRuntime.clearFarmAnchorIfMapChanged(entry, agent.getMapId())) {
-            if (AgentBotMoveTargetStateRuntime.isPrecise(entry)) {
-                AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        if (AgentFarmAnchorStateRuntime.clearFarmAnchorIfMapChanged(entry, agent.getMapId())) {
+            if (AgentMoveTargetStateRuntime.isPrecise(entry)) {
+                AgentMoveTargetStateRuntime.clearMoveTarget(entry);
             }
         }
     }
 
     public static void clearReachedMoveTarget(AgentRuntimeEntry entry, int normalArrivalDistance) {
-        if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
+        if (!AgentMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return;
         }
         Point agentPosition = AgentRuntimeIdentityRuntime.botPosition(entry);
-        if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, agentPosition, normalArrivalDistance)) {
-            AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
+        if (AgentMoveTargetStateRuntime.hasReachedMoveTarget(entry, agentPosition, normalArrivalDistance)) {
+            AgentMoveTargetStateRuntime.clearMoveTarget(entry);
         }
     }
 
     public static void clearPatrolOnMapChange(AgentRuntimeEntry entry, Character agent) {
-        if (entry == null || agent == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
+        if (entry == null || agent == null || !AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }
-        AgentBotPatrolStateRuntime.clearPatrolIfMapChanged(entry, agent.getMapId());
+        AgentPatrolStateRuntime.clearPatrolIfMapChanged(entry, agent.getMapId());
     }
 
     public static void markPreciseNavigationTargetIfNeeded(AgentRuntimeEntry entry) {
-        if (AgentBotMoveTargetStateRuntime.isPrecise(entry)
-                && !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
-            AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        if (AgentMoveTargetStateRuntime.isPrecise(entry)
+                && !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+            AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         }
     }
 }

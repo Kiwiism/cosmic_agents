@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -19,11 +19,11 @@ public final class AgentTradeItemAddTickService {
                                           Character agent,
                                           Trade trade,
                                           ItemAddTickCallbacks callbacks) {
-        if (AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
+        if (AgentPendingTradeStateRuntime.allItemsAdded(entry)) {
             return false;
         }
-        if (AgentBotPendingTradeStateRuntime.timerMs(entry) > 0) {
-            AgentBotPendingTradeStateRuntime.tickTimerDown(entry, callbacks.tickDown());
+        if (AgentPendingTradeStateRuntime.timerMs(entry) > 0) {
+            AgentPendingTradeStateRuntime.tickTimerDown(entry, callbacks.tickDown());
             return true;
         }
 
@@ -36,8 +36,8 @@ public final class AgentTradeItemAddTickService {
             return true;
         }
 
-        List<Item> items = AgentBotPendingTradeStateRuntime.items(entry);
-        int idx = AgentBotPendingTradeStateRuntime.itemIndex(entry);
+        List<Item> items = AgentPendingTradeStateRuntime.items(entry);
+        int idx = AgentPendingTradeStateRuntime.itemIndex(entry);
 
         if (idx >= items.size()) {
             AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade, callbacks.allDoneReply());

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -40,7 +40,7 @@ class AgentTradeSequenceServiceTest {
                     entry,
                     AgentDialogueCatalog.tradeRecipientNotFoundReply()));
             assertEquals(0, opened.get());
-            assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
+            assertFalse(AgentPendingTradeStateRuntime.hasActiveSequence(entry));
         }
     }
 
@@ -65,9 +65,9 @@ class AgentTradeSequenceServiceTest {
                     openedMesos.set(mesos);
                 });
 
-        assertEquals("scrolls", AgentBotPendingTradeStateRuntime.category(entry));
-        assertEquals(123, AgentBotPendingTradeStateRuntime.recipientId(entry));
-        assertEquals(false, AgentBotPendingTradeStateRuntime.singleBatch(entry));
+        assertEquals("scrolls", AgentPendingTradeStateRuntime.category(entry));
+        assertEquals(123, AgentPendingTradeStateRuntime.recipientId(entry));
+        assertEquals(false, AgentPendingTradeStateRuntime.singleBatch(entry));
         assertSame(item, openedItems.get().get(0));
         assertEquals(456, openedMesos.get());
     }

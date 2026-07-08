@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
-import server.agents.integration.AgentBotOwnerMotionStateRuntime;
+import server.agents.integration.AgentOwnerMotionStateRuntime;
 
 public final class AgentLiveTickContextRuntime {
     private AgentLiveTickContextRuntime() {
@@ -24,7 +24,7 @@ public final class AgentLiveTickContextRuntime {
                         followAnchorResolver,
                         targetSnapshotCapture,
                         AgentTickStateMaintenanceService::updateObservedLeaderMotion,
-                        AgentBotOwnerMotionStateRuntime::rememberOwnerPosition,
+                        AgentOwnerMotionStateRuntime::rememberOwnerPosition,
                         AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
                         AgentTickStateMaintenanceService::clearPatrolOnMapChange,
                         (runtimeEntry, agentPosition, targetSnapshot) ->

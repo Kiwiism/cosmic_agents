@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentAmmoStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -16,7 +16,7 @@ class AgentLocalOpportunityAttackServiceTest {
     @Test
     void returnsWithoutSideEffectsWhenAgentHasNoAmmo() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
+        AgentAmmoStateRuntime.setNoAmmo(entry, true);
         AtomicInteger hookCalls = new AtomicInteger();
 
         AgentLocalOpportunityAttackService.Result result =

@@ -1,8 +1,8 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
 import java.awt.Point;
 
@@ -34,9 +34,9 @@ public final class AgentFollowOpportunityTickService {
                                                Character followAnchor,
                                                boolean runAiTick,
                                                Hooks hooks) {
-        if (!AgentBotModeStateRuntime.following(entry)
+        if (!AgentModeStateRuntime.following(entry)
                 || !runAiTick
-                || AgentBotMovementStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.climbing(entry)
                 || followAnchor == null
                 || agent.getMapId() != followAnchor.getMapId()
                 || Math.abs(agentPosition.x - followAnchor.getPosition().x) > hooks.followDistance() * 5) {

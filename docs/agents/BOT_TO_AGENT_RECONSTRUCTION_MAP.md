@@ -22,11 +22,12 @@ Recent map updates:
   `server.bots` and should be renamed by capability in a future low-risk
   naming-only milestone.
 - Semantic rename pass started with the foundational identity/scheduler/reply
-  slice: `AgentBotRuntimeIdentityRuntime`, `AgentBotSchedulerRuntime`,
-  `AgentBotReplyRuntime`, `AgentBotReplyChannelStateRuntime`, and
-  `AgentBotMessageQueueStateRuntime` now use neutral Agent names. Behavior,
-  public methods, scheduling, reply routing, and message queue state are
-  unchanged.
+  slice. The identity, scheduler, reply, reply-channel, and message-queue
+  runtime adapters now use neutral Agent names. Behavior, public methods,
+  scheduling, reply routing, and message queue state are unchanged.
+- The state-adapter slice renamed `AgentBot*StateRuntime` classes to
+  `Agent*StateRuntime` by capability/state. State storage, method signatures,
+  and runtime behavior are unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -273,7 +274,7 @@ Recent map updates:
 - `AgentPotionCheckRequestService` no longer imports `BotEntry`; it accepts an
   Agent handle resolver and potion-check requester. The temporary
   `AgentPotionCheckRequestRuntime` owns BotClient detection, active leader
-  lookup, BotEntry lookup, and `AgentBotPotionStateRuntime` wiring.
+  lookup, BotEntry lookup, and `AgentPotionStateRuntime` wiring.
 - `AgentGroupSupplyResponderSelector` no longer imports `BotEntry`; it selects
   over Agent handles using a supplied map-id reader. `AgentChatRouteRuntime`
   keeps the temporary map-id adapter.
@@ -771,7 +772,7 @@ Recent map updates:
   unchanged.
 - `BotEntry` combat cooldown wrapper methods were removed. Attack cooldown,
   local move window, mob-hit cooldown, and alert timing behavior enters through
-  `AgentBotCombatCooldownStateRuntime`.
+  `AgentCombatCooldownStateRuntime`.
 - `BotEntry` grind wander and grind-loot wrapper methods were removed. Grind
   fallback and loot targeting behavior enters through Agent runtime adapters
   backed by `AgentGrindWanderState` and `AgentGrindLootState`.
@@ -782,16 +783,16 @@ Recent map updates:
   navigation callers use Agent runtime adapters backed by `AgentDeathState` and
   `AgentPortalCooldownState`.
 - `BotEntry` shop transition wrapper methods were removed after callers moved
-  to `server.agents.integration.AgentBotShopStateRuntime`. The temporary shell
+  to `server.agents.integration.AgentShopStateRuntime`. The temporary shell
   only hosts the Agent-owned `AgentShopState`.
 - `BotEntry` pending loot-offer and trade-retry wrapper methods were removed.
-  Offer and retry behavior enters through `AgentBotOfferStateRuntime` and
-  `AgentBotPendingTradeStateRuntime`, backed by Agent-owned trade state.
+  Offer and retry behavior enters through `AgentOfferStateRuntime` and
+  `AgentPendingTradeStateRuntime`, backed by Agent-owned trade state.
 - `BotEntry` message queue wrapper methods were removed after callers moved to
   `server.agents.integration.AgentMessageQueueStateRuntime`. The queue
   remains owned by `server.agents.commands.AgentMessageQueueState`.
 - `BotEntry` pending chat action wrapper methods were removed after callers
-  moved to `server.agents.integration.AgentBotPendingActionStateRuntime`.
+  moved to `server.agents.integration.AgentPendingActionStateRuntime`.
   `AgentPendingActionState` remains the Agent-owned mutable state object.
 - `BotEntry` live character identity ownership moved to
   `server.agents.runtime.AgentRuntimeIdentityState`. The temporary shell keeps
@@ -1790,7 +1791,7 @@ Recent map updates:
   `server.agents.runtime.AgentMapEnvironmentService`; BotManager no longer owns
   that map-environment predicate for movement/tick physics routing.
 - BotManager grind-loot retry suppression predicate was removed; Agent loot
-  targeting now consumes `AgentBotGrindLootStateRuntime::isRetrySuppressed`
+  targeting now consumes `AgentGrindLootStateRuntime::isRetrySuppressed`
   directly.
 - BotManager script item-drop behavior moved to
   `server.agents.plans.AgentScriptItemActionService`; BotManager remains a

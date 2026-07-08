@@ -56,7 +56,7 @@ public final class AgentBotEquipmentRuntime {
                     AgentEquipmentService.autoEquip(
                             bot(entry),
                             AgentRuntimeIdentityRuntime.owner(entry),
-                            AgentBotOfferStateRuntime.pendingLootOfferItem(entry),
+                            AgentOfferStateRuntime.pendingLootOfferItem(entry),
                             true);
                     AgentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });

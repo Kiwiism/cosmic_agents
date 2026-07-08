@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentTickCadenceStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 
 /**
  * Agent-owned tick orchestration helpers over AgentRuntimeEntry-backed state.
@@ -41,8 +41,8 @@ public final class AgentTickOrchestrator {
     }
 
     public static boolean prepareTick(AgentRuntimeEntry entry, int movementTickMs, int aiTickMs, long tickAtMs) {
-        boolean runAiTick = AgentBotTickCadenceStateRuntime.consumeAiTick(entry, movementTickMs, aiTickMs);
-        AgentBotTickStateRuntime.recordTick(entry, runAiTick, tickAtMs);
+        boolean runAiTick = AgentTickCadenceStateRuntime.consumeAiTick(entry, movementTickMs, aiTickMs);
+        AgentTickStateRuntime.recordTick(entry, runAiTick, tickAtMs);
         return runAiTick;
     }
 }

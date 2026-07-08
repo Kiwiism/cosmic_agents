@@ -2,8 +2,8 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import constants.game.CharacterStance;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -21,13 +21,13 @@ public final class AgentMovementSnapshotService {
             agent.setStance(stance);
         }
         return new AgentMovementPacketSnapshot(
-                AgentBotMovementStateRuntime.movementVelocityX(entry),
-                AgentBotMovementStateRuntime.movementVelocityY(entry),
+                AgentMovementStateRuntime.movementVelocityX(entry),
+                AgentMovementStateRuntime.movementVelocityY(entry),
                 broadcastStance(entry, stance));
     }
 
     private static int broadcastStance(AgentRuntimeEntry entry, int baseStance) {
-        if (System.currentTimeMillis() >= AgentBotCombatCooldownStateRuntime.alertedUntilMs(entry)) {
+        if (System.currentTimeMillis() >= AgentCombatCooldownStateRuntime.alertedUntilMs(entry)) {
             return baseStance;
         }
         if (baseStance == CharacterStance.STAND_RIGHT_STANCE) {

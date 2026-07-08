@@ -1,7 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -13,7 +13,7 @@ class AgentNavigationEdgeExecutionStateServiceTest {
     @Test
     void setEdgeExecutionTargetStoresEndPointAsNonPreciseWaypoint() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
         AgentNavigationGraph.Edge edge = new AgentNavigationGraph.Edge(
                 1,
                 2,
@@ -31,7 +31,7 @@ class AgentNavigationEdgeExecutionStateServiceTest {
 
         AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
 
-        assertEquals(new Point(30, 40), AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
+        assertEquals(new Point(30, 40), AgentNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertFalse(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 }

@@ -1,13 +1,13 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotFormationStateRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -47,17 +47,17 @@ public final class AgentTargetSnapshotService {
         Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;
         String followAnchorName = followAnchor != null ? followAnchor.getName() : "owner";
         Point followBasePos = new Point(
-                rawFollowAnchorPos.x + AgentBotFormationStateRuntime.followOffsetX(entry),
+                rawFollowAnchorPos.x + AgentFormationStateRuntime.followOffsetX(entry),
                 rawFollowAnchorPos.y);
         Point followTargetPos = followTargetResolver.resolve(
                 followBasePos, followAnchor, rawFollowAnchorPos, formation.snapRange(), bot.getMap());
-        Point rawShopTargetPos = AgentBotShopStateRuntime.shopVisitPending(entry)
-                ? AgentBotShopStateRuntime.activeShopTargetPosition(entry)
+        Point rawShopTargetPos = AgentShopStateRuntime.shopVisitPending(entry)
+                ? AgentShopStateRuntime.activeShopTargetPosition(entry)
                 : null;
         Point shopTargetPos = rawShopTargetPos == null ? null : new Point(rawShopTargetPos);
-        Point moveTargetPos = AgentBotMoveTargetStateRuntime.moveTarget(entry);
-        Point farmAnchorPos = AgentBotFarmAnchorStateRuntime.farmAnchorInMap(entry, bot.getMapId());
-        Monster activeGrindTarget = AgentBotGrindTargetStateRuntime.activeTargetInMap(entry, bot.getMap());
+        Point moveTargetPos = AgentMoveTargetStateRuntime.moveTarget(entry);
+        Point farmAnchorPos = AgentFarmAnchorStateRuntime.farmAnchorInMap(entry, bot.getMapId());
+        Monster activeGrindTarget = AgentGrindTargetStateRuntime.activeTargetInMap(entry, bot.getMap());
         Point grindTargetPos = activeGrindTarget == null ? null : new Point(activeGrindTarget.getPosition());
         Point primaryTargetPos;
         String primaryTargetSource;
@@ -73,10 +73,10 @@ public final class AgentTargetSnapshotService {
         } else if (grindTargetPos != null) {
             primaryTargetPos = grindTargetPos;
             primaryTargetSource = "grind-target";
-        } else if (AgentBotModeStateRuntime.grinding(entry)) {
+        } else if (AgentModeStateRuntime.grinding(entry)) {
             primaryTargetPos = fallbackPos;
             primaryTargetSource = "grind-idle";
-        } else if (AgentBotModeStateRuntime.following(entry)) {
+        } else if (AgentModeStateRuntime.following(entry)) {
             primaryTargetPos = followTargetPos;
             primaryTargetSource = "follow-target";
         } else {

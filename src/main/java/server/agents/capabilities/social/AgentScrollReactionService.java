@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScrollReactionRuntime;
-import server.agents.integration.AgentBotScrollReactionStateRuntime;
+import server.agents.integration.AgentScrollReactionStateRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
@@ -128,7 +128,7 @@ public final class AgentScrollReactionService {
 
         int streak = updateReactionStreak(entry, scrollerId, success, now);
         double load = recordReactionLoad(entry, now);
-        if (AgentBotScrollReactionStateRuntime.isOnCooldown(entry, now)) {
+        if (AgentScrollReactionStateRuntime.isOnCooldown(entry, now)) {
             return;
         }
 
@@ -156,12 +156,12 @@ public final class AgentScrollReactionService {
         }
 
         if (reacted) {
-            AgentBotScrollReactionStateRuntime.startCooldown(entry, now, REACTION_COOLDOWN_MS);
+            AgentScrollReactionStateRuntime.startCooldown(entry, now, REACTION_COOLDOWN_MS);
         }
     }
 
     public static double recordReactionLoad(AgentRuntimeEntry entry, long now) {
-        return AgentBotScrollReactionStateRuntime.recordReactionLoad(entry, now, LOAD_DECAY_MS);
+        return AgentScrollReactionStateRuntime.recordReactionLoad(entry, now, LOAD_DECAY_MS);
     }
 
     public static double reactionChanceScale(double load) {
@@ -198,7 +198,7 @@ public final class AgentScrollReactionService {
             return 0;
         }
 
-        return AgentBotScrollReactionStateRuntime.updateReactionStreak(
+        return AgentScrollReactionStateRuntime.updateReactionStreak(
                 entry, scrollerId, success, now, STREAK_WINDOW_MS, STREAK_PRUNE_INTERVAL_MS);
     }
 

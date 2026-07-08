@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -20,21 +20,21 @@ class AgentTradeResetServiceTest {
         Character agent = mock(Character.class);
         List<String> calls = new ArrayList<>();
         AgentTradeStateService.initializeSequence(entry, "scrolls", 12, true);
-        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, new Item(1002000, (short) 1, (short) 1), (short) -1);
+        AgentPendingTradeStateRuntime.rememberRestoreSlot(entry, new Item(1002000, (short) 1, (short) 1), (short) -1);
 
         AgentTradeResetService.reset(
                 entry,
                 agent,
                 () -> {
                     calls.add("restore");
-                    AgentBotPendingTradeStateRuntime.clearRestoreSlots(entry);
+                    AgentPendingTradeStateRuntime.clearRestoreSlots(entry);
                 },
                 () -> calls.add("manual"),
                 () -> calls.add("refill"));
 
         assertEquals(List.of("restore", "manual", "refill"), calls);
-        assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
-        assertFalse(AgentBotPendingTradeStateRuntime.hasRestoreSlots(entry));
+        assertFalse(AgentPendingTradeStateRuntime.hasActiveSequence(entry));
+        assertFalse(AgentPendingTradeStateRuntime.hasRestoreSlots(entry));
     }
 
     @Test
@@ -52,6 +52,6 @@ class AgentTradeResetServiceTest {
                 () -> calls.add("refill"));
 
         assertEquals(List.of("restore", "manual"), calls);
-        assertFalse(AgentBotPendingTradeStateRuntime.hasActiveSequence(entry));
+        assertFalse(AgentPendingTradeStateRuntime.hasActiveSequence(entry));
     }
 }

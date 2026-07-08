@@ -2,9 +2,9 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.agents.integration.AgentBotTickFailureStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentTickCadenceStateRuntime;
+import server.agents.integration.AgentTickFailureStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +17,7 @@ class AgentTickOrchestratorTest {
     @Test
     void guardedTickRunsCoreAndClearsPreviousFailures() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotTickFailureStateRuntime.recordFailure(entry, 1_000L, 10_000L);
+        AgentTickFailureStateRuntime.recordFailure(entry, 1_000L, 10_000L);
         int[] coreRuns = {0};
         int[] failures = {0};
 
@@ -35,7 +35,7 @@ class AgentTickOrchestratorTest {
 
         assertEquals(1, coreRuns[0]);
         assertEquals(0, failures[0]);
-        assertFalse(AgentBotTickFailureStateRuntime.hasFailures(entry));
+        assertFalse(AgentTickFailureStateRuntime.hasFailures(entry));
     }
 
     @Test
@@ -69,21 +69,21 @@ class AgentTickOrchestratorTest {
         boolean runAiTick = AgentTickOrchestrator.prepareTick(entry, 100, 250, 1_000L);
 
         assertFalse(runAiTick);
-        assertFalse(AgentBotTickStateRuntime.lastTickWasAi(entry));
-        assertEquals(1_000L, AgentBotTickStateRuntime.lastTickAtMs(entry));
-        assertEquals(100, AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry));
+        assertFalse(AgentTickStateRuntime.lastTickWasAi(entry));
+        assertEquals(1_000L, AgentTickStateRuntime.lastTickAtMs(entry));
+        assertEquals(100, AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry));
     }
 
     @Test
     void prepareTickRecordsAiTickAndCarriesCadenceRemainder() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotTickCadenceStateRuntime.setAiTickAccumulatorMs(entry, 200);
+        AgentTickCadenceStateRuntime.setAiTickAccumulatorMs(entry, 200);
 
         boolean runAiTick = AgentTickOrchestrator.prepareTick(entry, 100, 250, 2_000L);
 
         assertTrue(runAiTick);
-        assertTrue(AgentBotTickStateRuntime.lastTickWasAi(entry));
-        assertEquals(2_000L, AgentBotTickStateRuntime.lastTickAtMs(entry));
-        assertEquals(50, AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry));
+        assertTrue(AgentTickStateRuntime.lastTickWasAi(entry));
+        assertEquals(2_000L, AgentTickStateRuntime.lastTickAtMs(entry));
+        assertEquals(50, AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry));
     }
 }

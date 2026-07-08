@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import client.inventory.InventoryType;
-import server.agents.integration.AgentBotScriptTaskStateRuntime;
+import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 
 import java.awt.Point;
@@ -15,14 +15,14 @@ public final class AgentScriptTaskQueueService {
         if (entry == null) {
             return;
         }
-        AgentBotScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
+        AgentScriptTaskStateRuntime.clearTasksAndBumpEpoch(entry);
     }
 
     public static void queueTask(AgentRuntimeEntry entry, AgentTask task) {
         if (entry == null || task == null) {
             return;
         }
-        AgentBotScriptTaskStateRuntime.queueTask(entry, task);
+        AgentScriptTaskStateRuntime.queueTask(entry, task);
     }
 
     public static void queueMoveTo(AgentRuntimeEntry entry, Point point, boolean precise) {
@@ -54,6 +54,6 @@ public final class AgentScriptTaskQueueService {
     }
 
     public static boolean hasQueuedTasks(AgentRuntimeEntry entry) {
-        return AgentBotScriptTaskStateRuntime.hasQueuedTasks(entry);
+        return AgentScriptTaskStateRuntime.hasQueuedTasks(entry);
     }
 }

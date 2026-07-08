@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotMapStateRuntime;
+import server.agents.integration.AgentMapStateRuntime;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
@@ -31,12 +31,12 @@ public final class AgentMovementOnlyMapChangeService {
     }
 
     public static boolean handleMapChange(AgentRuntimeEntry entry, Character agent, Hooks hooks) {
-        if (AgentBotMapStateRuntime.isTrackingMap(entry, agent.getMapId())) {
+        if (AgentMapStateRuntime.isTrackingMap(entry, agent.getMapId())) {
             return false;
         }
 
         MapleMap map = agent.getMap();
-        AgentBotMapStateRuntime.setMapTracking(entry, agent.getMapId(), hooks.footholdIndexBuilder().apply(map));
+        AgentMapStateRuntime.setMapTracking(entry, agent.getMapId(), hooks.footholdIndexBuilder().apply(map));
         Point current = agent.getPosition();
         Point ground = hooks.groundPointFinder().apply(map, new Point(current.x, current.y - 1));
         hooks.teleporter().teleport(entry, agent, ground != null ? ground : current);

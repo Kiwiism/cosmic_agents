@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -38,7 +38,7 @@ class AgentFollowMapSyncServiceTest {
         Character agent = character(map, 100000000, new Point(10, 10));
         Character anchor = character(map, 100000000, new Point(20, 30));
         AgentRuntimeEntry entry = entry(agent);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
         Counters counters = new Counters(null);
 
         assertFalse(AgentFollowMapSyncService.syncFollowMap(entry, agent, null, hooks(counters)));
@@ -53,7 +53,7 @@ class AgentFollowMapSyncServiceTest {
         Character agent = character(agentMap, 100000000, new Point(10, 10));
         Character anchor = character(anchorMap, 200000000, new Point(20, 30));
         AgentRuntimeEntry entry = entry(agent);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
         Point ground = new Point(21, 29);
         Counters counters = new Counters(ground);
 
@@ -74,7 +74,7 @@ class AgentFollowMapSyncServiceTest {
         Point anchorPosition = new Point(20, 30);
         Character anchor = character(anchorMap, 200000000, anchorPosition);
         AgentRuntimeEntry entry = entry(agent);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
         Counters counters = new Counters(null);
 
         boolean synced = AgentFollowMapSyncService.syncFollowMap(entry, agent, anchor, hooks(counters));

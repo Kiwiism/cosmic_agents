@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.inventory.Item;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -13,15 +13,15 @@ public final class AgentTradeStateService {
     }
 
     public static void initializeSequence(AgentRuntimeEntry entry, String category, int recipientId, boolean singleBatch) {
-        AgentBotPendingTradeStateRuntime.setCategory(entry, category);
-        AgentBotPendingTradeStateRuntime.setRecipientId(entry, recipientId);
-        AgentBotPendingTradeStateRuntime.setSingleBatch(entry, singleBatch);
-        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
+        AgentPendingTradeStateRuntime.setCategory(entry, category);
+        AgentPendingTradeStateRuntime.setRecipientId(entry, recipientId);
+        AgentPendingTradeStateRuntime.setSingleBatch(entry, singleBatch);
+        AgentPendingTradeStateRuntime.clearInviteAnnounced(entry);
     }
 
     public static void initializeBatch(AgentRuntimeEntry entry, List<Item> items, int mesos) {
-        AgentBotPendingTradeStateRuntime.setItems(entry, firstTradeWindowItems(items));
-        AgentBotPendingTradeStateRuntime.setMeso(entry, mesos);
+        AgentPendingTradeStateRuntime.setItems(entry, firstTradeWindowItems(items));
+        AgentPendingTradeStateRuntime.setMeso(entry, mesos);
         clearBatchProgress(entry);
     }
 
@@ -32,34 +32,34 @@ public final class AgentTradeStateService {
     }
 
     public static void clearBatchProgress(AgentRuntimeEntry entry) {
-        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
+        AgentPendingTradeStateRuntime.clearItemIndex(entry);
+        AgentPendingTradeStateRuntime.clearTimer(entry);
+        AgentPendingTradeStateRuntime.clearMesoAdded(entry);
+        AgentPendingTradeStateRuntime.clearAllItemsAdded(entry);
+        AgentPendingTradeStateRuntime.clearBotDone(entry);
     }
 
     public static void enterBetweenBatches(AgentRuntimeEntry entry, int delayMs) {
-        AgentBotPendingTradeStateRuntime.clearItems(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, delayMs);
+        AgentPendingTradeStateRuntime.clearItems(entry);
+        AgentPendingTradeStateRuntime.clearAllItemsAdded(entry);
+        AgentPendingTradeStateRuntime.clearBotDone(entry);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, delayMs);
     }
 
     public static void clearSequence(AgentRuntimeEntry entry) {
-        AgentBotPendingTradeStateRuntime.clearCategory(entry);
-        AgentBotPendingTradeStateRuntime.clearCategoryMessage(entry);
-        AgentBotPendingTradeStateRuntime.clearItems(entry);
-        AgentBotPendingTradeStateRuntime.clearRecipientId(entry);
-        AgentBotPendingTradeStateRuntime.clearMeso(entry);
-        AgentBotPendingTradeStateRuntime.clearItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.clearTimer(entry);
-        AgentBotPendingTradeStateRuntime.clearMesoAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearAllItemsAdded(entry);
-        AgentBotPendingTradeStateRuntime.clearBotDone(entry);
-        AgentBotPendingTradeStateRuntime.clearSingleBatch(entry);
-        AgentBotPendingTradeStateRuntime.clearInviteAnnounced(entry);
-        AgentBotPendingTradeStateRuntime.clearShareBudget(entry);
-        AgentBotPendingTradeStateRuntime.clearOwnerGivenItems(entry);
+        AgentPendingTradeStateRuntime.clearCategory(entry);
+        AgentPendingTradeStateRuntime.clearCategoryMessage(entry);
+        AgentPendingTradeStateRuntime.clearItems(entry);
+        AgentPendingTradeStateRuntime.clearRecipientId(entry);
+        AgentPendingTradeStateRuntime.clearMeso(entry);
+        AgentPendingTradeStateRuntime.clearItemIndex(entry);
+        AgentPendingTradeStateRuntime.clearTimer(entry);
+        AgentPendingTradeStateRuntime.clearMesoAdded(entry);
+        AgentPendingTradeStateRuntime.clearAllItemsAdded(entry);
+        AgentPendingTradeStateRuntime.clearBotDone(entry);
+        AgentPendingTradeStateRuntime.clearSingleBatch(entry);
+        AgentPendingTradeStateRuntime.clearInviteAnnounced(entry);
+        AgentPendingTradeStateRuntime.clearShareBudget(entry);
+        AgentPendingTradeStateRuntime.clearOwnerGivenItems(entry);
     }
 }

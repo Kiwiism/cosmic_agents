@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotOfferRuntime;
-import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotPendingActionStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
+import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -43,7 +43,7 @@ class AgentOfferServiceTest {
         Character bot = mock(Character.class);
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotPendingActionStateRuntime.setPendingAction(entry, "trade");
+        AgentPendingActionStateRuntime.setPendingAction(entry, "trade");
 
         try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
             AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
@@ -75,7 +75,7 @@ class AgentOfferServiceTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(100);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotOfferStateRuntime.setPendingLootOffer(
+        AgentOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, true);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
@@ -94,7 +94,7 @@ class AgentOfferServiceTest {
         Character owner = mock(Character.class);
         when(owner.getId()).thenReturn(100);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotOfferStateRuntime.setPendingLootOffer(
+        AgentOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, false);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
@@ -115,7 +115,7 @@ class AgentOfferServiceTest {
         when(owner.getId()).thenReturn(100);
         when(speaker.getId()).thenReturn(200);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotOfferStateRuntime.setPendingLootOffer(
+        AgentOfferStateRuntime.setPendingLootOffer(
                 entry, new Item(1002000, (short) 1, (short) 1), 200, Long.MAX_VALUE, false);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);

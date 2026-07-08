@@ -2,10 +2,10 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
 
 
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationCommittedEdgeService;
 import server.agents.capabilities.movement.AgentClimbMovementService;
 import server.agents.capabilities.movement.AgentGroundMovementRuntimeService;
@@ -32,8 +32,8 @@ import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.BeforeAll;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.maps.MapleMap;
 import server.maps.Foothold;
@@ -216,8 +216,8 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, collapsedWalk);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, collapsedWalk);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
         // Bot is in intermediate region 359 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â neither source (358) nor destination (355)
@@ -236,8 +236,8 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, collapsedWalk);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, collapsedWalk);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 355);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
         AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 355, 355);
@@ -264,8 +264,8 @@ class BotNavigationManagerTest {
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, owner, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotModeStateRuntime.setFollowTargetId(entry, sibling.getId());
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowTargetId(entry, sibling.getId());
 
         try (MockedStatic<AgentBotSessionLifecycleSideEffects> lifecycle =
                      mockStatic(AgentBotSessionLifecycleSideEffects.class)) {
@@ -407,18 +407,18 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotModeStateRuntime.setFollowing(entry, true);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleEdge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleEdge);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, leftTargetRegionId);
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, rightTarget, true);
 
         assertFalse(directive.consumedTick());
-        assertEquals(freshEdge.toRegionId, ((AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry)).toRegionId,
+        assertEquals(freshEdge.toRegionId, ((AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry)).toRegionId,
                 "grounded reuse must discard a stale drop edge once the current best first edge changes");
-        assertEquals(freshEdge.startPoint, ((AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry)).startPoint);
+        assertEquals(freshEdge.startPoint, ((AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry)).startPoint);
     }
 
     @Test
@@ -460,8 +460,8 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleDrop);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, staleDrop.toRegionId);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleDrop);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, staleDrop.toRegionId);
 
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 1, 3),
                 "non-AI reuse must drop stale grounded edges whose destination no longer matches the live target");
@@ -510,18 +510,18 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(20, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(105, 105));
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(105, 105));
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, new Point(180, 100), true);
 
         assertFalse(directive.consumedTick());
         assertEquals(new Point(180, 100), directive.targetPos());
-        assertEquals("graph-warmup", AgentBotNavigationDebugStateRuntime.lastDecision(entry));
-        assertTrue(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry));
-        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
+        assertEquals("graph-warmup", AgentNavigationDebugStateRuntime.lastDecision(entry));
+        assertTrue(AgentNavigationDebugStateRuntime.graphWarmupFallback(entry));
+        assertNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
 
-        AgentNavigationGraphService.getGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraphService.getGraph(map, AgentMovementStateRuntime.movementProfile(entry));
     }
 
     @Test
@@ -529,7 +529,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(kerning());
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(-1251, -137, 2, true));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(-1251, -137, 2, true));
 
         AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
                 189, 157, AgentNavigationGraph.EdgeType.CLIMB,
@@ -548,7 +548,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(kerning());
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(-1251, -137, 2, true));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(-1251, -137, 2, true));
 
         AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
                 189, 157, AgentNavigationGraph.EdgeType.CLIMB,
@@ -565,7 +565,7 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(kerning());
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(707, -769, -455, false));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(707, -769, -455, false));
 
         AgentNavigationGraph.Edge climbExit = new AgentNavigationGraph.Edge(
                 104, 101, AgentNavigationGraph.EdgeType.CLIMB,
@@ -582,18 +582,18 @@ class BotNavigationManagerTest {
         Character bot = mock(Character.class);
         when(bot.getMap()).thenReturn(mock(MapleMap.class));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 25, 14, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(-437, -181), new Point(-473, -211),
                 -8, 0, -437, -1471, 84, 250
         ));
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 14);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 14);
         AgentNavigationGraph graph = mock(AgentNavigationGraph.class);
 
         AgentNavigationGraph.Edge reused = AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, 20, 14);
 
-        assertEquals(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry), reused);
+        assertEquals(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry), reused);
     }
 
     @Test
@@ -643,16 +643,16 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(fromRegion.pointAt(outsideLaunchX), lithHarbor);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, ropeEntry);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, ropeEntry);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, target, true);
 
         assertFalse(directive.consumedTick());
-        assertFalse(AgentBotMovementStateRuntime.inAir(entry));
-        assertEquals("climb-pos", AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry));
+        assertFalse(AgentMovementStateRuntime.inAir(entry));
+        assertEquals("climb-pos", AgentNavigationDebugStateRuntime.lastEdgeBlockReason(entry));
     }
 
     @Test
@@ -673,15 +673,15 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(botPos, lithHarbor);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, new Rope(1265, 289, 597, false));
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentClimbStateRuntime.setClimbingOnRope(entry, new Rope(1265, 289, 597, false));
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, target, true);
 
         assertTrue(directive.consumedTick());
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
         assertEquals(new Point(1265, 290), bot.getPosition());
     }
 
@@ -695,7 +695,7 @@ class BotNavigationManagerTest {
         Character bot = mockBot(ropeTop, map);
         bot.setStance(CharacterStance.ROPE_RIGHT_STANCE);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(105, 100));
+        AgentMovementStateRuntime.setMovementProfile(entry, new AgentMovementProfile(105, 100));
 
         assertEquals(graph.findRopeRegionId(ropeTop),
                 AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, ropeTop));
@@ -738,14 +738,14 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(100, 0), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
 
         // Simulate the state right after AI tick attached the bot to the rope at firstClimbableY.
-        AgentBotClimbStateRuntime.setClimbVerticalDirection(entry, -1);
+        AgentClimbStateRuntime.setClimbVerticalDirection(entry, -1);
         AgentRopeMovementService.attachToRope(entry, bot, rope, AgentNavigationPhysicsService.firstClimbableY(rope));
-        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
         assertEquals(AgentNavigationPhysicsService.firstClimbableY(rope), bot.getPosition().y);
-        assertEquals(0, AgentBotClimbStateRuntime.climbVerticalDirection(entry), "fresh attach must not carry stale climb intent");
+        assertEquals(0, AgentClimbStateRuntime.climbVerticalDirection(entry), "fresh attach must not carry stale climb intent");
 
         // Follow target far above the bot ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â without the fix, dy<0 forces climb-up which dismounts.
         Point followTargetAbove = new Point(50, -54);
@@ -753,14 +753,14 @@ class BotNavigationManagerTest {
         // No nav edge committed (rope-entry was just executed; reuseCommittedEdge would drop it
         // because the bot is now in the rope region == edge.toRegionId). This is the no-edge
         // window between AI ticks where the bug manifests.
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, null);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, null);
 
         // Run one non-AI physics tick.
         AgentClimbMovementService.tickClimbing(entry, followTargetAbove, false);
 
-        assertTrue(AgentBotClimbStateRuntime.climbing(entry),
+        assertTrue(AgentClimbStateRuntime.climbing(entry),
                 "Non-AI tick must not dismount: AI is the only place climb direction is decided.");
-        assertEquals(rope, AgentBotClimbStateRuntime.climbRope(entry));
+        assertEquals(rope, AgentClimbStateRuntime.climbRope(entry));
         assertEquals(new Point(100, AgentNavigationPhysicsService.firstClimbableY(rope)), bot.getPosition(),
                 "Bot must hold position on the rope without AI-decided intent.");
     }
@@ -772,21 +772,21 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
 
         AgentNavigationTargetService.NavigationDirective directive =
                 AgentNavigationTargetService.resolveTarget(entry, new Point(100, 150), true);
 
         assertTrue(directive.consumedTick());
-        assertTrue(AgentBotClimbStateRuntime.ropeEntryPending(entry));
-        assertFalse(AgentBotClimbStateRuntime.climbing(entry));
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
-        assertFalse(AgentBotMovementStateRuntime.crouching(entry));
+        assertTrue(AgentClimbStateRuntime.ropeEntryPending(entry));
+        assertFalse(AgentClimbStateRuntime.climbing(entry));
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentMovementStateRuntime.crouching(entry));
 
         AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(100, 150));
 
-        assertFalse(AgentBotClimbStateRuntime.ropeEntryPending(entry));
-        assertTrue(AgentBotClimbStateRuntime.climbing(entry));
+        assertFalse(AgentClimbStateRuntime.ropeEntryPending(entry));
+        assertTrue(AgentClimbStateRuntime.climbing(entry));
         assertEquals(new Point(100, 101), bot.getPosition());
     }
 
@@ -800,14 +800,14 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertTrue(immediateAction);
-        assertTrue(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertTrue(AgentMovementStateRuntime.downJumpPending(entry));
     }
 
     @Test
@@ -820,14 +820,14 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(130, 220);
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertTrue(immediateAction);
-        assertTrue(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertTrue(AgentMovementStateRuntime.downJumpPending(entry));
     }
 
     @Test
@@ -840,15 +840,15 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(120, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(260, 220);
         Point steeringTarget = AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
         assertNotNull(steeringTarget);
         assertTrue(steeringTarget.y > bot.getPosition().y);
         assertTrue(steeringTarget.x > 200 || steeringTarget.x < 0,
@@ -864,15 +864,15 @@ class BotNavigationManagerTest {
 
         Character bot = mockBot(new Point(40, 114), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
-        AgentBotNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentMovementStateRuntime.setMovementProfile(entry, AgentMovementProfile.base());
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(320, 212);
         Point steeringTarget = AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
-        assertFalse(AgentBotMovementStateRuntime.downJumpPending(entry));
+        assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
         assertEquals(target, steeringTarget);
     }
 

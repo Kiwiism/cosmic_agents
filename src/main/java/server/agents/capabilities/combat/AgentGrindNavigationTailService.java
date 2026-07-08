@@ -1,8 +1,8 @@
 package server.agents.capabilities.combat;
 
 import client.inventory.WeaponType;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -46,13 +46,13 @@ public final class AgentGrindNavigationTailService {
                 : hooks.navigationTargetSelector().select(
                         entry, agentPosition, mobPosition, shouldRetreatForRangedSpacing);
 
-        if (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
+        if (AgentDegenerateAttackStateRuntime.degenAttackDone(entry)
                 && !hooks.retreatPolicy().shouldRetreat(weaponType, agentPosition, mobPosition)) {
-            AgentBotDegenerateAttackStateRuntime.clear(entry);
+            AgentDegenerateAttackStateRuntime.clear(entry);
         }
 
         if (crossRegionRetreatPos == null && !shouldRetreatForRangedSpacing
-                && aoeRepositionPos == null && !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
+                && aoeRepositionPos == null && !AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
             Point lootPos = hooks.convenientLootTargetSelector().select(entry, agentPosition, mobPosition);
             if (lootPos != null) {
                 targetPos = lootPos;

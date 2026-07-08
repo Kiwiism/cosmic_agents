@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 
 import java.awt.Point;
 
@@ -30,13 +30,13 @@ public final class AgentShopVisitTickService {
                                                 Character agent,
                                                 boolean runAiTick,
                                                 Hooks hooks) {
-        if (!AgentBotShopStateRuntime.shopVisitPending(entry)) {
+        if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             return new Result(false, null);
         }
 
         boolean consumed = hooks.shopVisitTick().tick(entry, agent);
-        Point targetPos = AgentBotShopStateRuntime.activeShopTargetPosition(entry);
-        if (!consumed && AgentBotShopStateRuntime.shopApproachDelayMs(entry) > 0) {
+        Point targetPos = AgentShopStateRuntime.activeShopTargetPosition(entry);
+        if (!consumed && AgentShopStateRuntime.shopApproachDelayMs(entry) > 0) {
             return new Result(true, targetPos);
         }
         if (targetPos != null) {

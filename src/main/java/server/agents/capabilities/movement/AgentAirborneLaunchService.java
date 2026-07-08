@@ -1,8 +1,8 @@
 package server.agents.capabilities.movement;
 
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -16,20 +16,20 @@ public final class AgentAirborneLaunchService {
                                       float initialVelocityY,
                                       int airVelocityX,
                                       boolean climbUpIntent) {
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, null);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementStateRuntime.setCrouching(entry, false);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, initialVelocityY);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, null);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setCrouching(entry, false);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, position);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, initialVelocityY);
         AgentGroundPhysicsService.stopGroundMotion(entry);
-        AgentBotClimbStateRuntime.setClimbUpIntent(entry, climbUpIntent);
-        AgentBotClimbStateRuntime.clearRopeEntry(entry);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelocityX);
-        AgentBotMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
-        AgentBotMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
-        AgentBotMovementStateRuntime.setDownJumpPending(entry, false);
-        AgentBotMovementStateRuntime.clearMoveDirection(entry);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry,
+        AgentClimbStateRuntime.setClimbUpIntent(entry, climbUpIntent);
+        AgentClimbStateRuntime.clearRopeEntry(entry);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, airVelocityX);
+        AgentMovementPhysicsStateRuntime.setAirSteerVelocityX(entry, 0.0);
+        AgentMovementPhysicsStateRuntime.setFixedAirArc(entry, false);
+        AgentMovementStateRuntime.setDownJumpPending(entry, false);
+        AgentMovementStateRuntime.clearMoveDirection(entry);
+        AgentMovementStateRuntime.setMovementVelocity(entry,
                 AgentMovementKinematicsService.velocityFromDeltaX(airVelocityX),
                 movementVelocityFromAirStep(initialVelocityY));
         AgentMovementPoseService.syncCharacterState(entry);

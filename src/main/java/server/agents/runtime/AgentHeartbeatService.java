@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 
 import java.util.function.Consumer;
 
@@ -15,11 +15,11 @@ public final class AgentHeartbeatService {
                                         long intervalMs,
                                         Consumer<Character> lastPacketUpdater,
                                         Consumer<AgentRuntimeEntry> movementBroadcaster) {
-        if (!AgentBotTickStateRuntime.heartbeatDue(entry, nowMs, intervalMs)) {
+        if (!AgentTickStateRuntime.heartbeatDue(entry, nowMs, intervalMs)) {
             return false;
         }
 
-        AgentBotTickStateRuntime.markHeartbeat(entry, nowMs);
+        AgentTickStateRuntime.markHeartbeat(entry, nowMs);
         lastPacketUpdater.accept(agent);
         movementBroadcaster.accept(entry);
         return true;

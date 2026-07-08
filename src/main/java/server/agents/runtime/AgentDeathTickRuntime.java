@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentBotCombatDeathRuntime;
-import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentDeathStateRuntime;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -20,7 +20,7 @@ public final class AgentDeathTickRuntime {
         return handleDeadTick(
                 entry,
                 agent,
-                () -> AgentBotDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
+                () -> AgentDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
                 (deadEntry, deadAgent) -> AgentBotCombatDeathRuntime.enterDeadState(
                         deadEntry, deadAgent, false, AgentCombatConfig.cfg),
                 () -> AgentRespawnRuntime.respawnNearLeader(entry, agent, leader),

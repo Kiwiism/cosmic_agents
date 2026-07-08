@@ -2,10 +2,10 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -86,14 +86,14 @@ class AgentRecoveryTeleportServiceTest {
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
         AgentRuntimeEntry entry = entry(agent);
-        AgentBotModeStateRuntime.startGrinding(entry);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(5, 5), false);
+        AgentModeStateRuntime.startGrinding(entry);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(5, 5), false);
         Counters counters = new Counters(null);
 
         assertFalse(AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
                 entry, agent, anchor, 100, 20, 1, hooks(counters)));
-        AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(10, 10), map.getId());
+        AgentMoveTargetStateRuntime.clearMoveTarget(entry);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(10, 10), map.getId());
 
         assertFalse(AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
                 entry, agent, anchor, 100, 20, 1, hooks(counters)));
@@ -106,7 +106,7 @@ class AgentRecoveryTeleportServiceTest {
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
         AgentRuntimeEntry entry = entry(agent);
-        AgentBotModeStateRuntime.startGrinding(entry);
+        AgentModeStateRuntime.startGrinding(entry);
         Counters counters = new Counters(null);
 
         boolean recovered = AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(
@@ -123,8 +123,8 @@ class AgentRecoveryTeleportServiceTest {
         Character agent = character(map, new Point(0, 0));
         Character anchor = character(map, new Point(500, 0));
         AgentRuntimeEntry entry = entry(agent);
-        AgentBotModeStateRuntime.startGrinding(entry);
-        AgentBotShopStateRuntime.startShopVisit(entry, new Point(1, 1), new Point(1, 1), 0, 1L);
+        AgentModeStateRuntime.startGrinding(entry);
+        AgentShopStateRuntime.startShopVisit(entry, new Point(1, 1), new Point(1, 1), 0, 1L);
         Counters counters = new Counters(null);
 
         boolean recovered = AgentRecoveryTeleportService.recoverGrindPartyTeleportDistance(

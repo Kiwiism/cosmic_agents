@@ -17,7 +17,7 @@ import server.agents.capabilities.build.profiles.ThiefBuilds;
 import server.agents.capabilities.build.profiles.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
 import server.agents.integration.AgentBotBuildRuntime;
-import server.agents.integration.AgentBotBuildStateRuntime;
+import server.agents.integration.AgentBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -60,7 +60,7 @@ public final class AgentBuildService {
 
     /** Stores the AP build, confirms it to the owner, and immediately spends any pending AP. */
     public static void setApBuild(AgentRuntimeEntry entry, ApBuild build, String confirmMsg) {
-        AgentBotBuildStateRuntime.setApBuild(entry, build);
+        AgentBuildStateRuntime.setApBuild(entry, build);
         AgentBotBuildRuntime.confirmApBuild(entry, confirmMsg);
         autoAssignAp(entry, AgentRuntimeIdentityRuntime.bot(entry));
     }
@@ -73,20 +73,20 @@ public final class AgentBuildService {
     public static String buildApPrompt(AgentRuntimeEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
-        if (AgentBotBuildStateRuntime.hasApBuild(entry) || AgentBotBuildStateRuntime.apPromptSent(entry) || bot.getRemainingAp() < 1) return null;
+        if (AgentBuildStateRuntime.hasApBuild(entry) || AgentBuildStateRuntime.apPromptSent(entry) || bot.getRemainingAp() < 1) return null;
         return requestApBuildPrompt(entry, bot);
     }
 
     public static String requestApBuildPrompt(AgentRuntimeEntry entry, Character bot) {
         String prompt = apPromptForJob(bot.getJob());
         if (prompt == null) return null;
-        AgentBotBuildStateRuntime.markApPromptSent(entry);
+        AgentBuildStateRuntime.markApPromptSent(entry);
         return prompt;
     }
 
     /** Spends all remaining AP according to the stored build. */
     public static void autoAssignAp(AgentRuntimeEntry entry, Character bot) {
-        ApBuild build = AgentBotBuildStateRuntime.apBuild(entry);
+        ApBuild build = AgentBuildStateRuntime.apBuild(entry);
         if (build == null || bot.getRemainingAp() < 1) return;
 
         int ap = bot.getRemainingAp();
@@ -114,8 +114,8 @@ public final class AgentBuildService {
         if (apPromptForJob(bot.getJob()) == null) {
             return "dont have an ap build for my job yet";
         }
-        if (!AgentBotBuildStateRuntime.hasApBuild(entry)) {
-            AgentBotBuildStateRuntime.clearApBuildPromptState(entry);
+        if (!AgentBuildStateRuntime.hasApBuild(entry)) {
+            AgentBuildStateRuntime.clearApBuildPromptState(entry);
             String prompt = requestApBuildPrompt(entry, bot);
             return prompt != null ? prompt : "need your ap build first";
         }
@@ -128,7 +128,7 @@ public final class AgentBuildService {
     }
 
     public static void handleJobAdvance(AgentRuntimeEntry entry, Character bot, Job oldJob, Job newJob) {
-        if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBotBuildStateRuntime.hasApBuild(entry)) {
+        if (oldJob == Job.BEGINNER && oldJob != newJob && AgentBuildStateRuntime.hasApBuild(entry)) {
             reallocateAp(entry, bot);
         }
 
@@ -156,8 +156,8 @@ public final class AgentBuildService {
      */
     public static String buildSpVariantPrompt(AgentRuntimeEntry entry, Character bot) {
         if (bot.getJob() != Job.HERO) return null;
-        if (AgentBotBuildStateRuntime.hasSpVariant(entry) || AgentBotBuildStateRuntime.spVariantPromptSent(entry) || bot.getRemainingSps()[3] < 1) return null;
-        AgentBotBuildStateRuntime.markSpVariantPromptSent(entry);
+        if (AgentBuildStateRuntime.hasSpVariant(entry) || AgentBuildStateRuntime.spVariantPromptSent(entry) || bot.getRemainingSps()[3] < 1) return null;
+        AgentBuildStateRuntime.markSpVariantPromptSent(entry);
         return AgentBuildPromptReporter.heroSpVariantPrompt();
     }
 
@@ -166,7 +166,7 @@ public final class AgentBuildService {
      * Hero SP is held until the owner chooses a variant.
      */
     public static void autoAssignSp(AgentRuntimeEntry entry, Character bot) {
-        String spVariant = AgentBotBuildStateRuntime.spVariant(entry);
+        String spVariant = AgentBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) return;
 
         List<BuildStep> steps = getBuildOrder(bot.getJob(), spVariant);
@@ -176,7 +176,7 @@ public final class AgentBuildService {
     }
 
     public static String respecSp(AgentRuntimeEntry entry, Character bot) {
-        String spVariant = AgentBotBuildStateRuntime.spVariant(entry);
+        String spVariant = AgentBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) {
             return "need your hero build first. say '1h' or '2h'";
         }
@@ -315,10 +315,10 @@ public final class AgentBuildService {
      */
     public static void checkLevelUp(AgentRuntimeEntry entry, Character bot) {
         int lvl = bot.getLevel();
-        if (AgentBotBuildStateRuntime.lastKnownLevel(entry) == lvl) return;
+        if (AgentBuildStateRuntime.lastKnownLevel(entry) == lvl) return;
 
-        int prev = AgentBotBuildStateRuntime.lastKnownLevel(entry);
-        AgentBotBuildStateRuntime.setLastKnownLevel(entry, lvl);
+        int prev = AgentBuildStateRuntime.lastKnownLevel(entry);
+        AgentBuildStateRuntime.setLastKnownLevel(entry, lvl);
         if (prev == -1) {
             autoAssignSp(entry, bot);
             autoAssignAp(entry, bot);
@@ -338,14 +338,14 @@ public final class AgentBuildService {
     public static String buildJobPrompt(AgentRuntimeEntry entry, Character bot) {
         int lvl = bot.getLevel();
         Job job = bot.getJob();
-        int prompted = AgentBotBuildStateRuntime.jobPromptSent(entry);
+        int prompted = AgentBuildStateRuntime.jobPromptSent(entry);
 
         if (job == Job.BEGINNER) {
             if (lvl >= 10 && prompted < 10) {
-                AgentBotBuildStateRuntime.setJobPromptSent(entry, 10);
+                AgentBuildStateRuntime.setJobPromptSent(entry, 10);
                 return AgentBuildPromptReporter.beginnerJobPrompt(lvl);
             } else if (lvl >= 8 && prompted < 8) {
-                AgentBotBuildStateRuntime.setJobPromptSent(entry, 8);
+                AgentBuildStateRuntime.setJobPromptSent(entry, 8);
                 return AgentBuildPromptReporter.beginnerJobPrompt(lvl);
             }
             return null;
@@ -354,7 +354,7 @@ public final class AgentBuildService {
         if (lvl >= 30 && prompted < 30) {
             String msg = AgentBuildPromptReporter.secondJobPrompt(job);
             if (msg != null) {
-                AgentBotBuildStateRuntime.setJobPromptSent(entry, 30);
+                AgentBuildStateRuntime.setJobPromptSent(entry, 30);
                 return msg;
             }
         }
@@ -362,7 +362,7 @@ public final class AgentBuildService {
         if (lvl >= 70 && prompted < 70) {
             String msg = AgentBuildPromptReporter.thirdJobPrompt(job);
             if (msg != null) {
-                AgentBotBuildStateRuntime.setJobPromptSent(entry, 70);
+                AgentBuildStateRuntime.setJobPromptSent(entry, 70);
                 return msg;
             }
         }
@@ -370,7 +370,7 @@ public final class AgentBuildService {
         if (lvl >= 120 && prompted < 120) {
             String msg = AgentBuildPromptReporter.fourthJobPrompt(job);
             if (msg != null) {
-                AgentBotBuildStateRuntime.setJobPromptSent(entry, 120);
+                AgentBuildStateRuntime.setJobPromptSent(entry, 120);
                 return msg;
             }
         }

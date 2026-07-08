@@ -2,7 +2,7 @@ package server.agents.capabilities.looting;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -21,11 +21,11 @@ class AgentGrindLootTargetServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem loot = mockLoot(7, false);
         when(map.getMapObject(7)).thenReturn(loot);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, loot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, loot);
 
         AgentGrindLootTargetService.validateCachedGrindLootTarget(entry, agent);
 
-        assertSame(loot, AgentBotGrindLootStateRuntime.grindLootTarget(entry));
+        assertSame(loot, AgentGrindLootStateRuntime.grindLootTarget(entry));
     }
 
     @Test
@@ -35,20 +35,20 @@ class AgentGrindLootTargetServiceTest {
         when(agent.getMap()).thenReturn(map);
         AgentRuntimeEntry pickedEntry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem pickedLoot = mockLoot(7, true);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(pickedEntry, pickedLoot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(pickedEntry, pickedLoot);
 
         AgentGrindLootTargetService.validateCachedGrindLootTarget(pickedEntry, agent);
 
-        assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(pickedEntry));
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(pickedEntry));
 
         AgentRuntimeEntry staleEntry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem staleLoot = mockLoot(8, false);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(staleEntry, staleLoot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(staleEntry, staleLoot);
         when(map.getMapObject(8)).thenReturn(null);
 
         AgentGrindLootTargetService.validateCachedGrindLootTarget(staleEntry, agent);
 
-        assertNull(AgentBotGrindLootStateRuntime.grindLootTarget(staleEntry));
+        assertNull(AgentGrindLootStateRuntime.grindLootTarget(staleEntry));
     }
 
     @Test
@@ -56,11 +56,11 @@ class AgentGrindLootTargetServiceTest {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         MapItem existingLoot = mockLoot(9, false);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, existingLoot);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, existingLoot);
 
         AgentGrindLootTargetService.refreshGrindLootTarget(entry, agent, false, 100);
 
-        assertSame(existingLoot, AgentBotGrindLootStateRuntime.grindLootTarget(entry));
+        assertSame(existingLoot, AgentGrindLootStateRuntime.grindLootTarget(entry));
     }
 
     private static MapItem mockLoot(int objectId, boolean pickedUp) {

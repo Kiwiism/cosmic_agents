@@ -2,12 +2,12 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotSwimStateRuntime;
+import server.agents.integration.AgentSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
@@ -21,7 +21,7 @@ public final class AgentAirborneMovementService {
     public static void tickAirborne(AgentRuntimeEntry entry, Point targetPos) {
         long startedAt = System.nanoTime();
         try {
-            AgentBotSwimStateRuntime.setSwimming(entry, false);
+            AgentSwimStateRuntime.setSwimming(entry, false);
             AgentMotionTimerService.tickMotionTimers(entry);
 
             Character agent = AgentRuntimeIdentityRuntime.bot(entry);
@@ -31,9 +31,9 @@ public final class AgentAirborneMovementService {
                 return;
             }
 
-            if (!AgentBotMovementStateRuntime.hasMoveDirection(entry) && targetPos != null && shouldApplyAirSteering(entry)) {
+            if (!AgentMovementStateRuntime.hasMoveDirection(entry) && targetPos != null && shouldApplyAirSteering(entry)) {
                 int dx = targetPos.x - agentPosition.x;
-                AgentBotMovementStateRuntime.setMoveDirection(entry,
+                AgentMovementStateRuntime.setMoveDirection(entry,
                         Math.abs(dx) > AgentMovementPhysicsConfig.configuredSwimArrivalRadiusPx()
                                 ? Integer.signum(dx) : 0);
             }
@@ -51,7 +51,7 @@ public final class AgentAirborneMovementService {
                 return;
             }
             if (result == AgentAirborneStepResult.LANDED) {
-                AgentBotMovementPhysicsStateRuntime.clearJumpCooldown(entry);
+                AgentMovementPhysicsStateRuntime.clearJumpCooldown(entry);
                 AgentMovementBroadcastService.broadcastMovement(entry);
                 return;
             }
@@ -66,12 +66,12 @@ public final class AgentAirborneMovementService {
     }
 
     static boolean successfullyGrabbedRope(AgentRuntimeEntry entry, Character agent, Point agentPosition) {
-        if (!AgentBotClimbStateRuntime.climbUpIntent(entry)) {
+        if (!AgentClimbStateRuntime.climbUpIntent(entry)) {
             return false;
         }
 
         for (Rope rope : agent.getMap().getRopes()) {
-            if (AgentClimbMovementPolicy.sameRope(AgentBotClimbStateRuntime.blockedRopeGrab(entry), rope)) {
+            if (AgentClimbMovementPolicy.sameRope(AgentClimbStateRuntime.blockedRopeGrab(entry), rope)) {
                 continue;
             }
             if (Math.abs(rope.x() - agentPosition.x) > AgentMovementPhysicsConfig.configuredRopeGrabX()) {
@@ -90,13 +90,13 @@ public final class AgentAirborneMovementService {
     }
 
     static boolean shouldApplyAirSteering(AgentRuntimeEntry entry) {
-        if (AgentBotMovementPhysicsStateRuntime.fixedAirArc(entry)) {
+        if (AgentMovementPhysicsStateRuntime.fixedAirArc(entry)) {
             return false;
         }
-        if (AgentBotMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
+        if (AgentMovementStateRuntime.hasDownJumpGracePeriod(entry)) {
             return false;
         }
-        AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (navEdge == null) {
             return true;
         }

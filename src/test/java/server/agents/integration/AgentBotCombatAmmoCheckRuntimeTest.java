@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentBotCombatRuntime;
 
@@ -34,8 +34,8 @@ class AgentBotCombatAmmoCheckRuntimeTest {
 
             AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot, 100, 5);
 
-            assertTrue(AgentBotAmmoStateRuntime.ammoWarnSent(entry));
-            assertFalse(AgentBotAmmoStateRuntime.noAmmo(entry));
+            assertTrue(AgentAmmoStateRuntime.ammoWarnSent(entry));
+            assertFalse(AgentAmmoStateRuntime.noAmmo(entry));
             runtime.verify(() -> AgentBotCombatRuntime.sayMapNow(eq(bot), anyString()));
         }
     }
@@ -44,8 +44,8 @@ class AgentBotCombatAmmoCheckRuntimeTest {
     void clearsWarningStateForWeaponsWithoutAmmoNeed() {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotAmmoStateRuntime.setAmmoWarnSent(entry, true);
-        AgentBotAmmoStateRuntime.setNoAmmo(entry, true);
+        AgentAmmoStateRuntime.setAmmoWarnSent(entry, true);
+        AgentAmmoStateRuntime.setNoAmmo(entry, true);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
              MockedStatic<AgentCombatAmmoCounter> ammo = mockStatic(AgentCombatAmmoCounter.class)) {
@@ -54,8 +54,8 @@ class AgentBotCombatAmmoCheckRuntimeTest {
 
             AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(entry, bot, 100, 5);
 
-            assertFalse(AgentBotAmmoStateRuntime.ammoWarnSent(entry));
-            assertFalse(AgentBotAmmoStateRuntime.noAmmo(entry));
+            assertFalse(AgentAmmoStateRuntime.ammoWarnSent(entry));
+            assertFalse(AgentAmmoStateRuntime.noAmmo(entry));
         }
     }
 }

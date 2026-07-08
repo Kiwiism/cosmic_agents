@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -18,19 +18,19 @@ class AgentGroundMovementServiceTest {
         int step = AgentGroundMovementService.updateStepX(entry, map, 0, 200, 25, 80);
 
         assertEquals(AgentMovementKinematicsService.walkStep(map), step);
-        assertTrue(AgentBotMovementStateRuntime.wasMovingX(entry));
+        assertTrue(AgentMovementStateRuntime.wasMovingX(entry));
     }
 
     @Test
     void updateStepXClearsWasMovingWhenInsideStopDistance() {
         MapleMap map = new MapleMap(910000034, 0, 0, 910000034, 1.0f);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMovementStateRuntime.setWasMovingX(entry, true);
+        AgentMovementStateRuntime.setWasMovingX(entry, true);
 
         int step = AgentGroundMovementService.updateStepX(entry, map, 0, 20, 25, 80);
 
         assertEquals(0, step);
-        assertFalse(AgentBotMovementStateRuntime.wasMovingX(entry));
+        assertFalse(AgentMovementStateRuntime.wasMovingX(entry));
     }
 
     @Test

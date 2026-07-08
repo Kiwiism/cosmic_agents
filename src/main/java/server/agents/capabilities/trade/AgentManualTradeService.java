@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.agents.integration.AgentBotManualTradeStateRuntime;
+import server.agents.integration.AgentManualTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Set;
@@ -33,20 +33,20 @@ public final class AgentManualTradeService {
                                              Trade trade,
                                              int timeoutMs,
                                              IntUnaryOperator tickDown) {
-        if (trade != AgentBotManualTradeStateRuntime.tradeRef(entry)) {
+        if (trade != AgentManualTradeStateRuntime.tradeRef(entry)) {
             clearGreeting(agent);
-            AgentBotManualTradeStateRuntime.beginTrade(entry, trade, timeoutMs);
+            AgentManualTradeStateRuntime.beginTrade(entry, trade, timeoutMs);
             return false;
         }
 
-        if (AgentBotManualTradeStateRuntime.timeoutMs(entry) <= 0) {
+        if (AgentManualTradeStateRuntime.timeoutMs(entry) <= 0) {
             return false;
         }
 
-        AgentBotManualTradeStateRuntime.setTimeoutMs(
+        AgentManualTradeStateRuntime.setTimeoutMs(
                 entry,
-                tickDown.applyAsInt(AgentBotManualTradeStateRuntime.timeoutMs(entry)));
-        if (AgentBotManualTradeStateRuntime.timeoutMs(entry) != 0) {
+                tickDown.applyAsInt(AgentManualTradeStateRuntime.timeoutMs(entry)));
+        if (AgentManualTradeStateRuntime.timeoutMs(entry) != 0) {
             return false;
         }
 
@@ -57,7 +57,7 @@ public final class AgentManualTradeService {
 
     public static void clearState(AgentRuntimeEntry entry, Character agent) {
         clearGreeting(agent);
-        AgentBotManualTradeStateRuntime.clear(entry);
+        AgentManualTradeStateRuntime.clear(entry);
     }
 
     public static void clearGreeting(Character agent) {
@@ -82,11 +82,11 @@ public final class AgentManualTradeService {
             return trade;
         }
 
-        AgentBotManualTradeStateRuntime.ensureAcceptDelay(entry, delayMs);
-        AgentBotManualTradeStateRuntime.setAcceptDelayMs(
+        AgentManualTradeStateRuntime.ensureAcceptDelay(entry, delayMs);
+        AgentManualTradeStateRuntime.setAcceptDelayMs(
                 entry,
-                tickDown.applyAsInt(AgentBotManualTradeStateRuntime.acceptDelayMs(entry)));
-        if (AgentBotManualTradeStateRuntime.acceptDelayMs(entry) > 0) {
+                tickDown.applyAsInt(AgentManualTradeStateRuntime.acceptDelayMs(entry)));
+        if (AgentManualTradeStateRuntime.acceptDelayMs(entry) > 0) {
             return trade;
         }
 

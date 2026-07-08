@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotShopStateRuntime;
+import server.agents.integration.AgentShopStateRuntime;
 
 import java.awt.Point;
 
@@ -34,7 +34,7 @@ public final class AgentRecoveryTickService {
                                        Character followAnchor,
                                        Point targetPosition,
                                        Hooks hooks) {
-        if (!AgentBotShopStateRuntime.shopVisitPending(entry)
+        if (!AgentShopStateRuntime.shopVisitPending(entry)
                 && hooks.followMapSync().sync(entry, agent, followAnchor)) {
             return true;
         }

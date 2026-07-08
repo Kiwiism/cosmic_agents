@@ -2,8 +2,8 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -20,13 +20,13 @@ class AgentKnockbackMovementServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, -1);
+        AgentMovementStateRuntime.setFacingDirection(entry, -1);
 
         AgentKnockbackMovementService.beginKnockback(entry, agent, new Point(10, 20), -4.0f, 3);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertEquals(-1, AgentBotMovementStateRuntime.facingDirection(entry));
-        assertEquals(3, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertEquals(-1, AgentMovementStateRuntime.facingDirection(entry));
+        assertEquals(3, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test
@@ -35,13 +35,13 @@ class AgentKnockbackMovementServiceTest {
         when(agent.getPosition()).thenReturn(new Point(10, 20));
         when(agent.getHp()).thenReturn(1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setFacingDirection(entry, 1);
+        AgentMovementStateRuntime.setInAir(entry, true);
 
         AgentKnockbackMovementService.applyAirKnockback(entry, agent, -5);
 
-        assertTrue(AgentBotMovementStateRuntime.inAir(entry));
-        assertEquals(1, AgentBotMovementStateRuntime.facingDirection(entry));
-        assertEquals(-5, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertTrue(AgentMovementStateRuntime.inAir(entry));
+        assertEquals(1, AgentMovementStateRuntime.facingDirection(entry));
+        assertEquals(-5, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 }

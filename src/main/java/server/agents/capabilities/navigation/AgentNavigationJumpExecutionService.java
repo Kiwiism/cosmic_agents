@@ -3,9 +3,9 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
@@ -22,7 +22,7 @@ public final class AgentNavigationJumpExecutionService {
                                          AgentRuntimeEntry entry,
                                          Character agent,
                                          AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry) || AgentBotClimbStateRuntime.climbing(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry) || AgentClimbStateRuntime.climbing(entry)) {
             return false;
         }
         Point agentPos = agent.getPosition();
@@ -37,11 +37,11 @@ public final class AgentNavigationJumpExecutionService {
                     }
                 }
             }
-            AgentBotNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "jump-pos");
+            AgentNavigationDebugStateRuntime.setLastEdgeBlockReason(entry, "jump-pos");
             return false;
         }
 
-        AgentBotNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
+        AgentNavigationDebugStateRuntime.clearLastEdgeBlockReason(entry);
         AgentNavigationEdgeExecutionStateService.setEdgeExecutionTarget(entry, edge);
         AgentJumpActionService.initiateJump(entry, agent, edge.launchStepX);
         return true;
@@ -57,7 +57,7 @@ public final class AgentNavigationJumpExecutionService {
         }
         int launchX = AgentNavigationWaypointService.selectJumpLaunchX(entry, graph, edge);
         int tolerance = Math.max(1, AgentMovementKinematicsService.walkStep(agent.getMap(),
-                entry != null ? AgentBotMovementStateRuntime.movementProfile(entry) : null));
+                entry != null ? AgentMovementStateRuntime.movementProfile(entry) : null));
         return AgentNavigationEdgeReadinessService.canExecuteSelectedJumpFromCurrentPosition(
                 graph, agentPos, edge, launchX, tolerance);
     }

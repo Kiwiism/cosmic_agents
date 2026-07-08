@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.BotClient;
 import client.Character;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
-import server.agents.integration.AgentBotPotionStateRuntime;
+import server.agents.integration.AgentPotionStateRuntime;
 
 public final class AgentPotionCheckRequestRuntime {
     private AgentPotionCheckRequestRuntime() {
@@ -16,7 +16,7 @@ public final class AgentPotionCheckRequestRuntime {
     private static AgentPotionCheckRequestService.Hooks<AgentRuntimeEntry> hooks() {
         return new AgentPotionCheckRequestService.Hooks<>(
                 AgentPotionCheckRequestRuntime::resolveAgentEntry,
-                AgentBotPotionStateRuntime::requestPotionCheckSoon);
+                AgentPotionStateRuntime::requestPotionCheckSoon);
     }
 
     private static AgentRuntimeEntry resolveAgentEntry(Character agent) {

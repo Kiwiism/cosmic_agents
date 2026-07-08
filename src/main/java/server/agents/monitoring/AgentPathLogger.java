@@ -14,16 +14,16 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotFormationStateRuntime;
-import server.agents.integration.AgentBotMovementStuckStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentFormationStateRuntime;
+import server.agents.integration.AgentMovementStuckStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotTickCadenceStateRuntime;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentTickCadenceStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
@@ -98,14 +98,14 @@ public final class AgentPathLogger {
                 botRegionId,
                 physState(entry),
                 navEdgeSummary(entry),
-                AgentBotNavigationDebugStateRuntime.decisionWithBlockReason(entry),
+                AgentNavigationDebugStateRuntime.decisionWithBlockReason(entry),
                 targetSnapshot.primaryTargetSource(),
                 targetSnapshot.steeringTargetSource(),
                 navTargetSummary(entry),
                 aiTick,
                 consumedTick,
                 computeStuck(botPos.x, botPos.y),
-                AgentBotMovementStuckStateRuntime.hasUnstuckCooldown(entry) && consumedTick
+                AgentMovementStuckStateRuntime.hasUnstuckCooldown(entry) && consumedTick
         );
 
         if (history.size() >= MAX_TICKS) {
@@ -164,7 +164,7 @@ public final class AgentPathLogger {
     private static GraphSnapshot resolveGraphSnapshot(AgentRuntimeEntry entry) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
-        AgentMovementProfile requestedProfile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+        AgentMovementProfile requestedProfile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, bot);
         AgentNavigationGraph exact = AgentNavigationGraphService.peekGraph(map, requestedProfile);
         if (exact != null) {
             return new GraphSnapshot(requestedProfile, exact, "exact");
@@ -222,7 +222,7 @@ public final class AgentPathLogger {
         sb.append("--- CURRENT STATE ---\n");
         sb.append("Bot:        ").append(pointRegionStr(botPos, botRegionId)).append("\n");
         sb.append("Owner raw:  ").append(pointRegionStr(targetSnapshot.rawOwnerPosition(), rawOwnerRegionId)).append("\n");
-        if (AgentBotModeStateRuntime.following(entry)) {
+        if (AgentModeStateRuntime.following(entry)) {
             sb.append("Follow anchor:")
                     .append(" ").append(targetSnapshot.followAnchorName())
                     .append(" ").append(pointRegionStr(targetSnapshot.followAnchorPosition(), followAnchorRegionId))
@@ -232,13 +232,13 @@ public final class AgentPathLogger {
         sb.append("Formation:  ").append(targetSnapshot.formationType().toLowerCase())
                 .append(" px=").append(targetSnapshot.formationPx())
                 .append(" snap=").append(targetSnapshot.formationSnapRange())
-                .append(" offsetX=").append(AgentBotFormationStateRuntime.followOffsetX(entry)).append("\n");
-        if (AgentBotModeStateRuntime.following(entry) || !targetSnapshot.followBasePosition().equals(targetSnapshot.rawOwnerPosition())) {
+                .append(" offsetX=").append(AgentFormationStateRuntime.followOffsetX(entry)).append("\n");
+        if (AgentModeStateRuntime.following(entry) || !targetSnapshot.followBasePosition().equals(targetSnapshot.rawOwnerPosition())) {
             sb.append("Follow base:")
                     .append(" ").append(pointRegionStr(targetSnapshot.followBasePosition(), followBaseRegionId))
                     .append("  [anchor + formation offset]\n");
         }
-        if (AgentBotModeStateRuntime.following(entry)) {
+        if (AgentModeStateRuntime.following(entry)) {
             sb.append("Follow tgt: ").append(pointRegionStr(targetSnapshot.followTargetPosition(), followTargetRegionId))
                     .append("  [after snap/clamp]\n");
         }
@@ -255,24 +255,24 @@ public final class AgentPathLogger {
         sb.append("Physics:    ").append(physState(entry)).append("\n");
         sb.append("Nav edge:   ").append(navEdgeSummary(entry)).append("\n");
         sb.append("Nav target: ").append(navTargetSummary(entry))
-                .append("  targetRegion=").append(AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry)).append("\n");
-        sb.append("Last nav decision: ").append(AgentBotNavigationDebugStateRuntime.lastDecision(entry));
-        if (AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry) != null) {
-            sb.append("  [blocked: ").append(AgentBotNavigationDebugStateRuntime.lastEdgeBlockReason(entry)).append("]");
+                .append("  targetRegion=").append(AgentNavigationDebugStateRuntime.navTargetRegionId(entry)).append("\n");
+        sb.append("Last nav decision: ").append(AgentNavigationDebugStateRuntime.lastDecision(entry));
+        if (AgentNavigationDebugStateRuntime.lastEdgeBlockReason(entry) != null) {
+            sb.append("  [blocked: ").append(AgentNavigationDebugStateRuntime.lastEdgeBlockReason(entry)).append("]");
         }
         sb.append("\n");
         sb.append("AI cadence:  every ").append(AgentRuntimeConfig.cfg.AI_TICK_MS).append("ms")
-                .append("  accum=").append(AgentBotTickCadenceStateRuntime.aiTickAccumulatorMs(entry)).append("ms")
-                .append("  lastTick=").append(AgentBotTickStateRuntime.lastTickWasAi(entry) ? "AI" : "non-AI");
-        long lastTickAtMs = AgentBotTickStateRuntime.lastTickAtMs(entry);
+                .append("  accum=").append(AgentTickCadenceStateRuntime.aiTickAccumulatorMs(entry)).append("ms")
+                .append("  lastTick=").append(AgentTickStateRuntime.lastTickWasAi(entry) ? "AI" : "non-AI");
+        long lastTickAtMs = AgentTickStateRuntime.lastTickAtMs(entry);
         if (lastTickAtMs > 0) {
             sb.append("  at=").append(lastTickAtMs);
         }
         sb.append("\n");
-        sb.append("Mode:       ").append(AgentBotModeStateRuntime.following(entry)
+        sb.append("Mode:       ").append(AgentModeStateRuntime.following(entry)
                 ? "follow"
-                : AgentBotModeStateRuntime.grinding(entry) ? "grind" : "idle").append("\n");
-        int stuckMs = AgentBotMovementStuckStateRuntime.stuckMs(entry);
+                : AgentModeStateRuntime.grinding(entry) ? "grind" : "idle").append("\n");
+        int stuckMs = AgentMovementStuckStateRuntime.stuckMs(entry);
         boolean isStuck = stuckMs >= 500 || computeStuck(botPos.x, botPos.y);
         sb.append("Stuck:      ").append(isStuck ? "YES (" + stuckMs + "ms) ***" : "no").append("\n");
         sb.append("\n");
@@ -306,7 +306,7 @@ public final class AgentPathLogger {
             }
             sb.append("\n");
         }
-        sb.append("Fallback:   heuristic=").append(AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) ? "yes" : "no")
+        sb.append("Fallback:   heuristic=").append(AgentNavigationDebugStateRuntime.graphWarmupFallback(entry) ? "yes" : "no")
                 .append(" closestGraph=").append("closest".equals(graphSnapshot.source()) ? "yes" : "no")
                 .append("\n");
     }
@@ -395,8 +395,8 @@ public final class AgentPathLogger {
     }
 
     static String physState(AgentRuntimeEntry entry) {
-        if (AgentBotClimbStateRuntime.climbing(entry)) {
-            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+        if (AgentClimbStateRuntime.climbing(entry)) {
+            Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             if (climbRope != null) {
                 return "ROPE(x=" + climbRope.x()
                         + " top=" + climbRope.topY()
@@ -404,18 +404,18 @@ public final class AgentPathLogger {
             }
             return "ROPE(? climbRope=null)";
         }
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
-            return "AIR(velY=" + String.format("%.1f", AgentBotMovementPhysicsStateRuntime.verticalVelocity(entry))
-                    + " airVelX=" + AgentBotMovementPhysicsStateRuntime.airVelocityX(entry)
-                    + (AgentBotClimbStateRuntime.climbUpIntent(entry) ? " climbIntent" : "") + ")";
+        if (AgentMovementStateRuntime.inAir(entry)) {
+            return "AIR(velY=" + String.format("%.1f", AgentMovementPhysicsStateRuntime.verticalVelocity(entry))
+                    + " airVelX=" + AgentMovementPhysicsStateRuntime.airVelocityX(entry)
+                    + (AgentClimbStateRuntime.climbUpIntent(entry) ? " climbIntent" : "") + ")";
         }
         return "GND"
-                + (AgentBotMovementStateRuntime.downJumpPending(entry) ? "(downJump)" : "")
-                + (AgentBotMovementStateRuntime.crouching(entry) ? "(crouch)" : "");
+                + (AgentMovementStateRuntime.downJumpPending(entry) ? "(downJump)" : "")
+                + (AgentMovementStateRuntime.crouching(entry) ? "(crouch)" : "");
     }
 
     static String navEdgeSummary(AgentRuntimeEntry entry) {
-        AgentNavigationGraph.Edge e = (AgentNavigationGraph.Edge) AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        AgentNavigationGraph.Edge e = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (e == null) {
             return "none";
         }
@@ -427,12 +427,12 @@ public final class AgentPathLogger {
     }
 
     private static String navTargetSummary(AgentRuntimeEntry entry) {
-        Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
+        Point navTargetPos = AgentNavigationDebugStateRuntime.navTargetPosition(entry);
         if (navTargetPos == null) {
             return "none";
         }
         return "(" + navTargetPos.x + "," + navTargetPos.y + ")"
-                + (AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry) ? "[precise]" : "");
+                + (AgentNavigationDebugStateRuntime.navPreciseTarget(entry) ? "[precise]" : "");
     }
 
     private static String edgeStr(AgentNavigationGraph.Edge e) {

@@ -8,7 +8,7 @@ import constants.skills.Evan;
 import constants.skills.FPMage;
 import constants.skills.Shadower;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
@@ -122,7 +122,7 @@ public final class AgentNavigationDebugOverlay {
 
         overlay.drawNode(bot.getPosition(), OverlayType.CURRENT_EDGE, NODE_SIZE + 4);
         overlay.drawNode(targetPos, OverlayType.TRANSITION, NODE_SIZE + 4);
-        Point navTargetPos = AgentBotNavigationDebugStateRuntime.navTargetPosition(entry);
+        Point navTargetPos = AgentNavigationDebugStateRuntime.navTargetPosition(entry);
         if (navTargetPos != null) {
             overlay.drawNode(navTargetPos, OverlayType.PATH, NODE_SIZE + 2);
         }
@@ -144,13 +144,13 @@ public final class AgentNavigationDebugOverlay {
         }
         AgentRuntimeEntry entry = selection.entry;
 
-        if (!AgentBotNavigationDebugStateRuntime.isPathLogging(entry)) {
-            AgentBotNavigationDebugStateRuntime.startPathLogging(entry);
+        if (!AgentNavigationDebugStateRuntime.isPathLogging(entry)) {
+            AgentNavigationDebugStateRuntime.startPathLogging(entry);
             return "Path logging started for '" + AgentRuntimeIdentityRuntime.botName(entry) + "'. Run !botnav pathlog again to dump.";
         }
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
-        String filePath = AgentBotNavigationDebugStateRuntime.dumpPathLog(entry, targetSnapshot, note);
+        String filePath = AgentNavigationDebugStateRuntime.dumpPathLog(entry, targetSnapshot, note);
         return "Path log for '" + AgentRuntimeIdentityRuntime.botName(entry) + "' dumped: " + filePath;
     }
 
@@ -219,7 +219,7 @@ public final class AgentNavigationDebugOverlay {
     }
 
     private static AgentNavigationGraph.Edge activeNavigationEdge(AgentRuntimeEntry entry) {
-        Object edge = AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry);
+        Object edge = AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         return edge instanceof AgentNavigationGraph.Edge navEdge ? navEdge : null;
     }
 

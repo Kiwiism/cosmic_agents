@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.agents.commands.AgentTargetedCommandMatch;
-import server.agents.integration.AgentBotOfferStateRuntime;
+import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -115,7 +115,7 @@ class AgentPendingOfferResponseServiceTest {
         when(speaker.getMapId()).thenReturn(20000);
         when(agent.getMapId()).thenReturn(20000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, 1L, false);
+        AgentOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, 1L, false);
 
         assertTrue(AgentPendingOfferChatRouteService.isPendingOfferTarget(entry, speaker));
 

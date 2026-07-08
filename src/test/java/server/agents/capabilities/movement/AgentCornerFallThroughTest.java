@@ -6,8 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -68,11 +68,11 @@ class AgentCornerFallThroughTest {
         Character agent = mockAgent(start, map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentMovementPoseService.resetMotion(entry, agent.getPosition());
-        AgentBotMovementStateRuntime.setFacingDirection(entry, airVelocityX < 0 ? -1 : 1);
+        AgentMovementStateRuntime.setFacingDirection(entry, airVelocityX < 0 ? -1 : 1);
         if (airVelocityX == 0 && velocityY == 0f) {
-            AgentBotMovementStateRuntime.setInAir(entry, true);
-            AgentBotMovementPhysicsStateRuntime.setPhysicsPosition(entry, start);
-            AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
+            AgentMovementStateRuntime.setInAir(entry, true);
+            AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, start);
+            AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 0);
         } else {
             AgentKnockbackMovementService.beginKnockback(entry, agent, agent.getPosition(), velocityY, airVelocityX);
         }
@@ -81,7 +81,7 @@ class AgentCornerFallThroughTest {
         boolean tunneled = false;
         Point last = start;
         for (int tick = 0; tick < 800; tick++) {
-            if (!AgentBotMovementStateRuntime.inAir(entry)) {
+            if (!AgentMovementStateRuntime.inAir(entry)) {
                 break;
             }
             AgentMotionTimerService.tickMotionTimers(entry);
@@ -95,7 +95,7 @@ class AgentCornerFallThroughTest {
         Point end = agent.getPosition();
         Foothold endFoothold = AgentGroundingService.findGroundFoothold(map, end);
         return String.format("start=(%d,%d) vX=%d vY=%.0f -> end=%s inAir=%b fh=%s %s",
-                startX, CORNER.y, airVelocityX, velocityY, str(end), AgentBotMovementStateRuntime.inAir(entry),
+                startX, CORNER.y, airVelocityX, velocityY, str(end), AgentMovementStateRuntime.inAir(entry),
                 endFoothold == null ? "null" : "#" + endFoothold.getId(),
                 tunneled ? "*** FELL-THROUGH ***" : "ok");
     }

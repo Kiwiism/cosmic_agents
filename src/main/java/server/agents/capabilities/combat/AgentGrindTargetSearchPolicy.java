@@ -1,8 +1,8 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.integration.AgentBotCombatSkillCacheStateRuntime;
-import server.agents.integration.AgentBotGrindSearchStateRuntime;
+import server.agents.integration.AgentCombatSkillCacheStateRuntime;
+import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -24,7 +24,7 @@ public final class AgentGrindTargetSearchPolicy {
         if (currentTarget == null) {
             return true;
         }
-        if (AgentBotGrindSearchStateRuntime.searchBlocked(entry, now)) {
+        if (AgentGrindSearchStateRuntime.searchBlocked(entry, now)) {
             return false;
         }
         if (agent == null
@@ -38,9 +38,9 @@ public final class AgentGrindTargetSearchPolicy {
         return AgentCombatScoringPolicy.isAoeSingleTargeting(
                 currentAttackPlan.skillId,
                 currentAttackPlan.targets.size(),
-                AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry),
-                AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+                AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                AgentCombatSkillCacheStateRuntime.aoeSkillId(entry),
+                AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
     }
 
     /**
@@ -66,15 +66,15 @@ public final class AgentGrindTargetSearchPolicy {
                 : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
                         searched,
                         agent.getMap().getAllMonsters(),
-                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+                        AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         int currentClusterSize = agent.getMap() == null || current.getPosition() == null
                 ? 0
                 : AgentCombatScoringPolicy.legacyCappedAoeClusterSize(
                         current,
                         agent.getMap().getAllMonsters(),
-                        AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
+                        AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry));
         return searchedClusterSize > currentClusterSize;
     }
 }

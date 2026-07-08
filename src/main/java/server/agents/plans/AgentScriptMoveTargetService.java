@@ -5,7 +5,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -57,7 +57,7 @@ public final class AgentScriptMoveTargetService {
             return false;
         }
 
-        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry));
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             return Math.abs(targetPos.x - botPos.x) <= fallbackRangeX
                     && Math.abs(targetPos.y - botPos.y) <= fallbackRangeY;

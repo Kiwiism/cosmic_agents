@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -72,7 +72,7 @@ class AgentMovementTickServiceTest {
     @Test
     void airborneAiTickSkipsCommittedEdgeButRunsMaintenance() {
         AgentRuntimeEntry entry = entry();
-        AgentBotMovementStateRuntime.setInAir(entry, true);
+        AgentMovementStateRuntime.setInAir(entry, true);
         List<String> calls = new ArrayList<>();
 
         AgentMovementTickService.stepMovementCore(

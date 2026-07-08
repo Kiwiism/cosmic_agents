@@ -16,10 +16,10 @@ public final class AgentBotCombatDeathRuntime {
     public static void enterDeadState(AgentRuntimeEntry entry, Character bot,
                                       boolean announceDeath,
                                       AgentCombatConfig.Config config) {
-        AgentBotCombatActionStateRuntime.clearActionState(entry);
+        AgentCombatActionStateRuntime.clearActionState(entry);
         AgentMovementPoseService.markDead(entry, bot);
         AgentMovementBroadcastService.broadcastMovement(entry);
-        AgentBotDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), config.BOT_DEAD_MS);
+        AgentDeathStateRuntime.enterDeadState(entry, System.currentTimeMillis(), config.BOT_DEAD_MS);
         if (announceDeath) {
             AgentBotCombatRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.combatDeathReplies()));
         }

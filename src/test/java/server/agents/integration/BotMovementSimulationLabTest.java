@@ -2,12 +2,12 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
 
 
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -17,7 +17,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentFormationService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -44,7 +44,7 @@ class BotMovementSimulationLabTest {
 
         Point finalPos = lab.position("SLASH");
         assertTrue(Math.abs(finalPos.x - 320) <= 8, "bot should arrive at precise move target");
-        assertNull(AgentBotMoveTargetStateRuntime.moveTarget(entry), "move target should clear after arrival");
+        assertNull(AgentMoveTargetStateRuntime.moveTarget(entry), "move target should clear after arrival");
     }
 
     @Test
@@ -62,7 +62,7 @@ class BotMovementSimulationLabTest {
         int expectedX = 280;
         assertTrue(Math.abs(finalPos.x - expectedX) <= AgentMovementPhysicsConfig.configuredStopDist(),
                 "bot should settle near owner + formation offset");
-        assertTrue(AgentBotModeStateRuntime.following(entry));
+        assertTrue(AgentModeStateRuntime.following(entry));
         assertNotNull(lab.describeCurrentState("CRASH"));
     }
 
@@ -75,18 +75,18 @@ class BotMovementSimulationLabTest {
         map.setFootholds(footholds);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         AgentRuntimeEntry entry = lab.spawnBot("BUMP", 12, map, new Point(0, 100));
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, 100);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 8);
 
         lab.stepRaw("BUMP", new Point(20, 110), false);
 
         Foothold landedFoothold = map.getFootholds().findBelow(lab.position("BUMP"));
         assertNotNull(landedFoothold);
         assertEquals(2, landedFoothold.getId(), "bot should land on the authored intermediate bump foothold");
-        assertTrue(!AgentBotMovementStateRuntime.inAir(entry), "bot should land on the intermediate bump");
+        assertTrue(!AgentMovementStateRuntime.inAir(entry), "bot should land on the intermediate bump");
     }
 
     @Test
@@ -98,16 +98,16 @@ class BotMovementSimulationLabTest {
         map.setFootholds(footholds);
         BotMovementSimulationLab lab = BotMovementSimulationLab.fromMap(map);
         AgentRuntimeEntry entry = lab.spawnBot("DROP", 13, map, new Point(0, 0));
-        AgentBotMovementStateRuntime.setInAir(entry, true);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
-        AgentBotMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
-        AgentBotMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
+        AgentMovementStateRuntime.setInAir(entry, true);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, 0);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, 0);
+        AgentMovementPhysicsStateRuntime.setVerticalVelocity(entry, 0f);
+        AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, -8);
 
         lab.stepRaw("DROP", new Point(-50, 80), false);
 
         assertTrue(lab.position("DROP").x < 0, "bot should keep horizontal motion past the wall endpoint");
-        assertEquals(-8, AgentBotMovementPhysicsStateRuntime.airVelocityX(entry));
+        assertEquals(-8, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
     }
 
     @Test

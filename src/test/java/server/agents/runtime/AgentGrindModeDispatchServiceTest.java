@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +38,7 @@ class AgentGrindModeDispatchServiceTest {
     @Test
     void delegatesWhenGrindingAndReturnsResult() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
+        AgentModeStateRuntime.setGrinding(entry, true);
         Point updatedTarget = new Point(80, 10);
         AtomicInteger grindTicks = new AtomicInteger();
 

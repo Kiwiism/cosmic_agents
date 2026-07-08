@@ -3,8 +3,8 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentQueuedMovementActionService;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -21,9 +21,9 @@ public final class AgentNavigationDropExecutionService {
                                          Character agent,
                                          Point agentPos,
                                          AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotClimbStateRuntime.climbing(entry)
-                || AgentBotMovementStateRuntime.downJumpPending(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)
+                || AgentClimbStateRuntime.climbing(entry)
+                || AgentMovementStateRuntime.downJumpPending(entry)) {
             return false;
         }
 

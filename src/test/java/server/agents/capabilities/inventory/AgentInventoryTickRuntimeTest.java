@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentBotManualTradeStateRuntime;
+import server.agents.integration.AgentManualTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,14 +24,14 @@ class AgentInventoryTickRuntimeTest {
         when(agent.getTrade()).thenReturn(trade);
 
         AgentInventoryTickRuntime.tickManualTrade(entry, agent);
-        AgentBotManualTradeStateRuntime.setTimeoutMs(entry, 1);
+        AgentManualTradeStateRuntime.setTimeoutMs(entry, 1);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             AgentInventoryTickRuntime.tickManualTrade(entry, agent);
 
             trades.verify(() -> Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE));
-            assertNull(AgentBotManualTradeStateRuntime.tradeRef(entry));
-            assertEquals(0, AgentBotManualTradeStateRuntime.timeoutMs(entry));
+            assertNull(AgentManualTradeStateRuntime.tradeRef(entry));
+            assertEquals(0, AgentManualTradeStateRuntime.timeoutMs(entry));
         }
     }
 }

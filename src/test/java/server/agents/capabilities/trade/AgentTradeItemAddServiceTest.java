@@ -8,7 +8,7 @@ import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -43,7 +43,7 @@ class AgentTradeItemAddServiceTest {
                 (number, item) -> mock(Packet.class));
 
         assertFalse(handled);
-        assertEquals(0, AgentBotPendingTradeStateRuntime.itemIndex(entry));
+        assertEquals(0, AgentPendingTradeStateRuntime.itemIndex(entry));
     }
 
     @Test
@@ -66,8 +66,8 @@ class AgentTradeItemAddServiceTest {
                 (number, tradeItem) -> mock(Packet.class));
 
         assertTrue(handled);
-        assertEquals(1, AgentBotPendingTradeStateRuntime.itemIndex(entry));
-        assertEquals(500, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertEquals(1, AgentPendingTradeStateRuntime.itemIndex(entry));
+        assertEquals(500, AgentPendingTradeStateRuntime.timerMs(entry));
         verify(trade, never()).addItem(any(Item.class));
     }
 
@@ -85,7 +85,7 @@ class AgentTradeItemAddServiceTest {
         AtomicReference<Item> removedItem = new AtomicReference<>();
         AtomicInteger packetNumberSum = new AtomicInteger();
         AgentTradeStateService.initializeBatch(entry, List.of(item), 0);
-        AgentBotPendingTradeStateRuntime.rememberRestoreSlot(entry, item, (short) -5);
+        AgentPendingTradeStateRuntime.rememberRestoreSlot(entry, item, (short) -5);
 
         when(agent.getInventory(InventoryType.USE)).thenReturn(inventory);
         when(inventory.getItem((short) 3)).thenReturn(item);
@@ -120,10 +120,10 @@ class AgentTradeItemAddServiceTest {
         assertEquals((short) 10, tradeItem.getQuantity());
         assertSame(tradeItem, removedItem.get());
         assertEquals(1, packetNumberSum.get());
-        assertEquals(1, AgentBotPendingTradeStateRuntime.itemIndex(entry));
-        assertEquals(500, AgentBotPendingTradeStateRuntime.timerMs(entry));
-        assertSame(tradeItem, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getKey());
-        assertEquals((short) -5, AgentBotPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getValue());
+        assertEquals(1, AgentPendingTradeStateRuntime.itemIndex(entry));
+        assertEquals(500, AgentPendingTradeStateRuntime.timerMs(entry));
+        assertSame(tradeItem, AgentPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getKey());
+        assertEquals((short) -5, AgentPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getValue());
         verify(agent).sendPacket(ownPacket);
         verify(recipient).sendPacket(partnerPacket);
         verify(inventory).lockInventory();

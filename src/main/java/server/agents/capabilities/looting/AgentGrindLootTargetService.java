@@ -1,8 +1,8 @@
 package server.agents.capabilities.looting;
 
 import client.Character;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 
@@ -11,13 +11,13 @@ public final class AgentGrindLootTargetService {
     }
 
     public static void validateCachedGrindLootTarget(AgentRuntimeEntry entry, Character agent) {
-        if (!AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry)) {
+        if (!AgentGrindLootStateRuntime.hasGrindLootTarget(entry)) {
             return;
         }
 
-        MapItem loot = AgentBotGrindLootStateRuntime.grindLootTarget(entry);
+        MapItem loot = AgentGrindLootStateRuntime.grindLootTarget(entry);
         if (loot.isPickedUp() || agent.getMap().getMapObject(loot.getObjectId()) != loot) {
-            AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
+            AgentGrindLootStateRuntime.clearGrindLootTarget(entry);
         }
     }
 
@@ -25,14 +25,14 @@ public final class AgentGrindLootTargetService {
                                               Character agent,
                                               boolean runAiTick,
                                               int lootRadius) {
-        if (!runAiTick || AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
+        if (!runAiTick || AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
             return;
         }
 
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, AgentLootTargetService.findNearestGrindLootTarget(
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, AgentLootTargetService.findNearestGrindLootTarget(
                 entry,
                 agent,
                 lootRadius,
-                AgentBotGrindLootStateRuntime::isRetrySuppressed));
+                AgentGrindLootStateRuntime::isRetrySuppressed));
     }
 }

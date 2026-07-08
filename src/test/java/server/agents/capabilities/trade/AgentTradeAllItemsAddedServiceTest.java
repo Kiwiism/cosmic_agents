@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -25,7 +25,7 @@ class AgentTradeAllItemsAddedServiceTest {
         boolean handled = AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade, () -> "done");
 
         assertFalse(handled);
-        assertFalse(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
+        assertFalse(AgentPendingTradeStateRuntime.allItemsAdded(entry));
         verify(trade, never()).chat("done");
     }
 
@@ -34,14 +34,14 @@ class AgentTradeAllItemsAddedServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Trade trade = mock(Trade.class);
         AgentTradeStateService.initializeBatch(entry, List.of(item()), 0);
-        AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, 500);
+        AgentPendingTradeStateRuntime.incrementItemIndex(entry);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, 500);
 
         boolean handled = AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade, () -> "done");
 
         assertTrue(handled);
-        assertTrue(AgentBotPendingTradeStateRuntime.allItemsAdded(entry));
-        assertEquals(0, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertTrue(AgentPendingTradeStateRuntime.allItemsAdded(entry));
+        assertEquals(0, AgentPendingTradeStateRuntime.timerMs(entry));
         verify(trade).chat("done");
     }
 

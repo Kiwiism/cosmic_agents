@@ -25,9 +25,9 @@ public final class AgentBotCombatPlanRuntime {
             List<AgentAttackPlan> candidates = new ArrayList<>(3);
 
             for (int skillId : AgentCombatSkillClassifier.cachedAttackSkillIds(
-                    AgentBotCombatSkillCacheStateRuntime.attackSkillIds(entry),
-                    AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry),
-                    AgentBotCombatSkillCacheStateRuntime.aoeSkillId(entry))) {
+                    AgentCombatSkillCacheStateRuntime.attackSkillIds(entry),
+                    AgentCombatSkillCacheStateRuntime.attackSkillId(entry),
+                    AgentCombatSkillCacheStateRuntime.aoeSkillId(entry))) {
                 AgentAttackPlan skillAttack = AgentSkillAttackPlanRuntime.planSkillAttack(bot, target, skillId, config);
                 if (skillAttack != null) {
                     candidates.add(skillAttack);

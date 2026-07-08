@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,24 +24,24 @@ class AgentTradeQueuedRetryServiceTest {
     void ticksQueuedRetryDelayBeforeRunning() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AtomicInteger runs = new AtomicInteger();
-        AgentBotPendingTradeStateRuntime.queueRetry(entry, runs::incrementAndGet, 500);
+        AgentPendingTradeStateRuntime.queueRetry(entry, runs::incrementAndGet, 500);
 
         assertTrue(AgentTradeQueuedRetryService.tickQueuedRetry(entry, remaining -> remaining - 100));
 
-        assertEquals(400, AgentBotPendingTradeStateRuntime.retryDelayMs(entry));
+        assertEquals(400, AgentPendingTradeStateRuntime.retryDelayMs(entry));
         assertEquals(0, runs.get());
-        assertTrue(AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry));
+        assertTrue(AgentPendingTradeStateRuntime.hasQueuedRetry(entry));
     }
 
     @Test
     void runsQueuedRetryWhenDelayExpires() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         AtomicInteger runs = new AtomicInteger();
-        AgentBotPendingTradeStateRuntime.queueRetry(entry, runs::incrementAndGet, 0);
+        AgentPendingTradeStateRuntime.queueRetry(entry, runs::incrementAndGet, 0);
 
         assertTrue(AgentTradeQueuedRetryService.tickQueuedRetry(entry, remaining -> remaining - 100));
 
         assertEquals(1, runs.get());
-        assertFalse(AgentBotPendingTradeStateRuntime.hasQueuedRetry(entry));
+        assertFalse(AgentPendingTradeStateRuntime.hasQueuedRetry(entry));
     }
 }

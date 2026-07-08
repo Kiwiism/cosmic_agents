@@ -4,10 +4,10 @@ import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentWalkOffLanding;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -43,7 +43,7 @@ public final class AgentNavigationWaypointService {
                                            AgentNavigationGraph.Edge edge) {
         AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(
                 AgentRuntimeIdentityRuntime.botMap(entry),
-                AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentMovementStateRuntime.movementProfile(entry));
         return selectJumpWaypoint(graph, entry, botPos, edge);
     }
 
@@ -79,7 +79,7 @@ public final class AgentNavigationWaypointService {
                                            AgentNavigationGraph graph,
                                            Point botPos,
                                            AgentNavigationGraph.Edge edge) {
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)) {
             return new Point(edge.endPoint);
         }
         if (edge.launchStepX == 0) {
@@ -97,8 +97,8 @@ public final class AgentNavigationWaypointService {
 
         AgentWalkOffLanding liveOutcome = AgentJumpProbeService.simulateWalkOffLanding(
                 AgentRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
-                AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
-                AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentMovementPhysicsStateRuntime.groundTravelState(entry),
+                AgentMovementStateRuntime.movementProfile(entry));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
             // Like rope top step-offs, once the continuous-control exit is naturally executable
             // we stop targeting an intermediate anchor and just keep feeding the authored
@@ -137,8 +137,8 @@ public final class AgentNavigationWaypointService {
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return edge.startPoint.x;
         }
-        int cachedLaunchX = AgentBotNavigationDebugStateRuntime.navJumpLaunchX(entry);
-        if (AgentBotNavigationDebugStateRuntime.matchesNavJumpLaunchEdge(entry, edge)
+        int cachedLaunchX = AgentNavigationDebugStateRuntime.navJumpLaunchX(entry);
+        if (AgentNavigationDebugStateRuntime.matchesNavJumpLaunchEdge(entry, edge)
                 && cachedLaunchX >= edge.launchMinX
                 && cachedLaunchX <= edge.launchMaxX) {
             return cachedLaunchX;
@@ -154,7 +154,7 @@ public final class AgentNavigationWaypointService {
         int width = Math.max(0, maxX - minX);
         int margin = Math.min(width / 2, Math.max(1,
                 AgentMovementKinematicsService.walkStep(AgentRuntimeIdentityRuntime.botMap(entry),
-                        AgentBotMovementStateRuntime.movementProfile(entry)) * 2));
+                        AgentMovementStateRuntime.movementProfile(entry)) * 2));
         int randomMinX = minX + margin;
         int randomMaxX = maxX - margin;
         if (randomMinX > randomMaxX) {
@@ -165,7 +165,7 @@ public final class AgentNavigationWaypointService {
         int selectedX = randomMinX >= randomMaxX
                 ? randomMinX
                 : ThreadLocalRandom.current().nextInt(randomMinX, randomMaxX + 1);
-        AgentBotNavigationDebugStateRuntime.rememberNavJumpLaunch(entry, edge, selectedX);
+        AgentNavigationDebugStateRuntime.rememberNavJumpLaunch(entry, edge, selectedX);
         return selectedX;
     }
 
@@ -174,17 +174,17 @@ public final class AgentNavigationWaypointService {
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge,
                                             ClimbExitReadiness climbExitReadiness) {
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)) {
             return new Point(edge.endPoint);
         }
-        if (AgentBotClimbStateRuntime.climbing(entry) && edge.launchStepX != 0) {
+        if (AgentClimbStateRuntime.climbing(entry) && edge.launchStepX != 0) {
             if (graph != null && climbExitReadiness.canExecute(graph, entry, botPos, edge)) {
                 return new Point(botPos);
             }
             return new Point(edge.startPoint);
         }
-        if (AgentBotClimbStateRuntime.climbing(entry)) {
-            Rope climbRope = AgentBotClimbStateRuntime.climbRope(entry);
+        if (AgentClimbStateRuntime.climbing(entry)) {
+            Rope climbRope = AgentClimbStateRuntime.climbRope(entry);
             int ropeX = climbRope != null ? climbRope.x() : edge.startPoint.x;
             return new Point(ropeX, edge.endPoint.y);
         }
@@ -197,7 +197,7 @@ public final class AgentNavigationWaypointService {
         MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
                 map,
-                AgentBotMovementStateRuntime.movementProfile(entry));
+                AgentMovementStateRuntime.movementProfile(entry));
         return selectClimbWaypoint(graph, entry, botPos, edge);
     }
 

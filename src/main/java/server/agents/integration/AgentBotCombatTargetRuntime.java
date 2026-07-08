@@ -55,7 +55,7 @@ public final class AgentBotCombatTargetRuntime {
     public static Monster findPatrolTarget(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
         long startedAt = System.nanoTime();
         try {
-            if (entry == null || bot == null || !AgentBotPatrolStateRuntime.hasPatrolRegion(entry)) {
+            if (entry == null || bot == null || !AgentPatrolStateRuntime.hasPatrolRegion(entry)) {
                 return null;
             }
             Point botPos = bot.getPosition();
@@ -71,7 +71,7 @@ public final class AgentBotCombatTargetRuntime {
             }
             AgentNavigationGraph graph = graphContext.graph();
             MapleMap map = graphContext.map();
-            int patrolId = AgentBotPatrolStateRuntime.patrolRegionId(entry);
+            int patrolId = AgentPatrolStateRuntime.patrolRegionId(entry);
             Set<Integer> adjacentIds = graph.getMutualAdjacentRegionIds(patrolId);
 
             List<Monster> filtered = new ArrayList<>();
@@ -124,14 +124,14 @@ public final class AgentBotCombatTargetRuntime {
                             || AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
                             bot,
                             candidate,
-                            entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
-                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry)),
+                            entry == null || AgentAmmoStateRuntime.noAmmo(entry),
+                            entry == null ? 0 : AgentCombatSkillCacheStateRuntime.attackSkillId(entry)),
                     candidate -> grindTargetScore(bot, botPos, botFoothold, candidate, config),
                     candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
                             candidate,
                             candidates,
-                            entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                            entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
+                            entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                            entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
             return AgentCombatGrindTargetPolicy.pickFromBestTargets(localTargets);
         } finally {
             AgentPerformanceMonitor.record("combat-target-search", System.nanoTime() - startedAt);
@@ -148,8 +148,8 @@ public final class AgentBotCombatTargetRuntime {
                 && AgentCombatImmediateTargetPolicy.isImmediateProjectileTarget(
                 bot,
                 target,
-                entry == null || AgentBotAmmoStateRuntime.noAmmo(entry),
-                entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.attackSkillId(entry));
+                entry == null || AgentAmmoStateRuntime.noAmmo(entry),
+                entry == null ? 0 : AgentCombatSkillCacheStateRuntime.attackSkillId(entry));
         boolean graphAvailable = graphContext != null && graphContext.available();
         long targetCost = UNREACHABLE_GRAPH_COST;
         if (targetPresentAndAlive && hasRuntimeContext && !immediateProjectileTarget && graphAvailable) {
@@ -218,8 +218,8 @@ public final class AgentBotCombatTargetRuntime {
                 candidate -> AgentCombatScoringPolicy.legacyAoeClusterBonus(
                         candidate,
                         candidates,
-                        entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
+                        entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)));
     }
 
     private static List<AgentScoredGrindTarget> scoreTargetRegions(AgentRuntimeEntry entry,
@@ -238,8 +238,8 @@ public final class AgentBotCombatTargetRuntime {
                         - AgentCombatScoringPolicy.legacyAoeClusterBonus(
                         candidate,
                         candidates,
-                        entry != null && AgentBotCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
-                        entry == null ? 0 : AgentBotCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
+                        entry != null && AgentCombatSkillCacheStateRuntime.hasMultiMobAoeSkill(entry),
+                        entry == null ? 0 : AgentCombatSkillCacheStateRuntime.aoeSkillMobs(entry)),
                 group -> graphPathCost(context.graph(), context.map(), context.startPos(), context.startRegionId(),
                         group.bestMonster().getPosition(), group.regionId(), context.profile()),
                 group -> grindRegionOccupancyPenalty(context, bot, group.regionId(), config),
@@ -290,7 +290,7 @@ public final class AgentBotCombatTargetRuntime {
 
         int occupiedCount = 0;
         for (AgentRuntimeEntry sibling : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
-            if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
+            if (sibling == context.entry() || sibling == null || !AgentModeStateRuntime.grinding(sibling)) {
                 continue;
             }
             Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
@@ -302,7 +302,7 @@ public final class AgentBotCombatTargetRuntime {
             boolean hasPosition = siblingBot.getPosition() != null;
             if (!AgentCombatGrindTargetPolicy.shouldInspectRegionOccupant(
                     sibling == context.entry(),
-                    AgentBotModeStateRuntime.grinding(sibling),
+                    AgentModeStateRuntime.grinding(sibling),
                     sameMap,
                     alive,
                     hasPosition)) {
@@ -331,7 +331,7 @@ public final class AgentBotCombatTargetRuntime {
                 return unavailable(entry, bot, botPos);
             }
 
-            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+            AgentMovementProfile profile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(bot.getMap(), profile);
             if (graph == null) {
                 AgentNavigationGraphService.warmGraphAsync(bot.getMap(), profile);
@@ -350,7 +350,7 @@ public final class AgentBotCombatTargetRuntime {
 
         private static GrindGraphContext unavailable(AgentRuntimeEntry entry, Character bot, Point botPos) {
             MapleMap map = bot == null ? null : bot.getMap();
-            AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
+            AgentMovementProfile profile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             Point startPos = botPos == null ? null : new Point(botPos);
             return new GrindGraphContext(entry, map, null, profile, startPos, -1);
         }

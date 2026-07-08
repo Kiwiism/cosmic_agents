@@ -7,7 +7,7 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import net.packet.Packet;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import tools.PacketCreator;
 
@@ -34,17 +34,17 @@ public final class AgentTradeItemAddService {
                                int delayMs,
                                InventoryRemover inventoryRemover,
                                TradeItemPacketFactory packetFactory) {
-        List<Item> items = AgentBotPendingTradeStateRuntime.items(entry);
-        int idx = AgentBotPendingTradeStateRuntime.itemIndex(entry);
+        List<Item> items = AgentPendingTradeStateRuntime.items(entry);
+        int idx = AgentPendingTradeStateRuntime.itemIndex(entry);
         if (idx >= items.size()) {
             return false;
         }
 
         Item item = items.get(idx);
-        AgentBotPendingTradeStateRuntime.incrementItemIndex(entry);
-        AgentBotPendingTradeStateRuntime.setTimerMs(entry, delayMs);
+        AgentPendingTradeStateRuntime.incrementItemIndex(entry);
+        AgentPendingTradeStateRuntime.setTimerMs(entry, delayMs);
 
-        short tradeQty = AgentBotPendingTradeStateRuntime.capShareQuantity(entry, item.getQuantity());
+        short tradeQty = AgentPendingTradeStateRuntime.capShareQuantity(entry, item.getQuantity());
         InventoryType invType = item.getInventoryType();
         Inventory inv = agent.getInventory(invType);
         inv.lockInventory();
@@ -59,7 +59,7 @@ public final class AgentTradeItemAddService {
             tradeItem.setQuantity(tradeQty);
 
             if (trade.addItem(tradeItem)) {
-                AgentBotPendingTradeStateRuntime.transferRestoreSlot(entry, item, tradeItem);
+                AgentPendingTradeStateRuntime.transferRestoreSlot(entry, item, tradeItem);
                 inventoryRemover.remove(agent, invType, item.getPosition(), tradeQty, false);
                 agent.sendPacket(packetFactory.create((byte) 0, tradeItem));
                 if (trade.getPartner() != null) {

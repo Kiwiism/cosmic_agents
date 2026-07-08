@@ -5,10 +5,10 @@ import server.agents.capabilities.dialogue.llm.AgentLlmPromptContext;
 import server.agents.capabilities.dialogue.llm.AgentLlmReplyRequest;
 import server.agents.capabilities.dialogue.llm.AgentLlmReplyService;
 import server.agents.capabilities.dialogue.llm.AgentSenderRelation;
-import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
+import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotLlmRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
@@ -39,10 +39,10 @@ public final class AgentLlmReplyRuntime {
                                 ? AgentRuntimeIdentityRuntime.botName(entry)
                                 : "bot",
                         map,
-                        AgentBotModeStateRuntime.grinding(entry),
-                        AgentBotModeStateRuntime.following(entry),
-                        map != null && AgentBotFarmAnchorStateRuntime.isFarmAnchorInMap(entry, map.getId()),
-                        AgentBotActivityStateRuntime.lastOwnerCommand(entry),
-                        AgentBotActivityStateRuntime.lastOwnerCommandAtMs(entry)));
+                        AgentModeStateRuntime.grinding(entry),
+                        AgentModeStateRuntime.following(entry),
+                        map != null && AgentFarmAnchorStateRuntime.isFarmAnchorInMap(entry, map.getId()),
+                        AgentActivityStateRuntime.lastOwnerCommand(entry),
+                        AgentActivityStateRuntime.lastOwnerCommandAtMs(entry)));
     }
 }

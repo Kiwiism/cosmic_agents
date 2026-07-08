@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotTickStateRuntime;
+import server.agents.integration.AgentTickStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,7 +16,7 @@ class AgentHeartbeatServiceTest {
     void skipsHeartbeatWhenIntervalHasNotElapsed() {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotTickStateRuntime.markHeartbeat(entry, 1_000L);
+        AgentTickStateRuntime.markHeartbeat(entry, 1_000L);
         AtomicInteger lastPacketUpdates = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
 
@@ -32,7 +32,7 @@ class AgentHeartbeatServiceTest {
     void marksHeartbeatAndRunsSideEffectsWhenDue() {
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentBotTickStateRuntime.markHeartbeat(entry, 1_000L);
+        AgentTickStateRuntime.markHeartbeat(entry, 1_000L);
         AtomicInteger lastPacketUpdates = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
 
@@ -42,6 +42,6 @@ class AgentHeartbeatServiceTest {
         assertTrue(ran);
         assertEquals(1, lastPacketUpdates.get());
         assertEquals(1, broadcasts.get());
-        assertFalse(AgentBotTickStateRuntime.heartbeatDue(entry, 1_600L, 600L));
+        assertFalse(AgentTickStateRuntime.heartbeatDue(entry, 1_600L, 600L));
     }
 }

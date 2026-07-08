@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.integration.AgentBotInventoryRuntime;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntSupplier;
@@ -15,8 +15,8 @@ public final class AgentTradeClosedWindowService {
                                             IntSupplier betweenBatchDelayMs,
                                             Runnable resetTradeState,
                                             Runnable refillEquipmentSlots) {
-        if (AgentBotPendingTradeStateRuntime.botDone(entry)) {
-            if (AgentBotPendingTradeStateRuntime.singleBatch(entry)) {
+        if (AgentPendingTradeStateRuntime.botDone(entry)) {
+            if (AgentPendingTradeStateRuntime.singleBatch(entry)) {
                 resetTradeState.run();
                 refillEquipmentSlots.run();
                 return true;
@@ -25,7 +25,7 @@ public final class AgentTradeClosedWindowService {
             return true;
         }
 
-        if (AgentBotPendingTradeStateRuntime.allItemsAdded(entry)) {
+        if (AgentPendingTradeStateRuntime.allItemsAdded(entry)) {
             AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeCancelledReply());
             resetTradeState.run();
             refillEquipmentSlots.run();

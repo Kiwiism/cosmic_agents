@@ -1,9 +1,9 @@
 package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotClimbStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentClimbStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
 
@@ -87,7 +87,7 @@ class AgentNavigationCommittedEdgeServiceTest {
         assertFalse(finderCalled.get());
 
         AgentRuntimeEntry ready = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(ready, mock(Rope.class));
+        AgentClimbStateRuntime.setClimbingOnRope(ready, mock(Rope.class));
         assertSame(current, AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(
                 null, ready, null, new Point(0, 0), 1, 3, new Point(50, 0), current, true,
                 (graph, bot, botPos, edge) -> true,
@@ -97,13 +97,13 @@ class AgentNavigationCommittedEdgeServiceTest {
     @Test
     void refreshPendingClimbExitEdgeSwitchesWhenExitIsNotReadyAndBetterEdgeExists() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
         AgentNavigationGraph.Edge current = edge(1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 10, 100, 0);
         AgentNavigationGraph.Edge replacement = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(50, 0), 0, 20, 1, 0, 0, 0, 0);
-        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(99, 99));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(99, 99));
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.refreshPendingClimbExitEdge(
                 null, entry, null, new Point(0, 0), 1, 3, new Point(50, 0), current, true,
@@ -111,10 +111,10 @@ class AgentNavigationCommittedEdgeServiceTest {
                 (graph, bot, startRegionId, targetRegionId, targetPos) -> replacement);
 
         assertSame(replacement, result);
-        assertSame(replacement, AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
-        assertEquals(3, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
-        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
+        assertSame(replacement, AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
+        assertEquals(3, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertNull(AgentNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertFalse(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
     @Test
@@ -125,13 +125,13 @@ class AgentNavigationCommittedEdgeServiceTest {
                 new Point(0, 0), new Point(50, 0), 0, 20, 1, 0, 0, 0, 0);
 
         AgentRuntimeEntry airborne = new AgentRuntimeEntry(null, null, null);
-        AgentBotMovementStateRuntime.setInAir(airborne, true);
+        AgentMovementStateRuntime.setInAir(airborne, true);
         assertSame(current, AgentNavigationCommittedEdgeService.refreshCommittedGroundEdge(
                 null, airborne, null, 1, 3, new Point(50, 0), current, true,
                 (graph, bot, startRegionId, targetRegionId, targetPos) -> replacement));
 
         AgentRuntimeEntry climbing = new AgentRuntimeEntry(null, null, null);
-        AgentBotClimbStateRuntime.setClimbingOnRope(climbing, mock(Rope.class));
+        AgentClimbStateRuntime.setClimbingOnRope(climbing, mock(Rope.class));
         assertSame(current, AgentNavigationCommittedEdgeService.refreshCommittedGroundEdge(
                 null, climbing, null, 1, 3, new Point(50, 0), current, true,
                 (graph, bot, startRegionId, targetRegionId, targetPos) -> replacement));
@@ -165,18 +165,18 @@ class AgentNavigationCommittedEdgeServiceTest {
                 new Point(0, 0), new Point(20, 0), 0, 0, 0, 0, 0, 0, 0);
         AgentNavigationGraph.Edge replacement = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(50, 0), 0, 20, 1, 0, 0, 0, 0);
-        AgentBotNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(99, 99));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(99, 99));
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentNavigationGraph.Edge result = AgentNavigationCommittedEdgeService.refreshCommittedGroundEdge(
                 null, entry, null, 1, 3, new Point(50, 0), current, true,
                 (graph, bot, startRegionId, targetRegionId, targetPos) -> replacement);
 
         assertSame(replacement, result);
-        assertSame(replacement, AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
-        assertTrue(AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry) == 3);
-        assertNull(AgentBotNavigationDebugStateRuntime.navTargetPosition(entry));
-        assertFalse(AgentBotNavigationDebugStateRuntime.navPreciseTarget(entry));
+        assertSame(replacement, AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
+        assertTrue(AgentNavigationDebugStateRuntime.navTargetRegionId(entry) == 3);
+        assertNull(AgentNavigationDebugStateRuntime.navTargetPosition(entry));
+        assertFalse(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
     }
 
     @Test
@@ -184,14 +184,14 @@ class AgentNavigationCommittedEdgeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 0, 0, 0);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
 
         AgentNavigationGraph.Edge reused = AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, entry, 1, 2, (graph, bot, candidate) -> true, (graph, candidate) -> false);
 
         assertSame(edge, reused);
-        assertEquals(2, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertEquals(2, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
     }
 
     @Test
@@ -199,12 +199,12 @@ class AgentNavigationCommittedEdgeServiceTest {
         AgentRuntimeEntry unusable = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 0, 0, 0);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(unusable, edge);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(unusable, edge);
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, unusable, 1, 2, (graph, bot, candidate) -> false, (graph, candidate) -> false));
 
         AgentRuntimeEntry completed = new AgentRuntimeEntry(null, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(completed, edge);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(completed, edge);
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, completed, 2, 2, (graph, bot, candidate) -> true, (graph, candidate) -> false));
     }
@@ -214,12 +214,12 @@ class AgentNavigationCommittedEdgeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 0, 0, 0);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
-        AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 2);
 
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, entry, 1, 3, (graph, bot, candidate) -> true, (graph, candidate) -> false));
-        assertEquals(3, AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
+        assertEquals(3, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
     }
 
     @Test
@@ -227,16 +227,16 @@ class AgentNavigationCommittedEdgeServiceTest {
         AgentNavigationGraph.Edge jump = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 0, 0, 0);
         AgentRuntimeEntry airborne = new AgentRuntimeEntry(null, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(airborne, jump);
-        AgentBotMovementStateRuntime.setInAir(airborne, true);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(airborne, jump);
+        AgentMovementStateRuntime.setInAir(airborne, true);
         assertSame(jump, AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, airborne, 2, 2, (graph, bot, candidate) -> true, (graph, candidate) -> false));
 
         AgentNavigationGraph.Edge climbExit = edge(1, 2, AgentNavigationGraph.EdgeType.CLIMB,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 10, 100, 0);
         AgentRuntimeEntry ropeExit = new AgentRuntimeEntry(null, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(ropeExit, climbExit);
-        AgentBotMovementStateRuntime.setInAir(ropeExit, true);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(ropeExit, climbExit);
+        AgentMovementStateRuntime.setInAir(ropeExit, true);
         assertSame(climbExit, AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, ropeExit, 2, 2, (graph, bot, candidate) -> true, (graph, candidate) -> false));
     }

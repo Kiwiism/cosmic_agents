@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.looting.AgentGrindLootTargetService;
 import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotGrindTargetStateRuntime;
+import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentGrindNoTargetFallbackService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -34,7 +34,7 @@ public final class AgentGrindModeTickService {
                                        boolean runAiTick,
                                        Hooks hooks) {
         double seekRangeSq = (double) hooks.seekRange() * hooks.seekRange();
-        Monster target = AgentBotGrindTargetStateRuntime.targetInSeekRange(
+        Monster target = AgentGrindTargetStateRuntime.targetInSeekRange(
                 entry, agent, agentPosition, seekRangeSq);
         long now = System.currentTimeMillis();
         AgentAttackPlan attackPlan = target == null

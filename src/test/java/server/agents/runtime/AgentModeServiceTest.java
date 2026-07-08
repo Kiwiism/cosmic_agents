@@ -2,15 +2,15 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotFarmAnchorStateRuntime;
-import server.agents.integration.AgentBotGrindLootStateRuntime;
-import server.agents.integration.AgentBotGrindWanderStateRuntime;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotRetreatHoldStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentFarmAnchorStateRuntime;
+import server.agents.integration.AgentGrindLootStateRuntime;
+import server.agents.integration.AgentGrindWanderStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentMoveTargetStateRuntime;
+import server.agents.integration.AgentPatrolStateRuntime;
+import server.agents.integration.AgentRetreatHoldStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -29,17 +29,17 @@ class AgentModeServiceTest {
         Character leader = character(100, 100000000);
         Character target = character(300, 100000000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), leader, null);
-        AgentBotModeStateRuntime.setGrinding(entry, true);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(30, 40), 100000000);
+        AgentModeStateRuntime.setGrinding(entry, true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), true);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(30, 40), 100000000);
 
         AgentModeService.startFollow(entry, target);
 
-        assertTrue(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(target.getId(), AgentBotModeStateRuntime.followTargetId(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
-        assertFalse(AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry));
+        assertTrue(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
+        assertEquals(target.getId(), AgentModeStateRuntime.followTargetId(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertFalse(AgentFarmAnchorStateRuntime.hasFarmAnchor(entry));
     }
 
     @Test
@@ -48,10 +48,10 @@ class AgentModeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 100000000), leader, null);
 
         AgentModeService.startFollow(entry, leader);
-        assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
+        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
 
         AgentModeService.startFollow(entry, null);
-        assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
+        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
     }
 
     @Test
@@ -71,13 +71,13 @@ class AgentModeServiceTest {
 
         AgentModeService.startStop(entry);
 
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
-        assertFalse(AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry));
-        assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
-        assertFalse(AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
+        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertFalse(AgentFarmAnchorStateRuntime.hasFarmAnchor(entry));
+        assertFalse(AgentPatrolStateRuntime.hasPatrolRegion(entry));
+        assertFalse(AgentGrindLootStateRuntime.hasGrindLootTarget(entry));
     }
 
     @Test
@@ -87,10 +87,10 @@ class AgentModeServiceTest {
 
         AgentModeService.startMoveTo(entry, destination, true);
 
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertFalse(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(destination, AgentBotMoveTargetStateRuntime.moveTarget(entry));
-        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertFalse(AgentModeStateRuntime.grinding(entry));
+        assertEquals(destination, AgentMoveTargetStateRuntime.moveTarget(entry));
+        assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
     }
 
     @Test
@@ -101,11 +101,11 @@ class AgentModeServiceTest {
 
         AgentModeService.startFarmHere(entry, destination, ignored -> navigationClears.incrementAndGet());
 
-        assertTrue(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(destination, AgentBotFarmAnchorStateRuntime.farmAnchor(entry));
-        assertEquals(123456789, AgentBotFarmAnchorStateRuntime.farmAnchorMapId(entry));
-        assertEquals(destination, AgentBotMoveTargetStateRuntime.moveTarget(entry));
-        assertTrue(AgentBotMoveTargetStateRuntime.isPrecise(entry));
+        assertTrue(AgentModeStateRuntime.grinding(entry));
+        assertEquals(destination, AgentFarmAnchorStateRuntime.farmAnchor(entry));
+        assertEquals(123456789, AgentFarmAnchorStateRuntime.farmAnchorMapId(entry));
+        assertEquals(destination, AgentMoveTargetStateRuntime.moveTarget(entry));
+        assertTrue(AgentMoveTargetStateRuntime.isPrecise(entry));
         assertEquals(1, navigationClears.get());
     }
 
@@ -116,40 +116,40 @@ class AgentModeServiceTest {
 
         AgentModeService.startPatrol(entry, 42, ignored -> navigationClears.incrementAndGet());
 
-        assertTrue(AgentBotModeStateRuntime.grinding(entry));
-        assertTrue(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
-        assertEquals(42, AgentBotPatrolStateRuntime.patrolRegionId(entry));
-        assertEquals(123456789, AgentBotPatrolStateRuntime.patrolMapId(entry));
+        assertTrue(AgentModeStateRuntime.grinding(entry));
+        assertTrue(AgentPatrolStateRuntime.hasPatrolRegion(entry));
+        assertEquals(42, AgentPatrolStateRuntime.patrolRegionId(entry));
+        assertEquals(123456789, AgentPatrolStateRuntime.patrolMapId(entry));
         assertEquals(1, navigationClears.get());
     }
 
     private static void assertActiveModeReset(AgentRuntimeEntry entry) {
-        assertFalse(AgentBotModeStateRuntime.following(entry));
-        assertTrue(AgentBotModeStateRuntime.grinding(entry));
-        assertEquals(0, AgentBotModeStateRuntime.followTargetId(entry));
-        assertFalse(AgentBotMoveTargetStateRuntime.hasMoveTarget(entry));
-        assertFalse(AgentBotFarmAnchorStateRuntime.hasFarmAnchor(entry));
-        assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
-        assertFalse(AgentBotGrindLootStateRuntime.hasGrindLootTarget(entry));
-        assertFalse(AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry));
-        assertFalse(AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry));
-        assertFalse(AgentBotRetreatHoldStateRuntime.hasHold(entry));
-        assertEquals(0, AgentBotGrindWanderStateRuntime.wanderDirection(entry));
+        assertFalse(AgentModeStateRuntime.following(entry));
+        assertTrue(AgentModeStateRuntime.grinding(entry));
+        assertEquals(0, AgentModeStateRuntime.followTargetId(entry));
+        assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
+        assertFalse(AgentFarmAnchorStateRuntime.hasFarmAnchor(entry));
+        assertFalse(AgentPatrolStateRuntime.hasPatrolRegion(entry));
+        assertFalse(AgentGrindLootStateRuntime.hasGrindLootTarget(entry));
+        assertFalse(AgentCombatCooldownStateRuntime.hasMoveWindow(entry));
+        assertFalse(AgentDegenerateAttackStateRuntime.degenAttackDone(entry));
+        assertFalse(AgentRetreatHoldStateRuntime.hasHold(entry));
+        assertEquals(0, AgentGrindWanderStateRuntime.wanderDirection(entry));
     }
 
     private static AgentRuntimeEntry dirtyEntry() {
         Character leader = character(100, 123456789);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, 123456789), leader, null);
-        AgentBotModeStateRuntime.startFollowing(entry, leader.getId());
-        AgentBotModeStateRuntime.setGrinding(entry, true);
-        AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), false);
-        AgentBotFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(30, 40), 123456789);
-        AgentBotPatrolStateRuntime.startPatrol(entry, 7, 123456789);
-        AgentBotGrindLootStateRuntime.setGrindLootTarget(entry, mock(server.maps.MapItem.class));
-        AgentBotCombatCooldownStateRuntime.setMoveWindowMs(entry, 500);
-        AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
-        AgentBotRetreatHoldStateRuntime.setHold(entry, new Point(50, 60), 9999L);
-        AgentBotGrindWanderStateRuntime.setWanderDirection(entry, -1);
+        AgentModeStateRuntime.startFollowing(entry, leader.getId());
+        AgentModeStateRuntime.setGrinding(entry, true);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(10, 20), false);
+        AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(30, 40), 123456789);
+        AgentPatrolStateRuntime.startPatrol(entry, 7, 123456789);
+        AgentGrindLootStateRuntime.setGrindLootTarget(entry, mock(server.maps.MapItem.class));
+        AgentCombatCooldownStateRuntime.setMoveWindowMs(entry, 500);
+        AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+        AgentRetreatHoldStateRuntime.setHold(entry, new Point(50, 60), 9999L);
+        AgentGrindWanderStateRuntime.setWanderDirection(entry, -1);
         return entry;
     }
 

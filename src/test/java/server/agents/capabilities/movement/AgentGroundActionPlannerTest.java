@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
-import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 import server.maps.Foothold;
@@ -43,17 +43,17 @@ class AgentGroundActionPlannerTest {
 
         Character bot = mockBot(new Point(8, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, new AgentNavigationGraph.Edge(
                 1, 2, AgentNavigationGraph.EdgeType.WALK,
                 new Point(8, 100), new Point(60, 100),
                 0, 0, 0, 0, 0, 100
         ));
-        AgentBotNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
 
         AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, foothold, new Point(8, 100), new Point(60, 100));
 
         assertEquals(AgentGroundAction.Type.IDLE, action.type());
-        assertNull(AgentBotNavigationDebugStateRuntime.activeNavigationEdge(entry));
+        assertNull(AgentNavigationDebugStateRuntime.activeNavigationEdge(entry));
     }
 
     @Test
@@ -66,7 +66,7 @@ class AgentGroundActionPlannerTest {
 
         Character bot = mockBot(new Point(100, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
-        AgentBotModeStateRuntime.setFollowing(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
 
         AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, foothold, new Point(100, 100), new Point(250, 100));
 

@@ -3,13 +3,13 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.inventory.WeaponType;
 import server.agents.capabilities.movement.AgentMovementProfile;
-import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatAttackRuntime;
-import server.agents.integration.AgentBotCombatCooldownStateRuntime;
+import server.agents.integration.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
 import server.agents.integration.AgentBotCombatTargetRuntime;
-import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentDegenerateAttackStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -57,7 +57,7 @@ public final class AgentLocalOpportunityAttackService {
                                                    boolean allowJumpTowardTarget,
                                                    Hooks hooks) {
         Point targetPos = movementTargetPos;
-        if (AgentBotAmmoStateRuntime.noAmmo(entry) || agent == null || agentPos == null) {
+        if (AgentAmmoStateRuntime.noAmmo(entry) || agent == null || agentPos == null) {
             return new Result(false, targetPos);
         }
 
@@ -69,11 +69,11 @@ public final class AgentLocalOpportunityAttackService {
         Point localTargetPos = localTarget.getPosition();
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(agent);
         boolean shouldRetreat = allowCombatMovement
-                && (AgentBotDegenerateAttackStateRuntime.degenAttackDone(entry)
+                && (AgentDegenerateAttackStateRuntime.degenAttackDone(entry)
                 || AgentAttackExecutionProvider.shouldRetreatFromNearbyTarget(weaponType, agentPos, localTargetPos)
                 || AgentAttackExecutionProvider.isAnyMobNearerThanTarget(agent, agentPos, localTargetPos));
         if (shouldRetreat) {
-            AgentBotDegenerateAttackStateRuntime.clear(entry);
+            AgentDegenerateAttackStateRuntime.clear(entry);
             return new Result(
                     false, hooks.grindNavigationTargetSelector().select(entry, agentPos, localTargetPos));
         }
@@ -82,14 +82,14 @@ public final class AgentLocalOpportunityAttackService {
         if (attackPlan == null) {
             return new Result(false, targetPos);
         }
-        if (AgentBotMovementStateRuntime.inAir(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)) {
             if (AgentCombatRangePolicy.canUseAttackPlanNow(
-                    AgentBotMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
+                    AgentMovementStateRuntime.grounded(entry), weaponType, attackPlan.route)
                     && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, agent, localTarget)) {
                 AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
                 if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                         && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
-                    AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+                    AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
                 }
             }
             return new Result(false, targetPos);
@@ -108,21 +108,21 @@ public final class AgentLocalOpportunityAttackService {
             return new Result(true, targetPos);
         }
 
-        if (!AgentBotCombatCooldownStateRuntime.hasMoveWindow(entry)
+        if (!AgentCombatCooldownStateRuntime.hasMoveWindow(entry)
                 && AgentCombatRangePolicy.isTargetInAttackRange(attackPlan, agent, localTarget)) {
             AgentBotCombatAttackRuntime.attackMonster(entry, agent, attackPlan);
             hooks.localAttackMoveWindowSetter().set(entry, agentPos, moveWindowReferencePos);
             if (allowCombatMovement && attackPlan.isCloseRangeRoute()
                     && AgentCombatAmmoCounter.isRangedAmmoWeapon(weaponType)) {
-                AgentBotDegenerateAttackStateRuntime.markDegenAttackDone(entry);
+                AgentDegenerateAttackStateRuntime.markDegenAttackDone(entry);
             }
-            return new Result(!AgentBotMovementStateRuntime.inAir(entry), targetPos);
+            return new Result(!AgentMovementStateRuntime.inAir(entry), targetPos);
         }
 
         return new Result(false, targetPos);
     }
 
     private static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {
-        return AgentBotMovementStateRuntime.movementProfile(entry);
+        return AgentMovementStateRuntime.movementProfile(entry);
     }
 }

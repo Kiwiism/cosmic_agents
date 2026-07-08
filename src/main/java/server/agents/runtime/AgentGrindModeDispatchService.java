@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotModeStateRuntime;
+import server.agents.integration.AgentModeStateRuntime;
 
 import java.awt.Point;
 
@@ -26,7 +26,7 @@ public final class AgentGrindModeDispatchService {
                                         Point targetPosition,
                                         boolean runAiTick,
                                         Hooks hooks) {
-        if (!AgentBotModeStateRuntime.grinding(entry)) {
+        if (!AgentModeStateRuntime.grinding(entry)) {
             return new Result(false, targetPosition);
         }
         return hooks.grindTick().tick(entry, agent, agentPosition, targetPosition, runAiTick);

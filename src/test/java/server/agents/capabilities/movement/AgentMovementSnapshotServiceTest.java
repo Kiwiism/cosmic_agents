@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import constants.game.CharacterStance;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -21,8 +21,8 @@ class AgentMovementSnapshotServiceTest {
         when(agent.getHp()).thenReturn(1);
         when(agent.getStance()).thenReturn(CharacterStance.STAND_LEFT_STANCE);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        AgentBotMovementStateRuntime.setFacingDirection(entry, 1);
-        AgentBotMovementStateRuntime.setMovementVelocity(entry, 4, -2);
+        AgentMovementStateRuntime.setFacingDirection(entry, 1);
+        AgentMovementStateRuntime.setMovementVelocity(entry, 4, -2);
 
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
 

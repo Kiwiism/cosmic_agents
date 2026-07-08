@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.agents.integration.AgentBotPendingTradeStateRuntime;
+import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,7 +54,7 @@ class AgentTradeMesoAddServiceTest {
         assertTrue(handled);
         assertTrue(cancelled.get());
         verify(trade, never()).setMeso(org.mockito.ArgumentMatchers.anyInt());
-        assertFalse(AgentBotPendingTradeStateRuntime.mesoAdded(entry));
+        assertFalse(AgentPendingTradeStateRuntime.mesoAdded(entry));
     }
 
     @Test
@@ -76,7 +76,7 @@ class AgentTradeMesoAddServiceTest {
         assertTrue(handled);
         assertFalse(cancelled.get());
         verify(trade).setMeso(1_000);
-        assertTrue(AgentBotPendingTradeStateRuntime.mesoAdded(entry));
-        org.junit.jupiter.api.Assertions.assertEquals(550, AgentBotPendingTradeStateRuntime.timerMs(entry));
+        assertTrue(AgentPendingTradeStateRuntime.mesoAdded(entry));
+        org.junit.jupiter.api.Assertions.assertEquals(550, AgentPendingTradeStateRuntime.timerMs(entry));
     }
 }

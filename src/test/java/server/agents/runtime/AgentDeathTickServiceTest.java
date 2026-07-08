@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.integration.AgentBotDeathStateRuntime;
+import server.agents.integration.AgentDeathStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -33,7 +33,7 @@ class AgentDeathTickServiceTest {
         AtomicInteger resets = new AtomicInteger();
         AtomicInteger broadcasts = new AtomicInteger();
         AtomicReference<String> spoken = new AtomicReference<>();
-        AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
+        AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         when(agent.getMaxHp()).thenReturn(123);
 
         AgentDeathTickService.respawnNearLeader(
@@ -67,7 +67,7 @@ class AgentDeathTickServiceTest {
                             spoken.set(text);
                         }));
 
-        assertFalse(AgentBotDeathStateRuntime.isDead(entry));
+        assertFalse(AgentDeathStateRuntime.isDead(entry));
         verify(agent).updateHp(123);
         assertEquals(0, mapChanges.get());
         assertEquals(new Point(50, 99), groundedFrom.get());
@@ -133,13 +133,13 @@ class AgentDeathTickServiceTest {
 
         assertTrue(consumed);
         counters.assertCounts(1, 0);
-        assertTrue(AgentBotDeathStateRuntime.isDead(entry));
+        assertTrue(AgentDeathStateRuntime.isDead(entry));
     }
 
     @Test
     void consumesTickWhileWaitingForRespawn() {
         AgentRuntimeEntry entry = entry();
-        AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
+        AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         Counters counters = new Counters();
 
         boolean consumed = AgentDeathTickService.handleDeadTick(
@@ -152,7 +152,7 @@ class AgentDeathTickServiceTest {
     @Test
     void runsRespawnWhenDeadWindowIsDue() {
         AgentRuntimeEntry entry = entry();
-        AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
+        AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         Counters counters = new Counters();
 
         boolean consumed = AgentDeathTickService.handleDeadTick(
@@ -193,7 +193,7 @@ class AgentDeathTickServiceTest {
 
         private void enterDead(AgentRuntimeEntry entry, Character agent) {
             deadEntries.incrementAndGet();
-            AgentBotDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
+            AgentDeathStateRuntime.enterDeadState(entry, 1_000L, 500L);
         }
 
         private void respawn() {

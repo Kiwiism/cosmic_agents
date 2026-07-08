@@ -1,9 +1,9 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotNavigationDebugStateRuntime;
+import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
+import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -85,10 +85,10 @@ public final class AgentFallbackMovementService {
         if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return false;
         }
-        if (AgentBotMovementStateRuntime.inAir(entry)
-                || AgentBotMovementStateRuntime.climbing(entry)
-                || AgentBotMovementPhysicsStateRuntime.jumpCooldownMs(entry) > 0
-                || AgentBotMovementStateRuntime.downJumpPending(entry)) {
+        if (AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || AgentMovementPhysicsStateRuntime.jumpCooldownMs(entry) > 0
+                || AgentMovementStateRuntime.downJumpPending(entry)) {
             return false;
         }
         MapleMap map = map(entry);
@@ -101,7 +101,7 @@ public final class AgentFallbackMovementService {
     }
 
     public static boolean shouldWalkOffLedge(AgentRuntimeEntry entry, Point botPos, Point targetPos, int stepX) {
-        if (entry == null || !AgentBotNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
+        if (entry == null || !AgentNavigationDebugStateRuntime.graphWarmupFallback(entry) || botPos == null || targetPos == null || stepX == 0) {
             return false;
         }
         if (targetPos.y <= botPos.y + AgentMovementPhysicsConfig.configuredMaxSnapDrop()) {
@@ -289,7 +289,7 @@ public final class AgentFallbackMovementService {
     }
 
     private static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {
-        return AgentBotMovementStateRuntime.movementProfile(entry);
+        return AgentMovementStateRuntime.movementProfile(entry);
     }
 
     private static boolean isUsefulJumpProbeLanding(Point botPos,

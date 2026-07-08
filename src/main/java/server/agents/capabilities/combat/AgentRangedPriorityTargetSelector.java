@@ -2,9 +2,9 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.inventory.WeaponType;
-import server.agents.integration.AgentBotAmmoStateRuntime;
+import server.agents.integration.AgentAmmoStateRuntime;
 import server.agents.integration.AgentBotCombatPlanRuntime;
-import server.agents.integration.AgentBotMovementStateRuntime;
+import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -21,7 +21,7 @@ public final class AgentRangedPriorityTargetSelector {
                                                           Character agent,
                                                           Point agentPosition,
                                                           Monster preferredTarget) {
-        if (entry == null || AgentBotAmmoStateRuntime.noAmmo(entry) || agent == null || agentPosition == null) {
+        if (entry == null || AgentAmmoStateRuntime.noAmmo(entry) || agent == null || agentPosition == null) {
             return null;
         }
 
@@ -68,6 +68,6 @@ public final class AgentRangedPriorityTargetSelector {
                 && plan.route == AgentAttackRoute.RANGED
                 && AgentCombatRangePolicy.isTargetInAttackRange(plan, agent, target)
                 && AgentCombatRangePolicy.canUseAttackPlanNow(
-                        AgentBotMovementStateRuntime.grounded(entry), weaponType, plan.route);
+                        AgentMovementStateRuntime.grounded(entry), weaponType, plan.route);
     }
 }
