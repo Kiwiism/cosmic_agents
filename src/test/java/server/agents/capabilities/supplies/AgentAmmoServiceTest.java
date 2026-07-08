@@ -8,7 +8,7 @@ import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentAmmoRuntime;
+import server.agents.capabilities.supplies.AgentAmmoRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 import testutil.Items;

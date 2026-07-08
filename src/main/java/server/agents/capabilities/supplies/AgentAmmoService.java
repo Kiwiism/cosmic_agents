@@ -15,7 +15,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
-import server.agents.integration.AgentAmmoRuntime;
+import server.agents.capabilities.supplies.AgentAmmoRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;

@@ -6148,6 +6148,10 @@ Current physics correction:
   map-chat delivery to `AgentReplyRuntime` and delayed callbacks to
   `AgentSchedulerRuntime`; combat alert and ammo/death reply behavior is
   unchanged.
+- Ammo share reply/timing facade now lives in
+  `server.agents.capabilities.supplies.AgentAmmoRuntime`. It still delegates
+  map-chat delivery to `AgentReplyRuntime` and delayed callbacks/random delays
+  to `AgentSchedulerRuntime`; ammo request/share behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

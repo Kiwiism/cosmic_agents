@@ -1,12 +1,13 @@
-package server.agents.integration;
+package server.agents.capabilities.supplies;
 
 
-import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 /**
- * Temporary Agent-owned bridge for ammo-sharing timing/replies while ammo
- * transfer execution still lives in the legacy bot runtime.
+ * Agent-owned bridge for ammo-sharing timing/replies while reply delivery stays
+ * behind the integration runtime boundary.
  */
 public final class AgentAmmoRuntime {
     private AgentAmmoRuntime() {
