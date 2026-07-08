@@ -35,7 +35,6 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.Shop;
 import server.ShopFactory;
 import server.ShopItem;
-import server.bots.BotEntry;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
@@ -92,10 +91,6 @@ public final class AgentShopService {
     private record ShopSlotItem(short slot, ShopItem shopItem) {}
 
     public static void onMapChange(AgentRuntimeEntry entry, Character bot) {
-        onMapChange(asBotEntry(entry), bot);
-    }
-
-    public static void onMapChange(BotEntry entry, Character bot) {
         clearShopState(entry);
 
         NpcShopMatch match = findBestShop(bot, false);
@@ -122,15 +117,7 @@ public final class AgentShopService {
         startShopVisit(entry, bot, match);
     }
 
-    private static BotEntry asBotEntry(AgentRuntimeEntry entry) {
-        return (BotEntry) entry;
-    }
-
     public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot) {
-        requestSellTrashVisit(asBotEntry(entry), bot);
-    }
-
-    public static void requestSellTrashVisit(BotEntry entry, Character bot) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;
         }
@@ -155,7 +142,7 @@ public final class AgentShopService {
         startShopVisit(entry, bot, match);
     }
 
-    private static void startShopVisit(BotEntry entry, Character bot, NpcShopMatch match) {
+    private static void startShopVisit(AgentRuntimeEntry entry, Character bot, NpcShopMatch match) {
         AgentBotShopStateRuntime.startShopVisit(
                 entry,
                 match.npcPos,
@@ -165,10 +152,6 @@ public final class AgentShopService {
     }
 
     public static boolean tickShopVisit(AgentRuntimeEntry entry, Character bot) {
-        return tickShopVisit(asBotEntry(entry), bot);
-    }
-
-    public static boolean tickShopVisit(BotEntry entry, Character bot) {
         if (!AgentBotShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
@@ -212,7 +195,7 @@ public final class AgentShopService {
         return true;
     }
 
-    private static boolean isStuckNearNpc(BotEntry entry, Point botPos, long now) {
+    private static boolean isStuckNearNpc(AgentRuntimeEntry entry, Point botPos, long now) {
         return AgentBotShopStateRuntime.stuckNearNpc(
                 entry, botPos, now, SHOP_STUCK_FALLBACK_MS, SHOP_STUCK_MOVE_TOLERANCE_PX, SHOP_ARRIVE_DIST);
     }
@@ -260,14 +243,14 @@ public final class AgentShopService {
         return false;
     }
 
-    private static void executePurchases(BotEntry entry, Character bot, Point npcPos) {
+    private static void executePurchases(AgentRuntimeEntry entry, Character bot, Point npcPos) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopKeeperUnreachableReply());
             return;
         }
 
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        List<AgentShopPurchaseAction<BotEntry>> actions = new ArrayList<>();
+        List<AgentShopPurchaseAction<AgentRuntimeEntry>> actions = new ArrayList<>();
 
         if (shouldRechargeWhileShopping(bot, wt)) {
             actions.add((sequence, shop) -> {
@@ -302,7 +285,7 @@ public final class AgentShopService {
         runPurchaseStep(new AgentShopPurchaseSequence<>(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
     }
 
-    private static void runPurchaseStep(AgentShopPurchaseSequence<BotEntry> sequence, int index) {
+    private static void runPurchaseStep(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence, int index) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopBuyInterruptedReply());
             return;
@@ -327,11 +310,11 @@ public final class AgentShopService {
             return;
         }
 
-        AgentShopPurchaseSequence<BotEntry> next = sequence.actions().get(index).run(sequence, shop);
+        AgentShopPurchaseSequence<AgentRuntimeEntry> next = sequence.actions().get(index).run(sequence, shop);
         scheduleShopStep(sequence.entry(), () -> runPurchaseStep(next, index + 1));
     }
 
-    private static void finishPurchaseSequence(AgentShopPurchaseSequence<BotEntry> sequence, boolean announceIfEmpty) {
+    private static void finishPurchaseSequence(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence, boolean announceIfEmpty) {
         if (!isShopSequenceValid(sequence.entry(), sequence.bot(), sequence.npcPos())) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopFinishFailedReply());
             return;
@@ -363,7 +346,7 @@ public final class AgentShopService {
         finish.run();
     }
 
-    private static void startSellTrashSequence(AgentShopPurchaseSequence<BotEntry> sequence) {
+    private static void startSellTrashSequence(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence) {
         List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentBotShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
@@ -385,7 +368,7 @@ public final class AgentShopService {
                         sequence.firstShortfall()));
     }
 
-    private static void runSellTrashStep(BotEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
+    private static void runSellTrashStep(AgentRuntimeEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
                                          List<String> bought, AgentShopBuyReport firstShortfall) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopSellInterruptedReply());
@@ -441,8 +424,8 @@ public final class AgentShopService {
                 () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall));
     }
 
-    private static AgentShopPurchaseSequence<BotEntry> appendBuyReport(
-            AgentShopPurchaseSequence<BotEntry> sequence,
+    private static AgentShopPurchaseSequence<AgentRuntimeEntry> appendBuyReport(
+            AgentShopPurchaseSequence<AgentRuntimeEntry> sequence,
             AgentShopBuyReport report,
             String fallbackName) {
         if (report.quantity() > 0) {
@@ -658,7 +641,7 @@ public final class AgentShopService {
         return name != null ? name : fallbackName;
     }
 
-    private static boolean isShopSequenceValid(BotEntry entry, Character bot, Point npcPos) {
+    private static boolean isShopSequenceValid(AgentRuntimeEntry entry, Character bot, Point npcPos) {
         if (bot.getMap() == null) {
             return false;
         }
@@ -675,7 +658,7 @@ public final class AgentShopService {
     // Abort the shop visit and tell the owner why. Player commands cancel via
     // cancelShopVisit (which clears shopVisitPending) and scheduleShopStep guards on
     // that flag, so a cleared flag here means a concurrent player cancel — stay silent.
-    private static void abortShop(BotEntry entry, Character bot, String reason) {
+    private static void abortShop(AgentRuntimeEntry entry, Character bot, String reason) {
         if (AgentBotShopStateRuntime.shopVisitPending(entry)) {
             AgentBotShopRuntime.sayMapNow(bot, reason);
         }
@@ -690,11 +673,11 @@ public final class AgentShopService {
         return AgentBotShopRuntime.randomDelayMs(SHOP_STEP_DELAY_MIN_MS, SHOP_STEP_DELAY_MAX_MS);
     }
 
-    private static void scheduleShopStep(BotEntry entry, Runnable step) {
+    private static void scheduleShopStep(AgentRuntimeEntry entry, Runnable step) {
         scheduleShopStep(entry, stepDelayMs(), step);
     }
 
-    private static void scheduleShopStep(BotEntry entry, long delayMs, Runnable step) {
+    private static void scheduleShopStep(AgentRuntimeEntry entry, long delayMs, Runnable step) {
         AgentBotShopRuntime.afterDelay(delayMs, () -> {
             if (!AgentBotShopStateRuntime.shouldRunScheduledShopStep(entry)) {
                 return;
@@ -708,7 +691,7 @@ public final class AgentShopService {
         });
     }
 
-    private static Point pickShopApproachPoint(Point npcPos, BotEntry entry, Character bot) {
+    private static Point pickShopApproachPoint(Point npcPos, AgentRuntimeEntry entry, Character bot) {
         var footholds = bot.getMap().getFootholds();
         if (footholds == null) {
             return npcPos;

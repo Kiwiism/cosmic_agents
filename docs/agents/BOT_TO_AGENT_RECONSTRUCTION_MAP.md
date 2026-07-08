@@ -318,6 +318,11 @@ Recent map updates:
   movement-core, anchored-farm, and grind-mode callbacks now use
   `AgentRuntimeEntry`; shop visits, scripted movement/combat, follow-idle,
   anchored farm, grind, and final movement-tail behavior remain unchanged.
+- `BotShopManager.java#shop-service-runtime` is migrated through
+  `server.agents.capabilities.shop.AgentShopService`. Shop map-change
+  detection, sell-trash requests, shop visits, purchase sequences, recharge
+  sequences, sell-trash sequences, and scheduled shop-step guards now use
+  `AgentRuntimeEntry` while preserving existing shop behavior.
 - `AgentRangedPriorityTargetSelector` now accepts `AgentRuntimeEntry`. No-ammo
   gating, ranged weapon checks, degenerate-target replacement, attack-plan
   routing, attack range checks, and grounded-use gating are unchanged while

@@ -5792,6 +5792,11 @@ Current physics correction:
   follow-idle movement, scripted move/combat, anchored farm dispatch, grind
   dispatch, final movement tail, jump initiation, idle pose, and movement
   broadcasting keep the same ordering and behavior.
+- Shop service runtime entry points and purchase/sell-trash sequence helpers
+  now use `AgentRuntimeEntry`. Map-change resupply detection, sell-trash
+  visits, shop approach, purchase/recharge steps, sell-trash steps, shortfall
+  reporting, sequence validation, and scheduled shop-step guards remain
+  unchanged.
 
 Initial reconstruction order:
 
