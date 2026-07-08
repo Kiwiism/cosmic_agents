@@ -23,7 +23,7 @@ import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentControlRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 import server.agents.integration.AgentMovementRuntime;
-import server.agents.integration.AgentPendingActionRuntime;
+import server.agents.capabilities.dialogue.AgentPendingActionRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionRuntime;
 import server.agents.integration.AgentSocialRuntime;

@@ -6198,6 +6198,12 @@ Current physics correction:
   `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, and
   detailed buff/build reports to the existing report/build services; control
   command behavior is unchanged.
+- Pending chat-action orchestration now lives in
+  `server.agents.capabilities.dialogue.AgentPendingActionRuntime`. It still
+  delegates live Agent lookup to `AgentRuntimeIdentityRuntime`, visible replies
+  to `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, session
+  confirmations to `AgentSessionRuntime`, and inventory choice execution to
+  `AgentInventoryTransferService`; pending-action behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to

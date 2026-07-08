@@ -1,12 +1,11 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatPendingAction;
-import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
-import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
-import server.agents.capabilities.dialogue.AgentSkillReportFlow;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSessionRuntime;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -15,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Agent-owned pending-action facade over temporary live Agent state and side
- * effects.
+ * Agent-owned pending-action facade over live Agent state adapters. Session,
+ * reply, scheduling, and inventory transfer side effects remain delegated.
  */
 public final class AgentPendingActionRuntime {
     private AgentPendingActionRuntime() {
