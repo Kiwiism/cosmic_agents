@@ -151,6 +151,12 @@ Recent reconstruction notes:
   `AgentRuntimeEntry` KPQ state and delegates PQ speech through the existing
   reply integration seam; script reset, PQ hooks, loot eligibility, and KPQ
   behavior are unchanged.
+- Movement target snapshot facade access has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentMovementTargetRuntime`. It still
+  delegates snapshot capture to `AgentMovementTargetSideEffects`, so live
+  target capture, formation data, navigation waypoint steering, and movement
+  behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

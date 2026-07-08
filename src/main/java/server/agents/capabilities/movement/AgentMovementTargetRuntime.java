@@ -1,6 +1,6 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
+import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

@@ -9,7 +9,7 @@ import constants.skills.FPMage;
 import constants.skills.Shadower;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentMovementTargetRuntime;
+import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
