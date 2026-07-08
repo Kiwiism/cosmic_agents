@@ -10,7 +10,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentBuildStatusRuntime;
-import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

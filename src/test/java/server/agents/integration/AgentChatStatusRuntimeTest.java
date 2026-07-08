@@ -4,7 +4,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentActivityStateRuntime;
+import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.integration.AgentChatStatusRuntime;
 
 import java.awt.Point;

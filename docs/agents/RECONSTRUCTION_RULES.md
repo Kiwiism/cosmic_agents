@@ -39,6 +39,9 @@ Recent reconstruction notes:
   `AgentTickFailureStateRuntime`. These remain behavior-preserving wrappers
   over `AgentRuntimeEntry` state; scheduler/tick behavior and failure handling
   are unchanged.
+- `AgentActivityStateRuntime` moved to `server.agents.runtime` as pure
+  leader-activity/AFK/away state access. Dialogue return actions, replies, and
+  scheduling stay outside this state adapter.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

@@ -108,6 +108,10 @@ Recent map updates:
   to `server.agents.runtime`. They only adapt `AgentRuntimeEntry` tick,
   cadence, heartbeat, and failure-window state; tick scheduling and failure
   side effects remain in runtime/integration callers unchanged.
+- `AgentActivityStateRuntime` has moved from `server.agents.integration` to
+  `server.agents.runtime`. It only adapts live leader activity/AFK/away command
+  fields on `AgentRuntimeEntry`; status replies and delayed return actions stay
+  in integration-facing adapters.
 - `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout
