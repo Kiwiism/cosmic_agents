@@ -1,10 +1,6 @@
-package server.agents.integration;
+package server.agents.capabilities.movement.fidget;
 
 import server.agents.integration.AgentMovementStateRuntime;
-
-import server.agents.capabilities.movement.fidget.AgentFidgetMode;
-import server.agents.capabilities.movement.fidget.AgentFidgetState;
-import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

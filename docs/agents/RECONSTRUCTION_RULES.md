@@ -77,6 +77,14 @@ Recent reconstruction notes:
   jump cooldowns, air steering, fall peak, physics coordinates, ground carry,
   and last-ground foothold cache; collision checks, map reads, and packet
   broadcasting remain in existing movement/navigation services.
+- Fidget state has moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime`. The
+  adapter still only reads/writes `AgentRuntimeEntry` fidget fields such as
+  active mode, trigger, action/jump/visual timers, movement directions, origin
+  position, and idle-roll cadence. Its crouch query continues through the
+  existing movement-state seam; fidget side effects, visual packets, and
+  movement broadcasting remain unchanged in the existing fidget/movement
+  callers.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

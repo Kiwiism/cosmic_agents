@@ -1,5 +1,6 @@
 package server.agents.integration;
 
+import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**

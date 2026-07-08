@@ -1,11 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.movement.fidget;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
-import server.agents.capabilities.movement.fidget.AgentFidgetMode;
-import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
-import server.agents.integration.AgentFidgetStateRuntime;
 
 import java.awt.Point;
 

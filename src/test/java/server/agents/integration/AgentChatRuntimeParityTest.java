@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentFidgetStateRuntime;
+import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
 
 
 import server.agents.runtime.AgentModeStateRuntime;
