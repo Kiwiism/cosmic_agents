@@ -90,6 +90,11 @@ Recent reconstruction notes:
   behavior-preserving adapter over `AgentScriptMoveTargetService`; script
   execution order, fallback range checks, and move-target decisions are
   unchanged.
+- Degenerate ranged-hit latch state has moved from `server.agents.integration`
+  to `server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime`.
+  It remains a pure `AgentRuntimeEntry` state adapter for mark/clear/read
+  behavior; local opportunity attacks, ranged engagement, and navigation-tail
+  behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,
