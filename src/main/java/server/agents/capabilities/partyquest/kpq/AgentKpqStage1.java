@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.manipulator.InventoryManipulator;
 import scripting.event.EventInstanceManager;
-import server.agents.integration.AgentPqRuntime;
+import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptContext;
 import server.agents.plans.AgentScriptStep;

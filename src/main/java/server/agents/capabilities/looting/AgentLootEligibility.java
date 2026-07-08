@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
-import server.agents.integration.AgentPqRuntime;
+import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;

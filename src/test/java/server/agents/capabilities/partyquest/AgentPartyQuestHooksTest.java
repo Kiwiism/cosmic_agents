@@ -2,7 +2,7 @@ package server.agents.capabilities.partyquest;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentPqRuntime;
+import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

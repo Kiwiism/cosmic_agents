@@ -145,6 +145,12 @@ Recent reconstruction notes:
   delegates queued speech and delay/random-delay scheduling through the
   existing integration seams, so scroll reaction timing, chat, and visual
   behavior are unchanged.
+- KPQ/PQ state and queued-dialogue bridge access has moved from
+  `server.agents.integration` to
+  `server.agents.capabilities.partyquest.AgentPqRuntime`. It still adapts
+  `AgentRuntimeEntry` KPQ state and delegates PQ speech through the existing
+  reply integration seam; script reset, PQ hooks, loot eligibility, and KPQ
+  behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,

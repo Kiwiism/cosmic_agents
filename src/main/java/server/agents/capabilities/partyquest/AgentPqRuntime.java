@@ -1,6 +1,7 @@
-package server.agents.integration;
+package server.agents.capabilities.partyquest;
 
 import server.agents.capabilities.partyquest.kpq.AgentKpqState;
+import server.agents.integration.AgentReplyRuntime;
 import server.agents.plans.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

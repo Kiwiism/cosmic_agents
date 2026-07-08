@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import scripting.event.EventInstanceManager;
 import server.ItemInformationProvider;
-import server.agents.integration.AgentPqRuntime;
+import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.HashMap;

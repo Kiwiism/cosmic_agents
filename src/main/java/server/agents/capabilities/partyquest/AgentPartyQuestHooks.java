@@ -3,7 +3,7 @@ package server.agents.capabilities.partyquest;
 import client.Character;
 import server.agents.capabilities.partyquest.kpq.AgentKpqStage1;
 import server.agents.capabilities.partyquest.kpq.AgentKpqStage5;
-import server.agents.integration.AgentPqRuntime;
+import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptRunner;
 import server.agents.runtime.AgentRuntimeEntry;

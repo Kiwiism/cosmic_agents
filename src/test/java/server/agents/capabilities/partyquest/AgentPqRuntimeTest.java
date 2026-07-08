@@ -1,10 +1,9 @@
-package server.agents.integration;
+package server.agents.capabilities.partyquest;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentPqRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
