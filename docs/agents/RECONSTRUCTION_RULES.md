@@ -62,6 +62,11 @@ Recent reconstruction notes:
   still only reads/writes the `AgentRuntimeEntry` climb-state fields; rope
   movement, navigation edge execution, packet-visible movement, and map/rope
   lookup behavior stay in the existing capability/runtime callers.
+- Swim intent state has moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentSwimStateRuntime`. The adapter
+  remains a pure `AgentRuntimeEntry` wrapper for swim mode, movement direction,
+  vertical hold, jump request, and next-jump timing; swim physics and pose
+  updates stay in the existing movement capability services.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

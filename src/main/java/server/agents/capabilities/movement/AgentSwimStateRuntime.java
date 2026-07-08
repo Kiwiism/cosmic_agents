@@ -1,6 +1,5 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentSwimIntentState;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
