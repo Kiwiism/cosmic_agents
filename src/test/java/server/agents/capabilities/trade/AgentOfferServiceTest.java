@@ -9,7 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
-import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 

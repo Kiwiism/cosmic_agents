@@ -5,6 +5,7 @@ import server.agents.capabilities.equipment.AgentEquipRecommendation;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;

@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentSessionControlRuntime;
 import server.agents.integration.AgentSessionRuntime;

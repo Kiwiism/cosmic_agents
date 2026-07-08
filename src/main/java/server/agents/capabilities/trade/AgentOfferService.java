@@ -21,7 +21,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
-import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

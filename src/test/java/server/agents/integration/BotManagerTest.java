@@ -74,7 +74,7 @@ import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
-import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentPqRuntime;
 import server.agents.integration.AgentShopStateRuntime;

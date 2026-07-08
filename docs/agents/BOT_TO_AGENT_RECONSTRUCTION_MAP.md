@@ -99,6 +99,10 @@ Recent map updates:
   `server.agents.integration` only for the offline/AFK return actions that
   still schedule timers, emit replies, or change the live Agent character
   expression.
+- `AgentPendingActionStateRuntime` has moved from `server.agents.integration`
+  to `server.agents.runtime`. It only reads/writes pending action fields on
+  `AgentRuntimeEntry`; pending-action decision handling and reply/transfer side
+  effects remain in integration adapters for later slices.
 - `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout

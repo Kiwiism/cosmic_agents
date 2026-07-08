@@ -30,6 +30,10 @@ Recent reconstruction notes:
   builders in `server.agents.runtime`. `AgentStatusRuntime` stays in
   `server.agents.integration` for live side effects only: delayed scheduling,
   party/reply emission, map-name reads, and face-expression changes.
+- `AgentPendingActionStateRuntime` moved to `server.agents.runtime` because it
+  is pure live-session state access. Pending-action callbacks, transfer
+  decisions, replies, and session side effects stay in integration until those
+  behavior slices are split.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

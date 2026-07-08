@@ -24,7 +24,6 @@ import server.agents.integration.AgentControlRuntime;
 import server.agents.integration.AgentEquipmentRuntime;
 import server.agents.integration.AgentMovementRuntime;
 import server.agents.integration.AgentPendingActionRuntime;
-import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionRuntime;
 import server.agents.integration.AgentSocialRuntime;

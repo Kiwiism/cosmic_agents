@@ -7,6 +7,7 @@ import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Map;

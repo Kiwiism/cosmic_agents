@@ -6,6 +6,7 @@ import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillDialogueReporter;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

@@ -9,7 +9,7 @@ import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentPendingActionRuntime;
-import server.agents.integration.AgentPendingActionStateRuntime;
+import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
