@@ -1646,7 +1646,7 @@ Recent map updates:
   `Character` now call the Agent capability directly for start/complete/progress
   sync, while BotManager keeps temporary compatibility delegates.
 - Active Agent count/list access for the bot equip window moved to
-  `server.agents.runtime.AgentRuntimeRegistry`. `BotEquipHandler` no longer
+  `server.agents.runtime.AgentRuntimeRegistry`. `AgentEquipHandler` no longer
   imports BotManager for those lookups, while BotManager keeps compatibility
   accessors for older callers.
 - BotManager bot-only autopot cleanup moved to

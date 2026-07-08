@@ -1033,7 +1033,7 @@ Recent reconstruction notes:
   The same party-member filtering, BotClient-only Agent selection, already-
   started skip, forced action calls, progress update, and Maple Administrator
   NPC fallback are preserved.
-- BotEquipHandler active-Agent count and character-list lookup now reads
+- AgentEquipHandler active-Agent count and character-list lookup now reads
   `server.agents.runtime.AgentRuntimeRegistry` directly. BotManager keeps
   `spawnedBotCount` and `getOwnedBotCharacters` as compatibility delegates, and
   the same active-entry count plus null-agent filtering behavior is preserved.

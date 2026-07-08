@@ -32,7 +32,7 @@ import tools.PacketCreator;
 
 import java.util.List;
 
-public final class BotEquipHandler extends AbstractPacketHandler {
+public final class AgentEquipHandler extends AbstractPacketHandler {
 
     private static final int REQ_OPEN = 0, REQ_MOVE = 1, REQ_LIST = 2, REQ_GIVE = 3, REQ_TAKE = 4, REQ_SORT = 5;
 
