@@ -1,6 +1,6 @@
 package server.agents.capabilities.movement.fidget;
 
-import server.agents.integration.AgentChatStatusRuntime;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -12,7 +12,7 @@ public final class AgentFidgetRuntime {
     }
 
     public static boolean isLeaderIdleForFidget(AgentRuntimeEntry entry) {
-        return AgentChatStatusRuntime.isOwnerIdle(entry);
+        return AgentChatStatusOrchestrator.isOwnerIdle(entry);
     }
 
     public static boolean hasActiveFidgetMode(AgentRuntimeEntry entry) {

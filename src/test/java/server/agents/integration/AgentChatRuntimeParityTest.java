@@ -29,7 +29,7 @@ import server.agents.integration.AgentChatReportRuntime;
 import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
-import server.agents.integration.AgentChatStatusRuntime;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -214,7 +214,7 @@ class AgentChatRuntimeParityTest {
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
         assertFalse(AgentChatCommandClassifier.isFidgetCommand("please fidget"));
         for (int i = 0; i < 100; i++) {
-            assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentChatStatusRuntime.randomFidgetExpression()));
+            assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentChatStatusOrchestrator.randomFidgetExpression()));
         }
 
         assertTrue(AgentFidgetService.maybeStartSocialFidget(entry));

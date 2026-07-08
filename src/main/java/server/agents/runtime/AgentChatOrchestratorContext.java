@@ -19,7 +19,7 @@ import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.build.AgentBuildRuntime;
 import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.integration.AgentChatReportRuntime;
-import server.agents.integration.AgentChatStatusRuntime;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.dialogue.AgentControlRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 import server.agents.integration.AgentMovementRuntime;
@@ -44,7 +44,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public void markActive() {
-        AgentChatStatusRuntime.markOwnerActive(entry);
+        AgentChatStatusOrchestrator.markOwnerActive(entry);
     }
 
     @Override

@@ -3,6 +3,7 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -18,15 +19,15 @@ public final class AgentManagerStatusRuntime {
     }
 
     public static void checkManagerStatus(AgentRuntimeEntry entry, Character bot) {
-        AgentChatStatusRuntime.checkBotStatus(entry, bot);
+        AgentChatStatusOrchestrator.checkBotStatus(entry, bot);
     }
 
     public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
-        AgentChatStatusRuntime.announceOwnerReturnedFromOffline(entry);
+        AgentChatStatusOrchestrator.announceOwnerReturnedFromOffline(entry);
     }
 
     public static void tickAfkCheck(AgentRuntimeEntry entry, Character owner) {
-        AgentChatStatusRuntime.tickAfkCheck(entry, owner);
+        AgentChatStatusOrchestrator.tickAfkCheck(entry, owner);
     }
 
     public static boolean airshowActive(AgentRuntimeEntry entry) {

@@ -1,11 +1,10 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentActivityStateRuntime;
-import server.agents.integration.AgentChatStatusRuntime;
 
 import java.awt.Point;
 import java.util.Set;
@@ -16,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentChatStatusRuntimeTest {
+class AgentChatStatusOrchestratorTest {
     @Test
     void markOwnerActiveAdaptsAgentRuntimeEntryState() {
         Character owner = mock(Character.class);
@@ -25,7 +24,7 @@ class AgentChatStatusRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
         AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
-        AgentChatStatusRuntime.markOwnerActive(entry);
+        AgentChatStatusOrchestrator.markOwnerActive(entry);
 
         assertFalse(AgentActivityStateRuntime.ownerWasAfk(entry));
         assertEquals(position, AgentActivityStateRuntime.ownerAfkPosition(entry));
@@ -37,7 +36,7 @@ class AgentChatStatusRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentActivityStateRuntime.setOwnerWasAfk(entry, true);
 
-        assertTrue(AgentChatStatusRuntime.isOwnerIdle(entry));
-        assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentChatStatusRuntime.randomFidgetExpression()));
+        assertTrue(AgentChatStatusOrchestrator.isOwnerIdle(entry));
+        assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentChatStatusOrchestrator.randomFidgetExpression()));
     }
 }

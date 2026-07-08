@@ -5,7 +5,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentChatStatusRuntime;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -18,7 +18,7 @@ public final class AgentOfferRuntime {
     }
 
     public static boolean isOwnerIdleForOffer(AgentRuntimeEntry entry) {
-        return AgentChatStatusRuntime.isOwnerIdle(entry);
+        return AgentChatStatusOrchestrator.isOwnerIdle(entry);
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {

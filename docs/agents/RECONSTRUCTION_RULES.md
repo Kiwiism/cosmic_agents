@@ -6204,6 +6204,14 @@ Current physics correction:
   to `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, session
   confirmations to `AgentSessionRuntime`, and inventory choice execution to
   `AgentInventoryTransferService`; pending-action behavior is unchanged.
+- Chat status orchestration now lives in
+  `server.agents.capabilities.dialogue.AgentChatStatusOrchestrator`, separate
+  from the pure `AgentChatStatusRuntime` decision helpers. It still delegates
+  live Agent/leader lookup to `AgentRuntimeIdentityRuntime`, active-mode action
+  construction to `AgentActiveModeRuntime`, offline/AFK expression and reply
+  effects to `AgentStatusRuntime`, and build status checks to
+  `AgentBuildStatusRuntime`; status, fidget, AFK, and offline-return behavior
+  is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
