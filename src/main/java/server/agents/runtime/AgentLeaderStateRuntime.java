@@ -1,7 +1,6 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import client.Character;
-import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned adapter for AgentRuntimeEntry-backed live leader/anchor state.

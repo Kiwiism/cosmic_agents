@@ -6096,6 +6096,10 @@ Current physics correction:
   replacement/cancel behavior, spawn normalization, formation offsets, spawn
   status checks, dismiss/remove cleanup, active-leader lookup, and registry
   snapshots remain unchanged.
+- Live leader/anchor state access now lives in
+  `server.agents.runtime.AgentLeaderStateRuntime`. It still stores the same
+  live `Character` reference on `AgentRuntimeEntry.identityState()` and keeps
+  tick-leader refresh behavior unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
