@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentBotPqRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,10 +17,10 @@ class AgentBotPqRuntimeTest {
     void pqDialogueDelegatesToAgentReplyRuntime() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             AgentBotPqRuntime.queueSay(entry, "Here's your pass!");
 
-            replies.verify(() -> AgentBotReplyRuntime.queueSay(entry, "Here's your pass!"));
+            replies.verify(() -> AgentReplyRuntime.queueSay(entry, "Here's your pass!"));
         }
     }
 

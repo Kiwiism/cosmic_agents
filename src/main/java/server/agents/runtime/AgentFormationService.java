@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotFormationStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
 import java.util.Map;
@@ -47,7 +47,7 @@ public final class AgentFormationService {
     public static FormationState stateForEntry(AgentRuntimeEntry entry,
                                                Map<Integer, FormationState> formationsByLeaderId,
                                                FormationState defaultFormation) {
-        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
         if (leader == null) {
             return defaultFormation;
         }

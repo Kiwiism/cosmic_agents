@@ -3,8 +3,8 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import java.util.List;
 
@@ -34,9 +34,9 @@ public final class AgentTransferRuntime {
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         stopper,
                         registrar,
-                        AgentBotSchedulerRuntime::afterDelay,
+                        AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(700, 900),
-                        AgentBotReplyRuntime::sayMapNow,
+                        AgentReplyRuntime::sayMapNow,
                         () -> AgentDialogueSelector.randomReply(List.of(
                                 "ok!",
                                 "sure!",

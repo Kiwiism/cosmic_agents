@@ -5,7 +5,7 @@ import java.awt.Point;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -19,7 +19,7 @@ public final class AgentGroundMovementRuntimeService {
         long startedAt = System.nanoTime();
         try {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character bot = AgentRuntimeIdentityRuntime.bot(entry);
 
             AgentMotionTimerService.tickMotionTimers(entry);
 
@@ -54,12 +54,12 @@ public final class AgentGroundMovementRuntimeService {
     }
 
     private static void performDownJump(AgentRuntimeEntry entry) {
-        AgentQueuedMovementActionService.beginDownJump(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+        AgentQueuedMovementActionService.beginDownJump(entry, AgentRuntimeIdentityRuntime.bot(entry));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 
     private static void performTopRopeEntry(AgentRuntimeEntry entry) {
-        AgentQueuedMovementActionService.beginTopRopeEntry(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+        AgentQueuedMovementActionService.beginTopRopeEntry(entry, AgentRuntimeIdentityRuntime.bot(entry));
         AgentMovementBroadcastService.broadcastMovement(entry);
     }
 }

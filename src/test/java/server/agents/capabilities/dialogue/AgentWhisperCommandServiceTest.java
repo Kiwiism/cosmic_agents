@@ -6,7 +6,7 @@ import client.Client;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotReplyChannelStateRuntime;
+import server.agents.integration.AgentReplyChannelStateRuntime;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentWhisperCommandRuntime;
@@ -65,7 +65,7 @@ class AgentWhisperCommandServiceTest {
         try (MockedStatic<AgentChatRuntime> chat = mockStatic(AgentChatRuntime.class)) {
             AgentWhisperCommandRuntime.handleWhisperToAgent(leader, target, "follow me");
 
-            assertEquals(AgentReplyChannel.WHISPER, AgentBotReplyChannelStateRuntime.replyChannel(entry));
+            assertEquals(AgentReplyChannel.WHISPER, AgentReplyChannelStateRuntime.replyChannel(entry));
             chat.verify(() -> AgentChatRuntime.handleChat(eq("follow me"), any()));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();

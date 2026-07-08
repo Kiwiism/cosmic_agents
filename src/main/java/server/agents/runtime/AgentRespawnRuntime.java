@@ -6,7 +6,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 import server.maps.MapleMap;
 
 public final class AgentRespawnRuntime {
@@ -28,6 +28,6 @@ public final class AgentRespawnRuntime {
                                 AgentMovementStateResetService.resetEntryStateAfterTeleport(respawnEntry),
                         (respawnEntry, ignoredAgent) ->
                                 AgentMovementBroadcastService.broadcastMovement(respawnEntry),
-                        AgentBotReplyRuntime::sayMapNow));
+                        AgentReplyRuntime::sayMapNow));
     }
 }

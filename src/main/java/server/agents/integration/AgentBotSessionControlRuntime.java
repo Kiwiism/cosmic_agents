@@ -12,10 +12,10 @@ public final class AgentBotSessionControlRuntime {
     }
 
     public static boolean isPrimarySession(AgentRuntimeEntry entry) {
-        if (entry == null || AgentBotRuntimeIdentityRuntime.owner(entry) == null) {
+        if (entry == null || AgentRuntimeIdentityRuntime.owner(entry) == null) {
             return false;
         }
-        return AgentBotSessionLifecycleSideEffects.getBotEntries(AgentBotRuntimeIdentityRuntime.ownerId(entry))
+        return AgentBotSessionLifecycleSideEffects.getBotEntries(AgentRuntimeIdentityRuntime.ownerId(entry))
                 .stream()
                 .findFirst()
                 .filter(first -> first == entry)
@@ -23,7 +23,7 @@ public final class AgentBotSessionControlRuntime {
     }
 
     public static boolean shouldOfferTownForAwayCommand(AgentRuntimeEntry entry) {
-        return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(AgentBotRuntimeIdentityRuntime.botMap(entry));
+        return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(AgentRuntimeIdentityRuntime.botMap(entry));
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int leaderCharId, boolean town) {

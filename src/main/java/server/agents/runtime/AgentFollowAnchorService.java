@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public final class AgentFollowAnchorService {
         if (leader == null) {
             return null;
         }
-        if (targetId <= 0 || targetId == leader.getId() || targetId == AgentBotRuntimeIdentityRuntime.botId(entry)) {
+        if (targetId <= 0 || targetId == leader.getId() || targetId == AgentRuntimeIdentityRuntime.botId(entry)) {
             return leader;
         }
 
@@ -41,7 +41,7 @@ public final class AgentFollowAnchorService {
 
         if (siblingEntries != null) {
             for (AgentRuntimeEntry sibling : siblingEntries) {
-                Character siblingAgent = AgentBotRuntimeIdentityRuntime.bot(sibling);
+                Character siblingAgent = AgentRuntimeIdentityRuntime.bot(sibling);
                 if (siblingAgent != null && siblingAgent.getId() == targetId && siblingAgent.isLoggedinWorld()) {
                     return siblingAgent;
                 }
@@ -52,7 +52,7 @@ public final class AgentFollowAnchorService {
     }
 
     public static Character resolveTargetFromRuntimeRegistry(AgentRuntimeEntry entry, int targetId) {
-        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
                 : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());

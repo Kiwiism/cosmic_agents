@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 
 public final class AgentFormationCommandRuntime {
     private AgentFormationCommandRuntime() {
@@ -24,7 +24,7 @@ public final class AgentFormationCommandRuntime {
                                 fallbackFormation),
                         AgentFormationService.formationsByLeaderId()::put,
                         AgentFormationService::applyOffsets,
-                        AgentBotReplyRuntime::queueReply,
+                        AgentReplyRuntime::queueReply,
                         Character::yellowMessage,
                         defaultFormation,
                         defaultFollowStaggerPx,

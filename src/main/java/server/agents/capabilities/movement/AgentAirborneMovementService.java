@@ -6,7 +6,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -24,7 +24,7 @@ public final class AgentAirborneMovementService {
             AgentBotSwimStateRuntime.setSwimming(entry, false);
             AgentMotionTimerService.tickMotionTimers(entry);
 
-            Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character agent = AgentRuntimeIdentityRuntime.bot(entry);
             Point agentPosition = agent.getPosition();
 
             if (successfullyGrabbedRope(entry, agent, agentPosition)) {

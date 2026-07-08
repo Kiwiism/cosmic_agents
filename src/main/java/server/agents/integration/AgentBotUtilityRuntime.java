@@ -19,13 +19,13 @@ public final class AgentBotUtilityRuntime {
         return new AgentChatUtilityFlow.UtilityCallbacks() {
             @Override
             public void tradeInvite() {
-                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && AgentBotPendingTradeStateRuntime.isIdle(entry)) {
-                    AgentBotSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
-                        AgentBotReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
-                        AgentBotSchedulerRuntime.afterRandomDelay(800, 1200, () -> {
+                    AgentSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
+                        AgentReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
+                        AgentSchedulerRuntime.afterRandomDelay(800, 1200, () -> {
                             Trade.startTrade(bot);
                             Trade.inviteTrade(bot, owner);
                         });
@@ -35,20 +35,20 @@ public final class AgentBotUtilityRuntime {
 
             @Override
             public void sellTrash() {
-                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+                Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+                AgentSchedulerRuntime.afterRandomDelay(500, 700,
                         () -> AgentShopService.requestSellTrashVisit(entry, bot));
             }
 
             @Override
             public void makeCrystals() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentSchedulerRuntime.afterRandomDelay(500, 700,
                         () -> AgentMakerService.handleMakeCrystals(entry));
             }
 
             @Override
             public void disassembleTrash() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentSchedulerRuntime.afterRandomDelay(500, 700,
                         () -> AgentMakerService.handleDisassembleTrash(entry));
             }
         };

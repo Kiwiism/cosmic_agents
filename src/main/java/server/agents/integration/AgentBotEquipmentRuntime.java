@@ -16,7 +16,7 @@ public final class AgentBotEquipmentRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
-        AgentBotReplyRuntime.sayMapNow(bot, message);
+        AgentReplyRuntime.sayMapNow(bot, message);
     }
 
     public static AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks(AgentRuntimeEntry entry) {
@@ -27,44 +27,44 @@ public final class AgentBotEquipmentRuntime {
                 if (slots.length == 0) {
                     return false;
                 }
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
+                AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                        AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
                 return true;
             }
 
             @Override
             public void unequipAll() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
                     AgentBotMovementCommandRuntime.stop(entry);
-                    AgentBotReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
+                    AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
             }
 
             @Override
             public void autoEquipDebug() {
-                AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                     List<String> lines = AgentEquipmentService.autoEquipDebug(bot(entry));
                     for (String line : lines) {
-                        AgentBotReplyRuntime.replyNow(entry, line);
+                        AgentReplyRuntime.replyNow(entry, line);
                     }
                 });
             }
 
             @Override
             public void autoEquip() {
-                AgentBotSchedulerRuntime.afterRandomDelay(400, 600, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
                     AgentEquipmentService.autoEquip(
                             bot(entry),
-                            AgentBotRuntimeIdentityRuntime.owner(entry),
+                            AgentRuntimeIdentityRuntime.owner(entry),
                             AgentBotOfferStateRuntime.pendingLootOfferItem(entry),
                             true);
-                    AgentBotReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
+                    AgentReplyRuntime.replyNow(entry, AgentChatEquipmentFlow.gearOptimizedReply());
                 });
             }
         };
     }
 
     private static Character bot(AgentRuntimeEntry entry) {
-        return AgentBotRuntimeIdentityRuntime.bot(entry);
+        return AgentRuntimeIdentityRuntime.bot(entry);
     }
 }

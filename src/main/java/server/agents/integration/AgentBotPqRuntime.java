@@ -12,7 +12,7 @@ public final class AgentBotPqRuntime {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
-        AgentBotReplyRuntime.queueSay(entry, message);
+        AgentReplyRuntime.queueSay(entry, message);
     }
 
     public static void resetKpqStage5Claimed(AgentRuntimeEntry entry) {

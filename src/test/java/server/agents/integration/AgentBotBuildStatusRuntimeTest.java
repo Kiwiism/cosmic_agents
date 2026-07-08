@@ -11,7 +11,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -84,10 +84,10 @@ class AgentBotBuildStatusRuntimeTest {
         AgentChatStatusRuntime.StatusCheckActions actions =
                 AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             actions.queueReply("build?");
 
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(entry, "build?"));
+            replies.verify(() -> AgentReplyRuntime.queueReply(entry, "build?"));
         }
     }
 }

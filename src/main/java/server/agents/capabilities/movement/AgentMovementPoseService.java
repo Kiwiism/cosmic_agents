@@ -5,7 +5,7 @@ import constants.game.CharacterStance;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
@@ -67,7 +67,7 @@ public final class AgentMovementPoseService {
     }
 
     public static int resolveStance(AgentRuntimeEntry entry) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent != null && agent.getHp() <= 0) {
             return resolveDeadStance(entry);
         }
@@ -116,7 +116,7 @@ public final class AgentMovementPoseService {
     }
 
     public static void syncCharacterState(AgentRuntimeEntry entry) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null) {
             return;
         }

@@ -21,7 +21,7 @@ import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -83,7 +83,7 @@ public final class AgentPathLogger {
                 int botRegionId,
                 boolean consumedTick,
                 boolean aiTick) {
-        Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
+        Point botPos = AgentRuntimeIdentityRuntime.botPosition(entry);
         Point ownerPos = targetSnapshot.rawOwnerPosition();
         Point goalPos = targetSnapshot.primaryTargetPosition();
         Point steerPos = targetSnapshot.steeringTargetPosition();
@@ -126,7 +126,7 @@ public final class AgentPathLogger {
 
         GraphSnapshot graphSnapshot = resolveGraphSnapshot(entry);
         AgentNavigationGraph graph = graphSnapshot.graph();
-        Point botPos = AgentBotRuntimeIdentityRuntime.botPosition(entry);
+        Point botPos = AgentRuntimeIdentityRuntime.botPosition(entry);
         Point goalTargetPos = targetSnapshot.primaryTargetPosition();
         Point steeringTargetPos = targetSnapshot.steeringTargetPosition();
         int botRegionId = resolveCurrentRegionId(graph, entry, botPos);
@@ -162,8 +162,8 @@ public final class AgentPathLogger {
     }
 
     private static GraphSnapshot resolveGraphSnapshot(AgentRuntimeEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile requestedProfile = AgentBotMovementStateRuntime.movementProfileOrCharacter(entry, bot);
         AgentNavigationGraph exact = AgentNavigationGraphService.peekGraph(map, requestedProfile);
         if (exact != null) {
@@ -183,14 +183,14 @@ public final class AgentPathLogger {
         if (graph == null) {
             return -1;
         }
-        return AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
+        return AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, AgentRuntimeIdentityRuntime.botMap(entry), point);
     }
 
     private static int resolveTargetRegionId(AgentNavigationGraph graph, AgentRuntimeEntry entry, Point point) {
         if (graph == null) {
             return -1;
         }
-        return AgentNavigationRegionService.resolveTargetRegionId(graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), point);
+        return AgentNavigationRegionService.resolveTargetRegionId(graph, entry, AgentRuntimeIdentityRuntime.botMap(entry), point);
     }
 
     private void appendHeader(StringBuilder sb, LocalDateTime now, String note) {
@@ -280,8 +280,8 @@ public final class AgentPathLogger {
 
     private void appendMovementGraphState(StringBuilder sb, AgentRuntimeEntry entry, GraphSnapshot graphSnapshot) {
         AgentMovementProfile requested = graphSnapshot.requestedProfile();
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         sb.append("Movement:   speed=").append(requested.totalSpeedStat()).append("%")
                 .append(" jump=").append(requested.totalJumpStat()).append("%")
                 .append(" rawSpeed=").append(bot.getTotalMoveSpeedStat()).append("%")
@@ -345,7 +345,7 @@ public final class AgentPathLogger {
         } else if (botRegionId == targetRegionId) {
             sb.append("  same region - no inter-region path\n");
         } else {
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPath(
                     graph, bot, botRegionId, targetRegionId, targetPos);
             if (path.isEmpty()) {

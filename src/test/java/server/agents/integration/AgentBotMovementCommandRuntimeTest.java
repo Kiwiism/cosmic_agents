@@ -94,13 +94,13 @@ class AgentBotMovementCommandRuntimeTest {
         Point patrolPos = new Point(30, 40);
 
         try (MockedStatic<AgentNavigationGraphService> graphs = mockStatic(AgentNavigationGraphService.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             graphs.when(() -> AgentNavigationGraphService.peekBestGraph(map, AgentBotMovementStateRuntime.movementProfile(entry)))
                     .thenReturn(null);
 
             AgentBotMovementCommandRuntime.patrol(entry, patrolPos);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "can't find a patrol region here"));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "can't find a patrol region here"));
             assertFalse(AgentBotPatrolStateRuntime.hasPatrolRegion(entry));
         }
     }

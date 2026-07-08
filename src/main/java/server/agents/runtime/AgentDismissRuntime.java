@@ -1,8 +1,8 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,9 +26,9 @@ public final class AgentDismissRuntime {
                 new AgentLifecycleService.DismissHooks(
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         stopAgent,
-                        AgentBotSchedulerRuntime::afterDelay,
+                        AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(400, 600),
-                        AgentBotReplyRuntime::replyNow,
+                        AgentReplyRuntime::replyNow,
                         () -> AgentDialogueSelector.randomReply(FAREWELL_MESSAGES)));
     }
 }

@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
 import server.agents.integration.AgentBotEquipmentRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,10 +19,10 @@ import static org.mockito.Mockito.times;
 class AgentBotEquipmentRuntimeTest {
     @Test
     void equipmentVisibleReplyDelegatesToAgentReplyRuntime() {
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             AgentBotEquipmentRuntime.sayMapNow(null, "gear");
 
-            replies.verify(() -> AgentBotReplyRuntime.sayMapNow(null, "gear"));
+            replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "gear"));
         }
     }
 
@@ -31,15 +31,15 @@ class AgentBotEquipmentRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentChatEquipmentFlow.EquipmentCallbacks callbacks = AgentBotEquipmentRuntime.equipmentCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             assertTrue(callbacks.unequipSlot("hat"));
             callbacks.unequipAll();
             callbacks.autoEquipDebug();
             callbacks.autoEquip();
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     times(2));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)),
                     times(2));
         }
     }
@@ -49,7 +49,7 @@ class AgentBotEquipmentRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentChatEquipmentFlow.EquipmentCallbacks callbacks = AgentBotEquipmentRuntime.equipmentCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             assertFalse(callbacks.unequipSlot("not-a-slot"));
 
             scheduler.verifyNoInteractions();

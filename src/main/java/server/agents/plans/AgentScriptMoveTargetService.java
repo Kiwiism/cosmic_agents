@@ -6,7 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationPathService;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -38,11 +38,11 @@ public final class AgentScriptMoveTargetService {
                                             int fallbackRangeX,
                                             int fallbackRangeY,
                                             int nearTargetRadius) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry) || targetPos == null) {
+        if (!AgentRuntimeIdentityRuntime.hasBot(entry) || targetPos == null) {
             return false;
         }
 
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Point botPos = bot.getPosition();
         if (botPos == null) {
             return false;

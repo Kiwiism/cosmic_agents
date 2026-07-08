@@ -9,8 +9,8 @@ import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotStatusRuntime;
 
 import java.awt.Point;
@@ -118,18 +118,18 @@ class AgentBotStatusRuntimeTest {
         Runnable action = () -> {
         };
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies =
-                     mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies =
+                     mockStatic(AgentReplyRuntime.class)) {
             AgentChatStatusRuntime.OfflineReturnActions actions =
                     AgentBotStatusRuntime.offlineReturnActions(bot);
 
             actions.afterRandomDelay(900, 1100, action);
             actions.sayParty("wb");
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(900, 1100, action));
-            replies.verify(() -> AgentBotReplyRuntime.sayPartyNow(bot, "wb"));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(900, 1100, action));
+            replies.verify(() -> AgentReplyRuntime.sayPartyNow(bot, "wb"));
         }
     }
 
@@ -139,17 +139,17 @@ class AgentBotStatusRuntimeTest {
         Runnable action = () -> {
         };
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies =
-                     mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies =
+                     mockStatic(AgentReplyRuntime.class)) {
             AgentChatStatusRuntime.AfkReturnActions actions = AgentBotStatusRuntime.afkReturnActions(entry);
 
             actions.afterRandomDelay(700, 900, action);
             actions.reply("back");
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(700, 900, action));
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "back"));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(700, 900, action));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "back"));
         }
     }
 }

@@ -29,7 +29,7 @@ public final class AgentBotCombatAlertRuntime {
             }
             AgentBotCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);
             try {
-                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+                Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (bot != null) {
                     bot.broadcastStance();
                 }

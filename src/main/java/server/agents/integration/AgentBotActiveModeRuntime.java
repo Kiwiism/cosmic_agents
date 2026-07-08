@@ -51,7 +51,7 @@ public final class AgentBotActiveModeRuntime {
     }
 
     public static void maybeSuggestGearToSiblings(AgentRuntimeEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
                 AgentBotStatusRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
@@ -63,7 +63,7 @@ public final class AgentBotActiveModeRuntime {
     private static void autoEquip(AgentRuntimeEntry entry) {
         AgentEquipmentService.autoEquip(
                 bot(entry),
-                AgentBotRuntimeIdentityRuntime.owner(entry),
+                AgentRuntimeIdentityRuntime.owner(entry),
                 AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
@@ -72,6 +72,6 @@ public final class AgentBotActiveModeRuntime {
     }
 
     private static Character bot(AgentRuntimeEntry entry) {
-        return AgentBotRuntimeIdentityRuntime.bot(entry);
+        return AgentRuntimeIdentityRuntime.bot(entry);
     }
 }

@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotTransferRuntime;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -23,10 +23,10 @@ class AgentBotTransferRuntimeTest {
         AgentChatTransferFlow.TransferCommand command =
                 new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "trash");
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             AgentBotTransferRuntime.handleTransferCommand(entry, command, "show junk");
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply()));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply()));
         }
     }
 
@@ -37,10 +37,10 @@ class AgentBotTransferRuntimeTest {
         AgentChatTransferFlow.TransferCommand command =
                 new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "mesos");
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentInventoryTransferService> inventory = mockStatic(AgentInventoryTransferService.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;

@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
 import java.util.function.LongSupplier;
@@ -65,8 +65,8 @@ public final class AgentFollowTargetCommandService {
         }
 
         for (AgentRuntimeEntry entry : entries) {
-            if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
-                    || AgentBotRuntimeIdentityRuntime.botIs(entry, target.getId())) {
+            if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry)
+                    || AgentRuntimeIdentityRuntime.botIs(entry, target.getId())) {
                 continue;
             }
             hooks.agentReplyQueue().queue(entry, hooks.replySelector().select(target));

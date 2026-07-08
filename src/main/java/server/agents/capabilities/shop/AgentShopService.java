@@ -25,7 +25,7 @@ import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotShopRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
@@ -685,7 +685,7 @@ public final class AgentShopService {
             try {
                 step.run();
             } catch (RuntimeException exception) {
-                abortShop(entry, AgentBotRuntimeIdentityRuntime.bot(entry), AgentDialogueCatalog.shopScheduleErrorReply());
+                abortShop(entry, AgentRuntimeIdentityRuntime.bot(entry), AgentDialogueCatalog.shopScheduleErrorReply());
                 throw exception;
             }
         });

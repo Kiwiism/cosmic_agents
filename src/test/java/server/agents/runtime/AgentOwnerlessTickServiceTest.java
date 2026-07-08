@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ class AgentOwnerlessTickServiceTest {
     @Test
     void clearsFollowingAndStopsWhenGroundingConsumesTick() {
         AgentRuntimeEntry entry = entry();
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
         AgentBotModeStateRuntime.setFollowing(entry, true);
@@ -39,7 +39,7 @@ class AgentOwnerlessTickServiceTest {
     @Test
     void ticksStandaloneMoveWhenMoveTargetExists() {
         AgentRuntimeEntry entry = entry();
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
         AgentBotMoveTargetStateRuntime.setMoveTarget(entry, new Point(1, 2), true);
@@ -63,7 +63,7 @@ class AgentOwnerlessTickServiceTest {
     @Test
     void idlesWhenNoMoveTargetExists() {
         AgentRuntimeEntry entry = entry();
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AtomicInteger moves = new AtomicInteger();
         AtomicInteger idles = new AtomicInteger();
 

@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.plans.AgentTask;
 
@@ -14,7 +14,7 @@ public final class AgentScriptTaskTickService {
     public static void tick(AgentRuntimeEntry entry,
                             BiConsumer<AgentRuntimeEntry, AgentTask> startTask,
                             BiPredicate<AgentRuntimeEntry, AgentTask> isTaskComplete) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
+        if (!AgentRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
 

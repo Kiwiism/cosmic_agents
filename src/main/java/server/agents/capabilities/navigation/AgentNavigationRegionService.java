@@ -8,7 +8,7 @@ import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
@@ -30,7 +30,7 @@ public final class AgentNavigationRegionService {
                                              AgentRuntimeEntry entry,
                                              MapleMap map,
                                              Point botPos) {
-        if (AgentBotClimbStateRuntime.climbing(entry) || (AgentBotRuntimeIdentityRuntime.hasBot(entry) && CharacterStance.isClimbing(AgentBotRuntimeIdentityRuntime.bot(entry).getStance()))) {
+        if (AgentBotClimbStateRuntime.climbing(entry) || (AgentRuntimeIdentityRuntime.hasBot(entry) && CharacterStance.isClimbing(AgentRuntimeIdentityRuntime.bot(entry).getStance()))) {
             // Rope climbing state is authoritative. Ground lookup below a rope often resolves to
             // the nearby platform instead of the rope region, which can replan from the wrong side
             // of the rope and bounce between entry/exit climb edges.
@@ -59,7 +59,7 @@ public final class AgentNavigationRegionService {
             return -1;
         }
 
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = owner == null
                 ? List.of()
                 : AgentBotSessionLifecycleSideEffects.getBotEntries(owner.getId());

@@ -9,8 +9,8 @@ import java.awt.Point;
 /**
  * Agent-owned adapter for temporary AgentRuntimeEntry-backed live runtime identity.
  */
-public final class AgentBotRuntimeIdentityRuntime {
-    private AgentBotRuntimeIdentityRuntime() {
+public final class AgentRuntimeIdentityRuntime {
+    private AgentRuntimeIdentityRuntime() {
     }
 
     public static Character bot(AgentRuntimeEntry entry) {

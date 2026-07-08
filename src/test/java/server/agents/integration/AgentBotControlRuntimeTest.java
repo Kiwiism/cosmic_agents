@@ -8,8 +8,8 @@ import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
 import server.agents.integration.AgentBotControlRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,15 +22,15 @@ class AgentBotControlRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentChatToggleFlow.ToggleCallbacks callbacks = AgentBotControlRuntime.toggleCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             callbacks.setSupport(false);
             callbacks.setHeals(false);
             callbacks.setBuffConsumables(true);
             callbacks.setBuffConsumablesCheapMode(false);
             callbacks.setProactiveOffers(false);
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     times(5));
         }
     }
@@ -40,13 +40,13 @@ class AgentBotControlRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentChatBuffQueryFlow.BuffQueryCallbacks callbacks = AgentBotControlRuntime.buffQueryCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             callbacks.reportBuffList();
             callbacks.reportBuffDebug();
             callbacks.reportSkillBuffDebug();
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     times(3));
         }
     }
@@ -56,12 +56,12 @@ class AgentBotControlRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentChatRespecFlow.RespecCallbacks callbacks = AgentBotControlRuntime.respecCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             callbacks.respecAp();
             callbacks.respecSp();
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     times(2));
         }
     }
@@ -70,10 +70,10 @@ class AgentBotControlRuntimeTest {
     void broadReplyRuntimeStillSupportsControlReplies() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
-            AgentBotReplyRuntime.replyNow(entry, "ok");
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+            AgentReplyRuntime.replyNow(entry, "ok");
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "ok"));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "ok"));
         }
     }
 
@@ -82,10 +82,10 @@ class AgentBotControlRuntimeTest {
         Runnable action = () -> {
         };
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            AgentBotSchedulerRuntime.afterRandomDelay(500, 700, action);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
+            AgentSchedulerRuntime.afterRandomDelay(500, 700, action);
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(500, 700, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(500, 700, action));
         }
     }
 }

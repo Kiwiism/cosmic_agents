@@ -6,7 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -25,14 +25,14 @@ public final class AgentGroundTargetService {
             return targetPos;
         }
 
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         AgentMovementProfile profile = AgentBotMovementStateRuntime.movementProfile(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
         if (graph == null) {
             AgentNavigationGraphService.warmGraphAsync(map, profile);
             return targetPos;
         }
-        Point agentPosition = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
+        Point agentPosition = AgentRuntimeIdentityRuntime.bot(entry).getPosition();
         int currentRegionId = AgentNavigationRegionService.resolveCurrentRegionId(graph, entry, map, agentPosition);
         int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, map, targetPos);
         if (currentRegionId < 0 || currentRegionId != targetRegionId) {

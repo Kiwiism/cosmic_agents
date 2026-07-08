@@ -15,15 +15,15 @@ public final class AgentBotSocialRuntime {
     }
 
     public static AgentChatSocialFlow.SocialCallbacks socialCallbacks(AgentRuntimeEntry entry) {
-        return targetName -> AgentBotSchedulerRuntime.afterRandomDelay(
+        return targetName -> AgentSchedulerRuntime.afterRandomDelay(
                 500, 900, () -> handleFameCommand(entry, targetName));
     }
 
     public static void handleFameCommand(AgentRuntimeEntry entry, String targetName) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         Character target;
         if (AgentSocialDialogueClassifier.isSelfFameTarget(targetName)) {
-            target = AgentBotRuntimeIdentityRuntime.owner(entry);
+            target = AgentRuntimeIdentityRuntime.owner(entry);
         } else {
             target = bot.getMap().getCharacters().stream()
                     .filter(c -> c.getName().equalsIgnoreCase(targetName))
@@ -68,7 +68,7 @@ public final class AgentBotSocialRuntime {
 
             @Override
             public void reply(String message) {
-                AgentBotReplyRuntime.replyNow(entry, message);
+                AgentReplyRuntime.replyNow(entry, message);
             }
         });
     }

@@ -7,7 +7,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.maps.MapleMap;
 
@@ -208,7 +208,7 @@ public final class AgentLifecycleService {
                                                   RegisterHooks hooks) {
         List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
         entries.removeIf(entry -> {
-            if (AgentBotRuntimeIdentityRuntime.botIs(entry, agent.getId())) {
+            if (AgentRuntimeIdentityRuntime.botIs(entry, agent.getId())) {
                 hooks.cancelExistingTask().accept(entry);
                 return true;
             }
@@ -321,7 +321,7 @@ public final class AgentLifecycleService {
         for (Map.Entry<Integer, List<AgentRuntimeEntry>> leaderEntry : entriesByLeaderId.entrySet()) {
             List<AgentRuntimeEntry> entries = leaderEntry.getValue();
             boolean removedFromLeader = entries.removeIf(entry -> {
-                if (AgentBotRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                if (AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
                     beforeRemove.accept(entry);
                     return true;
                 }

@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Collection;
@@ -32,6 +32,6 @@ public final class AgentPendingOfferChatRouteService {
         return entry != null
                 && AgentOfferService.hasPendingOffer(entry)
                 && AgentBotOfferStateRuntime.pendingOfferRecipientIs(entry, speaker)
-                && AgentBotRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
+                && AgentRuntimeIdentityRuntime.botMapId(entry) == speaker.getMapId();
     }
 }

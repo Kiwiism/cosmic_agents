@@ -4,8 +4,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotShopRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,19 +18,19 @@ class AgentBotShopRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Runnable action = mock(Runnable.class);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
-             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(2000, 4001)).thenReturn(2500L);
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
+            scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(2000, 4001)).thenReturn(2500L);
 
             AgentBotShopRuntime.replyNow(entry, "reply");
             AgentBotShopRuntime.sayMapNow(null, "shop");
             AgentBotShopRuntime.afterDelay(500L, action);
             long delay = AgentBotShopRuntime.randomDelayMs(2000, 4001);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "reply"));
-            replies.verify(() -> AgentBotReplyRuntime.sayMapNow(null, "shop"));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(500L, action));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(2000, 4001));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "shop"));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(500L, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(2000, 4001));
             assertEquals(2500L, delay);
         }
     }

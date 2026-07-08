@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 
 import java.util.List;
@@ -97,13 +97,13 @@ public final class AgentTransferService {
             return "That's you.";
         }
 
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(found);
+        Character agent = AgentRuntimeIdentityRuntime.bot(found);
         AgentAuthorizationResult auth = hooks.transferAuthorization().authorize(
                 target,
                 new AgentResolvedCharacter(
-                        AgentBotRuntimeIdentityRuntime.botId(found),
-                        AgentBotRuntimeIdentityRuntime.botName(found),
-                        AgentBotRuntimeIdentityRuntime.botAccountId(found),
+                        AgentRuntimeIdentityRuntime.botId(found),
+                        AgentRuntimeIdentityRuntime.botName(found),
+                        AgentRuntimeIdentityRuntime.botAccountId(found),
                         agent));
         if (!auth.allowed()) {
             return auth.failureMessage();

@@ -120,7 +120,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+                AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
             }
 
             @Override
@@ -130,7 +130,7 @@ public final class AgentBotStatusRuntime {
 
             @Override
             public void sayParty(String text) {
-                AgentBotReplyRuntime.sayPartyNow(bot, text);
+                AgentReplyRuntime.sayPartyNow(bot, text);
             }
         };
     }
@@ -139,22 +139,22 @@ public final class AgentBotStatusRuntime {
         return new AgentChatStatusRuntime.AfkReturnActions() {
             @Override
             public boolean hasAgent() {
-                return AgentBotRuntimeIdentityRuntime.bot(entry) != null;
+                return AgentRuntimeIdentityRuntime.bot(entry) != null;
             }
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+                AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
             }
 
             @Override
             public void changeFaceExpression(int expression) {
-                AgentBotRuntimeIdentityRuntime.bot(entry).changeFaceExpression(expression);
+                AgentRuntimeIdentityRuntime.bot(entry).changeFaceExpression(expression);
             }
 
             @Override
             public void reply(String text) {
-                AgentBotReplyRuntime.replyNow(entry, text);
+                AgentReplyRuntime.replyNow(entry, text);
             }
         };
     }

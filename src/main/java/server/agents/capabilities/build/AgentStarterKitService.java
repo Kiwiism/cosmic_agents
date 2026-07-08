@@ -8,7 +8,7 @@ import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentBotBuildStatusRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -21,8 +21,8 @@ public final class AgentStarterKitService {
     private static final Logger log = LoggerFactory.getLogger(AgentStarterKitService.class);
 
     public static void advanceJob(AgentRuntimeEntry entry, Job newJob) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Job oldJob = bot.getJob();
         bot.changeJob(newJob);
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);

@@ -12,14 +12,14 @@ public final class AgentBotInventoryRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        AgentBotReplyRuntime.replyNow(entry, message);
+        AgentReplyRuntime.replyNow(entry, message);
     }
 
     public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
-        AgentBotReplyRuntime.visibleSayNow(entry, message);
+        AgentReplyRuntime.visibleSayNow(entry, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
+        AgentSchedulerRuntime.afterDelay(delayMs, action);
     }
 }

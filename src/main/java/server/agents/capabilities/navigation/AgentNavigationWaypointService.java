@@ -8,7 +8,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -42,7 +42,7 @@ public final class AgentNavigationWaypointService {
                                            Point botPos,
                                            AgentNavigationGraph.Edge edge) {
         AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(
-                AgentBotRuntimeIdentityRuntime.botMap(entry),
+                AgentRuntimeIdentityRuntime.botMap(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry));
         return selectJumpWaypoint(graph, entry, botPos, edge);
     }
@@ -96,7 +96,7 @@ public final class AgentNavigationWaypointService {
         }
 
         AgentWalkOffLanding liveOutcome = AgentJumpProbeService.simulateWalkOffLanding(
-                AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
+                AgentRuntimeIdentityRuntime.botMap(entry), botPos, Integer.signum(edge.launchStepX),
                 AgentBotMovementPhysicsStateRuntime.groundTravelState(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry));
         if (matchesDirectionalDrop(edge, graph, liveOutcome)) {
@@ -153,7 +153,7 @@ public final class AgentNavigationWaypointService {
 
         int width = Math.max(0, maxX - minX);
         int margin = Math.min(width / 2, Math.max(1,
-                AgentMovementKinematicsService.walkStep(AgentBotRuntimeIdentityRuntime.botMap(entry),
+                AgentMovementKinematicsService.walkStep(AgentRuntimeIdentityRuntime.botMap(entry),
                         AgentBotMovementStateRuntime.movementProfile(entry)) * 2));
         int randomMinX = minX + margin;
         int randomMaxX = maxX - margin;
@@ -194,7 +194,7 @@ public final class AgentNavigationWaypointService {
     public static Point selectClimbWaypoint(AgentRuntimeEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
                 map,
                 AgentBotMovementStateRuntime.movementProfile(entry));
@@ -205,7 +205,7 @@ public final class AgentNavigationWaypointService {
                                             AgentRuntimeEntry entry,
                                             Point botPos,
                                             AgentNavigationGraph.Edge edge) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         return selectClimbWaypoint(
                 graph,
                 entry,

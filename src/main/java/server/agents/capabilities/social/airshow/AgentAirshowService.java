@@ -16,7 +16,7 @@ import server.TimerManager;
 import server.agents.integration.AgentBotAirshowStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -50,7 +50,7 @@ public final class AgentAirshowService {
             return "No active owned bot named '" + botName + "'.";
         }
 
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = owner.getMap();
         if (bot == null || bot.getMap() == null || map == null || bot.getMap() != map) {
             return "Bot '" + botName + "' must be in your map.";
@@ -109,7 +109,7 @@ public final class AgentAirshowService {
                                                 int stance,
                                                 Runnable done) {
         TimerManager.getInstance().schedule(() -> {
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             if (!AgentBotAirshowStateRuntime.active(entry) || bot == null || bot.getMap() != map) {
                 if (bot != null) {
                     restore(entry, bot.getPosition(), bot.getStance());
@@ -149,7 +149,7 @@ public final class AgentAirshowService {
                                               int stance,
                                               Runnable done) {
         TimerManager.getInstance().schedule(() -> {
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             if (!AgentBotAirshowStateRuntime.active(entry) || bot == null || bot.getMap() != map) {
                 if (bot != null) {
                     restore(entry, bot.getPosition(), bot.getStance());
@@ -175,7 +175,7 @@ public final class AgentAirshowService {
         if (!AgentBotAirshowStateRuntime.active(entry)) {
             return;
         }
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             AgentBotAirshowStateRuntime.stop(entry);
             return;
@@ -189,7 +189,7 @@ public final class AgentAirshowService {
     }
 
     private static void moveFrame(AgentRuntimeEntry entry, MapleMap map, Point position, int velocityX, int velocityY, int stance) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return;
         }

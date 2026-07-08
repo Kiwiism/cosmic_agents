@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
@@ -82,7 +82,7 @@ public final class AgentFallbackMovementService {
     }
 
     private static boolean shouldJumpUpIntoSwim(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
+        if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return false;
         }
         if (AgentBotMovementStateRuntime.inAir(entry)
@@ -112,7 +112,7 @@ public final class AgentFallbackMovementService {
     }
 
     private static Rope selectNearbyRope(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
+        if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null) {
             return null;
         }
 
@@ -180,7 +180,7 @@ public final class AgentFallbackMovementService {
     }
 
     private static Point resolveFallbackLedgeTarget(AgentRuntimeEntry entry, Point botPos, Point targetPos, Rope rope) {
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null || rope != null) {
+        if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || botPos == null || targetPos == null || rope != null) {
             return null;
         }
         MapleMap map = map(entry);
@@ -281,11 +281,11 @@ public final class AgentFallbackMovementService {
     }
 
     private static Character bot(AgentRuntimeEntry entry) {
-        return AgentBotRuntimeIdentityRuntime.bot(entry);
+        return AgentRuntimeIdentityRuntime.bot(entry);
     }
 
     private static MapleMap map(AgentRuntimeEntry entry) {
-        return AgentBotRuntimeIdentityRuntime.botMap(entry);
+        return AgentRuntimeIdentityRuntime.botMap(entry);
     }
 
     private static AgentMovementProfile movementProfile(AgentRuntimeEntry entry) {

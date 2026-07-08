@@ -10,7 +10,7 @@ import constants.skills.Shadower;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotMovementTargetRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
@@ -89,7 +89,7 @@ public final class AgentNavigationDebugOverlay {
         }
         AgentRuntimeEntry entry = selection.entry;
 
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot.getMapId() != viewer.getMapId()) {
             return "Bot '" + bot.getName() + "' is on map " + bot.getMapId() + ", not your current map.";
         }
@@ -146,12 +146,12 @@ public final class AgentNavigationDebugOverlay {
 
         if (!AgentBotNavigationDebugStateRuntime.isPathLogging(entry)) {
             AgentBotNavigationDebugStateRuntime.startPathLogging(entry);
-            return "Path logging started for '" + AgentBotRuntimeIdentityRuntime.botName(entry) + "'. Run !botnav pathlog again to dump.";
+            return "Path logging started for '" + AgentRuntimeIdentityRuntime.botName(entry) + "'. Run !botnav pathlog again to dump.";
         }
 
         AgentMovementTargetSnapshot targetSnapshot = AgentBotMovementTargetRuntime.snapshot(entry);
         String filePath = AgentBotNavigationDebugStateRuntime.dumpPathLog(entry, targetSnapshot, note);
-        return "Path log for '" + AgentBotRuntimeIdentityRuntime.botName(entry) + "' dumped: " + filePath;
+        return "Path log for '" + AgentRuntimeIdentityRuntime.botName(entry) + "' dumped: " + filePath;
     }
 
     private static void drawRegion(OverlayBuilder overlay, AgentNavigationGraph.Region region, OverlayType type) {
@@ -169,7 +169,7 @@ public final class AgentNavigationDebugOverlay {
             }
             if (entries.size() > 1) {
                 String names = entries.stream()
-                        .map(AgentBotRuntimeIdentityRuntime::botName)
+                        .map(AgentRuntimeIdentityRuntime::botName)
                         .sorted(String::compareToIgnoreCase)
                         .reduce((left, right) -> left + ", " + right)
                         .orElse("");

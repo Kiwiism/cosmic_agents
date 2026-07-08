@@ -14,7 +14,7 @@ import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 
 
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 import client.Character;
 import client.Job;
 import client.inventory.Inventory;
@@ -28,7 +28,7 @@ import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotBuffStateRuntime;
-import server.agents.integration.AgentBotMessageQueueStateRuntime;
+import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentBotChatStatusRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
@@ -399,13 +399,13 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldMarkQueuedRepliesAsOwnerDirected() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMessageQueueStateRuntime.setSending(entry, true);
+        AgentMessageQueueStateRuntime.setSending(entry, true);
 
-        AgentBotReplyRuntime.queueReply(entry, "owner reply");
-        AgentBotReplyRuntime.queueSay(entry, "party chatter");
+        AgentReplyRuntime.queueReply(entry, "owner reply");
+        AgentReplyRuntime.queueSay(entry, "party chatter");
 
-        AgentQueuedMessage first = AgentBotMessageQueueStateRuntime.poll(entry);
-        AgentQueuedMessage second = AgentBotMessageQueueStateRuntime.poll(entry);
+        AgentQueuedMessage first = AgentMessageQueueStateRuntime.poll(entry);
+        AgentQueuedMessage second = AgentMessageQueueStateRuntime.poll(entry);
         assertEquals("owner reply", first.text());
         assertTrue(first.ownerDirected());
         assertEquals("party chatter", second.text());
@@ -415,12 +415,12 @@ class AgentChatRuntimeParityTest {
     @Test
     void shouldQueueHelpAsOwnerDirectedReply() throws Exception {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMessageQueueStateRuntime.setSending(entry, true);
+        AgentMessageQueueStateRuntime.setSending(entry, true);
 
         AgentBotChatReportRuntime.reportHelp(entry);
 
-        assertEquals(5, AgentBotMessageQueueStateRuntime.size(entry));
-        for (AgentQueuedMessage message : AgentBotMessageQueueStateRuntime.snapshot(entry)) {
+        assertEquals(5, AgentMessageQueueStateRuntime.size(entry));
+        for (AgentQueuedMessage message : AgentMessageQueueStateRuntime.snapshot(entry)) {
             assertTrue(message.ownerDirected());
         }
     }

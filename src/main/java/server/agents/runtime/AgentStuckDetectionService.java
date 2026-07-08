@@ -4,7 +4,7 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementStuckStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
 import java.util.function.IntUnaryOperator;
@@ -55,7 +55,7 @@ public final class AgentStuckDetectionService {
             return;
         }
 
-        Point agentPosition = AgentBotRuntimeIdentityRuntime.botPosition(entry);
+        Point agentPosition = AgentRuntimeIdentityRuntime.botPosition(entry);
         if (!AgentBotMovementStuckStateRuntime.hasStuckCheckPosition(entry)) {
             AgentBotMovementStuckStateRuntime.rememberStuckCheckPosition(entry, agentPosition);
             return;

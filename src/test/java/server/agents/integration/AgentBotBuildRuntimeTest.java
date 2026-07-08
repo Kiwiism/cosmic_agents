@@ -12,8 +12,8 @@ import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
 import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -29,12 +29,12 @@ class AgentBotBuildRuntimeTest {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
             AgentBotBuildRuntime.spVariantCallbacks(entry).oneHanded();
 
             assertEquals(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT, AgentBotBuildStateRuntime.spVariant(entry));
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
             buildManager.verify(() -> AgentBuildService.autoAssignSp(entry, bot));
         }
     }
@@ -67,13 +67,13 @@ class AgentBotBuildRuntimeTest {
     void jobAdvancementCallbackRepliesThenSchedulesAdvance() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
-             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             AgentBotBuildRuntime.jobAdvancementCallbacks(entry).advanceTo(Job.HUNTER);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), argThat(message ->
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), argThat(message ->
                     message != null && message.contains("hunter"))));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(
                     org.mockito.ArgumentMatchers.eq(900),
                     org.mockito.ArgumentMatchers.eq(1100),
                     org.mockito.ArgumentMatchers.any(Runnable.class)));
@@ -84,10 +84,10 @@ class AgentBotBuildRuntimeTest {
     void confirmApBuildUsesAgentReplyRuntime() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             AgentBotBuildRuntime.confirmApBuild(entry, "confirm");
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "confirm"));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "confirm"));
         }
     }
 }

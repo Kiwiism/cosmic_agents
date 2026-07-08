@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 public final class AgentTickPreflightService {
     private AgentTickPreflightService() {
@@ -65,7 +65,7 @@ public final class AgentTickPreflightService {
             return new Result(true, null, false);
         }
 
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent.getMap() == null) {
             hooks.removedAgentCleanup().remove(agentCharId);
             return new Result(true, agent, false);

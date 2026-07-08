@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.plans.AgentTask;
 
 import java.awt.Point;
@@ -18,13 +18,13 @@ public final class AgentScriptTaskCompletionService {
                                      IntFunction<Character> followTargetResolver) {
         return switch (task.type()) {
             case MOVE_TO -> !AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)
-                    || isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), task.point(),
+                    || isNear(AgentRuntimeIdentityRuntime.botPosition(entry), task.point(),
                     task.precise() ? 8 : normalMoveArrivalDistance);
             case FOLLOW_UNTIL_NEAR -> {
                 Character target = followTargetResolver.apply(task.targetCharacterId());
                 yield target != null
-                        && AgentBotRuntimeIdentityRuntime.botMapId(entry) == target.getMapId()
-                        && isNear(AgentBotRuntimeIdentityRuntime.botPosition(entry), target.getPosition(), task.nearPx());
+                        && AgentRuntimeIdentityRuntime.botMapId(entry) == target.getMapId()
+                        && isNear(AgentRuntimeIdentityRuntime.botPosition(entry), target.getPosition(), task.nearPx());
             }
             case FOLLOW_OWNER, FOLLOW_TARGET, GRIND, STOP, DROP_ITEM -> true;
         };

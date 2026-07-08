@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -147,7 +147,7 @@ public final class AgentNavigationCommittedEdgeService {
         // even when the owner hasn't meaningfully moved. Relying on structural checks below
         // (start-region match, usability, arrival) is sufficient to detect actual invalidity.
         AgentBotNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
-        if (!edgeUsabilityChecker.isUsable(graph, AgentBotRuntimeIdentityRuntime.bot(entry), edge)) {
+        if (!edgeUsabilityChecker.isUsable(graph, AgentRuntimeIdentityRuntime.bot(entry), edge)) {
             return null;
         }
         if (AgentBotClimbStateRuntime.climbing(entry) && ropeEntryChecker.isRopeEntry(graph, edge)) {

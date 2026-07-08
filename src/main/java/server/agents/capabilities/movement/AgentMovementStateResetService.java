@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -18,7 +18,7 @@ public final class AgentMovementStateResetService {
     }
 
     public static void resetEntryState(AgentRuntimeEntry entry) {
-        AgentMovementPoseService.resetMotion(entry, AgentBotRuntimeIdentityRuntime.bot(entry).getPosition());
+        AgentMovementPoseService.resetMotion(entry, AgentRuntimeIdentityRuntime.bot(entry).getPosition());
         clearTransientState(entry);
     }
 

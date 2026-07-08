@@ -23,7 +23,7 @@ import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -43,7 +43,7 @@ public final class AgentFidgetService {
     }
 
     public static boolean tryHandleTick(AgentRuntimeEntry entry, Point targetPos, boolean runAiTick) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || targetPos == null) {
             clear(entry);
             return false;
@@ -121,7 +121,7 @@ public final class AgentFidgetService {
             return;
         }
 
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         int airSteerDir = ThreadLocalRandom.current().nextBoolean() ? 1 : -1;
         boolean spamAirSteer = isJumpFidget(mode) && ThreadLocalRandom.current().nextInt(100) < 35;
         AgentBotFidgetStateRuntime.start(
@@ -192,7 +192,7 @@ public final class AgentFidgetService {
         if (!isEligible(entry, botPos, targetPos, true) || AgentBotFidgetStateRuntime.expired(entry, now)) {
             return false;
         }
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return false;
         }
@@ -245,7 +245,7 @@ public final class AgentFidgetService {
     }
 
     public static boolean shouldStartSpeedMismatchFidget(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || botPos == null || targetPos == null) {
             return false;
         }
@@ -311,7 +311,7 @@ public final class AgentFidgetService {
     }
 
     private static boolean executeGrounded(AgentRuntimeEntry entry, Point botPos, Point targetPos, long now) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null) {
             return false;
         }
@@ -482,7 +482,7 @@ public final class AgentFidgetService {
     }
 
     private static void maybeBroadcastProneAttackVisual(AgentRuntimeEntry entry, long now) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null || bot.getMap() == null
                 || !AgentBotFidgetStateRuntime.crouching(entry)
                 || !AgentBotFidgetStateRuntime.visualDue(entry, now)) {

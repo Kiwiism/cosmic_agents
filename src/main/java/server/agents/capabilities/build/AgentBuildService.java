@@ -20,7 +20,7 @@ import server.agents.integration.AgentBotBuildRuntime;
 import server.agents.integration.AgentBotBuildStateRuntime;
 import server.agents.integration.AgentBotBuildStatusRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBuildService {
@@ -62,7 +62,7 @@ public final class AgentBuildService {
     public static void setApBuild(AgentRuntimeEntry entry, ApBuild build, String confirmMsg) {
         AgentBotBuildStateRuntime.setApBuild(entry, build);
         AgentBotBuildRuntime.confirmApBuild(entry, confirmMsg);
-        autoAssignAp(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+        autoAssignAp(entry, AgentRuntimeIdentityRuntime.bot(entry));
     }
 
     /**

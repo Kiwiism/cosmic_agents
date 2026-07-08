@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 
 import java.util.List;
 
@@ -76,7 +76,7 @@ class AgentFormationCommandRuntimeTest {
         Character leader = leader(904);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), leader, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             boolean handled = AgentFormationCommandRuntime.handleFormationCommand(
                     leader,
                     "formation",
@@ -86,7 +86,7 @@ class AgentFormationCommandRuntimeTest {
                     120);
 
             assertTrue(handled);
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(
+            replies.verify(() -> AgentReplyRuntime.queueReply(
                     eq(entry),
                     eq("formations: stagger/split/random/spread/left/right <px>, stack, tight, loose | snap <px/on/off>")));
         }

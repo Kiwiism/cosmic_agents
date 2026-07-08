@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import java.awt.Point;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 
@@ -26,9 +26,9 @@ public final class AgentGroundActionPlanner {
         if (stepX == 0) {
             return AgentGroundAction.idle();
         }
-        boolean canWalkStep = AgentGroundCollisionService.canWalkGroundStep(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
+        boolean canWalkStep = AgentGroundCollisionService.canWalkGroundStep(AgentRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
         if (!canWalkStep) {
-            boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(AgentBotRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
+            boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(AgentRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
                     || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {

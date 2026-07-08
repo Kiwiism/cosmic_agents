@@ -9,8 +9,8 @@ import server.agents.integration.AgentBotActivityStateRuntime;
 import server.agents.integration.AgentBotFarmAnchorStateRuntime;
 import server.agents.integration.AgentBotLlmRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
-import server.agents.integration.AgentBotReplyChannelStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 
 public final class AgentLlmReplyRuntime {
@@ -18,25 +18,25 @@ public final class AgentLlmReplyRuntime {
     }
 
     public static void maybeRespond(AgentRuntimeEntry entry, Character sender, String message) {
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || sender == null) {
+        if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || sender == null) {
             return;
         }
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AgentLlmReplyService.maybeRespond(replyRequest(entry, agent, sender), sender, message, AgentBotLlmRuntime::replyNow);
     }
 
     private static AgentLlmReplyRequest<AgentRuntimeEntry> replyRequest(AgentRuntimeEntry entry, Character agent, Character sender) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         return new AgentLlmReplyRequest<>(
                 entry,
-                AgentBotRuntimeIdentityRuntime.botId(entry),
-                AgentBotRuntimeIdentityRuntime.botName(entry),
-                AgentBotReplyChannelStateRuntime.replyChannel(entry),
-                AgentSenderRelation.resolve(agent, AgentBotRuntimeIdentityRuntime.owner(entry), sender),
+                AgentRuntimeIdentityRuntime.botId(entry),
+                AgentRuntimeIdentityRuntime.botName(entry),
+                AgentReplyChannelStateRuntime.replyChannel(entry),
+                AgentSenderRelation.resolve(agent, AgentRuntimeIdentityRuntime.owner(entry), sender),
                 new AgentLlmPromptContext(
                         agent,
-                        AgentBotRuntimeIdentityRuntime.hasBot(entry)
-                                ? AgentBotRuntimeIdentityRuntime.botName(entry)
+                        AgentRuntimeIdentityRuntime.hasBot(entry)
+                                ? AgentRuntimeIdentityRuntime.botName(entry)
                                 : "bot",
                         map,
                         AgentBotModeStateRuntime.grinding(entry),

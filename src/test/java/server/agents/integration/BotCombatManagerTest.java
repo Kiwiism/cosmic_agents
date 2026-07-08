@@ -78,7 +78,7 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMobTouchStateRuntime;
 import server.agents.integration.AgentBotMobTouchRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotSkillBuffDebugStateRuntime;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -1811,9 +1811,9 @@ class BotCombatManagerTest {
     }
 
     private static void runWithStubbedBotAfter(Runnable action) {
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     Mockito.mockStatic(AgentBotSchedulerRuntime.class, Mockito.CALLS_REAL_METHODS)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterDelay(anyLong(), any(Runnable.class)))
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     Mockito.mockStatic(AgentSchedulerRuntime.class, Mockito.CALLS_REAL_METHODS)) {
+            scheduler.when(() -> AgentSchedulerRuntime.afterDelay(anyLong(), any(Runnable.class)))
                     .thenAnswer(invocation -> null);
             action.run();
         }

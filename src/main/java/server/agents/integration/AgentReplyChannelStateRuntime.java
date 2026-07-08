@@ -7,8 +7,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 /**
  * Agent-owned adapter for AgentRuntimeEntry-backed reply-channel state.
  */
-public final class AgentBotReplyChannelStateRuntime {
-    private AgentBotReplyChannelStateRuntime() {
+public final class AgentReplyChannelStateRuntime {
+    private AgentReplyChannelStateRuntime() {
     }
 
     public static AgentReplyChannel replyChannel(AgentRuntimeEntry entry) {

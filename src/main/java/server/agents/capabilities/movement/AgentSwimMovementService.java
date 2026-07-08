@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -37,7 +37,7 @@ public final class AgentSwimMovementService {
             return;
         }
 
-        Point pos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
+        Point pos = AgentRuntimeIdentityRuntime.bot(entry).getPosition();
         int dx = targetPos.x - pos.x;
         int dy = targetPos.y - pos.y;
 

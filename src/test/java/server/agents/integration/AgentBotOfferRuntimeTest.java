@@ -7,8 +7,8 @@ import org.mockito.MockedStatic;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,10 +66,10 @@ class AgentBotOfferRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Runnable action = mock(Runnable.class);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
-             MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.randomDelayMs(1800, 2200)).thenReturn(1900L);
-            replies.when(() -> AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry, "queued")).thenReturn(1200L);
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
+             MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
+            scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(1800, 2200)).thenReturn(1900L);
+            replies.when(() -> AgentReplyRuntime.queueSayWithEstimatedDelay(entry, "queued")).thenReturn(1200L);
 
             AgentBotOfferRuntime.replyNow(entry, "reply");
             AgentBotOfferRuntime.queueSay(entry, "say");
@@ -80,14 +80,14 @@ class AgentBotOfferRuntimeTest {
             AgentBotOfferRuntime.afterRandomDelay(400, 600, action);
             long randomDelay = AgentBotOfferRuntime.randomDelayMs(1800, 2200);
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "reply"));
-            replies.verify(() -> AgentBotReplyRuntime.queueSay(entry, "say"));
-            replies.verify(() -> AgentBotReplyRuntime.sayMapNow(null, "map"));
-            replies.verify(() -> AgentBotReplyRuntime.sayNow(null, AgentReplyChannel.PARTY, "party"));
-            replies.verify(() -> AgentBotReplyRuntime.queueSayWithEstimatedDelay(entry, "queued"));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterDelay(500L, action));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(400, 600, action));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.randomDelayMs(1800, 2200));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
+            replies.verify(() -> AgentReplyRuntime.queueSay(entry, "say"));
+            replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "map"));
+            replies.verify(() -> AgentReplyRuntime.sayNow(null, AgentReplyChannel.PARTY, "party"));
+            replies.verify(() -> AgentReplyRuntime.queueSayWithEstimatedDelay(entry, "queued"));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(500L, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(400, 600, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(1800, 2200));
             assertEquals(1200L, queueDelay);
             assertEquals(1900L, randomDelay);
         }

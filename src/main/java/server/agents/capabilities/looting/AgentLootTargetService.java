@@ -7,7 +7,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 import server.maps.MapleMap;
@@ -74,7 +74,7 @@ public final class AgentLootTargetService {
      * and its immediate neighbours.
      */
     public static Point findNearestPatrolLootTarget(AgentRuntimeEntry entry, int patrolRegionId) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null) return null;
         if (hasAnyInventoryFull(agent)) return null;
         MapleMap map = agent.getMap();

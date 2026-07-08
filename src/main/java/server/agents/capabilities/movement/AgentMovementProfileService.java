@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -12,7 +12,7 @@ public final class AgentMovementProfileService {
     }
 
     public static boolean refreshMovementProfile(AgentRuntimeEntry entry) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AgentMovementProfile updated = AgentMovementProfile.fromCharacter(agent);
         if (updated.equals(AgentBotMovementStateRuntime.movementProfile(entry))) {
             return false;

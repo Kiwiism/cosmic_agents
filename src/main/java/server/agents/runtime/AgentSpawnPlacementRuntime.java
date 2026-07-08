@@ -12,7 +12,7 @@ import server.agents.integration.AgentBotDeathStateRuntime;
 import server.agents.integration.AgentBotMapStateRuntime;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickCadenceStateRuntime;
 import server.maps.MapleMap;
 
@@ -36,8 +36,8 @@ public final class AgentSpawnPlacementRuntime {
 
     private static AgentSpawnPlacementService.Hooks<AgentRuntimeEntry> hooks() {
         return new AgentSpawnPlacementService.Hooks<AgentRuntimeEntry>(
-                AgentBotRuntimeIdentityRuntime::bot,
-                AgentBotRuntimeIdentityRuntime::owner,
+                AgentRuntimeIdentityRuntime::bot,
+                AgentRuntimeIdentityRuntime::owner,
                 AgentSpawnPositionService::resolveSpawnPosition,
                 AgentMovementPoseService::teleportTo,
                 AgentMovementStateResetService::resetEntryStateAfterTeleport,

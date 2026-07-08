@@ -5,7 +5,7 @@ import server.agents.integration.AgentBotClimbStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Rope;
@@ -25,7 +25,7 @@ public final class AgentClimbMovementService {
     public static void tickClimbing(AgentRuntimeEntry entry, Point targetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
-            Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character agent = AgentRuntimeIdentityRuntime.bot(entry);
             AgentMotionTimerService.tickMotionTimers(entry);
             Point agentPosition = agent.getPosition();
             int dy = targetPos.y - agentPosition.y;

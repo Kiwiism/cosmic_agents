@@ -4,8 +4,8 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 
 
-import server.agents.integration.AgentBotMessageQueueStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentMessageQueueStateRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScrollReactionRuntime;
 import server.agents.integration.AgentBotScrollReactionStateRuntime;
 import client.Character;
@@ -99,7 +99,7 @@ public final class AgentScrollReactionService {
 
         for (List<? extends AgentRuntimeEntry> entries : allEntries) {
             for (AgentRuntimeEntry entry : entries) {
-                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+                Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (bot == null || bot.getId() == source.getId() || bot.getMapId() != mapId) {
                     continue;
                 }
@@ -121,7 +121,7 @@ public final class AgentScrollReactionService {
     }
 
     public static void maybeReact(AgentRuntimeEntry entry, int scrollerId, boolean success, int scrollSuccessRate, long now) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (entry == null || bot == null) {
             return;
         }
@@ -247,7 +247,7 @@ public final class AgentScrollReactionService {
     }
 
     private static boolean shouldQueueChat(AgentRuntimeEntry entry) {
-        return AgentBotMessageQueueStateRuntime.isIdle(entry);
+        return AgentMessageQueueStateRuntime.isIdle(entry);
     }
 
     private static int successExpression() {

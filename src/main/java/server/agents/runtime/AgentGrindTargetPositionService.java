@@ -9,7 +9,7 @@ import server.agents.integration.AgentBotGrindLootStateRuntime;
 import server.agents.integration.AgentBotGrindWanderStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -72,7 +72,7 @@ public final class AgentGrindTargetPositionService {
                                                      int stopDistance,
                                                      int grindLootRetrySuppressMs,
                                                      RegionResolver regionResolver) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = agent != null ? agent.getMap() : null;
         return resolveNoGrindTargetPosition(
                 entry,
@@ -93,7 +93,7 @@ public final class AgentGrindTargetPositionService {
             AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);
             return null;
         }
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (loot.isPickedUp() || agent == null || agent.getMap() == null
                 || agent.getMap().getMapObject(loot.getObjectId()) != loot) {
             AgentBotGrindLootStateRuntime.clearGrindLootTarget(entry);

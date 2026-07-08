@@ -25,6 +25,10 @@ Recent reconstruction notes:
   names after shell deletion. They are naming artifacts only, not dependencies
   on the removed bot package, and should be renamed by capability in a later
   semantic cleanup branch.
+- The first semantic cleanup slice renamed the foundational identity,
+  scheduler, reply-channel, reply-runtime, and message-queue adapters to
+  neutral `Agent*` names. This was a type/file/import rename only; behavior and
+  reply timing are unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -150,7 +154,7 @@ Recent reconstruction notes:
   `AgentBotOfferStateRuntime` and `AgentBotPendingTradeStateRuntime` over the
   Agent-owned trade state objects.
 - Message queue compatibility wrappers were removed from `BotEntry`.
-  Chat/reply queue callers already use `AgentBotMessageQueueStateRuntime` over
+  Chat/reply queue callers already use `AgentMessageQueueStateRuntime` over
   the Agent-owned `AgentMessageQueueState`.
 - Pending chat action compatibility wrappers were removed from `BotEntry`.
   Pending action reads/writes now enter through
@@ -1641,9 +1645,9 @@ Recent reconstruction notes:
   delegates directly to `AgentChatRuntime` with
   `AgentBotChatOrchestratorContext`.
 - Immediate Agent integration reply delivery now routes through
-  `AgentBotReplyRuntime.replyNow`, `visibleSayNow`, and `sayPartyNow`; scattered
+  `AgentReplyRuntime.replyNow`, `visibleSayNow`, and `sayPartyNow`; scattered
   Agent integration facades no longer call `BotManager.botReply`/visible
-  delivery directly. `AgentBotReplyRuntime` remains the temporary adapter to the
+  delivery directly. `AgentReplyRuntime` remains the temporary adapter to the
   legacy BotManager packet-delivery methods.
 - Loot/gear offer owner-directed replies, queued offer prompts, estimated prompt
   delay reads, and delayed offer actions now enter through
@@ -1681,7 +1685,7 @@ Recent reconstruction notes:
   `AgentPotionService` no longer reaches directly into the lower-level scheduler
   runtime for potion-owned timing. Visible potion request/offer chat remains
   unchanged on the legacy map-visible say path.
-- Bot physics identity reads now enter through `AgentBotRuntimeIdentityRuntime`;
+- Bot physics identity reads now enter through `AgentRuntimeIdentityRuntime`;
   `BotPhysicsEngine` no longer reads `entry.bot` directly for swim motion,
   stance resolution, movement snapshots, or character-state synchronization,
   while the same BotEntry-backed character reference and movement behavior are
@@ -1756,28 +1760,28 @@ Recent reconstruction notes:
   runtime for combat-owned alert timing, and alert timing and stance reset
   behavior are unchanged.
 - Inventory, trade, meso-transfer, and drop owner-directed replies now route
-  through `AgentBotReplyRuntime`; delayed trade thanks/freebie callbacks now use
-  `AgentBotSchedulerRuntime` while preserving the legacy visible `botSay`
+  through `AgentReplyRuntime`; delayed trade thanks/freebie callbacks now use
+  `AgentSchedulerRuntime` while preserving the legacy visible `botSay`
   delivery and random reply pools.
 - LLM split-message owner-directed replies now enter through
   `AgentBotLlmRuntime`; `BotLlmReplyManager` no longer reaches directly into
   the lower-level reply runtime, and the existing LLM executor,
   multi-message delay, and sanitization/splitting behavior are unchanged.
 - Bot dismissal acknowledgement scheduling now routes through
-  `AgentBotSchedulerRuntime`; delivery intentionally remains on the local
-  `BotManager.botReply` method because `AgentBotReplyRuntime` currently bridges
+  `AgentSchedulerRuntime`; delivery intentionally remains on the local
+  `BotManager.botReply` method because `AgentReplyRuntime` currently bridges
   back to that delivery method.
 - Remaining BotManager fire-and-forget callback scheduling for follow-target
   activation, spawn status checks, recruit greetings, owner pickup scans, scroll
-  reactions, and relog greetings now routes through `AgentBotSchedulerRuntime`.
-- Immediate Agent reply delivery now lives in `AgentBotReplyRuntime` instead of
+  reactions, and relog greetings now routes through `AgentSchedulerRuntime`.
+- Immediate Agent reply delivery now lives in `AgentReplyRuntime` instead of
   bridging back through `BotManager.botReply`, `botVisibleSay`, or
   `botSayParty`. `BotManager` keeps those methods as compatibility wrappers,
   and chat text sanitization now lives in `AgentChatTextSanitizer`.
 - BotManager's remaining internal owner-directed reply sites now call
-  `AgentBotReplyRuntime.replyNow` directly; `BotManager.botReply` remains only a
+  `AgentReplyRuntime.replyNow` directly; `BotManager.botReply` remains only a
   compatibility wrapper for callers that have not been migrated yet.
-- `AgentBotSchedulerRuntime` now schedules directly through `TimerManager`; the
+- `AgentSchedulerRuntime` now schedules directly through `TimerManager`; the
   legacy `BotManager.scheduleBotReplyAction`/`after` bridge has been removed.
 - Agent integration tests for build, session, pending-action, transfer, social,
   and combat delayed callbacks now assert the Agent reply/scheduler runtime
@@ -1805,10 +1809,10 @@ Recent reconstruction notes:
   `AgentBotManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
   BotManager status boundary used by the tick shell.
 - BotManager-triggered queue/reply/map/party delivery now calls
-  `AgentBotReplyRuntime` directly; the pure manager reply pass-through adapter
+  `AgentReplyRuntime` directly; the pure manager reply pass-through adapter
   was removed while preserving internal command/error/formation replies and
   compatibility delivery wrappers.
-- BotManager-triggered delayed callbacks now call `AgentBotSchedulerRuntime`
+- BotManager-triggered delayed callbacks now call `AgentSchedulerRuntime`
   directly; the pure manager scheduler pass-through was removed for
   follow-target, dismiss, ownership-transfer, pickup-scan, scroll-reaction, and
   relog-greeting delays.
@@ -1821,7 +1825,7 @@ Recent reconstruction notes:
   `pendingGearPromptAt` entry field directly, while the same legacy field and
   timing semantics remain intact behind the Agent-owned offer boundary.
 - Agent reply queue ownership now uses narrow queue operations on
-  `AgentReplyQueue.State` and `AgentBotMessageQueueStateRuntime`; production
+  `AgentReplyQueue.State` and `AgentMessageQueueStateRuntime`; production
   reply draining no longer depends on direct `Deque` access while the same
   BotEntry-backed queue, synchronization lock, spacing estimate, and dispatch
   behavior remain in place.
@@ -1895,43 +1899,43 @@ Recent reconstruction notes:
   scheduler runtimes directly while preserving the same toggle, buff-query, and
   respec timings and replies.
 - Equipment visible replies, unequip, unequip-all, auto-equip-debug, and
-  auto-equip callbacks now call the existing `AgentBotReplyRuntime` and
-  `AgentBotSchedulerRuntime` directly; the pure equipment reply/scheduler
+  auto-equip callbacks now call the existing `AgentReplyRuntime` and
+  `AgentSchedulerRuntime` directly; the pure equipment reply/scheduler
   pass-through adapters were removed while preserving equipment behavior.
 - Inventory, trade, drop, and meso reply/timing bridge methods now call the
-  existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the
+  existing `AgentReplyRuntime` and `AgentSchedulerRuntime` directly; the
   pure inventory reply/scheduler pass-through adapters were removed while
   preserving inventory behavior.
 - Combat warning/status reply and delay bridge methods now call the existing
-  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure
+  `AgentReplyRuntime` and `AgentSchedulerRuntime` directly; the pure
   combat reply/scheduler pass-through adapters were removed while preserving
   combat behavior.
 - Ammo-sharing reply, delay, random-delay, and delay-sampling bridge methods
-  now call the existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`
+  now call the existing `AgentReplyRuntime` and `AgentSchedulerRuntime`
   directly; the pure ammo reply/scheduler pass-through adapters were removed
   while preserving ammo-sharing behavior.
 - Potion-sharing reply, delay, random-delay, and delay-sampling bridge methods
-  now call the existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime`
+  now call the existing `AgentReplyRuntime` and `AgentSchedulerRuntime`
   directly; the pure potion reply/scheduler pass-through adapters were removed
   while preserving potion-sharing behavior.
 - Maker automation reply, delay, and random-delay bridge methods now call the
-  existing `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the
+  existing `AgentReplyRuntime` and `AgentSchedulerRuntime` directly; the
   pure Maker reply/scheduler pass-through adapters were removed while
   preserving Maker behavior.
 - Shop automation owner replies, map-visible replies, fixed-delay callbacks,
   and delay-sampling bridge methods now call the existing
-  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure shop
+  `AgentReplyRuntime` and `AgentSchedulerRuntime` directly; the pure shop
   reply/scheduler pass-through adapters were removed while preserving shop
   behavior.
-- LLM dialogue replies now call the existing `AgentBotReplyRuntime` directly;
+- LLM dialogue replies now call the existing `AgentReplyRuntime` directly;
   the pure LLM reply pass-through adapter was removed while preserving LLM
   reply delivery behavior.
-- PQ queued dialogue now calls the existing `AgentBotReplyRuntime` directly;
+- PQ queued dialogue now calls the existing `AgentReplyRuntime` directly;
   the pure PQ reply pass-through adapter was removed while preserving PQ
   dialogue behavior.
 - Scroll-reaction queued dialogue, fixed-delay callbacks, and delay-sampling
-  bridge methods now call the existing `AgentBotReplyRuntime` and
-  `AgentBotSchedulerRuntime` directly; the pure scroll-reaction reply/scheduler
+  bridge methods now call the existing `AgentReplyRuntime` and
+  `AgentSchedulerRuntime` directly; the pure scroll-reaction reply/scheduler
   pass-through adapters were removed while preserving scroll-reaction behavior.
 - Supply reply and scheduler pass-through adapters were removed.
   Supply request queued replies and random-delay callbacks now call the existing
@@ -1946,24 +1950,24 @@ Recent reconstruction notes:
   the same utility behavior.
 - Build/AP/SP/job-advance immediate replies, queued build-status replies, and
   job-advance random-delay callbacks now call the existing
-  `AgentBotReplyRuntime` and `AgentBotSchedulerRuntime` directly; the pure
+  `AgentReplyRuntime` and `AgentSchedulerRuntime` directly; the pure
   build reply/scheduler pass-through adapters were removed while preserving
   build behavior.
 - Gear/loot offer immediate replies, queued replies, map/channel dialogue,
   queued-say delay estimation, fixed-delay callbacks, random-delay callbacks,
-  and delay sampling now call the existing `AgentBotReplyRuntime` and
-  `AgentBotSchedulerRuntime` directly; the pure offer reply/scheduler
+  and delay sampling now call the existing `AgentReplyRuntime` and
+  `AgentSchedulerRuntime` directly; the pure offer reply/scheduler
   pass-through adapters were removed while preserving offer behavior.
 - Transfer reply and scheduler pass-through adapters were removed.
   Transfer/item-query immediate replies, fixed-delay callbacks, random-delay
   callbacks, and delay sampling now call the existing reply and scheduler
   runtimes directly while preserving the same transfer behavior.
-- Manager spawn-status delayed callbacks now call `AgentBotSchedulerRuntime`
+- Manager spawn-status delayed callbacks now call `AgentSchedulerRuntime`
   directly; the pure manager scheduler pass-through was removed while
   preserving status-check timing.
 - Movement/follow/grind/stop/fidget/greeting immediate replies, queued replies,
-  and random-delay callbacks now call the existing `AgentBotReplyRuntime` and
-  `AgentBotSchedulerRuntime` directly; the pure movement reply/scheduler
+  and random-delay callbacks now call the existing `AgentReplyRuntime` and
+  `AgentSchedulerRuntime` directly; the pure movement reply/scheduler
   pass-through adapters were removed while preserving movement chat behavior.
 - Gear-prompt reservation state now enters through the narrow
   `AgentBotOfferStateRuntime` adapter; offer scheduling keeps BotEntry as the
@@ -1978,7 +1982,7 @@ Recent reconstruction notes:
   as the temporary backing store but no longer reads or mutates AP/SP prompt
   fields directly.
 - Chat message queue and message-sending state now enter through the narrow
-  `AgentBotMessageQueueStateRuntime` adapter; reply queue orchestration and
+  `AgentMessageQueueStateRuntime` adapter; reply queue orchestration and
   scroll-reaction readiness checks keep BotEntry as the temporary backing store
   but no longer read queue fields directly.
 - Scroll reaction cooldown, load, and per-scroller streak state now enter
@@ -2224,7 +2228,7 @@ Recent reconstruction notes:
   recovery reset keep BotEntry as the temporary backing store but no longer read
   or write `tickFailureCount` or `tickFailureWindowStartedAtMs` directly outside
   the adapter.
-- Reply-channel state now enters through `AgentBotReplyChannelStateRuntime`;
+- Reply-channel state now enters through `AgentReplyChannelStateRuntime`;
   BotManager command routing/reply delivery, Agent reply runtime delivery, and
   AgentOfferService auto-accept replies keep BotEntry as the temporary backing
   store but no longer read or write `replyChannel` directly outside the adapter.
@@ -2320,37 +2324,37 @@ Recent reconstruction notes:
   the temporary backing store but no longer reads or cancels `task` directly in
   production.
 - Runtime identity lookup state now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotManager follow-target filtering,
+  `AgentRuntimeIdentityRuntime`; BotManager follow-target filtering,
   ownership transfer, active-owner lookup, and name lookup keep BotEntry as the
   temporary backing store but no longer read the corresponding `bot`/`owner`
   identity fields directly in those paths.
 - Runtime identity local extraction now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotManager normalization, formation,
+  `AgentRuntimeIdentityRuntime`; BotManager normalization, formation,
   target snapshots, retreat selection, grind loot, tick shell, tick-failure
   handling, follow setup, local movement checks, and movement-only stepping keep
   BotEntry as the temporary backing store but no longer initialize local
   `Character bot`/`Character owner` variables directly from `entry.bot` or
   `entry.owner`.
 - Runtime identity side-effect arguments now enter through
-  `AgentBotRuntimeIdentityRuntime`; BotManager pickup auto-equip, potion-share
+  `AgentRuntimeIdentityRuntime`; BotManager pickup auto-equip, potion-share
   mode checks, spawn party join, owner-gained-equip notifications, and
   compatibility reply delivery keep BotEntry as the temporary backing store but
   no longer pass `entry.bot` or `entry.owner` directly in those calls.
 - Runtime identity map/position reads now enter through
-  `AgentBotRuntimeIdentityRuntime`; BotManager group supply responder
+  `AgentRuntimeIdentityRuntime`; BotManager group supply responder
   selection, pending-offer map checks, owner-inactive town checks, away
   safe-mode map checks, town cluster targeting, farm/patrol setup, script task
   completion, swim-map detection, and movement cleanup/stuck detection keep
   BotEntry as the temporary backing store but no longer read `entry.bot`
   map/position fields directly in those paths.
 - Remaining BotManager runtime identity reads now enter through
-  `AgentBotRuntimeIdentityRuntime`; test tick execution, leader refresh,
+  `AgentRuntimeIdentityRuntime`; test tick execution, leader refresh,
   farm/patrol guards, owner-follow reset, script item drop, follow-target
   resolution, queued script ticking, cheap script movement checks, and
   movement-only stepping keep BotEntry as the temporary backing store but no
   longer read `entry.bot` or `entry.owner` directly in production code.
 - BotMovementManager runtime identity reads now enter through
-  `AgentBotRuntimeIdentityRuntime`; movement profile refresh, state reset,
+  `AgentRuntimeIdentityRuntime`; movement profile refresh, state reset,
   climb/air/swim/ground movement, mob-avoidance region checks, ground step
   resolution, unstuck jumps, and movement broadcast keep BotEntry as the
   temporary backing store but no longer read `entry.bot` directly in production.
@@ -2371,7 +2375,7 @@ Recent reconstruction notes:
   the temporary backing store but no longer read `inAir`, `climbing`,
   `downJumpPending`, or `climbRope` directly in production.
 - BotNavigationManager runtime identity reads now enter through
-  `AgentBotRuntimeIdentityRuntime`; graph lookup/warmup, committed-edge
+  `AgentRuntimeIdentityRuntime`; graph lookup/warmup, committed-edge
   execution, warmup notification, edge usability checks, waypoint selection,
   current-region resolution, and follow-anchor handling keep BotEntry as the
   temporary backing store but no longer read `entry.bot` or `entry.owner`
@@ -2382,7 +2386,7 @@ Recent reconstruction notes:
   BotEntry as the temporary backing store but no longer read `physX`, `hspeed`,
   `groundPhysicsCarryMs`, or `shopVisitPending` directly in production.
 - BotInventoryManager runtime identity reads now enter through
-  `AgentBotRuntimeIdentityRuntime`; passive pickup ownership, patrol-loot
+  `AgentRuntimeIdentityRuntime`; passive pickup ownership, patrol-loot
   lookup, manual trade handling, transfer setup, auto-equip handoff,
   transferable item selection, recipient resolution, and slow-path logging keep
   BotEntry as the temporary backing store but no longer read `entry.bot` or
@@ -2421,7 +2425,7 @@ Recent reconstruction notes:
   temporary backing store but no longer read or write `facingDir`, `inAir`,
   `climbing`, `moveDir`, or `movementProfile` directly in production.
 - Combat runtime identity reads now enter through
-  `AgentBotRuntimeIdentityRuntime`; BotCombatManager jump-heal leader
+  `AgentRuntimeIdentityRuntime`; BotCombatManager jump-heal leader
   resolution and delayed alert-stance broadcasts keep BotEntry as the temporary
   backing store but no longer read `entry.owner` or `entry.bot` directly in
   production.
@@ -2464,7 +2468,7 @@ Recent reconstruction notes:
   and cleanup keep BotEntry as the temporary backing store but no longer read or
   write shop visit fields directly in production. Shop approach graph profile
   lookup now reads through `AgentBotMovementStateRuntime`, and delayed abort
-  identity reads through `AgentBotRuntimeIdentityRuntime`.
+  identity reads through `AgentRuntimeIdentityRuntime`.
 - Offer request/proactive-offer state now enters through
   `AgentBotOfferStateRuntime`; AgentOfferService owner upgrade request memory,
   proactive shared-loot offer checks, accepted/declined offer callbacks, sibling
@@ -2472,30 +2476,30 @@ Recent reconstruction notes:
   temporary backing store but no longer read `requestedUpgradeItemIds`,
   `proactiveUpgradeOffers`, `owner`, or `bot` directly in production.
 - Potion sharing and passive recovery gates now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
   AgentPotionService owner lookup, donor bot selection, delayed low-supply
   replies, transfer donor identity, and standing-still recovery checks keep
   BotEntry as the temporary backing store but no longer read `owner`, `bot`,
   `inAir`, `climbing`, or `moveDir` directly in production.
-- Ammo sharing identity now enters through `AgentBotRuntimeIdentityRuntime`;
+- Ammo sharing identity now enters through `AgentRuntimeIdentityRuntime`;
   AgentAmmoService low-ammo request owner lookup, owner-request sharing, sibling
   donor scans, and delayed transfer donor identity keep BotEntry as the
   temporary backing store but no longer read `owner` or `bot` directly in
   production.
 - AP build assignment identity now enters through
-  `AgentBotRuntimeIdentityRuntime`; AgentBuildService set-build confirmation and
+  `AgentRuntimeIdentityRuntime`; AgentBuildService set-build confirmation and
   immediate AP assignment keep BotEntry as the temporary backing store but no
   longer read `bot` directly in production.
 - Maker automation bot identity now enters through
-  `AgentBotRuntimeIdentityRuntime`; AgentMakerService crystal creation,
+  `AgentRuntimeIdentityRuntime`; AgentMakerService crystal creation,
   disassembly, batch start, and delayed batch step checks keep BotEntry as the
   temporary backing store but no longer read `bot` directly in production.
 - Scroll reaction bot identity now enters through
-  `AgentBotRuntimeIdentityRuntime`; BotScrollReactionManager range filtering,
+  `AgentRuntimeIdentityRuntime`; BotScrollReactionManager range filtering,
   delayed reaction eligibility, and emote side effects keep BotEntry as the
   temporary backing store but no longer read `bot` directly in production.
 - Fidget bot identity and movement profile reads now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
   AgentFidgetService tick eligibility, fidget origin capture, walk-step
   calculations, grounded execution, diagonal/sideways direction selection, and
   prone visual broadcast keep BotEntry as the temporary backing store but no
@@ -2539,12 +2543,12 @@ Recent reconstruction notes:
   temporary backing store but no longer read or write BotEntry fields directly
   in production.
 - Navigation debug overlay identity and active-edge reads now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotNavigationDebugStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentBotNavigationDebugStateRuntime`;
   BotNavigationDebugOverlay path rendering, path-log messages, multi-bot
   selection names, and committed-edge status keep BotEntry as the temporary
   backing store but no longer read `bot` or `navEdge` directly in production.
 - Path logger identity, map, and movement-profile reads now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentBotMovementStateRuntime`;
   BotPathLogger tick capture, graph snapshot resolution, region resolution,
   movement graph summaries, walk-step calculation, and path query calls keep
   BotEntry as the temporary backing store but no longer read `bot` or
@@ -2557,11 +2561,11 @@ Recent reconstruction notes:
   read climb, airborne, crouch, down-jump, velocity, or active-edge fields
   directly in production.
 - Bot command target-name resolution now enters through
-  `AgentBotRuntimeIdentityRuntime` and the Agent-owned
+  `AgentRuntimeIdentityRuntime` and the Agent-owned
   `AgentBotCommandParser`; targeted command matching behavior is unchanged, and
   the old bot-package command parser shim has been removed.
 - Starter-kit job advancement now lives in `AgentStarterKitService` and reads
-  identity through `AgentBotRuntimeIdentityRuntime`; job-change, starter-kit
+  identity through `AgentRuntimeIdentityRuntime`; job-change, starter-kit
   grant, auto-equip, and build-status ordering are unchanged.
 - KPQ coupon-target loot eligibility now enters through `AgentBotPqRuntime`;
   AgentLootEligibility preserves coupon/pass/rice-cake and quest-item filtering
@@ -2575,7 +2579,7 @@ Recent reconstruction notes:
   longer reading or writing stage-5 claimed state directly on BotEntry in
   production.
 - LLM identity and reply-channel reads now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotReplyChannelStateRuntime`;
+  `AgentRuntimeIdentityRuntime` and `AgentReplyChannelStateRuntime`;
   BotLlmReplyManager, PromptBuilder, SituationBuilder, and SenderRelation
   preserve reply gating, prompt wording, memory keys, and relation resolution
   while no longer reading bot, owner, map, or reply-channel state directly from
@@ -2590,7 +2594,7 @@ Recent reconstruction notes:
   reading or writing KPQ or script runtime fields directly on BotEntry in
   production.
 - Fallback movement identity, map, movement-profile, and movement-gate reads
-  now enter through `AgentBotRuntimeIdentityRuntime`,
+  now enter through `AgentRuntimeIdentityRuntime`,
   `AgentBotMovementStateRuntime`, and `AgentBotMovementPhysicsStateRuntime`;
   `AgentFallbackMovementService` preserves rope attach/jump, swim jump-up,
   down-jump, ledge walk-off, and fallback jump behavior while no longer reading
@@ -2684,17 +2688,17 @@ Recent reconstruction notes:
   behavior while no longer reading or writing `physX`, `physY`, `hspeed`, or
   `groundPhysicsCarryMs` directly in production.
 - Combat grind-region sibling occupancy and sibling gear-offer targeting now
-  enter through `AgentBotRuntimeIdentityRuntime` and `AgentBotModeStateRuntime`;
+  enter through `AgentRuntimeIdentityRuntime` and `AgentBotModeStateRuntime`;
   BotCombatManager and AgentOfferService preserve sibling filtering, map matching,
   and recipient selection while no longer reading sibling bot/owner/grinding
   fields directly in those paths.
 - BotManager sibling target discovery, bot-id lookup, replacement cancellation,
   removal matching, and transfer authorization identity now enter through
-  `AgentBotRuntimeIdentityRuntime` and `AgentScheduledTaskRuntime`; the registry
+  `AgentRuntimeIdentityRuntime` and `AgentScheduledTaskRuntime`; the registry
   behavior, task cancellation timing, and authorization inputs remain unchanged
   while those paths stop reading BotEntry identity/task fields directly.
 - BotManager first-bot lookup now enters through
-  `AgentBotRuntimeIdentityRuntime`; public owner-to-bot lookup preserves the
+  `AgentRuntimeIdentityRuntime`; public owner-to-bot lookup preserves the
   same first-entry behavior while no longer reading the BotEntry bot field
   directly.
 - KPQ stage-1 script context access now enters through `BotScriptContext`
@@ -4802,7 +4806,7 @@ Current physics correction:
   `AgentBotScrollReactionStateRuntime` and `AgentScrollReactionState`.
 - Reply-channel wrappers have been removed from `BotEntry`. Map/party/whisper
   routing and null-to-map normalization now route through
-  `AgentBotReplyChannelStateRuntime` and the Agent-owned
+  `AgentReplyChannelStateRuntime` and the Agent-owned
   `AgentReplyChannelState`.
 - Navigation debug, target, and active-edge wrappers have been removed from
   `BotEntry`. Path logging, last decision/block reason, graph-warmup fallback,
@@ -4858,7 +4862,7 @@ Current physics correction:
   `AgentBotMovementStateRuntime`.
 - Legacy JavaBean identity aliases `BotEntry.getBot()` and
   `BotEntry.getOwner()` have been removed. Agent identity reads now route
-  through `AgentBotRuntimeIdentityRuntime`.
+  through `AgentRuntimeIdentityRuntime`.
 - Down-jump pending/grace-period state now lives in `AgentDownJumpState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while crouch-then
   jump pending state and airborne grace-period timing route through the Agent
@@ -4909,71 +4913,71 @@ Current physics correction:
   bucketing, and null-to-base normalization route through the Agent movement
   state runtime adapter.
 - Chat status and leader integration now read/write live Agent identity through
-  `AgentBotRuntimeIdentityRuntime` and `AgentBotLeaderStateRuntime` rather than
+  `AgentRuntimeIdentityRuntime` and `AgentBotLeaderStateRuntime` rather than
   direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
   calls. The temporary shell methods remain only until all legacy-shaped callers
   are migrated.
 - Utility chat callbacks now resolve bot/leader identity through
-  `AgentBotRuntimeIdentityRuntime` before invoking the same trade, shop, and
+  `AgentRuntimeIdentityRuntime` before invoking the same trade, shop, and
   maker side effects. This keeps legacy scheduling and reply behavior intact
   while removing another direct `BotEntry` identity dependency from Agent
   utility dialogue.
 - Transfer chat command evaluation now resolves the live Agent character through
-  `AgentBotRuntimeIdentityRuntime` before scheduling meso transfer, inventory
+  `AgentRuntimeIdentityRuntime` before scheduling meso transfer, inventory
   transfer scans, and named-item queries. Legacy async timing, request ordering,
   and reply decisions are unchanged.
 - Supply chat requests now resolve the current leader through
-  `AgentBotRuntimeIdentityRuntime` before potion counting and ammo weapon checks.
+  `AgentRuntimeIdentityRuntime` before potion counting and ammo weapon checks.
   Potion share, ammo share, and reply routing behavior is unchanged.
 - Report operation callbacks now resolve the live Agent through
-  `AgentBotRuntimeIdentityRuntime` before invoking the existing report and
+  `AgentRuntimeIdentityRuntime` before invoking the existing report and
   request-upgrade side effects. Help, gear, skill, stat, inventory, meso, exp,
   scroll, potion, and debug reporting remain behavior-identical.
 - Control-triggered buff debug reports now resolve the live Agent through
-  `AgentBotRuntimeIdentityRuntime` before forwarding to the existing chat report
+  `AgentRuntimeIdentityRuntime` before forwarding to the existing chat report
   adapter. Report content and delivery behavior are unchanged.
 - Build chat callbacks now resolve the live Agent through
-  `AgentBotRuntimeIdentityRuntime` before AP build resolution, AP prompt
+  `AgentRuntimeIdentityRuntime` before AP build resolution, AP prompt
   creation, and SP auto-assignment. Existing AP/SP/job advancement behavior and
   replies remain unchanged.
 - Active-mode preparation now resolves Agent and leader identity through
-  `AgentBotRuntimeIdentityRuntime` before auto-equip, autopot setup, pot-share
+  `AgentRuntimeIdentityRuntime` before auto-equip, autopot setup, pot-share
   checks, and sibling gear suggestions. The legacy mode-entry side effects and
   cooldown behavior remain unchanged.
 - Build/status checks now resolve the current leader through
-  `AgentBotRuntimeIdentityRuntime` before recommended gear prompts and spawn
+  `AgentRuntimeIdentityRuntime` before recommended gear prompts and spawn
   upgrade gating. Build prompt, AP/SP assignment, idle checks, and offer
   behavior remain unchanged.
 - Equipment chat callbacks now resolve Agent and leader identity through
-  `AgentBotRuntimeIdentityRuntime` before unequip, debug, and auto-equip side
+  `AgentRuntimeIdentityRuntime` before unequip, debug, and auto-equip side
   effects. Scheduling, movement-stop behavior, replies, and pending-offer input
   remain unchanged.
 - Control chat callbacks now resolve the live Agent through
-  `AgentBotRuntimeIdentityRuntime` before buff summaries and AP/SP respec
+  `AgentRuntimeIdentityRuntime` before buff summaries and AP/SP respec
   commands. Toggle state writes, delays, and replies remain unchanged.
 - Movement diagnostics now resolve Agent and leader identity through
-  `AgentBotRuntimeIdentityRuntime` before creating movement snapshots and
+  `AgentRuntimeIdentityRuntime` before creating movement snapshots and
   path-log sessions. Snapshot content, defensive point copies, and navigation
   debug state behavior remain unchanged.
 - Pending chat-action callbacks now resolve the live Agent through
-  `AgentBotRuntimeIdentityRuntime` before item-choice execution and skill-tree
+  `AgentRuntimeIdentityRuntime` before item-choice execution and skill-tree
   follow-up handling. Pending-action state changes, delays, and replies remain
   unchanged.
 - Social fame and recommended-gear report delivery now resolve Agent/leader
-  identity through `AgentBotRuntimeIdentityRuntime`. Fame target resolution,
+  identity through `AgentRuntimeIdentityRuntime`. Fame target resolution,
   fame status checks, report delivery, and offer recommendation behavior remain
   unchanged.
 - Chat orchestration and AFK-return status adapters now resolve live Agent
-  identity through `AgentBotRuntimeIdentityRuntime` for job/level checks and
+  identity through `AgentRuntimeIdentityRuntime` for job/level checks and
   face-expression side effects. Dialogue classification and welcome-back
   behavior remain unchanged.
 - Movement chat callbacks now resolve Agent and leader identity through
-  `AgentBotRuntimeIdentityRuntime` before farm/patrol/move-here targets,
+  `AgentRuntimeIdentityRuntime` before farm/patrol/move-here targets,
   follow/grind supply checks, fidget expressions, and greeting status checks.
   Existing delays, commands, replies, and position-copy behavior remain
   unchanged.
 - Session lifecycle callbacks now resolve Agent and leader identity through
-  `AgentBotRuntimeIdentityRuntime` before relog/logout persistence,
+  `AgentRuntimeIdentityRuntime` before relog/logout persistence,
   disconnects, relog metadata capture, and owner-away safe-mode fanout. Existing
   confirmation prompts, delay windows, and lifecycle side effects remain
   unchanged.
@@ -5057,7 +5061,7 @@ Current physics correction:
   index/list state, marks the same all-items-added flag, clears the same timer,
   and sends the same trade-window chat line.
 - Reply delivery adapters now accept `AgentRuntimeEntry` at the
-  `AgentBotReplyRuntime` and `AgentBotInventoryRuntime` boundaries. The same
+  `AgentReplyRuntime` and `AgentBotInventoryRuntime` boundaries. The same
   reply-channel, message-queue, identity, scheduler, whisper, party, and map
   broadcast paths are used; this only moves the adapter seam off the bot shell.
 - Trade tick/control helpers now accept `AgentRuntimeEntry` for sequence start,

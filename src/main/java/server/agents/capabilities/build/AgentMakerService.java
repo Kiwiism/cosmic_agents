@@ -10,7 +10,7 @@ import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.integration.AgentBotMakerRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -51,7 +51,7 @@ public final class AgentMakerService {
     }
 
     public static void handleMakeCrystals(AgentRuntimeEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
         }
@@ -71,7 +71,7 @@ public final class AgentMakerService {
     }
 
     public static void handleDisassembleTrash(AgentRuntimeEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
         }
@@ -141,7 +141,7 @@ public final class AgentMakerService {
     }
 
     private static void startBatch(AgentRuntimeEntry entry, int total, String[] verbs, String noun, BatchStep step) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         String verb = verbs[ThreadLocalRandom.current().nextInt(verbs.length)];
         String msg = "ok " + verb + " " + total + " " + plural(noun, total);
         if (total > LONG_BATCH_THRESHOLD) {
@@ -155,7 +155,7 @@ public final class AgentMakerService {
     }
 
     private static void runStep(AgentRuntimeEntry entry, BatchStep step, String noun, int epoch, int done) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !bot.isLoggedin()) {
             if (bot != null) {
                 ACTIVE.remove(bot.getId());

@@ -28,7 +28,7 @@ public final class AgentBotChatReportRuntime {
 
     public static AgentChatReportFlow.ReportCallbacks reportCallbacks(AgentRuntimeEntry entry) {
         return AgentChatReportRuntime.reportCallbacks(
-                AgentBotSchedulerRuntime::afterRandomDelay,
+                AgentSchedulerRuntime::afterRandomDelay,
                 reportOperations(entry));
     }
 
@@ -41,82 +41,82 @@ public final class AgentBotChatReportRuntime {
 
             @Override
             public void requestUpgrade() {
-                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void recommendedGear() {
-                reportRecommendedGear(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportRecommendedGear(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void skills() {
-                reportSkills(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportSkills(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void stats() {
-                reportStats(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportStats(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void movementStats() {
-                reportMovementStats(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportMovementStats(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void range() {
-                reportRange(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportRange(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void build() {
-                reportBuild(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportBuild(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void inventory() {
-                reportInventory(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportInventory(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void mesos() {
-                reportMesos(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportMesos(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void exp() {
-                reportExp(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportExp(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void inventorySlots() {
-                reportInventorySlots(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportInventorySlots(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void scrolls() {
-                reportScrolls(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportScrolls(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void potions() {
-                reportPotions(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportPotions(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void debugStats() {
-                reportDebugStats(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportDebugStats(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void critDebug() {
-                reportCritDebug(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportCritDebug(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
             public void potDebug() {
-                reportPotDebug(entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                reportPotDebug(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
         };
     }
@@ -202,11 +202,11 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportHelp(AgentRuntimeEntry entry) {
-        AgentChatReportRuntime.reportHelp(line -> AgentBotReplyRuntime.queueReply(entry, line));
+        AgentChatReportRuntime.reportHelp(line -> AgentReplyRuntime.queueReply(entry, line));
     }
 
     public static void reportRecommendedGear(AgentRuntimeEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         AgentChatReportRuntime.reportRecommendedGear(
                 AgentBotStatusRuntime.recommendedGearReportState(entry),
                 AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner),
@@ -214,10 +214,10 @@ public final class AgentBotChatReportRuntime {
     }
 
     private static void reportLine(AgentRuntimeEntry entry, String line) {
-        AgentChatReportRuntime.reportLine(line, replyLine -> AgentBotReplyRuntime.queueReply(entry, replyLine));
+        AgentChatReportRuntime.reportLine(line, replyLine -> AgentReplyRuntime.queueReply(entry, replyLine));
     }
 
     private static void reportLines(AgentRuntimeEntry entry, Iterable<String> lines) {
-        AgentChatReportRuntime.reportLines(lines, line -> AgentBotReplyRuntime.queueReply(entry, line));
+        AgentChatReportRuntime.reportLines(lines, line -> AgentReplyRuntime.queueReply(entry, line));
     }
 }

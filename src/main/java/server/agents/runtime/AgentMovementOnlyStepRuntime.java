@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickStateRuntime;
 
 import java.awt.Point;
@@ -19,7 +19,7 @@ public final class AgentMovementOnlyStepRuntime {
     }
 
     public static boolean stepMovementOnly(AgentRuntimeEntry entry, long tickAtMs, MovementOnlyStepConfig config) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
+        if (!AgentRuntimeIdentityRuntime.hasBot(entry)) {
             return false;
         }
 

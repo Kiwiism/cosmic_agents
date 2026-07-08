@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentScriptItemActionService {
@@ -12,7 +12,7 @@ public final class AgentScriptItemActionService {
     }
 
     public static boolean dropItem(AgentRuntimeEntry entry, InventoryType type, int itemId, short quantity) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null || type == null) {
             return false;
         }

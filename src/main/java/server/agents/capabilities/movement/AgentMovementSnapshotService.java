@@ -4,7 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import server.agents.integration.AgentBotCombatCooldownStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -16,7 +16,7 @@ public final class AgentMovementSnapshotService {
 
     public static AgentMovementPacketSnapshot currentSnapshot(AgentRuntimeEntry entry) {
         int stance = AgentMovementPoseService.resolveStance(entry);
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent != null && agent.getStance() != stance) {
             agent.setStance(stance);
         }

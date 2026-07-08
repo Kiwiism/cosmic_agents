@@ -22,7 +22,7 @@ public final class AgentBotMovementCommandRuntime {
     }
 
     public static void followOwner(AgentRuntimeEntry entry) {
-        follow(entry, AgentBotRuntimeIdentityRuntime.owner(entry));
+        follow(entry, AgentRuntimeIdentityRuntime.owner(entry));
     }
 
     public static void follow(AgentRuntimeEntry entry, Character target) {
@@ -53,22 +53,22 @@ public final class AgentBotMovementCommandRuntime {
     public static void farmHere(AgentRuntimeEntry entry, Point dest) {
         AgentCommandModeService.runPreparedModeCommand(
                 entry,
-                () -> dest != null && AgentBotRuntimeIdentityRuntime.hasBot(entry),
+                () -> dest != null && AgentRuntimeIdentityRuntime.hasBot(entry),
                 () -> AgentScriptTaskQueueService.clearTasks(entry),
                 () -> AgentShopService.cancelShopVisit(entry),
                 () -> AgentModeService.startFarmHere(entry, dest, AgentMovementStateResetService::clearNavigationState));
     }
 
     public static void patrol(AgentRuntimeEntry entry, Point ownerPos) {
-        if (entry == null || ownerPos == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry)) {
+        if (entry == null || ownerPos == null || !AgentRuntimeIdentityRuntime.hasBot(entry)) {
             return;
         }
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
                 map, AgentBotMovementStateRuntime.movementProfile(entry));
         int regionId = graph != null ? graph.findRegionId(map, ownerPos) : -1;
         if (regionId < 0) {
-            AgentBotReplyRuntime.replyNow(entry, "can't find a patrol region here");
+            AgentReplyRuntime.replyNow(entry, "can't find a patrol region here");
             return;
         }
         AgentCommandModeService.runPreparedModeCommand(

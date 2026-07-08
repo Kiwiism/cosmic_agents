@@ -1,6 +1,6 @@
 package server.agents.runtime;
 
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 
 public final class AgentMapEnvironmentService {
@@ -8,7 +8,7 @@ public final class AgentMapEnvironmentService {
     }
 
     public static boolean isSwimMap(AgentRuntimeEntry entry) {
-        MapleMap map = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
         return map != null && map.isSwim();
     }
 }

@@ -9,7 +9,7 @@ import server.agents.integration.AgentBotDegenerateAttackStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 import server.life.Monster;
 
@@ -170,8 +170,8 @@ public final class AgentLeaderSafetyService {
                                                  AgentFormationService.FormationState formation,
                                                  int platformEdgeInsetPx,
                                                  BiFunction<MapleMap, Point, Point> groundPointResolver) {
-        Point base = anchor != null ? new Point(anchor) : new Point(AgentBotRuntimeIdentityRuntime.botPosition(entry));
-        if (entry == null || !AgentBotRuntimeIdentityRuntime.hasBot(entry) || map == null) {
+        Point base = anchor != null ? new Point(anchor) : new Point(AgentRuntimeIdentityRuntime.botPosition(entry));
+        if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry) || map == null) {
             return base;
         }
 

@@ -30,8 +30,8 @@ public final class AgentBotMovementStateRuntime {
                 AgentBotPatrolStateRuntime.patrolRegionId(entry),
                 AgentBotPatrolStateRuntime.patrolMapId(entry),
                 AgentBotPatrolStateRuntime.patrolWanderTarget(entry),
-                position(AgentBotRuntimeIdentityRuntime.bot(entry)),
-                position(AgentBotRuntimeIdentityRuntime.owner(entry)),
+                position(AgentRuntimeIdentityRuntime.bot(entry)),
+                position(AgentRuntimeIdentityRuntime.owner(entry)),
                 mode(entry));
     }
 

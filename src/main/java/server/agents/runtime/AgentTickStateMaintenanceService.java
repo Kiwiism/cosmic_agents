@@ -6,7 +6,7 @@ import server.agents.integration.AgentBotMoveTargetStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotOwnerMotionStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
 
@@ -39,7 +39,7 @@ public final class AgentTickStateMaintenanceService {
         if (!AgentBotMoveTargetStateRuntime.hasMoveTarget(entry)) {
             return;
         }
-        Point agentPosition = AgentBotRuntimeIdentityRuntime.botPosition(entry);
+        Point agentPosition = AgentRuntimeIdentityRuntime.botPosition(entry);
         if (AgentBotMoveTargetStateRuntime.hasReachedMoveTarget(entry, agentPosition, normalArrivalDistance)) {
             AgentBotMoveTargetStateRuntime.clearMoveTarget(entry);
         }

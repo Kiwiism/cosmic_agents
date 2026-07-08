@@ -6,7 +6,7 @@ import server.agents.integration.AgentBotFormationStateRuntime;
 import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotShopStateRuntime;
 import server.life.Monster;
 import server.maps.MapleMap;
@@ -29,7 +29,7 @@ public final class AgentTargetSnapshotService {
                                               Map<Integer, AgentFormationService.FormationState> formationsByLeaderId,
                                               AgentFormationService.FormationState defaultFormation,
                                               FollowTargetResolver followTargetResolver) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
         AgentFormationService.FormationState formation =
                 AgentFormationService.stateForEntry(entry, formationsByLeaderId, defaultFormation);
@@ -40,8 +40,8 @@ public final class AgentTargetSnapshotService {
                                               Character followAnchor,
                                               AgentFormationService.FormationState formation,
                                               FollowTargetResolver followTargetResolver) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Point fallbackPos = bot.getPosition();
         Point rawOwnerPos = owner != null ? owner.getPosition() : fallbackPos;
         Point rawFollowAnchorPos = followAnchor != null ? followAnchor.getPosition() : rawOwnerPos;

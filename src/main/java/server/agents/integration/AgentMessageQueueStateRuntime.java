@@ -8,8 +8,8 @@ import java.util.List;
 /**
  * Agent-owned adapter for AgentRuntimeEntry-backed chat queue state.
  */
-public final class AgentBotMessageQueueStateRuntime {
-    private AgentBotMessageQueueStateRuntime() {
+public final class AgentMessageQueueStateRuntime {
+    private AgentMessageQueueStateRuntime() {
     }
 
     public static Object lock(AgentRuntimeEntry entry) {

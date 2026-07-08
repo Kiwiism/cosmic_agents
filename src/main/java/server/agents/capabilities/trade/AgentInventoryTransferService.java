@@ -27,7 +27,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.integration.AgentBotInventoryRuntime;
 import server.agents.integration.AgentBotInventoryStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -63,7 +63,7 @@ public final class AgentInventoryTransferService {
 
     public static void startTradeTransfer(String category, AgentRuntimeEntry entry, Character agent) {
         long startedAt = AgentTradeCommandProfiler.profileCategory(category) ? System.nanoTime() : 0L;
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
 
         AgentTradeTransferRouter.routeCategoryTransfer(
                 category,
@@ -142,7 +142,7 @@ public final class AgentInventoryTransferService {
         return AgentTradeItemCollectionService.collectItems(
                 category,
                 agent,
-                AgentBotRuntimeIdentityRuntime.owner(entry),
+                AgentRuntimeIdentityRuntime.owner(entry),
                 AgentTradeItemCollectionService.TradeItemCollectionCallbacks.of(
                         () -> recommendedItems(entry, agent),
                         () -> classifyEquipTradeGroups(entry, agent),
@@ -182,7 +182,7 @@ public final class AgentInventoryTransferService {
                                 agent,
                                 () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
-                                () -> AgentEquipmentService.autoEquip(agent, AgentBotRuntimeIdentityRuntime.owner(entry), null))),
+                                () -> AgentEquipmentService.autoEquip(agent, AgentRuntimeIdentityRuntime.owner(entry), null))),
                 () -> server.Trade.startTrade(agent),
                 server.Trade::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
@@ -190,7 +190,7 @@ public final class AgentInventoryTransferService {
     }
 
     private static void startTradeMesoTransfer(String category, AgentRuntimeEntry entry, Character agent) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         AgentMesoTradeService.MesoTradeStartDecision decision = AgentMesoTradeService.decideStart(
                 category,
                 owner != null,
@@ -221,7 +221,7 @@ public final class AgentInventoryTransferService {
                 () -> recommendedItems(entry, agent),
                 () -> classifyEquipTradeGroups(entry, agent),
                 () -> classifyAmmoTradeGroups(agent),
-                AgentBotRuntimeIdentityRuntime.owner(entry));
+                AgentRuntimeIdentityRuntime.owner(entry));
     }
 
     private static List<Item> collectReservedEquipTradePage(String category, AgentRuntimeEntry entry, Character agent) {
@@ -253,7 +253,7 @@ public final class AgentInventoryTransferService {
     }
 
     private static List<Item> recommendedItems(AgentRuntimeEntry entry, Character agent) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return List.of();
         }
@@ -271,7 +271,7 @@ public final class AgentInventoryTransferService {
                         AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
                         AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                         item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
-                        () -> AgentBotRuntimeIdentityRuntime.owner(entry),
+                        () -> AgentRuntimeIdentityRuntime.owner(entry),
                         report -> log.warn(
                         "Slow equip trade classification: took {} ms bot={} owner={} bagItems={} selfKeep={} normalItems={} reservedOtherItems={} reservedSelfItems={} bagScanMs={} selfKeepMs={} reservedOtherMs={} reservedOtherChecks={} reservedOtherHits={} sortMs={}",
                         String.format("%.1f", report.elapsedNs() / 1_000_000.0),

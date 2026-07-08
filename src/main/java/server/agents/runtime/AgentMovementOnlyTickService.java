@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.awt.Point;
 
@@ -81,12 +81,12 @@ public final class AgentMovementOnlyTickService {
                                         boolean runAiTick,
                                         long nowMs,
                                         MovementOnlyHooks hooks) {
-        if (!AgentBotRuntimeIdentityRuntime.hasBot(entry) || targetPosition == null) {
+        if (!AgentRuntimeIdentityRuntime.hasBot(entry) || targetPosition == null) {
             return;
         }
 
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
 
         if (hooks.idleTick().tick(entry, agent)) {
             return;

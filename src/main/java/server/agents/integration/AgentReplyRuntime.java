@@ -14,8 +14,8 @@ import tools.PacketCreator;
  * Temporary Agent-owned adapter from Agent runtime message fields to the
  * Agent reply queue runtime.
  */
-public final class AgentBotReplyRuntime {
-    private AgentBotReplyRuntime() {
+public final class AgentReplyRuntime {
+    private AgentReplyRuntime() {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
@@ -35,11 +35,11 @@ public final class AgentBotReplyRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        switch (AgentBotReplyChannelStateRuntime.replyChannel(entry)) {
-            case PARTY -> sayPartyNow(AgentBotRuntimeIdentityRuntime.bot(entry), message);
+        switch (AgentReplyChannelStateRuntime.replyChannel(entry)) {
+            case PARTY -> sayPartyNow(AgentRuntimeIdentityRuntime.bot(entry), message);
             case WHISPER -> {
-                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
-                Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
+                Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (owner != null && owner.getClient() != null) {
                     owner.sendPacket(PacketCreator.getWhisperReceive(
                             bot.getName(),
@@ -48,12 +48,12 @@ public final class AgentBotReplyRuntime {
                             AgentChatTextSanitizer.sanitize(message)));
                 }
             }
-            default -> sayMapNow(AgentBotRuntimeIdentityRuntime.bot(entry), message);
+            default -> sayMapNow(AgentRuntimeIdentityRuntime.bot(entry), message);
         }
     }
 
     public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
-        sayNow(AgentBotRuntimeIdentityRuntime.bot(entry), AgentBotReplyChannelStateRuntime.replyChannel(entry), message);
+        sayNow(AgentRuntimeIdentityRuntime.bot(entry), AgentReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
     public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
@@ -87,32 +87,32 @@ public final class AgentBotReplyRuntime {
         return new AgentReplyQueue.State() {
             @Override
             public Object lock() {
-                return AgentBotMessageQueueStateRuntime.lock(entry);
+                return AgentMessageQueueStateRuntime.lock(entry);
             }
 
             @Override
             public int size() {
-                return AgentBotMessageQueueStateRuntime.size(entry);
+                return AgentMessageQueueStateRuntime.size(entry);
             }
 
             @Override
             public void enqueue(AgentQueuedMessage message) {
-                AgentBotMessageQueueStateRuntime.enqueue(entry, message);
+                AgentMessageQueueStateRuntime.enqueue(entry, message);
             }
 
             @Override
             public AgentQueuedMessage poll() {
-                return AgentBotMessageQueueStateRuntime.poll(entry);
+                return AgentMessageQueueStateRuntime.poll(entry);
             }
 
             @Override
             public boolean isSending() {
-                return AgentBotMessageQueueStateRuntime.isSending(entry);
+                return AgentMessageQueueStateRuntime.isSending(entry);
             }
 
             @Override
             public void setSending(boolean sending) {
-                AgentBotMessageQueueStateRuntime.setSending(entry, sending);
+                AgentMessageQueueStateRuntime.setSending(entry, sending);
             }
         };
     }
@@ -130,7 +130,7 @@ public final class AgentBotReplyRuntime {
 
             @Override
             public void scheduleNext(Runnable task, int delayMs) {
-                AgentBotSchedulerRuntime.afterDelay(delayMs, task);
+                AgentSchedulerRuntime.afterDelay(delayMs, task);
             }
         };
     }

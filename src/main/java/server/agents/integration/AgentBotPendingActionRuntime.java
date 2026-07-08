@@ -52,15 +52,15 @@ public final class AgentBotPendingActionRuntime {
 
             @Override
             public void executeItemChoice(String category, boolean trade) {
-                AgentBotSchedulerRuntime.afterRandomDelay(400, 600,
+                AgentSchedulerRuntime.afterRandomDelay(400, 600,
                         () -> AgentInventoryTransferService.executeChoice(
-                                category, trade, entry, AgentBotRuntimeIdentityRuntime.bot(entry)));
+                                category, trade, entry, AgentRuntimeIdentityRuntime.bot(entry)));
             }
 
             @Override
             public void cancelItemChoice() {
-                AgentBotSchedulerRuntime.afterRandomDelay(400, 600,
-                        () -> AgentBotReplyRuntime.replyNow(
+                AgentSchedulerRuntime.afterRandomDelay(400, 600,
+                        () -> AgentReplyRuntime.replyNow(
                                 entry,
                                 AgentPendingChatActionFlow.keepDropChoiceReply()));
             }
@@ -68,7 +68,7 @@ public final class AgentBotPendingActionRuntime {
             @Override
             public void handleSkillTreeChoice(String message) {
                 AgentBotPendingActionRuntime.handleSkillTreeChoice(
-                        entry, AgentBotRuntimeIdentityRuntime.bot(entry), message);
+                        entry, AgentRuntimeIdentityRuntime.bot(entry), message);
             }
 
             @Override
@@ -84,8 +84,8 @@ public final class AgentBotPendingActionRuntime {
             @Override
             public void cancelPendingAction(boolean dropAction) {
                 String cancelMsg = AgentPendingChatActionFlow.pendingActionCancelReply(dropAction);
-                AgentBotSchedulerRuntime.afterRandomDelay(700, 900,
-                        () -> AgentBotReplyRuntime.replyNow(entry, cancelMsg));
+                AgentSchedulerRuntime.afterRandomDelay(700, 900,
+                        () -> AgentReplyRuntime.replyNow(entry, cancelMsg));
             }
         };
     }
@@ -104,7 +104,7 @@ public final class AgentBotPendingActionRuntime {
             AgentBotPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.SKILL_TREE_CHOICE);
         }
         for (String line : decision.replies()) {
-            AgentBotReplyRuntime.queueReply(entry, line);
+            AgentReplyRuntime.queueReply(entry, line);
         }
     }
 }

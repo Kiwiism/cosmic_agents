@@ -7,7 +7,7 @@ import server.agents.integration.AgentBotBreakoutStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
 import server.agents.integration.AgentBotRetreatHoldStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
@@ -62,7 +62,7 @@ public final class AgentGrindNavigationTargetSelector {
             return combatTargetPosition;
         }
 
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         if (agent == null) {
             return combatTargetPosition;
         }
@@ -128,7 +128,7 @@ public final class AgentGrindNavigationTargetSelector {
                                              Point agentPosition,
                                              Point combatTargetPosition,
                                              NavigationHooks hooks) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         int base = AgentAttackExecutionProvider.pickRetreatDirection(agent, agentPosition, combatTargetPosition);
         MapleMap map = agent != null ? agent.getMap() : null;
         if (map == null || map.getFootholds() == null) {
@@ -178,7 +178,7 @@ public final class AgentGrindNavigationTargetSelector {
                 || AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
             return null;
         }
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = agent != null ? agent.getMap() : null;
         if (map == null || map.getFootholds() == null) {
             return null;
@@ -407,7 +407,7 @@ public final class AgentGrindNavigationTargetSelector {
             return false;
         }
 
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = agent != null ? agent.getMap() : null;
         if (map == null || map.getFootholds() == null) {
             return false;

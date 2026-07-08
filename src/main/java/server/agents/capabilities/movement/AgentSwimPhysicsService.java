@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import client.Character;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSwimStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -31,7 +31,7 @@ public final class AgentSwimPhysicsService {
     }
 
     public static void applySwimMotion(AgentRuntimeEntry entry) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = agent.getMap();
         Point position = agent.getPosition();
         double tickSeconds = AgentMovementPhysicsConfig.configuredMovementTickMs() / 1000.0;

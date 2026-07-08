@@ -25,7 +25,7 @@ public final class AgentBotCommandParser {
         List<AgentNamedCommandTarget<E>> targets = entries == null
                 ? null
                 : entries.stream()
-                .map(entry -> new AgentNamedCommandTarget<>(entry, AgentBotRuntimeIdentityRuntime.botName(entry)))
+                .map(entry -> new AgentNamedCommandTarget<>(entry, AgentRuntimeIdentityRuntime.botName(entry)))
                 .toList();
         AgentCommandParser.TargetedAgentMatch<AgentNamedCommandTarget<E>> match =
                 AgentCommandParser.resolveTargetedAgent(targets, message);

@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.BotClient;
 import client.Character;
 import net.server.Server;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ public final class AgentRuntimeRegistry {
             return null;
         }
         for (AgentRuntimeEntry entry : entries) {
-            if (AgentBotRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+            if (AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
                 return entry;
             }
         }
@@ -55,7 +55,7 @@ public final class AgentRuntimeRegistry {
             return null;
         }
         for (AgentRuntimeEntry entry : entries) {
-            if (AgentBotRuntimeIdentityRuntime.botNameEquals(entry, agentName)) {
+            if (AgentRuntimeIdentityRuntime.botNameEquals(entry, agentName)) {
                 return entry;
             }
         }
@@ -70,8 +70,8 @@ public final class AgentRuntimeRegistry {
                                                            int agentCharId) {
         for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
             for (AgentRuntimeEntry entry : entries) {
-                if (AgentBotRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
-                    return AgentBotRuntimeIdentityRuntime.owner(entry);
+                if (AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                    return AgentRuntimeIdentityRuntime.owner(entry);
                 }
             }
         }
@@ -100,7 +100,7 @@ public final class AgentRuntimeRegistry {
 
     public static Character firstAgent(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId, int leaderCharId) {
         AgentRuntimeEntry entry = firstEntry(entriesByLeaderId, leaderCharId);
-        return entry == null ? null : AgentBotRuntimeIdentityRuntime.bot(entry);
+        return entry == null ? null : AgentRuntimeIdentityRuntime.bot(entry);
     }
 
     public static Character firstAgent(int leaderCharId) {
@@ -117,10 +117,10 @@ public final class AgentRuntimeRegistry {
     }
 
     public static boolean isFirstEntryForLeader(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId, AgentRuntimeEntry entry) {
-        if (entry == null || AgentBotRuntimeIdentityRuntime.owner(entry) == null) {
+        if (entry == null || AgentRuntimeIdentityRuntime.owner(entry) == null) {
             return false;
         }
-        return firstEntry(entriesByLeaderId, AgentBotRuntimeIdentityRuntime.ownerId(entry)) == entry;
+        return firstEntry(entriesByLeaderId, AgentRuntimeIdentityRuntime.ownerId(entry)) == entry;
     }
 
     public static boolean isFirstEntryForLeader(AgentRuntimeEntry entry) {
@@ -165,7 +165,7 @@ public final class AgentRuntimeRegistry {
         }
 
         return entries.stream()
-                .map(AgentBotRuntimeIdentityRuntime::bot)
+                .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(agent -> agent != null)
                 .toList();
     }

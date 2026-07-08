@@ -21,6 +21,12 @@ Recent map updates:
   semantic rename pass is planned separately. They do not depend on
   `server.bots` and should be renamed by capability in a future low-risk
   naming-only milestone.
+- Semantic rename pass started with the foundational identity/scheduler/reply
+  slice: `AgentBotRuntimeIdentityRuntime`, `AgentBotSchedulerRuntime`,
+  `AgentBotReplyRuntime`, `AgentBotReplyChannelStateRuntime`, and
+  `AgentBotMessageQueueStateRuntime` now use neutral Agent names. Behavior,
+  public methods, scheduling, reply routing, and message queue state are
+  unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -668,7 +674,7 @@ Recent map updates:
 - Agent integration chat, status, utility, transfer, supply, report, control,
   build, equipment, movement diagnostics, pending-action, social/report
   delivery, movement-command, and session lifecycle adapters now resolve live
-  Agent/leader identity through `AgentBotRuntimeIdentityRuntime` instead of
+  Agent/leader identity through `AgentRuntimeIdentityRuntime` instead of
   direct `BotEntry.bot()`, `BotEntry.owner()`, or `BotEntry.setOwner(...)`
   calls. `BotEntry` still hosts the Agent-owned identity state temporarily
   while broader `BotEntry` signature migration continues.
@@ -782,7 +788,7 @@ Recent map updates:
   Offer and retry behavior enters through `AgentBotOfferStateRuntime` and
   `AgentBotPendingTradeStateRuntime`, backed by Agent-owned trade state.
 - `BotEntry` message queue wrapper methods were removed after callers moved to
-  `server.agents.integration.AgentBotMessageQueueStateRuntime`. The queue
+  `server.agents.integration.AgentMessageQueueStateRuntime`. The queue
   remains owned by `server.agents.commands.AgentMessageQueueState`.
 - `BotEntry` pending chat action wrapper methods were removed after callers
   moved to `server.agents.integration.AgentBotPendingActionStateRuntime`.
@@ -1049,7 +1055,7 @@ Recent map updates:
   mutation, snapshots, and idle checks now live in `server.agents.commands`.
 - Reply-channel state moved into `AgentReplyChannelState`, and the direct
   `BotEntry` reply-channel wrappers were removed. Reply routing now enters
-  through `AgentBotReplyChannelStateRuntime` while the temporary shell only
+  through `AgentReplyChannelStateRuntime` while the temporary shell only
   hosts the Agent-owned state object.
 - Scroll-reaction load/cooldown/streak state moved into
   `AgentScrollReactionState`. `BotEntry` still hosts the state object

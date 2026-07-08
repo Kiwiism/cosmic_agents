@@ -10,7 +10,7 @@ import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentBotManagerStatusRuntime;
 import server.agents.integration.AgentBotMoveTargetStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -58,7 +58,7 @@ public final class AgentLeaderSafetyRuntime {
     }
 
     public static boolean shouldTownWarpForInactiveEntry(AgentRuntimeEntry entry) {
-        MapleMap currentMap = AgentBotRuntimeIdentityRuntime.botMap(entry);
+        MapleMap currentMap = AgentRuntimeIdentityRuntime.botMap(entry);
         return AgentLeaderSafetyService.shouldTownWarpForInactiveLeader(currentMap);
     }
 
@@ -66,11 +66,11 @@ public final class AgentLeaderSafetyRuntime {
         AgentLeaderSafetyService.issueInactiveSafeModeForLeader(
                 AgentRuntimeRegistry.agentEntriesForLeader(leaderCharId),
                 town,
-                AgentBotRuntimeIdentityRuntime::botHasMap,
+                AgentRuntimeIdentityRuntime::botHasMap,
                 AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
                 (entry, shouldTown) -> enterInactiveSafeMode(
                         entry,
-                        AgentBotRuntimeIdentityRuntime.bot(entry),
+                        AgentRuntimeIdentityRuntime.bot(entry),
                         leaderCharId,
                         shouldTown));
     }

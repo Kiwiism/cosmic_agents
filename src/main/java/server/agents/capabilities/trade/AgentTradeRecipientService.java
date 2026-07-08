@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeRecipientService {
@@ -12,10 +12,10 @@ public final class AgentTradeRecipientService {
     public static Character resolveTradeRecipient(AgentRuntimeEntry entry, Character agent) {
         int recipientId = AgentBotPendingTradeStateRuntime.recipientId(entry);
         if (recipientId <= 0) {
-            return AgentBotRuntimeIdentityRuntime.owner(entry);
+            return AgentRuntimeIdentityRuntime.owner(entry);
         }
 
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner != null && owner.getId() == recipientId) {
             return owner;
         }

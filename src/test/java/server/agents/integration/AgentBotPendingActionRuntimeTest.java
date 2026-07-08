@@ -10,9 +10,9 @@ import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentBotPendingActionRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
-import server.agents.integration.AgentBotMessageQueueStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentMessageQueueStateRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 
 import java.util.List;
 
@@ -48,10 +48,10 @@ class AgentBotPendingActionRuntimeTest {
         AgentPendingChatActionFlow.PendingActionCallbacks callbacks =
                 AgentBotPendingActionRuntime.pendingActionCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentInventoryTransferService> inventory = mockStatic(AgentInventoryTransferService.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -67,11 +67,11 @@ class AgentBotPendingActionRuntimeTest {
     void cancelItemChoiceSchedulesLegacyReply() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies =
-                     mockStatic(AgentBotReplyRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies =
+                     mockStatic(AgentReplyRuntime.class)) {
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -79,7 +79,7 @@ class AgentBotPendingActionRuntimeTest {
 
             AgentBotPendingActionRuntime.pendingActionCallbacks(entry).cancelItemChoice();
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(
+            replies.verify(() -> AgentReplyRuntime.replyNow(
                     entry,
                     AgentPendingChatActionFlow.keepDropChoiceReply()));
         }
@@ -88,26 +88,26 @@ class AgentBotPendingActionRuntimeTest {
     @Test
     void skillReportDecisionMutatesPendingActionAndQueuesReplies() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMessageQueueStateRuntime.setSending(entry, true);
+        AgentMessageQueueStateRuntime.setSending(entry, true);
         AgentSkillReportFlow.SkillReportDecision decision =
                 new AgentSkillReportFlow.SkillReportDecision(List.of("pick tree"), true, true);
 
         AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision);
 
         assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentBotPendingActionStateRuntime.pendingAction(entry));
-        assertEquals("pick tree", AgentBotMessageQueueStateRuntime.peek(entry).text());
+        assertEquals("pick tree", AgentMessageQueueStateRuntime.peek(entry).text());
     }
 
     @Test
     void broadReplyRuntimeStillSupportsPendingActionReplies() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
-            AgentBotReplyRuntime.replyNow(entry, "now");
-            AgentBotReplyRuntime.queueReply(entry, "queued");
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+            AgentReplyRuntime.replyNow(entry, "now");
+            AgentReplyRuntime.queueReply(entry, "queued");
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(entry, "now"));
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(entry, "queued"));
+            replies.verify(() -> AgentReplyRuntime.replyNow(entry, "now"));
+            replies.verify(() -> AgentReplyRuntime.queueReply(entry, "queued"));
         }
     }
 
@@ -116,10 +116,10 @@ class AgentBotPendingActionRuntimeTest {
         Runnable action = () -> {
         };
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler = mockStatic(AgentBotSchedulerRuntime.class)) {
-            AgentBotSchedulerRuntime.afterRandomDelay(400, 600, action);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
+            AgentSchedulerRuntime.afterRandomDelay(400, 600, action);
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(400, 600, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(400, 600, action));
         }
     }
 }

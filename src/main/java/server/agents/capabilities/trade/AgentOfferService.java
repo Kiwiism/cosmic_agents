@@ -23,8 +23,8 @@ import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
 import server.agents.integration.AgentBotPendingTradeStateRuntime;
-import server.agents.integration.AgentBotReplyChannelStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -68,7 +68,7 @@ public final class AgentOfferService {
         if (AgentBotPendingActionStateRuntime.hasPendingAction(entry) || AgentBotPendingTradeStateRuntime.hasActiveSequence(entry) || hasOfferReservation(entry)) {
             return;
         }
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
@@ -82,7 +82,7 @@ public final class AgentOfferService {
     }
 
     public static void requestBestUpgradeFromOwner(AgentRuntimeEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
@@ -119,7 +119,7 @@ public final class AgentOfferService {
     }
 
     public static boolean offerBestGearToSibling(AgentRuntimeEntry entry, Character bot) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return false;
         }
@@ -133,7 +133,7 @@ public final class AgentOfferService {
             if (sibling == entry) {
                 continue;
             }
-            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
             if (siblingBot == null || siblingBot.getMapId() != bot.getMapId()) {
                 continue;
             }
@@ -153,7 +153,7 @@ public final class AgentOfferService {
     }
 
     public static void scheduleLootOfferPrompt(AgentRuntimeEntry entry, Character bot, Item item, long delayMs) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         long now = System.currentTimeMillis();
         if (owner == null
                 || item == null
@@ -199,7 +199,7 @@ public final class AgentOfferService {
                 AgentBotOfferRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentBotOfferStateRuntime.clearPendingOfferItem(entry);
                     AgentInventoryTransferService.startTradeTransfer(
-                            item, speaker, entry, AgentBotRuntimeIdentityRuntime.bot(entry));
+                            item, speaker, entry, AgentRuntimeIdentityRuntime.bot(entry));
                 });
             }
             return true;
@@ -207,11 +207,11 @@ public final class AgentOfferService {
         if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
             clearPendingOffer(entry);
             AgentBotOfferRuntime.afterRandomDelay(400, 600, () -> {
-                Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+                Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && speaker.getId() == owner.getId()) {
                     AgentBotOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerKeepItemReply());
                 } else {
-                    AgentBotOfferRuntime.sayMapNow(AgentBotRuntimeIdentityRuntime.bot(entry), AgentDialogueCatalog.offerKeepItemReply());
+                    AgentBotOfferRuntime.sayMapNow(AgentRuntimeIdentityRuntime.bot(entry), AgentDialogueCatalog.offerKeepItemReply());
                 }
             });
             return true;
@@ -251,7 +251,7 @@ public final class AgentOfferService {
         AgentBotPendingActionStateRuntime.clearPendingDropCategory(entry);
         AgentBotOfferStateRuntime.setPendingLootOffer(entry, item, recipient.getId(), System.currentTimeMillis() + 30_000L, false);
         long promptDelayMs = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry,
-                buildLootOfferPrompt(recipient, AgentBotRuntimeIdentityRuntime.owner(entry), item, need == GearOfferNeed.FUTURE));
+                buildLootOfferPrompt(recipient, AgentRuntimeIdentityRuntime.owner(entry), item, need == GearOfferNeed.FUTURE));
         scheduleBotLootOfferAutoAccept(entry, recipient, promptDelayMs);
         return true;
     }
@@ -267,7 +267,7 @@ public final class AgentOfferService {
             return;
         }
 
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         Character recipient = resolveReservedOfferRecipient(entry, bot, recipientId);
         if (owner == null
                 || AgentBotPendingActionStateRuntime.hasPendingAction(entry)
@@ -308,7 +308,7 @@ public final class AgentOfferService {
             return;
         }
         AgentBotOfferRuntime.sayNow(recipientBot,
-                AgentBotReplyChannelStateRuntime.replyChannel(entry),
+                AgentReplyChannelStateRuntime.replyChannel(entry),
                 AgentDialogueSelector.randomReply(AgentDialogueCatalog.offerAcceptReplies()));
         handlePendingOfferResponse(entry, recipientBot, "yes");
     }
@@ -420,7 +420,7 @@ public final class AgentOfferService {
     }
 
     private static Character findLootOfferRecipient(AgentRuntimeEntry entry, Character bot, Item item) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return null;
         }
@@ -518,7 +518,7 @@ public final class AgentOfferService {
             return false;
         }
 
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return false;
         }
@@ -657,7 +657,7 @@ public final class AgentOfferService {
     }
 
     private static Character resolveReservedOfferRecipient(AgentRuntimeEntry entry, Character bot, int recipientId) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner != null && owner.getId() == recipientId) {
             return owner;
         }

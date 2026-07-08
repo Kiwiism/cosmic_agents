@@ -61,7 +61,7 @@ public final class AgentBotCombatHealRuntime {
                 && AgentBotMovementStateRuntime.grounded(entry)
                 && AgentBotMovementStateRuntime.notClimbing(entry)
                 && config.JUMP_HEAL_LEADER_AHEAD_PX > 0) {
-            Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+            Character leader = AgentRuntimeIdentityRuntime.owner(entry);
             Character anchor = AgentFollowAnchorService.resolve(
                     entry,
                     leader,

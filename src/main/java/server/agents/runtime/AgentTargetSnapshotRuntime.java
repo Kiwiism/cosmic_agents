@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public final class AgentTargetSnapshotRuntime {
     }
 
     public static AgentTargetSnapshot captureTargetSnapshot(AgentRuntimeEntry entry) {
-        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = leader == null
                 ? List.of()
                 : AgentRuntimeRegistry.agentEntriesForLeader(leader.getId());

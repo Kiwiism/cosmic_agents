@@ -11,14 +11,14 @@ public final class AgentBotMakerRuntime {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
-        AgentBotReplyRuntime.replyNow(entry, message);
+        AgentReplyRuntime.replyNow(entry, message);
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        AgentBotSchedulerRuntime.afterDelay(delayMs, action);
+        AgentSchedulerRuntime.afterDelay(delayMs, action);
     }
 
     public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-        AgentBotSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+        AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
     }
 }

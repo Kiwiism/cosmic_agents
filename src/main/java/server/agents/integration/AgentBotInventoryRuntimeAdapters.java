@@ -48,7 +48,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 AgentBotInventoryRuntime::replyNow,
                 () -> AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
                 AgentBotInventoryStateRuntime::setInventoryFullWarnCooldownMs,
-                AgentBotRuntimeIdentityRuntime::owner,
+                AgentRuntimeIdentityRuntime::owner,
                 AgentBotOfferStateRuntime::pendingLootOfferItem,
                 AgentInventoryItemPolicy::hasItem,
                 AgentEquipmentService::autoEquip,
@@ -74,7 +74,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 Character::getTrade,
                 AgentMovementTimers::delayAfterCurrentTick,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
-                AgentBotRuntimeIdentityRuntime::owner,
+                AgentRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentTradeRecipientService::resolveTradeRecipient,
                 recipient -> recipient.getClient() instanceof client.BotClient);
@@ -84,7 +84,7 @@ public final class AgentBotInventoryRuntimeAdapters {
         return AgentTradeLifecycleRuntimeService.RuntimeCallbacks.of(
                 AgentEquippedSlotTradeService::restoreTemporarilyUnequippedItems,
                 AgentManualTradeService::clearState,
-                AgentBotRuntimeIdentityRuntime::owner,
+                AgentRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentRandom::randMs,
                 AgentTradeDialogueService::thanksReply,
@@ -93,7 +93,7 @@ public final class AgentBotInventoryRuntimeAdapters {
 
     public static AgentTradeTransferAvailabilityRuntimeService.RuntimeCallbacks transferAvailabilityRuntimeCallbacks() {
         return AgentTradeTransferAvailabilityRuntimeService.RuntimeCallbacks.of(
-                AgentBotRuntimeIdentityRuntime::owner,
+                AgentRuntimeIdentityRuntime::owner,
                 AgentInventoryNamedItemService::countNamedItems,
                 (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName));
     }
@@ -110,6 +110,6 @@ public final class AgentBotInventoryRuntimeAdapters {
                 () -> AgentTradeCommandProfiler.profileCategory("equips"),
                 AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                 item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
-                () -> AgentBotRuntimeIdentityRuntime.owner(entry));
+                () -> AgentRuntimeIdentityRuntime.owner(entry));
     }
 }

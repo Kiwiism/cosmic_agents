@@ -14,8 +14,8 @@ import server.agents.integration.AgentBotFidgetSideEffects;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotMovementRuntime;
 import server.agents.integration.AgentBotMovementStatusRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -40,13 +40,13 @@ class AgentBotMovementRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
         ArgumentCaptor<Point> pointCaptor = ArgumentCaptor.forClass(Point.class);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentBotMovementCommandRuntime> movementCommands =
                      mockStatic(AgentBotMovementCommandRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -59,7 +59,7 @@ class AgentBotMovementRuntimeTest {
                     (AgentRuntimeEntry) eq(entry),
                     pointCaptor.capture()));
             assertEquals(new Point(10, 20), pointCaptor.getValue());
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
         }
     }
 
@@ -67,8 +67,8 @@ class AgentBotMovementRuntimeTest {
     void moveHereReturnsFalseWithoutOwnerPosition() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             assertFalse(AgentBotMovementRuntime.movementCallbacks(entry).moveHere());
 
             scheduler.verifyNoInteractions();
@@ -80,19 +80,19 @@ class AgentBotMovementRuntimeTest {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<AgentBotMovementCommandRuntime> movementCommands =
                      mockStatic(AgentBotMovementCommandRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(250), eq(750), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(250), eq(750), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -101,7 +101,7 @@ class AgentBotMovementRuntimeTest {
             AgentBotMovementRuntime.movementCallbacks(entry).follow();
 
             activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), anyString()));
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> AgentPotionService.checkPotShareOnModeStart((AgentRuntimeEntry) eq(entry), eq(bot)));
             movementCommands.verify(() -> AgentBotMovementCommandRuntime.followOwner(entry));
         }
@@ -112,12 +112,12 @@ class AgentBotMovementRuntimeTest {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentBotFidgetSideEffects> fidgets = mockStatic(AgentBotFidgetSideEffects.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentBotMovementStatusRuntime> status = mockStatic(AgentBotMovementStatusRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -127,7 +127,7 @@ class AgentBotMovementRuntimeTest {
 
             verify(bot).changeFaceExpression(AgentEmote.HAPPY.getValue());
             fidgets.verify(() -> AgentBotFidgetSideEffects.maybeStartGreetingFidget(eq(entry), anyInt()));
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(eq(entry), anyString()));
+            replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), anyString()));
             status.verify(() -> AgentBotMovementStatusRuntime.checkMovementStatus(entry, bot));
         }
     }

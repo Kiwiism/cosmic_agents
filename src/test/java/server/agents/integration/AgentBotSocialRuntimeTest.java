@@ -5,8 +5,8 @@ import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotSocialRuntime;
 import server.maps.MapleMap;
 
@@ -24,11 +24,11 @@ class AgentBotSocialRuntimeTest {
     void socialCallbackSchedulesFameCommand() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             AgentBotSocialRuntime.socialCallbacks(entry).fame("Alice");
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(900), any(Runnable.class)));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(900), any(Runnable.class)));
         }
     }
 
@@ -38,13 +38,13 @@ class AgentBotSocialRuntimeTest {
         MapleMap map = mock(MapleMap.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+        try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             when(bot.getMap()).thenReturn(map);
             when(map.getCharacters()).thenReturn(List.of());
 
             AgentBotSocialRuntime.handleFameCommand(entry, "Alice");
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), contains("Alice")));
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), contains("Alice")));
         }
     }
 }

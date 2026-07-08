@@ -11,7 +11,7 @@ public final class AgentBotManagerStatusRuntime {
     }
 
     public static void scheduleSpawnStatusCheck(AgentRuntimeEntry entry, Character bot, long delayMs) {
-        AgentBotSchedulerRuntime.afterDelay(delayMs, () -> checkManagerStatus(entry, bot));
+        AgentSchedulerRuntime.afterDelay(delayMs, () -> checkManagerStatus(entry, bot));
     }
 
     public static void checkManagerStatus(AgentRuntimeEntry entry, Character bot) {

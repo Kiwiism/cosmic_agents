@@ -8,7 +8,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.integration.AgentBotChatReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +23,8 @@ class AgentBotChatReportDeliveryTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         List<String> replies = new ArrayList<>();
 
-        try (MockedStatic<AgentBotReplyRuntime> replyRuntime = mockStatic(AgentBotReplyRuntime.class)) {
-            replyRuntime.when(() -> AgentBotReplyRuntime.queueReply(org.mockito.Mockito.eq(entry), org.mockito.Mockito.anyString()))
+        try (MockedStatic<AgentReplyRuntime> replyRuntime = mockStatic(AgentReplyRuntime.class)) {
+            replyRuntime.when(() -> AgentReplyRuntime.queueReply(org.mockito.Mockito.eq(entry), org.mockito.Mockito.anyString()))
                     .thenAnswer(invocation -> {
                         replies.add(invocation.getArgument(1));
                         return null;

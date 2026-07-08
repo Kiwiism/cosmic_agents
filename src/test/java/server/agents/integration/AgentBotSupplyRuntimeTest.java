@@ -13,9 +13,9 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
-import server.agents.integration.AgentBotMessageQueueStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentMessageQueueStateRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotSupplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -45,7 +45,7 @@ class AgentBotSupplyRuntimeTest {
     @Test
     void potionRequestQueuesNoDonorReply() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentBotMessageQueueStateRuntime.setSending(entry, true);
+        AgentMessageQueueStateRuntime.setSending(entry, true);
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
             potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
@@ -53,7 +53,7 @@ class AgentBotSupplyRuntimeTest {
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
-            assertTrue(AgentBotMessageQueueStateRuntime.peek(entry).text().contains("hp"));
+            assertTrue(AgentMessageQueueStateRuntime.peek(entry).text().contains("hp"));
         }
     }
 
@@ -62,13 +62,13 @@ class AgentBotSupplyRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
                     .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
             AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
 
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(eq(entry), any(String.class)));
+            replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), any(String.class)));
         }
     }
 
@@ -76,7 +76,7 @@ class AgentBotSupplyRuntimeTest {
     void ammoRequestQueuesNotNeededReplyForNonBowOwner() {
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
-        AgentBotMessageQueueStateRuntime.setSending(entry, true);
+        AgentMessageQueueStateRuntime.setSending(entry, true);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
@@ -84,7 +84,7 @@ class AgentBotSupplyRuntimeTest {
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
 
-            String reply = AgentBotMessageQueueStateRuntime.peek(entry).text();
+            String reply = AgentMessageQueueStateRuntime.peek(entry).text();
             assertTrue(reply.contains("ammo") || reply.contains("arrows") || reply.contains("bolts"));
         }
     }
@@ -95,13 +95,13 @@ class AgentBotSupplyRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
             AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
 
-            replies.verify(() -> AgentBotReplyRuntime.queueReply(eq(entry), any(String.class)));
+            replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), any(String.class)));
         }
     }
 
@@ -110,14 +110,14 @@ class AgentBotSupplyRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentChatSupplyRequestFlow.SupplyRequestCallbacks callbacks = AgentBotSupplyRuntime.supplyRequestCallbacks(entry);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             callbacks.requestPotion(true);
             callbacks.requestAnyPotion();
             callbacks.requestAmmo();
 
             scheduler.verify(
-                    () -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+                    () -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     times(3));
         }
     }

@@ -3,11 +3,11 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotMovementCommandRuntime;
 import server.agents.integration.AgentBotOfferStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
@@ -44,9 +44,9 @@ public final class AgentFollowTargetRuntime {
                 new AgentFollowTargetCommandService.Hooks(
                         AgentFollowTargetRuntime::resolveFollowTarget,
                         AgentFollowTargetRuntime::followTargetReply,
-                        AgentBotReplyRuntime::queueReply,
+                        AgentReplyRuntime::queueReply,
                         () -> AgentRandom.randMs(250, 750),
-                        AgentBotSchedulerRuntime::afterDelay,
+                        AgentSchedulerRuntime::afterDelay,
                         AgentFollowTargetRuntime::autoEquipForFollow,
                         AgentFollowTargetRuntime::checkPotShareForFollow,
                         AgentBotMovementCommandRuntime::follow));
@@ -65,14 +65,14 @@ public final class AgentFollowTargetRuntime {
 
     private static void autoEquipForFollow(AgentRuntimeEntry entry) {
         AgentEquipmentService.autoEquip(
-                AgentBotRuntimeIdentityRuntime.bot(entry),
-                AgentBotRuntimeIdentityRuntime.owner(entry),
+                AgentRuntimeIdentityRuntime.bot(entry),
+                AgentRuntimeIdentityRuntime.owner(entry),
                 AgentBotOfferStateRuntime.pendingLootOfferItem(entry));
     }
 
     private static void checkPotShareForFollow(AgentRuntimeEntry entry) {
         AgentPotionService.checkPotShareOnModeStart(
                 entry,
-                AgentBotRuntimeIdentityRuntime.bot(entry));
+                AgentRuntimeIdentityRuntime.bot(entry));
     }
 }

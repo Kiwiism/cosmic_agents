@@ -7,7 +7,7 @@ import net.packet.InPacket;
 import net.packet.Packet;
 import server.agents.integration.AgentBotMovementBroadcastStateRuntime;
 import server.agents.integration.AgentBotMovementPhysicsStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -35,7 +35,7 @@ public final class AgentMovementBroadcastService {
     }
 
     private static void doBroadcastMovement(AgentRuntimeEntry entry) {
-        Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         int x = bot.getPosition().x;
         int y = bot.getPosition().y;
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);

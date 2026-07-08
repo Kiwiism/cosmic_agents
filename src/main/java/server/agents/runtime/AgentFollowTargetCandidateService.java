@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public final class AgentFollowTargetCandidateService {
             }
         }
         for (AgentRuntimeEntry sibling : hooks.siblingEntries().entries(leader.getId())) {
-            Character siblingAgent = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            Character siblingAgent = AgentRuntimeIdentityRuntime.bot(sibling);
             if (siblingAgent == null || !siblingAgent.isLoggedinWorld()) {
                 continue;
             }

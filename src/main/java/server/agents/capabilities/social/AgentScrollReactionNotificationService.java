@@ -2,7 +2,7 @@ package server.agents.capabilities.social;
 
 import client.Character;
 import client.inventory.Equip;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 public final class AgentScrollReactionNotificationService {
@@ -13,7 +13,7 @@ public final class AgentScrollReactionNotificationService {
                                                   Equip.ScrollResult result,
                                                   int scrollItemId,
                                                   long delayMs) {
-        AgentBotSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
+        AgentSchedulerRuntime.afterDelay(Math.max(0L, delayMs), () ->
                 AgentScrollReactionService.handleScrollEvent(
                         source, result, scrollItemId, AgentRuntimeRegistry.entriesByLeaderId().values()));
     }

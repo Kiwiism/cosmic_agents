@@ -6,7 +6,7 @@ import server.agents.integration.AgentBotGrindTargetStateRuntime;
 import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotPatrolStateRuntime;
 import server.agents.integration.AgentBotPendingActionStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentBotTickFailureStateRuntime;
 
 import java.util.function.BiConsumer;
@@ -96,8 +96,8 @@ public final class AgentTickFailurePolicy {
     }
 
     private static FailureContext failureContext(AgentRuntimeEntry entry, int failureCount, Throwable failure) {
-        Character agent = AgentBotRuntimeIdentityRuntime.bot(entry);
-        Character leader = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character agent = AgentRuntimeIdentityRuntime.bot(entry);
+        Character leader = AgentRuntimeIdentityRuntime.owner(entry);
         return new FailureContext(
                 agent != null ? agent.getName() : "?",
                 leader != null ? leader.getName() : "?",

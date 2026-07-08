@@ -283,7 +283,7 @@ public final class AgentBotCombatTargetRuntime {
 
     private static long grindRegionOccupancyPenalty(GrindGraphContext context, Character bot, int targetRegionId,
                                                     AgentCombatConfig.Config config) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(context.entry());
+        Character owner = AgentRuntimeIdentityRuntime.owner(context.entry());
         if (!context.available() || owner == null || bot == null || targetRegionId < 0) {
             return 0L;
         }
@@ -293,7 +293,7 @@ public final class AgentBotCombatTargetRuntime {
             if (sibling == context.entry() || sibling == null || !AgentBotModeStateRuntime.grinding(sibling)) {
                 continue;
             }
-            Character siblingBot = AgentBotRuntimeIdentityRuntime.bot(sibling);
+            Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
             if (siblingBot == null) {
                 continue;
             }

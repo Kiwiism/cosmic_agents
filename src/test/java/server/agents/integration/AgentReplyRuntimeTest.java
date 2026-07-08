@@ -6,8 +6,8 @@ import client.Character;
 import client.Client;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotReplyChannelStateRuntime;
-import server.agents.integration.AgentBotReplyRuntime;
+import server.agents.integration.AgentReplyChannelStateRuntime;
+import server.agents.integration.AgentReplyRuntime;
 import server.maps.MapleMap;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -15,7 +15,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AgentBotReplyRuntimeTest {
+class AgentReplyRuntimeTest {
     @Test
     void visibleSayBroadcastsToMap() {
         Character bot = mock(Character.class);
@@ -26,7 +26,7 @@ class AgentBotReplyRuntimeTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(7);
 
-        AgentBotReplyRuntime.visibleSayNow(entry, "hello");
+        AgentReplyRuntime.visibleSayNow(entry, "hello");
 
         verify(map).broadcastMessage(any(Packet.class));
     }
@@ -38,14 +38,14 @@ class AgentBotReplyRuntimeTest {
         Client botClient = mock(Client.class);
         Client ownerClient = mock(Client.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
-        AgentBotReplyChannelStateRuntime.setWhisper(entry);
+        AgentReplyChannelStateRuntime.setWhisper(entry);
 
         when(bot.getName()).thenReturn("agent");
         when(bot.getClient()).thenReturn(botClient);
         when(botClient.getChannel()).thenReturn(1);
         when(owner.getClient()).thenReturn(ownerClient);
 
-        AgentBotReplyRuntime.replyNow(entry, "ok");
+        AgentReplyRuntime.replyNow(entry, "ok");
 
         verify(owner).sendPacket(any(Packet.class));
     }
@@ -59,7 +59,7 @@ class AgentBotReplyRuntimeTest {
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(7);
 
-        AgentBotReplyRuntime.sayPartyNow(bot, "party");
+        AgentReplyRuntime.sayPartyNow(bot, "party");
 
         verify(map).broadcastMessage(any(Packet.class));
     }

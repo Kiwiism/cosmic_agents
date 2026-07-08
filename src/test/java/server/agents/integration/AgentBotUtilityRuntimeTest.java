@@ -5,8 +5,8 @@ import server.agents.capabilities.shop.AgentShopService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotReplyRuntime;
-import server.agents.integration.AgentBotSchedulerRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentSchedulerRuntime;
 import server.agents.integration.AgentBotUtilityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -21,10 +21,10 @@ class AgentBotUtilityRuntimeTest {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentShopService> shops = mockStatic(AgentShopService.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -40,12 +40,12 @@ class AgentBotUtilityRuntimeTest {
     void makerCommandsScheduleLegacyMakerActions() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             AgentBotUtilityRuntime.utilityCallbacks(entry).makeCrystals();
             AgentBotUtilityRuntime.utilityCallbacks(entry).disassembleTrash();
 
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     org.mockito.Mockito.times(2));
         }
     }
@@ -55,8 +55,8 @@ class AgentBotUtilityRuntimeTest {
         Character bot = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class)) {
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class)) {
             AgentBotUtilityRuntime.utilityCallbacks(entry).tradeInvite();
 
             scheduler.verifyNoInteractions();
@@ -69,10 +69,10 @@ class AgentBotUtilityRuntimeTest {
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
 
-        try (MockedStatic<AgentBotSchedulerRuntime> scheduler =
-                     mockStatic(AgentBotSchedulerRuntime.class);
-             MockedStatic<AgentBotReplyRuntime> replies = mockStatic(AgentBotReplyRuntime.class)) {
-            scheduler.when(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(600), eq(1000), any(Runnable.class)))
+        try (MockedStatic<AgentSchedulerRuntime> scheduler =
+                     mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(600), eq(1000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(2).run();
                         return null;
@@ -80,8 +80,8 @@ class AgentBotUtilityRuntimeTest {
 
             AgentBotUtilityRuntime.utilityCallbacks(entry).tradeInvite();
 
-            replies.verify(() -> AgentBotReplyRuntime.replyNow(eq(entry), any(String.class)));
-            scheduler.verify(() -> AgentBotSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)));
+            replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), any(String.class)));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)));
         }
     }
 }

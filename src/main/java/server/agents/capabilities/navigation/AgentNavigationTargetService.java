@@ -8,7 +8,7 @@ import server.agents.integration.AgentBotModeStateRuntime;
 import server.agents.integration.AgentBotMovementStateRuntime;
 import server.agents.integration.AgentBotMovementTargetSideEffects;
 import server.agents.integration.AgentBotNavigationDebugStateRuntime;
-import server.agents.integration.AgentBotRuntimeIdentityRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -29,7 +29,7 @@ public final class AgentNavigationTargetService {
     public static NavigationDirective resolveTarget(AgentRuntimeEntry entry, Point rawTargetPos, boolean runAiTick) {
         long startedAt = System.nanoTime();
         try {
-            Character bot = AgentBotRuntimeIdentityRuntime.bot(entry);
+            Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             if (bot.getMap().getFootholds() == null) {
                 AgentBotNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
                 AgentMovementStateResetService.clearNavigationState(entry);
@@ -136,7 +136,7 @@ public final class AgentNavigationTargetService {
 
     public static boolean tryExecuteCommittedEdgeAfterGroundMovement(AgentRuntimeEntry entry, Point rawTargetPos) {
         if (entry == null
-                || !AgentBotRuntimeIdentityRuntime.hasBot(entry)
+                || !AgentRuntimeIdentityRuntime.hasBot(entry)
                 || !AgentBotNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)
                 || AgentBotMovementStateRuntime.inAir(entry)
                 || AgentBotClimbStateRuntime.climbing(entry)) {
@@ -150,17 +150,17 @@ public final class AgentNavigationTargetService {
         // check, tryExecuteDrop re-fires from the landing platform where there's no lower foothold,
         // sending the bot out of the map.
         AgentNavigationGraph graph = resolveActiveGraph(
-                AgentBotRuntimeIdentityRuntime.botMap(entry),
+                AgentRuntimeIdentityRuntime.botMap(entry),
                 AgentBotMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             AgentNavigationGraphService.warmGraphAsync(
-                    AgentBotRuntimeIdentityRuntime.botMap(entry),
+                    AgentRuntimeIdentityRuntime.botMap(entry),
                     AgentBotMovementStateRuntime.movementProfile(entry));
             return false;
         }
-        Point botPos = AgentBotRuntimeIdentityRuntime.bot(entry).getPosition();
+        Point botPos = AgentRuntimeIdentityRuntime.bot(entry).getPosition();
         int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(
-                graph, entry, AgentBotRuntimeIdentityRuntime.botMap(entry), botPos);
+                graph, entry, AgentRuntimeIdentityRuntime.botMap(entry), botPos);
         AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
                 AgentBotNavigationDebugStateRuntime.navTargetRegionId(entry));
         if (edge == null) {
@@ -169,7 +169,7 @@ public final class AgentNavigationTargetService {
         }
 
         NavigationDirective directive = tryExecuteEdge(
-                graph, entry, AgentBotRuntimeIdentityRuntime.bot(entry), botPos, rawTargetPos, edge, true);
+                graph, entry, AgentRuntimeIdentityRuntime.bot(entry), botPos, rawTargetPos, edge, true);
         if (directive == null || !directive.consumedTick) {
             return false;
         }
@@ -248,7 +248,7 @@ public final class AgentNavigationTargetService {
                         return canExecuteSelectedJumpFromCurrentPosition(
                                 readinessGraph,
                                 readinessEntry,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                AgentRuntimeIdentityRuntime.botMap(readinessEntry),
                                 readinessBotPos,
                                 readinessEdge);
                     }
@@ -271,7 +271,7 @@ public final class AgentNavigationTargetService {
                                                        AgentNavigationGraph.Edge readinessEdge) {
                         return canExecuteClimbExitFromCurrentPosition(
                                 readinessGraph,
-                                AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                AgentRuntimeIdentityRuntime.botMap(readinessEntry),
                                 readinessBotPos,
                                 readinessEdge);
                     }
@@ -284,7 +284,7 @@ public final class AgentNavigationTargetService {
                         return AgentNavigationRopeEdgeService.canExecuteClimbEntryFromCurrentPosition(
                                 readinessBotPos,
                                 readinessEdge,
-                                findRopeForRegion(AgentBotRuntimeIdentityRuntime.botMap(readinessEntry),
+                                findRopeForRegion(AgentRuntimeIdentityRuntime.botMap(readinessEntry),
                                         readinessGraph.getRegion(readinessEdge.toRegionId)));
                     }
                 });

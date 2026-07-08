@@ -23,17 +23,17 @@ public final class AgentBotSupplyRuntime {
         return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
             @Override
             public void requestPotion(boolean hpPotion) {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedPotionCommand(entry, hpPotion));
+                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedPotionCommand(entry, hpPotion));
             }
 
             @Override
             public void requestAnyPotion() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAnyPotionCommand(entry));
+                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAnyPotionCommand(entry));
             }
 
             @Override
             public void requestAmmo() {
-                AgentBotSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAmmoCommand(entry));
+                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAmmoCommand(entry));
             }
         };
     }
@@ -47,7 +47,7 @@ public final class AgentBotSupplyRuntime {
     }
 
     public static void handleNeedAnyPotionCommand(AgentRuntimeEntry entry) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
@@ -61,25 +61,25 @@ public final class AgentBotSupplyRuntime {
                 result == AgentPotionService.OwnerPotShareResult.NO_DONOR,
                 forHp);
         if (reply != null) {
-            AgentBotReplyRuntime.queueReply(entry, reply);
+            AgentReplyRuntime.queueReply(entry, reply);
         }
     }
 
     public static void handleNeedAmmoCommand(AgentRuntimeEntry entry) {
-        Character owner = AgentBotRuntimeIdentityRuntime.owner(entry);
+        Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         if (owner == null) {
             return;
         }
         WeaponType weaponType = AgentAttackExecutionProvider.getEquippedWeaponType(owner);
         if (weaponType != WeaponType.BOW && weaponType != WeaponType.CROSSBOW) {
-            AgentBotReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
+            AgentReplyRuntime.queueReply(entry, AgentSupplyRequestOutcomeFlow.ammoNotNeededReply());
             return;
         }
         AgentAmmoService.OwnerAmmoShareResult result = AgentAmmoService.offerAmmoShareToOwner(entry, weaponType);
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
                 result == AgentAmmoService.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {
-            AgentBotReplyRuntime.queueReply(entry, reply);
+            AgentReplyRuntime.queueReply(entry, reply);
         }
     }
 
