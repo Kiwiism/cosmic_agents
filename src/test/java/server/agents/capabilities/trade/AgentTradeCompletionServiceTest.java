@@ -7,7 +7,6 @@ import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.integration.AgentInventoryRuntime;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

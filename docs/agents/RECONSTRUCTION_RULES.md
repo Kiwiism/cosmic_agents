@@ -98,6 +98,11 @@ Recent reconstruction notes:
   still only adapts `AgentRuntimeEntry` airshow flags, trail timing, and
   scripted movement frame state; monster spawning, map broadcasts, timers, and
   session cleanup remain in the existing airshow service/integration callers.
+- Pending trade sequence state has moved from `server.agents.integration` to
+  `server.agents.capabilities.trade.AgentPendingTradeStateRuntime`. It still
+  only adapts `AgentRuntimeEntry` trade retry, batch, item, meso, restore-slot,
+  and owner-given item bookkeeping; trade windows, inventory mutation, shop
+  APIs, timers, and client locks remain in existing trade/integration callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

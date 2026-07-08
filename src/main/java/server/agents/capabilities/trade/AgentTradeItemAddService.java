@@ -7,7 +7,6 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import net.packet.Packet;
 import server.Trade;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import tools.PacketCreator;
 

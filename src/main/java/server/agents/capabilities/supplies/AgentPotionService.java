@@ -1,5 +1,7 @@
 package server.agents.capabilities.supplies;
 
+import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
+
 import server.agents.capabilities.movement.AgentMovementTimers;
 
 import server.agents.capabilities.dialogue.AgentEmote;
@@ -23,7 +25,6 @@ import server.agents.capabilities.supplies.AgentAutopotPolicy.PotionRanking;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentPotionRuntime;
 import server.agents.integration.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

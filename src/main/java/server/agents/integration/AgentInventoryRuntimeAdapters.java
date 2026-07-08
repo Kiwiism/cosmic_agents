@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
+
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementTimers;
 

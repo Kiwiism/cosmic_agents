@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 import server.agents.integration.AgentMovementStateRuntime;
 
@@ -75,7 +75,6 @@ import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentNavigationDebugStateRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentPqRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.StatEffect;

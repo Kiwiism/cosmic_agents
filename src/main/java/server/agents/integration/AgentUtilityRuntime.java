@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
+
 import client.Character;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentChatUtilityFlow;

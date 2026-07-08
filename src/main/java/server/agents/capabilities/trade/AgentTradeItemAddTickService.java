@@ -3,7 +3,6 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import server.Trade;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

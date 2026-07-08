@@ -1,5 +1,7 @@
 package server.agents.capabilities.inventory;
 
+import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
+
 import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
@@ -7,7 +9,6 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;

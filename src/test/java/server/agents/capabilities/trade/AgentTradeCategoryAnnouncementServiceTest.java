@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import org.junit.jupiter.api.Test;
 import server.Trade;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

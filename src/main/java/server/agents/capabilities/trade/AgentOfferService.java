@@ -22,7 +22,6 @@ import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;

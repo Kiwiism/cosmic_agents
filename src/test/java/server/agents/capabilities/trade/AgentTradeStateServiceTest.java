@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;

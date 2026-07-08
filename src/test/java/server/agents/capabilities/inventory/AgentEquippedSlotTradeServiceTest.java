@@ -1,5 +1,7 @@
 package server.agents.capabilities.inventory;
 
+import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
+
 import client.Character;
 import client.Client;
 import client.inventory.Inventory;
@@ -8,7 +10,6 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

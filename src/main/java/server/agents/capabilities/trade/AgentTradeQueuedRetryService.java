@@ -1,6 +1,5 @@
 package server.agents.capabilities.trade;
 
-import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntUnaryOperator;
