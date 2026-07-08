@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
+import server.agents.capabilities.combat.AgentBuffStateRuntime;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;

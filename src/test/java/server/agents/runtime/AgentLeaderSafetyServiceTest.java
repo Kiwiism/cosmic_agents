@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentActivityStateRuntime;
-import server.agents.integration.AgentBuffStateRuntime;
+import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.integration.AgentDegenerateAttackStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.integration.AgentMoveTargetStateRuntime;
