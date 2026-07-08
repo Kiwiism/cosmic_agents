@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentAmmoStateRuntime;
+import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

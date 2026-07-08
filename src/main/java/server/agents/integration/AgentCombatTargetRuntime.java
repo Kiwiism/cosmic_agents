@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
+
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 
 import client.Character;

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.integration.AgentAmmoStateRuntime;
+import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import server.agents.integration.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentCombatRuntime;
 

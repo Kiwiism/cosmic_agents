@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.supplies;
 
 import server.agents.runtime.AgentRuntimeEntry;
 

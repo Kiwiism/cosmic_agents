@@ -1,9 +1,7 @@
-package server.agents.integration;
-
-import server.agents.runtime.AgentRuntimeEntry;
+package server.agents.capabilities.supplies;
 
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentAmmoStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -4913,6 +4913,11 @@ Current physics correction:
   These adapters remain pure `AgentRuntimeEntry` state accessors; actual
   attack execution, buff packet/application work, damage mutation, and alert
   scheduling remain at their existing integration/runtime seams.
+- Ammo and potion supply state adapters have moved from
+  `server.agents.integration` to `server.agents.capabilities.supplies`.
+  They remain pure `AgentRuntimeEntry` state accessors; item counting,
+  consumption, inventory mutation, share-trade execution, and scheduler work
+  remain at their existing capability/integration seams.
 - Movement input and facing wrappers have been removed from `BotEntry`.
   Movement velocity, movement direction, and facing direction reads/writes now
   route through `AgentMovementStateRuntime` over `AgentMovementInputState`.

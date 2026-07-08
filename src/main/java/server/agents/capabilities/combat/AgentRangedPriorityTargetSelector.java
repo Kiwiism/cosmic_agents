@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.inventory.WeaponType;
-import server.agents.integration.AgentAmmoStateRuntime;
+import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 import server.agents.integration.AgentCombatPlanRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

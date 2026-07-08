@@ -4,7 +4,6 @@ import client.BotClient;
 import client.Character;
 import client.Client;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentPotionStateRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;

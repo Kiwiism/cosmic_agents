@@ -1,5 +1,7 @@
 package server.agents.integration;
 
+import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
+
 import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
