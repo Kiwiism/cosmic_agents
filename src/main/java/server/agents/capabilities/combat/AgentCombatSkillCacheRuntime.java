@@ -1,14 +1,8 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
-
-import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
 import server.StatEffect;
-import server.agents.capabilities.combat.AgentCombatHitCounter;
-import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentCombatSkillCacheRuntime {

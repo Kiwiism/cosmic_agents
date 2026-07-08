@@ -6120,6 +6120,11 @@ Current physics correction:
   stores the same active `Monster` reference on `AgentRuntimeEntry`, including
   alive/map/seek-range validation; grind target snapshots, fallback clearing,
   commitment, and combat report behavior are unchanged.
+- Combat skill-cache rebuild logic now lives in
+  `server.agents.capabilities.combat.AgentCombatSkillCacheRuntime`. It still
+  scans the same learned skills, classifies attack/AoE/summon/buff/heal
+  buckets, and writes the same skill-cache state; common tick routing and
+  combat parity behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
