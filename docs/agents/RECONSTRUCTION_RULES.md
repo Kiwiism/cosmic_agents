@@ -157,6 +157,11 @@ Recent reconstruction notes:
   delegates snapshot capture to `AgentMovementTargetSideEffects`, so live
   target capture, formation data, navigation waypoint steering, and movement
   behavior are unchanged.
+- Combat attack-facing updates have moved from `server.agents.integration` to
+  `server.agents.capabilities.combat.AgentCombatFacingRuntime`. Attack packet
+  stance is still translated with the existing combat execution provider and
+  pose sync still delegates to the movement pose service, so attack-facing and
+  packet-visible stance behavior are unchanged.
 - Death/respawn window state has moved from `server.agents.integration` to
   `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
   `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,
