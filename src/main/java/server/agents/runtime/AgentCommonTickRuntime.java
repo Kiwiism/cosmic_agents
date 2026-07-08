@@ -16,7 +16,7 @@ import server.agents.integration.AgentBotCombatDeathRuntime;
 import server.agents.integration.AgentBotCombatHealRuntime;
 import server.agents.integration.AgentBotCombatSkillCacheRuntime;
 import server.agents.integration.AgentDeathStateRuntime;
-import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentManagerStatusRuntime;
 
 import java.util.function.Consumer;
 
@@ -49,7 +49,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentPotionService.tickPotionCheck(entry, agent),
                 (entry, agent) -> AgentPotionService.tickPassiveRecovery(entry, agent),
                 (entry, agent) -> AgentBuildService.checkLevelUp(entry, agent),
-                (entry, agent, leader) -> AgentBotManagerStatusRuntime.tickAfkCheck(entry, leader),
+                (entry, agent, leader) -> AgentManagerStatusRuntime.tickAfkCheck(entry, leader),
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(entry, agent),
                 (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(entry, agent),
                 AgentPartyQuestHooks::tick,

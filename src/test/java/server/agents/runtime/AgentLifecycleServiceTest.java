@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
-import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentManagerStatusRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -46,7 +46,7 @@ class AgentLifecycleServiceTest {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentFormationService.formationsByLeaderId().clear();
 
-        try (MockedStatic<AgentBotManagerStatusRuntime> status = mockStatic(AgentBotManagerStatusRuntime.class)) {
+        try (MockedStatic<AgentManagerStatusRuntime> status = mockStatic(AgentManagerStatusRuntime.class)) {
             AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
                     leader.getId(),
                     leader,
@@ -79,7 +79,7 @@ class AgentLifecycleServiceTest {
             assertTrue(normalized.get());
             scheduledTick.get().run();
             assertSame(entry, tickedEntry.get());
-            status.verify(() -> AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, 123L));
+            status.verify(() -> AgentManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, 123L));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
             AgentFormationService.formationsByLeaderId().clear();
@@ -96,7 +96,7 @@ class AgentLifecycleServiceTest {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(oldEntry);
 
-        try (MockedStatic<AgentBotManagerStatusRuntime> status = mockStatic(AgentBotManagerStatusRuntime.class)) {
+        try (MockedStatic<AgentManagerStatusRuntime> status = mockStatic(AgentManagerStatusRuntime.class)) {
             AgentRuntimeEntry newEntry = AgentLifecycleService.registerAgent(
                     leader.getId(),
                     leader,
@@ -118,7 +118,7 @@ class AgentLifecycleServiceTest {
 
             assertEquals(1, cancelled.get());
             assertEquals(List.of(newEntry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
-            status.verify(() -> AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(newEntry, agent, 456L));
+            status.verify(() -> AgentManagerStatusRuntime.scheduleSpawnStatusCheck(newEntry, agent, 456L));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }

@@ -11,14 +11,14 @@ public final class AgentMovementStatusRuntime {
     }
 
     public static void prepareMovementActiveMode(AgentRuntimeEntry entry) {
-        AgentBotChatStatusRuntime.prepareActiveModeEntry(entry);
+        AgentChatStatusRuntime.prepareActiveModeEntry(entry);
     }
 
     public static void checkMovementStatus(AgentRuntimeEntry entry, Character bot) {
-        AgentBotChatStatusRuntime.checkBotStatus(entry, bot);
+        AgentChatStatusRuntime.checkBotStatus(entry, bot);
     }
 
     public static int randomFidgetExpression() {
-        return AgentBotChatStatusRuntime.randomFidgetExpression();
+        return AgentChatStatusRuntime.randomFidgetExpression();
     }
 }

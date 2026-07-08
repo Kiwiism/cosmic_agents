@@ -25,11 +25,11 @@ import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.social.AgentScrollReactionService;
-import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentChatReportRuntime;
 import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentBuffStateRuntime;
 import server.agents.integration.AgentMessageQueueStateRuntime;
-import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
@@ -214,7 +214,7 @@ class AgentChatRuntimeParityTest {
         assertTrue(AgentChatCommandClassifier.isFidgetCommand("fidget!"));
         assertFalse(AgentChatCommandClassifier.isFidgetCommand("please fidget"));
         for (int i = 0; i < 100; i++) {
-            assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentBotChatStatusRuntime.randomFidgetExpression()));
+            assertTrue(Set.of(2, 3, 5, 6, 7).contains(AgentChatStatusRuntime.randomFidgetExpression()));
         }
 
         assertTrue(AgentFidgetService.maybeStartSocialFidget(entry));
@@ -289,7 +289,7 @@ class AgentChatRuntimeParityTest {
         when(bot.getTotalJumpStat()).thenReturn(110);
         AgentMovementProfile profile = AgentMovementProfile.fromCharacter(bot);
 
-        List<String> report = AgentBotChatReportRuntime.buildMovementStatsReport(bot);
+        List<String> report = AgentChatReportRuntime.buildMovementStatsReport(bot);
 
         assertEquals(List.of(
                 "speed 120% jump 110%",
@@ -316,7 +316,7 @@ class AgentChatRuntimeParityTest {
         when(bot.getTotalMoveSpeedStat()).thenReturn(140);
         when(bot.getTotalJumpStat()).thenReturn(125);
 
-        List<String> report = AgentBotChatReportRuntime.buildMovementStatsReport(bot);
+        List<String> report = AgentChatReportRuntime.buildMovementStatsReport(bot);
 
         assertEquals("speed 100% jump 100% (map forced; raw 140%/125%)", report.getFirst());
     }
@@ -336,7 +336,7 @@ class AgentChatRuntimeParityTest {
         when(bot.calculateMinBaseDamage(20, 0.1d)).thenReturn(50);
         when(bot.calculateMaxBaseDamage(20)).thenReturn(99);
 
-        String report = AgentBotChatReportRuntime.buildRangeReport(bot,
+        String report = AgentChatReportRuntime.buildRangeReport(bot,
                 new AgentMapDamageProfile(100, 40, 48));
 
         assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
@@ -351,7 +351,7 @@ class AgentChatRuntimeParityTest {
         when(bot.getTotalInt()).thenReturn(100);
         when(bot.getTotalLuk()).thenReturn(50);
 
-        String report = AgentBotChatReportRuntime.buildRangeReport(bot,
+        String report = AgentChatReportRuntime.buildRangeReport(bot,
                 new AgentMapDamageProfile(100, 30, 50));
 
         assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
@@ -417,7 +417,7 @@ class AgentChatRuntimeParityTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentMessageQueueStateRuntime.setSending(entry, true);
 
-        AgentBotChatReportRuntime.reportHelp(entry);
+        AgentChatReportRuntime.reportHelp(entry);
 
         assertEquals(5, AgentMessageQueueStateRuntime.size(entry));
         for (AgentQueuedMessage message : AgentMessageQueueStateRuntime.snapshot(entry)) {

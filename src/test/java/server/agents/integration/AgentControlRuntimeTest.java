@@ -7,7 +7,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatBuffQueryFlow;
 import server.agents.capabilities.dialogue.AgentChatRespecFlow;
 import server.agents.capabilities.dialogue.AgentChatToggleFlow;
-import server.agents.integration.AgentBotControlRuntime;
+import server.agents.integration.AgentControlRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 
@@ -16,11 +16,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 
-class AgentBotControlRuntimeTest {
+class AgentControlRuntimeTest {
     @Test
     void toggleCallbacksScheduleLegacyControlSideEffects() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatToggleFlow.ToggleCallbacks callbacks = AgentBotControlRuntime.toggleCallbacks(entry);
+        AgentChatToggleFlow.ToggleCallbacks callbacks = AgentControlRuntime.toggleCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {
@@ -38,7 +38,7 @@ class AgentBotControlRuntimeTest {
     @Test
     void buffQueryCallbacksScheduleLegacyReportSideEffects() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatBuffQueryFlow.BuffQueryCallbacks callbacks = AgentBotControlRuntime.buffQueryCallbacks(entry);
+        AgentChatBuffQueryFlow.BuffQueryCallbacks callbacks = AgentControlRuntime.buffQueryCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {
@@ -54,7 +54,7 @@ class AgentBotControlRuntimeTest {
     @Test
     void respecCallbacksScheduleLegacyBuildSideEffects() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatRespecFlow.RespecCallbacks callbacks = AgentBotControlRuntime.respecCallbacks(entry);
+        AgentChatRespecFlow.RespecCallbacks callbacks = AgentControlRuntime.respecCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {

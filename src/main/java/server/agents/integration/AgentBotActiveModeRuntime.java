@@ -53,7 +53,7 @@ public final class AgentBotActiveModeRuntime {
     public static void maybeSuggestGearToSiblings(AgentRuntimeEntry entry, Character bot) {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         AgentChatStatusRuntime.maybeSuggestGear(
-                AgentBotStatusRuntime.gearSuggestionState(entry),
+                AgentStatusRuntime.gearSuggestionState(entry),
                 AgentChatStatusRuntime.gearSuggestionActions(
                         owner != null,
                         () -> AgentOfferService.offerBestGearToSibling(entry, bot)),

@@ -15,7 +15,7 @@ import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentActivityStateRuntime;
-import server.agents.integration.AgentBotChatOrchestratorContext;
+import server.agents.integration.AgentChatOrchestratorContext;
 import server.agents.integration.AgentBotCommandParser;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentReplyChannelStateRuntime;
@@ -157,6 +157,6 @@ public final class AgentChatRouteRuntime {
     }
 
     private static void handleAgentChat(AgentRuntimeEntry entry, String message) {
-        AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry));
+        AgentChatRuntime.handleChat(message, new AgentChatOrchestratorContext(entry));
     }
 }

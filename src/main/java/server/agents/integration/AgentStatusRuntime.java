@@ -12,8 +12,8 @@ import java.awt.Point;
  * Temporary Agent-owned bridge from Agent runtime status fields to Agent
  * chat/status runtime state interfaces.
  */
-public final class AgentBotStatusRuntime {
-    private AgentBotStatusRuntime() {
+public final class AgentStatusRuntime {
+    private AgentStatusRuntime() {
     }
 
     public static AgentChatStatusRuntime.StatusState statusState(AgentRuntimeEntry entry) {

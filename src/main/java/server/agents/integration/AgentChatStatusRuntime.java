@@ -1,7 +1,6 @@
 package server.agents.integration;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -9,14 +8,14 @@ import server.agents.runtime.AgentRuntimeEntry;
  * effects. Legacy bot package callers should delegate here until their call
  * sites move into Agent modules.
  */
-public final class AgentBotChatStatusRuntime {
-    private AgentBotChatStatusRuntime() {
+public final class AgentChatStatusRuntime {
+    private AgentChatStatusRuntime() {
     }
 
     public static void markOwnerActive(AgentRuntimeEntry entry) {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        AgentChatStatusRuntime.markActive(
-                AgentBotStatusRuntime.statusState(entry),
+        server.agents.capabilities.dialogue.AgentChatStatusRuntime.markActive(
+                AgentStatusRuntime.statusState(entry),
                 owner != null ? owner.getPosition() : null,
                 System.currentTimeMillis());
     }
@@ -26,27 +25,27 @@ public final class AgentBotChatStatusRuntime {
     }
 
     public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
-        AgentChatStatusRuntime.announceOfflineReturn(
-                AgentBotStatusRuntime.offlineReturnActions(AgentRuntimeIdentityRuntime.bot(entry)));
+        server.agents.capabilities.dialogue.AgentChatStatusRuntime.announceOfflineReturn(
+                AgentStatusRuntime.offlineReturnActions(AgentRuntimeIdentityRuntime.bot(entry)));
     }
 
     public static void tickAfkCheck(AgentRuntimeEntry entry, Character owner) {
-        AgentChatStatusRuntime.tickAfkCheck(
-                AgentBotStatusRuntime.afkState(entry),
+        server.agents.capabilities.dialogue.AgentChatStatusRuntime.tickAfkCheck(
+                AgentStatusRuntime.afkState(entry),
                 owner.getPosition(),
                 System.currentTimeMillis(),
-                AgentBotStatusRuntime.afkReturnActions(entry));
+                AgentStatusRuntime.afkReturnActions(entry));
     }
 
     public static void prepareActiveModeEntry(AgentRuntimeEntry entry) {
-        AgentChatStatusRuntime.prepareActiveMode(AgentBotActiveModeRuntime.activeModeActions(entry));
+        server.agents.capabilities.dialogue.AgentChatStatusRuntime.prepareActiveMode(AgentBotActiveModeRuntime.activeModeActions(entry));
     }
 
     public static boolean isOwnerIdle(AgentRuntimeEntry entry) {
-        return AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry));
+        return server.agents.capabilities.dialogue.AgentChatStatusRuntime.isOwnerIdle(AgentStatusRuntime.statusState(entry));
     }
 
     public static int randomFidgetExpression() {
-        return AgentChatStatusRuntime.randomFidgetExpression();
+        return server.agents.capabilities.dialogue.AgentChatStatusRuntime.randomFidgetExpression();
     }
 }

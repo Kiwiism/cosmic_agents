@@ -15,8 +15,8 @@ import java.util.Map;
  * Agent-owned pending-action facade over temporary live Agent state and side
  * effects.
  */
-public final class AgentBotPendingActionRuntime {
-    private AgentBotPendingActionRuntime() {
+public final class AgentPendingActionRuntime {
+    private AgentPendingActionRuntime() {
     }
 
     public static AgentPendingChatActionFlow.PendingActionState pendingActionState(AgentRuntimeEntry entry) {
@@ -67,7 +67,7 @@ public final class AgentBotPendingActionRuntime {
 
             @Override
             public void handleSkillTreeChoice(String message) {
-                AgentBotPendingActionRuntime.handleSkillTreeChoice(
+                AgentPendingActionRuntime.handleSkillTreeChoice(
                         entry, AgentRuntimeIdentityRuntime.bot(entry), message);
             }
 

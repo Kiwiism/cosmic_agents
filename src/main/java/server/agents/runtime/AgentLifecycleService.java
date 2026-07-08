@@ -5,7 +5,7 @@ import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentManagerStatusRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
@@ -234,7 +234,7 @@ public final class AgentLifecycleService {
         if (normalizeSpawnState) {
             hooks.normalizeSpawnedAgent().accept(entry);
         }
-        AgentBotManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, hooks.spawnStatusDelayMs().getAsLong());
+        AgentManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, hooks.spawnStatusDelayMs().getAsLong());
         return entry;
     }
 

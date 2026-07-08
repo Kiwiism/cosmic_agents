@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentBotChatOrchestratorContext;
+import server.agents.integration.AgentChatOrchestratorContext;
 import server.agents.integration.AgentPendingActionStateRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentBotChatOrchestratorContextTest {
+class AgentChatOrchestratorContextTest {
     @Test
     void AdaptsAgentRuntimeEntryStateToAgentChatContext() {
         Character bot = mock(Character.class);
@@ -25,7 +25,7 @@ class AgentBotChatOrchestratorContextTest {
         AgentPendingActionStateRuntime.setPendingAction(entry, "item-choice");
         AgentPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
 
-        AgentBotChatOrchestratorContext context = new AgentBotChatOrchestratorContext(entry);
+        AgentChatOrchestratorContext context = new AgentChatOrchestratorContext(entry);
 
         assertTrue(context.hasPendingAction());
         assertEquals("item-choice", context.pendingActionState().pendingAction());

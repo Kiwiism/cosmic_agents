@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.fidget.AgentFidgetMode;
-import server.agents.integration.AgentBotChatStatusRuntime;
+import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.integration.AgentFidgetRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,11 +17,11 @@ class AgentFidgetRuntimeTest {
     void fidgetIdleCheckDelegatesToAgentStatusRuntime() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        try (MockedStatic<AgentBotChatStatusRuntime> status = mockStatic(AgentBotChatStatusRuntime.class)) {
-            status.when(() -> AgentBotChatStatusRuntime.isOwnerIdle(entry)).thenReturn(true);
+        try (MockedStatic<AgentChatStatusRuntime> status = mockStatic(AgentChatStatusRuntime.class)) {
+            status.when(() -> AgentChatStatusRuntime.isOwnerIdle(entry)).thenReturn(true);
 
             assertTrue(AgentFidgetRuntime.isLeaderIdleForFidget(entry));
-            status.verify(() -> AgentBotChatStatusRuntime.isOwnerIdle(entry));
+            status.verify(() -> AgentChatStatusRuntime.isOwnerIdle(entry));
         }
     }
 

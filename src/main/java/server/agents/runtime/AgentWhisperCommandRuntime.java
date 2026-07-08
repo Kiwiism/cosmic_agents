@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotChatOrchestratorContext;
+import server.agents.integration.AgentChatOrchestratorContext;
 import server.agents.integration.AgentReplyChannelStateRuntime;
 
 public final class AgentWhisperCommandRuntime {
@@ -26,6 +26,6 @@ public final class AgentWhisperCommandRuntime {
                         leader.getId(),
                         target.getId()),
                 entry -> AgentReplyChannelStateRuntime.setReplyChannel(entry, AgentReplyChannel.WHISPER),
-                (entry, message) -> AgentChatRuntime.handleChat(message, new AgentBotChatOrchestratorContext(entry)));
+                (entry, message) -> AgentChatRuntime.handleChat(message, new AgentChatOrchestratorContext(entry)));
     }
 }

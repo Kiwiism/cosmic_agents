@@ -37,6 +37,12 @@ Recent reconstruction notes:
   and fidget runtime adapters from `AgentBot*` to neutral `Agent*` names. This
   was a type/file/import rename only; movement, navigation targeting, fidget,
   and follow behavior are unchanged.
+- The dialogue/control/status semantic cleanup slice renamed chat
+  orchestrator, chat report, chat status, control, manager-status, pending
+  action, and status runtime adapters from `AgentBot*` to neutral `Agent*`
+  names. This was a type/file/import rename only; command handling, report
+  delivery, AFK/offline status checks, and pending-action behavior are
+  unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -1583,16 +1589,16 @@ Recent reconstruction notes:
   route values are unchanged; `BotCombatManager`, `BotManager`, and attack
   execution now share the Agent-owned route type.
 - Report helper orchestration now has an Agent-owned facade in
-  `AgentBotChatReportRuntime`; `BotChatReportRuntime` remains only as a
+  `AgentChatReportRuntime`; `BotChatReportRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Status helper orchestration now has an Agent-owned facade in
-  `AgentBotChatStatusRuntime`; `BotChatStatusRuntime` remains only as a
+  `AgentChatStatusRuntime`; `BotChatStatusRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Build/AP/SP/job callback orchestration now has an Agent-owned facade in
   `AgentBotBuildRuntime`; `BotChatBuildRuntime` remains only as a temporary
   compatibility shim for legacy bot package callers.
 - Pending chat-action state, callbacks, and skill-report decision application
-  now have an Agent-owned facade in `AgentBotPendingActionRuntime`;
+  now have an Agent-owned facade in `AgentPendingActionRuntime`;
   `BotChatPendingActionRuntime` remains only as a temporary compatibility shim
   for legacy bot package callers.
 - Utility chat callbacks now have an Agent-owned facade in
@@ -1635,23 +1641,23 @@ Recent reconstruction notes:
 - Top-level chat handled-state ownership now lives in `AgentChatRuntime`;
   the temporary `BotChatRuntime` adapter has been removed.
 - Top-level chat orchestrator context ownership now lives in
-  `AgentBotChatOrchestratorContext`; the old bot-side context class has been
+  `AgentChatOrchestratorContext`; the old bot-side context class has been
   removed, and `BotManager` now creates the Agent integration adapter directly.
 - Unused bot-side chat compatibility shims for build, control, equipment,
   movement, pending-action, social, transfer, and utility callbacks have been
   removed after the Agent orchestrator context switched directly to Agent
   integration facades.
 - The bot-side chat report compatibility shim has been removed; remaining report
-  tests and production callers use `AgentBotChatReportRuntime` directly.
+  tests and production callers use `AgentChatReportRuntime` directly.
 - The bot-side chat status compatibility shim has been removed; production
   lifecycle, fidget, offer, build, starter-kit, and tests now call
-  `AgentBotChatStatusRuntime` directly.
+  `AgentChatStatusRuntime` directly.
 - Unused bot-side chat session and supply compatibility shims have been
   removed; session and supply chat orchestration is reached through Agent
   integration facades.
 - `BotChatRuntime` and `BotChatManager` have been removed; `BotManager` now
   delegates directly to `AgentChatRuntime` with
-  `AgentBotChatOrchestratorContext`.
+  `AgentChatOrchestratorContext`.
 - Immediate Agent integration reply delivery now routes through
   `AgentReplyRuntime.replyNow`, `visibleSayNow`, and `sayPartyNow`; scattered
   Agent integration facades no longer call `BotManager.botReply`/visible
@@ -1810,11 +1816,11 @@ Recent reconstruction notes:
   chat-status facade for those movement callbacks.
 - BotManager-triggered spawn status checks, map-change status checks,
   shop-transition status checks, offline-return announcements, and AFK ticks
-  now enter through `AgentBotManagerStatusRuntime`; `BotManager` no longer
+  now enter through `AgentManagerStatusRuntime`; `BotManager` no longer
   reaches directly into the broad chat-status facade for those lifecycle/tick
   callbacks.
 - Bot performance-monitor diagnostics now label the common AFK check as
-  `AgentBotManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
+  `AgentManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
   BotManager status boundary used by the tick shell.
 - BotManager-triggered queue/reply/map/party delivery now calls
   `AgentReplyRuntime` directly; the pure manager reply pass-through adapter
@@ -1842,7 +1848,7 @@ Recent reconstruction notes:
   bridge or the broad chat-report facade just to render range text, and the
   underlying range formatter remains unchanged.
 - The old control report pass-through bridge was removed.
-  `AgentBotControlRuntime` still owns the same 500-700 ms command delay, but
+  `AgentControlRuntime` still owns the same 500-700 ms command delay, but
   now calls the existing chat-report facade directly for buff-debug and
   skill-buff-debug reports.
 - Offer-manager map-visible rejection replies and bot-to-bot loot-offer accept
@@ -1880,15 +1886,15 @@ Recent reconstruction notes:
   to Agent reply runtimes; `botSay(...)` and `botSayParty(...)` remain for
   legacy channel delivery compatibility.
 - The old report reply and delivery pass-through bridges were removed.
-  `AgentBotChatReportRuntime` now queues report lines directly through the
+  `AgentChatReportRuntime` now queues report lines directly through the
   existing reply runtime while preserving the same queued owner-directed reply
   behavior.
 - The old report scheduler pass-through bridge was removed.
-  `AgentBotChatReportRuntime` now supplies the existing random-delay scheduler
+  `AgentChatReportRuntime` now supplies the existing random-delay scheduler
   directly when constructing report callbacks, preserving the same delay
   behavior.
 - Report operation callback wiring now lives directly in
-  `AgentBotChatReportRuntime`; the standalone report-operations bridge was
+  `AgentChatReportRuntime`; the standalone report-operations bridge was
   removed while preserving the same help/request-upgrade/report dispatch table.
 - Status reply and scheduler pass-through adapters were removed.
   AFK-return and offline-return actions now call the existing reply and
@@ -1903,7 +1909,7 @@ Recent reconstruction notes:
   existing reply and random-delay scheduler runtimes directly while preserving
   the same pending-action behavior.
 - Control reply and scheduler pass-through adapters were removed.
-  `AgentBotControlRuntime` now calls the existing reply and random-delay
+  `AgentControlRuntime` now calls the existing reply and random-delay
   scheduler runtimes directly while preserving the same toggle, buff-query, and
   respec timings and replies.
 - Equipment visible replies, unequip, unequip-all, auto-equip-debug, and
@@ -2324,7 +2330,7 @@ Recent reconstruction notes:
   BotManager map-change handling keeps BotEntry as the temporary backing store
   but no longer writes `kpq.stage5Claimed` directly in production.
 - Airshow-active tick gate state now enters through
-  `AgentBotManagerStatusRuntime`; BotManager tick orchestration keeps BotEntry
+  `AgentManagerStatusRuntime`; BotManager tick orchestration keeps BotEntry
   as the temporary backing store but no longer reads `airshowActive` directly in
   production.
 - Scheduled tick task cancellation now enters through
@@ -3303,7 +3309,7 @@ Recent reconstruction notes:
   is retained only as the historical focused combat parity suite.
 - The remaining `BotChatManager` compatibility facade has been removed.
   `BotManager` now calls `AgentChatRuntime` directly with
-  `AgentBotChatOrchestratorContext`, preserving the same handled-state
+  `AgentChatOrchestratorContext`, preserving the same handled-state
   fall-through, targeted-command, group-supply, broadcast, and whisper behavior.
   The historical focused chat/dialogue parity suite has been renamed to
   `AgentChatRuntimeParityTest`.
@@ -5845,7 +5851,7 @@ Initial reconstruction order:
    runtime, and top-level chat orchestration have moved to Agent-owned dialogue
    and integration modules. `BotChatRuntime`, `BotChatOrchestratorContext`,
    `BotChatReplyRuntime`, and `BotChatManager` have been removed; `BotManager`
-   now enters `AgentChatRuntime` through `AgentBotChatOrchestratorContext`, and
+   now enters `AgentChatRuntime` through `AgentChatOrchestratorContext`, and
    `AgentChatRuntimeParityTest` is the historical focused parity suite.
 4. Movement and navigation.
 5. Combat.

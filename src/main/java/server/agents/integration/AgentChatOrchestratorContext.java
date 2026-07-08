@@ -22,16 +22,16 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Agent-owned adapter from the live Agent runtime entry to the generic
  * dialogue orchestrator context.
  */
-public final class AgentBotChatOrchestratorContext implements AgentChatOrchestrator.Context {
+public final class AgentChatOrchestratorContext implements AgentChatOrchestrator.Context {
     private final AgentRuntimeEntry entry;
 
-    public AgentBotChatOrchestratorContext(AgentRuntimeEntry entry) {
+    public AgentChatOrchestratorContext(AgentRuntimeEntry entry) {
         this.entry = entry;
     }
 
     @Override
     public void markActive() {
-        AgentBotChatStatusRuntime.markOwnerActive(entry);
+        AgentChatStatusRuntime.markOwnerActive(entry);
     }
 
     @Override
@@ -41,12 +41,12 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public AgentPendingChatActionFlow.PendingActionState pendingActionState() {
-        return AgentBotPendingActionRuntime.pendingActionState(entry);
+        return AgentPendingActionRuntime.pendingActionState(entry);
     }
 
     @Override
     public AgentPendingChatActionFlow.PendingActionCallbacks pendingActionCallbacks() {
-        return AgentBotPendingActionRuntime.pendingActionCallbacks(entry);
+        return AgentPendingActionRuntime.pendingActionCallbacks(entry);
     }
 
     @Override
@@ -66,17 +66,17 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public AgentChatToggleFlow.ToggleCallbacks toggleCallbacks() {
-        return AgentBotControlRuntime.toggleCallbacks(entry);
+        return AgentControlRuntime.toggleCallbacks(entry);
     }
 
     @Override
     public AgentChatBuffQueryFlow.BuffQueryCallbacks buffQueryCallbacks() {
-        return AgentBotControlRuntime.buffQueryCallbacks(entry);
+        return AgentControlRuntime.buffQueryCallbacks(entry);
     }
 
     @Override
     public AgentChatRespecFlow.RespecCallbacks respecCallbacks() {
-        return AgentBotControlRuntime.respecCallbacks(entry);
+        return AgentControlRuntime.respecCallbacks(entry);
     }
 
     @Override
@@ -127,7 +127,7 @@ public final class AgentBotChatOrchestratorContext implements AgentChatOrchestra
 
     @Override
     public AgentChatReportFlow.ReportCallbacks reportCallbacks() {
-        return AgentBotChatReportRuntime.reportCallbacks(entry);
+        return AgentChatReportRuntime.reportCallbacks(entry);
     }
 
     @Override

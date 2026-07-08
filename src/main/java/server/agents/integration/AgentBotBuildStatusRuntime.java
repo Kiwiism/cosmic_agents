@@ -21,7 +21,7 @@ public final class AgentBotBuildStatusRuntime {
 
     public static void checkBuildStatus(AgentRuntimeEntry entry, Character bot) {
         AgentChatStatusRuntime.checkStatus(
-                AgentBotStatusRuntime.statusCheckState(entry),
+                AgentStatusRuntime.statusCheckState(entry),
                 statusCheckActions(entry, bot));
     }
 
@@ -61,7 +61,7 @@ public final class AgentBotBuildStatusRuntime {
             public void maybeSuggestRecommendedGear() {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
-                        AgentBotStatusRuntime.gearSuggestionState(entry),
+                        AgentStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 owner != null,
                                 () -> AgentOfferService.offerBestRecommendedGear(entry, bot, owner)),
@@ -72,7 +72,7 @@ public final class AgentBotBuildStatusRuntime {
             public void maybeSuggestGearToSiblings() {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 AgentChatStatusRuntime.maybeSuggestGear(
-                        AgentBotStatusRuntime.gearSuggestionState(entry),
+                        AgentStatusRuntime.gearSuggestionState(entry),
                         AgentChatStatusRuntime.gearSuggestionActions(
                                 owner != null,
                                 () -> AgentOfferService.offerBestGearToSibling(entry, bot)),
@@ -82,7 +82,7 @@ public final class AgentBotBuildStatusRuntime {
             @Override
             public boolean canOfferSpawnUpgrade() {
                 return AgentRuntimeIdentityRuntime.owner(entry) != null
-                        && !AgentChatStatusRuntime.isOwnerIdle(AgentBotStatusRuntime.statusState(entry))
+                        && !AgentChatStatusRuntime.isOwnerIdle(AgentStatusRuntime.statusState(entry))
                         && !AgentPendingActionStateRuntime.hasPendingAction(entry)
                         && !AgentOfferService.hasPendingOffer(entry);
             }

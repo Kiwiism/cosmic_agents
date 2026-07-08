@@ -33,6 +33,11 @@ Recent map updates:
   and fidget runtime adapters from `AgentBot*` to neutral `Agent*` names.
   Movement command routing, target snapshot capture, fidget side effects, and
   runtime behavior are unchanged.
+- The dialogue/control/status semantic rename slice renamed chat
+  orchestrator, chat report, chat status, control, manager-status, pending
+  action, and status runtime adapters from `AgentBot*` to neutral `Agent*`
+  names. Chat command routing, report callbacks, AFK/offline status checks,
+  toggle/respec callbacks, and pending-action behavior are unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -49,11 +54,11 @@ Recent map updates:
   report actions. It now calls `AgentOfferService.offerBestRecommendedGear`
   with the existing `AgentRuntimeEntry`; owner checks, offer execution, and
   queued report replies remain unchanged.
-- `AgentBotChatOrchestratorContext` now accepts `AgentRuntimeEntry` for the
+- `AgentChatOrchestratorContext` now accepts `AgentRuntimeEntry` for the
   generic Agent dialogue context adapter. Pending action, session, supply,
   social, control, equipment, movement, build, utility, transfer, report, and
   job advancement callback wiring remains unchanged.
-- `AgentBotPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
+- `AgentPendingActionRuntime` now accepts `AgentRuntimeEntry` for pending
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout
   confirmations, skill-report decisions, and queued replies remain unchanged.
@@ -61,7 +66,7 @@ Recent map updates:
   callbacks, relog/logout confirmation, and owner-away choices. Relog/logout
   prompts, owner-away stay/town/logout decisions, delayed replies,
   save/disconnect scheduling, and lifecycle lookup behavior remain unchanged.
-- `AgentBotControlRuntime` now accepts `AgentRuntimeEntry` for toggle, buff
+- `AgentControlRuntime` now accepts `AgentRuntimeEntry` for toggle, buff
   query, and respec callback wiring. Support/heal toggles, consumable buff
   toggles, proactive-offer toggles, buff debug reporting, and AP/SP respec
   behavior keep the same delayed scheduling and reply text.
@@ -224,7 +229,7 @@ Recent map updates:
 - `AgentBotEquipmentRuntime` now exposes equipment chat callbacks over
   `AgentRuntimeEntry`; the temporary movement-command adapter supplies the
   legacy stop command where unequip-all still needs it.
-- `AgentBotChatReportRuntime` now exposes report callbacks and direct report
+- `AgentChatReportRuntime` now exposes report callbacks and direct report
   methods over `AgentRuntimeEntry`; lower supply, offer, and pending-action
   adapters keep the remaining compatibility casts for their own BotEntry-shaped
   side effects.
@@ -255,7 +260,7 @@ Recent map updates:
 - `AgentWhisperCommandService` now uses `AgentRuntimeHandle` hooks for entry
   resolution, reply-channel marking, and chat dispatch. The new
   `AgentWhisperCommandRuntime` keeps the temporary `BotEntry` registry lookup
-  and `AgentBotChatOrchestratorContext` construction at the runtime adapter
+  and `AgentChatOrchestratorContext` construction at the runtime adapter
   edge.
 - `AgentSenderRelation` no longer imports `BotEntry`; it classifies
   owner/party/stranger from resolved Agent, leader, and sender characters while
@@ -613,7 +618,7 @@ Recent map updates:
   importing `BotEntry`; the temporary `AgentPendingOfferChatRouteService`
   adapter keeps the BotEntry-specific pending-offer target check.
 - Character and inventory report pass-through bridges were removed.
-  `AgentBotChatReportRuntime` now calls `AgentCharacterDialogueReporter` and
+  `AgentChatReportRuntime` now calls `AgentCharacterDialogueReporter` and
   `AgentInventoryDialogueReporter` directly; the existing dialogue reporter
   tests cover the unchanged formatting behavior.
 - The supply report pass-through bridge was removed. Potion count and autopot
@@ -623,7 +628,7 @@ Recent map updates:
 - The skill report decision bridge was removed. Skill report decision assembly
   now lives in `AgentSkillReportDecisionService` in the dialogue capability,
   while the temporary chat report runtime still applies the decision through
-  `AgentBotPendingActionRuntime` until pending-action side effects are fully
+  `AgentPendingActionRuntime` until pending-action side effects are fully
   reconstructed.
 - The range report bridge was removed. Range report assembly now lives in
   `AgentRangeReportService` in the dialogue capability, and equipment debug
@@ -666,11 +671,11 @@ Recent map updates:
 - Social reply and scheduler pass-through bridges were removed. Fame replies
   and delayed social callbacks now call the existing reply and scheduler
   runtimes directly.
-- The report operations bridge was folded into `AgentBotChatReportRuntime`.
+- The report operations bridge was folded into `AgentChatReportRuntime`.
   Report callback construction still dispatches to the same help, upgrade,
   gear, skill, stat, movement, range, inventory, potion, and debug report
   methods.
-- The report delivery bridge was folded into `AgentBotChatReportRuntime`.
+- The report delivery bridge was folded into `AgentChatReportRuntime`.
   Help, line, multi-line, and recommended-gear report delivery now use the
   existing reply and offer runtimes directly from the chat-report facade.
 - Dialogue targeted chat routing now reuses the commands-package
@@ -2052,7 +2057,7 @@ Recent map updates:
   runtimes; `BotCombatManagerTest` remains only as a historical parity test
   class name.
 - `src/main/java/server/bots/BotChatManager.java` has been deleted. `BotManager`
-  now calls `AgentChatRuntime` with `AgentBotChatOrchestratorContext` directly;
+  now calls `AgentChatRuntime` with `AgentChatOrchestratorContext` directly;
   the historical parity suite is now named `AgentChatRuntimeParityTest`.
 - `server.bots.llm.CommandTypoSuggester` has moved to
   `server.agents.commands.AgentCommandTypoSuggester`; production and focused

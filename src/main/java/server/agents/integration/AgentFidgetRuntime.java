@@ -11,7 +11,7 @@ public final class AgentFidgetRuntime {
     }
 
     public static boolean isLeaderIdleForFidget(AgentRuntimeEntry entry) {
-        return AgentBotChatStatusRuntime.isOwnerIdle(entry);
+        return AgentChatStatusRuntime.isOwnerIdle(entry);
     }
 
     public static boolean hasActiveFidgetMode(AgentRuntimeEntry entry) {

@@ -11,7 +11,7 @@ import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
-import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentManagerStatusRuntime;
 import server.agents.integration.AgentBotPqRuntime;
 
 import java.util.function.Consumer;
@@ -39,7 +39,7 @@ public final class AgentMapTransitionRuntime {
                         issueFollow,
                         AgentBotPqRuntime::resetKpqStage5Claimed,
                         AgentShopService::onMapChange,
-                        AgentBotManagerStatusRuntime::checkManagerStatus));
+                        AgentManagerStatusRuntime::checkManagerStatus));
     }
 
     private static AgentMapTransitionService.GroundingHooks groundingHooks() {

@@ -6,7 +6,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
-import server.agents.integration.AgentBotChatReportRuntime;
+import server.agents.integration.AgentChatReportRuntime;
 import server.agents.integration.AgentBotOfferRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotChatReportDeliveryTest {
+class AgentChatReportDeliveryTest {
     @Test
     void reportHelpQueuesHelpLines() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -30,7 +30,7 @@ class AgentBotChatReportDeliveryTest {
                         return null;
                     });
 
-            AgentBotChatReportRuntime.reportHelp(entry);
+            AgentChatReportRuntime.reportHelp(entry);
         }
 
         assertEquals(AgentChatReportFlow.helpLines(), replies);
@@ -60,7 +60,7 @@ class AgentBotChatReportDeliveryTest {
                         }
                     });
 
-            AgentBotChatReportRuntime.reportRecommendedGear(entry, bot);
+            AgentChatReportRuntime.reportRecommendedGear(entry, bot);
 
             offers.verify(() -> AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner));
         }

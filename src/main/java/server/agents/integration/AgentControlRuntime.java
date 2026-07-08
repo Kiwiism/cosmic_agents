@@ -12,8 +12,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Temporary Agent-owned bridge for control callbacks while toggle/respec side
  * effects still write into the live Agent runtime entry.
  */
-public final class AgentBotControlRuntime {
-    private AgentBotControlRuntime() {
+public final class AgentControlRuntime {
+    private AgentControlRuntime() {
     }
 
     public static AgentChatToggleFlow.ToggleCallbacks toggleCallbacks(AgentRuntimeEntry entry) {
@@ -79,13 +79,13 @@ public final class AgentBotControlRuntime {
             @Override
             public void reportBuffDebug() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotChatReportRuntime.reportBuffDebug(entry, bot(entry)));
+                        AgentChatReportRuntime.reportBuffDebug(entry, bot(entry)));
             }
 
             @Override
             public void reportSkillBuffDebug() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentBotChatReportRuntime.reportSkillBuffDebug(entry, bot(entry)));
+                        AgentChatReportRuntime.reportSkillBuffDebug(entry, bot(entry)));
             }
         };
     }

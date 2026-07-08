@@ -5,7 +5,6 @@ import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentCharacterDialogueReporter;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
-import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.dialogue.AgentMovementDialogueReporter;
 import server.agents.capabilities.dialogue.AgentRangeReportService;
@@ -22,18 +21,18 @@ import java.util.List;
  * delivery. This keeps report orchestration in Agent modules while the data
  * providers still live in the legacy bot runtime.
  */
-public final class AgentBotChatReportRuntime {
-    private AgentBotChatReportRuntime() {
+public final class AgentChatReportRuntime {
+    private AgentChatReportRuntime() {
     }
 
     public static AgentChatReportFlow.ReportCallbacks reportCallbacks(AgentRuntimeEntry entry) {
-        return AgentChatReportRuntime.reportCallbacks(
+        return server.agents.capabilities.dialogue.AgentChatReportRuntime.reportCallbacks(
                 AgentSchedulerRuntime::afterRandomDelay,
                 reportOperations(entry));
     }
 
-    public static AgentChatReportRuntime.ReportOperations reportOperations(AgentRuntimeEntry entry) {
-        return new AgentChatReportRuntime.ReportOperations() {
+    public static server.agents.capabilities.dialogue.AgentChatReportRuntime.ReportOperations reportOperations(AgentRuntimeEntry entry) {
+        return new server.agents.capabilities.dialogue.AgentChatReportRuntime.ReportOperations() {
             @Override
             public void help() {
                 reportHelp(entry);
@@ -150,7 +149,7 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportSkills(AgentRuntimeEntry entry, Character bot) {
-        AgentBotPendingActionRuntime.applySkillReportDecision(
+        AgentPendingActionRuntime.applySkillReportDecision(
                 entry,
                 AgentSkillReportDecisionService.skillReportDecision(bot));
     }
@@ -202,22 +201,22 @@ public final class AgentBotChatReportRuntime {
     }
 
     public static void reportHelp(AgentRuntimeEntry entry) {
-        AgentChatReportRuntime.reportHelp(line -> AgentReplyRuntime.queueReply(entry, line));
+        server.agents.capabilities.dialogue.AgentChatReportRuntime.reportHelp(line -> AgentReplyRuntime.queueReply(entry, line));
     }
 
     public static void reportRecommendedGear(AgentRuntimeEntry entry, Character bot) {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
-        AgentChatReportRuntime.reportRecommendedGear(
-                AgentBotStatusRuntime.recommendedGearReportState(entry),
+        server.agents.capabilities.dialogue.AgentChatReportRuntime.reportRecommendedGear(
+                AgentStatusRuntime.recommendedGearReportState(entry),
                 AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner),
                 System.currentTimeMillis());
     }
 
     private static void reportLine(AgentRuntimeEntry entry, String line) {
-        AgentChatReportRuntime.reportLine(line, replyLine -> AgentReplyRuntime.queueReply(entry, replyLine));
+        server.agents.capabilities.dialogue.AgentChatReportRuntime.reportLine(line, replyLine -> AgentReplyRuntime.queueReply(entry, replyLine));
     }
 
     private static void reportLines(AgentRuntimeEntry entry, Iterable<String> lines) {
-        AgentChatReportRuntime.reportLines(lines, line -> AgentReplyRuntime.queueReply(entry, line));
+        server.agents.capabilities.dialogue.AgentChatReportRuntime.reportLines(lines, line -> AgentReplyRuntime.queueReply(entry, line));
     }
 }

@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.dialogue.AgentSkillReportFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
-import server.agents.integration.AgentBotPendingActionRuntime;
+import server.agents.integration.AgentPendingActionRuntime;
 import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotPendingActionRuntimeTest {
+class AgentPendingActionRuntimeTest {
     @Test
     void pendingActionStateAdaptsAgentRuntimeEntryFields() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -30,7 +30,7 @@ class AgentBotPendingActionRuntimeTest {
         AgentPendingActionStateRuntime.setPendingDropCategory(entry, "scrolls");
 
         AgentPendingChatActionFlow.PendingActionState state =
-                AgentBotPendingActionRuntime.pendingActionState(entry);
+                AgentPendingActionRuntime.pendingActionState(entry);
 
         assertEquals("drop_scrolls", state.pendingAction());
         assertEquals("scrolls", state.pendingDropCategory());
@@ -46,7 +46,7 @@ class AgentBotPendingActionRuntimeTest {
     void itemChoiceCallbacksScheduleAgentInventoryChoice() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentPendingChatActionFlow.PendingActionCallbacks callbacks =
-                AgentBotPendingActionRuntime.pendingActionCallbacks(entry);
+                AgentPendingActionRuntime.pendingActionCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
@@ -77,7 +77,7 @@ class AgentBotPendingActionRuntimeTest {
                         return null;
                     });
 
-            AgentBotPendingActionRuntime.pendingActionCallbacks(entry).cancelItemChoice();
+            AgentPendingActionRuntime.pendingActionCallbacks(entry).cancelItemChoice();
 
             replies.verify(() -> AgentReplyRuntime.replyNow(
                     entry,
@@ -92,7 +92,7 @@ class AgentBotPendingActionRuntimeTest {
         AgentSkillReportFlow.SkillReportDecision decision =
                 new AgentSkillReportFlow.SkillReportDecision(List.of("pick tree"), true, true);
 
-        AgentBotPendingActionRuntime.applySkillReportDecision(entry, decision);
+        AgentPendingActionRuntime.applySkillReportDecision(entry, decision);
 
         assertEquals(AgentChatPendingAction.SKILL_TREE_CHOICE, AgentPendingActionStateRuntime.pendingAction(entry));
         assertEquals("pick tree", AgentMessageQueueStateRuntime.peek(entry).text());

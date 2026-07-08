@@ -9,7 +9,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
-import server.agents.integration.AgentBotManagerStatusRuntime;
+import server.agents.integration.AgentManagerStatusRuntime;
 
 public final class AgentMovementOnlyMapChangeRuntime {
     private AgentMovementOnlyMapChangeRuntime() {
@@ -26,6 +26,6 @@ public final class AgentMovementOnlyMapChangeRuntime {
                         AgentMovementStateResetService::resetEntryStateAfterTeleport,
                         AgentMovementBroadcastService::broadcastMovement,
                         AgentShopService::onMapChange,
-                        AgentBotManagerStatusRuntime::checkManagerStatus));
+                        AgentManagerStatusRuntime::checkManagerStatus));
     }
 }

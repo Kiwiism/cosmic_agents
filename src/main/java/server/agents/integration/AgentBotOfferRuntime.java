@@ -14,7 +14,7 @@ public final class AgentBotOfferRuntime {
     }
 
     public static boolean isOwnerIdleForOffer(AgentRuntimeEntry entry) {
-        return AgentBotChatStatusRuntime.isOwnerIdle(entry);
+        return AgentChatStatusRuntime.isOwnerIdle(entry);
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
