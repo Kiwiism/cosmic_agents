@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.integration.AgentDeathStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

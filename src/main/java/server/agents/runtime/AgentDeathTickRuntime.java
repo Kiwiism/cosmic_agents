@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.integration.AgentCombatDeathRuntime;
-import server.agents.integration.AgentDeathStateRuntime;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;

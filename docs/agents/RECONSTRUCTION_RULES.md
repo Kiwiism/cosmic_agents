@@ -77,6 +77,11 @@ Recent reconstruction notes:
   jump cooldowns, air steering, fall peak, physics coordinates, ground carry,
   and last-ground foothold cache; collision checks, map reads, and packet
   broadcasting remain in existing movement/navigation services.
+- Death/respawn window state has moved from `server.agents.integration` to
+  `server.agents.runtime.AgentDeathStateRuntime`. It still only adapts
+  `AgentRuntimeEntry` death timing and respawn due checks; HP mutation,
+  respawn placement, combat death entry, and packet-visible side effects remain
+  in the existing runtime/combat integration callers.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no
