@@ -13,7 +13,7 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
 import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
-import server.agents.integration.AgentBotAmmoRuntime;
+import server.agents.integration.AgentAmmoRuntime;
 import server.agents.integration.AgentAmmoStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -86,7 +86,7 @@ public final class AgentAmmoService {
             ammoShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        AgentBotAmmoRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
+        AgentAmmoRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 weaponType == WeaponType.BOW
                         ? AgentDialogueCatalog.arrowRequestReplies()
                         : AgentDialogueCatalog.boltRequestReplies()));
@@ -99,7 +99,7 @@ public final class AgentAmmoService {
             return true;
         }
 
-        scheduleAmmoShare(plan, bot, weaponType, AgentBotAmmoRuntime.randomDelayMs(2000, 3000));
+        scheduleAmmoShare(plan, bot, weaponType, AgentAmmoRuntime.randomDelayMs(2000, 3000));
         return true;
     }
 
@@ -120,7 +120,7 @@ public final class AgentAmmoService {
             return OwnerAmmoShareResult.NO_DONOR;
         }
 
-        scheduleAmmoShare(plan, owner, weaponType, AgentBotAmmoRuntime.randomDelayMs(900, 1400));
+        scheduleAmmoShare(plan, owner, weaponType, AgentAmmoRuntime.randomDelayMs(900, 1400));
         return OwnerAmmoShareResult.OFFERED;
     }
 
@@ -171,7 +171,7 @@ public final class AgentAmmoService {
         AgentRuntimeEntry donorEntry = plan.entry();
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
-        AgentBotAmmoRuntime.afterDelay(initialDelayMs, () -> {
+        AgentAmmoRuntime.afterDelay(initialDelayMs, () -> {
             if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
@@ -179,8 +179,8 @@ public final class AgentAmmoService {
             if (items.isEmpty()) {
                 return;
             }
-            AgentBotAmmoRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
-            AgentBotAmmoRuntime.afterRandomDelay(900, 1100, () ->
+            AgentAmmoRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.ammoOfferReplies()));
+            AgentAmmoRuntime.afterRandomDelay(900, 1100, () ->
                     AgentSupplyShareTradeService.startAmmoShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }

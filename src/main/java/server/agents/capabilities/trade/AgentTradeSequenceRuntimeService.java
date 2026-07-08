@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 import server.Trade;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -53,6 +53,6 @@ public final class AgentTradeSequenceRuntimeService {
                 () -> Trade.startTrade(agent),
                 Trade::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
-                message -> AgentBotInventoryRuntime.replyNow(entry, message));
+                message -> AgentInventoryRuntime.replyNow(entry, message));
     }
 }

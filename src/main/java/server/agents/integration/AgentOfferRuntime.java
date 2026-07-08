@@ -9,8 +9,8 @@ import server.agents.capabilities.trade.AgentOfferService;
 /**
  * Temporary Agent-owned bridge to legacy bot offer side effects.
  */
-public final class AgentBotOfferRuntime {
-    private AgentBotOfferRuntime() {
+public final class AgentOfferRuntime {
+    private AgentOfferRuntime() {
     }
 
     public static boolean isOwnerIdleForOffer(AgentRuntimeEntry entry) {

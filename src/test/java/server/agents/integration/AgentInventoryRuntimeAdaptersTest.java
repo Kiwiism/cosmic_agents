@@ -11,18 +11,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotInventoryRuntimeAdaptersTest {
+class AgentInventoryRuntimeAdaptersTest {
     @Test
     void exposesInventoryRuntimeCallbackAdapters() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), null, null);
         Character agent = mock(Character.class);
 
-        assertNotNull(AgentBotInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
-        assertNotNull(AgentBotInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry));
-        assertNotNull(AgentBotInventoryRuntimeAdapters.tradeTickRuntimeCallbacks());
-        assertNotNull(AgentBotInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks());
-        assertNotNull(AgentBotInventoryRuntimeAdapters.transferAvailabilityRuntimeCallbacks());
-        assertNotNull(AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
+        assertNotNull(AgentInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
+        assertNotNull(AgentInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry));
+        assertNotNull(AgentInventoryRuntimeAdapters.tradeTickRuntimeCallbacks());
+        assertNotNull(AgentInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks());
+        assertNotNull(AgentInventoryRuntimeAdapters.transferAvailabilityRuntimeCallbacks());
+        assertNotNull(AgentInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
     }
 
     @Test
@@ -32,7 +32,7 @@ class AgentBotInventoryRuntimeAdaptersTest {
         try (MockedStatic<AgentTradeDialogueService> tradeDialogue = mockStatic(AgentTradeDialogueService.class)) {
             tradeDialogue.when(AgentTradeDialogueService::manualTradeGreeting).thenReturn("hello");
 
-            String greeting = AgentBotInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry).manualTradeGreeting();
+            String greeting = AgentInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry).manualTradeGreeting();
 
             assertEquals("hello", greeting);
             tradeDialogue.verify(AgentTradeDialogueService::manualTradeGreeting);

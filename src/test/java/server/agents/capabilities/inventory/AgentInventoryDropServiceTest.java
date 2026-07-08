@@ -9,7 +9,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -39,11 +39,11 @@ class AgentInventoryDropServiceTest {
         AgentInventoryDropService.questItemLookup = itemId -> false;
 
         try (MockedStatic<InventoryManipulator> inventory = mockStatic(InventoryManipulator.class);
-             MockedStatic<AgentBotInventoryRuntime> runtime = mockStatic(AgentBotInventoryRuntime.class)) {
+             MockedStatic<AgentInventoryRuntime> runtime = mockStatic(AgentInventoryRuntime.class)) {
             AgentInventoryDropService.dropCategory("etc", entry, agent, (ignoredEntry, ignoredAgent) -> List.of());
 
             inventory.verify(() -> InventoryManipulator.drop(client, InventoryType.ETC, (short) 1, (short) 2));
-            runtime.verify(() -> AgentBotInventoryRuntime.replyNow(entry, "dropped 1 etc item!"));
+            runtime.verify(() -> AgentInventoryRuntime.replyNow(entry, "dropped 1 etc item!"));
         } finally {
             AgentInventoryDropService.questItemLookup = oldQuestItemLookup;
         }
@@ -59,10 +59,10 @@ class AgentInventoryDropServiceTest {
             when(agent.getInventory(type)).thenReturn(inventory);
         }
 
-        try (MockedStatic<AgentBotInventoryRuntime> runtime = mockStatic(AgentBotInventoryRuntime.class)) {
+        try (MockedStatic<AgentInventoryRuntime> runtime = mockStatic(AgentInventoryRuntime.class)) {
             AgentInventoryDropService.dropCategory("name:red potion", entry, agent, (ignoredEntry, ignoredAgent) -> List.of());
 
-            runtime.verify(() -> AgentBotInventoryRuntime.replyNow(
+            runtime.verify(() -> AgentInventoryRuntime.replyNow(
                     entry,
                     AgentDialogueCatalog.tradeNamedItemNotFoundReply("red potion")));
         }

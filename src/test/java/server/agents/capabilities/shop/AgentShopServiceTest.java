@@ -13,7 +13,7 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
-import server.agents.integration.AgentBotShopRuntime;
+import server.agents.integration.AgentShopRuntime;
 import server.agents.integration.AgentShopStateRuntime;
 import server.Shop;
 import server.ShopFactory;
@@ -44,13 +44,13 @@ class AgentShopServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         try (MockedStatic<AgentInventorySellTrashService> inventories = mockStatic(AgentInventorySellTrashService.class);
-             MockedStatic<AgentBotShopRuntime> replies = mockStatic(AgentBotShopRuntime.class)) {
+             MockedStatic<AgentShopRuntime> replies = mockStatic(AgentShopRuntime.class)) {
             inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(entry, bot))
                     .thenReturn(List.of());
 
             AgentShopService.requestSellTrashVisit(entry, bot);
 
-            replies.verify(() -> AgentBotShopRuntime.replyNow(entry, "no trash equips worth selling"));
+            replies.verify(() -> AgentShopRuntime.replyNow(entry, "no trash equips worth selling"));
         }
     }
 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentBotUtilityRuntime;
+import server.agents.integration.AgentUtilityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -15,7 +15,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotUtilityRuntimeTest {
+class AgentUtilityRuntimeTest {
     @Test
     void sellTrashSchedulesLegacyShopVisit() {
         Character bot = mock(Character.class);
@@ -30,7 +30,7 @@ class AgentBotUtilityRuntimeTest {
                         return null;
                     });
 
-            AgentBotUtilityRuntime.utilityCallbacks(entry).sellTrash();
+            AgentUtilityRuntime.utilityCallbacks(entry).sellTrash();
 
             shops.verify(() -> AgentShopService.requestSellTrashVisit((AgentRuntimeEntry) entry, bot));
         }
@@ -42,8 +42,8 @@ class AgentBotUtilityRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {
-            AgentBotUtilityRuntime.utilityCallbacks(entry).makeCrystals();
-            AgentBotUtilityRuntime.utilityCallbacks(entry).disassembleTrash();
+            AgentUtilityRuntime.utilityCallbacks(entry).makeCrystals();
+            AgentUtilityRuntime.utilityCallbacks(entry).disassembleTrash();
 
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
                     org.mockito.Mockito.times(2));
@@ -57,7 +57,7 @@ class AgentBotUtilityRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {
-            AgentBotUtilityRuntime.utilityCallbacks(entry).tradeInvite();
+            AgentUtilityRuntime.utilityCallbacks(entry).tradeInvite();
 
             scheduler.verifyNoInteractions();
         }
@@ -78,7 +78,7 @@ class AgentBotUtilityRuntimeTest {
                         return null;
                     });
 
-            AgentBotUtilityRuntime.utilityCallbacks(entry).tradeInvite();
+            AgentUtilityRuntime.utilityCallbacks(entry).tradeInvite();
 
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), any(String.class)));
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)));

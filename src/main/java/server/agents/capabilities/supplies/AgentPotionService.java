@@ -24,7 +24,7 @@ import server.agents.integration.AgentModeStateRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
-import server.agents.integration.AgentBotPotionRuntime;
+import server.agents.integration.AgentPotionRuntime;
 import server.agents.integration.AgentPotionStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -210,7 +210,7 @@ public final class AgentPotionService {
         startedAt = AgentPerformanceMonitor.start();
         if (pots[0] < AgentRuntimeConfig.cfg.POT_STOP && bot.getHp() < bot.getMaxHp() * 0.4f) {
             AgentMovementCommandRuntime.followOwner(entry);
-            AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueCatalog.potLowReturnReply());
+            AgentPotionRuntime.sayMapNow(bot, AgentDialogueCatalog.potLowReturnReply());
             bot.changeFaceExpression(AgentEmote.GLARE.getValue());
         }
         AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
@@ -308,7 +308,7 @@ public final class AgentPotionService {
             potShareCooldownUntil.put(owner.getId(), now + 30_000L);
         }
 
-        AgentBotPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
+        AgentPotionRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(
                 forHp ? AgentDialogueCatalog.potRequestHpReplies() : AgentDialogueCatalog.potRequestMpReplies()));
 
         AgentPotionDonorPlan<AgentRuntimeEntry> plan = selectPotDonor(owner, bot, entry, forHp);
@@ -325,14 +325,14 @@ public final class AgentPotionService {
                 categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
             }
             String ownerName = owner.getName();
-            AgentBotPotionRuntime.afterRandomDelay(4000, 6000, () ->
-                    AgentBotPotionRuntime.sayMapNow(
+            AgentPotionRuntime.afterRandomDelay(4000, 6000, () ->
+                    AgentPotionRuntime.sayMapNow(
                             AgentRuntimeIdentityRuntime.bot(plan.entry()),
                             AgentDialogueCatalog.formatPotDonorLowReply(
                                     AgentDialogueSelector.randomReply(AgentDialogueCatalog.potDonorLowTemplates()),
                                     ownerName)));
         } else {
-            schedulePotShare(plan, bot, forHp, AgentBotPotionRuntime.randomDelayMs(2000, 3000));
+            schedulePotShare(plan, bot, forHp, AgentPotionRuntime.randomDelayMs(2000, 3000));
         }
         AgentPerformanceMonitor.recordSince("potion-request", startedAt);
         return true;
@@ -355,7 +355,7 @@ public final class AgentPotionService {
             return OwnerPotShareResult.NO_DONOR;
         }
 
-        schedulePotShare(plan, owner, forHp, AgentBotPotionRuntime.randomDelayMs(900, 1400));
+        schedulePotShare(plan, owner, forHp, AgentPotionRuntime.randomDelayMs(900, 1400));
         return OwnerPotShareResult.OFFERED;
     }
 
@@ -383,7 +383,7 @@ public final class AgentPotionService {
         AgentRuntimeEntry donorEntry = plan.entry();
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
-        AgentBotPotionRuntime.afterDelay(initialDelayMs, () -> {
+        AgentPotionRuntime.afterDelay(initialDelayMs, () -> {
             if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
@@ -391,9 +391,9 @@ public final class AgentPotionService {
             if (items.isEmpty()) {
                 return;
             }
-            AgentBotPotionRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(
+            AgentPotionRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(
                     forHp ? AgentDialogueCatalog.potOfferHpReplies() : AgentDialogueCatalog.potOfferMpReplies()));
-            AgentBotPotionRuntime.afterRandomDelay(900, 1100, () ->
+            AgentPotionRuntime.afterRandomDelay(900, 1100, () ->
                     AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }

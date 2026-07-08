@@ -11,25 +11,25 @@ import server.agents.capabilities.supplies.AgentPotionService;
  * Temporary Agent-owned bridge for active-mode side effects while equipment,
  * supply, and offer implementations still live in the bot runtime.
  */
-public final class AgentBotActiveModeRuntime {
-    private AgentBotActiveModeRuntime() {
+public final class AgentActiveModeRuntime {
+    private AgentActiveModeRuntime() {
     }
 
     public static AgentChatStatusRuntime.ActiveModeActions activeModeActions(AgentRuntimeEntry entry) {
         return new AgentChatStatusRuntime.ActiveModeActions() {
             @Override
             public void autoEquip() {
-                AgentBotActiveModeRuntime.autoEquip(entry);
+                AgentActiveModeRuntime.autoEquip(entry);
             }
 
             @Override
             public void resetGearSuggestionCooldown() {
-                AgentBotActiveModeRuntime.resetGearSuggestionCooldown(entry);
+                AgentActiveModeRuntime.resetGearSuggestionCooldown(entry);
             }
 
             @Override
             public void maybeSuggestGearToSiblings() {
-                AgentBotActiveModeRuntime.maybeSuggestGearToSiblings(entry, bot(entry));
+                AgentActiveModeRuntime.maybeSuggestGearToSiblings(entry, bot(entry));
             }
 
             @Override

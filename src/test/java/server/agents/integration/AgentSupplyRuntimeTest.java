@@ -16,7 +16,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.integration.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentBotSupplyRuntime;
+import server.agents.integration.AgentSupplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 
-class AgentBotSupplyRuntimeTest {
+class AgentSupplyRuntimeTest {
     @Test
     void requestUpgradeFallsBackToBestGearWhenNoSupplyRequestIsMade() {
         Character bot = mock(Character.class);
@@ -35,7 +35,7 @@ class AgentBotSupplyRuntimeTest {
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
             potions.when(() -> AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)).thenReturn(false);
 
-            AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, bot);
+            AgentSupplyRuntime.handleRequestUpgradeCommand(entry, bot);
 
             offers.verify(() -> AgentOfferService.clearPendingOfferForOwnerAsk(entry));
             offers.verify(() -> AgentOfferService.requestBestUpgradeFromOwner(entry, bot));
@@ -51,7 +51,7 @@ class AgentBotSupplyRuntimeTest {
             potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
                     .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
-            AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
+            AgentSupplyRuntime.handleNeedPotionCommand(entry, true);
 
             assertTrue(AgentMessageQueueStateRuntime.peek(entry).text().contains("hp"));
         }
@@ -66,7 +66,7 @@ class AgentBotSupplyRuntimeTest {
             potions.when(() -> AgentPotionService.offerPotShareToOwner(entry, true))
                     .thenReturn(AgentPotionService.OwnerPotShareResult.NO_DONOR);
 
-            AgentBotSupplyRuntime.handleNeedPotionCommand(entry, true);
+            AgentSupplyRuntime.handleNeedPotionCommand(entry, true);
 
             replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), any(String.class)));
         }
@@ -82,7 +82,7 @@ class AgentBotSupplyRuntimeTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
-            AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
+            AgentSupplyRuntime.handleNeedAmmoCommand(entry);
 
             String reply = AgentMessageQueueStateRuntime.peek(entry).text();
             assertTrue(reply.contains("ammo") || reply.contains("arrows") || reply.contains("bolts"));
@@ -99,7 +99,7 @@ class AgentBotSupplyRuntimeTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(owner))
                     .thenReturn(WeaponType.SWORD1H);
 
-            AgentBotSupplyRuntime.handleNeedAmmoCommand(entry);
+            AgentSupplyRuntime.handleNeedAmmoCommand(entry);
 
             replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), any(String.class)));
         }
@@ -108,7 +108,7 @@ class AgentBotSupplyRuntimeTest {
     @Test
     void supplyRequestCallbacksScheduleThroughSchedulerRuntime() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatSupplyRequestFlow.SupplyRequestCallbacks callbacks = AgentBotSupplyRuntime.supplyRequestCallbacks(entry);
+        AgentChatSupplyRequestFlow.SupplyRequestCallbacks callbacks = AgentSupplyRuntime.supplyRequestCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class)) {

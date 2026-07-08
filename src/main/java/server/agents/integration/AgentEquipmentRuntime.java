@@ -11,8 +11,8 @@ import java.util.List;
  * Temporary Agent-owned bridge for equipment chat callbacks while equipment
  * side effects still live in the bot runtime.
  */
-public final class AgentBotEquipmentRuntime {
-    private AgentBotEquipmentRuntime() {
+public final class AgentEquipmentRuntime {
+    private AgentEquipmentRuntime() {
     }
 
     public static void sayMapNow(Character bot, String message) {

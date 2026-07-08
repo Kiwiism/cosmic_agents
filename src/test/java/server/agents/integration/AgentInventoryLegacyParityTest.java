@@ -24,7 +24,7 @@ import server.agents.capabilities.inventory.AgentInventoryTickRuntime;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventorySellTrashPolicy;
 import server.agents.capabilities.trade.AgentTradeSequenceRuntimeService;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentManualTradeStateRuntime;
 import server.Trade;
 import server.maps.Foothold;
@@ -62,7 +62,7 @@ class AgentInventoryLegacyParityTest {
         when(owner.getTrade()).thenReturn(null);
         when(bot.getTrade()).thenReturn(null);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class);
              MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             AgentTradeSequenceRuntimeService.startTradeSequence(
                     "trash",
@@ -80,7 +80,7 @@ class AgentInventoryLegacyParityTest {
                     0,
                     () -> {});
 
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(eq(entry), anyString()), times(1));
+            replies.verify(() -> AgentInventoryRuntime.replyNow(eq(entry), anyString()), times(1));
         }
     }
 

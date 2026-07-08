@@ -34,7 +34,7 @@ import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 import server.agents.capabilities.equipment.AgentWeaponScoreBreakdown;
 import server.agents.capabilities.dialogue.AgentRangeReportService;
-import server.agents.integration.AgentBotEquipmentRuntime;
+import server.agents.integration.AgentEquipmentRuntime;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -141,7 +141,7 @@ public final class AgentEquipmentAutoEquipService {
             // the optimizer to exhaustively enumerate. The chosen set is best-effort under an
             // admissible-bound truncation; the owner should clean up redundant gear.
             try {
-                AgentBotEquipmentRuntime.sayMapNow(bot,
+                AgentEquipmentRuntime.sayMapNow(bot,
                         "inventory's too cluttered, cant fully optimize gear - try selling/dropping spares");
             } catch (Throwable ignored) {
                 // Don't let a chat error block the equip pass.

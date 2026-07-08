@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.integration.AgentBotOfferRuntime;
+import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
@@ -16,12 +16,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotOfferRuntimeTest {
+class AgentOfferRuntimeTest {
     @Test
     void recommendedGearActionsReportMissingOwner() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
-        assertFalse(AgentBotOfferRuntime.recommendedGearActions(entry, null, null).hasOwner());
+        assertFalse(AgentOfferRuntime.recommendedGearActions(entry, null, null).hasOwner());
     }
 
     @Test
@@ -49,10 +49,10 @@ class AgentBotOfferRuntimeTest {
             state.when(() -> AgentOfferStateRuntime.hasPendingGearPromptAfter(entry, 1_999L)).thenReturn(true);
             state.when(() -> AgentOfferStateRuntime.isReservedGearPrompt(entry, 2_000L)).thenReturn(true);
 
-            assertTrue(AgentBotOfferRuntime.hasPendingGearPromptAfter(entry, 1_999L));
-            AgentBotOfferRuntime.reserveGearPrompt(entry, 2_000L);
-            assertTrue(AgentBotOfferRuntime.isReservedGearPrompt(entry, 2_000L));
-            AgentBotOfferRuntime.clearGearPrompt(entry);
+            assertTrue(AgentOfferRuntime.hasPendingGearPromptAfter(entry, 1_999L));
+            AgentOfferRuntime.reserveGearPrompt(entry, 2_000L);
+            assertTrue(AgentOfferRuntime.isReservedGearPrompt(entry, 2_000L));
+            AgentOfferRuntime.clearGearPrompt(entry);
 
             state.verify(() -> AgentOfferStateRuntime.hasPendingGearPromptAfter(entry, 1_999L));
             state.verify(() -> AgentOfferStateRuntime.reserveGearPrompt(entry, 2_000L));
@@ -71,14 +71,14 @@ class AgentBotOfferRuntimeTest {
             scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(1800, 2200)).thenReturn(1900L);
             replies.when(() -> AgentReplyRuntime.queueSayWithEstimatedDelay(entry, "queued")).thenReturn(1200L);
 
-            AgentBotOfferRuntime.replyNow(entry, "reply");
-            AgentBotOfferRuntime.queueSay(entry, "say");
-            AgentBotOfferRuntime.sayMapNow(null, "map");
-            AgentBotOfferRuntime.sayNow(null, AgentReplyChannel.PARTY, "party");
-            long queueDelay = AgentBotOfferRuntime.queueSayWithEstimatedDelay(entry, "queued");
-            AgentBotOfferRuntime.afterDelay(500L, action);
-            AgentBotOfferRuntime.afterRandomDelay(400, 600, action);
-            long randomDelay = AgentBotOfferRuntime.randomDelayMs(1800, 2200);
+            AgentOfferRuntime.replyNow(entry, "reply");
+            AgentOfferRuntime.queueSay(entry, "say");
+            AgentOfferRuntime.sayMapNow(null, "map");
+            AgentOfferRuntime.sayNow(null, AgentReplyChannel.PARTY, "party");
+            long queueDelay = AgentOfferRuntime.queueSayWithEstimatedDelay(entry, "queued");
+            AgentOfferRuntime.afterDelay(500L, action);
+            AgentOfferRuntime.afterRandomDelay(400, 600, action);
+            long randomDelay = AgentOfferRuntime.randomDelayMs(1800, 2200);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
             replies.verify(() -> AgentReplyRuntime.queueSay(entry, "say"));

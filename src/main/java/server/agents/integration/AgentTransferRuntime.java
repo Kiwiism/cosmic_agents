@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Agent-owned transfer chat facade over temporary bot-side inventory/trade side
  * effects.
  */
-public final class AgentBotTransferRuntime {
+public final class AgentTransferRuntime {
     private static final ExecutorService TRADE_COMMAND_EXECUTOR = Executors.newFixedThreadPool(2, r -> {
         Thread thread = new Thread(r, "bot-trade-command");
         thread.setDaemon(true);
@@ -32,7 +32,7 @@ public final class AgentBotTransferRuntime {
     private record TransferCommandResult(boolean hasItems, int count) {}
     private record ItemQueryResult(int count) {}
 
-    private AgentBotTransferRuntime() {
+    private AgentTransferRuntime() {
     }
 
     public static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(AgentRuntimeEntry entry) {
@@ -93,7 +93,7 @@ public final class AgentBotTransferRuntime {
                 bot,
                 hasItemsStartedAt,
                 TRADE_COMMAND_PROFILE_WARN_NS,
-                org.slf4j.LoggerFactory.getLogger(AgentBotTransferRuntime.class));
+                org.slf4j.LoggerFactory.getLogger(AgentTransferRuntime.class));
         int count = hasItems && transferCommand.mode() == AgentChatTransferFlow.TransferMode.CHOICE
                 ? AgentInventoryTransferService.countTransferableItems(category, entry, bot)
                 : 0;

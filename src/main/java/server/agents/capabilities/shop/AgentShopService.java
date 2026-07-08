@@ -26,7 +26,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentBotShopRuntime;
+import server.agents.integration.AgentShopRuntime;
 import server.agents.integration.AgentShopStateRuntime;
 import server.agents.integration.AgentBotCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
@@ -111,7 +111,7 @@ public final class AgentShopService {
 
         long distSq = (long) bot.getPosition().distanceSq(match.npcPos);
         if (distSq > 1000L * 1000L) {
-            AgentBotShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shopResupplyReplies()));
+            AgentShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shopResupplyReplies()));
         }
 
         startShopVisit(entry, bot, match);
@@ -122,7 +122,7 @@ public final class AgentShopService {
             return;
         }
         if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot).isEmpty()) {
-            AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNoTrashEquipsReply());
+            AgentShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNoTrashEquipsReply());
             return;
         }
 
@@ -134,11 +134,11 @@ public final class AgentShopService {
         NpcShopMatch match = findBestShop(bot, true);
         if (match == null) {
             AgentShopStateRuntime.setShopSellTrashPending(entry, false);
-            AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNotFoundReply());
+            AgentShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNotFoundReply());
             return;
         }
 
-        AgentBotShopRuntime.replyNow(entry, AgentDialogueCatalog.shopSellTrashStartReply());
+        AgentShopRuntime.replyNow(entry, AgentDialogueCatalog.shopSellTrashStartReply());
         startShopVisit(entry, bot, match);
     }
 
@@ -161,7 +161,7 @@ public final class AgentShopService {
         }
         long now = System.currentTimeMillis();
         if (AgentShopStateRuntime.visitTimedOut(entry, now, SHOP_VISIT_TIMEOUT_MS)) {
-            AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopReachTimeoutReply());
+            AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopReachTimeoutReply());
             clearShopState(entry);
             return false;
         }
@@ -185,7 +185,7 @@ public final class AgentShopService {
         if (reachedApproach || stuckAtNpc) {
             if (!AgentShopStateRuntime.shopSequenceActive(entry)) {
                 AgentShopStateRuntime.markShopSequenceActive(entry, System.currentTimeMillis());
-                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shoppingReplies()));
+                AgentShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shoppingReplies()));
                 Point npcPos = AgentShopStateRuntime.shopNpcPosition(entry);
                 scheduleShopStep(entry, () -> executePurchases(entry, bot, npcPos));
             }
@@ -326,16 +326,16 @@ public final class AgentShopService {
                 return;
             }
             if (sequence.firstShortfall() != null) {
-                AgentBotShopRuntime.sayMapNow(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
+                AgentShopRuntime.sayMapNow(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
             } else if (announceIfEmpty && sequence.bought().isEmpty()) {
                 // Never end a resupply visit silently: nothing was bought and nothing fell short.
-                AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopEmptyResupplyReply());
+                AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopEmptyResupplyReply());
             }
             clearShopState(sequence.entry());
         };
 
         if (!sequence.bought().isEmpty()) {
-            AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
+            AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopBoughtReply(sequence.bought()));
             AgentPotionService.setupAutopotForBot(sequence.bot());
             AgentBotCombatAmmoCheckRuntime.tickAmmoCheck(sequence.entry(), sequence.bot(),
                     AgentCombatConfig.cfg.AMMO_LOW_WARN, AgentRuntimeConfig.cfg.POT_LOW_WARN);
@@ -350,7 +350,7 @@ public final class AgentShopService {
         List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
         if (items.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
-            AgentBotShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());
+            AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());
             finishPurchaseSequence(sequence, false);
             return;
         }
@@ -382,12 +382,12 @@ public final class AgentShopService {
         if (items.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(entry, false);
             if (soldCount > 0) {
-                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSoldTrashReply(soldCount));
+                AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSoldTrashReply(soldCount));
             }
             if (!failedItems.isEmpty()) {
-                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSellTrashFailureReply(failedItems.size()));
+                AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopSellTrashFailureReply(failedItems.size()));
             } else if (soldCount == 0) {
-                AgentBotShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
+                AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
             }
             finishPurchaseSequence(new AgentShopPurchaseSequence<>(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
             return;
@@ -660,7 +660,7 @@ public final class AgentShopService {
     // that flag, so a cleared flag here means a concurrent player cancel — stay silent.
     private static void abortShop(AgentRuntimeEntry entry, Character bot, String reason) {
         if (AgentShopStateRuntime.shopVisitPending(entry)) {
-            AgentBotShopRuntime.sayMapNow(bot, reason);
+            AgentShopRuntime.sayMapNow(bot, reason);
         }
         clearShopState(entry);
     }
@@ -670,7 +670,7 @@ public final class AgentShopService {
     }
 
     private static long stepDelayMs() {
-        return AgentBotShopRuntime.randomDelayMs(SHOP_STEP_DELAY_MIN_MS, SHOP_STEP_DELAY_MAX_MS);
+        return AgentShopRuntime.randomDelayMs(SHOP_STEP_DELAY_MIN_MS, SHOP_STEP_DELAY_MAX_MS);
     }
 
     private static void scheduleShopStep(AgentRuntimeEntry entry, Runnable step) {
@@ -678,7 +678,7 @@ public final class AgentShopService {
     }
 
     private static void scheduleShopStep(AgentRuntimeEntry entry, long delayMs, Runnable step) {
-        AgentBotShopRuntime.afterDelay(delayMs, () -> {
+        AgentShopRuntime.afterDelay(delayMs, () -> {
             if (!AgentShopStateRuntime.shouldRunScheduledShopStep(entry)) {
                 return;
             }

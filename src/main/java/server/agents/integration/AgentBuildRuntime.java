@@ -14,8 +14,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Agent-owned build callback facade over temporary bot-side AP/SP/job side
  * effects.
  */
-public final class AgentBotBuildRuntime {
-    private AgentBotBuildRuntime() {
+public final class AgentBuildRuntime {
+    private AgentBuildRuntime() {
     }
 
     public static AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks(AgentRuntimeEntry entry) {

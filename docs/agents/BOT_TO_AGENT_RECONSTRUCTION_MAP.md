@@ -38,6 +38,11 @@ Recent map updates:
   action, and status runtime adapters from `AgentBot*` to neutral `Agent*`
   names. Chat command routing, report callbacks, AFK/offline status checks,
   toggle/respec callbacks, and pending-action behavior are unchanged.
+- The item/build/supply semantic rename slice renamed active-mode, ammo,
+  build, equipment, inventory, Maker, offer, potion, shop, supply, transfer,
+  and utility runtime adapters from `AgentBot*` to neutral `Agent*` names.
+  Build setup, item automation, shop/trade orchestration, upgrade offers,
+  supply sharing, and utility command behavior are unchanged.
 - `AgentChatRouteRuntime` no longer imports `BotEntry`; its custom-entry path
   is generic over `AgentRuntimeEntry`. Pending-offer routing, lifecycle chat
   commands, formation commands, targeted/untargeted routing, typo suggestions,
@@ -47,10 +52,10 @@ Recent map updates:
   `AgentLlmReplyRequest<AgentRuntimeEntry>`. Sender relation, reply channel,
   prompt context, mode/farm-anchor flags, owner-command context, and reply
   delivery are unchanged.
-- `AgentBotInventoryRuntimeAdapters` no longer imports `BotEntry`. Passive
+- `AgentInventoryRuntimeAdapters` no longer imports `BotEntry`. Passive
   loot, manual trade, trade tick, lifecycle, transfer availability, and trade
   runtime callback wiring remain unchanged.
-- `AgentBotOfferRuntime` no longer imports `BotEntry` for recommended-gear
+- `AgentOfferRuntime` no longer imports `BotEntry` for recommended-gear
   report actions. It now calls `AgentOfferService.offerBestRecommendedGear`
   with the existing `AgentRuntimeEntry`; owner checks, offer execution, and
   queued report replies remain unchanged.
@@ -79,19 +84,19 @@ Recent map updates:
   streak/load tracking, emotes, chat queueing, fidget triggering, and cooldowns
   remain unchanged while the remaining registry source is still a temporary
   `BotEntry`-backed shell.
-- `AgentBotActiveModeRuntime` now stays on `AgentRuntimeEntry` for active-mode
+- `AgentActiveModeRuntime` now stays on `AgentRuntimeEntry` for active-mode
   preparation callbacks. Auto-equip, gear suggestion cooldown reset, sibling
   gear suggestion, autopot setup, and mode-start potion-share checks remain
   unchanged.
-- `AgentBotUtilityRuntime`, `AgentBotSupplyRuntime`, and
-  `AgentBotTransferRuntime` now accept `AgentRuntimeEntry` for chat utility,
+- `AgentUtilityRuntime`, `AgentSupplyRuntime`, and
+  `AgentTransferRuntime` now accept `AgentRuntimeEntry` for chat utility,
   supply request, upgrade request, item query, and transfer command callbacks.
   Trade-invite timing, sell-trash shop visit scheduling, Maker command delays,
   potion/ammo request replies, upgrade request routing, async transfer
   evaluation, request-id superseding, and transfer result decisions remain
   unchanged. `AgentShopService` has an Agent-entry sell-trash overload while
   deeper shop internals remain a later staged migration.
-- `AgentBotBuildStatusRuntime` now stays on `AgentRuntimeEntry` when building
+- `AgentBuildStatusRuntime` now stays on `AgentRuntimeEntry` when building
   status-check actions. Job/AP/SP prompt lookup, auto-assignment callbacks,
   gear suggestion gates, spawn-upgrade offering, pending-offer checks, and
   queued build replies remain unchanged.
@@ -100,7 +105,7 @@ Recent map updates:
   leftover scanning, trash-equip selection, client-lock retry behavior,
   activity-epoch interruption, step timing, abort reasons, and completion
   replies remain unchanged.
-- `AgentBuildService`, `AgentStarterKitService`, and `AgentBotBuildRuntime`
+- `AgentBuildService`, `AgentStarterKitService`, and `AgentBuildRuntime`
   now accept `AgentRuntimeEntry` for AP build selection, AP/SP auto-assignment,
   respec prompts, level-up checks, job advancement callbacks, starter-kit
   grants, build status refresh, and AP confirmation replies. Build prompts,
@@ -226,7 +231,7 @@ Recent map updates:
 - `AgentFidgetService` social/greeting start helpers and
   `AgentFidgetSideEffects` now use `AgentRuntimeEntry`, keeping deeper
   active fidget movement execution for a later movement reconstruction slice.
-- `AgentBotEquipmentRuntime` now exposes equipment chat callbacks over
+- `AgentEquipmentRuntime` now exposes equipment chat callbacks over
   `AgentRuntimeEntry`; the temporary movement-command adapter supplies the
   legacy stop command where unequip-all still needs it.
 - `AgentChatReportRuntime` now exposes report callbacks and direct report
@@ -555,20 +560,20 @@ Recent map updates:
   runtimes directly through `AgentBotCombatRuntime`.
 - Shop reply and scheduler pass-through bridges were removed. Shop owner/map
   replies and delayed shop callbacks now call the existing Agent reply and
-  scheduler runtimes directly through `AgentBotShopRuntime`.
+  scheduler runtimes directly through `AgentShopRuntime`.
 - Ammo reply and scheduler pass-through bridges were removed. Ammo map replies,
   delayed callbacks, and delay sampling now call the existing Agent reply and
-  scheduler runtimes directly through `AgentBotAmmoRuntime`.
+  scheduler runtimes directly through `AgentAmmoRuntime`.
 - Potion reply and scheduler pass-through bridges were removed. Potion map
   replies, delayed callbacks, and delay sampling now call the existing Agent
-  reply and scheduler runtimes directly through `AgentBotPotionRuntime`.
+  reply and scheduler runtimes directly through `AgentPotionRuntime`.
 - Scroll-reaction reply and scheduler pass-through bridges were removed.
   Queued scroll-reaction dialogue and delayed callbacks now call the existing
   Agent reply and scheduler runtimes directly through
   `AgentBotScrollReactionRuntime`.
 - Maker reply and scheduler pass-through bridges were removed. Maker owner
   replies and delayed batch callbacks now call the existing Agent reply and
-  scheduler runtimes directly through `AgentBotMakerRuntime`.
+  scheduler runtimes directly through `AgentMakerRuntime`.
 - Build reply and scheduler pass-through bridges were removed. Build/AP/SP/job
   replies, build-status queued replies, and delayed job advancement callbacks
   now call the existing Agent reply and scheduler runtimes directly.
@@ -1892,7 +1897,7 @@ Recent map updates:
   and grind-loot scanning now name Agent-owned runtime services while preserving
   the same section keys and timing behavior.
 - `BotInventoryManager` runtime hook factories moved to
-  `AgentBotInventoryRuntimeAdapters`; `BotInventoryManager` is now a thin
+  `AgentInventoryRuntimeAdapters`; `BotInventoryManager` is now a thin
   compatibility shell over Agent looting/trade/inventory services.
 - Dead `BotInventoryManager.collectItems` compatibility body was removed after
   all active item collection paths routed through Agent-owned runtime services.

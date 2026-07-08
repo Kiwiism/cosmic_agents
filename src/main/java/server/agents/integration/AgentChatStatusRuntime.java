@@ -21,7 +21,7 @@ public final class AgentChatStatusRuntime {
     }
 
     public static void checkBotStatus(AgentRuntimeEntry entry, Character bot) {
-        AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
+        AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 
     public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
@@ -38,7 +38,7 @@ public final class AgentChatStatusRuntime {
     }
 
     public static void prepareActiveModeEntry(AgentRuntimeEntry entry) {
-        server.agents.capabilities.dialogue.AgentChatStatusRuntime.prepareActiveMode(AgentBotActiveModeRuntime.activeModeActions(entry));
+        server.agents.capabilities.dialogue.AgentChatStatusRuntime.prepareActiveMode(AgentActiveModeRuntime.activeModeActions(entry));
     }
 
     public static boolean isOwnerIdle(AgentRuntimeEntry entry) {

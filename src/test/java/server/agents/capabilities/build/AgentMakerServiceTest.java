@@ -3,7 +3,7 @@ package server.agents.capabilities.build;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotMakerRuntime;
+import server.agents.integration.AgentMakerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.lang.reflect.Field;
@@ -22,10 +22,10 @@ class AgentMakerServiceTest {
         Set<Integer> active = activeMakerSet();
         active.add(100);
 
-        try (MockedStatic<AgentBotMakerRuntime> replies = mockStatic(AgentBotMakerRuntime.class)) {
+        try (MockedStatic<AgentMakerRuntime> replies = mockStatic(AgentMakerRuntime.class)) {
             AgentMakerService.handleMakeCrystals(entry);
 
-            replies.verify(() -> AgentBotMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
+            replies.verify(() -> AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {
             active.remove(100);
         }
@@ -39,10 +39,10 @@ class AgentMakerServiceTest {
         Set<Integer> active = activeMakerSet();
         active.add(200);
 
-        try (MockedStatic<AgentBotMakerRuntime> replies = mockStatic(AgentBotMakerRuntime.class)) {
+        try (MockedStatic<AgentMakerRuntime> replies = mockStatic(AgentMakerRuntime.class)) {
             AgentMakerService.handleDisassembleTrash(entry);
 
-            replies.verify(() -> AgentBotMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
+            replies.verify(() -> AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {
             active.remove(200);
         }

@@ -24,7 +24,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService.PreparedTradeItems;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentInventoryStateRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -83,7 +83,7 @@ public final class AgentInventoryTransferService {
                                     (reservedCategory, reservedItems) -> startTradeSequence(
                                             reservedCategory, owner, reservedItems, 0, true, entry, agent),
                                     message -> AgentPendingTradeStateRuntime.setCategoryMessage(entry, message),
-                                    reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+                                    reply -> AgentInventoryRuntime.replyNow(entry, reply));
                         },
                         () -> startAmmoGroupTradeTransfer(owner, entry, agent),
                         () -> prepareTradeItems(category, entry, agent),
@@ -93,8 +93,8 @@ public final class AgentInventoryTransferService {
                                 () -> AgentPendingTradeStateRuntime.hasRestoreSlots(entry),
                                 (preparedCategory, preparedItems, restoreSlots) ->
                                         startTradeSequence(preparedCategory, owner, preparedItems, 0, restoreSlots, entry, agent),
-                                reply -> AgentBotInventoryRuntime.replyNow(entry, reply)),
-                        reply -> AgentBotInventoryRuntime.replyNow(entry, reply),
+                                reply -> AgentInventoryRuntime.replyNow(entry, reply)),
+                        reply -> AgentInventoryRuntime.replyNow(entry, reply),
                         (operation, operationStartedAt) -> AgentTradeCommandProfiler.logSlowCommand(
                                 category,
                                 operation,
@@ -118,7 +118,7 @@ public final class AgentInventoryTransferService {
                         entry,
                         () -> startTradeTransfer(item, recipient, entry, agent),
                         AgentMovementTimers.delayAfterCurrentTick(10_000)),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+                reply -> AgentInventoryRuntime.replyNow(entry, reply));
     }
 
     public static boolean hasTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
@@ -186,7 +186,7 @@ public final class AgentInventoryTransferService {
                 () -> server.Trade.startTrade(agent),
                 server.Trade::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
-                message -> AgentBotInventoryRuntime.replyNow(entry, message));
+                message -> AgentInventoryRuntime.replyNow(entry, message));
     }
 
     private static void startTradeMesoTransfer(String category, AgentRuntimeEntry entry, Character agent) {
@@ -200,7 +200,7 @@ public final class AgentInventoryTransferService {
         AgentMesoTradeService.routeStart(
                 decision,
                 mesos -> startTradeSequence(category, owner, List.of(), mesos, true, entry, agent),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+                reply -> AgentInventoryRuntime.replyNow(entry, reply));
     }
 
     private static PreparedTradeItems prepareTradeItems(String category, AgentRuntimeEntry entry, Character agent) {
@@ -242,14 +242,14 @@ public final class AgentInventoryTransferService {
                 (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, agent),
                 AgentInventoryTransferService::equipsGroupMessage,
                 (category, message) -> AgentPendingTradeStateRuntime.setCategoryMessage(entry, message),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+                reply -> AgentInventoryRuntime.replyNow(entry, reply));
     }
 
     private static void startAmmoGroupTradeTransfer(Character owner, AgentRuntimeEntry entry, Character agent) {
         AgentGroupedTradeTransferService.startAmmoGroupTradeTransfer(
                 classifyAmmoTradeGroups(agent),
                 (category, items) -> startTradeSequence(category, owner, items, 0, false, entry, agent),
-                reply -> AgentBotInventoryRuntime.replyNow(entry, reply));
+                reply -> AgentInventoryRuntime.replyNow(entry, reply));
     }
 
     private static List<Item> recommendedItems(AgentRuntimeEntry entry, Character agent) {

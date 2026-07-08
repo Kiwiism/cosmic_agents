@@ -15,8 +15,8 @@ import java.util.List;
  * Temporary Agent-owned bridge for build/status side effects while the build,
  * equipment, and offer implementations still live in the bot runtime.
  */
-public final class AgentBotBuildStatusRuntime {
-    private AgentBotBuildStatusRuntime() {
+public final class AgentBuildStatusRuntime {
+    private AgentBuildStatusRuntime() {
     }
 
     public static void checkBuildStatus(AgentRuntimeEntry entry, Character bot) {

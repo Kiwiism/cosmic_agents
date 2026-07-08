@@ -6,8 +6,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * Temporary Agent-owned bridge for Maker automation replies and delayed batch
  * steps while Maker execution still lives in the legacy bot runtime.
  */
-public final class AgentBotMakerRuntime {
-    private AgentBotMakerRuntime() {
+public final class AgentMakerRuntime {
+    private AgentMakerRuntime() {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {

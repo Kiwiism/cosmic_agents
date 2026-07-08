@@ -7,7 +7,7 @@ import client.inventory.manipulator.InventoryManipulator;
 import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBuildStatusRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -28,7 +28,7 @@ public final class AgentStarterKitService {
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
         grantStarterKitIfEligible(bot, oldJob, newJob);
         AgentEquipmentService.autoEquip(bot, owner, null);
-        AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
+        AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
 
     public static List<AgentStarterItemGrant> starterKitFor(Job job) {

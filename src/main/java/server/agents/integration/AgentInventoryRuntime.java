@@ -7,8 +7,8 @@ import server.agents.runtime.AgentRuntimeEntry;
  * delivery while the inventory automation logic still lives in the legacy bot
  * runtime.
  */
-public final class AgentBotInventoryRuntime {
-    private AgentBotInventoryRuntime() {
+public final class AgentInventoryRuntime {
+    private AgentInventoryRuntime() {
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {

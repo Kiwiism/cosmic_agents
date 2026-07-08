@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -32,7 +32,7 @@ public final class AgentTradeConfirmWaitService {
             AgentPendingTradeStateRuntime.markBotDone(entry);
             AgentPendingTradeStateRuntime.clearTimer(entry);
         } else if (AgentPendingTradeStateRuntime.timerMs(entry) > CONFIRM_TIMEOUT_MS) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeConfirmTimeoutReply());
+            AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeConfirmTimeoutReply());
             Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE);
             resetTradeState.run();
         }

@@ -43,6 +43,11 @@ Recent reconstruction notes:
   names. This was a type/file/import rename only; command handling, report
   delivery, AFK/offline status checks, and pending-action behavior are
   unchanged.
+- The item/build/supply semantic cleanup slice renamed active-mode, ammo,
+  build, equipment, inventory, Maker, offer, potion, shop, supply, transfer,
+  and utility runtime adapters from `AgentBot*` to neutral `Agent*` names. This
+  was a type/file/import rename only; item automation, trade/shop flows,
+  build setup, upgrade offers, and supply sharing behavior are unchanged.
 - Airborne movement and physics services now take `AgentRuntimeEntry` directly.
   Air steering, wall/ceiling collision handling, landing, rope grabs, down-jump
   grace, fall damage, motion state sync, and movement broadcasts are unchanged.
@@ -1264,7 +1269,7 @@ Recent reconstruction notes:
   `BotInventoryManager` compatibility shell. Section keys and timing behavior
   are unchanged.
 - Bot-inventory runtime hook factory ownership moved from `BotInventoryManager`
-  to `server.agents.integration.AgentBotInventoryRuntimeAdapters`. The bot
+  to `server.agents.integration.AgentInventoryRuntimeAdapters`. The bot
   inventory class is now a compatibility shell over Agent-owned looting,
   transfer, manual-trade, trade-tick, and availability runtimes.
 - The dead `BotInventoryManager.collectItems` compatibility helper was removed
@@ -1595,23 +1600,23 @@ Recent reconstruction notes:
   `AgentChatStatusRuntime`; `BotChatStatusRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Build/AP/SP/job callback orchestration now has an Agent-owned facade in
-  `AgentBotBuildRuntime`; `BotChatBuildRuntime` remains only as a temporary
+  `AgentBuildRuntime`; `BotChatBuildRuntime` remains only as a temporary
   compatibility shim for legacy bot package callers.
 - Pending chat-action state, callbacks, and skill-report decision application
   now have an Agent-owned facade in `AgentPendingActionRuntime`;
   `BotChatPendingActionRuntime` remains only as a temporary compatibility shim
   for legacy bot package callers.
 - Utility chat callbacks now have an Agent-owned facade in
-  `AgentBotUtilityRuntime`; `BotChatUtilityRuntime` remains only as a
+  `AgentUtilityRuntime`; `BotChatUtilityRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Social/fame chat callbacks now have an Agent-owned facade in
   `AgentBotSocialRuntime`; `BotChatSocialRuntime` remains only as a temporary
   compatibility shim for legacy bot package callers.
 - Transfer/item-query chat callbacks and async transfer result routing now have
-  an Agent-owned facade in `AgentBotTransferRuntime`; `BotChatTransferRuntime`
+  an Agent-owned facade in `AgentTransferRuntime`; `BotChatTransferRuntime`
   remains only as a temporary compatibility shim for legacy bot package callers.
 - Supply request callbacks and request-upgrade supply routing now have an
-  Agent-owned facade in `AgentBotSupplyRuntime`; `BotChatSupplyRuntime` remains
+  Agent-owned facade in `AgentSupplyRuntime`; `BotChatSupplyRuntime` remains
   only as a temporary compatibility shim for legacy bot package callers.
 - Session/relog/logout/away callback orchestration now has an Agent-owned
   facade in `AgentBotSessionRuntime`; `BotChatSessionRuntime` remains only as a
@@ -1665,16 +1670,16 @@ Recent reconstruction notes:
   legacy BotManager packet-delivery methods.
 - Loot/gear offer owner-directed replies, queued offer prompts, estimated prompt
   delay reads, and delayed offer actions now enter through
-  `AgentBotOfferRuntime`; `AgentOfferService` no longer reaches directly into the
+  `AgentOfferRuntime`; `AgentOfferService` no longer reaches directly into the
   lower-level reply or scheduler runtime for offer-owned flows. The remaining
   bot-side map-only `botSay(Character, ...)` branch is intentionally unchanged
   until map-only visible delivery has an exact Agent adapter.
-- AP build confirmation replies now enter through `AgentBotBuildRuntime`; the
+- AP build confirmation replies now enter through `AgentBuildRuntime`; the
   build manager no longer reaches directly into the lower-level reply runtime
   for AP-build selection confirmation, but it still owns the legacy AP
   assignment behavior for this reconstruction stage.
 - Maker batch command replies and delayed batch steps now enter through
-  `AgentBotMakerRuntime`; `AgentMakerService` no longer reaches directly into the
+  `AgentMakerRuntime`; `AgentMakerService` no longer reaches directly into the
   lower-level reply or scheduler runtime for Maker-owned flows. It still lazily
   resolves `ItemInformationProvider` so guard paths and Agent adapter tests do
   not initialize database-backed item data before it is needed.
@@ -1686,16 +1691,16 @@ Recent reconstruction notes:
   through `AgentBotPqRuntime`; the KPQ script classes no longer reach directly
   into the lower-level reply runtime for party-quest-owned dialogue.
 - Sell-trash shop owner-directed replies and delayed shop step callbacks now
-  enter through `AgentBotShopRuntime`; `AgentShopService` no longer reaches
+  enter through `AgentShopRuntime`; `AgentShopService` no longer reaches
   directly into the lower-level reply or scheduler runtime for shop-owned
   flows. Map-only resupply/shop chatter remains on the legacy visible-say path
   until exact map-visible delivery has an Agent adapter.
 - Ammo-share donor selection delays and delayed transfer callbacks now enter
-  through `AgentBotAmmoRuntime`; `AgentAmmoService` no longer reaches directly
+  through `AgentAmmoRuntime`; `AgentAmmoService` no longer reaches directly
   into the lower-level scheduler runtime for ammo-owned timing. Visible ammo
   request/offer chat remains unchanged on the legacy map-visible say path.
 - Potion-share donor selection delays, low-supply fallback delay, and delayed
-  transfer callbacks now enter through `AgentBotPotionRuntime`;
+  transfer callbacks now enter through `AgentPotionRuntime`;
   `AgentPotionService` no longer reaches directly into the lower-level scheduler
   runtime for potion-owned timing. Visible potion request/offer chat remains
   unchanged on the legacy map-visible say path.
@@ -1801,11 +1806,11 @@ Recent reconstruction notes:
   and combat delayed callbacks now assert the Agent reply/scheduler runtime
   boundary instead of the removed BotManager delivery/scheduler bridge.
 - Build-triggered status checks now enter through
-  `AgentBotBuildStatusRuntime.checkBuildStatus`; `AgentBuildService` and
+  `AgentBuildStatusRuntime.checkBuildStatus`; `AgentBuildService` and
   `AgentStarterKitService` no longer call the broad chat-status facade directly
   for job/level build status prompts.
 - Gear-offer idle gating now enters through
-  `AgentBotOfferRuntime.isOwnerIdleForOffer`; `AgentOfferService` no longer
+  `AgentOfferRuntime.isOwnerIdleForOffer`; `AgentOfferService` no longer
   reaches directly into the broad chat-status facade for offer prompt checks.
 - Fidget idle gating now enters through
   `AgentFidgetRuntime.isLeaderIdleForFidget`; `AgentFidgetService` no longer
@@ -1831,11 +1836,11 @@ Recent reconstruction notes:
   follow-target, dismiss, ownership-transfer, pickup-scan, scroll-reaction, and
   relog-greeting delays.
 - Inventory/trade/drop/meso reply delivery and trade-thanks delayed callbacks
-  now enter through `AgentBotInventoryRuntime`; `BotInventoryManager` no longer
+  now enter through `AgentInventoryRuntime`; `BotInventoryManager` no longer
   reaches directly into the lower-level reply or scheduler runtime for those
   inventory-owned flows.
 - Recommended-gear prompt reservation state now enters through
-  `AgentBotOfferRuntime`; `AgentOfferService` no longer reads or clears the
+  `AgentOfferRuntime`; `AgentOfferService` no longer reads or clears the
   `pendingGearPromptAt` entry field directly, while the same legacy field and
   timing semantics remain intact behind the Agent-owned offer boundary.
 - Agent reply queue ownership now uses narrow queue operations on
@@ -1852,24 +1857,24 @@ Recent reconstruction notes:
   now calls the existing chat-report facade directly for buff-debug and
   skill-buff-debug reports.
 - Offer-manager map-visible rejection replies and bot-to-bot loot-offer accept
-  replies now enter through `AgentBotOfferRuntime`; `AgentOfferService` no longer
+  replies now enter through `AgentOfferRuntime`; `AgentOfferService` no longer
   calls `BotManager.botSay` directly for offer-owned reply delivery, while the
   same reply channel, random reply pool, and delay behavior remain intact.
 - Ammo low-supply request and ammo-donor offer visible replies now enter
-  through `AgentBotAmmoRuntime`; `AgentAmmoService` no longer calls
+  through `AgentAmmoRuntime`; `AgentAmmoService` no longer calls
   `BotManager.botSay` directly for ammo-owned reply delivery, while the same
   random reply pools and transfer timing remain intact.
 - Potion grind-stop warnings, low-supply requests, no-qualified-donor
   deflections, and donor offer visible replies now enter through
-  `AgentBotPotionRuntime`; `AgentPotionService` no longer calls
+  `AgentPotionRuntime`; `AgentPotionService` no longer calls
   `BotManager.botSay` directly for potion-owned reply delivery, while the same
   text, random reply pools, and transfer timing remain intact.
 - Equipment auto-equip clutter warnings now enter through
-  `AgentBotEquipmentRuntime`; `BotEquipManager` no longer calls
+  `AgentEquipmentRuntime`; `BotEquipManager` no longer calls
   `BotManager.botSay` directly for equipment-owned reply delivery, and the
   legacy try/catch still prevents chat failures from blocking equip passes.
 - Inventory trade-thanks and freebie quip callbacks now enter through
-  `AgentBotInventoryRuntime`; `BotInventoryManager` no longer calls
+  `AgentInventoryRuntime`; `BotInventoryManager` no longer calls
   `BotManager.botSay` directly for inventory-owned delayed trade reply
   delivery, while the same reply channel and random reply pools remain intact.
 - Combat death, missing-MP-potion, low-ammo, and out-of-ammo visible replies
@@ -1877,7 +1882,7 @@ Recent reconstruction notes:
   `BotManager.botSay` directly for combat-owned reply delivery, while the same
   random reply pools, follow-owner fallback, and warning flags remain intact.
 - Shop resupply, approach-timeout, shopping, purchase summary, shortfall,
-  sell-trash, and abort visible replies now enter through `AgentBotShopRuntime`;
+  sell-trash, and abort visible replies now enter through `AgentShopRuntime`;
   `AgentShopService` no longer calls `BotManager.botSay` directly for shop-owned
   reply delivery, while the same text, random reply pools, and delayed shop
   sequencing remain intact.
@@ -5075,7 +5080,7 @@ Current physics correction:
   index/list state, marks the same all-items-added flag, clears the same timer,
   and sends the same trade-window chat line.
 - Reply delivery adapters now accept `AgentRuntimeEntry` at the
-  `AgentReplyRuntime` and `AgentBotInventoryRuntime` boundaries. The same
+  `AgentReplyRuntime` and `AgentInventoryRuntime` boundaries. The same
   reply-channel, message-queue, identity, scheduler, whisper, party, and map
   broadcast paths are used; this only moves the adapter seam off the bot shell.
 - Trade tick/control helpers now accept `AgentRuntimeEntry` for sequence start,

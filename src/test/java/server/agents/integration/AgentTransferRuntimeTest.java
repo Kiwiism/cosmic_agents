@@ -9,14 +9,14 @@ import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentBotTransferRuntime;
+import server.agents.integration.AgentTransferRuntime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotTransferRuntimeTest {
+class AgentTransferRuntimeTest {
     @Test
     void weirdTransferRequestRepliesImmediately() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -24,7 +24,7 @@ class AgentBotTransferRuntimeTest {
                 new AgentChatTransferFlow.TransferCommand(AgentChatTransferFlow.TransferMode.TRADE, "trash");
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            AgentBotTransferRuntime.handleTransferCommand(entry, command, "show junk");
+            AgentTransferRuntime.handleTransferCommand(entry, command, "show junk");
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatTransferFlow.weirdTransferReply()));
         }
@@ -46,7 +46,7 @@ class AgentBotTransferRuntimeTest {
                         return null;
                     });
 
-            AgentBotTransferRuntime.handleTransferCommand(entry, command, "trade me mesos");
+            AgentTransferRuntime.handleTransferCommand(entry, command, "trade me mesos");
 
             inventory.verify(() -> AgentInventoryTransferService.startTradeTransfer("mesos", entry, bot));
         }

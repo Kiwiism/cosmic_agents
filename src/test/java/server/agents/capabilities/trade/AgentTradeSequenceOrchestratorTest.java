@@ -5,7 +5,7 @@ import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -27,7 +27,7 @@ class AgentTradeSequenceOrchestratorTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class)) {
             AgentTradeSequenceOrchestrator.startTradeSequence(
                     "scrolls",
                     null,
@@ -38,7 +38,7 @@ class AgentTradeSequenceOrchestratorTest {
                     mock(Character.class),
                     callbacks);
 
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(
+            replies.verify(() -> AgentInventoryRuntime.replyNow(
                     entry,
                     AgentDialogueCatalog.tradeRecipientNotFoundReply()));
             assertFalse(callbacks.started.get());

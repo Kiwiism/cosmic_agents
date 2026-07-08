@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -26,13 +26,13 @@ public final class AgentTradeClosedWindowService {
         }
 
         if (AgentPendingTradeStateRuntime.allItemsAdded(entry)) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeCancelledReply());
+            AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeCancelledReply());
             resetTradeState.run();
             refillEquipmentSlots.run();
             return true;
         }
 
-        AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeDeclinedReply());
+        AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeDeclinedReply());
         resetTradeState.run();
         return true;
     }

@@ -7,7 +7,7 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotOfferRuntime;
+import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentOfferStateRuntime;
 import server.agents.integration.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -45,10 +45,10 @@ class AgentOfferServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentPendingActionStateRuntime.setPendingAction(entry, "trade");
 
-        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
+        try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
 
-            offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit"));
+            offers.verify(() -> AgentOfferRuntime.replyNow(entry, "busy rn, ask me again in a bit"));
         }
     }
 
@@ -59,9 +59,9 @@ class AgentOfferServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         Item item = new Item(1002000, (short) 1, (short) 1);
 
-        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class);
+        try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class);
              MockedStatic<AgentEquipmentService> equipment = mockStatic(AgentEquipmentService.class)) {
-            offers.when(() -> AgentBotOfferRuntime.isOwnerIdleForOffer(entry)).thenReturn(true);
+            offers.when(() -> AgentOfferRuntime.isOwnerIdleForOffer(entry)).thenReturn(true);
 
             AgentOfferService.notifyOwnerGainedEquip(entry, bot, item);
 
@@ -79,12 +79,12 @@ class AgentOfferServiceTest {
                 entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, true);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
-        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
+        try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             assertTrue(AgentOfferService.handlePendingOfferResponse(entry, owner, "yes"));
 
-            offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
-            offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "ty! inv me?"));
+            offers.verify(() -> AgentOfferRuntime.replyNow(entry, "ty! inv me?"));
         }
     }
 
@@ -98,12 +98,12 @@ class AgentOfferServiceTest {
                 entry, new Item(1002000, (short) 1, (short) 1), 100, Long.MAX_VALUE, false);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
-        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
+        try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             assertTrue(AgentOfferService.handlePendingOfferResponse(entry, owner, "no"));
 
-            offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
-            offers.verify(() -> AgentBotOfferRuntime.replyNow(entry, "ok, keeping it for now"));
+            offers.verify(() -> AgentOfferRuntime.replyNow(entry, "ok, keeping it for now"));
         }
     }
 
@@ -119,12 +119,12 @@ class AgentOfferServiceTest {
                 entry, new Item(1002000, (short) 1, (short) 1), 200, Long.MAX_VALUE, false);
 
         ArgumentCaptor<Runnable> action = ArgumentCaptor.forClass(Runnable.class);
-        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
+        try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             assertTrue(AgentOfferService.handlePendingOfferResponse(entry, speaker, "no"));
 
-            offers.verify(() -> AgentBotOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
             action.getValue().run();
-            offers.verify(() -> AgentBotOfferRuntime.sayMapNow(bot, "ok, keeping it for now"));
+            offers.verify(() -> AgentOfferRuntime.sayMapNow(bot, "ok, keeping it for now"));
         }
     }
 }

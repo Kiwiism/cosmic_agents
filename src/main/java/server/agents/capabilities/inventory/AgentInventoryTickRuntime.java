@@ -8,7 +8,7 @@ import server.agents.capabilities.trade.AgentManualTradeRuntimeService;
 import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTickRuntimeService;
 import server.agents.capabilities.trade.AgentTradeTransferAvailabilityRuntimeService;
-import server.agents.integration.AgentBotInventoryRuntimeAdapters;
+import server.agents.integration.AgentInventoryRuntimeAdapters;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -23,7 +23,7 @@ public final class AgentInventoryTickRuntime {
         AgentPassiveLootRuntimeService.tickPassiveLoot(
                 entry,
                 agent,
-                AgentBotInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
+                AgentInventoryRuntimeAdapters.passiveLootRuntimeCallbacks());
     }
 
     public static void tickManualTrade(AgentRuntimeEntry entry, Character agent) {
@@ -31,9 +31,9 @@ public final class AgentInventoryTickRuntime {
                 entry,
                 agent,
                 AgentRuntimeIdentityRuntime.owner(entry),
-                AgentBotInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry),
+                AgentInventoryRuntimeAdapters.manualTradeRuntimeCallbacks(entry),
                 AgentTradeLifecycleRuntimeService.lifecycleCallbacks(
-                        AgentBotInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks()));
+                        AgentInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks()));
     }
 
     public static void executeChoice(String category, boolean tradeToLeader, AgentRuntimeEntry entry, Character agent) {
@@ -53,8 +53,8 @@ public final class AgentInventoryTickRuntime {
                 category,
                 entry,
                 agent,
-                AgentBotInventoryRuntimeAdapters.transferAvailabilityRuntimeCallbacks(),
-                AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
+                AgentInventoryRuntimeAdapters.transferAvailabilityRuntimeCallbacks(),
+                AgentInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
     }
 
     public static int countTransferableItems(String category, AgentRuntimeEntry entry, Character agent) {
@@ -62,16 +62,16 @@ public final class AgentInventoryTickRuntime {
                 category,
                 entry,
                 agent,
-                AgentBotInventoryRuntimeAdapters.transferAvailabilityRuntimeCallbacks(),
-                AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
+                AgentInventoryRuntimeAdapters.transferAvailabilityRuntimeCallbacks(),
+                AgentInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent));
     }
 
     public static void tickTrade(AgentRuntimeEntry entry, Character agent) {
         AgentTradeTickRuntimeService.tickTrade(
                 entry,
                 agent,
-                AgentBotInventoryRuntimeAdapters.tradeTickRuntimeCallbacks(),
-                AgentBotInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent),
-                AgentBotInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks());
+                AgentInventoryRuntimeAdapters.tradeTickRuntimeCallbacks(),
+                AgentInventoryRuntimeAdapters.tradeRuntimeCallbacks(entry, agent),
+                AgentInventoryRuntimeAdapters.tradeLifecycleRuntimeCallbacks());
     }
 }

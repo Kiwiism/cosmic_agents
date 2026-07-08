@@ -10,7 +10,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentBuildDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatBuildFlow;
-import server.agents.integration.AgentBotBuildRuntime;
+import server.agents.integration.AgentBuildRuntime;
 import server.agents.integration.AgentBuildStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 
-class AgentBotBuildRuntimeTest {
+class AgentBuildRuntimeTest {
     @Test
     void spVariantCallbacksSetVariantAndAutoAssignSp() {
         Character bot = mock(Character.class);
@@ -31,7 +31,7 @@ class AgentBotBuildRuntimeTest {
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
-            AgentBotBuildRuntime.spVariantCallbacks(entry).oneHanded();
+            AgentBuildRuntime.spVariantCallbacks(entry).oneHanded();
 
             assertEquals(AgentBuildDialogueClassifier.ONE_HANDED_SP_VARIANT, AgentBuildStateRuntime.spVariant(entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, AgentChatBuildFlow.oneHandedSpVariantReply()));
@@ -50,7 +50,7 @@ class AgentBotBuildRuntimeTest {
         ArgumentCaptor<AgentBuildService.ApBuild> buildCaptor = ArgumentCaptor.forClass(AgentBuildService.ApBuild.class);
 
         try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
-            AgentBotBuildRuntime.apBuildCallbacks(entry).selectBuild("dexless");
+            AgentBuildRuntime.apBuildCallbacks(entry).selectBuild("dexless");
 
             buildManager.verify(() -> AgentBuildService.setApBuild(
                     org.mockito.ArgumentMatchers.eq(entry),
@@ -69,7 +69,7 @@ class AgentBotBuildRuntimeTest {
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
-            AgentBotBuildRuntime.jobAdvancementCallbacks(entry).advanceTo(Job.HUNTER);
+            AgentBuildRuntime.jobAdvancementCallbacks(entry).advanceTo(Job.HUNTER);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), argThat(message ->
                     message != null && message.contains("hunter"))));
@@ -85,7 +85,7 @@ class AgentBotBuildRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            AgentBotBuildRuntime.confirmApBuild(entry, "confirm");
+            AgentBuildRuntime.confirmApBuild(entry, "confirm");
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "confirm"));
         }

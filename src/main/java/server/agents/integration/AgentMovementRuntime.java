@@ -67,7 +67,7 @@ public final class AgentMovementRuntime {
             @Override
             public void follow() {
                 AgentSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
-                    AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
+                    AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
                     AgentPotionService.checkPotShareOnModeStart(entry, bot(entry));
                     AgentSchedulerRuntime.afterRandomDelay(250, 750,
@@ -91,7 +91,7 @@ public final class AgentMovementRuntime {
             public void stop() {
                 AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     AgentMovementCommandRuntime.stop(entry);
-                    AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
+                    AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentSchedulerRuntime.afterRandomDelay(1400, 1600, () ->
                             AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.stopReply()));
                 });

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -35,8 +35,8 @@ class AgentTradeCompletionServiceTest {
         when(partner.hasAnyOffer()).thenReturn(true);
 
         try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
-             MockedStatic<AgentBotInventoryRuntime> inventory = mockStatic(AgentBotInventoryRuntime.class)) {
-            inventory.when(() -> AgentBotInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(900L), org.mockito.ArgumentMatchers.any(Runnable.class)))
+             MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
+            inventory.when(() -> AgentInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(900L), org.mockito.ArgumentMatchers.any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         delayedReply.set(true);
                         invocation.<Runnable>getArgument(1).run();
@@ -56,7 +56,7 @@ class AgentTradeCompletionServiceTest {
             assertTrue(AgentPendingTradeStateRuntime.hasOwnerGivenItems(entry));
             verify(agent).changeFaceExpression(AgentEmote.HAPPY.getValue());
             tradeStatic.verify(() -> Trade.completeTrade(agent));
-            inventory.verify(() -> AgentBotInventoryRuntime.visibleSayNow(entry, "thanks"));
+            inventory.verify(() -> AgentInventoryRuntime.visibleSayNow(entry, "thanks"));
             assertTrue(delayedReply.get());
         }
     }
@@ -68,8 +68,8 @@ class AgentTradeCompletionServiceTest {
         Trade trade = mock(Trade.class);
 
         try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
-             MockedStatic<AgentBotInventoryRuntime> inventory = mockStatic(AgentBotInventoryRuntime.class)) {
-            inventory.when(() -> AgentBotInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(800L), org.mockito.ArgumentMatchers.any(Runnable.class)))
+             MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
+            inventory.when(() -> AgentInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(800L), org.mockito.ArgumentMatchers.any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         invocation.<Runnable>getArgument(1).run();
                         return null;
@@ -88,7 +88,7 @@ class AgentTradeCompletionServiceTest {
             assertFalse(AgentPendingTradeStateRuntime.hasOwnerGivenItems(entry));
             verify(agent).changeFaceExpression(AgentEmote.ANNOYED.getValue());
             tradeStatic.verify(() -> Trade.completeTrade(agent));
-            inventory.verify(() -> AgentBotInventoryRuntime.visibleSayNow(entry, "freebie"));
+            inventory.verify(() -> AgentInventoryRuntime.visibleSayNow(entry, "freebie"));
         }
     }
 }

@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -63,7 +63,7 @@ class AgentTradeClosedWindowServiceTest {
         AtomicBoolean refill = new AtomicBoolean(false);
         AgentPendingTradeStateRuntime.markAllItemsAdded(entry);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class)) {
             boolean handled = AgentTradeClosedWindowService.handleClosedTrade(
                     entry,
                     () -> 1_000,
@@ -73,7 +73,7 @@ class AgentTradeClosedWindowServiceTest {
             assertTrue(handled);
             assertTrue(reset.get());
             assertTrue(refill.get());
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(
+            replies.verify(() -> AgentInventoryRuntime.replyNow(
                     entry,
                     AgentDialogueCatalog.tradeCancelledReply()));
         }
@@ -85,7 +85,7 @@ class AgentTradeClosedWindowServiceTest {
         AtomicBoolean reset = new AtomicBoolean(false);
         AtomicBoolean refill = new AtomicBoolean(false);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class)) {
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class)) {
             boolean handled = AgentTradeClosedWindowService.handleClosedTrade(
                     entry,
                     () -> 1_000,
@@ -95,7 +95,7 @@ class AgentTradeClosedWindowServiceTest {
             assertTrue(handled);
             assertTrue(reset.get());
             assertTrue(!refill.get());
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(
+            replies.verify(() -> AgentInventoryRuntime.replyNow(
                     entry,
                     AgentDialogueCatalog.tradeDeclinedReply()));
         }

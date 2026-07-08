@@ -9,7 +9,7 @@ import client.inventory.Item;
 import client.processor.action.MakerProcessor;
 import server.ItemInformationProvider;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
-import server.agents.integration.AgentBotMakerRuntime;
+import server.agents.integration.AgentMakerRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -58,7 +58,7 @@ public final class AgentMakerService {
 
         Queue<Integer> leftovers = collectLeftoverQueue(bot);   // one entry per craft, holding the leftover itemid
         if (leftovers.isEmpty()) {
-            AgentBotMakerRuntime.replyNow(entry,
+            AgentMakerRuntime.replyNow(entry,
                     "I don't have any leftovers I can turn into monster crystals (need 100+ of a drop)");
             return;
         }
@@ -78,7 +78,7 @@ public final class AgentMakerService {
 
         int total = collectDisassemblableTrash(entry, bot).size();
         if (total == 0) {
-            AgentBotMakerRuntime.replyNow(entry, "no trash equips I can disassemble");
+            AgentMakerRuntime.replyNow(entry, "no trash equips I can disassemble");
             return;
         }
 
@@ -105,11 +105,11 @@ public final class AgentMakerService {
 
     private static boolean guardStart(AgentRuntimeEntry entry, Character bot) {
         if (ACTIVE.contains(bot.getId())) {
-            AgentBotMakerRuntime.replyNow(entry, "still working on the last batch, hang on");
+            AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on");
             return false;
         }
         if (MakerProcessor.getMakerSkillLevel(bot) < 1) {
-            AgentBotMakerRuntime.replyNow(entry, "I can't - I don't have the Maker skill");
+            AgentMakerRuntime.replyNow(entry, "I can't - I don't have the Maker skill");
             return false;
         }
         return true;
@@ -147,11 +147,11 @@ public final class AgentMakerService {
         if (total > LONG_BATCH_THRESHOLD) {
             msg += ", will take a while";
         }
-        AgentBotMakerRuntime.replyNow(entry, msg);
+        AgentMakerRuntime.replyNow(entry, msg);
 
         ACTIVE.add(bot.getId());
         int epoch = AgentScriptTaskStateRuntime.activityEpoch(entry);
-        AgentBotMakerRuntime.afterRandomDelay(900, 1100, () -> runStep(entry, step, noun, epoch, 0));
+        AgentMakerRuntime.afterRandomDelay(900, 1100, () -> runStep(entry, step, noun, epoch, 0));
     }
 
     private static void runStep(AgentRuntimeEntry entry, BatchStep step, String noun, int epoch, int done) {
@@ -165,7 +165,7 @@ public final class AgentMakerService {
 
         if (!AgentScriptTaskStateRuntime.isCurrentActivityEpoch(entry, epoch)) {   // player issued a new command — disrupt
             ACTIVE.remove(bot.getId());
-            AgentBotMakerRuntime.replyNow(entry, "ok, stopping - " + done + " " + plural(noun, done) + " done");
+            AgentMakerRuntime.replyNow(entry, "ok, stopping - " + done + " " + plural(noun, done) + " done");
             return;
         }
 
@@ -177,7 +177,7 @@ public final class AgentMakerService {
         if (!c.tryacquireClient()) {
             // transient contention (a trade/packet in flight) — retry without consuming the step.
             // The bot keeps doing whatever it's doing; crafting just slots into the next free moment.
-            AgentBotMakerRuntime.afterRandomDelay(600, 900, () -> runStep(entry, step, noun, epoch, done));
+            AgentMakerRuntime.afterRandomDelay(600, 900, () -> runStep(entry, step, noun, epoch, done));
             return;
         }
         int status;
@@ -189,16 +189,16 @@ public final class AgentMakerService {
 
         if (status == NO_MORE) {
             ACTIVE.remove(bot.getId());
-            AgentBotMakerRuntime.replyNow(entry, "done - " + done + " " + plural(noun, done));
+            AgentMakerRuntime.replyNow(entry, "done - " + done + " " + plural(noun, done));
             return;
         }
         if (status != 0) {
             ACTIVE.remove(bot.getId());
-            AgentBotMakerRuntime.replyNow(entry, abortReason((short) status, noun, done));
+            AgentMakerRuntime.replyNow(entry, abortReason((short) status, noun, done));
             return;
         }
 
-        AgentBotMakerRuntime.afterDelay(STEP_INTERVAL_MS, () -> runStep(entry, step, noun, epoch, done + 1));
+        AgentMakerRuntime.afterDelay(STEP_INTERVAL_MS, () -> runStep(entry, step, noun, epoch, done + 1));
     }
 
     private static String abortReason(short status, String noun, int done) {

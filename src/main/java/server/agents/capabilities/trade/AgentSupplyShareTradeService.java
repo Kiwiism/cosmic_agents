@@ -6,7 +6,7 @@ import client.Character;
 import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -58,7 +58,7 @@ public final class AgentSupplyShareTradeService {
                                            AgentRuntimeEntry entry,
                                            Character agent) {
         if (recipient == null) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
+            AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRecipientNotFoundReply());
             return;
         }
         AgentTradeStateService.initializeSequence(entry, category, recipient.getId(), true);
@@ -73,13 +73,13 @@ public final class AgentSupplyShareTradeService {
                 0,
                 () -> recipient,
                 () -> {
-                    AgentBotInventoryRuntime.replyNow(entry, "can't trade right now, stopping");
+                    AgentInventoryRuntime.replyNow(entry, "can't trade right now, stopping");
                     AgentTradeStateService.clearSequence(entry);
                 },
                 () -> server.Trade.startTrade(agent),
                 server.Trade::inviteTrade,
                 () -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
-                message -> AgentBotInventoryRuntime.replyNow(entry, message));
+                message -> AgentInventoryRuntime.replyNow(entry, message));
     }
 
 }

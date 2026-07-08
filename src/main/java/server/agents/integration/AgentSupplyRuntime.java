@@ -15,8 +15,8 @@ import server.agents.capabilities.supplies.AgentPotionService;
  * Agent-owned supply chat callback facade over temporary bot-side potion,
  * ammo, and upgrade-offer side effects.
  */
-public final class AgentBotSupplyRuntime {
-    private AgentBotSupplyRuntime() {
+public final class AgentSupplyRuntime {
+    private AgentSupplyRuntime() {
     }
 
     public static AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks(AgentRuntimeEntry entry) {

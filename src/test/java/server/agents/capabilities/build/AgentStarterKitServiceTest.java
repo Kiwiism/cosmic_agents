@@ -4,7 +4,7 @@ import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBuildStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -60,14 +60,14 @@ class AgentStarterKitServiceTest {
         when(bot.getJob()).thenReturn(Job.BOWMAN);
 
         try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class);
-             MockedStatic<AgentBotBuildStatusRuntime> statusRuntime = mockStatic(AgentBotBuildStatusRuntime.class);
+             MockedStatic<AgentBuildStatusRuntime> statusRuntime = mockStatic(AgentBuildStatusRuntime.class);
              MockedStatic<AgentEquipmentService> equipManager = mockStatic(AgentEquipmentService.class)) {
             AgentStarterKitService.advanceJob(entry, Job.HUNTER);
 
             verify(bot).changeJob(Job.HUNTER);
             buildManager.verify(() -> AgentBuildService.handleJobAdvance(entry, bot, Job.BOWMAN, Job.HUNTER));
             equipManager.verify(() -> AgentEquipmentService.autoEquip(bot, owner, null));
-            statusRuntime.verify(() -> AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot));
+            statusRuntime.verify(() -> AgentBuildStatusRuntime.checkBuildStatus(entry, bot));
         }
     }
 }

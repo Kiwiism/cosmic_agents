@@ -40,7 +40,7 @@ public final class AgentChatReportRuntime {
 
             @Override
             public void requestUpgrade() {
-                AgentBotSupplyRuntime.handleRequestUpgradeCommand(entry, AgentRuntimeIdentityRuntime.bot(entry));
+                AgentSupplyRuntime.handleRequestUpgradeCommand(entry, AgentRuntimeIdentityRuntime.bot(entry));
             }
 
             @Override
@@ -208,7 +208,7 @@ public final class AgentChatReportRuntime {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         server.agents.capabilities.dialogue.AgentChatReportRuntime.reportRecommendedGear(
                 AgentStatusRuntime.recommendedGearReportState(entry),
-                AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner),
+                AgentOfferRuntime.recommendedGearActions(entry, bot, owner),
                 System.currentTimeMillis());
     }
 

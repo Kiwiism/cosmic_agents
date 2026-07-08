@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,11 +21,11 @@ class AgentTradeCancellationServiceTest {
         Character agent = mock(Character.class);
         AtomicBoolean reset = new AtomicBoolean(false);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class);
              MockedStatic<Trade> trade = mockStatic(Trade.class)) {
             AgentTradeCancellationService.cancelSequence(entry, agent, "stop", () -> reset.set(true));
 
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(entry, "stop"));
+            replies.verify(() -> AgentInventoryRuntime.replyNow(entry, "stop"));
             trade.verifyNoInteractions();
             assertTrue(reset.get());
         }
@@ -39,11 +39,11 @@ class AgentTradeCancellationServiceTest {
         AtomicBoolean reset = new AtomicBoolean(false);
         when(agent.getTrade()).thenReturn(activeTrade);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class);
              MockedStatic<Trade> trade = mockStatic(Trade.class)) {
             AgentTradeCancellationService.cancelSequence(entry, agent, "stop", () -> reset.set(true));
 
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(entry, "stop"));
+            replies.verify(() -> AgentInventoryRuntime.replyNow(entry, "stop"));
             trade.verify(() -> Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE));
             assertTrue(reset.get());
         }

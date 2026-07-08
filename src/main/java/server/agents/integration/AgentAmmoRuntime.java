@@ -6,8 +6,8 @@ import client.Character;
  * Temporary Agent-owned bridge for ammo-sharing timing/replies while ammo
  * transfer execution still lives in the legacy bot runtime.
  */
-public final class AgentBotAmmoRuntime {
-    private AgentBotAmmoRuntime() {
+public final class AgentAmmoRuntime {
+    private AgentAmmoRuntime() {
     }
 
     public static void sayMapNow(Character bot, String message) {

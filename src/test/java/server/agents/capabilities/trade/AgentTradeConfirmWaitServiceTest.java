@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -77,7 +77,7 @@ class AgentTradeConfirmWaitServiceTest {
         AtomicBoolean completed = new AtomicBoolean(false);
         AtomicBoolean reset = new AtomicBoolean(false);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class);
              MockedStatic<Trade> tradeStatic = mockStatic(Trade.class)) {
             AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                     entry,
@@ -105,7 +105,7 @@ class AgentTradeConfirmWaitServiceTest {
         AtomicBoolean reset = new AtomicBoolean(false);
         AgentPendingTradeStateRuntime.setTimerMs(entry, 59_950);
 
-        try (MockedStatic<AgentBotInventoryRuntime> replies = mockStatic(AgentBotInventoryRuntime.class);
+        try (MockedStatic<AgentInventoryRuntime> replies = mockStatic(AgentInventoryRuntime.class);
              MockedStatic<Trade> tradeStatic = mockStatic(Trade.class)) {
             AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                     entry,
@@ -119,7 +119,7 @@ class AgentTradeConfirmWaitServiceTest {
 
             assertEquals(60_050, AgentPendingTradeStateRuntime.timerMs(entry));
             assertTrue(reset.get());
-            replies.verify(() -> AgentBotInventoryRuntime.replyNow(
+            replies.verify(() -> AgentInventoryRuntime.replyNow(
                     entry,
                     AgentDialogueCatalog.tradeConfirmTimeoutReply()));
             tradeStatic.verify(() -> Trade.cancelTrade(agent, Trade.TradeResult.NO_RESPONSE));

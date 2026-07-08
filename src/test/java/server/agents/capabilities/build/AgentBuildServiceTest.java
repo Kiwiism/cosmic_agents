@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotBuildRuntime;
+import server.agents.integration.AgentBuildRuntime;
 import server.agents.integration.AgentBuildStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -47,10 +47,10 @@ class AgentBuildServiceTest {
                 AgentBuildService.StatType.DEX,
                 25);
 
-        try (MockedStatic<AgentBotBuildRuntime> buildRuntime = mockStatic(AgentBotBuildRuntime.class)) {
+        try (MockedStatic<AgentBuildRuntime> buildRuntime = mockStatic(AgentBuildRuntime.class)) {
             AgentBuildService.setApBuild(entry, build, "confirm");
 
-            buildRuntime.verify(() -> AgentBotBuildRuntime.confirmApBuild(entry, "confirm"));
+            buildRuntime.verify(() -> AgentBuildRuntime.confirmApBuild(entry, "confirm"));
         }
 
         assertEquals(build, AgentBuildStateRuntime.apBuild(entry));

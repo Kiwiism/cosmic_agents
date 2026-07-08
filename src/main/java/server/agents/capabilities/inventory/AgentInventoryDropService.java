@@ -9,7 +9,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.FieldLimit;
 
@@ -32,7 +32,7 @@ public final class AgentInventoryDropService {
                                     BiFunction<AgentRuntimeEntry, Character, List<Item>> trashEquipCollector) {
         if (!YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE
                 && FieldLimit.DROP_LIMIT.check(agent.getMap().getFieldLimit())) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.dropLimitedMapReply());
+            AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.dropLimitedMapReply());
             return;
         }
         switch (category) {
@@ -64,7 +64,7 @@ public final class AgentInventoryDropService {
 
     static void dropEquips(AgentRuntimeEntry entry, Character agent) {
         int count = dropFromBag(agent, InventoryType.EQUIP, item -> true);
-        AgentBotInventoryRuntime.replyNow(entry,
+        AgentInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " equip" + (count != 1 ? "s" : "") + "!"
                           : "equip bag is already empty");
     }
@@ -72,7 +72,7 @@ public final class AgentInventoryDropService {
     static void dropTrashEquips(AgentRuntimeEntry entry, Character agent, List<Item> trashEquips) {
         Set<Item> trash = new HashSet<>(trashEquips);
         int count = dropFromBag(agent, InventoryType.EQUIP, trash::contains);
-        AgentBotInventoryRuntime.replyNow(entry,
+        AgentInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " trash equip" + (count != 1 ? "s" : "") + "!"
                           : "no trash equips to drop");
     }
@@ -97,7 +97,7 @@ public final class AgentInventoryDropService {
                     item -> AgentInventoryNamedItemService.itemNameContains(item.getItemId(), normalizedFragment));
         }
         if (total <= 0) {
-            AgentBotInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeNamedItemNotFoundReply(nameFragment));
+            AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeNamedItemNotFoundReply(nameFragment));
         }
     }
 
@@ -120,7 +120,7 @@ public final class AgentInventoryDropService {
     }
 
     private static void reply(AgentRuntimeEntry entry, int count, String noun) {
-        AgentBotInventoryRuntime.replyNow(entry,
+        AgentInventoryRuntime.replyNow(entry,
                 count > 0 ? "dropped " + count + " " + noun + (count != 1 ? "s" : "") + "!"
                           : "no " + noun + "s to drop");
     }

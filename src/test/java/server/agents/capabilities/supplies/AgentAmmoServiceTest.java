@@ -8,7 +8,7 @@ import client.inventory.InventoryType;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotAmmoRuntime;
+import server.agents.integration.AgentAmmoRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 import testutil.Items;
@@ -41,15 +41,15 @@ class AgentAmmoServiceTest {
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
-             MockedStatic<AgentBotAmmoRuntime> scheduler = mockStatic(AgentBotAmmoRuntime.class)) {
+             MockedStatic<AgentAmmoRuntime> scheduler = mockStatic(AgentAmmoRuntime.class)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(donorBot)).thenReturn(null);
-            scheduler.when(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
+            scheduler.when(() -> AgentAmmoRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
 
             assertEquals(AgentAmmoService.OwnerAmmoShareResult.OFFERED,
                     AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW));
 
-            scheduler.verify(() -> AgentBotAmmoRuntime.randomDelayMs(900, 1400));
-            scheduler.verify(() -> AgentBotAmmoRuntime.afterDelay(eq(99L), any(Runnable.class)));
+            scheduler.verify(() -> AgentAmmoRuntime.randomDelayMs(900, 1400));
+            scheduler.verify(() -> AgentAmmoRuntime.afterDelay(eq(99L), any(Runnable.class)));
         } finally {
             bots.remove(owner.getId());
         }

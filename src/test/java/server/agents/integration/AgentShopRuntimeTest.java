@@ -6,13 +6,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
-import server.agents.integration.AgentBotShopRuntime;
+import server.agents.integration.AgentShopRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotShopRuntimeTest {
+class AgentShopRuntimeTest {
     @Test
     void shopBridgeMethodsDelegateToBroadAgentRuntimes() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -22,10 +22,10 @@ class AgentBotShopRuntimeTest {
              MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(2000, 4001)).thenReturn(2500L);
 
-            AgentBotShopRuntime.replyNow(entry, "reply");
-            AgentBotShopRuntime.sayMapNow(null, "shop");
-            AgentBotShopRuntime.afterDelay(500L, action);
-            long delay = AgentBotShopRuntime.randomDelayMs(2000, 4001);
+            AgentShopRuntime.replyNow(entry, "reply");
+            AgentShopRuntime.sayMapNow(null, "shop");
+            AgentShopRuntime.afterDelay(500L, action);
+            long delay = AgentShopRuntime.randomDelayMs(2000, 4001);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
             replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "shop"));

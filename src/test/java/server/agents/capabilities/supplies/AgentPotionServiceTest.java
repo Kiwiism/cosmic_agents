@@ -3,7 +3,7 @@ package server.agents.capabilities.supplies;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentBotPotionRuntime;
+import server.agents.integration.AgentPotionRuntime;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -37,15 +37,15 @@ class AgentPotionServiceTest {
         bots.put(owner.getId(), List.of(entry, donorEntry));
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class, CALLS_REAL_METHODS);
-             MockedStatic<AgentBotPotionRuntime> scheduler = mockStatic(AgentBotPotionRuntime.class)) {
+             MockedStatic<AgentPotionRuntime> scheduler = mockStatic(AgentPotionRuntime.class)) {
             potions.when(() -> AgentPotionService.countPotions(donorBot)).thenReturn(new int[]{400, 0});
-            scheduler.when(() -> AgentBotPotionRuntime.randomDelayMs(900, 1400)).thenReturn(77L);
+            scheduler.when(() -> AgentPotionRuntime.randomDelayMs(900, 1400)).thenReturn(77L);
 
             assertEquals(AgentPotionService.OwnerPotShareResult.OFFERED,
                     AgentPotionService.offerPotShareToOwner(entry, true));
 
-            scheduler.verify(() -> AgentBotPotionRuntime.randomDelayMs(900, 1400));
-            scheduler.verify(() -> AgentBotPotionRuntime.afterDelay(eq(77L), any(Runnable.class)));
+            scheduler.verify(() -> AgentPotionRuntime.randomDelayMs(900, 1400));
+            scheduler.verify(() -> AgentPotionRuntime.afterDelay(eq(77L), any(Runnable.class)));
         } finally {
             bots.remove(owner.getId());
         }

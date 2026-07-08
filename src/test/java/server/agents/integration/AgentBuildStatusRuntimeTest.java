@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBuildStatusRuntime;
 import server.agents.integration.AgentActivityStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
@@ -19,14 +19,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentBotBuildStatusRuntimeTest {
+class AgentBuildStatusRuntimeTest {
     @Test
     void checkBuildStatusRunsStatusRuntimeWithBuildActions() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character bot = mock(Character.class);
 
         try (MockedStatic<AgentChatStatusRuntime> statusRuntime = mockStatic(AgentChatStatusRuntime.class)) {
-            AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
+            AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
 
             statusRuntime.verify(() -> AgentChatStatusRuntime.checkStatus(
                     org.mockito.ArgumentMatchers.any(),
@@ -39,7 +39,7 @@ class AgentBotBuildStatusRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character bot = mock(Character.class);
         AgentChatStatusRuntime.StatusCheckActions actions =
-                AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
+                AgentBuildStatusRuntime.statusCheckActions(entry, bot);
 
         try (MockedStatic<AgentBuildService> buildManager = mockStatic(AgentBuildService.class)) {
             buildManager.when(() -> AgentBuildService.buildJobPrompt(entry, bot)).thenReturn("job?");
@@ -64,7 +64,7 @@ class AgentBotBuildStatusRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, owner, null);
         Character bot = mock(Character.class);
         AgentChatStatusRuntime.StatusCheckActions actions =
-                AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
+                AgentBuildStatusRuntime.statusCheckActions(entry, bot);
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             offers.when(() -> AgentOfferService.hasPendingOffer(entry)).thenReturn(false);
@@ -82,7 +82,7 @@ class AgentBotBuildStatusRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character bot = mock(Character.class);
         AgentChatStatusRuntime.StatusCheckActions actions =
-                AgentBotBuildStatusRuntime.statusCheckActions(entry, bot);
+                AgentBuildStatusRuntime.statusCheckActions(entry, bot);
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             actions.queueReply("build?");

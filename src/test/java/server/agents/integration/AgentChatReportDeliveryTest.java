@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
 import server.agents.integration.AgentChatReportRuntime;
-import server.agents.integration.AgentBotOfferRuntime;
+import server.agents.integration.AgentOfferRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import java.util.ArrayList;
@@ -42,8 +42,8 @@ class AgentChatReportDeliveryTest {
         Character owner = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
 
-        try (MockedStatic<AgentBotOfferRuntime> offers = mockStatic(AgentBotOfferRuntime.class)) {
-            offers.when(() -> AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner))
+        try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
+            offers.when(() -> AgentOfferRuntime.recommendedGearActions(entry, bot, owner))
                     .thenReturn(new server.agents.capabilities.dialogue.AgentChatReportRuntime.RecommendedGearActions() {
                         @Override
                         public boolean hasOwner() {
@@ -62,7 +62,7 @@ class AgentChatReportDeliveryTest {
 
             AgentChatReportRuntime.reportRecommendedGear(entry, bot);
 
-            offers.verify(() -> AgentBotOfferRuntime.recommendedGearActions(entry, bot, owner));
+            offers.verify(() -> AgentOfferRuntime.recommendedGearActions(entry, bot, owner));
         }
     }
 }

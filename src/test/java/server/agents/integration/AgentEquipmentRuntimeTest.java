@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
-import server.agents.integration.AgentBotEquipmentRuntime;
+import server.agents.integration.AgentEquipmentRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentSchedulerRuntime;
 
@@ -16,11 +16,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 
-class AgentBotEquipmentRuntimeTest {
+class AgentEquipmentRuntimeTest {
     @Test
     void equipmentVisibleReplyDelegatesToAgentReplyRuntime() {
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            AgentBotEquipmentRuntime.sayMapNow(null, "gear");
+            AgentEquipmentRuntime.sayMapNow(null, "gear");
 
             replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "gear"));
         }
@@ -29,7 +29,7 @@ class AgentBotEquipmentRuntimeTest {
     @Test
     void equipmentCallbacksScheduleLegacyEquipmentSideEffects() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatEquipmentFlow.EquipmentCallbacks callbacks = AgentBotEquipmentRuntime.equipmentCallbacks(entry);
+        AgentChatEquipmentFlow.EquipmentCallbacks callbacks = AgentEquipmentRuntime.equipmentCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             assertTrue(callbacks.unequipSlot("hat"));
@@ -47,7 +47,7 @@ class AgentBotEquipmentRuntimeTest {
     @Test
     void unknownUnequipSlotDoesNotScheduleWork() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        AgentChatEquipmentFlow.EquipmentCallbacks callbacks = AgentBotEquipmentRuntime.equipmentCallbacks(entry);
+        AgentChatEquipmentFlow.EquipmentCallbacks callbacks = AgentEquipmentRuntime.equipmentCallbacks(entry);
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             assertFalse(callbacks.unequipSlot("not-a-slot"));

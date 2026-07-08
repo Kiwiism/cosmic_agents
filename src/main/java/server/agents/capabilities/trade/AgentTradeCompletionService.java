@@ -6,7 +6,7 @@ import client.inventory.Item;
 import constants.inventory.ItemConstants;
 import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
-import server.agents.integration.AgentBotInventoryRuntime;
+import server.agents.integration.AgentInventoryRuntime;
 import server.agents.integration.AgentPendingTradeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -40,14 +40,14 @@ public final class AgentTradeCompletionService {
         long replyDelay = replyDelayMs.getAsLong();
         if (receivedSomething) {
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
-            AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
-                    AgentBotInventoryRuntime.visibleSayNow(entry, thanksReply.get()));
+            AgentInventoryRuntime.afterDelay(replyDelay, () ->
+                    AgentInventoryRuntime.visibleSayNow(entry, thanksReply.get()));
         } else if (freebieRoll.getAsInt() < 20) {
             agent.changeFaceExpression(glareExpression.getAsBoolean()
                     ? AgentEmote.GLARE.getValue()
                     : AgentEmote.ANNOYED.getValue());
-            AgentBotInventoryRuntime.afterDelay(replyDelay, () ->
-                    AgentBotInventoryRuntime.visibleSayNow(entry, freebieReply.get()));
+            AgentInventoryRuntime.afterDelay(replyDelay, () ->
+                    AgentInventoryRuntime.visibleSayNow(entry, freebieReply.get()));
         }
     }
 }

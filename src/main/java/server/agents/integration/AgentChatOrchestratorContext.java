@@ -56,7 +56,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatSupplyRequestFlow.SupplyRequestCallbacks supplyRequestCallbacks() {
-        return AgentBotSupplyRuntime.supplyRequestCallbacks(entry);
+        return AgentSupplyRuntime.supplyRequestCallbacks(entry);
     }
 
     @Override
@@ -81,7 +81,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatEquipmentFlow.EquipmentCallbacks equipmentCallbacks() {
-        return AgentBotEquipmentRuntime.equipmentCallbacks(entry);
+        return AgentEquipmentRuntime.equipmentCallbacks(entry);
     }
 
     @Override
@@ -97,7 +97,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatBuildFlow.SpVariantCallbacks spVariantCallbacks() {
-        return AgentBotBuildRuntime.spVariantCallbacks(entry);
+        return AgentBuildRuntime.spVariantCallbacks(entry);
     }
 
     @Override
@@ -107,22 +107,22 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatBuildFlow.ApBuildCallbacks apBuildCallbacks() {
-        return AgentBotBuildRuntime.apBuildCallbacks(entry);
+        return AgentBuildRuntime.apBuildCallbacks(entry);
     }
 
     @Override
     public AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks() {
-        return AgentBotUtilityRuntime.utilityCallbacks(entry);
+        return AgentUtilityRuntime.utilityCallbacks(entry);
     }
 
     @Override
     public void handleTransferCommand(AgentChatTransferFlow.TransferCommand transferCommand, String message) {
-        AgentBotTransferRuntime.handleTransferCommand(entry, transferCommand, message);
+        AgentTransferRuntime.handleTransferCommand(entry, transferCommand, message);
     }
 
     @Override
     public AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks() {
-        return AgentBotTransferRuntime.itemQueryCallbacks(entry);
+        return AgentTransferRuntime.itemQueryCallbacks(entry);
     }
 
     @Override
@@ -142,6 +142,6 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatJobAdvancementFlow.JobAdvancementCallbacks jobAdvancementCallbacks() {
-        return AgentBotBuildRuntime.jobAdvancementCallbacks(entry);
+        return AgentBuildRuntime.jobAdvancementCallbacks(entry);
     }
 }

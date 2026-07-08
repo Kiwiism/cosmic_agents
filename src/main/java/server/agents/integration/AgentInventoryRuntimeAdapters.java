@@ -32,8 +32,8 @@ import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.ArrayList;
 
-public final class AgentBotInventoryRuntimeAdapters {
-    private AgentBotInventoryRuntimeAdapters() {
+public final class AgentInventoryRuntimeAdapters {
+    private AgentInventoryRuntimeAdapters() {
     }
 
     public static AgentPassiveLootRuntimeService.RuntimeCallbacks passiveLootRuntimeCallbacks() {
@@ -45,7 +45,7 @@ public final class AgentBotInventoryRuntimeAdapters {
                 System::currentTimeMillis,
                 () -> AgentRuntimeConfig.cfg.LOOT_RADIUS,
                 AgentInventoryStateRuntime::canWarnInventoryFull,
-                AgentBotInventoryRuntime::replyNow,
+                AgentInventoryRuntime::replyNow,
                 () -> AgentMovementTimers.delayAfterCurrentTick(AgentRuntimeConfig.cfg.INV_FULL_WARN_CD_MS),
                 AgentInventoryStateRuntime::setInventoryFullWarnCooldownMs,
                 AgentRuntimeIdentityRuntime::owner,

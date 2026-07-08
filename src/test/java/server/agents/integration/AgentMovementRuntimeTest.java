@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
-import server.agents.integration.AgentBotActiveModeRuntime;
+import server.agents.integration.AgentActiveModeRuntime;
 import server.agents.integration.AgentFidgetSideEffects;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentMovementRuntime;
@@ -82,7 +82,7 @@ class AgentMovementRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentBotActiveModeRuntime> activeMode = mockStatic(AgentBotActiveModeRuntime.class);
+             MockedStatic<AgentActiveModeRuntime> activeMode = mockStatic(AgentActiveModeRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands =
@@ -100,7 +100,7 @@ class AgentMovementRuntimeTest {
 
             AgentMovementRuntime.movementCallbacks(entry).follow();
 
-            activeMode.verify(() -> AgentBotActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
+            activeMode.verify(() -> AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
             potions.verify(() -> AgentPotionService.checkPotShareOnModeStart((AgentRuntimeEntry) eq(entry), eq(bot)));
             movementCommands.verify(() -> AgentMovementCommandRuntime.followOwner(entry));

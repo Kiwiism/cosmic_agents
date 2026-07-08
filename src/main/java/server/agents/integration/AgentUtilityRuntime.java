@@ -11,8 +11,8 @@ import server.agents.capabilities.shop.AgentShopService;
  * Agent-owned utility chat callback facade over temporary bot-side trade,
  * shop, and maker side effects.
  */
-public final class AgentBotUtilityRuntime {
-    private AgentBotUtilityRuntime() {
+public final class AgentUtilityRuntime {
+    private AgentUtilityRuntime() {
     }
 
     public static AgentChatUtilityFlow.UtilityCallbacks utilityCallbacks(AgentRuntimeEntry entry) {

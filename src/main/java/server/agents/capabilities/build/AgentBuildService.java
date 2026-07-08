@@ -16,9 +16,9 @@ import server.agents.capabilities.build.profiles.MageBuilds;
 import server.agents.capabilities.build.profiles.ThiefBuilds;
 import server.agents.capabilities.build.profiles.WarriorBuilds;
 import server.agents.capabilities.dialogue.AgentBuildPromptReporter;
-import server.agents.integration.AgentBotBuildRuntime;
+import server.agents.integration.AgentBuildRuntime;
 import server.agents.integration.AgentBuildStateRuntime;
-import server.agents.integration.AgentBotBuildStatusRuntime;
+import server.agents.integration.AgentBuildStatusRuntime;
 import server.agents.integration.AgentMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -61,7 +61,7 @@ public final class AgentBuildService {
     /** Stores the AP build, confirms it to the owner, and immediately spends any pending AP. */
     public static void setApBuild(AgentRuntimeEntry entry, ApBuild build, String confirmMsg) {
         AgentBuildStateRuntime.setApBuild(entry, build);
-        AgentBotBuildRuntime.confirmApBuild(entry, confirmMsg);
+        AgentBuildRuntime.confirmApBuild(entry, confirmMsg);
         autoAssignAp(entry, AgentRuntimeIdentityRuntime.bot(entry));
     }
 
@@ -327,7 +327,7 @@ public final class AgentBuildService {
 
         if (lvl == 8 || lvl == 10 || lvl == 30 || lvl == 70 || lvl == 120) {
             AgentMovementCommandRuntime.followOwner(entry);
-            AgentBotBuildStatusRuntime.checkBuildStatus(entry, bot);
+            AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
         }
 
         autoAssignSp(entry, bot);
