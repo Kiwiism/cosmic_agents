@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.supplies;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
-import server.agents.integration.AgentCombatAmmoCheckRuntime;
 import server.agents.capabilities.combat.AgentCombatRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

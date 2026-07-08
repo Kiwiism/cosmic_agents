@@ -6264,6 +6264,10 @@ Current physics correction:
   same buff tick readiness, living-mob gate, party-support selection, skill
   cost checks, special-move dispatch, cooldown updates, alert marking, and
   legacy debug summaries.
+- Combat ammo and mage MP-pot shortage checks now live in
+  `server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime`. It
+  preserves the same weapon/ammo classification, warning latch state,
+  grind-mode follow fallback, and map dialogue side effects.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

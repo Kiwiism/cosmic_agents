@@ -1,6 +1,4 @@
-package server.agents.integration;
-
-import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
+package server.agents.capabilities.supplies;
 
 import client.Character;
 import client.inventory.InventoryType;

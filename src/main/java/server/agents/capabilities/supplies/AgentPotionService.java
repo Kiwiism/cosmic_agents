@@ -26,7 +26,7 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
-import server.agents.integration.AgentCombatAmmoCheckRuntime;
+import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.runtime.AgentRuntimeConfig;

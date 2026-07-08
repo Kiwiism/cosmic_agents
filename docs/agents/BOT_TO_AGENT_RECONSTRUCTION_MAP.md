@@ -2350,3 +2350,7 @@ Recent capability extraction notes:
 - `AgentCombatBuffRuntime` now lives in `server.agents.capabilities.combat`.
   It preserves the same support-buff readiness, party-support selection,
   special-move dispatch, cooldown, alert, and legacy debug behavior.
+- `AgentCombatAmmoCheckRuntime` now lives in
+  `server.agents.capabilities.supplies`. It preserves the same ammo/MP-pot
+  shortage decisions, warning state transitions, grind follow fallback, and map
+  dialogue side effects.

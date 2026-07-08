@@ -27,7 +27,7 @@ import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.shop.AgentShopRuntime;
-import server.agents.integration.AgentCombatAmmoCheckRuntime;
+import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
