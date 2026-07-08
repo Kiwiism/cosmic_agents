@@ -1,7 +1,6 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;

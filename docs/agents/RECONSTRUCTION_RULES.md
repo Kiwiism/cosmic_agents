@@ -103,6 +103,11 @@ Recent reconstruction notes:
   only adapts `AgentRuntimeEntry` trade retry, batch, item, meso, restore-slot,
   and owner-given item bookkeeping; trade windows, inventory mutation, shop
   APIs, timers, and client locks remain in existing trade/integration callers.
+- Grind target search cadence state has moved from `server.agents.integration`
+  to `server.agents.capabilities.combat.AgentGrindSearchStateRuntime`. It
+  still only adapts the next-retarget-search timestamp on `AgentRuntimeEntry`;
+  live target selection and map/monster checks remain in the existing combat
+  capability and integration target adapters.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

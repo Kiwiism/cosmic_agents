@@ -1,5 +1,7 @@
 package server.agents.capabilities.trade;
 
+import server.agents.capabilities.combat.AgentGrindSearchStateRuntime;
+
 import server.agents.integration.AgentMovementStateRuntime;
 
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
@@ -66,7 +68,6 @@ import server.agents.integration.AgentCommandTargetResolver;
 import server.agents.capabilities.combat.AgentBreakoutStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.integration.AgentGrindLootStateRuntime;
-import server.agents.integration.AgentGrindSearchStateRuntime;
 import server.agents.integration.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.integration.AgentMapStateRuntime;
