@@ -71,6 +71,12 @@ Recent reconstruction notes:
   `server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime`.
   It only tracks the last broadcast tuple and invalidation flag; actual packet
   broadcasting remains in the existing movement broadcast service.
+- Movement physics state has moved from `server.agents.integration` to
+  `server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime`. The
+  adapter still only reads/writes `AgentRuntimeEntry` physics fields such as
+  jump cooldowns, air steering, fall peak, physics coordinates, ground carry,
+  and last-ground foothold cache; collision checks, map reads, and packet
+  broadcasting remain in existing movement/navigation services.
 - Final shell cleanup removed `src/main/java/server/bots/**` and
   `src/test/java/server/bots/**`. Tests that used the constructor-compatible
   shell now instantiate `AgentRuntimeEntry` directly. Source and test code no

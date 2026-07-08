@@ -2,7 +2,6 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import constants.game.CharacterStance;
-import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

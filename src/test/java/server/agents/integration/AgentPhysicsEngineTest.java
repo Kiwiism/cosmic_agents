@@ -6,7 +6,7 @@ import server.agents.capabilities.movement.AgentClimbStateRuntime;
 
 import server.agents.integration.AgentMovementStateRuntime;
 
-import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentAirbornePhysicsService;

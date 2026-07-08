@@ -1,6 +1,5 @@
 package server.agents.capabilities.movement;
 
-import server.agents.integration.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

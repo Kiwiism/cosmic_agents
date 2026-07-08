@@ -1,9 +1,6 @@
-package server.agents.integration;
+package server.agents.capabilities.movement;
 
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.capabilities.movement.AgentAirborneSteeringState;
-import server.agents.capabilities.movement.AgentGroundTravelState;
-import server.agents.capabilities.movement.AgentMovementPhysicsState;
 
 import java.awt.Point;
 

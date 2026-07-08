@@ -2,7 +2,7 @@ package server.agents.integration;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
-import server.agents.integration.AgentMovementPhysicsStateRuntime;
+import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationWaypointService;
