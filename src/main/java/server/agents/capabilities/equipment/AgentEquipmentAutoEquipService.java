@@ -34,7 +34,7 @@ import server.agents.capabilities.equipment.AgentMapDamageProfile;
 import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 import server.agents.capabilities.equipment.AgentWeaponScoreBreakdown;
 import server.agents.capabilities.dialogue.AgentRangeReportService;
-import server.agents.integration.AgentEquipmentRuntime;
+import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 
 import java.util.ArrayList;
 import java.util.Collection;

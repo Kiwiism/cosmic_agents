@@ -21,7 +21,7 @@ import server.agents.capabilities.build.AgentBuildStateRuntime;
 import server.agents.integration.AgentChatReportRuntime;
 import server.agents.integration.AgentChatStatusRuntime;
 import server.agents.integration.AgentControlRuntime;
-import server.agents.integration.AgentEquipmentRuntime;
+import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 import server.agents.integration.AgentMovementRuntime;
 import server.agents.integration.AgentPendingActionRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

@@ -1,11 +1,10 @@
-package server.agents.integration;
+package server.agents.capabilities.equipment;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
-import server.agents.integration.AgentEquipmentRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 

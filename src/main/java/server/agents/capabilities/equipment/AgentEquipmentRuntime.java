@@ -1,18 +1,20 @@
-package server.agents.integration;
+package server.agents.capabilities.equipment;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatEquipmentFlow;
+import server.agents.integration.AgentMovementCommandRuntime;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 
 import java.util.List;
 
 /**
- * Temporary Agent-owned bridge for equipment chat callbacks while equipment
- * side effects still live in the bot runtime.
+ * Agent-owned bridge for equipment chat callbacks while reply delivery and
+ * movement stop side effects stay behind integration runtime boundaries.
  */
 public final class AgentEquipmentRuntime {
     private AgentEquipmentRuntime() {

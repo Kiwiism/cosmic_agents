@@ -6166,6 +6166,10 @@ Current physics correction:
   the same reply, owner lookup, starter-kit, equipment, and offer services;
   build prompt, AP/SP assignment, job advancement, and gear suggestion behavior
   are unchanged.
+- Equipment chat callback orchestration now lives in
+  `server.agents.capabilities.equipment.AgentEquipmentRuntime`. It still uses
+  the same delayed reply scheduling, movement stop, equipment service, and
+  pending-offer lookup; unequip and auto-equip chat behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
