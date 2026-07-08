@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -7,8 +7,8 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
-import server.agents.capabilities.trade.AgentInventoryTransferService;
-import server.agents.capabilities.trade.AgentTradeCommandProfiler;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

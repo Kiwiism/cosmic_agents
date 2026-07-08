@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.trade;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -9,7 +9,6 @@ import server.agents.capabilities.dialogue.AgentChatTransferFlow;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.integration.AgentTransferRuntime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

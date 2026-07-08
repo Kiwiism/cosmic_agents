@@ -28,7 +28,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSessionRuntime;
 import server.agents.integration.AgentSocialRuntime;
 import server.agents.capabilities.supplies.AgentSupplyRuntime;
-import server.agents.integration.AgentTransferRuntime;
+import server.agents.capabilities.trade.AgentTransferRuntime;
 import server.agents.integration.AgentUtilityRuntime;
 
 /**

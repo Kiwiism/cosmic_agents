@@ -6180,6 +6180,12 @@ Current physics correction:
   live leader lookup to `AgentRuntimeIdentityRuntime`, visible replies to
   `AgentReplyRuntime`, and delayed callbacks to `AgentSchedulerRuntime`; HP/MP
   potion, ammo, and upgrade-request behavior is unchanged.
+- Transfer command and item-query orchestration now lives in
+  `server.agents.capabilities.trade.AgentTransferRuntime`. It still delegates
+  live Agent lookup to `AgentRuntimeIdentityRuntime`, visible replies to
+  `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, and
+  inventory/trade mutation to `AgentInventoryTransferService`; transfer
+  command behavior is unchanged.
 - Movement kinematics snapshot construction now lives in
   `server.agents.capabilities.movement.AgentMovementKinematicsRuntime`. It
   still reads the same live character/map movement stats and field limits to
