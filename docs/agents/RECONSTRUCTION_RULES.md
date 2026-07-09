@@ -262,6 +262,10 @@ Recent reconstruction notes:
 - Support special-move packet building now obtains the current server
   timestamp through `AgentCombatGatewayRuntime`. Packet construction,
   synthetic dispatch, validation, and handler invocation remain unchanged.
+- Offline Agent disease restoration now obtains stored diseases through
+  `AgentCharacterGatewayRuntime` instead of direct server buff-storage access.
+  Disease application order, null handling, client binding, map registration,
+  and spawn setup remain unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

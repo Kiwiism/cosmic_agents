@@ -2765,6 +2765,10 @@ Recent capability extraction notes:
   timestamp for support special-move packet construction. `AgentSupportSpecialMoveExecutor`
   no longer calls `Server.getInstance()` directly; packet bytes and synthetic
   dispatch behavior stay unchanged.
+- SPI/gateway extraction: `CharacterGateway` now exposes stored disease
+  restoration for offline Agent loading. `AgentOfflineLoadRuntime` no longer
+  reaches directly into server player buff storage; disease restore behavior
+  and offline-load ordering stay unchanged.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the

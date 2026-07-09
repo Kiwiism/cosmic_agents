@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.BotClient;
 import client.Character;
 import config.YamlConfig;
-import net.server.Server;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.maps.MapleMap;
 
@@ -36,7 +36,7 @@ public final class AgentOfflineLoadRuntime {
         return new AgentOfflineLoadService.Hooks(
                 BotClient::new,
                 (characterId, client) -> Character.loadCharFromDB(characterId, client, true),
-                characterId -> Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId),
+                AgentCharacterGatewayRuntime.characters()::loadStoredDiseases,
                 AgentMapGatewayRuntime.map()::resolveMap,
                 AgentSpawnPositionService::resolveSpawnPosition,
                 agent -> {
