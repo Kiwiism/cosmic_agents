@@ -5,10 +5,9 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
-import net.packet.Packet;
 import server.Trade;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
-import tools.PacketCreator;
 
 import java.util.List;
 
@@ -24,7 +23,8 @@ public final class AgentTradeItemAddService {
                 delayMs,
                 (character, type, slot, quantity, fromDrop) ->
                         InventoryManipulator.removeFromSlot(character.getClient(), type, slot, quantity, fromDrop),
-                PacketCreator::getTradeItemAdd);
+                (recipient, number, item) ->
+                        CosmicAgentServerAdapter.INSTANCE.packets().sendTradeItemAdd(recipient, number, item));
     }
 
     static boolean addNextItem(AgentRuntimeEntry entry,
@@ -32,7 +32,7 @@ public final class AgentTradeItemAddService {
                                Trade trade,
                                int delayMs,
                                InventoryRemover inventoryRemover,
-                               TradeItemPacketFactory packetFactory) {
+                               TradeItemPacketSender packetSender) {
         List<Item> items = AgentPendingTradeStateRuntime.items(entry);
         int idx = AgentPendingTradeStateRuntime.itemIndex(entry);
         if (idx >= items.size()) {
@@ -60,9 +60,9 @@ public final class AgentTradeItemAddService {
             if (trade.addItem(tradeItem)) {
                 AgentPendingTradeStateRuntime.transferRestoreSlot(entry, item, tradeItem);
                 inventoryRemover.remove(agent, invType, item.getPosition(), tradeQty, false);
-                agent.sendPacket(packetFactory.create((byte) 0, tradeItem));
+                packetSender.send(agent, (byte) 0, tradeItem);
                 if (trade.getPartner() != null) {
-                    trade.getPartner().getChr().sendPacket(packetFactory.create((byte) 1, tradeItem));
+                    packetSender.send(trade.getPartner().getChr(), (byte) 1, tradeItem);
                 }
             }
             return true;
@@ -77,7 +77,7 @@ public final class AgentTradeItemAddService {
     }
 
     @FunctionalInterface
-    interface TradeItemPacketFactory {
-        Packet create(byte number, Item item);
+    interface TradeItemPacketSender {
+        void send(Character recipient, byte number, Item item);
     }
 }

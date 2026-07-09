@@ -1,6 +1,7 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
+import client.inventory.Item;
 import io.netty.buffer.Unpooled;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
@@ -67,5 +68,13 @@ public enum CosmicPacketGateway implements PacketGateway {
             return;
         }
         recipient.sendPacket(PacketCreator.removeItemFromMap(objectId, animation, fromCharacterId));
+    }
+
+    @Override
+    public void sendTradeItemAdd(Character recipient, byte tradeNumber, Item item) {
+        if (recipient == null || item == null) {
+            return;
+        }
+        recipient.sendPacket(PacketCreator.getTradeItemAdd(tradeNumber, item));
     }
 }

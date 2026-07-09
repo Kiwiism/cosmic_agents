@@ -2439,3 +2439,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: loot cleanup now routes stale drop removal packets
   through `PacketGateway.sendRemoveItemFromMap`; looting still owns the
   visible-player and BotClient filtering behavior.
+- SPI/gateway extraction: trade item-add packet delivery now routes through
+  `PacketGateway.sendTradeItemAdd`; `AgentTradeItemAddService` still owns item
+  selection, inventory removal, and recipient/partner routing.

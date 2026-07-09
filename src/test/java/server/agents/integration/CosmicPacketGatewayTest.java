@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
+import client.inventory.Item;
 import net.packet.InPacket;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,22 @@ class CosmicPacketGatewayTest {
             CosmicPacketGateway.INSTANCE.sendRemoveItemFromMap(recipient, 7, 1, 0);
 
             packets.verify(() -> PacketCreator.removeItemFromMap(7, 1, 0));
+            verify(recipient).sendPacket(packet);
+        }
+    }
+
+    @Test
+    void sendTradeItemAddBuildsPacketAndSendsToRecipient() {
+        Character recipient = mock(Character.class);
+        Item item = mock(Item.class);
+        Packet packet = mock(Packet.class);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.getTradeItemAdd((byte) 1, item)).thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.sendTradeItemAdd(recipient, (byte) 1, item);
+
+            packets.verify(() -> PacketCreator.getTradeItemAdd((byte) 1, item));
             verify(recipient).sendPacket(packet);
         }
     }

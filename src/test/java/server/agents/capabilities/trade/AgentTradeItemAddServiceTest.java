@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import server.Trade;
@@ -39,7 +38,7 @@ class AgentTradeItemAddServiceTest {
                 trade,
                 500,
                 (character, type, slot, quantity, fromDrop) -> {},
-                (number, item) -> mock(Packet.class));
+                (recipient, number, item) -> {});
 
         assertFalse(handled);
         assertEquals(0, AgentPendingTradeStateRuntime.itemIndex(entry));
@@ -62,7 +61,7 @@ class AgentTradeItemAddServiceTest {
                 trade,
                 500,
                 (character, type, slot, quantity, fromDrop) -> {},
-                (number, tradeItem) -> mock(Packet.class));
+                (recipient, number, tradeItem) -> {});
 
         assertTrue(handled);
         assertEquals(1, AgentPendingTradeStateRuntime.itemIndex(entry));
@@ -78,11 +77,11 @@ class AgentTradeItemAddServiceTest {
         Trade trade = mock(Trade.class);
         Trade partner = mock(Trade.class);
         Inventory inventory = mock(Inventory.class);
-        Packet ownPacket = mock(Packet.class);
-        Packet partnerPacket = mock(Packet.class);
         Item item = item(2000000, (short) 3, (short) 10);
         AtomicReference<Item> removedItem = new AtomicReference<>();
         AtomicInteger packetNumberSum = new AtomicInteger();
+        AtomicReference<Character> ownPacketRecipient = new AtomicReference<>();
+        AtomicReference<Character> partnerPacketRecipient = new AtomicReference<>();
         AgentTradeStateService.initializeBatch(entry, List.of(item), 0);
         AgentPendingTradeStateRuntime.rememberRestoreSlot(entry, item, (short) -5);
 
@@ -104,10 +103,14 @@ class AgentTradeItemAddServiceTest {
                     assertEquals((short) 10, quantity);
                     assertFalse(fromDrop);
                 },
-                (number, tradeItem) -> {
+                (recipientCharacter, number, tradeItem) -> {
                     packetNumberSum.addAndGet(number);
                     removedItem.set(tradeItem);
-                    return number == 0 ? ownPacket : partnerPacket;
+                    if (number == 0) {
+                        ownPacketRecipient.set(recipientCharacter);
+                    } else {
+                        partnerPacketRecipient.set(recipientCharacter);
+                    }
                 });
 
         assertTrue(handled);
@@ -123,8 +126,8 @@ class AgentTradeItemAddServiceTest {
         assertEquals(500, AgentPendingTradeStateRuntime.timerMs(entry));
         assertSame(tradeItem, AgentPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getKey());
         assertEquals((short) -5, AgentPendingTradeStateRuntime.restoreSlotEntries(entry).get(0).getValue());
-        verify(agent).sendPacket(ownPacket);
-        verify(recipient).sendPacket(partnerPacket);
+        assertSame(agent, ownPacketRecipient.get());
+        assertSame(recipient, partnerPacketRecipient.get());
         verify(inventory).lockInventory();
         verify(inventory).unlockInventory();
     }

@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
+import client.inventory.Item;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
 
 import java.util.Map;
@@ -21,5 +22,7 @@ public interface PacketGateway {
     void sendRemoveMist(Character recipient, int objectId);
 
     void sendRemoveItemFromMap(Character recipient, int objectId, int animation, int fromCharacterId);
+
+    void sendTradeItemAdd(Character recipient, byte tradeNumber, Item item);
 }
 

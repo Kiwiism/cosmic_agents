@@ -6380,6 +6380,11 @@ Current physics correction:
   packets through `PacketGateway.sendRemoveItemFromMap`, moving
   `PacketCreator.removeItemFromMap` out of the looting capability while keeping
   visibility and BotClient filtering in `AgentLootCleanupService`.
+- SPI/gateway extraction: trade item-add packets now route through
+  `PacketGateway.sendTradeItemAdd`, moving `PacketCreator.getTradeItemAdd` and
+  direct recipient packet sends out of `AgentTradeItemAddService` while keeping
+  trade item selection, inventory removal, and partner routing in the trade
+  capability.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
