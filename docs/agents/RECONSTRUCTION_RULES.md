@@ -255,6 +255,10 @@ Recent reconstruction notes:
   restoration, rate initialization, spawn-position resolution, client binding,
   entered-channel state, map visit, and disease-expiry task ordering are
   unchanged.
+- Live leader lookup now routes through `AgentCharacterGatewayRuntime` and the
+  new `CharacterGateway`/`CosmicCharacterGateway` boundary. Tick-time leader
+  refresh and relogin leader resolution still read the same world player
+  storage and preserve the same null/fallback behavior.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

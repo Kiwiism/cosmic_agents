@@ -1,8 +1,8 @@
 package server.agents.runtime;
 
 import client.Character;
-import net.server.Server;
 import org.slf4j.Logger;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
@@ -52,10 +52,8 @@ public final class AgentReloginRuntime {
                 world,
                 channel,
                 new AgentLifecycleService.ReloginHooks(
-                        (targetWorld, targetLeaderCharId) -> Server.getInstance()
-                                .getWorld(targetWorld)
-                                .getPlayerStorage()
-                                .getCharacterById(targetLeaderCharId),
+                        (targetWorld, targetLeaderCharId) -> AgentCharacterGatewayRuntime.characters()
+                                .findWorldCharacterById(targetWorld, targetLeaderCharId),
                         AgentSpawnPositionService::resolveSpawnPosition,
                         AgentReloginRuntime::loadOfflineAgent,
                         registerSpawnedAgent,

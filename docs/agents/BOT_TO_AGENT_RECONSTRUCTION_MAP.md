@@ -2756,6 +2756,11 @@ Recent capability extraction notes:
   and channel/world/map player registration through `AgentMapGatewayRuntime`.
   Offline character loading, disease restore, spawn positioning, rate setup,
   client binding, map visit, and disease task startup stay unchanged.
+- SPI/gateway extraction: `CharacterGateway`/`CosmicCharacterGateway` now expose
+  live world-player lookup through `AgentCharacterGatewayRuntime`.
+  `AgentLeaderSessionRuntime` and `AgentReloginRuntime` use this boundary for
+  leader refresh/relogin resolution while preserving the same player-storage
+  lookup behavior.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the

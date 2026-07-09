@@ -1,6 +1,8 @@
 package server.agents.integration;
 
 public interface AgentServerAdapter {
+    CharacterGateway characters();
+
     MapGateway maps();
 
     PacketGateway packets();

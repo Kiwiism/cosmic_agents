@@ -1,6 +1,7 @@
 package server.agents.integration.cosmic;
 
 import server.agents.integration.AgentServerAdapter;
+import server.agents.integration.CharacterGateway;
 import server.agents.integration.CombatGateway;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.MapGateway;
@@ -11,6 +12,11 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     public static final CosmicAgentServerAdapter INSTANCE = new CosmicAgentServerAdapter();
 
     private CosmicAgentServerAdapter() {
+    }
+
+    @Override
+    public CharacterGateway characters() {
+        return CosmicCharacterGateway.INSTANCE;
     }
 
     @Override
