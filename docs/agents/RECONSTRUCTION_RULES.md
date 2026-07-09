@@ -246,6 +246,10 @@ Recent reconstruction notes:
   map/position, register through the same runtime path, place online Agents
   through `AgentSpawnPlacementRuntime`, and start follow behavior exactly as
   before.
+- Cross-map follow synchronization now routes its live `changeMap(map,
+  position)` operation through `AgentMapGatewayRuntime`. The follow map-change
+  predicate, ground-point fallback, idle-on-ground call, and movement-state
+  reset order are unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

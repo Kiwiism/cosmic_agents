@@ -2748,6 +2748,10 @@ Recent capability extraction notes:
   map-change hooks through `AgentMapGatewayRuntime` instead of a direct
   `forceChangeMap` lambda. Spawn lookup, registration, online placement,
   follow-start callback wiring, and failure logging stay unchanged.
+- SPI/gateway extraction: `AgentFollowMapSyncRuntime` now routes its
+  cross-map follow `changeMap(map, position)` call through
+  `AgentMapGatewayRuntime`. Follow eligibility checks, spawn-position fallback,
+  idle-on-ground, and reset ordering stay unchanged.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the

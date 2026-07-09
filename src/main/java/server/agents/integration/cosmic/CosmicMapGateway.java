@@ -10,6 +10,14 @@ public enum CosmicMapGateway implements MapGateway {
     INSTANCE;
 
     @Override
+    public void changeMap(Character agent, MapleMap map, Point position) {
+        if (agent == null || map == null) {
+            return;
+        }
+        agent.changeMap(map, position);
+    }
+
+    @Override
     public void changeMapNear(Character agent, MapleMap map, Point position) {
         if (agent == null || map == null) {
             return;
