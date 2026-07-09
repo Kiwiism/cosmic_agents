@@ -15,7 +15,6 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
@@ -455,9 +454,8 @@ public final class AgentOfferService {
             return new GearOfferChoice(current.get(0).candidate(), GearOfferNeed.CURRENT);
         }
         if (AgentOfferStateRuntime.proactiveUpgradeOffers(entry)) {
-            ItemInformationProvider ii = ItemInformationProvider.getInstance();
             for (Equip equip : offerable) {
-                if (AgentEquipmentService.wouldReserveIncomingItem(recipient, ii, equip)) {
+                if (AgentEquipmentService.wouldReserveIncomingItem(recipient, equip)) {
                     return new GearOfferChoice(equip, GearOfferNeed.FUTURE);
                 }
             }
@@ -490,7 +488,7 @@ public final class AgentOfferService {
             return GearOfferNeed.CURRENT;
         }
         if (AgentOfferStateRuntime.proactiveUpgradeOffers(entry) && item instanceof Equip equip) {
-            if (AgentEquipmentService.wouldReserveIncomingItem(recipient, ItemInformationProvider.getInstance(), equip)) {
+            if (AgentEquipmentService.wouldReserveIncomingItem(recipient, equip)) {
                 return GearOfferNeed.FUTURE;
             }
         }
@@ -539,28 +537,27 @@ public final class AgentOfferService {
         if (!(item instanceof Equip equip)) {
             return false;
         }
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         // Trade-classification path: only the FUTURE (Pareto self-reserve) check is used here.
         // The IMMEDIATE optimizer-DP check that gearOfferNeed() also runs is intentionally
         // skipped — it's expensive and its picks are essentially a subset of the FUTURE set,
         // so it adds no signal for "should this item be held back from a player→bot trade?".
         // Proactive offer paths still call gearOfferNeed() directly and keep both checks.
-        if (isFutureReservedForRecipient(owner, equip, ii)) {
+        if (isFutureReservedForRecipient(owner, equip)) {
             return true;
         }
         for (Character member : eligibleBotRecipients(owner, donor)) {
-            if (isFutureReservedForRecipient(member, equip, ii)) {
+            if (isFutureReservedForRecipient(member, equip)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean isFutureReservedForRecipient(Character recipient, Equip equip, ItemInformationProvider ii) {
+    private static boolean isFutureReservedForRecipient(Character recipient, Equip equip) {
         if (!isWeaponOfferCompatible(recipient, equip)) {
             return false;
         }
-        return AgentEquipmentService.wouldReserveIncomingItem(recipient, ii, equip);
+        return AgentEquipmentService.wouldReserveIncomingItem(recipient, equip);
     }
 
     private static Character findWeakestThrowingStarRecipient(Character owner, Character donor) {

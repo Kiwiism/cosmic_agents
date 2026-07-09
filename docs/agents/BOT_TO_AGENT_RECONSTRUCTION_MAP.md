@@ -2550,3 +2550,8 @@ Recent capability extraction notes:
   wearability, and requirement validation; recommendation candidate filtering,
   future/immediate scope behavior, optimizer inputs, and summary formatting stay
   unchanged.
+- SPI/gateway extraction: trade offer future-reserve checks now use the
+  gateway-backed `AgentEquipmentService.wouldReserveIncomingItem(Character,
+  Equip)` path. `AgentOfferService` no longer passes `ItemInformationProvider`
+  into reserve checks; recipient priority, proactive-upgrade FUTURE routing,
+  reserved-item filtering, and offer prompts stay unchanged.

@@ -6506,6 +6506,11 @@ Current physics correction:
   wearability, and requirement validation. Recommendation candidate filtering,
   future/immediate scope behavior, optimizer inputs, and summary formatting are
   unchanged.
+- SPI/gateway extraction: trade offer future-reserve checks now call the
+  gateway-backed equipment reserve service instead of passing
+  `ItemInformationProvider` through `AgentOfferService`. Sibling/leader
+  recipient priority, proactive-upgrade FUTURE classification, reserved-item
+  trade filtering, and prompt behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

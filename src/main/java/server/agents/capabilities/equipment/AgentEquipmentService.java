@@ -65,6 +65,10 @@ public final class AgentEquipmentService {
         return AgentEquipmentReservePolicy.wouldReserveIncomingItem(agent, ii, equip);
     }
 
+    public static boolean wouldReserveIncomingItem(Character agent, Equip equip) {
+        return AgentEquipmentReservePolicy.wouldReserveIncomingItem(agent, equip);
+    }
+
     public static boolean isWeaponCompatible(Character agent, WeaponType weaponType) {
         return AgentWeaponCompatibilityPolicy.isWeaponCompatible(agent, weaponType);
     }

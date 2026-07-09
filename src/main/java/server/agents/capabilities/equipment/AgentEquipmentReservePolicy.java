@@ -137,6 +137,13 @@ public final class AgentEquipmentReservePolicy {
         return selectOwnedItemsForSelfReserve(agent, SelfReserveHooks.from(ii), owned).contains(item);
     }
 
+    public static boolean wouldReserveIncomingItem(Character agent, Equip item) {
+        InventoryGateway inventory = inventory();
+        List<Equip> owned = collectOwnedEquips(agent, inventory);
+        owned.add(item);
+        return selectOwnedItemsForSelfReserve(agent, SelfReserveHooks.from(inventory), owned).contains(item);
+    }
+
     public static boolean isEquipUsefulToAgent(Character recipient, ItemInformationProvider ii, Equip item) {
         return isEquipUsefulToAgent(recipient, EquipUsefulnessHooks.from(ii), item);
     }
