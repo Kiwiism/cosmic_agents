@@ -2813,3 +2813,7 @@ Recent capability extraction notes:
   return scrolls through `InventoryGateway.removeFromSlot`; direct
   `InventoryManipulator` removal is isolated to `CosmicInventoryGateway`.
   Effect lookup, apply-to-Agent behavior, and failure cases remain unchanged.
+- SPI/gateway extraction: `AgentTradeItemAddService` now removes items from
+  inventory through `AgentInventoryGatewayRuntime` while keeping its existing
+  remover test seam. Trade item copies, quantity caps, restore slots, and
+  packet sends remain unchanged.

@@ -6775,6 +6775,11 @@ Current physics correction:
   `InventoryManipulator` from runtime code. Return-scroll item scanning,
   effect application, failure handling, and one-scroll consumption are
   unchanged.
+- SPI/gateway extraction: trade item-add inventory removal now routes through
+  `AgentInventoryGatewayRuntime`/`InventoryGateway.removeFromSlot` instead of
+  importing `InventoryManipulator` in the trade capability. Trade item copying,
+  restore-slot tracking, packet mirroring, and inventory-lock ordering are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
