@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Collections;
@@ -46,10 +45,10 @@ public final class AgentTradeLifecycleService {
 
     public static void completeTradeAndReact(AgentRuntimeEntry entry,
                                              Character agent,
-                                             Trade trade,
+                                             AgentTradeWindow trade,
                                              LifecycleCallbacks callbacks) {
-        Trade partner = trade.getPartner();
-        List<Item> partnerItems = partner != null ? partner.getItems() : Collections.emptyList();
+        AgentTradeWindow partner = trade.partner();
+        List<Item> partnerItems = partner != null ? partner.items() : Collections.emptyList();
         boolean receivedSomething = partner != null && partner.hasAnyOffer();
         AgentTradeCompletionService.completeAndReact(
                 entry,

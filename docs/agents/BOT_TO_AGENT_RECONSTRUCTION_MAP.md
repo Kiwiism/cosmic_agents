@@ -2752,3 +2752,8 @@ Recent capability extraction notes:
   `AgentTradeItemAddTickService` now use `AgentTradeWindow` for item add,
   meso add, partner packet recipient lookup, and trade chat. The concrete
   `server.Trade` item/meso calls are isolated in `AgentServerTradeWindow`.
+- Trade-window reconstruction: `AgentTradeLifecycleService` and
+  `AgentTradeLifecycleRuntimeService` now use `AgentTradeWindow` for partner
+  item/offer inspection during completion reactions. Live `server.Trade`
+  coupling remains only in the server-window adapter and current-trade runtime
+  lookup.

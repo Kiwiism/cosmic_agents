@@ -3,6 +3,8 @@ package server.agents.capabilities.trade;
 import client.Character;
 import client.inventory.Item;
 
+import java.util.List;
+
 public interface AgentTradeWindow {
     Object identity();
 
@@ -21,4 +23,8 @@ public interface AgentTradeWindow {
     boolean addItem(Item item);
 
     void setMeso(int meso);
+
+    List<Item> items();
+
+    boolean hasAnyOffer();
 }

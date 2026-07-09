@@ -87,7 +87,7 @@ public final class AgentTradeTickRuntimeService {
                                 () -> AgentTradeLifecycleRuntimeService.completeTradeAndReact(
                                         entry,
                                         agent,
-                                        AgentServerTradeWindow.unwrap(trade),
+                                        trade,
                                         lifecycleCallbacks),
                                 () -> AgentTradeLifecycleRuntimeService.resetTradeState(entry, agent, lifecycleCallbacks))));
     }

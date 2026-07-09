@@ -53,7 +53,7 @@ public final class AgentManualTradeRuntimeService {
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
                                                 entry,
                                                 tradeAgent,
-                                                AgentServerTradeWindow.unwrap(completedTrade),
+                                                completedTrade,
                                                 lifecycleCallbacks),
                                         peerOwner -> callbacks.refillEquipment(tradeAgent, peerOwner),
                                         AgentManualTradeService::clearGreeting)),
@@ -74,7 +74,7 @@ public final class AgentManualTradeRuntimeService {
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
                                                 entry,
                                                 tradeAgent,
-                                                AgentServerTradeWindow.unwrap(completedTrade),
+                                                completedTrade,
                                                 lifecycleCallbacks),
                                         refillOwner -> callbacks.refillEquipment(tradeAgent, refillOwner)))));
     }

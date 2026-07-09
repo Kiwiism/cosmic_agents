@@ -4,6 +4,8 @@ import client.Character;
 import client.inventory.Item;
 import server.Trade;
 
+import java.util.List;
+
 public final class AgentServerTradeWindow implements AgentTradeWindow {
     private final Trade trade;
 
@@ -65,5 +67,15 @@ public final class AgentServerTradeWindow implements AgentTradeWindow {
     @Override
     public void setMeso(int meso) {
         trade.setMeso(meso);
+    }
+
+    @Override
+    public List<Item> items() {
+        return trade.getItems();
+    }
+
+    @Override
+    public boolean hasAnyOffer() {
+        return trade.hasAnyOffer();
     }
 }

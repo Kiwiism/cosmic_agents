@@ -6711,6 +6711,11 @@ Current physics correction:
   `AgentServerTradeWindow`; inventory locking, restore-slot tracking,
   quantity caps, packet emission, category announcements, all-done chat, and
   meso cancellation behavior are unchanged.
+- Trade-window reconstruction: trade lifecycle completion now reads partner
+  items and received-offer state through `AgentTradeWindow`; the lifecycle
+  service/runtime no longer import `server.Trade`. Completion reactions,
+  equipment tracking for received equips, thanks/freebie reply timing, and
+  reset/cancel/refill behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

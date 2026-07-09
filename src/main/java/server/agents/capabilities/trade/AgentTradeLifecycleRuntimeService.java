@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -33,7 +32,7 @@ public final class AgentTradeLifecycleRuntimeService {
 
     public static void completeTradeAndReact(AgentRuntimeEntry entry,
                                              Character agent,
-                                             Trade trade,
+                                             AgentTradeWindow trade,
                                              RuntimeCallbacks callbacks) {
         AgentTradeLifecycleService.completeTradeAndReact(entry, agent, trade, lifecycleCallbacks(callbacks));
     }

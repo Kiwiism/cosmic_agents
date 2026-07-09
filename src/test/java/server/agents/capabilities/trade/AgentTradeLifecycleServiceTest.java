@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,8 +62,8 @@ class AgentTradeLifecycleServiceTest {
     @Test
     void completeTradeAndReactUsesLegacyReplyCallbacks() {
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
-        Trade partner = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
+        AgentTradeWindow partner = mock(AgentTradeWindow.class);
         Item equip = new Item(1002000, (short) 1, (short) 1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
@@ -73,8 +72,8 @@ class AgentTradeLifecycleServiceTest {
         callbacks.freebie = "freebie";
         callbacks.roll = 7;
         callbacks.glare = true;
-        when(trade.getPartner()).thenReturn(partner);
-        when(partner.getItems()).thenReturn(java.util.List.of(equip));
+        when(trade.partner()).thenReturn(partner);
+        when(partner.items()).thenReturn(java.util.List.of(equip));
         when(partner.hasAnyOffer()).thenReturn(true);
 
         try (MockedStatic<AgentTradeCompletionService> completions = mockStatic(AgentTradeCompletionService.class)) {
@@ -92,8 +91,8 @@ class AgentTradeLifecycleServiceTest {
                     org.mockito.ArgumentMatchers.any()));
         }
 
-        verify(trade).getPartner();
-        verify(partner).getItems();
+        verify(trade).partner();
+        verify(partner).items();
         verify(partner).hasAnyOffer();
     }
 
