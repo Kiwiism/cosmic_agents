@@ -2389,3 +2389,8 @@ Recent capability extraction notes:
   HP/autopot mutation, packet-visible damage broadcast, death entry, knockback,
   cooldown, alert, and movement broadcast behavior; direct HP mutation and
   packet broadcast calls remain the next explicit gateway split.
+- `AgentSessionRuntime` now lives in `server.agents.runtime`. It preserves
+  session request callbacks, relog/logout confirmation timing, owner-away
+  handling, stop-command dispatch, save/disconnect/relogin scheduling, and
+  replies while leaving save/disconnect/relogin and reply delivery as
+  integration seams.

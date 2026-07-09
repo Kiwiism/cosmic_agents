@@ -6314,6 +6314,12 @@ Current physics correction:
   mutation, death entry, stance/knockback checks, knockback state, and movement
   broadcast behavior. The direct HP mutation and packet broadcast calls are
   intentionally documented as the next gateway split.
+- Session request, relog/logout confirmation, and away-choice orchestration now
+  lives in `server.agents.runtime.AgentSessionRuntime`. It preserves pending
+  action state, stop-command dispatch, confirmation replies, owner-away town/
+  stay/logout handling, save/disconnect timing, and relog scheduling. Direct
+  save/disconnect/relogin side effects and reply delivery remain explicit
+  integration seams.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

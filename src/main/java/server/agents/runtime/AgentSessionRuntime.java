@@ -1,18 +1,18 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 
-import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.runtime.AgentSessionControlRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.runtime.AgentPendingActionStateRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 
 /**
- * Agent-owned session facade over temporary bot-side lifecycle side effects.
+ * Agent-owned session facade. Save/disconnect/relogin side effects and reply
+ * delivery remain explicit integration seams.
  */
 public final class AgentSessionRuntime {
     private AgentSessionRuntime() {

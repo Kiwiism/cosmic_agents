@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
@@ -7,11 +7,6 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.runtime.AgentPendingActionStateRuntime;
-import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.runtime.AgentSessionControlRuntime;
-import server.agents.integration.AgentSessionRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

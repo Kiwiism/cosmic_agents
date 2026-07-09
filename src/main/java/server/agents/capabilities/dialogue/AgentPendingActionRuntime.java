@@ -5,7 +5,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionRuntime;
+import server.agents.runtime.AgentSessionRuntime;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
