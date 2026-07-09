@@ -2844,3 +2844,7 @@ Recent capability extraction notes:
   `LifeFactory` monster creation. `AgentAirshowService` uses
   `AgentLifeGatewayRuntime` for trail monster creation while visual trail
   behavior remains unchanged.
+- SPI/gateway extraction: `AgentMapDamageProfile` now uses
+  `AgentLifeGatewayRuntime` for spawn-template monster stats. Damage/avoid
+  profile selection, live mob inclusion, and spawn fallback behavior remain
+  unchanged.

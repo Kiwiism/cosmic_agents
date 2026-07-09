@@ -6812,6 +6812,11 @@ Current physics correction:
   `LifeFactory` in `AgentAirshowService`. Trail monster id, object id,
   position, foothold, stance, spawn packet, and delayed removal behavior are
   unchanged.
+- SPI/gateway extraction: map damage profiling now calls
+  `AgentLifeGatewayRuntime`/`LifeGateway.getMonster` for spawn-template mob
+  stats instead of importing `LifeFactory` in `AgentMapDamageProfile`. Live mob
+  stats, spawn-template fallback, friendly filtering, and profile selection
+  order are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

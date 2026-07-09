@@ -1,7 +1,8 @@
 package server.agents.capabilities.equipment;
 
 import client.Character;
-import server.life.LifeFactory;
+import server.agents.integration.AgentLifeGatewayRuntime;
+import server.agents.integration.LifeGateway;
 import server.life.Monster;
 import server.life.MonsterStats;
 import server.life.SpawnPoint;
@@ -17,14 +18,22 @@ import java.util.List;
  */
 public record AgentMapDamageProfile(int mobWdef, int mobAvoid, int mobLevel) {
     public static AgentMapDamageProfile snapshot(Character agent) {
-        return fromStats(collectCandidates(agent));
+        return snapshot(agent, AgentLifeGatewayRuntime.life());
     }
 
     public static AgentMapDamageProfile snapshotByAvoid(Character agent) {
-        return fromStatsByAvoid(collectCandidates(agent));
+        return snapshotByAvoid(agent, AgentLifeGatewayRuntime.life());
     }
 
-    private static List<MonsterStats> collectCandidates(Character agent) {
+    static AgentMapDamageProfile snapshot(Character agent, LifeGateway life) {
+        return fromStats(collectCandidates(agent, life));
+    }
+
+    static AgentMapDamageProfile snapshotByAvoid(Character agent, LifeGateway life) {
+        return fromStatsByAvoid(collectCandidates(agent, life));
+    }
+
+    private static List<MonsterStats> collectCandidates(Character agent, LifeGateway life) {
         if (agent == null) {
             return null;
         }
@@ -60,7 +69,7 @@ public record AgentMapDamageProfile(int mobWdef, int mobAvoid, int mobLevel) {
                 if (spawn == null || spawn.getDenySpawn() || spawn.getMobTime() < 0) {
                     continue;
                 }
-                Monster template = LifeFactory.getMonster(spawn.getMonsterId());
+                Monster template = life.getMonster(spawn.getMonsterId());
                 if (template != null && template.getStats() != null) {
                     candidates.add(template.getStats());
                 }
