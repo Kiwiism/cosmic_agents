@@ -12,6 +12,10 @@ public interface CharacterGateway {
 
     Character findWorldCharacterByName(int world, String characterName);
 
+    Character findOnlineCharacterById(int characterId);
+
+    Character findOnlineCharacterByName(String characterName);
+
     Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId);
 }
 

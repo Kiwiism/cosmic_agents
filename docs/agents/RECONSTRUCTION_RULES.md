@@ -270,6 +270,10 @@ Recent reconstruction notes:
   `AgentCharacterGatewayRuntime` instead of iterating server world channels in
   `AgentRuntimeRegistry`. Bot-client filtering, claimed-Agent exclusion, and
   null handling remain unchanged.
+- Ownership character resolution now obtains online character-by-id/name
+  lookups through `AgentCharacterGatewayRuntime`. Owner registration,
+  authorization rules, DB fallback queries, denial text, and registration
+  writes are unchanged; only the live world scan moved behind the gateway.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

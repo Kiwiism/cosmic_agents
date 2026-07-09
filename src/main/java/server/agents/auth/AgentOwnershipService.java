@@ -1,7 +1,7 @@
 package server.agents.auth;
 
 import client.Character;
-import net.server.Server;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import tools.DatabaseConnection;
 
@@ -124,11 +124,9 @@ public final class AgentOwnershipService {
     }
 
     public AgentResolvedCharacter resolveCharacterById(int charId) {
-        for (var world : Server.getInstance().getWorlds()) {
-            Character online = world.getPlayerStorage().getCharacterById(charId);
-            if (online != null) {
-                return new AgentResolvedCharacter(charId, online.getName(), online.getAccountID(), online);
-            }
+        Character online = AgentCharacterGatewayRuntime.characters().findOnlineCharacterById(charId);
+        if (online != null) {
+            return new AgentResolvedCharacter(charId, online.getName(), online.getAccountID(), online);
         }
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(
@@ -146,13 +144,7 @@ public final class AgentOwnershipService {
     }
 
     private Character findOnlineCharacter(String name) {
-        for (var world : Server.getInstance().getWorlds()) {
-            Character online = world.getPlayerStorage().getCharacterByName(name);
-            if (online != null) {
-                return online;
-            }
-        }
-        return null;
+        return AgentCharacterGatewayRuntime.characters().findOnlineCharacterByName(name);
     }
 
 }

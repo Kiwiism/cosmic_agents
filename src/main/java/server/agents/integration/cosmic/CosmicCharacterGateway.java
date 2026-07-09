@@ -32,6 +32,28 @@ public enum CosmicCharacterGateway implements CharacterGateway {
     }
 
     @Override
+    public Character findOnlineCharacterById(int characterId) {
+        for (var world : Server.getInstance().getWorlds()) {
+            Character online = world.getPlayerStorage().getCharacterById(characterId);
+            if (online != null) {
+                return online;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Character findOnlineCharacterByName(String characterName) {
+        for (var world : Server.getInstance().getWorlds()) {
+            Character online = world.getPlayerStorage().getCharacterByName(characterName);
+            if (online != null) {
+                return online;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId) {
         return Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId);
     }

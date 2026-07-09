@@ -2773,6 +2773,10 @@ Recent capability extraction notes:
   lookup by name. `AgentRuntimeRegistry.findUnclaimedOnlineAgentByName` uses
   this boundary while preserving BotClient detection, active-leader exclusion,
   and null behavior.
+- SPI/gateway extraction: `AgentOwnershipService` now uses
+  `AgentCharacterGatewayRuntime` for online character-by-id/name resolution.
+  Ownership checks, automatic same-account registration, DB fallback, and
+  denial/registration behavior stay unchanged.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the
