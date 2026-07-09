@@ -157,6 +157,7 @@ public final class AgentEquipmentAutoEquipService {
 
     public static List<String> autoEquipDebug(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        InventoryGateway inventory = CosmicAgentServerAdapter.INSTANCE.inventory();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
         AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
@@ -172,7 +173,7 @@ public final class AgentEquipmentAutoEquipService {
         Map<Short, List<Equip>> bySlot = collectAutoEquipCandidates(bot, ii, eqpInv, eqdInv, null);
         Map<Short, Equip> currentBySlot = new HashMap<>();
         for (Item it : eqdInv.list()) {
-            if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
+            if (it instanceof Equip e && !inventory.isCashItem(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
 
         List<Short> dpSlots = AgentEquipmentSlotResolver.buildDpSlots(bySlot, currentBySlot);
@@ -212,10 +213,10 @@ public final class AgentEquipmentAutoEquipService {
             int show = Math.min(3, branches.size());
             for (int i = 0; i < show; i++) {
                 Branch b = branches.get(i);
-                String wName = b.weapon() == null ? "(no weapon)" : ii.getName(b.weapon().getItemId());
+                String wName = b.weapon() == null ? "(no weapon)" : inventory.getItemName(b.weapon().getItemId());
                 AgentEquipmentScore s = b.result().score();
                 AgentEquipmentStatSnapshot branchSnap = AgentEquipmentOptimizer.snapshotForBranch(naked, b.weapon(), b.result().picks());
-                WeaponType wt = b.weapon() != null ? ii.getWeaponType(b.weapon().getItemId()) : null;
+                WeaponType wt = b.weapon() != null ? inventory.getWeaponType(b.weapon().getItemId()) : null;
                 AgentWeaponScoreBreakdown breakdown = AgentEquipmentOptimizer.weaponScoreBreakdown(branchSnap, b.weapon(), wt, mob);
                 String tag = i == 0 ? "*" : " ";
                 out.add(tag + " W=" + wName
@@ -233,14 +234,14 @@ public final class AgentEquipmentAutoEquipService {
                 Equip cur = currentBySlot.get(e.getKey());
                 if (cur != e.getValue()) {
                     diffs.add(AgentEquipmentSlotResolver.slotLabel(e.getKey()) + ":"
-                            + (cur == null ? "-" : ii.getName(cur.getItemId()))
-                            + ">" + ii.getName(e.getValue().getItemId()));
+                            + (cur == null ? "-" : inventory.getItemName(cur.getItemId()))
+                            + ">" + inventory.getItemName(e.getValue().getItemId()));
                 }
             }
             Equip currentWp = (Equip) eqdInv.getItem((short) -11);
             if (best.weapon() != currentWp) {
-                diffs.add(0, "weapon:" + (currentWp == null ? "-" : ii.getName(currentWp.getItemId()))
-                        + ">" + (best.weapon() == null ? "-" : ii.getName(best.weapon().getItemId())));
+                diffs.add(0, "weapon:" + (currentWp == null ? "-" : inventory.getItemName(currentWp.getItemId()))
+                        + ">" + (best.weapon() == null ? "-" : inventory.getItemName(best.weapon().getItemId())));
             }
             if (diffs.isEmpty()) {
                 out.add("changes: none (already optimal)");
@@ -328,7 +329,7 @@ public final class AgentEquipmentAutoEquipService {
             else {
                 sb.append(en.getValue().size()).append(" cands: ");
                 List<String> names = new ArrayList<>();
-                for (Equip e : en.getValue()) names.add(ii.getName(e.getItemId()) + "#" + e.getPosition());
+                for (Equip e : en.getValue()) names.add(inventory.getItemName(e.getItemId()) + "#" + e.getPosition());
                 sb.append(String.join(", ", names)).append('\n');
             }
         }
@@ -339,7 +340,7 @@ public final class AgentEquipmentAutoEquipService {
         Equip currentWp = (Equip) eqdInv.getItem((short) -11);
         Map<Short, Equip> currentBySlot = new HashMap<>();
         for (Item it : eqdInv.list()) {
-            if (it instanceof Equip e && !ii.isCash(e.getItemId())) currentBySlot.put(e.getPosition(), e);
+            if (it instanceof Equip e && !inventory.isCashItem(e.getItemId())) currentBySlot.put(e.getPosition(), e);
         }
         record Br(Equip w, AgentEquipmentDpResult r) {}
         List<Br> sorted = new ArrayList<>();
@@ -351,10 +352,10 @@ public final class AgentEquipmentAutoEquipService {
         sorted.sort((a, b) -> AgentEquipmentOptimizer.compareScores(b.r().score(), a.r().score()));
         for (int i = 0; i < sorted.size(); i++) {
             Br b = sorted.get(i);
-            String wName = b.w() == null ? "(none)" : ii.getName(b.w().getItemId());
+            String wName = b.w() == null ? "(none)" : inventory.getItemName(b.w().getItemId());
             AgentEquipmentScore s = b.r().score();
             AgentEquipmentStatSnapshot branchSnap = AgentEquipmentOptimizer.snapshotForBranch(naked, b.w(), b.r().picks());
-            WeaponType wt = b.w() != null ? ii.getWeaponType(b.w().getItemId()) : null;
+            WeaponType wt = b.w() != null ? inventory.getWeaponType(b.w().getItemId()) : null;
             AgentWeaponScoreBreakdown breakdown = AgentEquipmentOptimizer.weaponScoreBreakdown(branchSnap, b.w(), wt, mob);
             sb.append(i == 0 ? "[*] " : "[ ] ").append(wName)
               .append(" id=").append(b.w() == null ? 0 : b.w().getItemId())
@@ -369,9 +370,9 @@ public final class AgentEquipmentAutoEquipService {
                 String marker = cur == pick.getValue() ? "  =" : "  >";
                 sb.append(marker).append(' ').append(AgentEquipmentSlotResolver.slotLabel(pick.getKey())).append(": ");
                 if (cur != pick.getValue() && cur != null) {
-                    sb.append(ii.getName(cur.getItemId())).append(" -> ");
+                    sb.append(inventory.getItemName(cur.getItemId())).append(" -> ");
                 }
-                sb.append(ii.getName(pick.getValue().getItemId())).append('\n');
+                sb.append(inventory.getItemName(pick.getValue().getItemId())).append('\n');
             }
         }
 
@@ -380,8 +381,8 @@ public final class AgentEquipmentAutoEquipService {
             sb.append("no feasible set found\n");
         } else {
             Br winner = sorted.get(0);
-            sb.append("winner weapon: ").append(winner.w() == null ? "(none)" : ii.getName(winner.w().getItemId())).append('\n');
-            sb.append("current weapon: ").append(currentWp == null ? "(none)" : ii.getName(currentWp.getItemId())).append('\n');
+            sb.append("winner weapon: ").append(winner.w() == null ? "(none)" : inventory.getItemName(winner.w().getItemId())).append('\n');
+            sb.append("current weapon: ").append(currentWp == null ? "(none)" : inventory.getItemName(currentWp.getItemId())).append('\n');
             sb.append("pareto-cap-hit: ").append(anyCap).append('\n');
         }
 

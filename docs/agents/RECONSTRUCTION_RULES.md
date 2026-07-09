@@ -6525,6 +6525,10 @@ Current physics correction:
   calls `AgentEquipmentRecommendationPolicy` with `InventoryGateway` hooks.
   The surrounding optimizer still contains staged item-info metadata seams, but
   extra-offer candidate acceptance/rejection behavior is unchanged.
+- SPI/gateway extraction: auto-equip debug/report metadata now routes item
+  names, cash checks, and weapon-type display lookups through
+  `InventoryGateway`. Optimizer math, candidate pools, dump structure, branch
+  ordering, and chat/debug text content are intended to remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

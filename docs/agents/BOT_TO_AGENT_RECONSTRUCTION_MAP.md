@@ -2569,3 +2569,7 @@ Recent capability extraction notes:
   `InventoryGateway` recommendation hooks when checking extra/offered
   equipment candidates. Candidate gates and optimizer behavior stay unchanged
   while the larger optimizer metadata cluster remains a later extraction slice.
+- SPI/gateway extraction: `AgentEquipmentAutoEquipService` debug/report paths
+  now use `InventoryGateway` for item names, cash checks, and weapon-type
+  lookups. The auto-equip optimizer still owns the same candidate pools,
+  branch ordering, dump shape, and debug reply behavior.
