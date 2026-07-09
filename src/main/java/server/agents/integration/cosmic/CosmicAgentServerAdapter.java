@@ -10,6 +10,7 @@ import server.agents.integration.MakerGateway;
 import server.agents.integration.MapGateway;
 import server.agents.integration.PacketGateway;
 import server.agents.integration.SkillGateway;
+import server.agents.integration.ShopGateway;
 import server.agents.integration.TradeGateway;
 
 public final class CosmicAgentServerAdapter implements AgentServerAdapter {
@@ -41,6 +42,11 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public InventoryGateway inventory() {
         return CosmicInventoryGateway.INSTANCE;
+    }
+
+    @Override
+    public ShopGateway shop() {
+        return CosmicShopGateway.INSTANCE;
     }
 
     @Override

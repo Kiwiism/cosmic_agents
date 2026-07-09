@@ -25,6 +25,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentShopGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.capabilities.shop.AgentShopRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
@@ -399,7 +400,7 @@ public final class AgentShopService {
             return;
         }
 
-        shop.sell(bot.getClient(), InventoryType.EQUIP, item.getPosition(), (short) 1);
+        AgentShopGatewayRuntime.shop().sell(bot, shop, InventoryType.EQUIP, item.getPosition(), (short) 1);
         if (AgentInventoryItemPolicy.hasItem(bot, item)) {
             failedItems.add(item);
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,

@@ -11,6 +11,8 @@ public interface AgentServerAdapter {
 
     InventoryGateway inventory();
 
+    ShopGateway shop();
+
     TradeGateway trade();
 
     LifeGateway life();

@@ -2916,3 +2916,8 @@ Recent capability extraction notes:
   close-range, ranged, and magic damage-handler dispatch is isolated in
   `CosmicCombatGateway`. Attack planning, route choice, packet-field generation,
   and cooldown behavior remain unchanged.
+- SPI/gateway extraction: `AgentShopService` now uses
+  `AgentShopGatewayRuntime`/`ShopGateway.sell`; live `Shop.sell` client dispatch
+  is isolated in `CosmicShopGateway`. Sell-trash shop selection, item order,
+  delays, slot and quantity values, failure detection, and replies remain
+  unchanged.

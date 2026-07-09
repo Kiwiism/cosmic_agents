@@ -6912,6 +6912,12 @@ Current physics correction:
   `AgentAttackExecutionProvider`. Attack-route selection, attack packet fields,
   hitbox planning, cooldowns, and caller timing are unchanged. Live Cosmic
   damage-handler dispatch is isolated in `CosmicCombatGateway`.
+- SPI/gateway extraction: sell-trash shop mutations now call
+  `AgentShopGatewayRuntime`/`ShopGateway.sell` instead of invoking
+  `Shop.sell(agent.getClient(), ...)` inside `AgentShopService`. Shop selection,
+  sell ordering, per-item delay, slot and quantity values, failed-sale
+  detection, and completion replies are unchanged. Live Cosmic client/shop
+  dispatch is isolated in `CosmicShopGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
