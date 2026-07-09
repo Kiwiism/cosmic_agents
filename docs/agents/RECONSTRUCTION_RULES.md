@@ -6830,6 +6830,11 @@ Current physics correction:
   `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
   `SkillFactory` in `AgentCombatSkillUsePolicy`. Missing-skill rejection,
   level guards, and skill-effect affordability checks are unchanged.
+- SPI/gateway extraction: immediate projectile skill targeting now calls
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentCombatImmediateTargetPolicy`. Cooldown checks,
+  skill-level checks, affordability, route filtering, hitbox intersection, and
+  ranged-route validation are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

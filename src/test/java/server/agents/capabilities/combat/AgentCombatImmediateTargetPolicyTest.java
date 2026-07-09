@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import client.inventory.WeaponType;
 import java.awt.Point;
 import java.util.Map;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import server.StatEffect;
+import server.agents.integration.SkillGateway;
 import server.life.Monster;
 
 class AgentCombatImmediateTargetPolicyTest {
@@ -38,8 +38,7 @@ class AgentCombatImmediateTargetPolicyTest {
         Monster target = monsterAt(250, 100, true);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
-                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS);
-             MockedStatic<SkillFactory> skills = Mockito.mockStatic(SkillFactory.class)) {
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
                     .thenReturn(WeaponType.BOW);
             attacks.when(() -> AgentAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.BOW))
@@ -57,8 +56,7 @@ class AgentCombatImmediateTargetPolicyTest {
         Monster target = monsterAt(250, 100, true);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks =
-                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS);
-             MockedStatic<SkillFactory> skills = Mockito.mockStatic(SkillFactory.class)) {
+                     Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
                     .thenReturn(WeaponType.BOW);
             attacks.when(() -> AgentAttackExecutionProvider.determineBasicWeaponRoute(WeaponType.BOW))
@@ -76,17 +74,17 @@ class AgentCombatImmediateTargetPolicyTest {
         Monster target = monsterAt(250, 100, true);
         Skill skill = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);
+        SkillGateway skills = mock(SkillGateway.class);
         when(agent.skillIsCooling(30_000)).thenReturn(false);
         when(agent.getSkillLevel(skill)).thenReturn((byte) 1);
+        when(skills.getSkill(30_000)).thenReturn(skill);
         when(skill.getEffect(1)).thenReturn(effect);
         when(effect.canPaySkillCost(agent)).thenReturn(true);
         when(effect.hasBoundingBox()).thenReturn(false);
         when(effect.getRange()).thenReturn(100);
 
-        try (MockedStatic<SkillFactory> skills = Mockito.mockStatic(SkillFactory.class);
-             MockedStatic<AgentAttackExecutionProvider> attacks =
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            skills.when(() -> SkillFactory.getSkill(30_000)).thenReturn(skill);
             attacks.when(() -> AgentAttackExecutionProvider.determineSkillRoute(agent, 30_000))
                     .thenReturn(AgentAttackRoute.RANGED);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(agent))
@@ -95,7 +93,7 @@ class AgentCombatImmediateTargetPolicyTest {
                     eq(AgentAttackRoute.RANGED), eq(WeaponType.CLAW), any(Point.class), any(Point.class)))
                     .thenReturn(true);
 
-            assertTrue(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_000));
+            assertTrue(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_000, skills));
         }
     }
 
@@ -105,26 +103,26 @@ class AgentCombatImmediateTargetPolicyTest {
         Monster target = monsterAt(250, 100, true);
         Skill skill = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);
+        SkillGateway skills = mock(SkillGateway.class);
         when(agent.getSkillLevel(skill)).thenReturn((byte) 1);
         when(skill.getEffect(1)).thenReturn(effect);
 
         when(agent.skillIsCooling(30_001)).thenReturn(true);
-        assertFalse(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_001));
+        assertFalse(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_001, skills));
 
-        try (MockedStatic<SkillFactory> skills = Mockito.mockStatic(SkillFactory.class);
-             MockedStatic<AgentAttackExecutionProvider> attacks =
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            skills.when(() -> SkillFactory.getSkill(30_002)).thenReturn(skill);
+            when(skills.getSkill(30_002)).thenReturn(skill);
             when(agent.skillIsCooling(30_002)).thenReturn(false);
             when(effect.canPaySkillCost(agent)).thenReturn(false);
-            assertFalse(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_002));
+            assertFalse(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_002, skills));
 
-            skills.when(() -> SkillFactory.getSkill(30_003)).thenReturn(skill);
+            when(skills.getSkill(30_003)).thenReturn(skill);
             when(agent.skillIsCooling(30_003)).thenReturn(false);
             when(effect.canPaySkillCost(agent)).thenReturn(true);
             attacks.when(() -> AgentAttackExecutionProvider.determineSkillRoute(agent, 30_003))
                     .thenReturn(AgentAttackRoute.CLOSE);
-            assertFalse(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_003));
+            assertFalse(AgentCombatImmediateTargetPolicy.isImmediateProjectileSkillTarget(agent, target, 30_003, skills));
         }
     }
 

@@ -2,11 +2,12 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import client.inventory.WeaponType;
 import java.awt.Point;
 import java.awt.Rectangle;
 import server.StatEffect;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.life.Monster;
 
 public final class AgentCombatImmediateTargetPolicy {
@@ -40,12 +41,19 @@ public final class AgentCombatImmediateTargetPolicy {
     public static boolean isImmediateProjectileSkillTarget(Character agent,
                                                            Monster target,
                                                            int cachedAttackSkillId) {
+        return isImmediateProjectileSkillTarget(agent, target, cachedAttackSkillId, AgentSkillGatewayRuntime.skills());
+    }
+
+    static boolean isImmediateProjectileSkillTarget(Character agent,
+                                                    Monster target,
+                                                    int cachedAttackSkillId,
+                                                    SkillGateway skills) {
         if (agent == null || target == null || cachedAttackSkillId == 0
                 || agent.skillIsCooling(cachedAttackSkillId)) {
             return false;
         }
 
-        Skill skill = SkillFactory.getSkill(cachedAttackSkillId);
+        Skill skill = skills.getSkill(cachedAttackSkillId);
         int skillLevel = skill == null ? 0 : agent.getSkillLevel(skill);
         if (skillLevel <= 0) {
             return false;

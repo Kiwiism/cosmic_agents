@@ -2859,3 +2859,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: `AgentCombatSkillUsePolicy` now uses
   `AgentSkillGatewayRuntime` for skill-effect lookup. Skill-cost affordability
   behavior remains unchanged.
+- SPI/gateway extraction: `AgentCombatImmediateTargetPolicy` now uses
+  `AgentSkillGatewayRuntime` for cached projectile skill lookup. Immediate
+  target eligibility behavior remains unchanged.
