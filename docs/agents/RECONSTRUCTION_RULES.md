@@ -6688,6 +6688,11 @@ Current physics correction:
   type. Manual invite timeout, accept-delay, greeting, cancel, and accept
   behavior are unchanged; deeper trade tick/services still adapt live
   `Trade` windows until later slices.
+- SPI/gateway extraction: immediate Agent map-chat and whisper reply packet
+  creation now routes through `AgentPacketGatewayRuntime`/`PacketGateway`
+  instead of importing `PacketCreator` in `AgentReplyRuntime`. Reply-channel
+  selection, sanitization, party fallback, and visible chat behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

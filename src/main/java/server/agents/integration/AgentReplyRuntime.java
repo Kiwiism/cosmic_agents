@@ -12,7 +12,6 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import net.server.world.Party;
-import tools.PacketCreator;
 
 /**
  * Boundary adapter from Agent reply queues to Cosmic chat, whisper, party, and
@@ -45,11 +44,12 @@ public final class AgentReplyRuntime {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 if (owner != null && owner.getClient() != null) {
-                    owner.sendPacket(PacketCreator.getWhisperReceive(
+                    AgentPacketGatewayRuntime.packets().sendWhisperReceive(
+                            owner,
                             bot.getName(),
                             bot.getClient().getChannel() - 1,
                             false,
-                            AgentChatTextSanitizer.sanitize(message)));
+                            AgentChatTextSanitizer.sanitize(message));
                 }
             }
             default -> sayMapNow(AgentRuntimeIdentityRuntime.bot(entry), message);
@@ -68,11 +68,11 @@ public final class AgentReplyRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
-        bot.getMap().broadcastMessage(PacketCreator.getChatText(
-                bot.getId(),
+        AgentPacketGatewayRuntime.packets().broadcastChatText(
+                bot,
                 AgentChatTextSanitizer.sanitize(message),
                 false,
-                0));
+                0);
     }
 
     public static void sayPartyNow(Character bot, String message) {

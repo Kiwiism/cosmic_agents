@@ -2735,3 +2735,7 @@ Recent capability extraction notes:
   pending manual trade window as an opaque identity reference. The surrounding
   manual trade services still receive live `Trade` windows for ticking and
   callbacks until the broader trade-window abstraction slice.
+- SPI/gateway extraction: `AgentReplyRuntime` no longer imports `PacketCreator`
+  for immediate map-chat and whisper replies. Those packets are built and sent
+  through `AgentPacketGatewayRuntime`/`PacketGateway`; reply-channel selection,
+  sanitization, party fallback, and visible chat behavior stay unchanged.

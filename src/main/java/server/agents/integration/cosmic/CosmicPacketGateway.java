@@ -112,6 +112,22 @@ public enum CosmicPacketGateway implements PacketGateway {
     }
 
     @Override
+    public void sendWhisperReceive(Character recipient, String senderName, int channel, boolean gm, String message) {
+        if (recipient == null) {
+            return;
+        }
+        recipient.sendPacket(PacketCreator.getWhisperReceive(senderName, channel, gm, message));
+    }
+
+    @Override
+    public void broadcastChatText(Character speaker, String message, boolean gm, int show) {
+        if (speaker == null || speaker.getMap() == null) {
+            return;
+        }
+        speaker.getMap().broadcastMessage(PacketCreator.getChatText(speaker.getId(), message, gm, show));
+    }
+
+    @Override
     public void broadcastSpawnMonster(MapleMap map, Monster monster, boolean newSpawn) {
         if (map == null || monster == null) {
             return;

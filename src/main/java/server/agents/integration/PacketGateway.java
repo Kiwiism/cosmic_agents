@@ -44,6 +44,10 @@ public interface PacketGateway {
 
     void sendMistFakeSpawn(Character recipient, Mist mist, int level);
 
+    void sendWhisperReceive(Character recipient, String senderName, int channel, boolean gm, String message);
+
+    void broadcastChatText(Character speaker, String message, boolean gm, int show);
+
     void broadcastSpawnMonster(MapleMap map, Monster monster, boolean newSpawn);
 
     void broadcastKillMonster(MapleMap map, int objectId, int animation, Point position);
