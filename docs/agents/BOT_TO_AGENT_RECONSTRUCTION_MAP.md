@@ -2430,3 +2430,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: fidget close-range visual attack packets now route
   through the same packet gateway, removing direct `PacketCreator.closeRangeAttack`
   and map broadcast calls from `AgentFidgetService`.
+- SPI/gateway extraction: airshow movement packets now route through
+  `PacketGateway`; airshow trail spawn/kill packet calls remain direct until the
+  airshow visual gateway slice.

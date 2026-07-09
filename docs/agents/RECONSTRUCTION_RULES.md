@@ -6370,6 +6370,9 @@ Current physics correction:
   broadcast for fidget visuals. `AgentFidgetService` now delegates
   `PacketCreator.closeRangeAttack` and map broadcast side effects to the Cosmic
   packet gateway while preserving the same prone visual packet values.
+- SPI/gateway extraction: `AgentAirshowService` now reuses `PacketGateway` for
+  airshow movement packets. Airshow monster trail spawn/kill packets remain a
+  documented follow-up gateway slice.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

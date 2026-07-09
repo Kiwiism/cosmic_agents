@@ -6,16 +6,13 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 import client.Character;
 import constants.game.CharacterStance;
 import constants.id.MobId;
-import io.netty.buffer.Unpooled;
-import net.packet.ByteBufInPacket;
-import net.packet.InPacket;
-import net.packet.Packet;
 import server.life.LifeFactory;
 import server.life.Monster;
 import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -242,8 +239,6 @@ public final class AgentAirshowService {
         data[12] = (byte) stance;
         data[13] = (byte) (FRAME_MS & 0xFF);
         data[14] = (byte) (FRAME_MS >> 8);
-        InPacket packet = new ByteBufInPacket(Unpooled.wrappedBuffer(data));
-        Packet movePacket = PacketCreator.movePlayer(bot.getId(), packet, data.length);
-        bot.getMap().broadcastMessage(bot, movePacket, false);
+        CosmicAgentServerAdapter.INSTANCE.packets().broadcastMovePlayer(bot, data);
     }
 }
