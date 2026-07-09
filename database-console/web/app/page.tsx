@@ -18,7 +18,7 @@ type View =
   | "mobs"
   | "items"
   | "maps" | "npcs" | "shops" | "gacha"
-  | "audit";
+  | "audit" | "quality-settings";
 type Entity = {
   entity_type:string; entity_id:number; name:string; description?:string; category?:string;
   subtype?:string; level_value?:number; job_id?:number; job_name?:string; used_in_game?:boolean;
@@ -112,6 +112,19 @@ const worldTabs:readonly [View,string][]=[
 const auditTabs:readonly [View,string][]=[
   ["audit","Global Audit"]
 ];
+type QualityGrade="below"|"normal"|"orange"|"blue"|"purple"|"yellow";
+type QualityRange={min:number;max:number};
+type QualitySettings=Record<QualityGrade,QualityRange>;
+const QUALITY_SETTINGS_KEY="database-console-quality-ranges";
+const defaultQualitySettings:QualitySettings={
+  below:{min:-9999,max:-0.1},
+  normal:{min:0,max:5},
+  orange:{min:0,max:5},
+  blue:{min:6,max:22},
+  purple:{min:23,max:39},
+  yellow:{min:40,max:9999}
+};
+const qualityGradeLabels:Record<QualityGrade,string>={below:"Grey",normal:"White",orange:"Orange",blue:"Blue",purple:"Purple",yellow:"Gold / Yellow"};
 
 export default function App(){
   const [view,setView]=useState<View>("dashboard");
@@ -165,15 +178,15 @@ export default function App(){
     headerTitle={headerSection?.label} headerTabs={headerTabs} inspectorOpen={Boolean(drawer)||Boolean(accountDrawer)||embeddedInspector!=="none"}
     inspectorSize={embeddedInspector==="wide"?"wide":"standard"} navigation={nav}
     onNavigate={next=>{setView(next);setFocusId(undefined);setDrawer(null);setAccountDrawer(null);setEmbeddedInspector("none")}}
-    sidebarStatus={<><Database size={16}/> MySQL connected</>} theme={theme} onToggleTheme={()=>setTheme(current=>current==="dark"?"light":"dark")} inspector={inspector}>
+    sidebarStatus={<><Database size={16}/> MySQL connected</>} theme={theme} onToggleTheme={()=>setTheme(current=>current==="dark"?"light":"dark")} onOpenSettings={()=>{setView("quality-settings");setFocusId(undefined);setDrawer(null);setAccountDrawer(null);setEmbeddedInspector("none")}} inspector={inspector}>
       {notices.length>0&&<div className="notice-stack">{notices.map(toast=><button type="button" className="notice" key={toast.id} onClick={()=>setNotices(previous=>previous.filter(row=>row.id!==toast.id))}>{toast.message}</button>)}</div>}
         {view==="dashboard"&&<Dashboard/>}
         {view==="accounts"&&<SectionFrame title="Account" tabs={[["accounts","Account Search"],["create-account","Create"]]} active={view} setView={setView}><Accounts notify={notify} onCreateCharacter={account=>{setCreateCharacterAccount(account);setView("create-account")}} onInspect={(account,characters)=>{setDrawer(null);setAccountDrawer({account,characters})}}/></SectionFrame>}
         {view==="create-account"&&<SectionFrame title="Account" tabs={[["accounts","Account Search"],["create-account","Create"]]} active={view} setView={setView}><AccountCharacterCreate notify={notify} initialAccount={createCharacterAccount} onInspect={(account,characters)=>{setDrawer(null);setAccountDrawer({account,characters})}} onCreated={id=>jump({view:"character-stats",id})}/></SectionFrame>}
-        {view==="character-stats"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterStats notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId}/></SectionFrame>}
-        {view==="inventory"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><Inventory notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId} onOpen={inspectEntity} jump={jump} onInspectorChange={setEmbeddedInspector}/></SectionFrame>}
-        {view==="character-equipment"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><EquipmentAppearance notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId} onOpen={inspectEntity} jump={jump} onInspectorChange={setEmbeddedInspector}/></SectionFrame>}
-        {view==="character-quests"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterQuestsMonsterBook notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={setSelectedCharacterId} onOpen={inspectEntity}/></SectionFrame>}
+        {view==="character-stats"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterStats notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={id=>{setSelectedCharacterId(id);setFocusId(undefined)}}/></SectionFrame>}
+        {view==="inventory"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><Inventory notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={id=>{setSelectedCharacterId(id);setFocusId(undefined)}} onOpen={inspectEntity} jump={jump} onInspectorChange={setEmbeddedInspector}/></SectionFrame>}
+        {view==="character-equipment"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><EquipmentAppearance notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={id=>{setSelectedCharacterId(id);setFocusId(undefined)}} onOpen={inspectEntity} jump={jump} onInspectorChange={setEmbeddedInspector}/></SectionFrame>}
+        {view==="character-quests"&&<SectionFrame title="Account > Character" tabs={characterTabs} active={view} setView={setView}><CharacterQuestsMonsterBook notify={notify} focusCharacter={focusId||selectedCharacterId} onCharacterSelect={id=>{setSelectedCharacterId(id);setFocusId(undefined)}} onOpen={inspectEntity}/></SectionFrame>}
         {view==="items"&&<SectionFrame title="Items" tabs={[["items","Catalog"]]} active={view} setView={setView}><Library fixedType="ITEM" onOpen={inspectEntity}/></SectionFrame>}
         {view==="mobs"&&<SectionFrame title="Mobs" tabs={[["mobs","Catalog / Drop Table"]]} active={view} setView={setView}><Drops notify={notify} focusMob={focusId} onOpen={(type,id)=>openDrawer(type,id)}/></SectionFrame>}
         {view==="maps"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Maps focusMap={focusId} onOpen={inspectEntity}/></SectionFrame>}
@@ -181,6 +194,7 @@ export default function App(){
         {view==="shops"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Shops notify={notify} focusShop={focusId} onOpen={inspectEntity}/></SectionFrame>}
         {view==="gacha"&&<SectionFrame title="World Data" tabs={worldTabs} active={view} setView={setView}><Gachapon notify={notify} focusLocation={focusLocation} onOpen={inspectEntity}/></SectionFrame>}
         {view==="audit"&&<SectionFrame title="Audit & Tools" tabs={auditTabs} active={view} setView={setView}><Audit/></SectionFrame>}
+        {view==="quality-settings"&&<SectionFrame title="Settings" tabs={[["quality-settings","Quality Colors"]]} active={view} setView={setView}><QualityColorSettings notify={notify}/></SectionFrame>}
   </ConsoleShell>
 }
 
@@ -268,6 +282,7 @@ function sectionHeader(view:View){
     {title:"Mobs",tabs:[["mobs","Catalog / Drop Table"]]},
     {title:"World Data",tabs:worldTabs},
     {title:"Audit & Tools",tabs:auditTabs},
+    {title:"Settings",tabs:[["quality-settings","Quality Colors"]]},
   ];
   for(const group of groups){const activeIndex=group.tabs.findIndex(([key])=>key===view);if(activeIndex>=0)return{...group,activeIndex,label:group.tabs[activeIndex][1]}}
   return null;
@@ -409,21 +424,22 @@ function DropAdd({mode,mob,after}:{mode:"mob"|"global";mob:Entity|null;after:()=
 function Shops({notify,focusShop,onOpen}:{notify:Notify;focusShop?:number;onOpen:(type:string,id:number)=>void}){
   const [query,setQuery]=useState("");const [shops,setShops]=useState<any[]>([]);const [selected,setSelected]=useState<number|undefined>(focusShop);const [items,setItems]=useState<any[]>([]);const [page,setPage]=useState(0);
   const [deleteItem,setDeleteItem]=useState<any|null>(null);
+  const [createDialog,setCreateDialog]=useState(false);
   const loadShops=()=>api<any[]>(`/api/shops?query=${encodeURIComponent(query)}`).then(setShops);
   const loadItems=async()=>{if(selected)setItems(await api<any[]>(`/api/shops/${selected}/items`))};
   const orderedItems=useMemo(()=>[...items].sort((a,b)=>Number(b.position||0)-Number(a.position||0)),[items]);
   useEffect(()=>{setPage(0);const t=setTimeout(loadShops,180);return()=>clearTimeout(t)},[query]);useEffect(()=>{if(focusShop){setQuery("");setSelected(focusShop)}},[focusShop]);useEffect(()=>{if(selected)loadItems()},[selected]);
   useEffect(()=>{if(!selected||!shops.length)return;const index=shops.findIndex(shop=>Number(shop.shopid)===Number(selected));if(index>=0)setPage(Math.floor(index/12))},[shops,selected]);
   async function patch(row:any,field:string,value:number){await api(`/api/shops/${selected}/items/${row.shopitemid}`,{method:"PUT",body:JSON.stringify({itemId:row.itemid,price:field==="price"?value:row.price,pitch:row.pitch,position:field==="position"?value:row.position,reason:`Inline ${field} update`})});notify("Shop item updated");loadItems()}
-  async function createShop(){const npc=prompt("NPC ID for the new shop");if(!npc)return;const result=await api<any>("/api/shops",{method:"POST",body:JSON.stringify({npcId:Number(npc),reason:"Created in Console"})});await loadShops();setSelected(Number(result.shopId))}
+  async function createShop(form:{npc:Entity;reason:string;starterItem:Entity|null;price:number;position:number;pitch:number}){const result=await api<any>("/api/shops",{method:"POST",body:JSON.stringify({npcId:Number(form.npc.entity_id),reason:form.reason})});if(form.starterItem){await api(`/api/shops/${result.shopId}/items`,{method:"POST",body:JSON.stringify({itemId:form.starterItem.entity_id,price:form.price,pitch:form.pitch,position:form.position,reason:`Starter item for new shop. ${form.reason}`})})}await loadShops();setSelected(Number(result.shopId));setCreateDialog(false);notify(form.starterItem?"Shop created with starter item":"Shop created")}
   async function addItem(item:Entity){if(!selected)return;const position=items.reduce((max,row)=>Math.max(max,Number(row.position||0)),100)+4;await api(`/api/shops/${selected}/items`,{method:"POST",body:JSON.stringify({itemId:item.entity_id,price:1,pitch:0,position,reason:"Added in Console"})});notify("Shop item added");loadItems()}
   async function remove(row:any){await api(`/api/shops/${selected}/items/${row.shopitemid}?reason=Deleted%20from%20Console`,{method:"DELETE"});setDeleteItem(null);notify("Shop item deleted");loadItems()}
   async function drag(row:any,target:any){if(row.shopitemid===target.shopitemid)return;await api(`/api/shops/${selected}/items/swap`,{method:"POST",body:JSON.stringify({firstItemId:row.shopitemid,secondItemId:target.shopitemid,reason:"Reordered in Console"})});notify("Shop order updated");await loadItems()}
   const selectedShop=shops.find(shop=>Number(shop.shopid)===Number(selected));
   const selectedShopTitle=selectedShop?`${selectedShop.npc_name||`NPC ${selectedShop.npcid}`}${selectedShop.primary_map_name?`: ${selectedShop.primary_map_name}`:""}`:selected?`Shop ${selected}`:"Choose a shop";
   const selectedShopSubtitle=selectedShop?`Shop ${selectedShop.shopid} | NPC ${selectedShop.npcid} | ${selectedShop.item_count} items. Items are shown by order from high to low.`:"Items are shown by order from high to low. Drag by the handle to reorder.";
-  return <><PageToolbar query={query} onQueryChange={setQuery} placeholder="Search NPC, shop ID or NPC ID"><button className="primary" onClick={createShop}>New shop</button></PageToolbar>
-    <div className="split-list"><div className="list-column"><Pager page={page} pages={Math.ceil(shops.length/12)} setPage={setPage}/><div className="list-panel">{shops.slice(page*12,page*12+12).map(s=><button key={s.shopid} className={Number(selected)===Number(s.shopid)?"selected":""} onClick={()=>setSelected(s.shopid)}>
+  return <><PageToolbar query={query} onQueryChange={setQuery} placeholder="Search NPC, shop ID or NPC ID"><button className="primary" onClick={()=>setCreateDialog(true)}>New shop</button></PageToolbar>
+    <div className="split-list sticky-selector-list"><div className="list-column"><Pager page={page} pages={Math.ceil(shops.length/12)} setPage={setPage}/><div className="list-panel">{shops.slice(page*12,page*12+12).map(s=><button key={s.shopid} className={Number(selected)===Number(s.shopid)?"selected":""} onClick={()=>setSelected(s.shopid)}>
       <EntityImage className="list-avatar" type="NPC" id={s.npcid}/><span><strong>{s.primary_map_name?`${s.npc_name||`NPC ${s.npcid}`}: ${s.primary_map_name}`:s.npc_name||`NPC ${s.npcid}`}</strong><small>Shop {s.shopid} | {s.item_count} items</small><small>{s.npcid}</small></span><ChevronRight size={16}/></button>)}</div><Pager page={page} pages={Math.ceil(shops.length/12)} setPage={setPage}/></div>
       <article className="panel"><PanelTitle title={selectedShopTitle} subtitle={selectedShopSubtitle}/>
         {selected&&<><Autocomplete type="ITEM" value={null} onSelect={addItem} placeholder="Search item to add"/>
@@ -433,7 +449,8 @@ function Shops({notify,focusShop,onOpen}:{notify:Notify;focusShop?:number;onOpen
             <button className="row-identity" onClick={()=>onOpen("ITEM",row.itemid)}><strong>{row.item_name||row.itemid}</strong><code>{row.itemid}</code></button>
             <InlineNumber value={row.position} save={v=>patch(row,"position",v)} label="Position"/><InlineNumber value={row.price} save={v=>patch(row,"price",v)} label="Price"/>
             <button className="danger-icon" onClick={()=>setDeleteItem(row)}><Trash2 size={15}/></button></div>)}</div></>}</article></div>
-    {deleteItem&&<ConfirmDialog title="Delete shop item?" message={`${deleteItem.item_name||`Item ${deleteItem.itemid}`} will be removed from this NPC shop. This cannot be undone.`} confirmLabel="Delete item" onCancel={()=>setDeleteItem(null)} onConfirm={()=>remove(deleteItem)}/>}</>
+    {deleteItem&&<ConfirmDialog title="Delete shop item?" message={`${deleteItem.item_name||`Item ${deleteItem.itemid}`} will be removed from this NPC shop. This cannot be undone.`} confirmLabel="Delete item" onCancel={()=>setDeleteItem(null)} onConfirm={()=>remove(deleteItem)}/>}
+    {createDialog&&<ShopCreateDialog onCancel={()=>setCreateDialog(false)} onConfirm={createShop}/>}</>
 }
 
 function Gachapon({notify,focusLocation,onOpen}:{notify:Notify;focusLocation?:string;onOpen:(type:string,id:number)=>void}){
@@ -449,7 +466,7 @@ function Gachapon({notify,focusLocation,onOpen}:{notify:Notify;focusLocation?:st
   async function remove(row:any){if(!selected)return;await api(`/api/gachapon/${selected}/${row.id}?reason=Deleted%20from%20Console`,{method:"DELETE"});setDeleteReward(null);notify("Gachapon reward deleted");load()}
   const filteredLocations=locations.filter(x=>!query||gachaponTown(x.location_code).toLowerCase().includes(query.toLowerCase())||String(x.npc_id||"").includes(query));
   return <><PageToolbar query={query} onQueryChange={v=>{setQuery(v);setPage(0)}} placeholder="Search gachapon town or NPC ID"/><div className="source-banner"><Ticket className="gacha-ticket-icon" size={18}/><div><strong>Live database override</strong><span>The game server reads these rows first and falls back to the original Java reward arrays when a location has no Console entries.</span></div></div>
-    <div className="split-list"><div className="list-column"><Pager page={page} pages={Math.ceil(filteredLocations.length/8)} setPage={setPage}/><div className="list-panel">{filteredLocations.slice(page*8,page*8+8).map(x=><button key={x.location_code} className={selected===x.location_code?"selected":""} onClick={()=>setSelected(x.location_code)}>
+    <div className="split-list sticky-selector-list"><div className="list-column"><Pager page={page} pages={Math.ceil(filteredLocations.length/8)} setPage={setPage}/><div className="list-panel">{filteredLocations.slice(page*8,page*8+8).map(x=><button key={x.location_code} className={selected===x.location_code?"selected":""} onClick={()=>setSelected(x.location_code)}>
       {x.npc_id?<EntityImage className="list-avatar" type="NPC" id={x.npc_id}/>:<Ticket className="list-avatar gacha-ticket-icon"/>}<span><strong>{x.location_code==="GLOBAL"?"Global Gachapon":`Gachapon: ${gachaponTown(x.location_code)}`}</strong><small>{x.item_count} rewards | {x.region_name||"Global pool"}</small><small>{x.npc_id||"GLOBAL"}</small></span><ChevronRight size={16}/></button>)}</div><Pager page={page} pages={Math.ceil(filteredLocations.length/8)} setPage={setPage}/></div>
       <article className="panel"><PanelTitle title={selected?(selected==="GLOBAL"?"Global Gachapon":`Gachapon: ${gachaponTown(selected)}`):"Choose a gachapon"} subtitle="Common 90%, uncommon 8%, rare 2% before global-pool mixing"/>
         {selected&&<><Autocomplete type="ITEM" value={null} onSelect={setPendingReward} placeholder="Search reward to add"/>
@@ -514,7 +531,7 @@ function CharacterStats({notify,focusCharacter,onCharacterSelect}:{notify:Notify
   const [accountQuery,setAccountQuery]=useState("");const [worldFilter,setWorldFilter]=useState("all");const [job,setJob]=useState<any|null>(null);const [map,setMap]=useState<Entity|null>(null);
   const [skills,setSkills]=useState<any[]>([]);const [equippedItems,setEquippedItems]=useState<any[]>([]);
   useEffect(()=>{api<Page<any>>("/api/accounts?sort=name&direction=asc&page=0&size=200").then(r=>setAccounts(r.items))},[]);
-  useEffect(()=>{if(focusCharacter)api<any[]>(`/api/characters/search?query=${focusCharacter}`).then(r=>r[0]&&chooseCharacter(r[0]))},[focusCharacter]);
+  useEffect(()=>{if(focusCharacter&&Number(character?.id)!==Number(focusCharacter))chooseCharacter({id:focusCharacter})},[focusCharacter]);
   async function chooseAccount(account:any){setBrowseAccount(account);setAccountCharacters(await api<any[]>(`/api/accounts/${account.id}/characters`))}
   async function chooseCharacter(row:any){const id=Number(row.id);const [details,skillRows,inventoryRows]=await Promise.all([api<any>(`/api/characters/${id}`),api<any[]>(`/api/characters/${id}/skills`),api<any[]>(`/api/characters/${id}/inventory`)]);setCharacter(details);setForm(details);setJob(details.job?{job_id:details.job,job_name:details.job_name||`Job ${details.job}`}:null);setMap(details.map?{entity_type:"MAP",entity_id:details.map,name:details.map_name||`Map ${details.map}`}:null);setSkills(skillRows.map(skill=>({...skill,savedSkilllevel:skill.skilllevel})));setEquippedItems(inventoryRows.filter(item=>Number(item.inventorytype)===1&&Number(item.position)<0));onCharacterSelect?.(id)}
   useEffect(()=>{if(!character?.accountid||!accounts.length)return;const account=accounts.find(row=>Number(row.id)===Number(character.accountid));if(account&&Number(browseAccount?.id)!==Number(account.id)){setBrowseAccount(account);api<any[]>(`/api/accounts/${account.id}/characters`).then(setAccountCharacters)}},[character?.accountid,accounts.length]);
@@ -606,14 +623,14 @@ function Inventory({notify,focusCharacter,onCharacterSelect,onOpen,jump,onInspec
     {character&&<div className="character-strip"><CircleUserRound/><div><strong>{character.account_name} → {character.name}</strong><span>Lv. {character.level} | {character.job_name||"Unknown job"} ({character.job}) | {character.map_name||"Unknown map"} ({character.map})</span></div><button className="secondary" onClick={load}><RefreshCw size={14}/>Refresh</button></div>}
     {!character?<Empty text="Choose an account and character to edit inventory and storage"/>:<>{groups.map(group=><article className="panel inventory-panel" key={group.type}><div className="inventory-panel-head"><PanelTitle title={["","Equip","Use","Setup","Etc","Cash"][group.type]} subtitle="Click an item to edit. Drag onto an empty slot to move."/>
       <div className="inventory-transfer-zone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const raw=e.dataTransfer.getData("item");if(raw)transferInventoryToStorage(JSON.parse(raw))}}>Drag here to put in storage</div></div>
-      <div className="slot-grid expanded">{Array.from({length:limits[group.type]},(_,index)=>index+1).map(slot=>{const item=group.items.find(x=>x.position===slot);return <button key={slot} className={`item-slot ${item?"occupied":""}`}
+      <div className="slot-grid expanded">{Array.from({length:limits[group.type]},(_,index)=>index+1).map(slot=>{const item=group.items.find(x=>x.position===slot);return <button key={slot} className={`item-slot ${item?"occupied":""} ${itemQualityClass(item)}`}
         draggable={!!item} onDragStart={e=>item&&e.dataTransfer.setData("item",JSON.stringify(item))} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const dragged=JSON.parse(e.dataTransfer.getData("item"));if(dragged.inventoryitemid!==item?.inventoryitemid)moveOrSwap(dragged,item,slot)}}
         onClick={()=>item?setEditing(item):setEditing({newItem:true,position:slot,inventorytype:group.type})} title={item?itemTooltip(item):`Empty ${slot}`}>
         <span>{slot}</span>{item&&<><img src={assetUrl("ITEM",item.itemid)} alt=""/>{group.type!==1&&<b>{item.quantity||1}</b>}</>}</button>})}</div></article>)}
       <article className="panel inventory-panel"><div className="storage-heading"><PanelTitle title="Account storage" subtitle={`World ${character.world}`}/>
         <div className="storage-tools">{Number(storage[0]?.slots||0)<48&&<button className="secondary" onClick={expandStorage}>Expand storage to 48 slots</button>}
           <StorageMesoEditor value={Number(storage[0]?.meso||0)} save={saveStorageMeso}/><div className="inventory-transfer-zone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const raw=e.dataTransfer.getData("storageItem");if(raw)transferStorageToInventory(JSON.parse(raw))}}>Drag here to put in inventory</div></div></div>
-        <div className="slot-grid expanded">{Array.from({length:storage[0]?.slots||48},(_,i)=>i+1).map(slot=>{const item=storage.find(x=>x.inventoryitemid&&x.position===slot);return <button className={`item-slot ${item?"occupied":""}`} key={slot}
+        <div className="slot-grid expanded">{Array.from({length:storage[0]?.slots||48},(_,i)=>i+1).map(slot=>{const item=storage.find(x=>x.inventoryitemid&&x.position===slot);return <button className={`item-slot ${item?"occupied":""} ${itemQualityClass(item)}`} key={slot}
           draggable={!!item} onDragStart={e=>item&&e.dataTransfer.setData("storageItem",JSON.stringify(item))} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const dragged=JSON.parse(e.dataTransfer.getData("storageItem"));if(dragged.inventoryitemid!==item?.inventoryitemid)moveOrSwapStorage(dragged,item,slot)}}
           onClick={()=>setEditingStorage(item||{newItem:true,position:slot})} title={item?itemTooltip(item):`Empty storage slot ${slot}`}><span>{slot}</span>{item&&<><img src={assetUrl("ITEM",item.itemid)} alt=""/>{Number(item.inventorytype)!==1&&<b>{item.quantity||1}</b>}</>}</button>})}</div></article></>}
     {editing&&character&&<ItemEditor key={`${editing.newItem?"new":editing.inventoryitemid}-${editing.position}`} item={editing} characterId={character.id} close={()=>setEditing(null)} saved={savedItem=>{if(!savedItem){setItems(rows=>{const remaining=rows.filter(row=>Number(row.inventoryitemid)!==Number(editing.inventoryitemid));setEditing(nearestInventoryItem(remaining,editing));return remaining});return}setItems(rows=>{const exists=rows.some(row=>Number(row.inventoryitemid)===Number(savedItem.inventoryitemid));return exists?rows.map(row=>Number(row.inventoryitemid)===Number(savedItem.inventoryitemid)?savedItem:row):[...rows,savedItem]});setEditing(savedItem)}} notify={notify} duplicate={duplicate} onOpen={onOpen} jump={jump}/>}
@@ -698,7 +715,7 @@ function EquipmentAppearance({notify,focusCharacter,onCharacterSelect,onOpen,jum
   const avatarSource=showCash?cashAvatarSource:nonCashAvatarSource;
   const renderEquipped=(rows:any[],title:string,slots:readonly (readonly [number,string])[])=><article className="panel inventory-panel"><PanelTitle title={title} subtitle="Click equipment to edit stats and view catalog details."/><div className="slot-grid equipment-slot-grid">{slots.map(([position,label])=>{
     const item=rows.find(row=>Number(row.position)===position);
-    return <button key={`${title}-${position}`} className={`item-slot equipment-slot ${item?"occupied":""}`} onClick={()=>setEditing(item||{newItem:true,position,inventorytype:1})} title={item?itemTooltip(item):`Empty ${label} slot (${position})`}>
+    return <button key={`${title}-${position}`} className={`item-slot equipment-slot ${item?"occupied":""} ${itemQualityClass(item)}`} onClick={()=>setEditing(item||{newItem:true,position,inventorytype:1})} title={item?itemTooltip(item):`Empty ${label} slot (${position})`}>
       <span>{label}</span>{item?<img src={assetUrl("ITEM",item.itemid)} alt={item.item_name||String(item.itemid)}/>:<small>Empty</small>}
     </button>})}</div></article>;
   return <><div className="inventory-account-toolbar"><SearchInput value={accountQuery} setValue={setAccountQuery} placeholder="Search account, character or ID"/><select value={worldFilter} onChange={e=>setWorldFilter(e.target.value)}><option value="all">All worlds</option>{accountWorlds.map(world=><option value={world} key={world}>World {world}</option>)}</select></div>
@@ -751,7 +768,7 @@ function CharacterQuestsMonsterBook({notify,focusCharacter,onCharacterSelect,onO
         <div className="tab-bar book-section-tabs">{bookTabs.map(name=><button type="button" className={bookTab===name?"active":""} key={name} onClick={()=>{setBookTab(name);setBookPage(0)}}>{name}</button>)}</div>
         <div className="monster-book-grid">{cardPageRows.map((row:any)=>{const cardLevel=Math.min(5,Number(row.level||0));const medal=monsterBookMedal(cardLevel);return <article className={`monster-book-card ${medal.className}`} key={`${row.cardid}-${row.mobid}`}><button type="button" className="monster-book-main" onClick={()=>onOpen("MOB",Number(row.mobid))}><EntityImage type="MOB" id={Number(row.mobid)}/><span><strong>{row.mob_name}</strong><code>{row.mobid}</code><small>Card {row.cardid}</small>{medal.label&&<span className="monster-book-medal" aria-label={`${medal.label} completion`} title={`${medal.label} completion`}/>}</span></button><label className="monster-card-count">Cards<select value={cardLevel} onChange={event=>saveBookCard(row,Number(event.target.value))}>{[0,1,2,3,4,5].map(count=><option value={count} key={count}>{count}/5</option>)}</select></label></article>})}</div><Pager page={bookPage} pages={Math.ceil(visibleCards.length/30)} setPage={setBookPage}/></article>
       :<div className="quest-status-layout"><article className="panel quest-list-panel"><PanelTitle title={tabs.find(([key])=>key===tab)?.[1]||"Quests"} subtitle="Matches the character-facing quest window categories; raw empty placeholders stay hidden."/>
-        <div className="rich-list">{quests.length?quests.map((quest:any)=><div key={quest.queststatusid} role="button" tabIndex={0} className={`quest-row ${selectedQuest?.queststatusid===quest.queststatusid?"selected":""}`} onClick={()=>{setSelectedQuest(quest);onOpen("QUEST",Number(quest.quest))}} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();setSelectedQuest(quest);onOpen("QUEST",Number(quest.quest))}}}><BookOpen/><span><strong>{questName(quest)}</strong><small>{questRowSummary(quest,progressByStatusId[String(quest.queststatusid)]||[])}</small><QuestNpcLinks quest={quest} onOpen={onOpen}/></span><span className="tag soft">{questStatusLabel(Number(quest.status))}</span></div>):<p className="muted">No quests in this tab.</p>}</div></article>
+        <div className="rich-list">{quests.length?quests.map((quest:any)=><div key={quest.queststatusid} role="button" tabIndex={0} className={`quest-row ${selectedQuest?.queststatusid===quest.queststatusid?"selected":""}`} onClick={()=>{setSelectedQuest(quest);onOpen("QUEST",Number(quest.quest))}} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();setSelectedQuest(quest);onOpen("QUEST",Number(quest.quest))}}}><QuestRowIcon quest={quest}/><span><strong>{questName(quest)}</strong><small>{questRowSummary(quest,progressByStatusId[String(quest.queststatusid)]||[])}</small><QuestNpcLinks quest={quest} onOpen={onOpen}/></span><span className="tag soft">{questStatusLabel(Number(quest.status))}</span></div>):<p className="muted">No quests in this tab.</p>}</div></article>
         <article className="panel quest-edit-panel">{selectedQuest?<QuestStatusEditor quest={selectedQuest} progressRows={progressByStatusId[String(selectedQuest.queststatusid)]||[]} saveQuest={saveQuest} saveProgress={saveProgress} questAction={questAction} onOpen={onOpen}/>:<Empty text="Select a quest to edit status or progress"/>}</article></div>}</>}
   </>;
 }
@@ -759,15 +776,22 @@ function CharacterQuestsMonsterBook({notify,focusCharacter,onCharacterSelect,onO
 function QuestStatusEditor({quest,progressRows,saveQuest,saveProgress,questAction,onOpen}:{quest:any;progressRows:any[];saveQuest:(quest:any,next:any)=>void;saveProgress:(quest:any,progressId:number,value:string)=>void;questAction:(quest:any,action:"start"|"forfeit"|"reset")=>void;onOpen:(type:string,id:number)=>void}){
   const [draft,setDraft]=useState<any>(quest);const [newProgressId,setNewProgressId]=useState(0);const [newProgressValue,setNewProgressValue]=useState("");
   useEffect(()=>setDraft(quest),[quest.queststatusid]);
-  return <><PanelTitle title={questName(quest)} subtitle={`Quest ${quest.quest} | status row ${quest.queststatusid}`}/><QuestNpcLinks quest={quest} onOpen={onOpen}/><div className="quest-status-actions">{Number(quest.status)===0&&<button type="button" className="primary" onClick={()=>questAction(quest,"start")}>Start quest</button>}{Number(quest.status)===1&&<button type="button" className="danger-button" onClick={()=>questAction(quest,"forfeit")}>Forfeit quest</button>}{Number(quest.status)===2&&<button type="button" className="secondary" onClick={()=>questAction(quest,"reset")}>Reset to available</button>}</div><div className="quest-edit-grid"><label>Status<select value={Number(draft.status)} onChange={e=>setDraft({...draft,status:Number(e.target.value)})}><option value={0}>Available</option><option value={1}>In Progress</option><option value={2}>Completed</option></select></label><NumberField label="Completed count" value={draft.completed} set={v=>setDraft({...draft,completed:v})}/><NumberField label="Forfeited" value={draft.forfeited} set={v=>setDraft({...draft,forfeited:v})}/><DateTimeField label="Time" value={draft.time} set={v=>setDraft({...draft,time:v})}/><DateTimeField label="Expires" value={draft.expires} set={v=>setDraft({...draft,expires:v})}/><NumberField label="Info" value={draft.info} set={v=>setDraft({...draft,info:v})}/></div><button type="button" className="primary" onClick={()=>saveQuest(quest,draft)}>Save quest status</button>
-    <h3>Progress</h3><div className="quest-progress-list">{progressRows.map(row=><label key={row.id}>Progress {row.progressid}<input defaultValue={row.progress} onBlur={e=>e.target.value!==String(row.progress)&&saveProgress(quest,Number(row.progressid),e.target.value)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>)}</div>
+  return <><PanelTitle title={questName(quest)} subtitle={`Quest ${quest.quest} | status row ${quest.queststatusid}`}/><QuestNpcLinks quest={quest} onOpen={onOpen}/><div className="quest-status-actions">{Number(quest.status)===0&&<button type="button" className="primary" onClick={()=>questAction(quest,"start")}>Start quest</button>}{Number(quest.status)===1&&<button type="button" className="danger-button" onClick={()=>questAction(quest,"forfeit")}>Forfeit quest</button>}{Number(quest.status)===2&&<button type="button" className="primary quest-reset-button" onClick={()=>questAction(quest,"reset")}><RefreshCw size={14}/>Reset to available</button>}</div><div className="quest-edit-grid"><label>Status<select value={Number(draft.status)} onChange={e=>setDraft({...draft,status:Number(e.target.value)})}><option value={0}>Available</option><option value={1}>In Progress</option><option value={2}>Completed</option></select></label><NumberField label="Completed count" value={draft.completed} set={v=>setDraft({...draft,completed:v})}/><NumberField label="Forfeited" value={draft.forfeited} set={v=>setDraft({...draft,forfeited:v})}/><DateTimeField label="Time" value={draft.time} set={v=>setDraft({...draft,time:v})}/><DateTimeField label="Expires" value={draft.expires} set={v=>setDraft({...draft,expires:v})}/><NumberField label="Info" value={draft.info} set={v=>setDraft({...draft,info:v})}/></div><button type="button" className="primary" onClick={()=>saveQuest(quest,draft)}>Save quest status</button>
+    <h3>Progress</h3>{quest.info_storage?.length>0&&<div className="quest-info-storage">{quest.info_storage.map((row:any)=><div key={row.queststatusid}><strong>Info {row.info_number}</strong><span>{infoStorageSummary(row)}</span></div>)}</div>}<div className="quest-progress-list">{progressRows.map(row=><label key={row.id}>Progress {row.progressid}<input defaultValue={row.progress} onBlur={e=>e.target.value!==String(row.progress)&&saveProgress(quest,Number(row.progressid),e.target.value)} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>)}</div>
     <div className="quest-progress-add"><NumberField label="Progress ID" value={newProgressId} set={setNewProgressId}/><label>Progress value<input value={newProgressValue} onChange={e=>setNewProgressValue(e.target.value)}/></label><button type="button" className="secondary" disabled={!newProgressId} onClick={()=>{saveProgress(quest,newProgressId,newProgressValue);setNewProgressValue("")}}>Add / update progress</button></div></>
 }
 
 function questStatusForTab(tab:string){if(tab==="available")return 0;if(tab==="completed")return 2;return 1}
 function questStatusLabel(status:number){return status===2?"Completed":status===1?"In Progress":"Available"}
 function questName(quest:any){return quest.quest_name||`Quest ${quest.quest}`}
-function questRowSummary(quest:any,progressRows:any[]){if(Number(quest.status)===2)return `Completed count ${quest.completed||1}${quest.time?` | ${epochSecondsLabel(quest.time)}`:""}`;if(progressRows.length)return progressRows.map(row=>`${row.progressid}: ${row.progress}`).join(" | ");return Number(quest.status)===1?"Started, no tracked progress rows":"Available to start when shown by game/server state"}
+function questRowSummary(quest:any,progressRows:any[]){const info=Array.isArray(quest.info_storage)&&quest.info_storage.length?` | ${quest.info_storage.map(infoStorageSummary).join(" | ")}`:"";if(Number(quest.status)===2)return `Completed count ${quest.completed||1}${quest.time?` | ${epochSecondsLabel(quest.time)}`:""}${info}`;if(progressRows.length)return `${progressRows.map(row=>`${row.progressid}: ${row.progress}`).join(" | ")}${info}`;return `${Number(quest.status)===1?"Started, no tracked progress rows":"Available to start when shown by game/server state"}${info}`}
+function infoStorageSummary(row:any){const progress=Array.isArray(row.progress_rows)&&row.progress_rows.length?row.progress_rows.map((progress:any)=>`${progress.progressid}: ${progress.progress}`).join(", "):row.progress_summary||"no progress";return `Info ${row.info_number}: ${progress}`}
+
+function QuestRowIcon({quest}:{quest:any}){
+  const npcs=Array.isArray(quest.quest_npcs)?quest.quest_npcs:[];
+  const giver=npcs.find((npc:any)=>Number(npc.id)>0);
+  return <span className="quest-row-icon">{giver?<EntityImage type="NPC" id={Number(giver.id)}/>:<BookOpen/>}</span>
+}
 
 function QuestNpcLinks({quest,onOpen}:{quest:any;onOpen:(type:string,id:number)=>void}){
   const npcs=Array.isArray(quest.quest_npcs)?quest.quest_npcs:[];
@@ -899,7 +923,7 @@ function EntityDrawer({entity,close,jump,history,historyIndex,moveHistory,named}
     {entity.type==="MAP"&&<><LinkedRows type="MAP" title="Portal destinations" rows={data.portals} labelKey="target_map_name" idKey="target_map_id" click={r=>jump({view:"maps",type:"MAP",id:r.target_map_id})}/>
       <LinkedRows type="MOB" title="Monsters on this map" rows={data.mobs} labelKey="name" idKey="entity_id" click={r=>jump({view:"mobs",type:"MOB",id:r.entity_id})}/>
       <LinkedRows type="NPC" title="NPCs on this map" rows={data.npcs} labelKey="name" idKey="entity_id" click={r=>jump({view:"npcs",type:"NPC",id:r.entity_id})}/></>}
-    {entity.type==="SKILL"&&<><section><h3>{data.job_name||"Unknown job"} <small>Job {data.job_id}</small></h3></section><section><h3>Skill levels</h3><div className="skill-levels">{(data.levels||[]).map((x:any)=><details key={x.skill_level}><summary>Level {x.skill_level}</summary><PropertyGrid data={metadata(x.properties_json)}/></details>)}</div></section></>}
+    {entity.type==="SKILL"&&<><section><h3 className="job-detail-title"><JobBadge jobId={Number(data.job_id||0)}/>{data.job_name||"Unknown job"} <small>Job {data.job_id}</small></h3></section><section><h3>Skill levels</h3><div className="skill-levels">{(data.levels||[]).map((x:any)=><details key={x.skill_level}><summary>Level {x.skill_level}</summary><PropertyGrid data={metadata(x.properties_json)}/></details>)}</div></section></>}
     <section className="technical"><h3>Technical provenance</h3><PropertyGrid data={props}/><code className="source-code">WZ: {data.source_path}</code>
       <code className="source-code">WZ image node: {wzImageNode(entity.type,entity.id,data.source_path,props)}</code>
       {imageSources.map((source,index)=><code className="source-code" key={source}>Image {index===0?"source":"fallback"}: {source}</code>)}
@@ -910,7 +934,7 @@ function EntityDrawer({entity,close,jump,history,historyIndex,moveHistory,named}
 function QuestDrawer({data,close,history,historyIndex,moveHistory,jump}:{data:any;close:()=>void;history:HistoryEntry[];historyIndex:number;moveHistory:(index:number)=>void;jump:(x:JumpTarget)=>void}){
   const props=data.properties||{};
   return <div className="drawer quest-detail-drawer"><button className="modal-close" onClick={close}><X/></button><div className="drawer-history"><button disabled={historyIndex<=0} onClick={()=>moveHistory(historyIndex-1)}><ChevronLeft/><span>{history[historyIndex-1]?.name||"Back"}</span></button><select value={historyIndex} onChange={e=>moveHistory(Number(e.target.value))}>{history.map((entry,index)=><option value={index} key={`${entry.type}-${entry.id}-${index}`}>{entry.name||`${entry.type} ${entry.id}`}</option>)}</select><button disabled={historyIndex>=history.length-1} onClick={()=>moveHistory(historyIndex+1)}><span>{history[historyIndex+1]?.name||"Forward"}</span><ChevronRight/></button></div>
-    <div className="drawer-hero"><span className="quest-hero-icon"><BookOpen/></span><div><div className="tag-row"><span className="tag">QUEST</span>{props.area!=null&&<span className="tag soft">Area {props.area}</span>}{props.autoStart!=null&&<span className="tag soft">Auto start</span>}{props.autoComplete!=null&&<span className="tag soft">Auto complete</span>}</div><h2>{data.name}</h2><code>{data.id}</code></div></div>
+    <div className="drawer-hero"><QuestHeroIcon data={data}/><div><div className="tag-row"><span className="tag">QUEST</span>{props.area!=null&&<span className="tag soft">Area {props.area}</span>}{props.autoStart!=null&&<span className="tag soft">Auto start</span>}{props.autoComplete!=null&&<span className="tag soft">Auto complete</span>}</div><h2>{data.name}</h2><code>{data.id}</code></div></div>
     <section><h3>Quest Text</h3>{(data.overview||[]).length?<div className="quest-text-list">{data.overview.map((row:any)=><article key={row.stage}><strong>Stage {row.stage}</strong><p>{cleanQuestText(row.text)}</p></article>)}</div>:<p className="muted">No quest text found.</p>}</section>
     <QuestPhase title="Start Requirements" phase={data.requirements} jump={jump}/>
     <QuestPhase title="Completion Criteria" phase={data.completionCriteria} jump={jump}/>
@@ -920,10 +944,17 @@ function QuestDrawer({data,close,history,historyIndex,moveHistory,jump}:{data:an
   </div>
 }
 
+function QuestHeroIcon({data}:{data:any}){
+  const npc=[...(data.requirements?.npcs||[]),...(data.completionCriteria?.npcs||[]),...(data.startActions?.npcs||[]),...(data.completionRewards?.npcs||[])].find((row:any)=>Number(row.id)>0);
+  return <span className="quest-hero-icon">{npc?<EntityImage type="NPC" id={Number(npc.id)}/>:<BookOpen/>}</span>
+}
+
 function QuestPhase({title,phase,jump}:{title:string;phase:any;jump:(x:JumpTarget)=>void}){
   const props=phase?.properties||{};
-  const hasData=Object.keys(props).length||phase?.npcs?.length||phase?.items?.length||phase?.mobs?.length||phase?.quests?.length||phase?.jobs?.length||phase?.info?.length;
-  return <section><h3>{title}</h3>{!hasData?<p className="muted">No entries.</p>:<><QuestReferenceRows title="NPC" type="NPC" rows={phase.npcs||[]} jump={jump}/><QuestReferenceRows title="Items" type="ITEM" rows={phase.items||[]} jump={jump}/><QuestReferenceRows title="Monsters" type="MOB" rows={phase.mobs||[]} jump={jump}/><QuestReferenceRows title="Prerequisite Quests" type="QUEST" rows={phase.quests||[]} jump={jump}/><QuestReferenceRows title="Jobs" type="JOB" rows={phase.jobs||[]} jump={jump}/><QuestReferenceRows title="Info" type="INFO" rows={phase.info||[]} jump={jump}/>{Object.keys(props).length>0&&<details className="quest-phase-properties" open><summary>Properties</summary><PropertyGrid data={props}/></details>}</>}</section>
+  const technicalItems=title==="Start Requirements"?(phase.items||[]).filter((row:any)=>Number(row.id)===1042003):[];
+  const visibleItems=technicalItems.length?(phase.items||[]).filter((row:any)=>Number(row.id)!==1042003):phase.items||[];
+  const hasData=Object.keys(props).length||phase?.npcs?.length||visibleItems.length||technicalItems.length||phase?.mobs?.length||phase?.quests?.length||phase?.jobs?.length||phase?.info?.length;
+  return <section><h3>{title}</h3>{!hasData?<p className="muted">No entries.</p>:<><QuestReferenceRows title="NPC" type="NPC" rows={phase.npcs||[]} jump={jump}/><QuestReferenceRows title="Items" type="ITEM" rows={visibleItems} jump={jump}/><QuestReferenceRows title="Monsters" type="MOB" rows={phase.mobs||[]} jump={jump}/><QuestReferenceRows title="Prerequisite Quests" type="QUEST" rows={phase.quests||[]} jump={jump}/><QuestReferenceRows title="Jobs" type="JOB" rows={phase.jobs||[]} jump={jump}/><QuestReferenceRows title="Info" type="INFO" rows={phase.info||[]} jump={jump}/>{technicalItems.length>0&&<details className="quest-technical-footnote"><summary>Technical item checks</summary><QuestReferenceRows title="Hidden client/server checks" type="ITEM" rows={technicalItems} jump={jump}/><p className="muted">Shown here instead of the main start requirements because this is a starter-equipment continuity check from Quest.wz, not an action objective.</p></details>}{Object.keys(props).length>0&&<details className="quest-phase-properties" open><summary>Properties</summary><PropertyGrid data={props}/></details>}</>}</section>
 }
 
 function QuestReferenceRows({title,type,rows,jump}:{title:string;type:string;rows:any[];jump:(x:JumpTarget)=>void}){
@@ -931,8 +962,18 @@ function QuestReferenceRows({title,type,rows,jump}:{title:string;type:string;row
   return <div className="quest-reference-block"><h4>{title}</h4><div className="linked-rows">{rows.map((row:any,index:number)=>{
     const id=Number(row.id||0);const count=Number(row.count||0);const clickable=["ITEM","MOB","NPC","QUEST"].includes(type)&&id>0;
     const targetView=type==="ITEM"?"items":type==="MOB"?"mobs":type==="NPC"?"npcs":"character-quests";
-    return <button type="button" key={`${type}-${id}-${index}`} disabled={!clickable} onClick={()=>clickable&&jump({view:targetView as View,type,id})}><span className="linked-icon">{type==="QUEST"?<BookOpen/>:type==="JOB"?<ShieldCheck/>:type==="INFO"?<Database/>:<EntityImage type={type} id={id}/>}</span><span className="linked-copy"><strong>{row.name||`${type} ${id}`}</strong><code>{id||row.slot}</code>{count!==0&&<small>Count {count}</small>}{row.state!=null&&<small>State {row.state}</small>}{row.prop!=null&&<small>Prop {row.prop}</small>}</span>{clickable&&<ChevronRight size={14}/>}</button>
+    return <button type="button" key={`${type}-${id}-${index}`} disabled={!clickable} onClick={()=>clickable&&jump({view:targetView as View,type,id})}><span className="linked-icon"><QuestReferenceIcon type={type} id={id} row={row}/></span><span className="linked-copy"><strong>{row.name||`${type} ${id}`}</strong><code>{id||row.slot}</code>{count!==0&&<small>Count {count}</small>}{row.state!=null&&<small>State {row.state}</small>}{row.prop!=null&&<small>Prop {row.prop}</small>}</span>{clickable&&<ChevronRight size={14}/>}</button>
   })}</div></div>
+}
+
+function QuestReferenceIcon({type,id,row={}}:{type:string;id:number;row?:any}){
+  if(type==="NPC")return <EntityImage type="NPC" id={id}/>;
+  if(type==="ITEM")return <EntityImage type="ITEM" id={id}/>;
+  if(type==="MOB")return <EntityImage type="MOB" id={id}/>;
+  if(type==="QUEST")return Number(row.iconNpcId)>0?<EntityImage type="NPC" id={Number(row.iconNpcId)}/>:<BookOpen/>;
+  if(type==="JOB")return <JobBadge jobId={id}/>;
+  if(type==="INFO")return <Database/>;
+  return <PackageSearch/>;
 }
 
 function cleanQuestText(value:any){return String(value||"").replace(/#.[^#]*#/g,"").replace(/#\\w/g,"").replace(/\\n/g,"\n").trim()}
@@ -961,7 +1002,7 @@ function AppearanceCatalogSelect({label,type,gender,value,onSelect}:{label:strin
   const [selected,setSelected]=useState<Entity|null>(null);const [query,setQuery]=useState("");const [rows,setRows]=useState<Entity[]>([]);const [open,setOpen]=useState(false);
   useEffect(()=>{if(value)api<Entity>(`/api/catalog/ITEM/${value}`).then(setSelected).catch(()=>setSelected({entity_type:"ITEM",entity_id:value,name:`${label} ${value}`,subtype:type}))},[type,value,label]);
   useEffect(()=>{if(!open){setRows([]);return}const timer=setTimeout(async()=>{const q=query.trim();const suggestions=await api<Entity[]>(`/api/catalog/suggest?type=ITEM&subtype=${type}&q=${encodeURIComponent(q)}&limit=500`);let next=suggestions.filter(row=>matchesAppearanceGender(type,Number(row.entity_id),gender));if(q&&next.length===0){const page=await api<Page<Entity>>(`/api/catalog/search?type=ITEM&subtype=${type}&q=${encodeURIComponent(q)}&page=0&size=500&sort=name`);next=page.items.filter(row=>matchesAppearanceGender(type,Number(row.entity_id),gender))}setRows(next)},160);return()=>clearTimeout(timer)},[type,gender,query,open]);
-  return <div className="appearance-selector"><label>{label}</label>{selected&&<button type="button" className="appearance-current" onClick={()=>{setOpen(true);setQuery(String(selected.entity_id))}}><EntityImage type="ITEM" id={selected.entity_id}/><span><strong>{selected.name}</strong><code>{selected.entity_id}</code></span></button>}<SearchInput value={query} setValue={value=>{setOpen(true);setQuery(value)}} onFocus={()=>setOpen(true)} placeholder={`Search ${label.toLowerCase()} id or name`}/>{open&&rows.length>0&&<div className="appearance-results">{rows.map(row=><button type="button" key={row.entity_id} onClick={()=>{setSelected(row);setQuery("");setRows([]);setOpen(false);onSelect(row)}}><EntityImage type="ITEM" id={row.entity_id}/><span><strong>{row.name}</strong><code>{row.entity_id}</code></span></button>)}</div>}</div>
+  return <div className="appearance-selector"><label>{label}</label>{selected&&<button type="button" className="appearance-current" onClick={()=>{setOpen(true);setQuery(String(selected.entity_id))}}><EntityImage type="ITEM" id={selected.entity_id}/><span><strong>{selected.name}</strong><code>{selected.entity_id}</code></span></button>}<SearchInput value={query} setValue={value=>{setOpen(true);setQuery(value)}} onFocus={()=>setOpen(true)} onIconClick={()=>setOpen(previous=>!previous)} placeholder={`Search ${label.toLowerCase()} id or name`}/>{open&&rows.length>0&&<div className="appearance-results">{rows.map(row=><button type="button" key={row.entity_id} onClick={()=>{setSelected(row);setQuery("");setRows([]);setOpen(false);onSelect(row)}}><EntityImage type="ITEM" id={row.entity_id}/><span><strong>{row.name}</strong><code>{row.entity_id}</code></span></button>)}</div>}</div>
 }
 function GenderIconSelect({value,onSelect}:{value:number;onSelect:(value:number)=>void}){
   return <label className="gender-icon-select"><span>Gender</span>
@@ -1047,7 +1088,7 @@ function Chance({value}:{value:number}){const display=chanceDisplay(value);retur
 function Pager({page,pages,setPage}:{page:number;pages:number;setPage:(n:number)=>void}){const [target,setTarget]=useState(String(page+1));useEffect(()=>setTarget(String(page+1)),[page]);if(pages<=1)return null;
   function go(){const next=Math.min(pages,Math.max(1,Number(target)||1));setPage(next-1)}
   return <div className="pager"><button disabled={page===0} onClick={()=>setPage(page-1)}><ChevronLeft/></button><span>{page+1} / {pages}</span><label>Go to<input type="number" min="1" max={pages} value={target} onChange={e=>setTarget(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></label><button className="go-page" onClick={go}>Go</button><button disabled={page>=pages-1} onClick={()=>setPage(page+1)}><ChevronRight/></button></div>}
-function SearchInput({value,setValue,placeholder,onFocus}:{value:string;setValue:(x:string)=>void;placeholder:string;onFocus?:()=>void}){return <div className="search-box" onMouseDown={event=>{if(event.target!==event.currentTarget.querySelector("input"))event.currentTarget.querySelector("input")?.focus()}}><Search size={17}/><input value={value} onFocus={onFocus} onChange={e=>setValue(e.target.value)} placeholder={placeholder}/></div>}
+function SearchInput({value,setValue,placeholder,onFocus,onIconClick}:{value:string;setValue:(x:string)=>void;placeholder:string;onFocus?:()=>void;onIconClick?:()=>void}){return <div className="search-box" onMouseDown={event=>{if((event.target as HTMLElement).closest("button"))return;if(event.target!==event.currentTarget.querySelector("input"))event.currentTarget.querySelector("input")?.focus()}}>{onIconClick?<button type="button" className="search-icon-button" onMouseDown={event=>event.preventDefault()} onClick={onIconClick} aria-label="Toggle search results"><Search size={17}/></button>:<Search size={17}/>}<input value={value} onFocus={onFocus} onChange={e=>setValue(e.target.value)} placeholder={placeholder}/></div>}
 function EntityImage({type,id,properties={},className=""}:{type:string;id:number;properties?:Record<string,any>;className?:string}){
   const sources=assetUrls(type,id,properties);const [sourceIndex,setSourceIndex]=useState(0);useEffect(()=>setSourceIndex(0),[type,id,properties.imageAction]);
   if(sourceIndex>=sources.length){if(type==="SKILL")return <SkillBadge skillId={id} className={className}/>;
@@ -1055,12 +1096,44 @@ function EntityImage({type,id,properties={},className=""}:{type:string;id:number
   return <img className={className} src={sources[sourceIndex]} alt="" onError={()=>setSourceIndex(index=>index+1)}/>;
 }
 function SkillBadge({skillId,className=""}:{skillId:number;className?:string}){return <span className={`skill-badge ${className}`}><BookOpen/><small>{String(skillId).slice(-2)}</small></span>}
-function JobBadge({jobId,skillId=0}:{jobId:number;skillId?:number}){const family=jobId===0?"BG":jobId<200?"WA":jobId<300?"MA":jobId<400?"BO":jobId<500?"TH":jobId<600?"PI":jobId>=1000&&jobId<2000?"CY":jobId>=2000?"HE":"GM";const iconId=skillId||defaultJobSkillIcon(jobId);return iconId?<EntityImage type="SKILL" id={iconId} className={`job-badge job-icon family-${family.toLowerCase()}`}/>:<span className={`job-badge family-${family.toLowerCase()}`}>{family}</span>}
-function defaultJobSkillIcon(jobId:number){if(jobId===0)return 1000;const defaults:Record<number,number>={100:1000000,110:1100000,111:1110000,112:1120003,120:1200000,121:1210000,122:1220005,130:1300000,131:1310000,132:1320005,200:2000000,210:2100000,211:2110000,212:2121004,220:2200000,221:2210000,222:2221004,230:2300000,231:2310000,232:2321004,300:3000000,310:3100000,311:3110000,312:3120005,320:3200000,321:3210000,322:3220004,400:4000000,410:4100000,411:4110000,412:4120002,420:4200000,421:4210000,422:4220002,500:5000000,510:5100000,511:5110000,512:5121003,520:5200000,521:5210000,522:5220001};return defaults[jobId]||jobId*10000}
+function JobBadge({jobId}:{jobId:number;skillId?:number}){
+  const family=jobBadgeFamily(jobId);return <span className={`job-badge family-${family.toLowerCase()}`}>{jobTextIcon(jobId)}</span>
+}
+function jobBadgeFamily(jobId:number){return jobId===0?"BG":jobId<200?"WA":jobId<300?"MA":jobId<400?"BO":jobId<500?"TH":jobId<600?"PI":jobId>=1000&&jobId<2000?"CY":jobId>=2000?"HE":"GM"}
+function jobTextIcon(jobId:number){
+  const exact:Record<number,string>={
+    0:"✧",
+    100:"⚔",110:"⚔",111:"⚔",112:"⚔",
+    120:"⛨",121:"⛨",122:"⛨",
+    130:"♜",131:"♜",132:"♜",
+    200:"✦",210:"🔥",211:"🔥",212:"🔥",
+    220:"❄",221:"❄",222:"❄",
+    230:"✚",231:"✚",232:"✚",
+    300:"➹",310:"➹",311:"➹",312:"➹",
+    320:"⌖",321:"⌖",322:"⌖",
+    400:"◈",410:"✦",411:"✦",412:"✦",
+    420:"‡",421:"‡",422:"‡",
+    500:"☠",510:"拳",511:"拳",512:"拳",
+    520:"◉",521:"◉",522:"◉",
+    800:"✪",900:"★",910:"★",
+    1000:"♔",
+    1100:"⚔",1110:"⚔",1111:"⚔",1112:"⚔",
+    1200:"✦",1210:"🔥",1211:"🔥",1212:"🔥",
+    1300:"➹",1310:"➹",1311:"➹",1312:"➹",
+    1400:"✦",1410:"✦",1411:"✦",1412:"✦",
+    1500:"⚡",1510:"⚡",1511:"⚡",1512:"⚡",
+    2000:"♜",2001:"✦",
+    2100:"♜",2110:"♜",2111:"♜",2112:"♜",
+    2200:"✦",2210:"✦",2211:"✦",2212:"✦",2213:"✦",2214:"✦",2215:"✦",2216:"✦",2217:"✦",2218:"✦"
+  };
+  if(exact[jobId])return exact[jobId];
+  const root=Math.floor(jobId/100)*100;
+  return exact[root]||jobBadgeFamily(jobId);
+}
 function MesoIcon({min=0,max=0}:{min?:number;max?:number}){const average=(Number(min||0)+Number(max||0))/2;const id=average>=1000?9000003:average>=100?9000002:average>=50?9000001:9000000;return <img className="meso-icon" src={`https://maplestory.io/api/GMS/83/item/${id}/icon`} alt="Meso drop" onError={hideImage}/>}
 function SelectedEntity({entity}:{entity:Entity}){return <div className="selected-entity"><img src={assetUrl(entity.entity_type,entity.entity_id)} alt=""/><span><strong>{entity.name}</strong><code>{entity.entity_id}</code><small>{entity.description}</small></span></div>}
-function StatStrip({ranges}:{ranges:Record<string,any>}){return <div className="stat-strip">{Object.entries(ranges).slice(0,4).map(([key,value]:any)=><span key={key}>{statName(key)} {value.average} ({value.min}-{value.max})</span>)}</div>}
-function StatTable({ranges}:{ranges:Record<string,any>}){return <div className="stat-table">{Object.entries(ranges).map(([key,value]:any)=><div key={key}><strong>{statName(key)}</strong><span>{value.average}</span><small>{value.min} - {value.max}</small></div>)}</div>}
+function StatStrip({ranges}:{ranges:Record<string,any>}){return <div className="stat-strip">{Object.entries(ranges).slice(0,4).map(([key,value]:any)=><span key={key}>{statName(key)} {Number(value?.average||0)} ({Number(value?.min||0)}-{Number(value?.max||0)})</span>)}</div>}
+function StatTable({ranges}:{ranges:Record<string,any>}){return <div className="stat-table">{Object.entries(ranges).map(([key,value]:any)=><div key={key}><strong>{statName(key)}</strong><span>{Number(value?.average||0)}</span><small>{Number(value?.min||0)} - {Number(value?.max||0)}</small></div>)}</div>}
 function LinkedRows({type,title,rows=[],labelKey,idKey,click,collapsible=false,defaultOpen=true,characterJump}:{type:string;title:string;rows:any[];labelKey:string;idKey:string;click:(x:any)=>void;collapsible?:boolean;defaultOpen?:boolean;characterJump?:(view:View,id:number)=>void}){
   const content=rows.length?<div className="linked-rows">{rows.map((row,i)=>{
     const chance=type==="GACHA"?gachaponChanceDisplay(row):row.chance==null?null:chanceDisplay(Number(row.chance));
@@ -1071,10 +1144,18 @@ function LinkedRows({type,title,rows=[],labelKey,idKey,click,collapsible=false,d
         <button type="button" onClick={()=>characterJump?.("character-equipment",Number(row[idKey]))}>Equipment / Appearance</button>
       </div>
     </article>
-  return <button key={`${row[idKey]}-${i}`} onClick={()=>click(row)}><span className="linked-icon">{type==="SHOP"?<Store/>:type==="GACHA"?(row[idKey]?<EntityImage type="NPC" id={row[idKey]}/>:<Ticket className="gacha-ticket-icon"/>):<EntityImage type={type} id={row[idKey]}/>}</span><span className="linked-copy"><strong>{type==="GACHA"?`Gachapon: ${gachaponTown(row[labelKey])}`:row[labelKey]||row[idKey]}</strong><code>{type==="GACHA"?`Tier ${row.tier}`:row[idKey]}</code>{row.region_name&&<small>{row.region_name} | {row.spawn_count} spawn points</small>}{chance&&<small className="linked-chance">{chance.percent} | {chance.one}</small>}</span><ChevronRight size={14}/></button>
+  return <button key={`${row[idKey]}-${i}`} onClick={()=>click(row)}><span className="linked-icon">{linkedRowIcon(type,row,idKey)}</span><span className="linked-copy"><strong>{type==="GACHA"?`Gachapon: ${gachaponTown(row[labelKey])}`:row[labelKey]||row[idKey]}</strong><code>{type==="GACHA"?`Tier ${row.tier}`:row[idKey]}</code>{row.npc_name&&type==="SHOP"&&<small>{row.npc_name} | NPC {row.npcid||row.npc_id}</small>}{row.region_name&&<small>{row.region_name} | {row.spawn_count} spawn points</small>}{chance&&<small className="linked-chance">{chance.percent} | {chance.one}</small>}</span><ChevronRight size={14}/></button>
   })}</div>:<p className="muted">No linked records.</p>;
   if(collapsible)return <details className="linked-section" open={defaultOpen}><summary>{title} <small>({rows.length})</small><ChevronRight size={16}/></summary>{content}</details>;
   return <section><h3>{title} <small>({rows.length})</small></h3>{content}</section>
+}
+function linkedRowIcon(type:string,row:any,idKey:string){
+  if(type==="SHOP"){
+    const npcId=Number(row.npcid||row.npc_id||0);
+    return npcId>0?<EntityImage type="NPC" id={npcId}/>:<Store/>;
+  }
+  if(type==="GACHA")return row[idKey]?<EntityImage type="NPC" id={row[idKey]}/>:<Ticket className="gacha-ticket-icon"/>;
+  return <EntityImage type={type} id={row[idKey]}/>;
 }
 function ConfirmDialog({title,message,confirmLabel="Confirm",onCancel,onConfirm}:{title:string;message:string;confirmLabel?:string;onCancel:()=>void;onConfirm:()=>void|Promise<void>}){
   const [busy,setBusy]=useState(false);
@@ -1113,6 +1194,52 @@ function RarityDialog({item,onCancel,onConfirm}:{item:Entity;onCancel:()=>void;o
     </article>
   </div>
 }
+function ShopCreateDialog({onCancel,onConfirm}:{onCancel:()=>void;onConfirm:(form:{npc:Entity;reason:string;starterItem:Entity|null;price:number;position:number;pitch:number})=>void|Promise<void>}){
+  const [npc,setNpc]=useState<Entity|null>(null);const [starterItem,setStarterItem]=useState<Entity|null>(null);
+  const [price,setPrice]=useState(1);const [position,setPosition]=useState(100);const [pitch,setPitch]=useState(0);
+  const [reason,setReason]=useState("Created in Console");const [busy,setBusy]=useState(false);
+  async function submit(event:FormEvent){event.preventDefault();if(!npc)return;setBusy(true);try{await onConfirm({npc,starterItem,price:Number(price||0),position:Number(position||0),pitch:Number(pitch||0),reason:reason.trim()||"Created in Console"})}finally{setBusy(false)}}
+  return <div className="modal-backdrop confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="shop-create-title">
+    <form className="modal-card shop-create-card" onSubmit={submit}>
+      <button type="button" className="modal-close" onClick={onCancel} disabled={busy}><X size={18}/></button>
+      <div>
+        <p className="eyebrow">WORLD DATA</p>
+        <h2 id="shop-create-title">Create NPC shop</h2>
+        <p className="muted">Choose the NPC that owns this shop. Starter item fields are optional and can be edited after creation.</p>
+      </div>
+      <section className="shop-create-section">
+        <h3>Required</h3>
+        <label className="selector-field">Shop NPC
+          <Autocomplete type="NPC" value={npc} onSelect={setNpc} placeholder="Search NPC name or ID"/>
+        </label>
+        {npc&&<div className="selected-entity">
+          <EntityImage type="NPC" id={npc.entity_id}/><span><strong>{npc.name}</strong><code>{npc.entity_id}</code><small>{npc.description||"NPC will own the new shop row"}</small></span>
+        </div>}
+      </section>
+      <section className="shop-create-section">
+        <h3>Optional starter item</h3>
+        <label className="selector-field">First shop item
+          <Autocomplete type="ITEM" value={starterItem} onSelect={setStarterItem} placeholder="Search item name or ID"/>
+        </label>
+        {starterItem&&<SelectedEntity entity={starterItem}/>}
+        <div className="shop-create-grid">
+          <label>Position<input type="number" value={position} onChange={event=>setPosition(Number(event.target.value))}/></label>
+          <label>Price<input type="number" min="0" value={price} onChange={event=>setPrice(Number(event.target.value))}/></label>
+          <label>Pitch<input type="number" value={pitch} onChange={event=>setPitch(Number(event.target.value))}/></label>
+        </div>
+        <p className="muted">Higher position values appear first in the in-game shop list.</p>
+      </section>
+      <section className="shop-create-section">
+        <h3>Audit</h3>
+        <label>Reason<textarea value={reason} onChange={event=>setReason(event.target.value)} required/></label>
+      </section>
+      <div className="modal-actions">
+        <button type="button" className="secondary" onClick={onCancel} disabled={busy}>Cancel</button>
+        <button type="submit" className="primary" disabled={busy||!npc}>{busy?"Creating...":"Create shop"}</button>
+      </div>
+    </form>
+  </div>
+}
 function PropertyGrid({data}:{data:Record<string,any>}){return <div className="property-grid">{Object.entries(data||{}).filter(([,v])=>typeof v!=="object").map(([k,v])=><div key={k}><span>{k}</span><code>{String(v)}</code></div>)}</div>}
 function PanelTitle({title,subtitle}:{title:string;subtitle:string}){return <div className="panel-title"><div><h2>{title}</h2><p>{subtitle}</p></div></div>}
 function Status({label,value}:{label:string;value:string}){return <div className="status-row"><span>{label}</span><strong>{value}</strong></div>}
@@ -1121,7 +1248,44 @@ function Loading(){return <div className="empty"><RefreshCw className="spin"/><p
 function Audit(){const [rows,setRows]=useState<any[]>([]);useEffect(()=>{api<any[]>("/api/audit").then(setRows)},[]);return <article className="panel"><PanelTitle title="Audit history" subtitle="Who changed what, when, why, and the exact saved values"/><div className="rich-list">{rows.map(row=><details className="audit-row" key={row.id}><summary><strong>{row.action}</strong><span>{row.username||"System"}</span><code>{row.entity_type}:{row.entity_key}</code><small>{row.created_at} | {row.outcome}</small></summary><p>{row.reason}</p><small>Remote address: {row.remote_address||"Unknown"}</small><div className="audit-change-grid"><AuditValue title="Before" value={row.before_json}/><AuditValue title="After" value={row.after_json}/></div></details>)}</div></article>}
 function AuditValue({title,value}:{title:string;value:any}){const parsed=metadata(value);return <section><h3>{title}</h3>{value?<PropertyGrid data={flattenRecord(parsed)}/>:<p className="muted">No value</p>}</section>}
 
+function QualityColorSettings({notify}:{notify:Notify}){
+  const [settings,setSettings]=useState<QualitySettings>(defaultQualitySettings);
+  useEffect(()=>setSettings(loadQualitySettings()),[]);
+  const grades:QualityGrade[]=["below","normal","orange","blue","purple","yellow"];
+  function update(grade:QualityGrade,field:keyof QualityRange,value:string){setSettings(previous=>({...previous,[grade]:{...previous[grade],[field]:Number(value)||0}}))}
+  function save(){saveQualitySettings(settings);notify("Quality color ranges saved")}
+  function reset(){setSettings(defaultQualitySettings);saveQualitySettings(defaultQualitySettings);notify("Quality color ranges reset")}
+  return <article className="panel quality-settings-panel"><PanelTitle title="Equip Quality Colors" subtitle="Configure total stat ranges for non-cash equip color coding. Missing base stats count as 0."/>
+    <div className="quality-settings-grid">{grades.map(grade=><section className={`quality-range-card quality-${grade}`} key={grade}>
+      <div><strong>{qualityGradeLabels[grade]}</strong><small>{grade==="orange"?"Requires at least 1 successful scroll":grade==="below"?"Below average":"Total stats above average"}</small></div>
+      <label>Min<input type="number" step="0.1" value={settings[grade].min} onChange={event=>update(grade,"min",event.target.value)}/></label>
+      <label>Max<input type="number" step="0.1" value={settings[grade].max} onChange={event=>update(grade,"max",event.target.value)}/></label>
+    </section>)}</div>
+    <div className="quality-settings-notes">
+      <p>Scored stats: STR, DEX, INT, LUK, WATK, MATK, WDEF, MDEF, ACC, AVOID, Speed, Jump, HP/MP where 10 HP or MP equals 1 stat.</p>
+      <p>Orange uses its configured stat range only when the equip has successful scrolls. Otherwise that score can fall back to white/normal.</p>
+    </div>
+    <div className="modal-actions quality-settings-actions"><button type="button" className="secondary" onClick={reset}>Reset defaults</button><button type="button" className="primary" onClick={save}>Save ranges</button></div>
+  </article>
+}
+
 function metadata(value:any):Record<string,any>{if(!value)return{};if(typeof value==="object")return value;try{return JSON.parse(value)}catch{return{raw:value}}}
+function loadQualitySettings():QualitySettings{
+  if(typeof window==="undefined")return defaultQualitySettings;
+  try{
+    const parsed=JSON.parse(window.localStorage.getItem(QUALITY_SETTINGS_KEY)||"{}");
+    return mergeQualitySettings(parsed);
+  }catch{return defaultQualitySettings}
+}
+function saveQualitySettings(settings:QualitySettings){if(typeof window!=="undefined")window.localStorage.setItem(QUALITY_SETTINGS_KEY,JSON.stringify(settings))}
+function mergeQualitySettings(value:any):QualitySettings{
+  const next={...defaultQualitySettings} as QualitySettings;
+  for(const grade of Object.keys(defaultQualitySettings) as QualityGrade[]){
+    const row=value?.[grade]||{};
+    next[grade]={min:Number.isFinite(Number(row.min))?Number(row.min):defaultQualitySettings[grade].min,max:Number.isFinite(Number(row.max))?Number(row.max):defaultQualitySettings[grade].max};
+  }
+  return next;
+}
 function flattenRecord(value:any,prefix=""):Record<string,any>{
   if(value==null||typeof value!=="object")return prefix?{[prefix]:value}:{value};
   return Object.entries(value).reduce((result,[key,nested])=>{
@@ -1152,6 +1316,53 @@ function wzImageNode(type:string,id:number,sourcePath:string|undefined,props:Rec
 }
 function statName(key:string){return key.replace("inc","").replace("PAD","WATK").replace("MAD","MATK").replace("PDD","WDEF").replace("MDD","MDEF").replace("MHP","HP").replace("MMP","MP")}
 function hideImage(e:any){e.currentTarget.style.visibility="hidden"}
-function itemTooltip(item:any){const lines=[item.item_name||String(item.itemid),`Quantity: ${item.quantity||1}`];const isEquip=Number(item.inventorytype)===1||Number(item.position)<0;if(isEquip){const stats=[["Upgrade slots",item.upgradeslots],["Upgrades",item.upgrades],["STR",item.str],["DEX",item.dex],["INT",item.int],["LUK",item.luk],["HP",item.hp],["MP",item.mp],["WATK",item.watk],["MATK",item.matk],["WDEF",item.wdef],["MDEF",item.mdef],["Accuracy",item.acc],["Avoidability",item.avoid],["Hands",item.hands],["Speed",item.speed],["Jump",item.jump],["Vicious",item.vicious],["Item level",item.itemlevel],["Item EXP",item.itemexp]];for(const [name,value] of stats)if(Number(value)!==0)lines.push(`${name}: ${value}`)}return lines.join("\n")}
+function itemTooltip(item:any){
+  const isEquip=Number(item?.inventorytype)===1||Number(item?.position)<0;
+  const quality=itemQuality(item);
+  const name=`${item.item_name||String(item.itemid)}${isEquip?` (+${Number(item.upgrades||0)})`:""}`;
+  const lines=isEquip?[name]:[name,`Quantity: ${item.quantity||1}`];
+  if(quality)lines.push(`Quality: ${quality.scoreText} vs average`);
+  if(isEquip){const stats=[["Upgrade slots",item.upgradeslots],["Upgrades",item.upgrades],["STR",item.str],["DEX",item.dex],["INT",item.int],["LUK",item.luk],["HP",item.hp],["MP",item.mp],["WATK",item.watk],["MATK",item.matk],["WDEF",item.wdef],["MDEF",item.mdef],["Accuracy",item.acc],["Avoidability",item.avoid],["Hands",item.hands],["Speed",item.speed],["Jump",item.jump],["Vicious",item.vicious],["Item level",item.itemlevel],["Item EXP",item.itemexp]];for(const [stat,value] of stats)if(Number(value)!==0)lines.push(`${stat}: ${value}`)}
+  return lines.join("\n");
+}
+function itemQualityClass(item:any){const quality=itemQuality(item);return quality?`quality-${quality.grade}`:""}
+function itemQuality(item:any){
+  if(!item)return null;
+  const isEquip=Number(item.inventorytype)===1||Number(item.position)<0;
+  if(!isEquip)return null;
+  const props=metadata(item.properties_json);
+  const isCash=Number(item.position)<=-100||props.cashEquip===true||Number(props.cash||0)===1;
+  if(isCash)return null;
+  const ranges=props.statRanges;
+  const hasRanges=ranges&&typeof ranges==="object";
+  const fields:Record<string,[string,number]>={
+    incSTR:["str",1],incDEX:["dex",1],incINT:["int",1],incLUK:["luk",1],
+    incPAD:["watk",1],incMAD:["matk",1],incPDD:["wdef",1],incMDD:["mdef",1],
+    incACC:["acc",1],incEVA:["avoid",1],incSpeed:["speed",1],incJump:["jump",1],
+    incMHP:["hp",10],incMMP:["mp",10]
+  };
+  let score=0;
+  for(const [rangeKey,[itemKey,divisor]] of Object.entries(fields)){
+    const range=hasRanges?ranges[rangeKey]:null;
+    const actual=Number(item[itemKey]||0);const average=Number(range?.average||0);
+    score+=(actual-average)/divisor;
+  }
+  const scrolls=Number(item.upgrades||0);
+  const rounded=Math.round(score*10)/10;
+  const grade=qualityGradeForScore(rounded,scrolls);
+  return {score:rounded,scoreText:`${rounded>0?"+":""}${rounded}`,grade};
+}
+function qualityGradeForScore(score:number,scrolls:number):QualityGrade{
+  const settings=loadQualitySettings();
+  if(scoreInRange(score,settings.below))return "below";
+  if(scrolls>0&&scoreInRange(score,settings.orange))return "orange";
+  if(scoreInRange(score,settings.yellow))return "yellow";
+  if(scoreInRange(score,settings.purple))return "purple";
+  if(scoreInRange(score,settings.blue))return "blue";
+  if(scoreInRange(score,settings.normal))return "normal";
+  if(score<settings.below.max)return "below";
+  return "yellow";
+}
+function scoreInRange(score:number,range:QualityRange){return score>=range.min&&score<=range.max}
 function equipFrom(item:any){return {upgradeSlots:item.upgradeslots??0,level:item.upgrades??0,str:item.str??0,dex:item.dex??0,intStat:item.int??0,luk:item.luk??0,hp:item.hp??0,mp:item.mp??0,watk:item.watk??0,matk:item.matk??0,wdef:item.wdef??0,mdef:item.mdef??0,acc:item.acc??0,avoid:item.avoid??0,hands:item.hands??0,speed:item.speed??0,jump:item.jump??0,locked:item.locked??0,vicious:item.vicious??0,itemLevel:item.itemlevel??1,itemExp:item.itemexp??0}}
 

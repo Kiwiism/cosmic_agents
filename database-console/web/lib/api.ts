@@ -21,20 +21,25 @@ export function assetUrl(type: string, id: number) {
   return assetUrls(type, id)[0];
 }
 
+const NPC_RENDER_ALIASES: Record<number, number> = {
+  2004: 2003,
+};
+
 export function assetUrls(type: string, id: number, properties?: Record<string, unknown>) {
+  const renderId = type === "NPC" ? NPC_RENDER_ALIASES[id] ?? id : id;
   const mobAction = String(properties?.imageAction ?? "stand");
-  const route = type === "ITEM" ? `item/${id}/icon`
-    : type === "HAIR" || type === "FACE" ? `item/${id}/icon`
-    : type === "MOB" ? `mob/${id}/render/${mobAction}`
-    : type === "NPC" ? `npc/${id}/render/stand`
+  const route = type === "ITEM" ? `item/${renderId}/icon`
+    : type === "HAIR" || type === "FACE" ? `item/${renderId}/icon`
+    : type === "MOB" ? `mob/${renderId}/render/${mobAction}`
+    : type === "NPC" ? `npc/${renderId}/render/stand`
     : type === "SKILL" ? ""
-    : type === "MAP" ? `map/${id}/miniMap`
-    : `${type.toLowerCase()}/${id}/icon`;
+    : type === "MAP" ? `map/${renderId}/miniMap`
+    : `${type.toLowerCase()}/${renderId}/icon`;
   if (!route) return [];
   const primary = `https://maplestory.io/api/GMS/83/${route}`;
   if (type === "MOB") {
     return [...new Set([mobAction, "stand", "move", "fly"])]
-      .map(action => `https://maplestory.io/api/GMS/83/mob/${id}/render/${action}`);
+      .map(action => `https://maplestory.io/api/GMS/83/mob/${renderId}/render/${action}`);
   }
   return [primary];
 }

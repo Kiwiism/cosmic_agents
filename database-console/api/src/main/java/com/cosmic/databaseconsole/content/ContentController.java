@@ -203,9 +203,10 @@ public class ContentController {
                                    HttpServletRequest request) {
         game.update("INSERT INTO shops(npcid) VALUES (:npcId)", Map.of("npcId", body.npcId()));
         Long shopId = game.queryForObject("SELECT LAST_INSERT_ID()", Map.of(), Long.class);
+        boolean active = bridge.reloadShops();
         audit.record(principal, "SHOP_CREATE", "SHOP", shopId, body.reason(), null,
-                Map.of("shopId", shopId, "npcId", body.npcId()), "SAVED", request);
-        return Map.of("shopId", shopId, "npcId", body.npcId());
+                Map.of("shopId", shopId, "npcId", body.npcId()), active ? "ACTIVE" : "SAVED_RELOAD_PENDING", request);
+        return Map.of("shopId", shopId, "npcId", body.npcId(), "active", active);
     }
 
     @GetMapping("/shops/{shopId}/items")

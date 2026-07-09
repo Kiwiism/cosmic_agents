@@ -54,6 +54,7 @@ public class PlayerController {
     private final ObjectMapper json;
     private final Path wzPath;
     private Map<Integer, Map<String, Object>> questMetadataCache;
+    private Map<Integer, Integer> questInfoNumberOwners;
 
     public PlayerController(@Qualifier("gameJdbc") NamedParameterJdbcTemplate game, AuditService audit,
                             BridgeClient bridge, PasswordEncoder passwordEncoder, ObjectMapper json,
@@ -375,7 +376,7 @@ public class PlayerController {
                 WHERE qp.characterid = :characterId
                 ORDER BY qp.queststatusid, qp.progressid
                 """, Map.of("characterId", characterId));
-        return Map.of("quests", enrichQuestRows(quests), "progress", progress);
+        return Map.of("quests", enrichQuestRows(quests, progress), "progress", progress);
     }
 
     @PatchMapping("/characters/{characterId}/quests/{questId}")
@@ -1313,8 +1314,11 @@ public class PlayerController {
 
     private Map<String, Object> inventoryItem(long inventoryItemId, int characterId) {
         List<Map<String, Object>> rows = game.queryForList("""
-                SELECT i.*, e.* FROM inventoryitems i
+                SELECT i.*, e.*, c.name AS item_name, c.description, c.properties_json
+                FROM inventoryitems i
                 LEFT JOIN inventoryequipment e ON e.inventoryitemid = i.inventoryitemid
+                LEFT JOIN cosmic_database_console.catalog_entities c
+                  ON c.entity_type = 'ITEM' AND c.entity_id = i.itemid
                 WHERE i.inventoryitemid = :inventoryItemId AND i.characterid = :characterId
                 """, Map.of("inventoryItemId", inventoryItemId, "characterId", characterId));
         if (rows.isEmpty()) {
@@ -1325,8 +1329,11 @@ public class PlayerController {
 
     private Map<String, Object> equippedInventoryItem(int characterId, int position) {
         List<Map<String, Object>> rows = game.queryForList("""
-                SELECT i.*, e.* FROM inventoryitems i
+                SELECT i.*, e.*, c.name AS item_name, c.description, c.properties_json
+                FROM inventoryitems i
                 LEFT JOIN inventoryequipment e ON e.inventoryitemid = i.inventoryitemid
+                LEFT JOIN cosmic_database_console.catalog_entities c
+                  ON c.entity_type = 'ITEM' AND c.entity_id = i.itemid
                 WHERE i.characterid = :characterId AND i.inventorytype = -1 AND i.position = :position
                 ORDER BY i.inventoryitemid DESC LIMIT 1 FOR UPDATE
                 """, Map.of("characterId", characterId, "position", position));
@@ -1338,8 +1345,10 @@ public class PlayerController {
 
     private Map<String, Object> storageItem(long inventoryItemId, int storageId) {
         List<Map<String, Object>> rows = game.queryForList("""
-                SELECT i.*, e.* FROM inventoryitems i
+                SELECT i.*, e.*, c.name AS item_name, c.description, c.properties_json
+                FROM inventoryitems i
                 LEFT JOIN inventoryequipment e ON e.inventoryitemid=i.inventoryitemid
+                LEFT JOIN cosmic_database_console.catalog_entities c ON c.entity_type='ITEM' AND c.entity_id=i.itemid
                 WHERE i.inventoryitemid=:itemId AND i.type=2 AND i.accountid=:storageId
                 """, Map.of("itemId", inventoryItemId, "storageId", storageId));
         if (rows.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage item not found");
@@ -1445,9 +1454,50 @@ public class PlayerController {
     }
 
     private List<Map<String, Object>> enrichQuestRows(List<Map<String, Object>> quests) {
+        return enrichQuestRows(quests, List.of());
+    }
+
+    private List<Map<String, Object>> enrichQuestRows(List<Map<String, Object>> quests,
+                                                      List<Map<String, Object>> progressRows) {
         List<Map<String, Object>> enriched = new ArrayList<>();
+        Map<Integer, Integer> infoOwners = questInfoNumberOwners();
+        Map<Integer, List<Map<String, Object>>> infoRowsByOwner = new HashMap<>();
+        Map<Integer, List<Map<String, Object>>> progressByStatusId = new HashMap<>();
+        for (Map<String, Object> progress : progressRows) {
+            if (progress.get("queststatusid") instanceof Number statusId) {
+                progressByStatusId.computeIfAbsent(statusId.intValue(), ignored -> new ArrayList<>()).add(progress);
+            }
+        }
         for (Map<String, Object> quest : quests) {
-            enriched.add(enrichedQuestRow(quest));
+            Integer questId = quest.get("quest") instanceof Number number ? number.intValue() : null;
+            Integer owner = questId == null ? null : infoOwners.get(questId);
+            if (owner != null) {
+                Map<String, Object> infoRow = new LinkedHashMap<>(quest);
+                infoRow.put("info_number", questId);
+                infoRow.put("owner_quest", owner);
+                if (quest.get("queststatusid") instanceof Number statusId) {
+                    infoRow.put("progress_rows", progressByStatusId.getOrDefault(statusId.intValue(), List.of()));
+                }
+                infoRowsByOwner.computeIfAbsent(owner, ignored -> new ArrayList<>()).add(infoRow);
+                continue;
+            }
+            Map<String, Object> row = enrichedQuestRow(quest);
+            if (questId != null) {
+                List<Map<String, Object>> infoRows = infoRowsByOwner.get(questId);
+                if (infoRows != null) {
+                    row.put("info_storage", infoRows);
+                }
+            }
+            enriched.add(row);
+        }
+        for (Map<String, Object> row : enriched) {
+            Object questId = row.get("quest");
+            if (questId instanceof Number number && !row.containsKey("info_storage")) {
+                List<Map<String, Object>> infoRows = infoRowsByOwner.get(number.intValue());
+                if (infoRows != null) {
+                    row.put("info_storage", infoRows);
+                }
+            }
         }
         return enriched;
     }
@@ -1552,6 +1602,22 @@ public class PlayerController {
         }
     }
 
+    private synchronized Map<Integer, Integer> questInfoNumberOwners() {
+        if (questInfoNumberOwners != null) {
+            return questInfoNumberOwners;
+        }
+        Map<Integer, Integer> owners = new HashMap<>();
+        Path file = wzPath.resolve("Quest.wz").resolve("Check.img.xml");
+        if (Files.isRegularFile(file)) {
+            Document document = parseXml(file);
+            if (document != null) {
+                collectQuestInfoNumberOwners(document.getDocumentElement(), owners);
+            }
+        }
+        questInfoNumberOwners = owners;
+        return questInfoNumberOwners;
+    }
+
     private Document parseXml(Path file) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -1600,6 +1666,25 @@ public class PlayerController {
             }
             if (!ids.isEmpty()) {
                 npcIds.put(questId, ids);
+            }
+        }
+    }
+
+    private void collectQuestInfoNumberOwners(Element root, Map<Integer, Integer> owners) {
+        for (Element quest : elementChildren(root)) {
+            Integer questId = numericName(quest);
+            if (questId == null) {
+                continue;
+            }
+            for (Element phase : elementChildren(quest)) {
+                for (Element value : elementChildren(phase)) {
+                    if ("int".equals(value.getTagName()) && "infoNumber".equals(value.getAttribute("name"))) {
+                        Integer infoNumber = parseInteger(value.getAttribute("value"));
+                        if (infoNumber != null) {
+                            owners.put(infoNumber, questId);
+                        }
+                    }
+                }
             }
         }
     }
@@ -1694,7 +1779,7 @@ public class PlayerController {
             return Map.of("properties", Map.of(), "npcs", List.of(), "items", List.of(),
                     "mobs", List.of(), "quests", List.of(), "jobs", List.of(), "raw", Map.of());
         }
-        Map<String, Object> properties = scalarChildren(phase);
+        Map<String, Object> properties = enrichQuestPhaseProperties(scalarChildren(phase));
         List<Map<String, Object>> npcs = new ArrayList<>();
         Object npc = properties.get("npc");
         if (npc instanceof Number id) {
@@ -1723,9 +1808,17 @@ public class PlayerController {
             int id = values.get("id") instanceof Number number ? number.intValue() : parseInteger(entry.getAttribute("value")) == null ? 0 : parseInteger(entry.getAttribute("value"));
             int count = values.get("count") instanceof Number number ? number.intValue() : 0;
             if ("JOB".equals(type)) {
-                id = parseInteger(entry.getAttribute("value")) == null ? id : parseInteger(entry.getAttribute("value"));
-                if (id == 0 && values.get(entry.getAttribute("name")) instanceof Number number) {
-                    id = number.intValue();
+                Integer direct = parseInteger(entry.getAttribute("value"));
+                if (direct != null) {
+                    id = direct;
+                } else {
+                    for (Element child : elementChildren(entry)) {
+                        Integer value = parseInteger(child.getAttribute("value"));
+                        if (value != null) {
+                            id = value;
+                            break;
+                        }
+                    }
                 }
             }
             Map<String, Object> row = new LinkedHashMap<>(values);
@@ -1734,9 +1827,39 @@ public class PlayerController {
             row.put("id", id);
             row.put("count", count);
             row.put("name", questReferenceName(type, id));
+            if ("QUEST".equals(type)) {
+                addQuestIconNpc(row, id);
+            }
             rows.add(row);
         }
         return rows;
+    }
+
+    private void addQuestIconNpc(Map<String, Object> row, int questId) {
+        Object npcs = questMetadata(questId).get("quest_npcs");
+        if (!(npcs instanceof List<?> list) || list.isEmpty() || !(list.getFirst() instanceof Map<?, ?> npc)) {
+            return;
+        }
+        Object id = npc.get("id");
+        if (id instanceof Number number) {
+            Object name = npc.get("name");
+            row.put("iconNpcId", number.intValue());
+            row.put("iconNpcName", name == null ? "NPC " + number.intValue() : String.valueOf(name));
+        }
+    }
+
+    private Map<String, Object> enrichQuestPhaseProperties(Map<String, Object> properties) {
+        Map<String, Object> enriched = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            enriched.put(entry.getKey(), entry.getValue());
+            if ("npc".equals(entry.getKey()) && entry.getValue() instanceof Number npcId) {
+                enriched.put("npcName", questReferenceName("NPC", npcId.intValue()));
+            }
+            if ("nextQuest".equals(entry.getKey()) && entry.getValue() instanceof Number questId) {
+                enriched.put("nextQuestName", questReferenceName("QUEST", questId.intValue()));
+            }
+        }
+        return enriched;
     }
 
     private Map<String, Object> catalogRef(String type, int id, int count, String slot) {
@@ -1750,12 +1873,6 @@ public class PlayerController {
     }
 
     private String questReferenceName(String type, int id) {
-        if (id <= 0) {
-            return type + " " + id;
-        }
-        if ("QUEST".equals(type)) {
-            return questInfoName(questElement("QuestInfo.img.xml", id), id);
-        }
         if ("JOB".equals(type)) {
             try {
                 List<Map<String, Object>> rows = game.queryForList("""
@@ -1767,6 +1884,12 @@ public class PlayerController {
             } catch (Exception ignored) {
             }
             return "Job " + id;
+        }
+        if (id <= 0) {
+            return type + " " + id;
+        }
+        if ("QUEST".equals(type)) {
+            return questInfoName(questElement("QuestInfo.img.xml", id), id);
         }
         try {
             List<Map<String, Object>> rows = game.queryForList("""

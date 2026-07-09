@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, LucideIcon, Moon, Sun } from "lucide-react";
+import { ChevronDown, ChevronRight, LucideIcon, Moon, Settings, Sun } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
 
 export type ConsoleNavItem<T extends string> = {
@@ -27,6 +27,7 @@ type ConsoleShellProps<T extends string> = {
   sidebarStatus: ReactNode;
   theme?: "light" | "dark";
   onToggleTheme?: () => void;
+  onOpenSettings?: () => void;
   children: ReactNode;
   inspector?: ReactNode;
 };
@@ -46,6 +47,7 @@ export function ConsoleShell<T extends string>({
   sidebarStatus,
   theme = "light",
   onToggleTheme,
+  onOpenSettings,
   children,
   inspector,
 }: ConsoleShellProps<T>) {
@@ -68,17 +70,30 @@ export function ConsoleShell<T extends string>({
         </nav>
         <div className="console-sidebar-footer">
           <div className="console-sidebar-status">{sidebarStatus}</div>
-          {onToggleTheme && (
-            <button
-              type="button"
-              className="theme-toggle"
-              onClick={onToggleTheme}
-              title={theme === "dark" ? "Switch to day mode" : "Switch to night mode"}
-              aria-label={theme === "dark" ? "Switch to day mode" : "Switch to night mode"}
-            >
-              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-          )}
+          <div className="console-footer-actions">
+            {onOpenSettings && (
+              <button
+                type="button"
+                className="theme-toggle settings-toggle"
+                onClick={onOpenSettings}
+                title="Open quality color settings"
+                aria-label="Open quality color settings"
+              >
+                <Settings size={17} />
+              </button>
+            )}
+            {onToggleTheme && (
+              <button
+                type="button"
+                className="theme-toggle"
+                onClick={onToggleTheme}
+                title={theme === "dark" ? "Switch to day mode" : "Switch to night mode"}
+                aria-label={theme === "dark" ? "Switch to day mode" : "Switch to night mode"}
+              >
+                {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+              </button>
+            )}
+          </div>
         </div>
       </aside>
       <main className="console-main">

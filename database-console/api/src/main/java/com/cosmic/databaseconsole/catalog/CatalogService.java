@@ -196,8 +196,11 @@ public class CatalogService {
                     """, id));
         } else if ("NPC".equals(type)) {
             result.put("shops", game.queryForList("""
-                    SELECT s.shopid, COUNT(si.shopitemid) item_count FROM shops s
-                    LEFT JOIN shopitems si ON si.shopid=s.shopid WHERE s.npcid=:id GROUP BY s.shopid
+                    SELECT s.shopid, s.npcid, n.name npc_name, COUNT(si.shopitemid) item_count FROM shops s
+                    LEFT JOIN shopitems si ON si.shopid=s.shopid
+                    LEFT JOIN cosmic_database_console.catalog_entities n
+                      ON n.entity_type='NPC' AND n.entity_id=s.npcid
+                    WHERE s.npcid=:id GROUP BY s.shopid, s.npcid, n.name
                     """, Map.of("id", id)));
             result.put("locations", jdbc.queryForList("""
                     SELECT ml.map_id, m.name map_name, ml.region_code, ml.region_name, ml.spawn_count,
