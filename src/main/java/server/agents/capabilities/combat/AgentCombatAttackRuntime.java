@@ -1,19 +1,9 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
-import server.agents.capabilities.combat.AgentCombatAlertRuntime;
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
-
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 
 import client.Character;
 import net.server.channel.handlers.AbstractDealDamageHandler;
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentAttackRoute;
-import server.agents.capabilities.combat.AgentCombatAttackExecutionPolicy;
-import server.agents.capabilities.combat.AgentCombatFacingRuntime;
-import server.agents.capabilities.combat.AgentCombatRangePolicy;
-import server.agents.capabilities.combat.AgentCombatSkillUsePolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;

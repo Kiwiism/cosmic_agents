@@ -2312,7 +2312,7 @@ Recent map updates:
 | `src/main/java/server/bots/combat/BotDefenseDataProvider.java` | `server.agents.capabilities.combat.data.AgentDefenseDataProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotMobHitboxProvider.java` | `server.agents.capabilities.combat.data.AgentMobHitboxProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotWzXml.java` | `server.agents.capabilities.combat.data.AgentWzXml` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.runtime.AgentLocalOpportunityAttackRuntime`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.integration.AgentCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
+| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.runtime.AgentLocalOpportunityAttackRuntime`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.capabilities.combat.AgentCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
 | `src/main/java/server/bots/BotManager.java#grind-combat-helpers` | `server.agents.runtime.AgentGrindCombatRuntime` | `MIGRATED_TO_AGENT`; AoE reposition and priority ranged target callbacks now accept `AgentRuntimeEntry` while preserving AoE anchor and ranged-threat selection behavior |
 | `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotLlmReplyManager.java` | `server.agents.capabilities.dialogue.llm.AgentLlmReplyService` | `MIGRATED_TO_AGENT`; LLM reply bridge now accepts `AgentRuntimeEntry` |
@@ -2379,3 +2379,8 @@ Recent capability extraction notes:
   graph-cost reachability, patrol filtering, immediate projectile targeting,
   and sibling occupancy penalties while leaving live leader/session lookup as
   integration seams.
+- `AgentCombatAttackRuntime` now lives in
+  `server.agents.capabilities.combat`. It preserves attack readiness, packet
+  attack-info construction, damage target construction, route application,
+  cooldown, facing, and alert behavior while leaving route application behind
+  the existing execution provider seam.

@@ -6301,6 +6301,12 @@ Current physics correction:
   projectile targeting, local target scoring, patrol-region filtering, and
   sibling occupancy penalties; live leader/sibling session lookup remains an
   explicit integration seam.
+- Combat attack execution orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatAttackRuntime`. It preserves
+  readiness checks, skill-cost checks, range checks, attack-info construction,
+  damage profile/target construction, route application, cooldown updates,
+  facing memory, and alert marking; packet-visible route application remains
+  behind the existing attack execution provider seam.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

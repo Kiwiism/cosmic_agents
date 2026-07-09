@@ -16,7 +16,7 @@ import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
 import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
-import server.agents.integration.AgentCombatAttackRuntime;
+import server.agents.capabilities.combat.AgentCombatAttackRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetRuntime;
 
 import java.awt.Point;
