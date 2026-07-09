@@ -273,7 +273,10 @@ public final class AgentInventoryTransferService {
                 AgentEquipTradeClassificationService.ClassificationCallbacks.of(
                         () -> AgentTradeCommandProfiler.profileCategory("equips"),
                         () -> TRADE_COMMAND_PROFILE_WARN_NS,
-                        AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
+                        character -> AgentEquipTradeClassificationService.ClassificationCallbacks.collectEquipBag(
+                                character,
+                                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                                YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE),
                         AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                         item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
                         () -> AgentRuntimeIdentityRuntime.owner(entry),

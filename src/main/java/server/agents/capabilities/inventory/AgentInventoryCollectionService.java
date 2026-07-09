@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.function.IntPredicate;
@@ -14,12 +14,15 @@ public final class AgentInventoryCollectionService {
     private AgentInventoryCollectionService() {
     }
 
-    public static List<Item> collectFromBag(Character agent, InventoryType type, Predicate<Item> filter) {
+    public static List<Item> collectFromBag(Character agent,
+                                            InventoryType type,
+                                            Predicate<Item> filter,
+                                            InventoryGateway inventory) {
         return collectFromBag(
                 agent,
                 type,
                 filter,
-                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                inventory::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 

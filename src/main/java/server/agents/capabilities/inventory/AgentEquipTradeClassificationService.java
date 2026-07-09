@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -127,8 +128,15 @@ public final class AgentEquipTradeClassificationService {
             };
         }
 
-        static List<Item> collectEquipBag(Character agent) {
-            return AgentInventoryCollectionService.collectFromBag(agent, InventoryType.EQUIP, item -> true);
+        static List<Item> collectEquipBag(Character agent,
+                                          IntPredicate isQuestItem,
+                                          boolean untradeableItemsTradeable) {
+            return AgentInventoryCollectionService.collectFromBag(
+                    agent,
+                    InventoryType.EQUIP,
+                    item -> true,
+                    isQuestItem,
+                    untradeableItemsTradeable);
         }
     }
 

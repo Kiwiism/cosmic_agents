@@ -6581,6 +6581,12 @@ Current physics correction:
   Normalized query matching, cached item-name normalization, quest-item
   filtering, trade collection, drop-by-name behavior, and transfer counts are
   unchanged.
+- SPI/gateway extraction: shared safe bag collection now receives
+  `InventoryGateway`/explicit quest-item predicates from inventory/trade
+  runtime callers instead of reaching for the Cosmic adapter inside
+  `AgentInventoryCollectionService`. Slot-order traversal, untradeable rules,
+  quest-item filtering, equip-bag grouping, scroll/potion/buff/etc collection,
+  and trade classification behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

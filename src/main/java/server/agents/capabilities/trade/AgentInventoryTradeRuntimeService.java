@@ -58,7 +58,10 @@ public final class AgentInventoryTradeRuntimeService {
                 AgentEquipTradeCallbackService.equipTradeCallbacks(
                         callbacks::profileEquips,
                         AgentEquipTradeSlowLogService::slowWarnNs,
-                        AgentEquipTradeClassificationService.ClassificationCallbacks::collectEquipBag,
+                        character -> AgentEquipTradeClassificationService.ClassificationCallbacks.collectEquipBag(
+                                character,
+                                callbacks::isQuestItem,
+                                callbacks.untradeableItemsTradeable()),
                         callbacks::collectPotentialSelfUpgradeItems,
                         callbacks::isReservedForOtherRecipients,
                         callbacks::owner,

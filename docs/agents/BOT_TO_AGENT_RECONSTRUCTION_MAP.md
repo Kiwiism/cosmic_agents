@@ -2619,3 +2619,8 @@ Recent capability extraction notes:
   and quest-item metadata. Normalized query matching, cached normalized names,
   safe-item filtering, named trade collection, drop-by-name matching, and
   transfer count behavior stay unchanged.
+- SPI/gateway extraction: `AgentInventoryCollectionService` now receives
+  `InventoryGateway` or explicit quest-item predicates from callers for safe
+  bag collection. Inventory/trade/equip-group callers still own category
+  selection, priority ordering, grouping, and callback wiring; safe-item
+  filtering and slot-order traversal stay unchanged.

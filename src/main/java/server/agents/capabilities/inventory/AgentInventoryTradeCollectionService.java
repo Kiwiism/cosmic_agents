@@ -60,13 +60,16 @@ public final class AgentInventoryTradeCollectionService {
             }
             case "scrolls" -> {
                 result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.USE,
-                        item -> ItemConstants.isEquipScroll(item.getItemId())));
+                        item -> ItemConstants.isEquipScroll(item.getItemId()),
+                        CosmicAgentServerAdapter.INSTANCE.inventory()));
                 result = AgentInventoryTradePolicy.prioritizeScrollTradeItems(result, owner);
             }
             case "pots" -> result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.USE,
-                    item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId())));
+                    item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()),
+                    CosmicAgentServerAdapter.INSTANCE.inventory()));
             case "buff" -> result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.USE,
-                    item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId())));
+                    item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()),
+                    CosmicAgentServerAdapter.INSTANCE.inventory()));
             case "use" -> {
                 UseTradeGroups groups = classifyUseTradeGroups(agent, owner);
                 result.addAll(groups.uncategorized());
@@ -80,7 +83,11 @@ public final class AgentInventoryTradeCollectionService {
             case "equips" -> result.addAll(AgentEquipTradeGroupService.allTradeItems(equipGroups.get()));
             case "trash" -> result.addAll(equipGroups.get().itemsFor(EquipsGroup.NORMAL));
             case "etc" -> {
-                result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.ETC, item -> true));
+                result.addAll(AgentInventoryCollectionService.collectFromBag(
+                        agent,
+                        InventoryType.ETC,
+                        item -> true,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()));
                 result = AgentInventoryTradePolicy.prioritizeEtcTradeItems(result, owner);
             }
             default -> {
