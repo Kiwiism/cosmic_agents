@@ -6470,6 +6470,10 @@ Current physics correction:
 - SPI/gateway extraction: common buff-pot active/available item names now route
   through `InventoryGateway`. Buff selection, cheap/best scoring, active-buff
   detection, item consumption, and dialogue formatting are unchanged.
+- SPI/gateway extraction: combat attack execution now routes equipped-weapon
+  type and two-handed metadata through `InventoryGateway`. Attack route
+  selection, skill animation resolution, degenerate ranged handling, retreat
+  checks, hitbox construction, and packet fields are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

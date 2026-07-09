@@ -15,6 +15,8 @@ import net.server.channel.handlers.MagicDamageHandler;
 import net.server.channel.handlers.RangedAttackHandler;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public final class AgentAttackExecutionProvider {
             return fallbackBasicAttackData(targetPosition.x < bot.getPosition().x, 4, null, bot, targetPosition);
         }
 
-        WeaponType weaponType = server.ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
+        WeaponType weaponType = inventory().getWeaponType(weapon.getItemId());
         boolean facingLeft = targetPosition.x < bot.getPosition().x;
         return buildBasicAttackDataFromProfile(attackProfile, weaponType, facingLeft, bot, targetPosition);
     }
@@ -308,7 +310,7 @@ public final class AgentAttackExecutionProvider {
             return null;
         }
 
-        return server.ItemInformationProvider.getInstance().getWeaponType(weapon.getItemId());
+        return inventory().getWeaponType(weapon.getItemId());
     }
 
     public static boolean shouldDegenerateRangedAttack(WeaponType weaponType, Point botPos, Point targetPos) {
@@ -592,7 +594,11 @@ public final class AgentAttackExecutionProvider {
             return false;
         }
 
-        return server.ItemInformationProvider.getInstance().isTwoHanded(weapon.getItemId());
+        return inventory().isTwoHandedWeapon(weapon.getItemId());
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 
     private static boolean isRangedSkill(int skillId) {

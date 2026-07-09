@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.inventory.Equip;
 import client.Character;
+import client.inventory.WeaponType;
 import server.StatEffect;
 
 import java.util.Map;
@@ -22,5 +23,9 @@ public interface InventoryGateway {
     Map<String, Integer> getEquipStats(int itemId);
 
     Equip getEquipById(int itemId);
+
+    WeaponType getWeaponType(int itemId);
+
+    boolean isTwoHandedWeapon(int itemId);
 }
 

@@ -2514,3 +2514,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: common buff-pot active/available item names now use
   `InventoryGateway`; buff eligibility, cheap/best selection, active-buff
   detection, item consumption, and report text stay unchanged.
+- SPI/gateway extraction: combat attack execution now uses `InventoryGateway`
+  for equipped-weapon type and two-handed metadata; basic/skill route
+  selection, animation action sampling, hitbox calculation, retreat behavior,
+  and packet fields stay unchanged.

@@ -2,6 +2,7 @@ package server.agents.integration.cosmic;
 
 import client.Character;
 import client.inventory.Equip;
+import client.inventory.WeaponType;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.agents.integration.InventoryGateway;
@@ -52,5 +53,15 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     @Override
     public Equip getEquipById(int itemId) {
         return (Equip) ItemInformationProvider.getInstance().getEquipById(itemId);
+    }
+
+    @Override
+    public WeaponType getWeaponType(int itemId) {
+        return ItemInformationProvider.getInstance().getWeaponType(itemId);
+    }
+
+    @Override
+    public boolean isTwoHandedWeapon(int itemId) {
+        return ItemInformationProvider.getInstance().isTwoHanded(itemId);
     }
 }
