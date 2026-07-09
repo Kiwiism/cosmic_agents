@@ -8,19 +8,16 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntPredicate;
 import java.util.function.Function;
 
 public final class AgentEquippedSlotTradeService {
-    static IntPredicate cashItemLookup = itemId -> CosmicAgentServerAdapter.INSTANCE.inventory().isCashItem(itemId);
-
     public record PreparedTradeItems(List<Item> items, String errorMessage) {
     }
 
@@ -29,13 +26,15 @@ public final class AgentEquippedSlotTradeService {
 
     public static boolean hasEquippedSlotItems(Character agent,
                                                String fragment,
-                                               Function<String, short[]> slotResolver) {
-        return countEquippedSlotItems(agent, fragment, slotResolver) > 0;
+                                               Function<String, short[]> slotResolver,
+                                               InventoryGateway inventory) {
+        return countEquippedSlotItems(agent, fragment, slotResolver, inventory) > 0;
     }
 
     public static int countEquippedSlotItems(Character agent,
                                              String fragment,
-                                             Function<String, short[]> slotResolver) {
+                                             Function<String, short[]> slotResolver,
+                                             InventoryGateway inventory) {
         short[] slots = slotResolver.apply(fragment);
         if (slots.length == 0) {
             return 0;
@@ -45,7 +44,7 @@ public final class AgentEquippedSlotTradeService {
         int total = 0;
         for (short slot : slots) {
             Item item = equipped.getItem(slot);
-            if (item != null && !cashItemLookup.test(item.getItemId())) {
+            if (item != null && !inventory.isCashItem(item.getItemId())) {
                 total++;
             }
         }
@@ -56,6 +55,7 @@ public final class AgentEquippedSlotTradeService {
                                                                    AgentRuntimeEntry entry,
                                                                    Character agent,
                                                                    Function<String, short[]> slotResolver,
+                                                                   InventoryGateway inventory,
                                                                    Runnable restoreTemporarilyUnequippedItems) {
         short[] slots = slotResolver.apply(fragment);
         if (slots.length == 0) {
@@ -67,7 +67,7 @@ public final class AgentEquippedSlotTradeService {
         List<Short> occupiedSlots = new ArrayList<>();
         for (short slot : slots) {
             Item item = equipped.getItem(slot);
-            if (item != null && !cashItemLookup.test(item.getItemId())) {
+            if (item != null && !inventory.isCashItem(item.getItemId())) {
                 occupiedSlots.add(slot);
             }
         }

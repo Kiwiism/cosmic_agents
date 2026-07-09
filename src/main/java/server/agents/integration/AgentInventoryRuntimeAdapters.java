@@ -100,7 +100,11 @@ public final class AgentInventoryRuntimeAdapters {
         return AgentTradeTransferAvailabilityRuntimeService.RuntimeCallbacks.of(
                 AgentRuntimeIdentityRuntime::owner,
                 (agent, fragment) -> AgentInventoryNamedItemService.countNamedItems(agent, fragment, inventory()),
-                (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName));
+                (agent, fragment) -> AgentEquippedSlotTradeService.countEquippedSlotItems(
+                        agent,
+                        fragment,
+                        AgentEquipmentService::slotsFromName,
+                        inventory()));
     }
 
     public static AgentInventoryTradeRuntimeService.RuntimeCallbacks tradeRuntimeCallbacks(AgentRuntimeEntry entry, Character agent) {

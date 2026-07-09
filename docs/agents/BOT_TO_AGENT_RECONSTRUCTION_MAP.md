@@ -2649,3 +2649,9 @@ Recent capability extraction notes:
   safe-item checks, quest-item filtering, named-item matching, item dropping,
   and legacy reply text stay unchanged while drop behavior no longer reaches
   directly for the Cosmic adapter.
+- SPI/gateway extraction: `AgentEquippedSlotTradeService` now receives
+  `InventoryGateway` from transfer/runtime callers. Cash-equipped item
+  filtering, equipped-slot counts, temporary unequip movement, restore-slot
+  tracking, full-bag failure replies, and restoration behavior stay unchanged
+  while equipped-slot trade preparation no longer reaches directly for the
+  Cosmic adapter.

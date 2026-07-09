@@ -6613,6 +6613,11 @@ Current physics correction:
   Cosmic adapter inside `AgentInventoryDropService`. Drop-limit checks, safe
   item filtering, named-item matching, drop execution, and legacy reply text
   are unchanged.
+- SPI/gateway extraction: equipped-slot trade preparation now receives
+  `InventoryGateway` from transfer and runtime callers instead of reaching for
+  the Cosmic adapter inside `AgentEquippedSlotTradeService`. Cash-item skipping,
+  equipped-slot counting, temporary unequip ordering, restore-slot recording,
+  full-bag errors, and restore behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

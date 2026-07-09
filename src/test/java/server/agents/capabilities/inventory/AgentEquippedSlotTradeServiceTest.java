@@ -10,12 +10,12 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.function.IntPredicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,27 +33,25 @@ class AgentEquippedSlotTradeServiceTest {
         Inventory equipped = mock(Inventory.class);
         Item cashHat = item(1000);
         Item glove = item(1001);
-        IntPredicate oldCashItemLookup = AgentEquippedSlotTradeService.cashItemLookup;
-        AgentEquippedSlotTradeService.cashItemLookup = itemId -> itemId == 1000;
+        InventoryGateway inventory = inventoryGateway();
+        when(inventory.isCashItem(1000)).thenReturn(true);
 
-        try {
-            when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
-            when(equipped.getItem((short) -1)).thenReturn(cashHat);
-            when(equipped.getItem((short) -10)).thenReturn(glove);
+        when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(equipped.getItem((short) -1)).thenReturn(cashHat);
+        when(equipped.getItem((short) -10)).thenReturn(glove);
 
-            int count = AgentEquippedSlotTradeService.countEquippedSlotItems(
-                    agent,
-                    "style",
-                    ignored -> new short[]{-1, -10});
+        int count = AgentEquippedSlotTradeService.countEquippedSlotItems(
+                agent,
+                "style",
+                ignored -> new short[]{-1, -10},
+                inventory);
 
-            assertEquals(1, count);
-            assertTrue(AgentEquippedSlotTradeService.hasEquippedSlotItems(
-                    agent,
-                    "style",
-                    ignored -> new short[]{-1, -10}));
-        } finally {
-            AgentEquippedSlotTradeService.cashItemLookup = oldCashItemLookup;
-        }
+        assertEquals(1, count);
+        assertTrue(AgentEquippedSlotTradeService.hasEquippedSlotItems(
+                agent,
+                "style",
+                ignored -> new short[]{-1, -10},
+                inventory));
     }
 
     @Test
@@ -65,8 +63,7 @@ class AgentEquippedSlotTradeServiceTest {
         Item hat = item(1000);
         Item glove = item(1001);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        IntPredicate oldCashItemLookup = AgentEquippedSlotTradeService.cashItemLookup;
-        AgentEquippedSlotTradeService.cashItemLookup = itemId -> false;
+        InventoryGateway inventoryGateway = inventoryGateway();
 
         try (MockedStatic<InventoryManipulator> inventory = mockStatic(InventoryManipulator.class)) {
             when(agent.getClient()).thenReturn(client);
@@ -85,6 +82,7 @@ class AgentEquippedSlotTradeServiceTest {
                             entry,
                             agent,
                             ignored -> new short[]{-10, -1},
+                            inventoryGateway,
                             () -> {
                                 throw new AssertionError("restore should not run on success");
                             });
@@ -100,8 +98,6 @@ class AgentEquippedSlotTradeServiceTest {
             assertEquals(2, restoreSlots.size());
             assertEquals((short) -10, restoreSlots.get(glove));
             assertEquals((short) -1, restoreSlots.get(hat));
-        } finally {
-            AgentEquippedSlotTradeService.cashItemLookup = oldCashItemLookup;
         }
     }
 
@@ -112,31 +108,27 @@ class AgentEquippedSlotTradeServiceTest {
         Inventory equipBag = mock(Inventory.class);
         Item hat = item(1000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
-        IntPredicate oldCashItemLookup = AgentEquippedSlotTradeService.cashItemLookup;
-        AgentEquippedSlotTradeService.cashItemLookup = itemId -> false;
+        InventoryGateway inventory = inventoryGateway();
         Runnable restore = mock(Runnable.class);
 
-        try {
-            when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
-            when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equipBag);
-            when(equipped.getItem((short) -1)).thenReturn(hat);
-            when(equipBag.getNumFreeSlot()).thenReturn((short) 0);
+        when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equipBag);
+        when(equipped.getItem((short) -1)).thenReturn(hat);
+        when(equipBag.getNumFreeSlot()).thenReturn((short) 0);
 
-            AgentEquippedSlotTradeService.PreparedTradeItems prepared =
-                    AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
-                            "hat",
-                            entry,
-                            agent,
-                            ignored -> new short[]{-1},
-                            restore);
+        AgentEquippedSlotTradeService.PreparedTradeItems prepared =
+                AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
+                        "hat",
+                        entry,
+                        agent,
+                        ignored -> new short[]{-1},
+                        inventory,
+                        restore);
 
-            assertTrue(prepared.items().isEmpty());
-            assertEquals("equip bag full", prepared.errorMessage());
-            verify(restore, org.mockito.Mockito.never()).run();
-            assertFalse(AgentPendingTradeStateRuntime.hasRestoreSlots(entry));
-        } finally {
-            AgentEquippedSlotTradeService.cashItemLookup = oldCashItemLookup;
-        }
+        assertTrue(prepared.items().isEmpty());
+        assertEquals("equip bag full", prepared.errorMessage());
+        verify(restore, org.mockito.Mockito.never()).run();
+        assertFalse(AgentPendingTradeStateRuntime.hasRestoreSlots(entry));
     }
 
     @Test
@@ -170,6 +162,12 @@ class AgentEquippedSlotTradeServiceTest {
         Item item = mock(Item.class);
         when(item.getItemId()).thenReturn(itemId);
         return item;
+    }
+
+    private static InventoryGateway inventoryGateway() {
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        when(inventory.isCashItem(org.mockito.ArgumentMatchers.anyInt())).thenReturn(false);
+        return inventory;
     }
 }
 
