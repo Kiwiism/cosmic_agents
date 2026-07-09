@@ -6,11 +6,11 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 import client.Character;
 import constants.game.CharacterStance;
 import constants.id.MobId;
-import server.life.LifeFactory;
 import server.life.Monster;
 import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentLifeGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
@@ -210,7 +210,7 @@ public final class AgentAirshowService {
         }
         AgentAirshowStateRuntime.markTrail(entry, now);
 
-        Monster trail = LifeFactory.getMonster(MobId.ORANGE_MUSHROOM);
+        Monster trail = AgentLifeGatewayRuntime.life().getMonster(MobId.ORANGE_MUSHROOM);
         if (trail == null) {
             return;
         }

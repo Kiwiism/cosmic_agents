@@ -2840,3 +2840,7 @@ Recent capability extraction notes:
   through `InventoryGateway.removeById` and `InventoryGateway.addItem`. Coupon
   thresholds, pass grant behavior, event-grid reset, and delivery flow remain
   unchanged.
+- SPI/gateway extraction: `LifeGateway`/`CosmicLifeGateway` now own live
+  `LifeFactory` monster creation. `AgentAirshowService` uses
+  `AgentLifeGatewayRuntime` for trail monster creation while visual trail
+  behavior remains unchanged.

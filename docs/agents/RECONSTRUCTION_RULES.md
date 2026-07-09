@@ -6807,6 +6807,11 @@ Current physics correction:
   importing `InventoryManipulator` in `AgentKpqStage1`. Coupon-count gating,
   pass grant, grid-question reset, and queued pass-delivery dialogue are
   unchanged.
+- SPI/gateway extraction: airshow trail monster creation now calls
+  `AgentLifeGatewayRuntime`/`LifeGateway.getMonster` instead of importing
+  `LifeFactory` in `AgentAirshowService`. Trail monster id, object id,
+  position, foothold, stance, spawn packet, and delayed removal behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
