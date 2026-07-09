@@ -4,6 +4,7 @@ import client.Character;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
+import server.agents.integration.AgentPartyGatewayRuntime;
 
 /**
  * Agent-owned party lifecycle side effects for live Agent sessions.
@@ -24,7 +25,7 @@ public final class AgentPartyLifecycleService {
                 agent.updatePartyMemberHP();
                 return;
             }
-            Party.leaveParty(agentParty, agent.getClient());
+            AgentPartyGatewayRuntime.party().leaveCurrentParty(agent);
         }
         Party leaderParty = leader.getParty();
         if (leaderParty == null) {

@@ -2929,3 +2929,7 @@ Recent capability extraction notes:
   transactions through `ShopGateway.buy`; live `Shop.buyDirect` dispatch is
   isolated in `CosmicShopGateway`. Batch and affordable-partial purchase logic,
   transaction-result handling, shortfall reports, and timings remain unchanged.
+- SPI/gateway extraction: `AgentPartyLifecycleService` now routes party
+  departure through `PartyGateway.leaveCurrentParty`; live `Party.leaveParty`
+  client dispatch is isolated in `CosmicPartyGateway`. Same-party checks and
+  leave-before-join ordering remain unchanged.

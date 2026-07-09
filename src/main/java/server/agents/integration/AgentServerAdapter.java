@@ -15,6 +15,8 @@ public interface AgentServerAdapter {
 
     TradeGateway trade();
 
+    PartyGateway party();
+
     LifeGateway life();
 
     SkillGateway skills();

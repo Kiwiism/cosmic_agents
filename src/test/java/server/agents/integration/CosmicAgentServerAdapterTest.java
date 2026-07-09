@@ -7,6 +7,7 @@ import server.agents.integration.cosmic.CosmicCombatGateway;
 import server.agents.integration.cosmic.CosmicInventoryGateway;
 import server.agents.integration.cosmic.CosmicMapGateway;
 import server.agents.integration.cosmic.CosmicPacketGateway;
+import server.agents.integration.cosmic.CosmicPartyGateway;
 import server.agents.integration.cosmic.CosmicShopGateway;
 import server.agents.integration.cosmic.CosmicTradeGateway;
 
@@ -46,5 +47,10 @@ class CosmicAgentServerAdapterTest {
     @Test
     void exposesCosmicTradeGateway() {
         assertSame(CosmicTradeGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.trade());
+    }
+
+    @Test
+    void exposesCosmicPartyGateway() {
+        assertSame(CosmicPartyGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.party());
     }
 }

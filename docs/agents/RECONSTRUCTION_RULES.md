@@ -6930,6 +6930,12 @@ Current physics correction:
   full-price attempts, affordable partial retries, transaction-result mapping,
   and shortfall reports are unchanged. Live direct purchase dispatch is
   isolated in `CosmicShopGateway`.
+- SPI/gateway extraction: Agent party departure now calls
+  `AgentPartyGatewayRuntime`/`PartyGateway.leaveCurrentParty` instead of
+  invoking `Party.leaveParty(agentParty, agent.getClient())` inside
+  `AgentPartyLifecycleService`. Existing same-party detection, leave-before-
+  join ordering, and subsequent create/join behavior are unchanged. Live
+  Cosmic party/client departure is isolated in `CosmicPartyGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
