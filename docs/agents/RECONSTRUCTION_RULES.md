@@ -6960,6 +6960,11 @@ Current physics correction:
   `TradeGateway.currentWindow`. Window identity, partner traversal, trade chat,
   item/meso offers, confirmation state, and tick ordering are unchanged. The
   generic integration package no longer imports `server.Trade`.
+- SPI/gateway extraction: party-channel reply delivery now calls
+  `PartyGateway.sendPartyChat` instead of reading `Party` and dispatching through
+  the live world server inside `AgentReplyRuntime`. Chat sanitization, party/
+  client/world availability checks, speaker name, and map-chat fallback remain
+  unchanged. Live party delivery is isolated in `CosmicPartyGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -2951,3 +2951,7 @@ Recent capability extraction notes:
   `AgentTradeWindow` through `TradeGateway.currentWindow`, leaving the generic
   integration package free of `server.Trade` while preserving all trade-window
   behavior and timing.
+- SPI/gateway extraction: `AgentReplyRuntime` now routes party-channel delivery
+  through `PartyGateway.sendPartyChat`; live party/world-server dispatch is
+  isolated in `CosmicPartyGateway`. Sanitization, availability checks, speaker
+  identity, and map-chat fallback remain unchanged.

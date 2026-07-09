@@ -34,4 +34,14 @@ public final class CosmicPartyGateway implements PartyGateway {
         partyCharacter.setMapId(agent.getMapId());
         agent.getWorldServer().updateParty(partyId, PartyOperation.LOG_ONOFF, partyCharacter);
     }
+
+    @Override
+    public boolean sendPartyChat(Character speaker, String message) {
+        Party party = speaker.getParty();
+        if (party == null || speaker.getClient() == null || speaker.getClient().getWorldServer() == null) {
+            return false;
+        }
+        speaker.getClient().getWorldServer().partyChat(party, message, speaker.getName());
+        return true;
+    }
 }

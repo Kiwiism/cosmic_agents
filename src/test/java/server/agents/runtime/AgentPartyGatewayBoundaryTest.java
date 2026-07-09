@@ -16,6 +16,8 @@ class AgentPartyGatewayBoundaryTest {
                 "src/main/java/server/agents/runtime/AgentPartyLifecycleService.java"));
         String gateway = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/cosmic/CosmicPartyGateway.java"));
+        String replies = Files.readString(Path.of(
+                "src/main/java/server/agents/integration/AgentReplyRuntime.java"));
 
         assertFalse(lifecycle.contains("Party.leaveParty("));
         assertFalse(lifecycle.contains("Party.createParty("));
@@ -31,5 +33,9 @@ class AgentPartyGatewayBoundaryTest {
         assertTrue(gateway.contains("Party.joinParty(agent, partyId, true)"));
         assertTrue(gateway.contains("new PartyCharacter(agent)"));
         assertTrue(gateway.contains("PartyOperation.LOG_ONOFF"));
+        assertFalse(replies.contains("import net.server.world.Party"));
+        assertFalse(replies.contains("getWorldServer().partyChat("));
+        assertTrue(replies.contains("AgentPartyGatewayRuntime.party().sendPartyChat("));
+        assertTrue(gateway.contains("getWorldServer().partyChat(party, message, speaker.getName())"));
     }
 }
