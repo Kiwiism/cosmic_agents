@@ -5,7 +5,6 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 
@@ -26,6 +25,15 @@ public final class AgentEquipmentPlanExecutor {
                                       Map<Short, Equip> picks,
                                       Equip targetWeapon,
                                       List<Short> dpSlots) {
+        applyEquipPlan(agent, currentBySlot, picks, targetWeapon, dpSlots, AgentInventoryGatewayRuntime.inventory());
+    }
+
+    static void applyEquipPlan(Character agent,
+                               Map<Short, Equip> currentBySlot,
+                               Map<Short, Equip> picks,
+                               Equip targetWeapon,
+                               List<Short> dpSlots,
+                               InventoryGateway inventory) {
         List<Short> order = new ArrayList<>();
         order.add((short) -11);
         if (dpSlots.contains((short) -5)) {
@@ -51,8 +59,7 @@ public final class AgentEquipmentPlanExecutor {
             if (position <= 0) {
                 continue;
             }
-            InventoryManipulator.handleItemMove(agent.getClient(), InventoryType.EQUIP,
-                    position, slot, (short) 1);
+            inventory.moveItem(agent, InventoryType.EQUIP, position, slot, (short) 1);
         }
     }
 

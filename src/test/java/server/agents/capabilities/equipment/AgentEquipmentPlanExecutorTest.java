@@ -5,7 +5,9 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.InventoryGateway;
 
+import java.util.Map;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
@@ -14,6 +16,45 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentEquipmentPlanExecutorTest {
+    @Test
+    void applyEquipPlanMovesSelectedBagItemThroughInventoryGateway() {
+        Character agent = mock(Character.class);
+        Equip targetWeapon = equip(1302000, (short) 2);
+        InventoryGateway inventory = mock(InventoryGateway.class);
+
+        AgentEquipmentPlanExecutor.applyEquipPlan(
+                agent,
+                Map.of((short) -11, equip(1302001, (short) -11)),
+                Map.of(),
+                targetWeapon,
+                List.of(),
+                inventory);
+
+        verify(inventory).moveItem(agent, InventoryType.EQUIP, (short) 2, (short) -11, (short) 1);
+    }
+
+    @Test
+    void applyEquipPlanSkipsAlreadyEquippedOrMissingTargets() {
+        Character agent = mock(Character.class);
+        Equip current = equip(1302000, (short) -11);
+        InventoryGateway inventory = mock(InventoryGateway.class);
+
+        AgentEquipmentPlanExecutor.applyEquipPlan(
+                agent,
+                Map.of((short) -11, current),
+                Map.of(),
+                current,
+                List.of(),
+                inventory);
+
+        verify(inventory, never()).moveItem(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyShort(),
+                org.mockito.ArgumentMatchers.anyShort(),
+                org.mockito.ArgumentMatchers.anyShort());
+    }
+
     @Test
     void infeasibleUnequipSkipsCashEquipsBeforeWearabilityCheck() {
         Character agent = mock(Character.class);

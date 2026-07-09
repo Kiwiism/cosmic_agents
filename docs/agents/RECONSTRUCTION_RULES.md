@@ -6788,6 +6788,10 @@ Current physics correction:
   `InventoryGateway.moveItem` instead of importing `InventoryManipulator` in
   `AgentEquipmentUnequipService`. Cash-item filtering, free-slot guards,
   destination-slot selection, and unequip reply text are unchanged.
+- SPI/gateway extraction: optimizer equip-plan application now calls
+  `InventoryGateway.moveItem` instead of importing `InventoryManipulator` in
+  `AgentEquipmentPlanExecutor`. Slot application order, bag-position guards,
+  already-equipped skips, and selected equipment behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

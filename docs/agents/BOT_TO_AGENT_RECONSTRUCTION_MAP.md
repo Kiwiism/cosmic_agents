@@ -2825,3 +2825,6 @@ Recent capability extraction notes:
   equip moves through `InventoryGateway.moveItem`; direct item-move mutation
   stays in `CosmicInventoryGateway`. Slot selection, cash filtering, and
   unequip messages remain unchanged.
+- SPI/gateway extraction: `AgentEquipmentPlanExecutor` now applies optimizer
+  equip moves through `InventoryGateway.moveItem`. Equipment order, target
+  selection, bag-position validation, and skip behavior remain unchanged.
