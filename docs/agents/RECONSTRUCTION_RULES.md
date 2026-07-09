@@ -6385,6 +6385,10 @@ Current physics correction:
   direct recipient packet sends out of `AgentTradeItemAddService` while keeping
   trade item selection, inventory removal, and partner routing in the trade
   capability.
+- SPI/gateway extraction: combat damage packets now route through
+  `PacketGateway.broadcastDamagePlayer`, moving `PacketCreator.damagePlayer` and
+  map broadcast side effects out of `AgentCombatDamageRuntime` while preserving
+  HP, cooldown, death, and knockback behavior in the combat capability.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

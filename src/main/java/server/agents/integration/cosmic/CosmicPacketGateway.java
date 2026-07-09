@@ -77,4 +77,25 @@ public enum CosmicPacketGateway implements PacketGateway {
         }
         recipient.sendPacket(PacketCreator.getTradeItemAdd(tradeNumber, item));
     }
+
+    @Override
+    public void broadcastDamagePlayer(Character agent,
+                                      int damageFrom,
+                                      int monsterId,
+                                      int damage,
+                                      int fake,
+                                      int direction,
+                                      boolean pgmr,
+                                      int pgmr1,
+                                      boolean is_pg,
+                                      int oid,
+                                      int pos_x,
+                                      int pos_y) {
+        if (agent == null || agent.getMap() == null) {
+            return;
+        }
+        agent.getMap().broadcastMessage(agent,
+                PacketCreator.damagePlayer(damageFrom, monsterId, agent.getId(), damage, fake,
+                        direction, pgmr, pgmr1, is_pg, oid, pos_x, pos_y), false);
+    }
 }

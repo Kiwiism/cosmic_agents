@@ -24,5 +24,18 @@ public interface PacketGateway {
     void sendRemoveItemFromMap(Character recipient, int objectId, int animation, int fromCharacterId);
 
     void sendTradeItemAdd(Character recipient, byte tradeNumber, Item item);
+
+    void broadcastDamagePlayer(Character agent,
+                               int damageFrom,
+                               int monsterId,
+                               int damage,
+                               int fake,
+                               int direction,
+                               boolean pgmr,
+                               int pgmr1,
+                               boolean is_pg,
+                               int oid,
+                               int pos_x,
+                               int pos_y);
 }
 

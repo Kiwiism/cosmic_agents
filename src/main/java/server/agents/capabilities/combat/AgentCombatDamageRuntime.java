@@ -10,9 +10,9 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
-import tools.PacketCreator;
 
 import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
@@ -72,9 +72,8 @@ public final class AgentCombatDamageRuntime {
         Point botPos = bot.getPosition();
 
         if (dmg <= 0) {
-            bot.getMap().broadcastMessage(bot,
-                    PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), 0, 0,
-                            broadcastDirection, false, 0, false, 0, 0, 0), false);
+            CosmicAgentServerAdapter.INSTANCE.packets().broadcastDamagePlayer(
+                    bot, damageFrom, monsterId, 0, 0, broadcastDirection, false, 0, false, 0, 0, 0);
             AgentCombatCooldownStateRuntime.setMobHitCooldownMs(
                     entry,
                     AgentMovementTimers.delayAfterCurrentTick(config.MOB_HIT_COOLDOWN_MS));
@@ -84,9 +83,8 @@ public final class AgentCombatDamageRuntime {
 
         bot.addMPHPAndTriggerAutopot(-dmg, 0);
 
-        bot.getMap().broadcastMessage(bot,
-                PacketCreator.damagePlayer(damageFrom, monsterId, bot.getId(), dmg, 0,
-                        broadcastDirection, false, 0, false, 0, 0, 0), false);
+        CosmicAgentServerAdapter.INSTANCE.packets().broadcastDamagePlayer(
+                bot, damageFrom, monsterId, dmg, 0, broadcastDirection, false, 0, false, 0, 0, 0);
 
         AgentCombatCooldownStateRuntime.setMobHitCooldownMs(
                 entry,

@@ -117,4 +117,24 @@ class CosmicPacketGatewayTest {
             verify(recipient).sendPacket(packet);
         }
     }
+
+    @Test
+    void broadcastDamagePlayerBuildsPacketAndBroadcastsThroughMap() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        Packet packet = mock(Packet.class);
+
+        when(agent.getId()).thenReturn(123);
+        when(agent.getMap()).thenReturn(map);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.damagePlayer(-1, 222, 123, 50, 0, -1, false, 0, false, 0, 0, 0))
+                    .thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.broadcastDamagePlayer(agent, -1, 222, 50, 0, -1, false, 0, false, 0, 0, 0);
+
+            packets.verify(() -> PacketCreator.damagePlayer(-1, 222, 123, 50, 0, -1, false, 0, false, 0, 0, 0));
+            verify(map).broadcastMessage(agent, packet, false);
+        }
+    }
 }

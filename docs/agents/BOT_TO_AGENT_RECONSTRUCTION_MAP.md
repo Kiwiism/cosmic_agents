@@ -2442,3 +2442,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: trade item-add packet delivery now routes through
   `PacketGateway.sendTradeItemAdd`; `AgentTradeItemAddService` still owns item
   selection, inventory removal, and recipient/partner routing.
+- SPI/gateway extraction: combat damage packet broadcast now routes through
+  `PacketGateway.broadcastDamagePlayer`; `AgentCombatDamageRuntime` still owns
+  HP mutation, cooldowns, death transition, and knockback orchestration.
