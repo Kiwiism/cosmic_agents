@@ -29,7 +29,7 @@ public final class AgentPartyLifecycleService {
         }
         Party leaderParty = leader.getParty();
         if (leaderParty == null) {
-            if (!Party.createParty(leader, true)) {
+            if (!AgentPartyGatewayRuntime.party().createAgentParty(leader)) {
                 return;
             }
             leaderParty = leader.getParty();

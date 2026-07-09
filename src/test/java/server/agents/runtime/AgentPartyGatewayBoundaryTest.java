@@ -18,7 +18,10 @@ class AgentPartyGatewayBoundaryTest {
                 "src/main/java/server/agents/integration/cosmic/CosmicPartyGateway.java"));
 
         assertFalse(lifecycle.contains("Party.leaveParty("));
+        assertFalse(lifecycle.contains("Party.createParty("));
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().leaveCurrentParty(agent)"));
+        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().createAgentParty(leader)"));
         assertTrue(gateway.contains("Party.leaveParty(agent.getParty(), agent.getClient())"));
+        assertTrue(gateway.contains("Party.createParty(leader, true)"));
     }
 }

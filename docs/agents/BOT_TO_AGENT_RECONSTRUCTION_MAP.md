@@ -2933,3 +2933,7 @@ Recent capability extraction notes:
   departure through `PartyGateway.leaveCurrentParty`; live `Party.leaveParty`
   client dispatch is isolated in `CosmicPartyGateway`. Same-party checks and
   leave-before-join ordering remain unchanged.
+- SPI/gateway extraction: `AgentPartyLifecycleService` now routes leader-party
+  creation through `PartyGateway.createAgentParty`; live `Party.createParty`
+  dispatch is isolated in `CosmicPartyGateway`. Creation gating, Agent-party
+  flag, failure behavior, and leader-party refresh remain unchanged.

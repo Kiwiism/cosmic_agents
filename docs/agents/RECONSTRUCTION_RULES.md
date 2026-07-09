@@ -6936,6 +6936,12 @@ Current physics correction:
   `AgentPartyLifecycleService`. Existing same-party detection, leave-before-
   join ordering, and subsequent create/join behavior are unchanged. Live
   Cosmic party/client departure is isolated in `CosmicPartyGateway`.
+- SPI/gateway extraction: leader-party creation now calls
+  `AgentPartyGatewayRuntime`/`PartyGateway.createAgentParty` instead of invoking
+  `Party.createParty(leader, true)` inside `AgentPartyLifecycleService`.
+  Existing no-party gating, Agent-party flag, failure return, and post-create
+  leader-party refresh are unchanged. Live Cosmic party creation is isolated
+  in `CosmicPartyGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
