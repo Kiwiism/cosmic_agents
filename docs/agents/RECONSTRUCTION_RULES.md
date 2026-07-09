@@ -275,7 +275,7 @@ Recent reconstruction notes:
   authorization rules, DB fallback queries, denial text, and registration
   writes are unchanged; only the live world scan moved behind the gateway.
 - The live `server.Trade` window adapter moved from the trade capability into
-  `server.agents.integration.AgentServerTradeWindow`. Manual trade acceptance
+  `server.agents.integration.cosmic.CosmicAgentTradeWindow`. Manual trade acceptance
   now receives current-window lookup as a callback from the runtime adapter, so
   capability logic depends on `AgentTradeWindow` while trade state identity,
   greeting, timeout, invite-accept, completion, and packet-visible behavior are
@@ -6740,7 +6740,7 @@ Current physics correction:
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting orchestration now use the Agent-owned
   `AgentTradeWindow` seam. The live `server.Trade` object is wrapped only at the
-  runtime adapter boundary by `AgentServerTradeWindow`; accept timing, timeout,
+  runtime adapter boundary by `CosmicAgentTradeWindow`; accept timing, timeout,
   peer authorization, owner confirmation, greeting, completion, and refill
   behavior are unchanged.
 - Trade-window reconstruction: pending trade tick routing and its callback
@@ -6752,7 +6752,7 @@ Current physics correction:
 - Trade-window reconstruction: item-add and item-add tick services now use
   `AgentTradeWindow` for item placement, meso placement, partner lookup, and
   trade chat. The live `server.Trade` item-add/meso operations stay behind
-  `AgentServerTradeWindow`; inventory locking, restore-slot tracking,
+  `CosmicAgentTradeWindow`; inventory locking, restore-slot tracking,
   quantity caps, packet emission, category announcements, all-done chat, and
   meso cancellation behavior are unchanged.
 - Trade-window reconstruction: trade lifecycle completion now reads partner
@@ -6762,7 +6762,7 @@ Current physics correction:
   reset/cancel/refill behavior are unchanged.
 - Trade-window reconstruction: `AgentTradeTickRuntimeService.RuntimeCallbacks`
   now returns `AgentTradeWindow` instead of live `server.Trade`; the integration
-  adapter wraps `Character.getTrade()` with `AgentServerTradeWindow`. Trade tick
+  adapter wraps `Character.getTrade()` with `CosmicAgentTradeWindow`. Trade tick
   lookup ordering, queued retry behavior, closed-window handling, item-add
   dispatch, confirmation waits, and completion reactions are unchanged.
 - SPI/gateway extraction: script item-drop execution now routes inventory
@@ -6954,6 +6954,12 @@ Current physics correction:
   inside `AgentPartyLifecycleService`. Same-party identity checks, channel/map
   values, world update, HP refresh, and early return behavior are unchanged.
   Live Cosmic party-member projection is isolated in `CosmicPartyGateway`.
+- SPI/gateway extraction: the concrete live trade-window wrapper now lives at
+  `integration.cosmic.CosmicAgentTradeWindow`, and production runtime/capability
+  code obtains the abstract `AgentTradeWindow` through
+  `TradeGateway.currentWindow`. Window identity, partner traversal, trade chat,
+  item/meso offers, confirmation state, and tick ordering are unchanged. The
+  generic integration package no longer imports `server.Trade`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

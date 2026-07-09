@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import client.inventory.Item;
@@ -7,15 +7,15 @@ import server.agents.capabilities.trade.AgentTradeWindow;
 
 import java.util.List;
 
-public final class AgentServerTradeWindow implements AgentTradeWindow {
+public final class CosmicAgentTradeWindow implements AgentTradeWindow {
     private final Trade trade;
 
-    private AgentServerTradeWindow(Trade trade) {
+    private CosmicAgentTradeWindow(Trade trade) {
         this.trade = trade;
     }
 
     public static AgentTradeWindow wrap(Trade trade) {
-        return trade == null ? null : new AgentServerTradeWindow(trade);
+        return trade == null ? null : new CosmicAgentTradeWindow(trade);
     }
 
     @Override

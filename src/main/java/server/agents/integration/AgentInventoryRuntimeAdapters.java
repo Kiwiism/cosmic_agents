@@ -75,7 +75,7 @@ public final class AgentInventoryRuntimeAdapters {
     public static AgentTradeTickRuntimeService.RuntimeCallbacks tradeTickRuntimeCallbacks() {
         return AgentTradeTickRuntimeService.RuntimeCallbacks.of(
                 AgentMovementTimers::tickDown,
-                agent -> AgentServerTradeWindow.wrap(agent.getTrade()),
+                agent -> AgentTradeGatewayRuntime.trade().currentWindow(agent),
                 AgentMovementTimers::delayAfterCurrentTick,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
                 AgentRuntimeIdentityRuntime::owner,

@@ -2,6 +2,7 @@ package server.agents.integration.cosmic;
 
 import client.Character;
 import server.Trade;
+import server.agents.capabilities.trade.AgentTradeWindow;
 import server.agents.integration.TradeGateway;
 
 public enum CosmicTradeGateway implements TradeGateway {
@@ -30,5 +31,10 @@ public enum CosmicTradeGateway implements TradeGateway {
     @Override
     public void visitTrade(Character agent, Character inviter) {
         Trade.visitTrade(agent, inviter);
+    }
+
+    @Override
+    public AgentTradeWindow currentWindow(Character agent) {
+        return CosmicAgentTradeWindow.wrap(agent.getTrade());
     }
 }

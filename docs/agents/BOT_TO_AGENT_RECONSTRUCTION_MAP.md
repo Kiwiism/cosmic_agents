@@ -2778,14 +2778,14 @@ Recent capability extraction notes:
   Ownership checks, automatic same-account registration, DB fallback, and
   denial/registration behavior stay unchanged.
 - Trade-window reconstruction: the live `server.Trade` adapter has moved to
-  `server.agents.integration.AgentServerTradeWindow`. Manual trade capability
+  `server.agents.integration.cosmic.CosmicAgentTradeWindow`. Manual trade capability
   code now accepts current-window lookup from its runtime adapter and stays on
   the `AgentTradeWindow` abstraction for invite acceptance, preserving the
   existing visit-trade, full-trade check, greeting, timeout, and completion
   behavior.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
-  `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the
+  `server.Trade`. `CosmicAgentTradeWindow` is the live Cosmic adapter for the
   existing `Trade` window while deeper trade lifecycle/item-add services are
   reconstructed in later slices.
 - Trade-window reconstruction: `AgentTradeTickService` and
@@ -2795,7 +2795,7 @@ Recent capability extraction notes:
 - Trade-window reconstruction: `AgentTradeItemAddService` and
   `AgentTradeItemAddTickService` now use `AgentTradeWindow` for item add,
   meso add, partner packet recipient lookup, and trade chat. The concrete
-  `server.Trade` item/meso calls are isolated in `AgentServerTradeWindow`.
+  `server.Trade` item/meso calls are isolated in `CosmicAgentTradeWindow`.
 - Trade-window reconstruction: `AgentTradeLifecycleService` and
   `AgentTradeLifecycleRuntimeService` now use `AgentTradeWindow` for partner
   item/offer inspection during completion reactions. Live `server.Trade`
@@ -2804,7 +2804,7 @@ Recent capability extraction notes:
 - Trade-window reconstruction: `AgentTradeTickRuntimeService.RuntimeCallbacks`
   now supplies `AgentTradeWindow`; `AgentInventoryRuntimeAdapters` owns the live
   `Character.getTrade()` wrapping. The trade capability's production
-  `server.Trade` coupling is now isolated to `AgentServerTradeWindow`.
+  `server.Trade` coupling is now isolated to `CosmicAgentTradeWindow`.
 - SPI/gateway extraction: `AgentScriptItemActionService` now drops script
   items through `InventoryGateway.dropItem`; direct `InventoryManipulator`
   usage for this plan action is isolated to `CosmicInventoryGateway`. Script
@@ -2946,3 +2946,8 @@ Recent capability extraction notes:
   `PartyCharacter` construction and `LOG_ONOFF` dispatch are isolated in
   `CosmicPartyGateway`. Identity checks, channel/map values, and HP refresh
   remain unchanged.
+- SPI/gateway extraction: the concrete `server.Trade` wrapper is now
+  `integration.cosmic.CosmicAgentTradeWindow`. Production callers obtain
+  `AgentTradeWindow` through `TradeGateway.currentWindow`, leaving the generic
+  integration package free of `server.Trade` while preserving all trade-window
+  behavior and timing.

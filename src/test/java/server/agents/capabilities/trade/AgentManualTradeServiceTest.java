@@ -4,7 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
-import server.agents.integration.AgentServerTradeWindow;
+import server.agents.integration.cosmic.CosmicAgentTradeWindow;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,7 +26,7 @@ class AgentManualTradeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         boolean cancelled = AgentManualTradeService.beginOrTickTimeout(
-                entry, bot, AgentServerTradeWindow.wrap(trade), 60_000, value -> value);
+                entry, bot, CosmicAgentTradeWindow.wrap(trade), 60_000, value -> value);
 
         assertFalse(cancelled);
         assertSame(trade, AgentManualTradeStateRuntime.tradeRef(entry));
@@ -40,7 +40,7 @@ class AgentManualTradeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         boolean cancelled = AgentManualTradeService.beginOrTickTimeout(
-                entry, bot, AgentServerTradeWindow.wrap(trade), value -> value);
+                entry, bot, CosmicAgentTradeWindow.wrap(trade), value -> value);
 
         assertFalse(cancelled);
         assertSame(trade, AgentManualTradeStateRuntime.tradeRef(entry));
@@ -57,7 +57,7 @@ class AgentManualTradeServiceTest {
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             boolean cancelled = AgentManualTradeService.beginOrTickTimeout(
-                    entry, bot, AgentServerTradeWindow.wrap(trade), 60_000, value -> 0);
+                    entry, bot, CosmicAgentTradeWindow.wrap(trade), 60_000, value -> 0);
 
             assertTrue(cancelled);
             trades.verify(() -> Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE));
@@ -73,13 +73,13 @@ class AgentManualTradeServiceTest {
         Trade trade = mock(Trade.class);
 
         AgentManualTradeService.clearGreeting(bot);
-        AgentManualTradeService.sendGreetingOnce(bot, AgentServerTradeWindow.wrap(trade), () -> "hi");
-        AgentManualTradeService.sendGreetingOnce(bot, AgentServerTradeWindow.wrap(trade), () -> "hi again");
+        AgentManualTradeService.sendGreetingOnce(bot, CosmicAgentTradeWindow.wrap(trade), () -> "hi");
+        AgentManualTradeService.sendGreetingOnce(bot, CosmicAgentTradeWindow.wrap(trade), () -> "hi again");
 
         verify(trade, times(1)).chat("hi");
 
         AgentManualTradeService.clearGreeting(bot);
-        AgentManualTradeService.sendGreetingOnce(bot, AgentServerTradeWindow.wrap(trade), () -> "hi after clear");
+        AgentManualTradeService.sendGreetingOnce(bot, CosmicAgentTradeWindow.wrap(trade), () -> "hi after clear");
 
         verify(trade).chat("hi after clear");
     }
@@ -96,10 +96,10 @@ class AgentManualTradeServiceTest {
                 entry,
                 bot,
                 inviter,
-                AgentServerTradeWindow.wrap(trade),
+                CosmicAgentTradeWindow.wrap(trade),
                 600,
                 value -> 100,
-                tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()));
+                tradeOwner -> CosmicAgentTradeWindow.wrap(tradeOwner.getTrade()));
 
         assertSame(trade, result.identity());
         assertEquals(100, AgentManualTradeStateRuntime.acceptDelayMs(entry));
@@ -121,10 +121,10 @@ class AgentManualTradeServiceTest {
                     entry,
                     bot,
                     inviter,
-                    AgentServerTradeWindow.wrap(trade),
+                    CosmicAgentTradeWindow.wrap(trade),
                     600,
                     value -> 0,
-                    tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()));
+                    tradeOwner -> CosmicAgentTradeWindow.wrap(tradeOwner.getTrade()));
 
             trades.verify(() -> Trade.visitTrade(bot, inviter));
             assertSame(joinedTrade, result.identity());

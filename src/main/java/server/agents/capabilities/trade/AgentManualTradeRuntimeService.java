@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.agents.integration.AgentServerTradeWindow;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiConsumer;
@@ -27,14 +27,14 @@ public final class AgentManualTradeRuntimeService {
                 owner,
                 AgentManualTradeCallbackService.manualTradeTickCallbacks(
                         () -> callbacks.hasActiveSequence(entry),
-                        tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()),
+                        tradeOwner -> AgentTradeGatewayRuntime.trade().currentWindow(tradeOwner),
                         clearAgent -> AgentManualTradeService.clearState(entry, clearAgent),
                         (tradeAgent, trade) -> AgentManualTradeService.beginOrTickTimeout(
                                 entry,
                                 tradeAgent,
                                 trade,
                                 callbacks::tickDown),
-                        tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()),
+                        tradeOwner -> AgentTradeGatewayRuntime.trade().currentWindow(tradeOwner),
                         (tradeAgent, tradeOwner, trade, isOwnerTrade) -> AgentManualPeerTradeService.tickPeerTrade(
                                 entry,
                                 tradeAgent,
@@ -51,7 +51,7 @@ public final class AgentManualTradeRuntimeService {
                                                 pendingTrade,
                                                 500 + callbacks.tickMs(),
                                                 callbacks::tickDown,
-                                                currentOwner -> AgentServerTradeWindow.wrap(currentOwner.getTrade())),
+                                                currentOwner -> AgentTradeGatewayRuntime.trade().currentWindow(currentOwner)),
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
                                                 entry,
                                                 tradeAgent,
@@ -71,7 +71,7 @@ public final class AgentManualTradeRuntimeService {
                                                 pendingTrade,
                                                 500 + callbacks.tickMs(),
                                                 callbacks::tickDown,
-                                                currentOwner -> AgentServerTradeWindow.wrap(currentOwner.getTrade())),
+                                                currentOwner -> AgentTradeGatewayRuntime.trade().currentWindow(currentOwner)),
                                         AgentManualTradeService::sendGreetingOnce,
                                         callbacks::manualTradeGreeting,
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
