@@ -3,8 +3,8 @@ package server.agents.capabilities.inventory;
 import client.Character;
 import client.inventory.Item;
 import config.YamlConfig;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,7 @@ public final class AgentInventoryNamedItemService {
                 agent,
                 fragment,
                 AgentInventoryNamedItemService::normalizedItemName,
-                ItemInformationProvider.getInstance()::isQuestItem,
+                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
@@ -59,11 +59,7 @@ public final class AgentInventoryNamedItemService {
     }
 
     private static String loadNormalizedItemName(int itemId) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        String name;
-        synchronized (ii) {
-            name = ii.getName(itemId);
-        }
+        String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(itemId);
         return name != null ? AgentItemQueryNormalizer.normalize(name) : "";
     }
 }

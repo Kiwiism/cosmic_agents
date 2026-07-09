@@ -2468,3 +2468,7 @@ Recent capability extraction notes:
   `InventoryGateway.isQuestItem`; inventory still owns bag traversal, safe-item
   policy application, category filters, drop execution, and replies while the
   Cosmic quest-item metadata check sits behind the inventory gateway.
+- SPI/gateway extraction: named-item inventory collection now uses
+  `InventoryGateway` for item-name and quest-item metadata. Inventory still
+  owns normalized query matching, cached normalized names, safe-item filtering,
+  and count/collection behavior.

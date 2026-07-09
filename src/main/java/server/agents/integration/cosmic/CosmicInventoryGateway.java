@@ -8,7 +8,10 @@ public enum CosmicInventoryGateway implements InventoryGateway {
 
     @Override
     public String getItemName(int itemId) {
-        return ItemInformationProvider.getInstance().getName(itemId);
+        ItemInformationProvider itemInfo = ItemInformationProvider.getInstance();
+        synchronized (itemInfo) {
+            return itemInfo.getName(itemId);
+        }
     }
 
     @Override

@@ -6416,6 +6416,11 @@ Current physics correction:
   collection/drop services still own bag iteration, filters, untradeable rules,
   drop-limit handling, and replies; the Cosmic quest-item metadata lookup is
   isolated behind the inventory gateway.
+- SPI/gateway extraction: named-item inventory queries now route item-name and
+  quest-item metadata through `InventoryGateway`. The normalized-name cache,
+  query normalization, bag scanning, and safe-item filtering remain in
+  `AgentInventoryNamedItemService`; the synchronized Cosmic item-name lookup is
+  preserved inside `CosmicInventoryGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
