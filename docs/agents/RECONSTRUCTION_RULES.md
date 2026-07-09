@@ -6411,6 +6411,11 @@ Current physics correction:
   counting, ranking, keybinding setup, low-pot sharing, passive recovery, and
   supply dialogue formatting; only the Cosmic item-name lookup moved to the
   inventory gateway boundary.
+- SPI/gateway extraction: inventory safe-collection and drop safety now route
+  quest-item checks through `InventoryGateway.isQuestItem`. Inventory
+  collection/drop services still own bag iteration, filters, untradeable rules,
+  drop-limit handling, and replies; the Cosmic quest-item metadata lookup is
+  isolated behind the inventory gateway.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -7,9 +7,9 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.FieldLimit;
 
@@ -21,7 +21,7 @@ import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 
 public final class AgentInventoryDropService {
-    static IntPredicate questItemLookup = itemId -> ItemInformationProvider.getInstance().isQuestItem(itemId);
+    static IntPredicate questItemLookup = itemId -> CosmicAgentServerAdapter.INSTANCE.inventory().isQuestItem(itemId);
 
     private AgentInventoryDropService() {
     }

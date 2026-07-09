@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
-import server.ItemInformationProvider;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.List;
 import java.util.function.IntPredicate;
@@ -19,7 +19,7 @@ public final class AgentInventoryCollectionService {
                 agent,
                 type,
                 filter,
-                ItemInformationProvider.getInstance()::isQuestItem,
+                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 

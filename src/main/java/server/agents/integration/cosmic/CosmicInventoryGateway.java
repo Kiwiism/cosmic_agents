@@ -15,4 +15,9 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     public int getProjectileWeaponAttack(int itemId) {
         return ItemInformationProvider.getInstance().getWatkForProjectile(itemId);
     }
+
+    @Override
+    public boolean isQuestItem(int itemId) {
+        return ItemInformationProvider.getInstance().isQuestItem(itemId);
+    }
 }

@@ -2464,3 +2464,7 @@ Recent capability extraction notes:
   counting, ranking, keybinding setup, share requests, and passive recovery
   while Cosmic item metadata access continues to shrink into the inventory
   gateway.
+- SPI/gateway extraction: inventory safe-collection and drop safety now use
+  `InventoryGateway.isQuestItem`; inventory still owns bag traversal, safe-item
+  policy application, category filters, drop execution, and replies while the
+  Cosmic quest-item metadata check sits behind the inventory gateway.
