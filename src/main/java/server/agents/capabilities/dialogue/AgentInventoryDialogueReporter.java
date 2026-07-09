@@ -6,9 +6,9 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
 import server.StatEffect;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -120,7 +120,7 @@ public final class AgentInventoryDialogueReporter {
 
     private static StatEffect itemEffect(int itemId) {
         try {
-            return ItemInformationProvider.getInstance().getItemEffect(itemId);
+            return CosmicAgentServerAdapter.INSTANCE.inventory().getItemEffect(itemId);
         } catch (Exception e) {
             return null;
         }
@@ -130,7 +130,7 @@ public final class AgentInventoryDialogueReporter {
         if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
             return false;
         }
-        return !ItemInformationProvider.getInstance().isQuestItem(item.getItemId());
+        return !CosmicAgentServerAdapter.INSTANCE.inventory().isQuestItem(item.getItemId());
     }
 
     public static String noItemsReply(String category) {

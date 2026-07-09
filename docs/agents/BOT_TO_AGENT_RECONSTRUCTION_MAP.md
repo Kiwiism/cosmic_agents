@@ -2483,3 +2483,7 @@ Recent capability extraction notes:
   `InventoryGateway.getItemEffect`; inventory still owns recovery/buff
   classification. The gateway returns `StatEffect` temporarily to preserve
   behavior before a later Agent-owned item-effect view is extracted.
+- SPI/gateway extraction: inventory dialogue reporting and nearest-town return
+  scroll use now use `InventoryGateway` for item-effect and quest-item metadata;
+  dialogue formatting, safe mention filtering, effect application, and item
+  removal behavior stay in their existing Agent modules.

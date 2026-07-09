@@ -6434,6 +6434,10 @@ Current physics correction:
   lives in `AgentUseItemClassificationPolicy`; the gateway still returns the
   existing `StatEffect` type as an interim compatibility seam until a later
   Agent-owned item-effect view is introduced.
+- SPI/gateway extraction: inventory dialogue summaries and nearest-town return
+  scroll use now route item-effect and quest-item metadata through
+  `InventoryGateway`. Dialogue formatting, safe-to-mention rules, return-scroll
+  item search, effect application, and inventory removal behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
