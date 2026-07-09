@@ -1,10 +1,7 @@
-package server.agents.integration;
+package server.agents.commands;
 
 import java.util.List;
-import server.agents.commands.AgentCommandParser;
-import server.agents.commands.AgentNamedCommandTarget;
-import server.agents.commands.AgentTargetedCommandMatch;
-import server.agents.commands.AgentTransferCommand;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentCommandTargetResolver {

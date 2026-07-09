@@ -2407,3 +2407,7 @@ Recent capability extraction notes:
   capture now live in `server.agents.capabilities.movement.AgentMovementTargetRuntime`.
   The capability still uses `AgentRuntimeIdentityRuntime` as the live
   `Character`/map boundary until the broader SPI/gateway phase.
+- Moved `AgentCommandTargetResolver` to `server.agents.commands` so transfer
+  command matching and targeted Agent command parsing are no longer modeled as
+  integration code. Live Agent name lookup remains behind
+  `AgentRuntimeIdentityRuntime`.

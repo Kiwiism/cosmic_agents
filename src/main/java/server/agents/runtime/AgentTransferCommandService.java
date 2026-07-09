@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.commands.AgentTransferCommand;
-import server.agents.integration.AgentCommandTargetResolver;
+import server.agents.commands.AgentCommandTargetResolver;
 
 public final class AgentTransferCommandService {
     private AgentTransferCommandService() {

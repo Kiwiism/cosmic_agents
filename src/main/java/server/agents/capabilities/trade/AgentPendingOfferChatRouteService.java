@@ -1,7 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.agents.integration.AgentCommandTargetResolver;
+import server.agents.commands.AgentCommandTargetResolver;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 

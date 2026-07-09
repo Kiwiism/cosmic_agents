@@ -64,7 +64,7 @@ import server.agents.capabilities.supplies.AgentAmmoService;
 import server.agents.capabilities.supplies.AgentAmmoDonorPlan;
 import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.commands.AgentTransferCommand;
-import server.agents.integration.AgentCommandTargetResolver;
+import server.agents.commands.AgentCommandTargetResolver;
 import server.agents.capabilities.combat.AgentBreakoutStateRuntime;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;

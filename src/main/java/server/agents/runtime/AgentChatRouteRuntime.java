@@ -15,7 +15,7 @@ import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
 import server.agents.commands.AgentCommandTypoSuggester;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentActivityStateRuntime;
-import server.agents.integration.AgentCommandTargetResolver;
+import server.agents.commands.AgentCommandTargetResolver;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;

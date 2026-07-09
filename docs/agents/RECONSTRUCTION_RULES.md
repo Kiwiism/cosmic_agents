@@ -6338,6 +6338,11 @@ Current physics correction:
   `server.agents.capabilities.movement.AgentMovementTargetRuntime`; only live
   `Character` identity access remains behind the documented
   `AgentRuntimeIdentityRuntime` boundary seam.
+- Reconstruction capability extraction: moved `AgentCommandTargetResolver` from
+  `server.agents.integration` to `server.agents.commands`. Targeted command
+  parsing and transfer command matching are Agent command-domain behavior; the
+  resolver still uses `AgentRuntimeIdentityRuntime` only for live Agent name
+  lookup.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
