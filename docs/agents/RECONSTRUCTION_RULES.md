@@ -6460,6 +6460,10 @@ Current physics correction:
   ammo slot-max, and item-name lookups through `InventoryGateway`. Shop visit
   sequencing, resupply/recharge decisions, purchase shortfall replies, and the
   existing test seams for projectile/slot-max behavior are unchanged.
+- SPI/gateway extraction: trade-transfer ammo grouping now routes projectile
+  attack and quest-item metadata through `InventoryGateway`. Trade command
+  routing, item collection, ammo grouping, batching, and transfer sequencing are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

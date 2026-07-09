@@ -5,7 +5,6 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 import client.Character;
 import client.inventory.Item;
 import config.YamlConfig;
-import server.ItemInformationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
@@ -27,6 +26,7 @@ import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -294,8 +294,8 @@ public final class AgentInventoryTransferService {
                 agent,
                 AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
                         () -> AgentAttackExecutionProvider.getEquippedWeaponType(agent),
-                        ItemInformationProvider.getInstance()::getWatkForProjectile,
-                        ItemInformationProvider.getInstance()::isQuestItem,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()::getProjectileWeaponAttack,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
                         () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
     }
 }

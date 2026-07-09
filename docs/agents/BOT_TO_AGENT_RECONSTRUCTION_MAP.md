@@ -2505,3 +2505,6 @@ Recent capability extraction notes:
   for projectile attack, ammo slot-max, and item names; shop sequencing,
   resupply/recharge decisions, purchase shortfall replies, and test seams remain
   behavior-preserving.
+- SPI/gateway extraction: trade-transfer ammo grouping now uses
+  `InventoryGateway` for projectile attack and quest-item metadata; trade
+  routing, collection, grouping, batching, and sequence behavior stay unchanged.
