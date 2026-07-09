@@ -2511,3 +2511,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: KPQ Stage 5 reward announcement item names now use
   `InventoryGateway`; reward claiming, inventory delta detection, claimed-state
   marking, and queued PQ chat behavior stay unchanged.
+- SPI/gateway extraction: common buff-pot active/available item names now use
+  `InventoryGateway`; buff eligibility, cheap/best selection, active-buff
+  detection, item consumption, and report text stay unchanged.

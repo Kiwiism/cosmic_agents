@@ -6467,6 +6467,9 @@ Current physics correction:
 - SPI/gateway extraction: KPQ Stage 5 reward announcement item names now route
   through `InventoryGateway`. Reward claiming, inventory delta detection,
   claimed-state marking, and queued PQ chat remain unchanged.
+- SPI/gateway extraction: common buff-pot active/available item names now route
+  through `InventoryGateway`. Buff selection, cheap/best scoring, active-buff
+  detection, item consumption, and dialogue formatting are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

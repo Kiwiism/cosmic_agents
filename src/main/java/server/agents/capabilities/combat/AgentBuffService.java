@@ -8,10 +8,11 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import net.server.PlayerBuffValueHolder;
 import net.server.channel.handlers.UseItemHandler;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.StatEffect;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
@@ -185,7 +186,6 @@ public final class AgentBuffService {
     }
 
     private static List<ActiveBuff> collectActiveItemBuffs(Character bot) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         List<ActiveBuff> active = new ArrayList<>();
 
         for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
@@ -206,7 +206,7 @@ public final class AgentBuffService {
                     ? Math.max(0, effect.getDuration() - holder.usedTime)
                     : 0;
             active.add(new ActiveBuff(itemId,
-                    safeName(ii.getName(itemId), itemId),
+                    itemName(itemId),
                     effect,
                     remainingMs));
         }
@@ -340,7 +340,11 @@ public final class AgentBuffService {
     }
 
     private static String itemName(int itemId) {
-        return safeName(ItemInformationProvider.getInstance().getName(itemId), itemId);
+        return safeName(inventory().getItemName(itemId), itemId);
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 
     private static String safeName(String name, int itemId) {
