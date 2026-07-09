@@ -4,7 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import config.YamlConfig;
 import server.agents.capabilities.dialogue.AgentItemQueryNormalizer;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.Map;
@@ -18,16 +18,16 @@ public final class AgentInventoryNamedItemService {
     private AgentInventoryNamedItemService() {
     }
 
-    public static int countNamedItems(Character agent, String fragment) {
-        return AgentInventoryTradePolicy.itemQuantitySum(collectNamedItems(agent, fragment));
+    public static int countNamedItems(Character agent, String fragment, InventoryGateway inventory) {
+        return AgentInventoryTradePolicy.itemQuantitySum(collectNamedItems(agent, fragment, inventory));
     }
 
-    public static List<Item> collectNamedItems(Character agent, String fragment) {
+    public static List<Item> collectNamedItems(Character agent, String fragment, InventoryGateway inventory) {
         return collectNamedItems(
                 agent,
                 fragment,
-                AgentInventoryNamedItemService::normalizedItemName,
-                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                itemId -> normalizedItemName(itemId, inventory),
+                inventory::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 
@@ -45,12 +45,12 @@ public final class AgentInventoryNamedItemService {
                 untradeableItemsTradeable);
     }
 
-    public static String normalizedItemName(int itemId) {
-        return normalizedItemNameCache.computeIfAbsent(itemId, AgentInventoryNamedItemService::loadNormalizedItemName);
+    public static String normalizedItemName(int itemId, InventoryGateway inventory) {
+        return normalizedItemNameCache.computeIfAbsent(itemId, id -> loadNormalizedItemName(id, inventory));
     }
 
-    public static boolean itemNameContains(int itemId, String normalizedFragment) {
-        String name = normalizedItemName(itemId);
+    public static boolean itemNameContains(int itemId, String normalizedFragment, InventoryGateway inventory) {
+        String name = normalizedItemName(itemId, inventory);
         return name != null && name.contains(normalizedFragment);
     }
 
@@ -58,8 +58,8 @@ public final class AgentInventoryNamedItemService {
         return AgentItemQueryNormalizer.normalize(text);
     }
 
-    private static String loadNormalizedItemName(int itemId) {
-        String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(itemId);
+    private static String loadNormalizedItemName(int itemId, InventoryGateway inventory) {
+        String name = inventory.getItemName(itemId);
         return name != null ? AgentItemQueryNormalizer.normalize(name) : "";
     }
 }

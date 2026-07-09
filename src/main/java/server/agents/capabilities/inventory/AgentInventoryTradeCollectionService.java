@@ -95,7 +95,10 @@ public final class AgentInventoryTradeCollectionService {
                         if (ammoGroup != null) {
                             result.addAll(ammoGroups.get().itemsFor(ammoGroup));
                         } else if (category.startsWith("name:")) {
-                            result.addAll(AgentInventoryNamedItemService.collectNamedItems(agent, category.substring(5)));
+                            result.addAll(AgentInventoryNamedItemService.collectNamedItems(
+                                    agent,
+                                    category.substring(5),
+                                    CosmicAgentServerAdapter.INSTANCE.inventory()));
                         }
                     }
                 }

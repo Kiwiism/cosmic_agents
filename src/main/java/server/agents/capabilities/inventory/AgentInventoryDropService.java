@@ -90,11 +90,12 @@ public final class AgentInventoryDropService {
 
     static void dropByName(AgentRuntimeEntry entry, Character agent, String nameFragment) {
         String normalizedFragment = AgentInventoryNamedItemService.normalizeQuery(nameFragment);
+        var inventory = CosmicAgentServerAdapter.INSTANCE.inventory();
         int total = 0;
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
             total += dropFromBag(agent, type,
-                    item -> AgentInventoryNamedItemService.itemNameContains(item.getItemId(), normalizedFragment));
+                    item -> AgentInventoryNamedItemService.itemNameContains(item.getItemId(), normalizedFragment, inventory));
         }
         if (total <= 0) {
             AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeNamedItemNotFoundReply(nameFragment));

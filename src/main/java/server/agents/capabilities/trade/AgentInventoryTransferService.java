@@ -132,7 +132,10 @@ public final class AgentInventoryTransferService {
         return AgentInventoryTradeCollectionService.countTransferableItems(
                 category,
                 agent,
-                fragment -> AgentInventoryNamedItemService.countNamedItems(agent, fragment),
+                fragment -> AgentInventoryNamedItemService.countNamedItems(
+                        agent,
+                        fragment,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()),
                 fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(agent, fragment, AgentEquipmentService::slotsFromName),
                 () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, agent)));
     }
@@ -216,7 +219,10 @@ public final class AgentInventoryTransferService {
                                     () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent));
                     return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
                 },
-                fragment -> AgentInventoryNamedItemService.collectNamedItems(agent, fragment),
+                fragment -> AgentInventoryNamedItemService.collectNamedItems(
+                        agent,
+                        fragment,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()),
                 () -> recommendedItems(entry, agent),
                 () -> classifyEquipTradeGroups(entry, agent),
                 () -> classifyAmmoTradeGroups(agent),

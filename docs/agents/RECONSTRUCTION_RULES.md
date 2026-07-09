@@ -6575,6 +6575,12 @@ Current physics correction:
   the Cosmic adapter inside `AgentMakerService`. Maker skill gating, leftover
   scanning, batch timing, client-lock retry behavior, abort replies, and
   completion replies are unchanged.
+- SPI/gateway extraction: named-item inventory collection/count/drop matching
+  now receives `InventoryGateway` from runtime/caller boundaries instead of
+  reaching for the Cosmic adapter inside `AgentInventoryNamedItemService`.
+  Normalized query matching, cached item-name normalization, quest-item
+  filtering, trade collection, drop-by-name behavior, and transfer counts are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

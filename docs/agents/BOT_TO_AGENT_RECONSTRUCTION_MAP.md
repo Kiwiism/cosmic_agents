@@ -2614,3 +2614,8 @@ Recent capability extraction notes:
   `InventoryGateway` from `AgentUtilityRuntime`; leftover-to-monster-crystal
   metadata no longer reaches directly for the Cosmic adapter inside the Maker
   service. Maker batch behavior, timings, and replies stay unchanged.
+- SPI/gateway extraction: `AgentInventoryNamedItemService` now receives
+  `InventoryGateway` from inventory/trade/drop/runtime callers for item names
+  and quest-item metadata. Normalized query matching, cached normalized names,
+  safe-item filtering, named trade collection, drop-by-name matching, and
+  transfer count behavior stay unchanged.
