@@ -2726,3 +2726,7 @@ Recent capability extraction notes:
   This removes the remaining direct concrete inventory adapter imports from
   runtime/capability code while preserving follow setup, shop visit/map-change
   sequencing, movement-only shop ticks, and nearest-town return scroll use.
+- SPI/gateway extraction: `AgentTradeInviteGateway` now delegates trade
+  start/invite operations to `AgentTradeGatewayRuntime` rather than importing
+  the concrete Cosmic adapter. Utility trade invite ordering and chat-command
+  behavior stay unchanged.

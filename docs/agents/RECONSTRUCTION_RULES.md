@@ -6679,6 +6679,10 @@ Current physics correction:
   shop ticks, and nearest-town return scroll metadata now route through
   `AgentInventoryGatewayRuntime`. Follow setup, shop sequencing, map-change
   handling, movement-only ticks, and return-scroll behavior are unchanged.
+- SPI/gateway extraction: utility trade-invite creation now routes through
+  `AgentTradeGatewayRuntime` instead of importing the concrete Cosmic adapter
+  from `AgentTradeInviteGateway`. Trade start/invite ordering and utility chat
+  behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
