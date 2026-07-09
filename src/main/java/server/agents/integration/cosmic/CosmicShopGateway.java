@@ -15,4 +15,9 @@ public final class CosmicShopGateway implements ShopGateway {
     public void sell(Character agent, Shop shop, InventoryType type, short slot, short quantity) {
         shop.sell(agent.getClient(), type, slot, quantity);
     }
+
+    @Override
+    public Shop.TransactionResult recharge(Character agent, Shop shop, short slot) {
+        return shop.rechargeDirect(agent, slot);
+    }
 }

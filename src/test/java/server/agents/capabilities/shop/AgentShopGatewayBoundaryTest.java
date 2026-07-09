@@ -18,7 +18,10 @@ class AgentShopGatewayBoundaryTest {
                 "src/main/java/server/agents/integration/cosmic/CosmicShopGateway.java"));
 
         assertFalse(service.contains("shop.sell(bot.getClient()"));
+        assertFalse(service.contains("shop.rechargeDirect(bot"));
         assertTrue(service.contains("AgentShopGatewayRuntime.shop().sell("));
+        assertTrue(service.contains("AgentShopGatewayRuntime.shop().recharge("));
         assertTrue(gateway.contains("shop.sell(agent.getClient(), type, slot, quantity)"));
+        assertTrue(gateway.contains("shop.rechargeDirect(agent, slot)"));
     }
 }

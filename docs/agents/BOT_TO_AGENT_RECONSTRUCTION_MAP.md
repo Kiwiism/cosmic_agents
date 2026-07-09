@@ -2921,3 +2921,7 @@ Recent capability extraction notes:
   is isolated in `CosmicShopGateway`. Sell-trash shop selection, item order,
   delays, slot and quantity values, failure detection, and replies remain
   unchanged.
+- SPI/gateway extraction: `AgentShopService` now routes rechargeable-ammo
+  transactions through `ShopGateway.recharge`; live `Shop.rechargeDirect`
+  dispatch is isolated in `CosmicShopGateway`. Stack ranking, recharge cap,
+  transaction-result handling, shortfall reports, and timings remain unchanged.

@@ -530,7 +530,7 @@ public final class AgentShopService {
             if (recharged >= RECHARGE_MAX_SETS) {
                 break;
             }
-            Shop.TransactionResult result = shop.rechargeDirect(bot, item.getPosition());
+            Shop.TransactionResult result = AgentShopGatewayRuntime.shop().recharge(bot, shop, item.getPosition());
             if (result == Shop.TransactionResult.SUCCESS) {
                 recharged++;
                 attempted++;

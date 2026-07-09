@@ -6918,6 +6918,12 @@ Current physics correction:
   sell ordering, per-item delay, slot and quantity values, failed-sale
   detection, and completion replies are unchanged. Live Cosmic client/shop
   dispatch is isolated in `CosmicShopGateway`.
+- SPI/gateway extraction: rechargeable-ammo shop mutations now call
+  `AgentShopGatewayRuntime`/`ShopGateway.recharge` instead of invoking
+  `Shop.rechargeDirect` inside `AgentShopService`. Rechargeable stack ranking,
+  ten-set cap, attempt counts, shortfall mapping, meso charging, and report text
+  are unchanged. Live direct recharge dispatch is isolated in
+  `CosmicShopGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
