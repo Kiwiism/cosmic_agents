@@ -11,6 +11,7 @@ import client.BuffStat;
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
 import server.agents.capabilities.combat.AgentCombatConfig;
+import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
 import server.agents.capabilities.combat.AgentFallDamageCalculator;
 import server.agents.capabilities.combat.AgentMobKnockbackPolicy;

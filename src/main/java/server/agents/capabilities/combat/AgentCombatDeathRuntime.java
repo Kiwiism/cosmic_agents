@@ -1,11 +1,8 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatRuntime;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.movement.AgentMovementPoseService;

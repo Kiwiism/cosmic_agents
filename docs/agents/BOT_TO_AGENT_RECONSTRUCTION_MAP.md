@@ -2361,3 +2361,7 @@ Recent capability extraction notes:
   preserves the same delayed fame command handling, target lookup, fame
   eligibility/mutation, and reply behavior while keeping live identity and
   reply delivery as integration seams.
+- `AgentCombatDeathRuntime` now lives in
+  `server.agents.capabilities.combat`. It preserves action-state clearing,
+  dead pose marking, movement broadcast, dead-state timing, and optional map
+  death dialogue.

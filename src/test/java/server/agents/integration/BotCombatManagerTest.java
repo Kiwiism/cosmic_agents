@@ -65,7 +65,7 @@ import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.integration.AgentCombatDamageRuntime;
-import server.agents.integration.AgentCombatDeathRuntime;
+import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.capabilities.combat.AgentCombatFacingRuntime;
 import server.agents.capabilities.combat.AgentCombatGroundRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;

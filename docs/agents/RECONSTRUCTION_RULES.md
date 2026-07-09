@@ -6278,6 +6278,10 @@ Current physics correction:
   same delayed fame command handling, self-target resolution, same-map target
   lookup, fame eligibility checks, fame mutation, and replies while keeping
   live identity and reply delivery behind integration seams.
+- Combat death-state entry now lives in
+  `server.agents.capabilities.combat.AgentCombatDeathRuntime`. It preserves
+  the same action-state clearing, dead pose marking, movement broadcast,
+  dead-state timer entry, and optional map death dialogue.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

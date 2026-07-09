@@ -12,7 +12,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.combat.AgentCombatActionLockRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.integration.AgentCombatDamageRuntime;
-import server.agents.integration.AgentCombatDeathRuntime;
+import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.integration.AgentCombatHealRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheRuntime;
 
