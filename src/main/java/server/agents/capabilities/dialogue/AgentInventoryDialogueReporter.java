@@ -8,7 +8,7 @@ import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.StatEffect;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -49,7 +49,7 @@ public final class AgentInventoryDialogueReporter {
         return sb.toString();
     }
 
-    public static String inventorySummary(Character agent) {
+    public static String inventorySummary(Character agent, InventoryGateway inventoryGateway) {
         StringBuilder sb = new StringBuilder();
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.ETC, InventoryType.SETUP)) {
@@ -61,26 +61,26 @@ public final class AgentInventoryDialogueReporter {
             }
             sb.append(type.name().toLowerCase()).append(' ').append(used).append('/').append(total);
             if (type == InventoryType.USE) {
-                appendUseInventorySummary(sb, inv);
+                appendUseInventorySummary(sb, inv, inventoryGateway);
             }
         }
         return sb.toString();
     }
 
-    private static void appendUseInventorySummary(StringBuilder sb, Inventory inventory) {
+    private static void appendUseInventorySummary(StringBuilder sb, Inventory inventory, InventoryGateway inventoryGateway) {
         int scrolls = 0;
         int pots = 0;
         int buffs = 0;
         for (Item item : inventory.list()) {
-            if (!isSafeToMention(item)) {
+            if (!isSafeToMention(item, inventoryGateway)) {
                 continue;
             }
             int id = item.getItemId();
             if (ItemConstants.isEquipScroll(id)) {
                 scrolls += item.getQuantity();
-            } else if (isRecoveryPotion(id)) {
+            } else if (isRecoveryPotion(id, inventoryGateway)) {
                 pots += item.getQuantity();
-            } else if (isBuffConsumable(id)) {
+            } else if (isBuffConsumable(id, inventoryGateway)) {
                 buffs += item.getQuantity();
             }
         }
@@ -110,27 +110,27 @@ public final class AgentInventoryDialogueReporter {
         sb.append(')');
     }
 
-    private static boolean isRecoveryPotion(int itemId) {
-        return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId));
+    private static boolean isRecoveryPotion(int itemId, InventoryGateway inventoryGateway) {
+        return AgentUseItemClassificationPolicy.isRecoveryPotion(itemEffect(itemId, inventoryGateway));
     }
 
-    private static boolean isBuffConsumable(int itemId) {
-        return AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId));
+    private static boolean isBuffConsumable(int itemId, InventoryGateway inventoryGateway) {
+        return AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId, inventoryGateway));
     }
 
-    private static StatEffect itemEffect(int itemId) {
+    private static StatEffect itemEffect(int itemId, InventoryGateway inventoryGateway) {
         try {
-            return CosmicAgentServerAdapter.INSTANCE.inventory().getItemEffect(itemId);
+            return inventoryGateway.getItemEffect(itemId);
         } catch (Exception e) {
             return null;
         }
     }
 
-    private static boolean isSafeToMention(Item item) {
+    private static boolean isSafeToMention(Item item, InventoryGateway inventoryGateway) {
         if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
             return false;
         }
-        return !CosmicAgentServerAdapter.INSTANCE.inventory().isQuestItem(item.getItemId());
+        return !inventoryGateway.isQuestItem(item.getItemId());
     }
 
     public static String noItemsReply(String category) {

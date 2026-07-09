@@ -6565,6 +6565,11 @@ Current physics correction:
   `InventoryGateway` from the report runtime instead of reaching for the
   Cosmic adapter inside `AgentPotionService`. Potion counting, autopot choice
   ranking, keybind setup, and debug wording are unchanged.
+- SPI/gateway extraction: inventory summary reporting now receives
+  `InventoryGateway` from the report runtime instead of reaching for the
+  Cosmic adapter inside `AgentInventoryDialogueReporter`. USE inventory scroll,
+  recovery-pot, buff-pot, untradeable, and quest-item filtering behavior is
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

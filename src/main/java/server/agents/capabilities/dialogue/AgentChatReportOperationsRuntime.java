@@ -165,7 +165,7 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     public static void reportInventory(AgentRuntimeEntry entry, Character bot) {
-        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot));
+        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot, CosmicAgentServerAdapter.INSTANCE.inventory()));
     }
 
     public static void reportMesos(AgentRuntimeEntry entry, Character bot) {

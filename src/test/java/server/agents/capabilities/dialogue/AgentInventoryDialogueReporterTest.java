@@ -5,9 +5,13 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.StatEffect;
+import server.agents.integration.InventoryGateway;
+import tools.Pair;
 
 import java.util.List;
 
+import static client.BuffStat.WATK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,7 +63,33 @@ class AgentInventoryDialogueReporterTest {
         stubInventory(agent, InventoryType.SETUP, 36, 36);
 
         assertEquals("equip 10/24 | use 8/28 | etc 3/32 | setup 0/36",
-                AgentInventoryDialogueReporter.inventorySummary(agent));
+                AgentInventoryDialogueReporter.inventorySummary(agent, inventoryGateway()));
+    }
+
+    @Test
+    void shouldSummarizeSafeUseInventoryItemsThroughGateway() {
+        Character agent = mock(Character.class);
+        stubInventory(agent, InventoryType.EQUIP, 24, 24);
+        Inventory use = stubInventory(agent, InventoryType.USE, 28, 23);
+        stubInventory(agent, InventoryType.ETC, 32, 32);
+        stubInventory(agent, InventoryType.SETUP, 36, 36);
+        when(use.list()).thenReturn(List.of(
+                new Item(2040000, (short) 1, (short) 2),
+                new Item(2000000, (short) 2, (short) 3),
+                new Item(2022179, (short) 3, (short) 4),
+                new Item(4000000, (short) 4, (short) 99)));
+        InventoryGateway inventoryGateway = inventoryGateway();
+        StatEffect pot = mock(StatEffect.class);
+        when(pot.getHp()).thenReturn((short) 50);
+        when(pot.getStatups()).thenReturn(List.of());
+        StatEffect buff = mock(StatEffect.class);
+        when(buff.getStatups()).thenReturn(List.of(new Pair<>(WATK, 12)));
+        when(inventoryGateway.getItemEffect(2000000)).thenReturn(pot);
+        when(inventoryGateway.getItemEffect(2022179)).thenReturn(buff);
+        when(inventoryGateway.isQuestItem(4000000)).thenReturn(true);
+
+        assertEquals("equip 0/24 | use 5/28 (2 scrolls, 3 pots, 4 buffs) | etc 0/32 | setup 0/36",
+                AgentInventoryDialogueReporter.inventorySummary(agent, inventoryGateway));
     }
 
     @Test
@@ -96,5 +126,9 @@ class AgentInventoryDialogueReporterTest {
         when(inventory.getNumFreeSlot()).thenReturn((short) freeSlots);
         when(inventory.list()).thenReturn(List.of());
         return inventory;
+    }
+
+    private static InventoryGateway inventoryGateway() {
+        return mock(InventoryGateway.class);
     }
 }

@@ -2605,3 +2605,8 @@ Recent capability extraction notes:
   `InventoryGateway` from `AgentChatReportOperationsRuntime`; autopot item-name
   lookup moved to the caller boundary while potion counts, chosen-slot ranking,
   and report text stay unchanged.
+- SPI/gateway extraction: `AgentInventoryDialogueReporter.inventorySummary`
+  now receives `InventoryGateway` from `AgentChatReportOperationsRuntime`.
+  Recovery/buff consumable classification and quest-item filtering no longer
+  reach directly for the Cosmic adapter inside the dialogue reporter; inventory
+  summary text and category counts stay unchanged.
