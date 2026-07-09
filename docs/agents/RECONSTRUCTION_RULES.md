@@ -6347,6 +6347,18 @@ Current physics correction:
   to `server.agents.runtime.AgentSessionLifecycleRuntime`. Session lookup,
   relogin dispatch, leader safe mode, and active leader lookup are Agent runtime
   responsibilities rather than integration package side-effect wrappers.
+- Reconstruction capability extraction boundary audit: remaining
+  `server.agents.integration` files are intentionally boundary-only for this
+  milestone:
+  - `AgentCombatStanceGateway`: packet-visible stance refresh through live
+    `Character`.
+  - `AgentInventoryRuntimeAdapters`: callback wiring for Cosmic inventory,
+    trade, item info, pickup, and server-config side effects.
+  - `AgentReplyRuntime`: Cosmic chat, whisper, party, and reply packet delivery.
+  - `AgentRuntimeIdentityRuntime`: live `Character`/`MapleMap` identity lookup.
+  - `AgentTradeInviteGateway`: server-side trade creation and invite calls.
+  - `AgentServerAdapter` plus `*Gateway` interfaces: SPI placeholders for the
+    next gateway-decoupling phase.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

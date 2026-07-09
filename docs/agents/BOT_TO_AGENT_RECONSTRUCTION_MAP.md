@@ -2415,3 +2415,8 @@ Recent capability extraction notes:
   `server.agents.runtime.AgentSessionLifecycleRuntime`; session registry lookup,
   relogin dispatch, leader safe mode, and active leader lookup now sit with
   Agent runtime ownership instead of an integration wrapper.
+- Remaining `server.agents.integration` files after this extraction milestone
+  are boundary adapters or SPI placeholders: stance broadcast, inventory/trade
+  callback wiring around Cosmic item/trade APIs, reply delivery, live identity
+  lookup, trade invite calls, and empty `*Gateway` interfaces for the later
+  gateway implementation phase.
