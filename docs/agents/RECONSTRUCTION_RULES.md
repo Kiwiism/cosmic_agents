@@ -6456,6 +6456,10 @@ Current physics correction:
   metadata through `InventoryGateway.getEquipStats`. Reaction radius checks,
   cooldowns, streak/load scaling, emotes, queued chat, and fidget behavior are
   unchanged.
+- SPI/gateway extraction: shop resupply metadata now routes projectile attack,
+  ammo slot-max, and item-name lookups through `InventoryGateway`. Shop visit
+  sequencing, resupply/recharge decisions, purchase shortfall replies, and the
+  existing test seams for projectile/slot-max behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

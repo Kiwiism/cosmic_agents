@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 import client.inventory.Equip;
+import client.Character;
 import server.StatEffect;
 
 import java.util.Map;
@@ -11,6 +12,8 @@ public interface InventoryGateway {
     StatEffect getItemEffect(int itemId);
 
     int getProjectileWeaponAttack(int itemId);
+
+    short getSlotMax(Character agent, int itemId);
 
     boolean isQuestItem(int itemId);
 

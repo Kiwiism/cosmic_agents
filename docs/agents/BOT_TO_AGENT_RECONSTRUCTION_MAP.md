@@ -2501,3 +2501,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: scroll-reaction success-rate lookup now uses
   `InventoryGateway.getEquipStats`; social reaction timing, chance scaling,
   streak state, emotes, queued chat, and fidget behavior are unchanged.
+- SPI/gateway extraction: shop resupply metadata now uses `InventoryGateway`
+  for projectile attack, ammo slot-max, and item names; shop sequencing,
+  resupply/recharge decisions, purchase shortfall replies, and test seams remain
+  behavior-preserving.

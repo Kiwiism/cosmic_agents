@@ -18,7 +18,6 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.game.GameConstants;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
@@ -26,6 +25,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.capabilities.shop.AgentShopRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
@@ -62,9 +62,9 @@ public final class AgentShopService {
     }
 
     static IntUnaryOperator projectileWatk =
-            id -> ItemInformationProvider.getInstance().getWatkForProjectile(id);
+            CosmicAgentServerAdapter.INSTANCE.inventory()::getProjectileWeaponAttack;
     static SlotMaxLookup ammoSlotMax =
-            (bot, id) -> ItemInformationProvider.getInstance().getSlotMax(bot.getClient(), id);
+            (bot, id) -> CosmicAgentServerAdapter.INSTANCE.inventory().getSlotMax(bot, id);
 
     private static final int SHOP_MANHATTAN_RADIUS = 200;
     private static final int SHOP_ARRIVE_DIST = 100;
@@ -636,7 +636,7 @@ public final class AgentShopService {
     }
 
     private static String resolveItemName(int itemId, String fallbackName) {
-        String name = ItemInformationProvider.getInstance().getName(itemId);
+        String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(itemId);
         return name != null ? name : fallbackName;
     }
 

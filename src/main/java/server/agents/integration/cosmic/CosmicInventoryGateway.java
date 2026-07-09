@@ -1,5 +1,6 @@
 package server.agents.integration.cosmic;
 
+import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
 import server.StatEffect;
@@ -26,6 +27,11 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     @Override
     public int getProjectileWeaponAttack(int itemId) {
         return ItemInformationProvider.getInstance().getWatkForProjectile(itemId);
+    }
+
+    @Override
+    public short getSlotMax(Character agent, int itemId) {
+        return ItemInformationProvider.getInstance().getSlotMax(agent.getClient(), itemId);
     }
 
     @Override
