@@ -2911,3 +2911,8 @@ Recent capability extraction notes:
   `agent.getClient().disconnect(...)` mutation is isolated in
   `CosmicCharacterGateway`. Relog/logout save ordering, delays, and owner-away
   batch logout behavior remain unchanged.
+- SPI/gateway extraction: `AgentAttackExecutionProvider` now uses
+  `AgentCombatGatewayRuntime`/`CombatGateway.applyAttackEffects`; live
+  close-range, ranged, and magic damage-handler dispatch is isolated in
+  `CosmicCombatGateway`. Attack planning, route choice, packet-field generation,
+  and cooldown behavior remain unchanged.

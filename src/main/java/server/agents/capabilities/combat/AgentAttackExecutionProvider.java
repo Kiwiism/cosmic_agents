@@ -10,11 +10,9 @@ import client.inventory.WeaponType;
 import constants.skills.Crossbowman;
 import constants.skills.Hunter;
 import net.server.channel.handlers.AbstractDealDamageHandler;
-import net.server.channel.handlers.CloseRangeDamageHandler;
-import net.server.channel.handlers.MagicDamageHandler;
-import net.server.channel.handlers.RangedAttackHandler;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
 import server.agents.capabilities.combat.data.AgentAttackTiming;
+import server.agents.integration.AgentCombatGatewayRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 
@@ -244,11 +242,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     public static void applyAttackRoute(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
-        switch (route) {
-            case RANGED -> RangedAttackHandler.applyRangedAttackEffects(attack, bot, bot.getClient());
-            case MAGIC -> MagicDamageHandler.applyMagicAttackEffects(attack, bot, bot.getClient());
-            default -> CloseRangeDamageHandler.applyCloseRangeEffects(attack, bot, bot.getClient());
-        }
+        AgentCombatGatewayRuntime.combat().applyAttackEffects(route, attack, bot);
     }
 
     public static AgentAttackRoute determineBasicAttackRoute(Character bot) {

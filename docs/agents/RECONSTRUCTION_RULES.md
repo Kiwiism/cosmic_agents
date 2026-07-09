@@ -6906,6 +6906,12 @@ Current physics correction:
   capture, delayed relog scheduling, logout confirmation, and owner-away batch
   logout behavior are unchanged. Live client disconnect mutation is isolated in
   `CosmicCharacterGateway`.
+- SPI/gateway extraction: attack-route effect dispatch now calls
+  `AgentCombatGatewayRuntime`/`CombatGateway.applyAttackEffects` instead of
+  importing the raw close-range, ranged, and magic damage handlers in
+  `AgentAttackExecutionProvider`. Attack-route selection, attack packet fields,
+  hitbox planning, cooldowns, and caller timing are unchanged. Live Cosmic
+  damage-handler dispatch is isolated in `CosmicCombatGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
