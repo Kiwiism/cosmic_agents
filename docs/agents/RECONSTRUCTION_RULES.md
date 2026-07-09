@@ -6447,6 +6447,11 @@ Current physics correction:
   item-name metadata through `InventoryGateway`. Unequip slot selection,
   free-slot checks, item moves, and reply text remain in
   `AgentEquipmentUnequipService`.
+- SPI/gateway extraction: equipment recommendation summary formatting now
+  routes item-name metadata through `InventoryGateway`. Candidate filtering,
+  optimizer input, useful-item policy, and future/immediate recommendation
+  behavior still use the existing equipment item-info path and remain a later
+  equipment gateway slice.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

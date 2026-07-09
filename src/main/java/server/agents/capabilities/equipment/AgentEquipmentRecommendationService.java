@@ -9,6 +9,7 @@ import config.YamlConfig;
 import constants.inventory.EquipSlot;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -158,7 +159,7 @@ public final class AgentEquipmentRecommendationService {
         return formatRecommendationSummary(
                 recommendations,
                 maxItems,
-                itemId -> ItemInformationProvider.getInstance().getName(itemId));
+                CosmicAgentServerAdapter.INSTANCE.inventory()::getItemName);
     }
 
     static String formatRecommendationSummary(List<AgentEquipRecommendation> recommendations,

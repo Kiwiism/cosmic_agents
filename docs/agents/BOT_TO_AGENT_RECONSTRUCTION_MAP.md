@@ -2494,3 +2494,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: equipment unequip live hooks now use
   `InventoryGateway` for cash-item and item-name metadata; equipment still owns
   slot selection, free-slot validation, item moves, and reply formatting.
+- SPI/gateway extraction: equipment recommendation summary formatting now uses
+  `InventoryGateway` for item names; recommendation candidate filtering,
+  optimizer input, useful-item policy, and future/immediate recommendation
+  behavior remain unchanged for a later equipment gateway slice.
