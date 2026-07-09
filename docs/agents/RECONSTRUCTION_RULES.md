@@ -221,6 +221,11 @@ Recent reconstruction notes:
   adapter code that still needs legacy metadata now goes through that boundary
   instead of importing the Cosmic adapter directly; offer decisions and trade
   routing are unchanged.
+- `AgentTradeGatewayRuntime` centralizes the live Cosmic trade gateway accessor
+  inside `server.agents.integration`. `AgentInventoryTransferService` now uses
+  inventory/trade gateway runtime boundaries instead of importing the Cosmic
+  adapter directly; transfer routing, drop handling, item collection,
+  classification, trade start/invite order, and replies are unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

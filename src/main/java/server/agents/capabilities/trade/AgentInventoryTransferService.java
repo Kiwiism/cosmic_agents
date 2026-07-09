@@ -25,8 +25,11 @@ import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.TradeGateway;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -54,11 +57,11 @@ public final class AgentInventoryTransferService {
                 category,
                 entry,
                 agent,
-                CosmicAgentServerAdapter.INSTANCE.inventory(),
+                inventory(),
                 (dropEntry, dropAgent) -> AgentInventorySellTrashService.collectSellTrashEquips(
                         dropEntry,
                         dropAgent,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()));
+                        inventory()));
         AgentInventoryStateRuntime.setLootInhibitMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(20_000));
@@ -132,7 +135,7 @@ public final class AgentInventoryTransferService {
                         agent,
                         fragment,
                         AgentEquipmentService::slotsFromName,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        inventory()),
                 () -> collectItems(category, entry, agent));
     }
 
@@ -143,12 +146,12 @@ public final class AgentInventoryTransferService {
                 fragment -> AgentInventoryNamedItemService.countNamedItems(
                         agent,
                         fragment,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        inventory()),
                 fragment -> AgentEquippedSlotTradeService.countEquippedSlotItems(
                         agent,
                         fragment,
                         AgentEquipmentService::slotsFromName,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        inventory()),
                 () -> AgentInventoryTradePolicy.itemQuantitySum(collectItems(category, entry, agent)));
     }
 
@@ -161,7 +164,7 @@ public final class AgentInventoryTransferService {
                         () -> recommendedItems(entry, agent),
                         () -> classifyEquipTradeGroups(entry, agent),
                         () -> classifyAmmoTradeGroups(agent)),
-                CosmicAgentServerAdapter.INSTANCE.inventory());
+                inventory());
     }
 
     private static void startTradeSequence(String category,
@@ -198,8 +201,8 @@ public final class AgentInventoryTransferService {
                                 () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
                                 () -> AgentEquipmentService.autoEquip(agent, AgentRuntimeIdentityRuntime.owner(entry), null))),
-                () -> CosmicAgentServerAdapter.INSTANCE.trade().startTrade(agent),
-                CosmicAgentServerAdapter.INSTANCE.trade()::inviteTrade,
+                () -> trade().startTrade(agent),
+                trade()::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
                 message -> AgentInventoryRuntime.replyNow(entry, message));
     }
@@ -229,19 +232,19 @@ public final class AgentInventoryTransferService {
                                     entry,
                                     agent,
                                     AgentEquipmentService::slotsFromName,
-                                    CosmicAgentServerAdapter.INSTANCE.inventory(),
+                                    inventory(),
                                     () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent));
                     return new PreparedTradeItems(equippedSlotItems.items(), equippedSlotItems.errorMessage());
                 },
                 fragment -> AgentInventoryNamedItemService.collectNamedItems(
                         agent,
                         fragment,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        inventory()),
                 () -> recommendedItems(entry, agent),
                 () -> classifyEquipTradeGroups(entry, agent),
                 () -> classifyAmmoTradeGroups(agent),
                 AgentRuntimeIdentityRuntime.owner(entry),
-                CosmicAgentServerAdapter.INSTANCE.inventory());
+                inventory());
     }
 
     private static List<Item> collectReservedEquipTradePage(String category, AgentRuntimeEntry entry, Character agent) {
@@ -290,7 +293,7 @@ public final class AgentInventoryTransferService {
                         () -> TRADE_COMMAND_PROFILE_WARN_NS,
                         character -> AgentEquipTradeClassificationService.ClassificationCallbacks.collectEquipBag(
                                 character,
-                                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                                inventory()::isQuestItem,
                                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE),
                         AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                         item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
@@ -318,8 +321,16 @@ public final class AgentInventoryTransferService {
                 agent,
                 AgentAmmoTradeClassificationService.AmmoTradeCallbacks.of(
                         () -> AgentAttackExecutionProvider.getEquippedWeaponType(agent),
-                        CosmicAgentServerAdapter.INSTANCE.inventory()::getProjectileWeaponAttack,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                        inventory()::getProjectileWeaponAttack,
+                        inventory()::isQuestItem,
                         () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE));
+    }
+
+    private static InventoryGateway inventory() {
+        return AgentInventoryGatewayRuntime.inventory();
+    }
+
+    private static TradeGateway trade() {
+        return AgentTradeGatewayRuntime.trade();
     }
 }

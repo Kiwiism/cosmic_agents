@@ -196,6 +196,13 @@ Recent map updates:
   importing the Cosmic adapter directly for legacy metadata. This is a boundary
   cleanup only; offer prompts, gear reservation decisions, throwing-star
   comparisons, and inventory transfer routing are unchanged.
+- `AgentTradeGatewayRuntime` now owns the live trade gateway lookup in
+  `server.agents.integration`. `AgentInventoryTransferService` uses
+  `AgentInventoryGatewayRuntime` and `AgentTradeGatewayRuntime` for its legacy
+  metadata and trade mutation seams instead of importing the Cosmic adapter
+  directly. Drop-vs-trade choice handling, transfer availability checks, item
+  collection, equip/ammo classification, batch opening, invitation replies, and
+  trade start/invite ordering are unchanged.
 - `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
   `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
   `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across
