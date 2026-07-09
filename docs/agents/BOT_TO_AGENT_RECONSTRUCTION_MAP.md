@@ -2717,3 +2717,7 @@ Recent capability extraction notes:
   importing the concrete Cosmic adapter. Existing packet gateway methods still
   build the same packets and target the same clients/maps, preserving visible
   behavior.
+- SPI/gateway extraction: support special-move dispatch now uses
+  `AgentCombatGatewayRuntime` for synthetic packet handling. The combat
+  capability still builds the same legacy packet bytes, while gateway dispatch
+  remains isolated behind the Agent integration boundary.

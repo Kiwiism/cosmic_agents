@@ -6670,6 +6670,10 @@ Current physics correction:
   packets now obtain packet emission through `AgentPacketGatewayRuntime` instead
   of importing the concrete Cosmic adapter. Packet payloads, broadcast targets,
   scheduling, and visibility filtering are unchanged.
+- SPI/gateway extraction: support special-move synthetic packet dispatch now
+  obtains combat gateway access through `AgentCombatGatewayRuntime` instead of
+  importing the concrete Cosmic adapter. Packet bytes, dispatch timing, and
+  handler behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

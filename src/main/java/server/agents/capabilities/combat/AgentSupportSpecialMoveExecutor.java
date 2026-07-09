@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentCombatGatewayRuntime;
 
 public final class AgentSupportSpecialMoveExecutor {
     private AgentSupportSpecialMoveExecutor() {
@@ -18,6 +18,6 @@ public final class AgentSupportSpecialMoveExecutor {
                 skill.getId(),
                 skillLevel,
                 net.server.Server.getInstance().getCurrentTimestamp());
-        return CosmicAgentServerAdapter.INSTANCE.combat().dispatchSyntheticPacket(agent, packetBytes);
+        return AgentCombatGatewayRuntime.combat().dispatchSyntheticPacket(agent, packetBytes);
     }
 }
