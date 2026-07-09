@@ -1,18 +1,15 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import io.netty.buffer.Unpooled;
-import net.packet.ByteBufInPacket;
-import net.packet.InPacket;
-import net.packet.Packet;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
-import tools.PacketCreator;
 
 /**
- * Packet-visible Agent movement broadcast side effects.
+ * Agent movement broadcast state. Cosmic packet construction and map broadcast
+ * are delegated to the packet gateway boundary.
  */
 public final class AgentMovementBroadcastService {
     private AgentMovementBroadcastService() {
@@ -80,8 +77,6 @@ public final class AgentMovementBroadcastService {
         int movementTickMs = AgentMovementPhysicsConfig.configuredMovementTickMs();
         data[13] = (byte) (movementTickMs & 0xFF);
         data[14] = (byte) (movementTickMs >> 8);
-        InPacket packet = new ByteBufInPacket(Unpooled.wrappedBuffer(data));
-        Packet movePacket = PacketCreator.movePlayer(bot.getId(), packet, data.length);
-        bot.getMap().broadcastMessage(bot, movePacket, false);
+        CosmicAgentServerAdapter.INSTANCE.packets().broadcastMovePlayer(bot, data);
     }
 }

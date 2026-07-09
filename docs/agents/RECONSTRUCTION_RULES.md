@@ -6359,6 +6359,13 @@ Current physics correction:
   - `AgentTradeInviteGateway`: server-side trade creation and invite calls.
   - `AgentServerAdapter` plus `*Gateway` interfaces: SPI placeholders for the
     next gateway-decoupling phase.
+- SPI/gateway extraction: `PacketGateway` now exposes movement packet broadcast
+  and `server.agents.integration.cosmic.CosmicPacketGateway` owns
+  `PacketCreator.movePlayer` plus `MapleMap.broadcastMessage` for Agent
+  movement packets. `server.agents.integration.cosmic.CosmicAgentServerAdapter`
+  exposes this concrete gateway through the `AgentServerAdapter` seam. Movement
+  capability code delegates packet construction and map broadcast to this
+  boundary.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

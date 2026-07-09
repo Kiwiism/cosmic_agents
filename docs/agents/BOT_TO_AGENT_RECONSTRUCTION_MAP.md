@@ -2420,3 +2420,10 @@ Recent capability extraction notes:
   callback wiring around Cosmic item/trade APIs, reply delivery, live identity
   lookup, trade invite calls, and empty `*Gateway` interfaces for the later
   gateway implementation phase.
+- SPI/gateway extraction: `PacketGateway` and
+  `server.agents.integration.cosmic.CosmicPacketGateway` now own movement packet
+  construction/broadcast for Agent movement. This removes direct
+  `PacketCreator.movePlayer` and map broadcast calls from
+  `AgentMovementBroadcastService`;
+  `server.agents.integration.cosmic.CosmicAgentServerAdapter` exposes the packet
+  gateway through `AgentServerAdapter`.
