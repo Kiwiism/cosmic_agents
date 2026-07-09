@@ -9,6 +9,8 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.inventory.EquipSlot;
 import server.ItemInformationProvider;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +44,18 @@ public final class AgentEquipmentReservePolicy {
                 }
             };
         }
+
+        static EquipUsefulnessHooks from(InventoryGateway inventory) {
+            return new EquipUsefulnessHooks() {
+                @Override public boolean isCash(int itemId) { return inventory.isCashItem(itemId); }
+                @Override public String getEquipmentSlot(int itemId) { return inventory.getEquipmentSlot(itemId); }
+                @Override public WeaponType getWeaponType(int itemId) { return inventory.getWeaponType(itemId); }
+                @Override public boolean meetsReqs(Equip equip, Job job, int level, int str, int dex,
+                                                   int int_, int luk, int fame) {
+                    return inventory.meetsEquipRequirements(equip, job, level, str, dex, int_, luk, fame);
+                }
+            };
+        }
     }
 
     public interface SelfReserveHooks extends EquipUsefulnessHooks {
@@ -59,6 +73,20 @@ public final class AgentEquipmentReservePolicy {
                 }
                 @Override public int getEquipLevelReq(int itemId) { return ii.getEquipLevelReq(itemId); }
                 @Override public Map<String, Integer> getEquipStats(int itemId) { return ii.getEquipStats(itemId); }
+            };
+        }
+
+        static SelfReserveHooks from(InventoryGateway inventory) {
+            return new SelfReserveHooks() {
+                @Override public boolean isCash(int itemId) { return inventory.isCashItem(itemId); }
+                @Override public String getEquipmentSlot(int itemId) { return inventory.getEquipmentSlot(itemId); }
+                @Override public WeaponType getWeaponType(int itemId) { return inventory.getWeaponType(itemId); }
+                @Override public boolean meetsReqs(Equip equip, Job job, int level, int str, int dex,
+                                                   int int_, int luk, int fame) {
+                    return inventory.meetsEquipRequirements(equip, job, level, str, dex, int_, luk, fame);
+                }
+                @Override public int getEquipLevelReq(int itemId) { return inventory.getEquipLevelRequirement(itemId); }
+                @Override public Map<String, Integer> getEquipStats(int itemId) { return inventory.getEquipStats(itemId); }
             };
         }
     }
@@ -87,7 +115,10 @@ public final class AgentEquipmentReservePolicy {
 
     public static boolean shouldReserveOwnedItem(Character agent, Item item) {
         if (item instanceof Equip equip) {
-            return shouldReserveOwnedItem(agent, ItemInformationProvider.getInstance(), equip);
+            InventoryGateway inventory = inventory();
+            return selectOwnedItemsForSelfReserve(agent,
+                    SelfReserveHooks.from(inventory),
+                    collectOwnedEquips(agent, inventory)).contains(equip);
         }
         return false;
     }
@@ -211,10 +242,12 @@ public final class AgentEquipmentReservePolicy {
     }
 
     public static Set<Item> collectPotentialSelfUpgradeItems(Character agent) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        InventoryGateway inventory = inventory();
         Set<Item> keep = Collections.newSetFromMap(new IdentityHashMap<>());
-        List<Equip> bagEquips = collectOwnedBagEquips(agent, ii);
-        Set<Equip> selected = selectOwnedItemsForSelfReserve(agent, SelfReserveHooks.from(ii), collectOwnedEquips(agent, ii));
+        List<Equip> bagEquips = collectOwnedBagEquips(agent, inventory);
+        Set<Equip> selected = selectOwnedItemsForSelfReserve(agent,
+                SelfReserveHooks.from(inventory),
+                collectOwnedEquips(agent, inventory));
         for (Equip equip : bagEquips) {
             if (selected.contains(equip)) {
                 keep.add(equip);
@@ -287,6 +320,16 @@ public final class AgentEquipmentReservePolicy {
         return owned;
     }
 
+    private static List<Equip> collectOwnedEquips(Character agent, InventoryGateway inventory) {
+        List<Equip> owned = new ArrayList<>();
+        owned.addAll(collectOwnedBagEquips(agent, inventory));
+        Inventory equippedInv = agent.getInventory(InventoryType.EQUIPPED);
+        for (Item item : equippedInv.list()) {
+            if (item instanceof Equip equip && !inventory.isCashItem(equip.getItemId())) owned.add(equip);
+        }
+        return owned;
+    }
+
     private static List<Equip> collectOwnedBagEquips(Character agent, ItemInformationProvider ii) {
         List<Equip> owned = new ArrayList<>();
         Inventory equipInv = agent.getInventory(InventoryType.EQUIP);
@@ -294,6 +337,19 @@ public final class AgentEquipmentReservePolicy {
             if (item instanceof Equip equip && !ii.isCash(equip.getItemId())) owned.add(equip);
         }
         return owned;
+    }
+
+    private static List<Equip> collectOwnedBagEquips(Character agent, InventoryGateway inventory) {
+        List<Equip> owned = new ArrayList<>();
+        Inventory equipInv = agent.getInventory(InventoryType.EQUIP);
+        for (Item item : equipInv.list()) {
+            if (item instanceof Equip equip && !inventory.isCashItem(equip.getItemId())) owned.add(equip);
+        }
+        return owned;
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 
     private static String selfReserveTrackKey(Character agent, EquipUsefulnessHooks hooks, Equip equip) {

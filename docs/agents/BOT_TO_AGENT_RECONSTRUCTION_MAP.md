@@ -2540,3 +2540,8 @@ Recent capability extraction notes:
   `InventoryGateway` for item name, text slot, equip stats, and level
   requirement metadata; dump layout, self-reserve flags, optimizer inputs, and
   equipment selection behavior stay unchanged.
+- SPI/gateway extraction: default equipment self-reserve and potential
+  self-upgrade collection now use gateway-backed reserve hooks for cash checks,
+  text slot, weapon type, equip stats, level requirements, and requirement
+  validation. Legacy item-info overloads remain for compatibility and focused
+  tests; reserve selection behavior stays unchanged.

@@ -1,6 +1,7 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
+import client.Job;
 import client.inventory.Equip;
 import client.inventory.WeaponType;
 import server.ItemInformationProvider;
@@ -78,5 +79,10 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     @Override
     public int getMakerCrystalFromLeftover(int leftoverId) {
         return ItemInformationProvider.getInstance().getMakerCrystalFromLeftover(leftoverId);
+    }
+
+    @Override
+    public boolean meetsEquipRequirements(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame) {
+        return ItemInformationProvider.getInstance().meetsEquipRequirements(equip, job, level, str, dex, int_, luk, fame);
     }
 }

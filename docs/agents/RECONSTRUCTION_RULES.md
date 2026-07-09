@@ -6496,6 +6496,11 @@ Current physics correction:
   text slot, equip stats, and level requirement metadata through
   `InventoryGateway`. Dump layout, self-reserve flags, optimizer inputs, and
   equipment selection behavior are unchanged.
+- SPI/gateway extraction: default equipment self-reserve and potential
+  self-upgrade collection now use gateway-backed reserve hooks for cash checks,
+  text slot, weapon type, equip stats, level requirements, and requirement
+  validation. The legacy item-info overloads remain for compatibility and
+  focused tests; reserve selection behavior is unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

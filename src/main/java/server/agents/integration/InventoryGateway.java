@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.inventory.Equip;
 import client.Character;
+import client.Job;
 import client.inventory.WeaponType;
 import server.StatEffect;
 
@@ -33,5 +34,7 @@ public interface InventoryGateway {
     boolean isTwoHandedWeapon(int itemId);
 
     int getMakerCrystalFromLeftover(int leftoverId);
+
+    boolean meetsEquipRequirements(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame);
 }
 
