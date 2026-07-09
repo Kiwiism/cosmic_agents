@@ -241,6 +241,11 @@ Recent reconstruction notes:
   ground-point lookup route through `MapGateway`/`CosmicMapGateway`; death-state
   clearing, HP restore, teleport placement, movement reset, broadcast, reply,
   and face-expression behavior are unchanged.
+- Lifecycle spawn map-change hooks now also route through
+  `AgentMapGatewayRuntime`. Offline-loaded Agents still resolve the same spawn
+  map/position, register through the same runtime path, place online Agents
+  through `AgentSpawnPlacementRuntime`, and start follow behavior exactly as
+  before.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

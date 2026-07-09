@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.slf4j.Logger;
 import server.agents.auth.AgentOwnershipService;
+import server.agents.integration.AgentMapGatewayRuntime;
 
 import java.util.function.Consumer;
 
@@ -49,7 +50,7 @@ public final class AgentSpawnRuntime {
                         AgentOfflineLoadRuntime::loadOfflineAgent,
                         AgentSpawnPlacementRuntime::placeSpawnedOnlineAgent,
                         startFollowLeader,
-                        (agent, map, position) -> agent.forceChangeMap(map, map.findClosestPortal(position))),
+                        AgentMapGatewayRuntime.map()::changeMapNear),
                 (failedAgentName, failedLeader, e) -> log.warn(
                         "Failed to load bot character '{}' for owner '{}'", failedAgentName, failedLeader.getName(), e));
     }

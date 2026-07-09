@@ -2744,6 +2744,10 @@ Recent capability extraction notes:
   `AgentRespawnRuntime` uses this gateway for respawn-near-leader map changes
   and point-below lookup; respawn ordering, placement fallback, movement reset,
   broadcast, map reply, and face-expression behavior stay unchanged.
+- SPI/gateway extraction: `AgentSpawnRuntime` now passes lifecycle spawn
+  map-change hooks through `AgentMapGatewayRuntime` instead of a direct
+  `forceChangeMap` lambda. Spawn lookup, registration, online placement,
+  follow-start callback wiring, and failure logging stay unchanged.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the
