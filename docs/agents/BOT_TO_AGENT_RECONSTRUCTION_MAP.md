@@ -2925,3 +2925,7 @@ Recent capability extraction notes:
   transactions through `ShopGateway.recharge`; live `Shop.rechargeDirect`
   dispatch is isolated in `CosmicShopGateway`. Stack ranking, recharge cap,
   transaction-result handling, shortfall reports, and timings remain unchanged.
+- SPI/gateway extraction: `AgentShopService` now routes fixed-ammo and potion
+  transactions through `ShopGateway.buy`; live `Shop.buyDirect` dispatch is
+  isolated in `CosmicShopGateway`. Batch and affordable-partial purchase logic,
+  transaction-result handling, shortfall reports, and timings remain unchanged.

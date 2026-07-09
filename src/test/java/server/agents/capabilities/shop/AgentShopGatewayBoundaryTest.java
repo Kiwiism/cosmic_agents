@@ -19,9 +19,13 @@ class AgentShopGatewayBoundaryTest {
 
         assertFalse(service.contains("shop.sell(bot.getClient()"));
         assertFalse(service.contains("shop.rechargeDirect(bot"));
+        assertFalse(service.contains("shop.buyDirect(bot"));
         assertTrue(service.contains("AgentShopGatewayRuntime.shop().sell("));
         assertTrue(service.contains("AgentShopGatewayRuntime.shop().recharge("));
+        assertTrue(service.contains("AgentShopGatewayRuntime.shop()"));
+        assertTrue(service.contains(".buy(bot, shop,"));
         assertTrue(gateway.contains("shop.sell(agent.getClient(), type, slot, quantity)"));
         assertTrue(gateway.contains("shop.rechargeDirect(agent, slot)"));
+        assertTrue(gateway.contains("shop.buyDirect(agent, slot, itemId, quantity)"));
     }
 }

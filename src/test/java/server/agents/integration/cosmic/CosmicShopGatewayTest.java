@@ -22,4 +22,19 @@ class CosmicShopGatewayTest {
         assertSame(Shop.TransactionResult.NO_SPACE, result);
         verify(shop).rechargeDirect(agent, slot);
     }
+
+    @Test
+    void delegatesBuyToDirectShopTransaction() {
+        Character agent = mock(Character.class);
+        Shop shop = mock(Shop.class);
+        short slot = 3;
+        int itemId = 2000000;
+        short quantity = 25;
+        when(shop.buyDirect(agent, slot, itemId, quantity)).thenReturn(Shop.TransactionResult.NOT_ENOUGH_MESO);
+
+        Shop.TransactionResult result = CosmicShopGateway.INSTANCE.buy(agent, shop, slot, itemId, quantity);
+
+        assertSame(Shop.TransactionResult.NOT_ENOUGH_MESO, result);
+        verify(shop).buyDirect(agent, slot, itemId, quantity);
+    }
 }

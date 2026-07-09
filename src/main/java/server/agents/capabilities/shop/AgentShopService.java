@@ -583,7 +583,8 @@ public final class AgentShopService {
         while (totalBought < desiredQuantity) {
             int remaining = desiredQuantity - totalBought;
             short qty = (short) Math.min(remaining, batchSize);
-            Shop.TransactionResult result = shop.buyDirect(bot, item.slot, item.shopItem.getItemId(), qty);
+            Shop.TransactionResult result = AgentShopGatewayRuntime.shop()
+                    .buy(bot, shop, item.slot, item.shopItem.getItemId(), qty);
             if (result == Shop.TransactionResult.SUCCESS) {
                 totalBought += qty;
                 continue;
@@ -592,7 +593,8 @@ public final class AgentShopService {
                 reason = AgentShopShortfallReason.NO_MESO;
                 int affordable = price > 0 ? Math.min(remaining, bot.getMeso() / price) : 0;
                 if (affordable > 0) {
-                    Shop.TransactionResult partial = shop.buyDirect(bot, item.slot, item.shopItem.getItemId(), (short) affordable);
+                    Shop.TransactionResult partial = AgentShopGatewayRuntime.shop()
+                            .buy(bot, shop, item.slot, item.shopItem.getItemId(), (short) affordable);
                     if (partial == Shop.TransactionResult.SUCCESS) {
                         totalBought += affordable;
                     } else if (partial == Shop.TransactionResult.NO_SPACE) {

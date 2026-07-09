@@ -6924,6 +6924,12 @@ Current physics correction:
   ten-set cap, attempt counts, shortfall mapping, meso charging, and report text
   are unchanged. Live direct recharge dispatch is isolated in
   `CosmicShopGateway`.
+- SPI/gateway extraction: fixed-ammo and potion shop purchases now call
+  `AgentShopGatewayRuntime`/`ShopGateway.buy` instead of invoking
+  `Shop.buyDirect` inside `AgentShopService`. Batch sizing, target quantities,
+  full-price attempts, affordable partial retries, transaction-result mapping,
+  and shortfall reports are unchanged. Live direct purchase dispatch is
+  isolated in `CosmicShopGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

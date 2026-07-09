@@ -20,4 +20,9 @@ public final class CosmicShopGateway implements ShopGateway {
     public Shop.TransactionResult recharge(Character agent, Shop shop, short slot) {
         return shop.rechargeDirect(agent, slot);
     }
+
+    @Override
+    public Shop.TransactionResult buy(Character agent, Shop shop, short slot, int itemId, short quantity) {
+        return shop.buyDirect(agent, slot, itemId, quantity);
+    }
 }
