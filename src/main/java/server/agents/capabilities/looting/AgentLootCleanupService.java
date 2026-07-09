@@ -2,7 +2,7 @@ package server.agents.capabilities.looting;
 
 import client.BotClient;
 import client.Character;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.maps.MapItem;
 
 public final class AgentLootCleanupService {
@@ -25,7 +25,7 @@ public final class AgentLootCleanupService {
                 continue;
             }
             player.removeVisibleMapObject(drop);
-            CosmicAgentServerAdapter.INSTANCE.packets().sendRemoveItemFromMap(player, drop.getObjectId(), 1, 0);
+            AgentPacketGatewayRuntime.packets().sendRemoveItemFromMap(player, drop.getObjectId(), 1, 0);
         }
     }
 }

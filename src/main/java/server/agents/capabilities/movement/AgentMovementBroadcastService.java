@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -77,6 +77,6 @@ public final class AgentMovementBroadcastService {
         int movementTickMs = AgentMovementPhysicsConfig.configuredMovementTickMs();
         data[13] = (byte) (movementTickMs & 0xFF);
         data[14] = (byte) (movementTickMs >> 8);
-        CosmicAgentServerAdapter.INSTANCE.packets().broadcastMovePlayer(bot, data);
+        AgentPacketGatewayRuntime.packets().broadcastMovePlayer(bot, data);
     }
 }

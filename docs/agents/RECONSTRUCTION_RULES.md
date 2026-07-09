@@ -6665,6 +6665,11 @@ Current physics correction:
   reserve checks, recommendation filtering, unequip behavior, infeasible-equip
   cleanup, and equipped-weapon attack metadata are unchanged; deeper
   `ItemInformationProvider` compatibility signatures remain staged for later.
+- SPI/gateway extraction: movement broadcast, fidget visual attack, combat
+  damage, loot ghost-drop cleanup, navigation debug overlay, and airshow visual
+  packets now obtain packet emission through `AgentPacketGatewayRuntime` instead
+  of importing the concrete Cosmic adapter. Packet payloads, broadcast targets,
+  scheduling, and visibility filtering are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -11,8 +11,8 @@ import server.life.Monster;
 import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -218,9 +218,9 @@ public final class AgentAirshowService {
         trail.setPosition(position);
         trail.setFh(AgentMovementPhysicsStateRuntime.lastGroundFhId(entry));
         trail.setStance(CharacterStance.STAND_RIGHT_STANCE);
-        CosmicAgentServerAdapter.INSTANCE.packets().broadcastSpawnMonster(map, trail, true);
+        AgentPacketGatewayRuntime.packets().broadcastSpawnMonster(map, trail, true);
         TimerManager.getInstance().schedule(
-                () -> CosmicAgentServerAdapter.INSTANCE.packets().broadcastKillMonster(
+                () -> AgentPacketGatewayRuntime.packets().broadcastKillMonster(
                         map, trail.getObjectId(), 1, trail.getPosition()),
                 TRAIL_DEATH_DELAY_MS);
     }
@@ -239,6 +239,6 @@ public final class AgentAirshowService {
         data[12] = (byte) stance;
         data[13] = (byte) (FRAME_MS & 0xFF);
         data[14] = (byte) (FRAME_MS >> 8);
-        CosmicAgentServerAdapter.INSTANCE.packets().broadcastMovePlayer(bot, data);
+        AgentPacketGatewayRuntime.packets().broadcastMovePlayer(bot, data);
     }
 }

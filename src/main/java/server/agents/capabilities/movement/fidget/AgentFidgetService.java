@@ -16,7 +16,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.movement.fidget.AgentFidgetRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
@@ -493,7 +493,7 @@ public final class AgentFidgetService {
         }
 
         int direction = AgentAttackExecutionProvider.bodyActionId("proneStab", "stabO1", null);
-        CosmicAgentServerAdapter.INSTANCE.packets().broadcastCloseRangeAttack(
+        AgentPacketGatewayRuntime.packets().broadcastCloseRangeAttack(
                 bot,
                 0,
                 0,

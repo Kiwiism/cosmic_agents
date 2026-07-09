@@ -10,8 +10,8 @@ import constants.skills.Shadower;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
@@ -239,7 +239,7 @@ public final class AgentNavigationDebugOverlay {
             state.clearTask.cancel(false);
         }
         for (int objectId : state.objectIds) {
-            CosmicAgentServerAdapter.INSTANCE.packets().sendRemoveMist(viewer, objectId);
+            AgentPacketGatewayRuntime.packets().sendRemoveMist(viewer, objectId);
         }
     }
 
@@ -381,7 +381,7 @@ public final class AgentNavigationDebugOverlay {
             Rectangle box = normalize(rectangle);
             Mist mist = new Mist(box, viewer, effectFor(type));
             mist.setObjectId(map.allocateMapObjectId());
-            CosmicAgentServerAdapter.INSTANCE.packets().sendMistFakeSpawn(viewer, mist, 1);
+            AgentPacketGatewayRuntime.packets().sendMistFakeSpawn(viewer, mist, 1);
             objectIds.add(mist.getObjectId());
         }
 

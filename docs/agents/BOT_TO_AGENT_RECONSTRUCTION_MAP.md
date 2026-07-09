@@ -2711,3 +2711,9 @@ Recent capability extraction notes:
   Existing item-info compatibility method signatures remain as staged seams,
   while auto-equip, recommendation, reserve, unequip, infeasible-cleanup, and
   attack route metadata behavior remain unchanged.
+- SPI/gateway extraction: packet-emitting capability code for movement
+  broadcasts, fidget visuals, combat damage, loot cleanup, navigation debug
+  overlays, and airshow visuals now uses `AgentPacketGatewayRuntime` instead of
+  importing the concrete Cosmic adapter. Existing packet gateway methods still
+  build the same packets and target the same clients/maps, preserving visible
+  behavior.
