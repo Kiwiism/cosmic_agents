@@ -6443,6 +6443,10 @@ Current physics correction:
   Sell-trash filtering, protected stat thresholds, mage/weapon attack checks,
   self-upgrade exclusions, reserved-recipient exclusions, and sorting behavior
   are unchanged.
+- SPI/gateway extraction: equipment unequip live hooks now route cash-item and
+  item-name metadata through `InventoryGateway`. Unequip slot selection,
+  free-slot checks, item moves, and reply text remain in
+  `AgentEquipmentUnequipService`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

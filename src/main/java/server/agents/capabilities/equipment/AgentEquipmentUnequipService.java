@@ -5,7 +5,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
-import server.ItemInformationProvider;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +20,13 @@ public final class AgentEquipmentUnequipService {
         String itemName(int itemId);
         void move(Character agent, short sourceSlot, short destinationSlot);
 
-        static UnequipHooks live(ItemInformationProvider ii) {
+        static UnequipHooks live(InventoryGateway inventory) {
             return new UnequipHooks() {
                 @Override public boolean isCash(int itemId) {
-                    return ii.isCash(itemId);
+                    return inventory.isCashItem(itemId);
                 }
                 @Override public String itemName(int itemId) {
-                    return ii.getName(itemId);
+                    return inventory.getItemName(itemId);
                 }
                 @Override public void move(Character agent, short sourceSlot, short destinationSlot) {
                     InventoryManipulator.handleItemMove(
@@ -36,7 +37,7 @@ public final class AgentEquipmentUnequipService {
     }
 
     public static String unequipAll(Character agent) {
-        return unequipAll(agent, UnequipHooks.live(ItemInformationProvider.getInstance()));
+        return unequipAll(agent, UnequipHooks.live(CosmicAgentServerAdapter.INSTANCE.inventory()));
     }
 
     static String unequipAll(Character agent, UnequipHooks hooks) {
@@ -67,7 +68,7 @@ public final class AgentEquipmentUnequipService {
     }
 
     public static String unequipSlot(Character agent, short[] slots) {
-        return unequipSlot(agent, slots, UnequipHooks.live(ItemInformationProvider.getInstance()));
+        return unequipSlot(agent, slots, UnequipHooks.live(CosmicAgentServerAdapter.INSTANCE.inventory()));
     }
 
     static String unequipSlot(Character agent, short[] slots, UnequipHooks hooks) {

@@ -2491,3 +2491,6 @@ Recent capability extraction notes:
   `InventoryGateway` for equip stats, base equip lookup, and quest-item checks;
   inventory still owns sell-trash filtering, protected-stat policy, self-upgrade
   exclusion, reserved-recipient exclusion, and sort behavior.
+- SPI/gateway extraction: equipment unequip live hooks now use
+  `InventoryGateway` for cash-item and item-name metadata; equipment still owns
+  slot selection, free-slot validation, item moves, and reply formatting.
