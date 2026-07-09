@@ -2,7 +2,7 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -45,7 +45,7 @@ public final class AgentActiveModeRuntime {
                 AgentPotionService.checkPotShareOnModeStart(
                         entry,
                         bot(entry),
-                        CosmicAgentServerAdapter.INSTANCE.inventory());
+                        AgentInventoryGatewayRuntime.inventory());
             }
         };
     }

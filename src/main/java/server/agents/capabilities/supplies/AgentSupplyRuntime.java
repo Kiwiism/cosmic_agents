@@ -10,7 +10,7 @@ import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.capabilities.dialogue.AgentSupplyRequestOutcomeFlow;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.trade.AgentOfferService;
 
@@ -44,7 +44,7 @@ public final class AgentSupplyRuntime {
 
     public static void handleRequestUpgradeCommand(AgentRuntimeEntry entry, Character bot) {
         AgentOfferService.clearPendingOfferForOwnerAsk(entry);
-        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot, CosmicAgentServerAdapter.INSTANCE.inventory())) {
+        if (AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot, AgentInventoryGatewayRuntime.inventory())) {
             return;
         }
         AgentOfferService.requestBestUpgradeFromOwner(entry, bot);
@@ -82,7 +82,7 @@ public final class AgentSupplyRuntime {
         AgentAmmoService.OwnerAmmoShareResult result = AgentAmmoService.offerAmmoShareToOwner(
                 entry,
                 weaponType,
-                CosmicAgentServerAdapter.INSTANCE.inventory());
+                AgentInventoryGatewayRuntime.inventory());
         String reply = AgentSupplyRequestOutcomeFlow.ammoShareReply(
                 result == AgentAmmoService.OwnerAmmoShareResult.NO_DONOR);
         if (reply != null) {

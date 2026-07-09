@@ -8,7 +8,7 @@ import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentTradeInviteGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.build.AgentMakerService;
 import server.agents.capabilities.shop.AgentShopService;
@@ -43,19 +43,19 @@ public final class AgentUtilityRuntime {
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 AgentSchedulerRuntime.afterRandomDelay(500, 700,
                         () -> AgentShopService.requestSellTrashVisit(
-                                entry, bot, CosmicAgentServerAdapter.INSTANCE.inventory()));
+                                entry, bot, AgentInventoryGatewayRuntime.inventory()));
             }
 
             @Override
             public void makeCrystals() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> AgentMakerService.handleMakeCrystals(entry, CosmicAgentServerAdapter.INSTANCE.inventory()));
+                        () -> AgentMakerService.handleMakeCrystals(entry, AgentInventoryGatewayRuntime.inventory()));
             }
 
             @Override
             public void disassembleTrash() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> AgentMakerService.handleDisassembleTrash(entry, CosmicAgentServerAdapter.INSTANCE.inventory()));
+                        () -> AgentMakerService.handleDisassembleTrash(entry, AgentInventoryGatewayRuntime.inventory()));
             }
         };
     }

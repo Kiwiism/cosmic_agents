@@ -6648,6 +6648,12 @@ Current physics correction:
   reaching for the Cosmic adapter inside `AgentAmmoService`. Low-ammo checks,
   owner/manual bypass behavior, donor selection, cooldown/backoff handling,
   dialogue timing, and transfer scheduling are unchanged.
+- SPI/gateway extraction: runtime inventory lookups for common ticks,
+  active-mode preparation, utility commands, movement follow setup, supply
+  requests, and buff-control reporting now route through
+  `AgentInventoryGatewayRuntime` instead of importing the Cosmic adapter
+  directly at those runtime boundaries. Potion, ammo, buff, Maker, shop, and
+  mode-start behavior is unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

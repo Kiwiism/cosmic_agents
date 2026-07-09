@@ -11,7 +11,7 @@ import server.agents.capabilities.build.AgentBuildService;
 import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -78,7 +78,7 @@ public final class AgentControlRuntime {
                             AgentBuffStateRuntime.enabled(entry),
                             AgentBuffStateRuntime.cheapMode(entry),
                             bot(entry),
-                            CosmicAgentServerAdapter.INSTANCE.inventory());
+                            AgentInventoryGatewayRuntime.inventory());
                     AgentReplyRuntime.replyNow(entry, summary);
                 });
             }

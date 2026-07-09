@@ -15,7 +15,7 @@ import server.agents.capabilities.combat.AgentCombatDamageRuntime;
 import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.capabilities.combat.AgentCombatHealRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 
 import java.util.function.Consumer;
 
@@ -48,7 +48,7 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentPotionService.tickPotionCheck(
                         entry,
                         agent,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        AgentInventoryGatewayRuntime.inventory()),
                 (entry, agent) -> AgentPotionService.tickPassiveRecovery(entry, agent),
                 (entry, agent) -> AgentBuildService.checkLevelUp(entry, agent),
                 (entry, agent, leader) -> AgentManagerStatusRuntime.tickAfkCheck(entry, leader),
@@ -58,7 +58,7 @@ public final class AgentCommonTickRuntime {
                         entry,
                         agent,
                         leader,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        AgentInventoryGatewayRuntime.inventory()),
                 tickScriptTasks,
                 AgentPartyQuestHooks::isNpcLocked,
                 AgentCombatActionLockRuntime::tickActionLock,
@@ -67,7 +67,7 @@ public final class AgentCommonTickRuntime {
                         entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentCombatBuffRuntime.tickBuffs(
                         entry, agent, AgentCombatConfig.cfg),
-                (entry, agent) -> AgentBuffService.tick(entry, agent, CosmicAgentServerAdapter.INSTANCE.inventory()),
+                (entry, agent) -> AgentBuffService.tick(entry, agent, AgentInventoryGatewayRuntime.inventory()),
                 AgentActionLockPhysicsRuntime::tickActionLocked);
     }
 }

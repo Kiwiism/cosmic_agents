@@ -2693,3 +2693,9 @@ Recent capability extraction notes:
   cooldown/backoff state, map chat, random delays, and supply-share trade
   scheduling stay unchanged while ammo sharing no longer reaches directly for
   the Cosmic adapter.
+- SPI/gateway extraction: common tick, active-mode, utility, movement, supply,
+  and control-report runtime boundaries now obtain live inventory metadata
+  through `AgentInventoryGatewayRuntime` instead of importing
+  `CosmicAgentServerAdapter` directly. This keeps the Cosmic inventory adapter
+  behind the integration seam while preserving potion, ammo, buff, Maker, shop,
+  and mode-start behavior.
