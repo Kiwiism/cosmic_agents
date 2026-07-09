@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import client.BotClient;
 import client.Character;
+import client.Client;
 import client.Disease;
 import org.junit.jupiter.api.Test;
 import server.life.MobSkill;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class AgentOfflineLoadServiceTest {
     @Test
     void loadsOfflineAgentInLegacyOrder() throws Exception {
-        BotClient client = mock(BotClient.class);
+        Client client = mock(Client.class);
         Character agent = mock(Character.class);
         MapleMap spawnMap = mock(MapleMap.class);
         Point desiredPosition = new Point(10, 20);

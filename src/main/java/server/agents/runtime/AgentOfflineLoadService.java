@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import client.BotClient;
 import client.Character;
+import client.Client;
 import client.Disease;
 import server.life.MobSkill;
 import server.maps.MapleMap;
@@ -15,7 +15,7 @@ public final class AgentOfflineLoadService {
     private AgentOfflineLoadService() {
     }
 
-    public record Hooks(BotClientFactory clientFactory,
+    public record Hooks(AgentClientFactory clientFactory,
                         CharacterLoader characterLoader,
                         DiseaseStorageLoader diseaseStorageLoader,
                         MapResolver mapResolver,
@@ -27,13 +27,13 @@ public final class AgentOfflineLoadService {
     }
 
     @FunctionalInterface
-    public interface BotClientFactory {
-        BotClient create(int world, int channel);
+    public interface AgentClientFactory {
+        Client create(int world, int channel);
     }
 
     @FunctionalInterface
     public interface CharacterLoader {
-        Character load(int characterId, BotClient client) throws SQLException;
+        Character load(int characterId, Client client) throws SQLException;
     }
 
     @FunctionalInterface
@@ -77,7 +77,7 @@ public final class AgentOfflineLoadService {
                                              MapleMap targetMap,
                                              Point desiredPosition,
                                              Hooks hooks) throws SQLException {
-        BotClient client = hooks.clientFactory().create(world, channel);
+        Client client = hooks.clientFactory().create(world, channel);
         Character agent = hooks.characterLoader().load(characterId, client);
         client.setPlayer(agent);
         client.setAccID(agent.getAccountID());

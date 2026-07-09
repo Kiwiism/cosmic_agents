@@ -1,0 +1,28 @@
+package server.agents.integration.cosmic;
+
+import client.BotClient;
+import client.Character;
+import client.Client;
+import client.creator.BotCreator;
+import server.agents.integration.AgentClientGateway;
+
+import java.sql.SQLException;
+
+public enum CosmicAgentClientGateway implements AgentClientGateway {
+    INSTANCE;
+
+    @Override
+    public Client createHeadlessClient(int world, int channel) {
+        return new BotClient(world, channel);
+    }
+
+    @Override
+    public int createBackingCharacter(Client client, String name) {
+        return BotCreator.createCharacter(client, name);
+    }
+
+    @Override
+    public Character loadBackingCharacter(int characterId, Client client) throws SQLException {
+        return Character.loadCharFromDB(characterId, client, true);
+    }
+}

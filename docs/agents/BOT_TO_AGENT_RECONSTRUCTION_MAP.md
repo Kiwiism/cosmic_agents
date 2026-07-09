@@ -2968,3 +2968,8 @@ Recent capability extraction notes:
   `CharacterGateway.isAgentCharacter`. The concrete `BotClient` type check is
   isolated in `CosmicCharacterGateway`; registry, loot, quest, dialogue, trade,
   and runtime filtering behavior remains unchanged.
+- SPI/gateway extraction: spawn and offline-load paths now obtain headless
+  clients and create/load backing characters through `AgentClientGateway`.
+  Concrete `BotClient`, `BotCreator`, and `Character.loadCharFromDB` calls are
+  isolated in `CosmicAgentClientGateway`; account binding, disease restore,
+  rates, registration, map placement, and startup ordering remain unchanged.

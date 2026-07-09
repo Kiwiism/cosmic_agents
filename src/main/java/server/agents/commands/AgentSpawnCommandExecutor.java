@@ -1,13 +1,12 @@
 package server.agents.commands;
 
-import client.BotClient;
 import client.Character;
 import client.Client;
 import client.DefaultDates;
-import client.creator.BotCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentPartyLifecycleService;
@@ -55,11 +54,12 @@ public final class AgentSpawnCommandExecutor {
                 return;
             }
 
-            BotClient creationClient = new BotClient(c.getWorld(), c.getChannel());
+            Client creationClient = AgentClientGatewayRuntime.clients()
+                    .createHeadlessClient(c.getWorld(), c.getChannel());
             creationClient.setAccID(account.accountId());
             creationClient.setAccountName(botName);
 
-            int createdCharId = BotCreator.createCharacter(creationClient, botName);
+            int createdCharId = AgentClientGatewayRuntime.clients().createBackingCharacter(creationClient, botName);
             if (createdCharId == -1) {
                 player.yellowMessage("Failed to create bot character '" + botName + "'. Name may be invalid or already taken.");
                 return;

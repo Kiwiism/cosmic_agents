@@ -6983,6 +6983,13 @@ Current physics correction:
   instanceof BotClient` rule is isolated in `CosmicCharacterGateway`; all
   existing null behavior, human/Agent filtering, ownership checks, and target
   selection remain unchanged.
+- SPI/gateway extraction: headless client creation, backing-character creation,
+  and backing-character database loading now call `AgentClientGateway` through
+  `AgentClientGatewayRuntime`. `AgentSpawnCommandExecutor`,
+  `AgentOfflineLoadRuntime`, and `AgentOfflineLoadService` no longer import
+  `BotClient` or `BotCreator`; the exact concrete client/creator/load calls are
+  isolated in `CosmicAgentClientGateway`. Account setup and offline-load order
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
