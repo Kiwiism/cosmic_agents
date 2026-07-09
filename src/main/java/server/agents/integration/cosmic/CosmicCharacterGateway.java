@@ -1,6 +1,7 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
+import client.BotClient;
 import client.Disease;
 import net.server.Server;
 import server.agents.integration.CharacterGateway;
@@ -70,5 +71,10 @@ public enum CosmicCharacterGateway implements CharacterGateway {
         if (agent != null && agent.getClient() != null) {
             agent.getClient().disconnect(shutdown, cashShop);
         }
+    }
+
+    @Override
+    public boolean isAgentCharacter(Character character) {
+        return character != null && character.getClient() instanceof BotClient;
     }
 }

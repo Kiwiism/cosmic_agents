@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import client.BotClient;
 import client.Character;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
@@ -98,7 +98,7 @@ public final class AgentRuntimeRegistry {
 
     public static boolean isUnclaimedBotClientCharacter(Character candidate) {
         return candidate != null
-                && candidate.getClient() instanceof BotClient
+                && AgentCharacterGatewayRuntime.characters().isAgentCharacter(candidate)
                 && activeLeaderByAgentCharacterId(candidate.getId()) == null;
     }
 

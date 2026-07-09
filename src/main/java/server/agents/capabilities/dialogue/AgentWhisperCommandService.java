@@ -1,7 +1,7 @@
 package server.agents.capabilities.dialogue;
 
-import client.BotClient;
 import client.Character;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.runtime.AgentRuntimeHandle;
 
 public final class AgentWhisperCommandService {
@@ -36,7 +36,7 @@ public final class AgentWhisperCommandService {
         if (leader == null || target == null || message == null) {
             return;
         }
-        if (!(target.getClient() instanceof BotClient)) {
+        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(target)) {
             return;
         }
 

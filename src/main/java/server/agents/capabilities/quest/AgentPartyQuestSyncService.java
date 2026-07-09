@@ -1,12 +1,12 @@
 package server.agents.capabilities.quest;
 
-import client.BotClient;
 import client.Character;
 import client.QuestStatus;
 import server.agents.integration.AgentQuestSyncGateway;
 import server.agents.integration.AgentQuestSyncGatewayRuntime;
 import server.agents.integration.AgentQuestSyncHandle;
 import server.agents.integration.AgentPartyGatewayRuntime;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +77,7 @@ public final class AgentPartyQuestSyncService {
 
     static List<Character> partyAgents(Character source) {
         if (source == null || !AgentPartyGatewayRuntime.party().hasParty(source)
-                || source.getClient() instanceof BotClient) {
+                || AgentCharacterGatewayRuntime.characters().isAgentCharacter(source)) {
             return List.of();
         }
 
@@ -86,7 +86,7 @@ public final class AgentPartyQuestSyncService {
             if (member == null || member.getId() == source.getId()) {
                 continue;
             }
-            if (member.getClient() instanceof BotClient) {
+            if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(member)) {
                 partyAgents.add(member);
             }
         }

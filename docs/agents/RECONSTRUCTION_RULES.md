@@ -6977,6 +6977,12 @@ Current physics correction:
   order, login/source filters, duplicate handling, BotClient classification,
   and null behavior remain unchanged. Direct `getParty()` and
   `getPartyMembersOnline()` reads are isolated in `CosmicPartyGateway`.
+- SPI/gateway extraction: runtime, registry, loot, quest, dialogue, and trade
+  code now classifies live Agent characters through
+  `CharacterGateway.isAgentCharacter`. The exact `character.getClient()
+  instanceof BotClient` rule is isolated in `CosmicCharacterGateway`; all
+  existing null behavior, human/Agent filtering, ownership checks, and target
+  selection remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -1,7 +1,7 @@
 package server.agents.registry;
 
-import client.BotClient;
 import client.Character;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 
 public record AgentResolvedCharacter(int id, String name, int accountId, Character onlineCharacter) {
     public boolean isOnline() {
@@ -9,6 +9,6 @@ public record AgentResolvedCharacter(int id, String name, int accountId, Charact
     }
 
     public boolean isOnlineAsBot() {
-        return onlineCharacter != null && onlineCharacter.getClient() instanceof BotClient;
+        return AgentCharacterGatewayRuntime.characters().isAgentCharacter(onlineCharacter);
     }
 }

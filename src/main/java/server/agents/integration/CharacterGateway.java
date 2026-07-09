@@ -21,5 +21,7 @@ public interface CharacterGateway {
     void markClientHeartbeat(Character agent);
 
     void disconnect(Character agent, boolean shutdown, boolean cashShop);
+
+    boolean isAgentCharacter(Character character);
 }
 

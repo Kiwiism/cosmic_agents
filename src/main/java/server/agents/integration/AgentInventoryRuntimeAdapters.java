@@ -66,7 +66,7 @@ public final class AgentInventoryRuntimeAdapters {
                 () -> AgentPendingTradeStateRuntime.hasActiveSequence(entry),
                 AgentMovementTimers::tickDown,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
-                peer -> peer.getClient() instanceof client.BotClient,
+                peer -> AgentCharacterGatewayRuntime.characters().isAgentCharacter(peer),
                 (peerId, ownerId) -> AgentOwnershipService.getInstance().isAuthorizedOwner(peerId, ownerId),
                 AgentTradeDialogueService::manualTradeGreeting,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null));
@@ -81,7 +81,7 @@ public final class AgentInventoryRuntimeAdapters {
                 AgentRuntimeIdentityRuntime::owner,
                 (agent, owner) -> AgentEquipmentService.autoEquip(agent, owner, null),
                 AgentTradeRecipientService::resolveTradeRecipient,
-                recipient -> recipient.getClient() instanceof client.BotClient);
+                recipient -> AgentCharacterGatewayRuntime.characters().isAgentCharacter(recipient));
     }
 
     public static AgentTradeLifecycleRuntimeService.RuntimeCallbacks tradeLifecycleRuntimeCallbacks() {

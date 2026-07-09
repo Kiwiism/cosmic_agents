@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
-import client.BotClient;
 import client.Character;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionStateRuntime;
 
@@ -20,7 +20,7 @@ public final class AgentPotionCheckRequestRuntime {
     }
 
     private static AgentRuntimeEntry resolveAgentEntry(Character agent) {
-        if (agent == null || !(agent.getClient() instanceof BotClient)) {
+        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(agent)) {
             return null;
         }
         Character leader = AgentRuntimeRegistry.activeLeaderByAgentCharacterId(

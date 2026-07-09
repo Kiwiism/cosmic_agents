@@ -6,7 +6,6 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 
 
-import client.BotClient;
 import client.Character;
 import client.inventory.Equip;
 import client.inventory.Inventory;
@@ -24,6 +23,7 @@ import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
@@ -295,7 +295,7 @@ public final class AgentOfferService {
     }
 
     private static void scheduleBotLootOfferAutoAccept(AgentRuntimeEntry entry, Character recipient, long promptDelayMs) {
-        if (!(recipient.getClient() instanceof BotClient)) {
+        if (!AgentCharacterGatewayRuntime.characters().isAgentCharacter(recipient)) {
             return;
         }
         long replyDelayMs = promptDelayMs + AgentOfferRuntime.randomDelayMs(1800, 2200);
@@ -599,7 +599,7 @@ public final class AgentOfferService {
                 .filter(member -> member != null)
                 .filter(member -> member.getId() != owner.getId())
                 .filter(member -> member.getId() != donor.getId())
-                .filter(member -> member.getClient() instanceof BotClient)
+                .filter(member -> AgentCharacterGatewayRuntime.characters().isAgentCharacter(member))
                 .filter(member -> ownership.isAuthorizedOwner(member.getId(), owner.getId()))
                 .toList();
     }

@@ -1,7 +1,7 @@
 package server.agents.capabilities.looting;
 
-import client.BotClient;
 import client.Character;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.maps.MapItem;
 
@@ -18,7 +18,7 @@ public final class AgentLootCleanupService {
         }
 
         for (Character player : agent.getMap().getAllPlayers()) {
-            if (player.getClient() instanceof BotClient) {
+            if (AgentCharacterGatewayRuntime.characters().isAgentCharacter(player)) {
                 continue;
             }
             if (!player.isMapObjectVisible(drop)) {

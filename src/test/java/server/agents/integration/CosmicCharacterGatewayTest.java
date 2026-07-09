@@ -2,9 +2,12 @@ package server.agents.integration;
 
 import client.Character;
 import client.Client;
+import client.BotClient;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.cosmic.CosmicCharacterGateway;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -53,5 +56,17 @@ class CosmicCharacterGatewayTest {
         CosmicCharacterGateway.INSTANCE.disconnect(agent, false, false);
 
         verify(client, never()).disconnect(false, false);
+    }
+
+    @Test
+    void classifiesOnlyCharactersBackedByBotClientAsAgents() {
+        Character agent = mock(Character.class);
+        Character player = mock(Character.class);
+        when(agent.getClient()).thenReturn(mock(BotClient.class));
+        when(player.getClient()).thenReturn(mock(Client.class));
+
+        assertTrue(CosmicCharacterGateway.INSTANCE.isAgentCharacter(agent));
+        assertFalse(CosmicCharacterGateway.INSTANCE.isAgentCharacter(player));
+        assertFalse(CosmicCharacterGateway.INSTANCE.isAgentCharacter(null));
     }
 }
