@@ -41,5 +41,7 @@ public interface InventoryGateway {
     boolean canWearEquipment(Character agent, Equip equip, short primarySlot);
 
     void dropItem(Character agent, InventoryType type, short slot, short quantity);
+
+    void removeFromSlot(Character agent, InventoryType type, short slot, short quantity, boolean fromDrop);
 }
 

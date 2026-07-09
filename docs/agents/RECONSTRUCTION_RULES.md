@@ -6770,6 +6770,11 @@ Current physics correction:
   `InventoryManipulator` from the plan layer. Item lookup, quantity clamping,
   slot selection, and drop behavior are unchanged; the concrete Cosmic
   mutation remains in `CosmicInventoryGateway`.
+- SPI/gateway extraction: nearest-town return scroll use now removes the
+  consumed scroll through `InventoryGateway.removeFromSlot` instead of calling
+  `InventoryManipulator` from runtime code. Return-scroll item scanning,
+  effect application, failure handling, and one-scroll consumption are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

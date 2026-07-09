@@ -2809,3 +2809,7 @@ Recent capability extraction notes:
   items through `InventoryGateway.dropItem`; direct `InventoryManipulator`
   usage for this plan action is isolated to `CosmicInventoryGateway`. Script
   item lookup, quantity clamping, and slot choice remain unchanged.
+- SPI/gateway extraction: `AgentReturnScrollService` now consumes nearest-town
+  return scrolls through `InventoryGateway.removeFromSlot`; direct
+  `InventoryManipulator` removal is isolated to `CosmicInventoryGateway`.
+  Effect lookup, apply-to-Agent behavior, and failure cases remain unchanged.

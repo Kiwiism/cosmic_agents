@@ -3,9 +3,9 @@ package server.agents.runtime;
 import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import server.StatEffect;
 import server.agents.integration.AgentInventoryGatewayRuntime;
+import server.agents.integration.InventoryGateway;
 
 /**
  * Agent runtime helper for using a Return Scroll - Nearest Town.
@@ -17,6 +17,13 @@ public final class AgentReturnScrollService {
     }
 
     public static boolean tryUseNearestTownReturnScroll(Character agent) {
+        return tryUseNearestTownReturnScroll(agent, AgentInventoryGatewayRuntime.inventory());
+    }
+
+    static boolean tryUseNearestTownReturnScroll(Character agent, InventoryGateway inventoryGateway) {
+        if (agent == null || inventoryGateway == null) {
+            return false;
+        }
         var use = agent.getInventory(InventoryType.USE);
         if (use == null) {
             return false;
@@ -30,15 +37,14 @@ public final class AgentReturnScrollService {
             }
             StatEffect effect;
             try {
-                effect = AgentInventoryGatewayRuntime.inventory().getItemEffect(RETURN_SCROLL_NEAREST_TOWN);
+                effect = inventoryGateway.getItemEffect(RETURN_SCROLL_NEAREST_TOWN);
             } catch (Exception e) {
                 return false;
             }
             if (effect == null || !effect.applyTo(agent)) {
                 return false;
             }
-            InventoryManipulator.removeFromSlot(
-                    agent.getClient(), InventoryType.USE, item.getPosition(), (short) 1, false);
+            inventoryGateway.removeFromSlot(agent, InventoryType.USE, item.getPosition(), (short) 1, false);
             return true;
         }
         return false;
