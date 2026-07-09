@@ -5,8 +5,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import scripting.event.EventInstanceManager;
-import server.ItemInformationProvider;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.HashMap;
@@ -52,11 +52,10 @@ public final class AgentKpqStage5 {
     }
 
     private static String findNewItem(Map<Integer, Integer> before, Map<Integer, Integer> after) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         for (Map.Entry<Integer, Integer> e : after.entrySet()) {
             int delta = e.getValue() - before.getOrDefault(e.getKey(), 0);
             if (delta > 0) {
-                String name = ii.getName(e.getKey());
+                String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(e.getKey());
                 return (delta > 1 ? delta + "x " : "") + (name != null ? name : "item " + e.getKey());
             }
         }

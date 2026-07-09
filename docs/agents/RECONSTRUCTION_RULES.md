@@ -6464,6 +6464,9 @@ Current physics correction:
   attack and quest-item metadata through `InventoryGateway`. Trade command
   routing, item collection, ammo grouping, batching, and transfer sequencing are
   unchanged.
+- SPI/gateway extraction: KPQ Stage 5 reward announcement item names now route
+  through `InventoryGateway`. Reward claiming, inventory delta detection,
+  claimed-state marking, and queued PQ chat remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
