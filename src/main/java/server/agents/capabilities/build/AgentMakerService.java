@@ -71,13 +71,13 @@ public final class AgentMakerService {
                 });
     }
 
-    public static void handleDisassembleTrash(AgentRuntimeEntry entry) {
+    public static void handleDisassembleTrash(AgentRuntimeEntry entry, InventoryGateway inventory) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
         }
 
-        int total = collectDisassemblableTrash(entry, bot).size();
+        int total = collectDisassemblableTrash(entry, bot, inventory).size();
         if (total == 0) {
             AgentMakerRuntime.replyNow(entry, "no trash equips I can disassemble");
             return;
@@ -87,16 +87,16 @@ public final class AgentMakerService {
         // looted gear during the 5s gaps, so always disassemble a currently-trash equip.
         startBatch(entry, total, DISASSEMBLE_VERBS, "trash equip",
                 c -> {
-                    List<Equip> trash = collectDisassemblableTrash(entry, bot);
+                    List<Equip> trash = collectDisassemblableTrash(entry, bot, inventory);
                     return trash.isEmpty() ? NO_MORE : MakerProcessor.disassembleEquip(c, trash.get(0).getPosition());
                 });
     }
 
     /** Trash equips (SSOT: {@link AgentInventorySellTrashService#collectSellTrashEquips}) that actually
      *  have a Maker disassembly recipe — others would just abort the batch. */
-    private static List<Equip> collectDisassemblableTrash(AgentRuntimeEntry entry, Character bot) {
+    private static List<Equip> collectDisassemblableTrash(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         List<Equip> out = new ArrayList<>();
-        for (Item item : AgentInventorySellTrashService.collectSellTrashEquips(entry, bot)) {
+        for (Item item : AgentInventorySellTrashService.collectSellTrashEquips(entry, bot, inventory)) {
             if (item instanceof Equip equip && MakerProcessor.canDisassemble(equip.getItemId())) {
                 out.add(equip);
             }

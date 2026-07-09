@@ -2639,3 +2639,8 @@ Recent capability extraction notes:
   use/ammo/equip grouping, reserved-equip pages, and priority ordering stay
   unchanged while Cosmic inventory metadata lookup remains at the caller
   boundary.
+- SPI/gateway extraction: `AgentInventorySellTrashService` now receives
+  `InventoryGateway` from Maker/shop/drop-transfer callers. Sell-trash equip
+  candidate collection, quest-item safety, self-upgrade and reserved-recipient
+  exclusions, protected-stat checks, and item ordering stay unchanged while the
+  service no longer reaches directly for the Cosmic adapter.

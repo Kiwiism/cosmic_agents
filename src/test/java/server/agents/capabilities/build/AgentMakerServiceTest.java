@@ -41,7 +41,7 @@ class AgentMakerServiceTest {
         active.add(200);
 
         try (MockedStatic<AgentMakerRuntime> replies = mockStatic(AgentMakerRuntime.class)) {
-            AgentMakerService.handleDisassembleTrash(entry);
+            AgentMakerService.handleDisassembleTrash(entry, mock(InventoryGateway.class));
 
             replies.verify(() -> AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {

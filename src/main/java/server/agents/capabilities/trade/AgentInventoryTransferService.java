@@ -54,7 +54,10 @@ public final class AgentInventoryTransferService {
                 category,
                 entry,
                 agent,
-                AgentInventorySellTrashService::collectSellTrashEquips);
+                (dropEntry, dropAgent) -> AgentInventorySellTrashService.collectSellTrashEquips(
+                        dropEntry,
+                        dropAgent,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()));
         AgentInventoryStateRuntime.setLootInhibitMs(
                 entry,
                 AgentMovementTimers.delayAfterCurrentTick(20_000));

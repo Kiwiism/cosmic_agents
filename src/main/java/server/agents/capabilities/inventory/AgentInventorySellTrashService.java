@@ -8,7 +8,6 @@ import config.YamlConfig;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.trade.AgentOfferService;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -19,9 +18,9 @@ public final class AgentInventorySellTrashService {
     private AgentInventorySellTrashService() {
     }
 
-    public static List<Item> collectSellTrashEquips(AgentRuntimeEntry entry, Character agent) {
-        List<Item> normalTradeEquips = collectNormalTradeEquips(entry, agent);
-        return collectSellTrashEquips(normalTradeEquips, CosmicAgentServerAdapter.INSTANCE.inventory());
+    public static List<Item> collectSellTrashEquips(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
+        List<Item> normalTradeEquips = collectNormalTradeEquips(entry, agent, inventory);
+        return collectSellTrashEquips(normalTradeEquips, inventory);
     }
 
     static List<Item> collectSellTrashEquips(List<Item> normalTradeEquips, InventoryGateway inventory) {
@@ -38,9 +37,9 @@ public final class AgentInventorySellTrashService {
         return result;
     }
 
-    private static List<Item> collectNormalTradeEquips(AgentRuntimeEntry entry, Character agent) {
+    private static List<Item> collectNormalTradeEquips(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
         List<Item> all = AgentInventoryItemPolicy.collectSafeItems(agent, InventoryType.EQUIP, item -> true,
-                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                inventory::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
         Set<Item> selfKeep = AgentEquipmentReservePolicy.collectPotentialSelfUpgradeItems(agent);
 

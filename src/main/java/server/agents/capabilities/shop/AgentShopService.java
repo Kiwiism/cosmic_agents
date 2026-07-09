@@ -120,7 +120,8 @@ public final class AgentShopService {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;
         }
-        if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot).isEmpty()) {
+        if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot,
+                CosmicAgentServerAdapter.INSTANCE.inventory()).isEmpty()) {
             AgentShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNoTrashEquipsReply());
             return;
         }
@@ -346,7 +347,8 @@ public final class AgentShopService {
     }
 
     private static void startSellTrashSequence(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence) {
-        List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot());
+        List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot(),
+                CosmicAgentServerAdapter.INSTANCE.inventory());
         if (items.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
             AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());

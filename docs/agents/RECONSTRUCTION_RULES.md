@@ -6603,6 +6603,11 @@ Current physics correction:
   Cosmic adapter inside `AgentInventoryTradeCollectionService`. Recommended,
   name, scroll, potion, buff, use, ammo, equip, trash, reserved-equip, and ETC
   trade collection behavior is unchanged.
+- SPI/gateway extraction: sell-trash equip filtering now receives
+  `InventoryGateway` from Maker/shop/drop-transfer callers instead of reaching
+  for the Cosmic adapter inside `AgentInventorySellTrashService`. Safe equip
+  collection, quest-item filtering, self-upgrade/reserved-recipient exclusions,
+  protected-stat filtering, and sort order are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

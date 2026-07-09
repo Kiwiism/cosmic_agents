@@ -54,7 +54,7 @@ public final class AgentUtilityRuntime {
             @Override
             public void disassembleTrash() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> AgentMakerService.handleDisassembleTrash(entry));
+                        () -> AgentMakerService.handleDisassembleTrash(entry, CosmicAgentServerAdapter.INSTANCE.inventory()));
             }
         };
     }

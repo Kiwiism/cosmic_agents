@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.shop.AgentShopRuntime;
+import server.agents.integration.InventoryGateway;
 import server.Shop;
 import server.ShopFactory;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -44,7 +45,8 @@ class AgentShopServiceTest {
 
         try (MockedStatic<AgentInventorySellTrashService> inventories = mockStatic(AgentInventorySellTrashService.class);
              MockedStatic<AgentShopRuntime> replies = mockStatic(AgentShopRuntime.class)) {
-            inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(entry, bot))
+            inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(
+                            any(AgentRuntimeEntry.class), any(Character.class), any(InventoryGateway.class)))
                     .thenReturn(List.of());
 
             AgentShopService.requestSellTrashVisit(entry, bot);
@@ -167,7 +169,8 @@ class AgentShopServiceTest {
             when(factory.getShopForNPC(npc.getId())).thenReturn(shop);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
-            inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(entry, bot))
+            inventories.when(() -> AgentInventorySellTrashService.collectSellTrashEquips(
+                            any(AgentRuntimeEntry.class), any(Character.class), any(InventoryGateway.class)))
                     .thenReturn(List.of(mock(Item.class)));
 
             AgentShopService.requestSellTrashVisit(entry, bot);
