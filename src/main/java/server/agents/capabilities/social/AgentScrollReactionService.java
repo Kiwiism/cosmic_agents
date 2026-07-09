@@ -9,8 +9,8 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.social.AgentScrollReactionRuntime;
 import client.Character;
 import client.inventory.Equip;
-import server.ItemInformationProvider;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.*;
@@ -232,7 +232,7 @@ public final class AgentScrollReactionService {
         if (scrollItemId <= 0) {
             return 0;
         }
-        Map<String, Integer> stats = ItemInformationProvider.getInstance().getEquipStats(scrollItemId);
+        Map<String, Integer> stats = CosmicAgentServerAdapter.INSTANCE.inventory().getEquipStats(scrollItemId);
         if (stats == null) {
             return 0;
         }

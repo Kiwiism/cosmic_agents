@@ -2498,3 +2498,6 @@ Recent capability extraction notes:
   `InventoryGateway` for item names; recommendation candidate filtering,
   optimizer input, useful-item policy, and future/immediate recommendation
   behavior remain unchanged for a later equipment gateway slice.
+- SPI/gateway extraction: scroll-reaction success-rate lookup now uses
+  `InventoryGateway.getEquipStats`; social reaction timing, chance scaling,
+  streak state, emotes, queued chat, and fidget behavior are unchanged.

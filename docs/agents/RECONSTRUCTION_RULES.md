@@ -6452,6 +6452,10 @@ Current physics correction:
   optimizer input, useful-item policy, and future/immediate recommendation
   behavior still use the existing equipment item-info path and remain a later
   equipment gateway slice.
+- SPI/gateway extraction: scroll-reaction success-rate lookup now routes equip
+  metadata through `InventoryGateway.getEquipStats`. Reaction radius checks,
+  cooldowns, streak/load scaling, emotes, queued chat, and fidget behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
