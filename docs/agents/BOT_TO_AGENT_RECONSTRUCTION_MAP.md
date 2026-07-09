@@ -2821,3 +2821,7 @@ Recent capability extraction notes:
   and named-item drops through `InventoryGateway.dropItem`; direct drop
   mutation stays in `CosmicInventoryGateway`. Safe item filtering, quest-item
   protection, matching, and reply wording remain unchanged.
+- SPI/gateway extraction: `AgentEquipmentUnequipService` now executes live
+  equip moves through `InventoryGateway.moveItem`; direct item-move mutation
+  stays in `CosmicInventoryGateway`. Slot selection, cash filtering, and
+  unequip messages remain unchanged.

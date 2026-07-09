@@ -43,5 +43,7 @@ public interface InventoryGateway {
     void dropItem(Character agent, InventoryType type, short slot, short quantity);
 
     void removeFromSlot(Character agent, InventoryType type, short slot, short quantity, boolean fromDrop);
+
+    void moveItem(Character agent, InventoryType type, short sourceSlot, short destinationSlot, short quantity);
 }
 

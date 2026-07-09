@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 
@@ -29,8 +28,7 @@ public final class AgentEquipmentUnequipService {
                     return inventory.getItemName(itemId);
                 }
                 @Override public void move(Character agent, short sourceSlot, short destinationSlot) {
-                    InventoryManipulator.handleItemMove(
-                            agent.getClient(), InventoryType.EQUIP, sourceSlot, destinationSlot, (short) 1);
+                    inventory.moveItem(agent, InventoryType.EQUIP, sourceSlot, destinationSlot, (short) 1);
                 }
             };
         }

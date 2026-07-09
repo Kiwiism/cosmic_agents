@@ -6784,6 +6784,10 @@ Current physics correction:
   `InventoryGateway.dropItem` instead of importing `InventoryManipulator` in
   `AgentInventoryDropService`. Safe-drop filtering, quest-item checks,
   category matching, drop counts, and legacy reply text are unchanged.
+- SPI/gateway extraction: equipment unequip live item movement now calls
+  `InventoryGateway.moveItem` instead of importing `InventoryManipulator` in
+  `AgentEquipmentUnequipService`. Cash-item filtering, free-slot guards,
+  destination-slot selection, and unequip reply text are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
