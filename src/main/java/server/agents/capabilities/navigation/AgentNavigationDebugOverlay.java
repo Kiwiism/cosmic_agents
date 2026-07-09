@@ -381,7 +381,7 @@ public final class AgentNavigationDebugOverlay {
             Rectangle box = normalize(rectangle);
             Mist mist = new Mist(box, viewer, effectFor(type));
             mist.setObjectId(map.allocateMapObjectId());
-            viewer.sendPacket(mist.makeFakeSpawnData(1));
+            CosmicAgentServerAdapter.INSTANCE.packets().sendMistFakeSpawn(viewer, mist, 1);
             objectIds.add(mist.getObjectId());
         }
 

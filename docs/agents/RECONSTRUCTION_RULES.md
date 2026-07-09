@@ -6389,6 +6389,10 @@ Current physics correction:
   `PacketGateway.broadcastDamagePlayer`, moving `PacketCreator.damagePlayer` and
   map broadcast side effects out of `AgentCombatDamageRuntime` while preserving
   HP, cooldown, death, and knockback behavior in the combat capability.
+- SPI/gateway extraction: navigation debug overlay mist spawn packets now route
+  through `PacketGateway.sendMistFakeSpawn`, moving direct client packet send out
+  of the navigation capability. Overlay geometry and mist object allocation stay
+  in `AgentNavigationDebugOverlay`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

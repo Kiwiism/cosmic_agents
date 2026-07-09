@@ -3,6 +3,7 @@ package server.agents.integration;
 import client.Character;
 import client.inventory.Item;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
+import server.maps.Mist;
 
 import java.util.Map;
 
@@ -37,5 +38,7 @@ public interface PacketGateway {
                                int oid,
                                int pos_x,
                                int pos_y);
+
+    void sendMistFakeSpawn(Character recipient, Mist mist, int level);
 }
 

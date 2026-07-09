@@ -2445,3 +2445,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: combat damage packet broadcast now routes through
   `PacketGateway.broadcastDamagePlayer`; `AgentCombatDamageRuntime` still owns
   HP mutation, cooldowns, death transition, and knockback orchestration.
+- SPI/gateway extraction: navigation debug overlay mist spawn packets now route
+  through `PacketGateway.sendMistFakeSpawn`; navigation still owns overlay
+  geometry, effect selection, and object id allocation.

@@ -8,6 +8,7 @@ import net.packet.InPacket;
 import net.packet.Packet;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
 import server.agents.integration.PacketGateway;
+import server.maps.Mist;
 import tools.PacketCreator;
 
 import java.util.Map;
@@ -97,5 +98,13 @@ public enum CosmicPacketGateway implements PacketGateway {
         agent.getMap().broadcastMessage(agent,
                 PacketCreator.damagePlayer(damageFrom, monsterId, agent.getId(), damage, fake,
                         direction, pgmr, pgmr1, is_pg, oid, pos_x, pos_y), false);
+    }
+
+    @Override
+    public void sendMistFakeSpawn(Character recipient, Mist mist, int level) {
+        if (recipient == null || mist == null) {
+            return;
+        }
+        recipient.sendPacket(mist.makeFakeSpawnData(level));
     }
 }

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.cosmic.CosmicPacketGateway;
 import server.maps.MapleMap;
+import server.maps.Mist;
 import tools.PacketCreator;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -136,5 +137,19 @@ class CosmicPacketGatewayTest {
             packets.verify(() -> PacketCreator.damagePlayer(-1, 222, 123, 50, 0, -1, false, 0, false, 0, 0, 0));
             verify(map).broadcastMessage(agent, packet, false);
         }
+    }
+
+    @Test
+    void sendMistFakeSpawnSendsMistSpawnPacketToRecipient() {
+        Character recipient = mock(Character.class);
+        Mist mist = mock(Mist.class);
+        Packet packet = mock(Packet.class);
+
+        when(mist.makeFakeSpawnData(1)).thenReturn(packet);
+
+        CosmicPacketGateway.INSTANCE.sendMistFakeSpawn(recipient, mist, 1);
+
+        verify(mist).makeFakeSpawnData(1);
+        verify(recipient).sendPacket(packet);
     }
 }
