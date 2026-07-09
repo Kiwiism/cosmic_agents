@@ -6841,6 +6841,11 @@ Current physics correction:
   effect lookup, route selection, ammo readiness, hitbox calculation, target
   collection, Dragon Roar support guards, and attack-packet field/timing
   behavior are unchanged.
+- SPI/gateway extraction: projectile passive range fallback now calls
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentProjectileHitbox`. Learned-skill-map preference,
+  passive range summing, client projectile base range, facing geometry, and
+  vertical hitbox behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

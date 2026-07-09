@@ -2866,3 +2866,7 @@ Recent capability extraction notes:
   `AgentSkillGatewayRuntime` for attack skill lookup. Skill attack plan
   readiness, hitbox, target collection, Dragon Roar support gating, and packet
   timing behavior remain unchanged.
+- SPI/gateway extraction: `AgentProjectileHitbox` now uses
+  `AgentSkillGatewayRuntime` for passive projectile range skill fallback lookup.
+  Learned-skill preference, range bonus math, and client hitbox geometry remain
+  unchanged.

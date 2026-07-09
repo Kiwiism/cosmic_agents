@@ -2,12 +2,13 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import constants.skills.Archer;
 import constants.skills.NightWalker;
 import constants.skills.Rogue;
 import constants.skills.WindArcher;
 import server.StatEffect;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -36,18 +37,30 @@ public final class AgentProjectileHitbox {
                 CLIENT_PROJECTILE_TOP, CLIENT_PROJECTILE_BOTTOM);
     }
 
+    public static Rectangle clientProjectileHitBox(Character agent, boolean facingLeft, float horizontalScale,
+                                                   SkillGateway skills) {
+        return clientProjectileHitBox(agent, facingLeft, horizontalScale,
+                CLIENT_PROJECTILE_TOP, CLIENT_PROJECTILE_BOTTOM, skills);
+    }
+
     // Vertical extents are signed offsets from the character feet (origin.y):
     //   yAboveOrigin >  0 -> box top is yAboveOrigin px above feet.
     //   yBelowOrigin >  0 -> box bottom is yBelowOrigin px below feet.
     //   yBelowOrigin <  0 -> box bottom is |yBelowOrigin| px above feet.
     public static Rectangle clientProjectileHitBox(Character agent, boolean facingLeft, float horizontalScale,
                                                    int yAboveOrigin, int yBelowOrigin) {
+        return clientProjectileHitBox(agent, facingLeft, horizontalScale, yAboveOrigin, yBelowOrigin,
+                AgentSkillGatewayRuntime.skills());
+    }
+
+    public static Rectangle clientProjectileHitBox(Character agent, boolean facingLeft, float horizontalScale,
+                                                   int yAboveOrigin, int yBelowOrigin, SkillGateway skills) {
         if (agent == null || agent.getPosition() == null) {
             return null;
         }
 
         Point origin = agent.getPosition();
-        int projectileRange = CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(agent);
+        int projectileRange = CLIENT_PROJECTILE_BASE_RANGE + passiveProjectileRangeBonus(agent, skills);
         int farEdge = Math.max(CLIENT_PROJECTILE_NEAR_INSET, Math.round(projectileRange * Math.max(0f, horizontalScale)));
         int left = facingLeft ? origin.x - farEdge : origin.x + CLIENT_PROJECTILE_NEAR_INSET;
         int right = facingLeft ? origin.x - CLIENT_PROJECTILE_NEAR_INSET : origin.x + farEdge;
@@ -61,13 +74,17 @@ public final class AgentProjectileHitbox {
     }
 
     public static int passiveProjectileRangeBonus(Character agent) {
+        return passiveProjectileRangeBonus(agent, AgentSkillGatewayRuntime.skills());
+    }
+
+    static int passiveProjectileRangeBonus(Character agent, SkillGateway skills) {
         if (agent == null) {
             return 0;
         }
 
         int bonus = 0;
         for (int skillId : PASSIVE_PROJECTILE_RANGE_SKILL_IDS) {
-            Skill skill = resolveLearnedSkill(agent, skillId);
+            Skill skill = resolveLearnedSkill(agent, skillId, skills);
             if (skill == null) {
                 continue;
             }
@@ -82,16 +99,16 @@ public final class AgentProjectileHitbox {
         return bonus;
     }
 
-    private static Skill resolveLearnedSkill(Character agent, int skillId) {
-        Map<Skill, Character.SkillEntry> skills = agent.getSkills();
-        if (skills != null) {
-            for (Skill learned : skills.keySet()) {
+    private static Skill resolveLearnedSkill(Character agent, int skillId, SkillGateway skillsGateway) {
+        Map<Skill, Character.SkillEntry> learnedSkills = agent.getSkills();
+        if (learnedSkills != null) {
+            for (Skill learned : learnedSkills.keySet()) {
                 if (learned != null && learned.getId() == skillId) {
                     return learned;
                 }
             }
         }
 
-        return SkillFactory.getSkill(skillId);
+        return skillsGateway.getSkill(skillId);
     }
 }

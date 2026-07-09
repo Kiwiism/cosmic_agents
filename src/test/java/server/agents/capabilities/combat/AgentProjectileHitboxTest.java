@@ -5,6 +5,7 @@ import client.Skill;
 import constants.skills.Archer;
 import org.junit.jupiter.api.Test;
 import server.StatEffect;
+import server.agents.integration.SkillGateway;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -31,11 +32,12 @@ class AgentProjectileHitboxTest {
         Character agent = mock(Character.class);
         when(agent.getPosition()).thenReturn(new Point(100, 200));
         when(agent.getSkills()).thenReturn(Map.of());
+        SkillGateway skills = mock(SkillGateway.class);
 
         assertEquals(new Rectangle(105, 150, 395, 100),
-                AgentProjectileHitbox.clientProjectileHitBox(agent, false, 1.0f));
+                AgentProjectileHitbox.clientProjectileHitBox(agent, false, 1.0f, skills));
         assertEquals(new Rectangle(-300, 150, 395, 100),
-                AgentProjectileHitbox.clientProjectileHitBox(agent, true, 1.0f));
+                AgentProjectileHitbox.clientProjectileHitBox(agent, true, 1.0f, skills));
     }
 
     @Test
@@ -51,8 +53,26 @@ class AgentProjectileHitboxTest {
         skills.put(eyeOfAmazon, null);
         when(agent.getSkills()).thenReturn(skills);
         when(agent.getSkillLevel(eyeOfAmazon)).thenReturn((byte) 1);
+        SkillGateway gateway = mock(SkillGateway.class);
 
         assertEquals(new Rectangle(105, 150, 515, 100),
-                AgentProjectileHitbox.clientProjectileHitBox(agent, false, 1.0f));
+                AgentProjectileHitbox.clientProjectileHitBox(agent, false, 1.0f, gateway));
+    }
+
+    @Test
+    void resolvesPassiveRangeSkillThroughGatewayWhenNotLearnedInMap() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 200));
+        when(agent.getSkills()).thenReturn(Map.of());
+        Skill eyeOfAmazon = new Skill(Archer.EYE_OF_AMAZON);
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getRange()).thenReturn(80);
+        eyeOfAmazon.addLevelEffect(effect);
+        when(agent.getSkillLevel(eyeOfAmazon)).thenReturn((byte) 1);
+        SkillGateway gateway = mock(SkillGateway.class);
+        when(gateway.getSkill(Archer.EYE_OF_AMAZON)).thenReturn(eyeOfAmazon);
+
+        assertEquals(new Rectangle(105, 150, 475, 100),
+                AgentProjectileHitbox.clientProjectileHitBox(agent, false, 1.0f, gateway));
     }
 }
