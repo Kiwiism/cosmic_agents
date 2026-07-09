@@ -2,8 +2,11 @@ package server.agents.capabilities.build;
 
 import client.Character;
 import client.Job;
+import client.inventory.Inventory;
+import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.InventoryGateway;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.capabilities.build.AgentBuildService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -49,6 +52,20 @@ class AgentStarterKitServiceTest {
         assertTrue(AgentStarterKitService.isFirstJobAdvancement(Job.BEGINNER, Job.MAGICIAN));
         assertFalse(AgentStarterKitService.isFirstJobAdvancement(Job.WARRIOR, Job.FIGHTER));
         assertFalse(AgentStarterKitService.isFirstJobAdvancement(Job.BEGINNER, Job.FIGHTER));
+    }
+
+    @Test
+    void firstJobStarterKitGrantsItemsThroughInventoryGateway() {
+        Character bot = mock(Character.class);
+        Inventory equip = mock(Inventory.class);
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        when(bot.getInventory(InventoryType.EQUIP)).thenReturn(equip);
+        when(equip.getNumFreeSlot()).thenReturn((short) 1);
+        when(inventory.addItem(bot, 1302077, (short) 1)).thenReturn(true);
+
+        AgentStarterKitService.grantStarterKitIfEligible(bot, Job.BEGINNER, Job.WARRIOR, inventory);
+
+        verify(inventory).addItem(bot, 1302077, (short) 1);
     }
 
     @Test

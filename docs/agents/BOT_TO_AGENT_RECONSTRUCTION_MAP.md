@@ -2832,3 +2832,7 @@ Recent capability extraction notes:
   restores equipped-slot trade items through `InventoryGateway.moveItem`.
   Equipped-slot filtering, restore-slot state, failure handling, and restore
   ordering remain unchanged.
+- SPI/gateway extraction: `AgentStarterKitService` now grants first-job starter
+  kit items through `InventoryGateway.addItem`. Eligibility checks, inventory
+  capacity guards, grant order, and post-job-advance follow-up remain
+  unchanged.

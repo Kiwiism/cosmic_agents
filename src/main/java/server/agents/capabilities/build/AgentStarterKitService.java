@@ -3,13 +3,14 @@ package server.agents.capabilities.build;
 import client.Character;
 import client.Job;
 import client.inventory.InventoryType;
-import client.inventory.manipulator.InventoryManipulator;
 import constants.inventory.ItemConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.build.AgentBuildService;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
@@ -26,7 +27,7 @@ public final class AgentStarterKitService {
         Job oldJob = bot.getJob();
         bot.changeJob(newJob);
         AgentBuildService.handleJobAdvance(entry, bot, oldJob, newJob);
-        grantStarterKitIfEligible(bot, oldJob, newJob);
+        grantStarterKitIfEligible(bot, oldJob, newJob, AgentInventoryGatewayRuntime.inventory());
         AgentEquipmentService.autoEquip(bot, owner, null);
         AgentBuildStatusRuntime.checkBuildStatus(entry, bot);
     }
@@ -39,7 +40,7 @@ public final class AgentStarterKitService {
         return AgentStarterKitCatalog.isFirstJobAdvancement(oldJob, newJob);
     }
 
-    private static void grantStarterKitIfEligible(Character bot, Job oldJob, Job newJob) {
+    static void grantStarterKitIfEligible(Character bot, Job oldJob, Job newJob, InventoryGateway inventory) {
         if (!isFirstJobAdvancement(oldJob, newJob)) {
             return;
         }
@@ -54,7 +55,7 @@ public final class AgentStarterKitService {
         }
 
         for (AgentStarterItemGrant grant : starterKit) {
-            if (!InventoryManipulator.addById(bot.getClient(), grant.itemId(), grant.quantity())) {
+            if (!inventory.addItem(bot, grant.itemId(), grant.quantity())) {
                 log.warn("Bot '{}' failed to receive starter item {} x{} for job {}",
                         bot.getName(), grant.itemId(), grant.quantity(), newJob);
             }

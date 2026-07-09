@@ -6797,6 +6797,11 @@ Current physics correction:
   `AgentEquippedSlotTradeService`. Equipped-slot filtering, bag-space guards,
   temporary restore-slot tracking, failure restoration, and restore ordering
   are unchanged.
+- SPI/gateway extraction: first-job starter-kit grants now call
+  `InventoryGateway.addItem` instead of importing `InventoryManipulator` in
+  `AgentStarterKitService`. First-job eligibility, inventory-space checks,
+  grant ordering, warning logs, and auto-equip/build-status follow-up behavior
+  are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
