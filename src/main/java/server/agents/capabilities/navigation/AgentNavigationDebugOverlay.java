@@ -11,7 +11,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
 import server.TimerManager;
@@ -163,7 +163,7 @@ public final class AgentNavigationDebugOverlay {
 
     private static BotSelection selectAgentEntry(Character viewer, String botName) {
         if (botName == null || botName.isBlank()) {
-            var entries = AgentSessionLifecycleSideEffects.getBotEntries(viewer.getId());
+            var entries = AgentSessionLifecycleRuntime.getBotEntries(viewer.getId());
             if (entries.isEmpty()) {
                 return new BotSelection(null, "No owned bot found. Spawn one first or use !botnav path <botName>.");
             }
@@ -177,7 +177,7 @@ public final class AgentNavigationDebugOverlay {
             }
             return new BotSelection(entries.getFirst(), null);
         }
-        AgentRuntimeEntry entry = AgentSessionLifecycleSideEffects.getAgentEntry(viewer.getId(), botName);
+        AgentRuntimeEntry entry = AgentSessionLifecycleRuntime.getAgentEntry(viewer.getId(), botName);
         if (entry == null) {
             return new BotSelection(null, "No owned bot named '" + botName + "' found.");
         }

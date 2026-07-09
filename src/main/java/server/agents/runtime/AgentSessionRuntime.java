@@ -8,7 +8,7 @@ import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 
 /**
  * Agent-owned session facade. Save/disconnect/relogin side effects and reply
@@ -65,7 +65,7 @@ public final class AgentSessionRuntime {
                 relogBot.saveCharToDB(true);
                 relogBot.getClient().disconnect(false, false);
                 AgentSchedulerRuntime.afterRandomDelay(10000, 10100,
-                        () -> AgentSessionLifecycleSideEffects.reloginBot(charId, ownerCharId, world, channel));
+                        () -> AgentSessionLifecycleRuntime.reloginBot(charId, ownerCharId, world, channel));
             });
         });
     }
@@ -167,7 +167,7 @@ public final class AgentSessionRuntime {
             return;
         }
 
-        for (AgentRuntimeEntry owned : AgentSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry owned : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
             AgentMovementCommandRuntime.stop(owned);
             AgentSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
                 Character ownedBot = bot(owned);

@@ -7,7 +7,7 @@ import server.agents.capabilities.looting.AgentLootEligibility;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;
 
@@ -33,9 +33,9 @@ class AgentLootEligibilityTest {
         when(bot.getId()).thenReturn(88);
         doReturn(drop).when(map).getMapObject(1);
 
-        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(99))
+        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
+                     mockStatic(AgentSessionLifecycleRuntime.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleRuntime.activeLeaderByAgentCharacterId(99))
                     .thenReturn(dropBotOwner);
 
             assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
@@ -53,9 +53,9 @@ class AgentLootEligibilityTest {
         when(bot.getId()).thenReturn(88);
         doReturn(drop).when(map).getMapObject(1);
 
-        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(99))
+        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
+                     mockStatic(AgentSessionLifecycleRuntime.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleRuntime.activeLeaderByAgentCharacterId(99))
                     .thenReturn(dropBotOwner);
 
             assertTrue(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
@@ -73,9 +73,9 @@ class AgentLootEligibilityTest {
         when(bot.getId()).thenReturn(88);
         doReturn(drop).when(map).getMapObject(1);
 
-        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(88))
+        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
+                     mockStatic(AgentSessionLifecycleRuntime.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleRuntime.activeLeaderByAgentCharacterId(88))
                     .thenReturn(owner);
 
             assertFalse(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));
@@ -92,9 +92,9 @@ class AgentLootEligibilityTest {
         when(bot.getId()).thenReturn(88);
         doReturn(drop).when(map).getMapObject(1);
 
-        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(77))
+        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
+                     mockStatic(AgentSessionLifecycleRuntime.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleRuntime.activeLeaderByAgentCharacterId(77))
                     .thenReturn(null);
 
             assertTrue(AgentLootEligibility.canBotTargetLoot(entry, bot, map, drop, System.currentTimeMillis()));

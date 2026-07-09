@@ -16,7 +16,7 @@ import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import tools.PacketCreator;
@@ -44,7 +44,7 @@ public final class AgentAirshowService {
             return "Syntax: !airshow <botname>";
         }
 
-        AgentRuntimeEntry entry = AgentSessionLifecycleSideEffects.getAgentEntry(owner.getId(), botName);
+        AgentRuntimeEntry entry = AgentSessionLifecycleRuntime.getAgentEntry(owner.getId(), botName);
         if (entry == null) {
             return "No active owned bot named '" + botName + "'.";
         }

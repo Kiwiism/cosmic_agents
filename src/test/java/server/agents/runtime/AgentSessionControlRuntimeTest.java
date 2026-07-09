@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 
 import java.util.List;
 
@@ -21,9 +21,9 @@ class AgentSessionControlRuntimeTest {
         AgentRuntimeEntry first = new AgentRuntimeEntry(null, owner, null);
         AgentRuntimeEntry second = new AgentRuntimeEntry(null, owner, null);
 
-        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
-            lifecycle.when(() -> AgentSessionLifecycleSideEffects.getBotEntries(123))
+        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
+                     mockStatic(AgentSessionLifecycleRuntime.class)) {
+            lifecycle.when(() -> AgentSessionLifecycleRuntime.getBotEntries(123))
                     .thenReturn(List.of(first, second));
 
             assertTrue(AgentSessionControlRuntime.isPrimarySession(first));
@@ -33,11 +33,11 @@ class AgentSessionControlRuntimeTest {
 
     @Test
     void ownerAwaySafeModeUsesLifecycleSideEffectBoundary() {
-        try (MockedStatic<AgentSessionLifecycleSideEffects> lifecycle =
-                     mockStatic(AgentSessionLifecycleSideEffects.class)) {
+        try (MockedStatic<AgentSessionLifecycleRuntime> lifecycle =
+                     mockStatic(AgentSessionLifecycleRuntime.class)) {
             AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, true);
 
-            lifecycle.verify(() -> AgentSessionLifecycleSideEffects.issueOwnerAwaySafeModeForLeader(123, true));
+            lifecycle.verify(() -> AgentSessionLifecycleRuntime.issueOwnerAwaySafeModeForLeader(123, true));
         }
     }
 }

@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 
 /**
  * Agent-owned session control boundary over AgentRuntimeEntry-backed session
@@ -15,7 +15,7 @@ public final class AgentSessionControlRuntime {
         if (entry == null || AgentRuntimeIdentityRuntime.owner(entry) == null) {
             return false;
         }
-        return AgentSessionLifecycleSideEffects.getBotEntries(AgentRuntimeIdentityRuntime.ownerId(entry))
+        return AgentSessionLifecycleRuntime.getBotEntries(AgentRuntimeIdentityRuntime.ownerId(entry))
                 .stream()
                 .findFirst()
                 .filter(first -> first == entry)
@@ -27,6 +27,6 @@ public final class AgentSessionControlRuntime {
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int leaderCharId, boolean town) {
-        AgentSessionLifecycleSideEffects.issueOwnerAwaySafeModeForLeader(leaderCharId, town);
+        AgentSessionLifecycleRuntime.issueOwnerAwaySafeModeForLeader(leaderCharId, town);
     }
 }

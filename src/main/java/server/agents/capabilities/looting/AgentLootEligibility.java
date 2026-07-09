@@ -5,7 +5,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import constants.inventory.ItemConstants;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.maps.MapItem;
@@ -76,6 +76,6 @@ public final class AgentLootEligibility {
         int ownerId = drop.getOwnerId();
         return drop.isPlayerDrop()
                 && ownerId > 0
-                && AgentSessionLifecycleSideEffects.activeLeaderByAgentCharacterId(ownerId) != null;
+                && AgentSessionLifecycleRuntime.activeLeaderByAgentCharacterId(ownerId) != null;
     }
 }

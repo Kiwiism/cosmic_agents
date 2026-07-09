@@ -2411,3 +2411,7 @@ Recent capability extraction notes:
   command matching and targeted Agent command parsing are no longer modeled as
   integration code. Live Agent name lookup remains behind
   `AgentRuntimeIdentityRuntime`.
+- Moved `AgentSessionLifecycleSideEffects` to
+  `server.agents.runtime.AgentSessionLifecycleRuntime`; session registry lookup,
+  relogin dispatch, leader safe mode, and active leader lookup now sit with
+  Agent runtime ownership instead of an integration wrapper.

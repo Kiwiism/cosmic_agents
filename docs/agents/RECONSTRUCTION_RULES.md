@@ -6343,6 +6343,10 @@ Current physics correction:
   parsing and transfer command matching are Agent command-domain behavior; the
   resolver still uses `AgentRuntimeIdentityRuntime` only for live Agent name
   lookup.
+- Reconstruction capability extraction: moved `AgentSessionLifecycleSideEffects`
+  to `server.agents.runtime.AgentSessionLifecycleRuntime`. Session lookup,
+  relogin dispatch, leader safe mode, and active leader lookup are Agent runtime
+  responsibilities rather than integration package side-effect wrappers.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -4,7 +4,7 @@ import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -288,7 +288,7 @@ public final class AgentCombatTargetRuntime {
         }
 
         int occupiedCount = 0;
-        for (AgentRuntimeEntry sibling : AgentSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
             if (sibling == context.entry() || sibling == null || !AgentModeStateRuntime.grinding(sibling)) {
                 continue;
             }

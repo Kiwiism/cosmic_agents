@@ -1,19 +1,14 @@
-package server.agents.integration;
+package server.agents.runtime;
 
 import client.Character;
 
 import java.util.List;
-import server.agents.runtime.AgentInteractionRuntime;
-import server.agents.runtime.AgentLeaderSafetyRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentRuntimeRegistry;
 
 /**
- * Temporary bot-side gateway for session lifecycle side effects while
- * orchestration moves into Agent modules.
+ * Agent runtime facade for live session registry and lifecycle actions.
  */
-public final class AgentSessionLifecycleSideEffects {
-    private AgentSessionLifecycleSideEffects() {
+public final class AgentSessionLifecycleRuntime {
+    private AgentSessionLifecycleRuntime() {
     }
 
     public static void reloginBot(int charId, int ownerCharId, int world, int channel) {

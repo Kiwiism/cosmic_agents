@@ -9,7 +9,7 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -62,7 +62,7 @@ public final class AgentNavigationRegionService {
         Character owner = AgentRuntimeIdentityRuntime.owner(entry);
         List<? extends AgentRuntimeEntry> siblingEntries = owner == null
                 ? List.of()
-                : AgentSessionLifecycleSideEffects.getBotEntries(owner.getId());
+                : AgentSessionLifecycleRuntime.getBotEntries(owner.getId());
         Character followAnchor = AgentFollowAnchorService.resolve(entry, owner, siblingEntries);
         if (AgentModeStateRuntime.following(entry)
                 && !AgentMoveTargetStateRuntime.hasMoveTarget(entry)

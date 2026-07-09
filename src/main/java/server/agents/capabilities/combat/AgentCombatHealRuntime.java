@@ -10,7 +10,7 @@ import client.SkillFactory;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -64,7 +64,7 @@ public final class AgentCombatHealRuntime {
             Character anchor = AgentFollowAnchorService.resolve(
                     entry,
                     leader,
-                    leader == null ? List.of() : AgentSessionLifecycleSideEffects.getBotEntries(leader.getId()));
+                    leader == null ? List.of() : AgentSessionLifecycleRuntime.getBotEntries(leader.getId()));
             if (anchor != null && anchor != bot && anchor.getMap() == bot.getMap()) {
                 int dx = anchor.getPosition().x - bot.getPosition().x;
                 if (Math.abs(dx) >= config.JUMP_HEAL_LEADER_AHEAD_PX) {

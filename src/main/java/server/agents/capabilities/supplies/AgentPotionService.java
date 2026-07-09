@@ -28,7 +28,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.AgentSessionLifecycleSideEffects;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
@@ -363,7 +363,7 @@ public final class AgentPotionService {
         long startedAt = AgentPerformanceMonitor.start();
         AgentRuntimeEntry bestEntry = null;
         int bestCount = 0;
-        for (AgentRuntimeEntry sibling : AgentSessionLifecycleSideEffects.getBotEntries(owner.getId())) {
+        for (AgentRuntimeEntry sibling : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
             Character siblingBot = AgentRuntimeIdentityRuntime.bot(sibling);
             if (sibling == excludedEntry || siblingBot == null || siblingBot.getMapId() != recipient.getMapId()) {
                 continue;
