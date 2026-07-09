@@ -2880,3 +2880,6 @@ Recent capability extraction notes:
   build profiles now use `AgentSkillGatewayRuntime`/`SkillGateway` for build
   skill lookup and max-level lookup. SP assignment, build ordering, respec, and
   AP behavior remain unchanged.
+- SPI/gateway extraction: `AgentCombatBuffRuntime` now uses
+  `AgentSkillGatewayRuntime`/`SkillGateway` for support-buff skill lookup.
+  Party-support and self-buff timing/classification behavior remains unchanged.

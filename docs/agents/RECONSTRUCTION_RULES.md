@@ -6863,6 +6863,11 @@ Current physics correction:
   profiles. Build order, missing-skill fallback max level, fourth-job master
   level gating, SP book selection, refund/rebuild behavior, and AP behavior are
   unchanged.
+- SPI/gateway extraction: support-buff runtime skill lookup now calls
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentCombatBuffRuntime`. Buff tick gating, party-support
+  preference, cooldown checks, active-support classification, special-move
+  dispatch, debug summaries, and support-cast timing behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

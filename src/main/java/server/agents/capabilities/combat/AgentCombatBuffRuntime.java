@@ -2,9 +2,10 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import server.StatEffect;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
@@ -14,6 +15,11 @@ public final class AgentCombatBuffRuntime {
     }
 
     public static void tickBuffs(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
+        tickBuffs(entry, bot, config, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static void tickBuffs(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
+                                 SkillGateway skills) {
         AgentCombatSupportPolicy.SkillBuffTickDecision tickDecision =
                 AgentCombatSupportPolicy.skillBuffTickDecision(
                         AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
@@ -32,7 +38,7 @@ public final class AgentCombatBuffRuntime {
         if (AgentCombatSupportPolicy.shouldSkipSkillBuffsWithoutLivingMobs(hasLivingMobs)) return;
 
         long now = System.currentTimeMillis();
-        if (trySupportBuff(entry, bot, config, now)) {
+        if (trySupportBuff(entry, bot, config, now, skills)) {
             return;
         }
 
@@ -40,7 +46,7 @@ public final class AgentCombatBuffRuntime {
             if (now < AgentCombatBuffStateRuntime.nextBuffAt(entry, skillId)) continue;
             if (bot.skillIsCooling(skillId)) continue;
 
-            Skill skill = SkillFactory.getSkill(skillId);
+            Skill skill = skills.getSkill(skillId);
             int lvl = bot.getSkillLevel(skill);
             if (lvl <= 0) continue;
 
@@ -57,7 +63,8 @@ public final class AgentCombatBuffRuntime {
                 entry, System.currentTimeMillis(), AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
     }
 
-    private static boolean trySupportBuff(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config, long now) {
+    private static boolean trySupportBuff(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
+                                          long now, SkillGateway skills) {
         for (int skillId : AgentCombatSkillCacheStateRuntime.buffSkillIds(entry)) {
             if (!AgentCombatSupportPolicy.shouldConsiderSupportBuff(
                     AgentCombatSkillClassifier.isPartySupportSkill(skillId),
@@ -66,7 +73,7 @@ public final class AgentCombatBuffRuntime {
                 continue;
             }
 
-            Skill skill = SkillFactory.getSkill(skillId);
+            Skill skill = skills.getSkill(skillId);
             int lvl = bot.getSkillLevel(skill);
             if (lvl <= 0) {
                 continue;

@@ -1100,11 +1100,10 @@ class BotCombatManagerTest {
         bless.addLevelEffect(effect);
         when(bot.getSkillLevel(any(Skill.class))).thenReturn((byte) 1);
 
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
-            skillFactory.when(() -> SkillFactory.getSkill(Cleric.BLESS)).thenReturn(bless);
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkill(Cleric.BLESS)).thenReturn(bless);
 
-            AgentCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg);
-        }
+        AgentCombatBuffRuntime.tickBuffs(entry, bot, AgentCombatConfig.cfg, skills);
 
         assertEquals("no skill buff checks yet", AgentSkillBuffDebugStateRuntime.lastActionSummary(entry));
         assertEquals(0L, AgentCombatBuffStateRuntime.nextSupportBuffAt(entry, Cleric.BLESS));
