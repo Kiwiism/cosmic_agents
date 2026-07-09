@@ -6570,6 +6570,11 @@ Current physics correction:
   Cosmic adapter inside `AgentInventoryDialogueReporter`. USE inventory scroll,
   recovery-pot, buff-pot, untradeable, and quest-item filtering behavior is
   unchanged.
+- SPI/gateway extraction: Maker monster-crystal leftover metadata now receives
+  `InventoryGateway` from the utility command runtime instead of reaching for
+  the Cosmic adapter inside `AgentMakerService`. Maker skill gating, leftover
+  scanning, batch timing, client-lock retry behavior, abort replies, and
+  completion replies are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

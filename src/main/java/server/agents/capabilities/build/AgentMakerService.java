@@ -13,7 +13,6 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.build.AgentMakerRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -52,13 +51,13 @@ public final class AgentMakerService {
     private AgentMakerService() {
     }
 
-    public static void handleMakeCrystals(AgentRuntimeEntry entry) {
+    public static void handleMakeCrystals(AgentRuntimeEntry entry, InventoryGateway inventory) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         if (bot == null || !guardStart(entry, bot)) {
             return;
         }
 
-        Queue<Integer> leftovers = collectLeftoverQueue(bot);   // one entry per craft, holding the leftover itemid
+        Queue<Integer> leftovers = collectLeftoverQueue(bot, inventory);   // one entry per craft, holding the leftover itemid
         if (leftovers.isEmpty()) {
             AgentMakerRuntime.replyNow(entry,
                     "I don't have any leftovers I can turn into monster crystals (need 100+ of a drop)");
@@ -117,7 +116,7 @@ public final class AgentMakerService {
         return true;
     }
 
-    private static Queue<Integer> collectLeftoverQueue(Character bot) {
+    private static Queue<Integer> collectLeftoverQueue(Character bot, InventoryGateway inventory) {
         Queue<Integer> queue = new LinkedList<>();
         Inventory etc = bot.getInventory(InventoryType.ETC);
         etc.lockInventory();
@@ -129,7 +128,7 @@ public final class AgentMakerService {
                     continue;   // count each distinct leftover once; countById sums all stacks
                 }
                 int crafts = etc.countById(itemId) / LEFTOVERS_PER_CRYSTAL;
-                if (crafts <= 0 || inventory().getMakerCrystalFromLeftover(itemId) == -1) {
+                if (crafts <= 0 || inventory.getMakerCrystalFromLeftover(itemId) == -1) {
                     continue;
                 }
                 for (int i = 0; i < crafts; i++) {
@@ -217,7 +216,4 @@ public final class AgentMakerService {
         return count == 1 ? noun : noun + "s";
     }
 
-    private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
-    }
 }

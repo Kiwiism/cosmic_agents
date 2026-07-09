@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentMakerRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.lang.reflect.Field;
@@ -23,7 +24,7 @@ class AgentMakerServiceTest {
         active.add(100);
 
         try (MockedStatic<AgentMakerRuntime> replies = mockStatic(AgentMakerRuntime.class)) {
-            AgentMakerService.handleMakeCrystals(entry);
+            AgentMakerService.handleMakeCrystals(entry, mock(InventoryGateway.class));
 
             replies.verify(() -> AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {

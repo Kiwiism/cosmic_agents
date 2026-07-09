@@ -8,6 +8,7 @@ import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentTradeInviteGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.build.AgentMakerService;
 import server.agents.capabilities.shop.AgentShopService;
@@ -47,7 +48,7 @@ public final class AgentUtilityRuntime {
             @Override
             public void makeCrystals() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> AgentMakerService.handleMakeCrystals(entry));
+                        () -> AgentMakerService.handleMakeCrystals(entry, CosmicAgentServerAdapter.INSTANCE.inventory()));
             }
 
             @Override

@@ -2610,3 +2610,7 @@ Recent capability extraction notes:
   Recovery/buff consumable classification and quest-item filtering no longer
   reach directly for the Cosmic adapter inside the dialogue reporter; inventory
   summary text and category counts stay unchanged.
+- SPI/gateway extraction: `AgentMakerService.handleMakeCrystals` now receives
+  `InventoryGateway` from `AgentUtilityRuntime`; leftover-to-monster-crystal
+  metadata no longer reaches directly for the Cosmic adapter inside the Maker
+  service. Maker batch behavior, timings, and replies stay unchanged.
