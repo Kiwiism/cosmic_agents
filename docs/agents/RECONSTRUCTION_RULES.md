@@ -6792,6 +6792,11 @@ Current physics correction:
   `InventoryGateway.moveItem` instead of importing `InventoryManipulator` in
   `AgentEquipmentPlanExecutor`. Slot application order, bag-position guards,
   already-equipped skips, and selected equipment behavior are unchanged.
+- SPI/gateway extraction: equipped-slot trade preparation and restore now call
+  `InventoryGateway.moveItem` instead of importing `InventoryManipulator` in
+  `AgentEquippedSlotTradeService`. Equipped-slot filtering, bag-space guards,
+  temporary restore-slot tracking, failure restoration, and restore ordering
+  are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

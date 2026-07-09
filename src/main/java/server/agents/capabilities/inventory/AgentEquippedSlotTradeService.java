@@ -6,8 +6,8 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -87,7 +87,7 @@ public final class AgentEquippedSlotTradeService {
                 return new PreparedTradeItems(List.of(), AgentDialogueCatalog.tradeEquipSlotsFullReply());
             }
 
-            InventoryManipulator.handleItemMove(agent.getClient(), InventoryType.EQUIP, srcSlot, dstSlot, (short) 1);
+            inventory.moveItem(agent, InventoryType.EQUIP, srcSlot, dstSlot, (short) 1);
             Item moved = equipBag.getItem(dstSlot);
             if (moved == null) {
                 restoreTemporarilyUnequippedItems.run();
@@ -102,6 +102,10 @@ public final class AgentEquippedSlotTradeService {
     }
 
     public static void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent) {
+        restoreTemporarilyUnequippedItems(entry, agent, AgentInventoryGatewayRuntime.inventory());
+    }
+
+    static void restoreTemporarilyUnequippedItems(AgentRuntimeEntry entry, Character agent, InventoryGateway inventory) {
         if (agent == null || !AgentPendingTradeStateRuntime.hasRestoreSlots(entry)) {
             AgentPendingTradeStateRuntime.clearRestoreSlots(entry);
             return;
@@ -116,7 +120,7 @@ public final class AgentEquippedSlotTradeService {
             if (!AgentInventoryItemPolicy.hasItem(agent, item) || equipped.getItem(dstSlot) != null) {
                 continue;
             }
-            InventoryManipulator.handleItemMove(agent.getClient(), InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
+            inventory.moveItem(agent, InventoryType.EQUIP, item.getPosition(), dstSlot, (short) 1);
         }
         AgentPendingTradeStateRuntime.clearRestoreSlots(entry);
     }

@@ -2828,3 +2828,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: `AgentEquipmentPlanExecutor` now applies optimizer
   equip moves through `InventoryGateway.moveItem`. Equipment order, target
   selection, bag-position validation, and skip behavior remain unchanged.
+- SPI/gateway extraction: `AgentEquippedSlotTradeService` now prepares and
+  restores equipped-slot trade items through `InventoryGateway.moveItem`.
+  Equipped-slot filtering, restore-slot state, failure handling, and restore
+  ordering remain unchanged.

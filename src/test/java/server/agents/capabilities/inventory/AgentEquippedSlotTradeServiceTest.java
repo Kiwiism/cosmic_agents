@@ -3,13 +3,10 @@ package server.agents.capabilities.inventory;
 import server.agents.capabilities.trade.AgentPendingTradeStateRuntime;
 
 import client.Character;
-import client.Client;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -22,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,7 +53,6 @@ class AgentEquippedSlotTradeServiceTest {
     @Test
     void prepareEquippedSlotTradeItemsMovesSlotsAndRecordsRestoreSlots() {
         Character agent = mock(Character.class);
-        Client client = mock(Client.class);
         Inventory equipped = mock(Inventory.class);
         Inventory equipBag = mock(Inventory.class);
         Item hat = item(1000);
@@ -65,40 +60,35 @@ class AgentEquippedSlotTradeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         InventoryGateway inventoryGateway = inventoryGateway();
 
-        try (MockedStatic<InventoryManipulator> inventory = mockStatic(InventoryManipulator.class)) {
-            when(agent.getClient()).thenReturn(client);
-            when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
-            when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equipBag);
-            when(equipped.getItem((short) -10)).thenReturn(glove);
-            when(equipped.getItem((short) -1)).thenReturn(hat);
-            when(equipBag.getNumFreeSlot()).thenReturn((short) 2);
-            when(equipBag.getNextFreeSlot()).thenReturn((short) 1, (short) 2);
-            when(equipBag.getItem((short) 1)).thenReturn(glove);
-            when(equipBag.getItem((short) 2)).thenReturn(hat);
+        when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
+        when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equipBag);
+        when(equipped.getItem((short) -10)).thenReturn(glove);
+        when(equipped.getItem((short) -1)).thenReturn(hat);
+        when(equipBag.getNumFreeSlot()).thenReturn((short) 2);
+        when(equipBag.getNextFreeSlot()).thenReturn((short) 1, (short) 2);
+        when(equipBag.getItem((short) 1)).thenReturn(glove);
+        when(equipBag.getItem((short) 2)).thenReturn(hat);
 
-            AgentEquippedSlotTradeService.PreparedTradeItems prepared =
-                    AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
-                            "style",
-                            entry,
-                            agent,
-                            ignored -> new short[]{-10, -1},
-                            inventoryGateway,
-                            () -> {
-                                throw new AssertionError("restore should not run on success");
-                            });
+        AgentEquippedSlotTradeService.PreparedTradeItems prepared =
+                AgentEquippedSlotTradeService.prepareEquippedSlotTradeItems(
+                        "style",
+                        entry,
+                        agent,
+                        ignored -> new short[]{-10, -1},
+                        inventoryGateway,
+                        () -> {
+                            throw new AssertionError("restore should not run on success");
+                        });
 
-            assertNull(prepared.errorMessage());
-            assertEquals(List.of(glove, hat), prepared.items());
-            inventory.verify(() -> InventoryManipulator.handleItemMove(
-                    client, InventoryType.EQUIP, (short) -10, (short) 1, (short) 1));
-            inventory.verify(() -> InventoryManipulator.handleItemMove(
-                    client, InventoryType.EQUIP, (short) -1, (short) 2, (short) 1));
-            Map<Item, Short> restoreSlots = AgentPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            assertEquals(2, restoreSlots.size());
-            assertEquals((short) -10, restoreSlots.get(glove));
-            assertEquals((short) -1, restoreSlots.get(hat));
-        }
+        assertNull(prepared.errorMessage());
+        assertEquals(List.of(glove, hat), prepared.items());
+        verify(inventoryGateway).moveItem(agent, InventoryType.EQUIP, (short) -10, (short) 1, (short) 1);
+        verify(inventoryGateway).moveItem(agent, InventoryType.EQUIP, (short) -1, (short) 2, (short) 1);
+        Map<Item, Short> restoreSlots = AgentPendingTradeStateRuntime.restoreSlotEntries(entry).stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        assertEquals(2, restoreSlots.size());
+        assertEquals((short) -10, restoreSlots.get(glove));
+        assertEquals((short) -1, restoreSlots.get(hat));
     }
 
     @Test
@@ -134,13 +124,12 @@ class AgentEquippedSlotTradeServiceTest {
     @Test
     void restoreTemporarilyUnequippedItemsMovesBagItemsBackAndClearsState() {
         Character agent = mock(Character.class);
-        Client client = mock(Client.class);
         Inventory equipped = mock(Inventory.class);
         Inventory equipBag = mock(Inventory.class);
         Item hat = item(1000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        InventoryGateway inventoryGateway = inventoryGateway();
 
-        when(agent.getClient()).thenReturn(client);
         when(agent.getInventory(InventoryType.EQUIPPED)).thenReturn(equipped);
         when(agent.getInventory(InventoryType.EQUIP)).thenReturn(equipBag);
         when(equipBag.getItem((short) 1)).thenReturn(hat);
@@ -149,13 +138,10 @@ class AgentEquippedSlotTradeServiceTest {
         when(equipped.getItem((short) -1)).thenReturn(null);
         AgentPendingTradeStateRuntime.rememberRestoreSlot(entry, hat, (short) -1);
 
-        try (MockedStatic<InventoryManipulator> inventory = mockStatic(InventoryManipulator.class)) {
-            AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent);
+        AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent, inventoryGateway);
 
-            inventory.verify(() -> InventoryManipulator.handleItemMove(
-                    client, InventoryType.EQUIP, (short) 1, (short) -1, (short) 1));
-            assertFalse(AgentPendingTradeStateRuntime.hasRestoreSlots(entry));
-        }
+        verify(inventoryGateway).moveItem(agent, InventoryType.EQUIP, (short) 1, (short) -1, (short) 1);
+        assertFalse(AgentPendingTradeStateRuntime.hasRestoreSlots(entry));
     }
 
     private static Item item(int itemId) {
