@@ -37,7 +37,7 @@ public final class AgentPartyLifecycleService {
         if (leaderParty == null) {
             return;
         }
-        if (Party.joinParty(agent, leaderParty.getId(), true)) {
+        if (AgentPartyGatewayRuntime.party().joinAgentParty(agent, leaderParty.getId())) {
             agent.updatePartyMemberHP();
         }
     }

@@ -19,4 +19,9 @@ public final class CosmicPartyGateway implements PartyGateway {
     public boolean createAgentParty(Character leader) {
         return Party.createParty(leader, true);
     }
+
+    @Override
+    public boolean joinAgentParty(Character agent, int partyId) {
+        return Party.joinParty(agent, partyId, true);
+    }
 }

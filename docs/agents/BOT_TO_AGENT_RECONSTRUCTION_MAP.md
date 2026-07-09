@@ -2937,3 +2937,7 @@ Recent capability extraction notes:
   creation through `PartyGateway.createAgentParty`; live `Party.createParty`
   dispatch is isolated in `CosmicPartyGateway`. Creation gating, Agent-party
   flag, failure behavior, and leader-party refresh remain unchanged.
+- SPI/gateway extraction: `AgentPartyLifecycleService` now routes Agent party
+  joining through `PartyGateway.joinAgentParty`; live `Party.joinParty`
+  dispatch is isolated in `CosmicPartyGateway`. Leader-party lookup, Agent-party
+  flag, success handling, and HP refresh remain unchanged.

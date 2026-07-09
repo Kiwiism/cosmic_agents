@@ -6,5 +6,7 @@ public interface PartyGateway {
     void leaveCurrentParty(Character agent);
 
     boolean createAgentParty(Character leader);
+
+    boolean joinAgentParty(Character agent, int partyId);
 }
 

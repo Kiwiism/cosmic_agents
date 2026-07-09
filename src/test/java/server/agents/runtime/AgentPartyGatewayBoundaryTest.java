@@ -19,9 +19,12 @@ class AgentPartyGatewayBoundaryTest {
 
         assertFalse(lifecycle.contains("Party.leaveParty("));
         assertFalse(lifecycle.contains("Party.createParty("));
+        assertFalse(lifecycle.contains("Party.joinParty("));
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().leaveCurrentParty(agent)"));
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().createAgentParty(leader)"));
+        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().joinAgentParty(agent, leaderParty.getId())"));
         assertTrue(gateway.contains("Party.leaveParty(agent.getParty(), agent.getClient())"));
         assertTrue(gateway.contains("Party.createParty(leader, true)"));
+        assertTrue(gateway.contains("Party.joinParty(agent, partyId, true)"));
     }
 }
