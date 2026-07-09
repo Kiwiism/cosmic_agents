@@ -2805,3 +2805,7 @@ Recent capability extraction notes:
   now supplies `AgentTradeWindow`; `AgentInventoryRuntimeAdapters` owns the live
   `Character.getTrade()` wrapping. The trade capability's production
   `server.Trade` coupling is now isolated to `AgentServerTradeWindow`.
+- SPI/gateway extraction: `AgentScriptItemActionService` now drops script
+  items through `InventoryGateway.dropItem`; direct `InventoryManipulator`
+  usage for this plan action is isolated to `CosmicInventoryGateway`. Script
+  item lookup, quantity clamping, and slot choice remain unchanged.

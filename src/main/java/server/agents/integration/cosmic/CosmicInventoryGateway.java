@@ -3,7 +3,9 @@ package server.agents.integration.cosmic;
 import client.Character;
 import client.Job;
 import client.inventory.Equip;
+import client.inventory.InventoryType;
 import client.inventory.WeaponType;
+import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.agents.integration.InventoryGateway;
@@ -89,5 +91,10 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     @Override
     public boolean canWearEquipment(Character agent, Equip equip, short primarySlot) {
         return ItemInformationProvider.getInstance().canWearEquipment(agent, equip, primarySlot);
+    }
+
+    @Override
+    public void dropItem(Character agent, InventoryType type, short slot, short quantity) {
+        InventoryManipulator.drop(agent.getClient(), type, slot, quantity);
     }
 }

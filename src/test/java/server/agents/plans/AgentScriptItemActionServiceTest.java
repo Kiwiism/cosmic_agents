@@ -4,11 +4,14 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 import testutil.Items;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentScriptItemActionServiceTest {
@@ -36,5 +39,36 @@ class AgentScriptItemActionServiceTest {
         when(agent.getInventory(InventoryType.ETC)).thenReturn(inventory);
 
         assertFalse(AgentScriptItemActionService.dropItem(entry, InventoryType.ETC, 4000000, (short) 1));
+    }
+
+    @Test
+    void dropsRequestedQuantityThroughInventoryGateway() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Inventory inventory = new Inventory(agent, InventoryType.ETC, (byte) 8);
+        inventory.addItem(Items.itemWithQuantity(4000000, 7));
+        when(agent.getInventory(InventoryType.ETC)).thenReturn(inventory);
+        InventoryGateway gateway = mock(InventoryGateway.class);
+
+        assertTrue(AgentScriptItemActionService.dropItem(entry, InventoryType.ETC, 4000000, (short) 3, gateway));
+
+        verify(gateway).dropItem(agent, InventoryType.ETC, (short) 1, (short) 3);
+    }
+
+    @Test
+    void dropsAvailableQuantityWhenRequestedQuantityIsNotPositiveOrTooLarge() {
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Inventory inventory = new Inventory(agent, InventoryType.ETC, (byte) 8);
+        inventory.addItem(Items.itemWithQuantity(4000000, 7));
+        when(agent.getInventory(InventoryType.ETC)).thenReturn(inventory);
+        InventoryGateway gateway = mock(InventoryGateway.class);
+
+        assertTrue(AgentScriptItemActionService.dropItem(entry, InventoryType.ETC, 4000000, (short) 0, gateway));
+        verify(gateway).dropItem(agent, InventoryType.ETC, (short) 1, (short) 7);
+
+        gateway = mock(InventoryGateway.class);
+        assertTrue(AgentScriptItemActionService.dropItem(entry, InventoryType.ETC, 4000000, (short) 99, gateway));
+        verify(gateway).dropItem(agent, InventoryType.ETC, (short) 1, (short) 7);
     }
 }

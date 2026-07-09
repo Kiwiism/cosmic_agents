@@ -2,6 +2,7 @@ package server.agents.integration;
 
 import client.inventory.Equip;
 import client.Character;
+import client.inventory.InventoryType;
 import client.Job;
 import client.inventory.WeaponType;
 import server.StatEffect;
@@ -38,5 +39,7 @@ public interface InventoryGateway {
     boolean meetsEquipRequirements(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame);
 
     boolean canWearEquipment(Character agent, Equip equip, short primarySlot);
+
+    void dropItem(Character agent, InventoryType type, short slot, short quantity);
 }
 

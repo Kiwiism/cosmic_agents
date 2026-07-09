@@ -6765,6 +6765,11 @@ Current physics correction:
   adapter wraps `Character.getTrade()` with `AgentServerTradeWindow`. Trade tick
   lookup ordering, queued retry behavior, closed-window handling, item-add
   dispatch, confirmation waits, and completion reactions are unchanged.
+- SPI/gateway extraction: script item-drop execution now routes inventory
+  mutation through `InventoryGateway.dropItem` instead of calling
+  `InventoryManipulator` from the plan layer. Item lookup, quantity clamping,
+  slot selection, and drop behavior are unchanged; the concrete Cosmic
+  mutation remains in `CosmicInventoryGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
