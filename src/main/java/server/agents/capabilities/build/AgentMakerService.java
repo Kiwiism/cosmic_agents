@@ -9,10 +9,11 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.processor.action.MakerProcessor;
-import server.ItemInformationProvider;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.build.AgentMakerRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -128,7 +129,7 @@ public final class AgentMakerService {
                     continue;   // count each distinct leftover once; countById sums all stacks
                 }
                 int crafts = etc.countById(itemId) / LEFTOVERS_PER_CRYSTAL;
-                if (crafts <= 0 || itemInformation().getMakerCrystalFromLeftover(itemId) == -1) {
+                if (crafts <= 0 || inventory().getMakerCrystalFromLeftover(itemId) == -1) {
                     continue;
                 }
                 for (int i = 0; i < crafts; i++) {
@@ -216,7 +217,7 @@ public final class AgentMakerService {
         return count == 1 ? noun : noun + "s";
     }
 
-    private static ItemInformationProvider itemInformation() {
-        return ItemInformationProvider.getInstance();
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 }

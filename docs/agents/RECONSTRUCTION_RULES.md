@@ -6484,6 +6484,10 @@ Current physics correction:
   upgrade logic, sibling/owner priority, and trade scheduling are unchanged.
   Deeper equipment reserve checks still use the existing item-info signatures
   until the equipment policy gateway slice.
+- SPI/gateway extraction: Maker leftover-to-crystal metadata now routes through
+  `InventoryGateway`. Maker skill checks, leftover counting, batch scheduling,
+  MakerProcessor execution, disassembly filtering, and interruption behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

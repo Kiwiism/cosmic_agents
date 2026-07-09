@@ -64,4 +64,9 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     public boolean isTwoHandedWeapon(int itemId) {
         return ItemInformationProvider.getInstance().isTwoHanded(itemId);
     }
+
+    @Override
+    public int getMakerCrystalFromLeftover(int leftoverId) {
+        return ItemInformationProvider.getInstance().getMakerCrystalFromLeftover(leftoverId);
+    }
 }

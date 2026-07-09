@@ -27,5 +27,7 @@ public interface InventoryGateway {
     WeaponType getWeaponType(int itemId);
 
     boolean isTwoHandedWeapon(int itemId);
+
+    int getMakerCrystalFromLeftover(int leftoverId);
 }
 

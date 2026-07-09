@@ -2528,3 +2528,7 @@ Recent capability extraction notes:
   checks, sibling/owner routing, and transfer scheduling stay unchanged. The
   remaining item-info calls in this class are tied to equipment reserve-policy
   signatures and remain for the equipment gateway slice.
+- SPI/gateway extraction: Maker leftover-to-crystal metadata now uses
+  `InventoryGateway`; Maker skill gating, leftover counting, batch scheduling,
+  MakerProcessor execution, disassembly filtering, and interruption behavior
+  stay unchanged.
