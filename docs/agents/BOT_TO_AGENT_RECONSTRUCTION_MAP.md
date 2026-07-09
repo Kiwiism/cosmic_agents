@@ -2374,3 +2374,8 @@ Recent capability extraction notes:
   `server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime`. It
   preserves report callback wiring and delivery while leaving live identity and
   reply delivery as integration seams.
+- `AgentCombatTargetRuntime` now lives in
+  `server.agents.capabilities.combat`. It preserves target search/scoring,
+  graph-cost reachability, patrol filtering, immediate projectile targeting,
+  and sibling occupancy penalties while leaving live leader/session lookup as
+  integration seams.

@@ -4,7 +4,7 @@ import client.Character;
 import net.server.PlayerBuffValueHolder;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.integration.AgentCombatTargetRuntime;
+import server.agents.capabilities.combat.AgentCombatTargetRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;

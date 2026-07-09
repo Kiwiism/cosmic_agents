@@ -15,7 +15,7 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
-import server.agents.integration.AgentCombatTargetRuntime;
+import server.agents.capabilities.combat.AgentCombatTargetRuntime;
 import server.StatEffect;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;

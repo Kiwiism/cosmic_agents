@@ -6295,6 +6295,12 @@ Current physics correction:
   stat/range/movement/build/inventory/supply/combat report delivery, skill
   report pending-action behavior, recommended-gear actions, and queued replies;
   live identity and reply delivery remain integration seams.
+- Combat target search and scoring now lives in
+  `server.agents.capabilities.combat.AgentCombatTargetRuntime`. It preserves
+  grind, patrol, and follow target selection, graph path cost scoring, immediate
+  projectile targeting, local target scoring, patrol-region filtering, and
+  sibling occupancy penalties; live leader/sibling session lookup remains an
+  explicit integration seam.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

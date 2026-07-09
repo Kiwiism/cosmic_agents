@@ -1,19 +1,10 @@
-package server.agents.integration;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.supplies.AgentAmmoStateRuntime;
 
-import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
-
 import client.Character;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatGroundRuntime;
-import server.agents.capabilities.combat.AgentCombatGrindTargetPolicy;
-import server.agents.capabilities.combat.AgentCombatImmediateTargetPolicy;
-import server.agents.capabilities.combat.AgentCombatScoringPolicy;
-import server.agents.capabilities.combat.AgentCombatTargetSelector;
-import server.agents.capabilities.combat.AgentGrindTargetGroup;
-import server.agents.capabilities.combat.AgentProjectileHitbox;
-import server.agents.capabilities.combat.AgentScoredGrindTarget;
+import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSessionLifecycleSideEffects;
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
