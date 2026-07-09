@@ -6683,6 +6683,11 @@ Current physics correction:
   `AgentTradeGatewayRuntime` instead of importing the concrete Cosmic adapter
   from `AgentTradeInviteGateway`. Trade start/invite ordering and utility chat
   behavior are unchanged.
+- Trade-window reconstruction: manual trade invite state now stores the live
+  trade window as an opaque identity object instead of owning the `server.Trade`
+  type. Manual invite timeout, accept-delay, greeting, cancel, and accept
+  behavior are unchanged; deeper trade tick/services still adapt live
+  `Trade` windows until later slices.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

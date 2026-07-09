@@ -1,10 +1,8 @@
 package server.agents.capabilities.trade;
 
-import server.Trade;
-
 public final class AgentManualTradeState {
     private int acceptDelayMs = 0;
-    private Trade tradeRef = null;
+    private Object tradeRef = null;
     private int timeoutMs = 0;
 
     public int acceptDelayMs() {
@@ -15,11 +13,11 @@ public final class AgentManualTradeState {
         this.acceptDelayMs = acceptDelayMs;
     }
 
-    public Trade tradeRef() {
+    public Object tradeRef() {
         return tradeRef;
     }
 
-    public void setTradeRef(Trade tradeRef) {
+    public void setTradeRef(Object tradeRef) {
         this.tradeRef = tradeRef;
     }
 
@@ -31,7 +29,7 @@ public final class AgentManualTradeState {
         this.timeoutMs = timeoutMs;
     }
 
-    public void begin(Trade trade, int timeoutMs) {
+    public void begin(Object trade, int timeoutMs) {
         this.acceptDelayMs = 0;
         this.tradeRef = trade;
         this.timeoutMs = timeoutMs;

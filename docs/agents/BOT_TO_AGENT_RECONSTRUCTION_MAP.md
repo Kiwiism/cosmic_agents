@@ -2730,3 +2730,8 @@ Recent capability extraction notes:
   start/invite operations to `AgentTradeGatewayRuntime` rather than importing
   the concrete Cosmic adapter. Utility trade invite ordering and chat-command
   behavior stay unchanged.
+- Trade-window reconstruction: `AgentManualTradeState` and
+  `AgentManualTradeStateRuntime` no longer import `server.Trade`; they keep the
+  pending manual trade window as an opaque identity reference. The surrounding
+  manual trade services still receive live `Trade` windows for ticking and
+  callbacks until the broader trade-window abstraction slice.

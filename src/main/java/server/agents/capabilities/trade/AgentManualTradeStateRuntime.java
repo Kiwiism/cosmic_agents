@@ -1,6 +1,5 @@
 package server.agents.capabilities.trade;
 
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 /**
@@ -10,12 +9,12 @@ public final class AgentManualTradeStateRuntime {
     private AgentManualTradeStateRuntime() {
     }
 
-    public static Trade tradeRef(AgentRuntimeEntry entry) {
+    public static Object tradeRef(AgentRuntimeEntry entry) {
         AgentManualTradeState state = state(entry);
         return state == null ? null : state.tradeRef();
     }
 
-    public static void beginTrade(AgentRuntimeEntry entry, Trade trade, int timeoutMs) {
+    public static void beginTrade(AgentRuntimeEntry entry, Object trade, int timeoutMs) {
         AgentManualTradeState state = state(entry);
         if (state != null) {
             state.begin(trade, timeoutMs);
