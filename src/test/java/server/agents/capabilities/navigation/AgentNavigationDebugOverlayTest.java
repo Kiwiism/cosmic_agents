@@ -1,14 +1,18 @@
 package server.agents.capabilities.navigation;
 
 import client.Character;
+import client.Skill;
 import org.junit.jupiter.api.Test;
+import server.StatEffect;
 import server.agents.commands.AgentLegacyCommandBridge;
+import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -53,5 +57,17 @@ class AgentNavigationDebugOverlayTest {
             assertEquals("No owned bot named 'alpha' found.",
                     AgentNavigationDebugOverlay.pathLog(viewer, "alpha", "note"));
         }
+    }
+
+    @Test
+    void firstAvailableEffectUsesSkillGatewayInOrder() {
+        SkillGateway skills = mock(SkillGateway.class);
+        Skill secondSkill = new Skill(2);
+        StatEffect effect = mock(StatEffect.class);
+        secondSkill.addLevelEffect(effect);
+        when(skills.getSkill(1)).thenReturn(null);
+        when(skills.getSkill(2)).thenReturn(secondSkill);
+
+        assertSame(effect, AgentNavigationDebugOverlay.firstAvailableEffect(skills, 1, 2, 3));
     }
 }

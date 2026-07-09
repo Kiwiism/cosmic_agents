@@ -2873,3 +2873,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: `AgentPassiveRecoveryPolicy` now uses
   `AgentSkillGatewayRuntime` for passive HP/MP recovery skill-effect lookup.
   Standing-still gating and legacy recovery math remain unchanged.
+- SPI/gateway extraction: `AgentNavigationDebugOverlay` now uses
+  `AgentSkillGatewayRuntime` for debug-overlay mist-effect lookup. Overlay
+  effect fallback order and rendering behavior remain unchanged.

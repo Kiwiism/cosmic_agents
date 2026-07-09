@@ -3,7 +3,6 @@ package server.agents.capabilities.navigation;
 import server.agents.capabilities.movement.AgentMovementProfile;
 
 import client.Character;
-import client.SkillFactory;
 import constants.skills.Evan;
 import constants.skills.FPMage;
 import constants.skills.Shadower;
@@ -12,6 +11,8 @@ import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
@@ -259,8 +260,12 @@ public final class AgentNavigationDebugOverlay {
     }
 
     private static StatEffect firstAvailableEffect(int... skillIds) {
+        return firstAvailableEffect(AgentSkillGatewayRuntime.skills(), skillIds);
+    }
+
+    static StatEffect firstAvailableEffect(SkillGateway skills, int... skillIds) {
         for (int skillId : skillIds) {
-            var skill = SkillFactory.getSkill(skillId);
+            var skill = skills.getSkill(skillId);
             if (skill != null) {
                 return skill.getEffect(1);
             }

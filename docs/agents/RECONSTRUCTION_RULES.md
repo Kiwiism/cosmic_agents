@@ -6852,6 +6852,11 @@ Current physics correction:
   Warrior flat HP recovery, Crusader/White Knight/Dawn Warrior flat MP
   recovery, Magician INT-scaled MP recovery, and base recovery math are
   unchanged.
+- SPI/gateway extraction: navigation debug overlay mist-effect selection now
+  calls `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentNavigationDebugOverlay`. Evan Recovery Aura, FP
+  Poison Mist, and Shadower Smoke Screen fallback order, unavailable-overlay
+  messaging, and overlay drawing behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
