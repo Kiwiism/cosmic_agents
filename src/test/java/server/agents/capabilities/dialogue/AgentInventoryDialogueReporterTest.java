@@ -73,11 +73,12 @@ class AgentInventoryDialogueReporterTest {
         Inventory use = stubInventory(agent, InventoryType.USE, 28, 23);
         stubInventory(agent, InventoryType.ETC, 32, 32);
         stubInventory(agent, InventoryType.SETUP, 36, 36);
-        when(use.list()).thenReturn(List.of(
-                new Item(2040000, (short) 1, (short) 2),
-                new Item(2000000, (short) 2, (short) 3),
-                new Item(2022179, (short) 3, (short) 4),
-                new Item(4000000, (short) 4, (short) 99)));
+        List<Item> useItems = List.of(
+                item(2040000, 2),
+                item(2000000, 3),
+                item(2022179, 4),
+                item(4000000, 99));
+        when(use.list()).thenReturn(useItems);
         InventoryGateway inventoryGateway = inventoryGateway();
         StatEffect pot = mock(StatEffect.class);
         when(pot.getHp()).thenReturn((short) 50);
@@ -130,5 +131,13 @@ class AgentInventoryDialogueReporterTest {
 
     private static InventoryGateway inventoryGateway() {
         return mock(InventoryGateway.class);
+    }
+
+    private static Item item(int itemId, int quantity) {
+        Item item = mock(Item.class);
+        when(item.getItemId()).thenReturn(itemId);
+        when(item.getQuantity()).thenReturn((short) quantity);
+        when(item.isUntradeable()).thenReturn(false);
+        return item;
     }
 }
