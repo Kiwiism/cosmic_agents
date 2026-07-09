@@ -18,5 +18,7 @@ public interface AgentServerAdapter {
     SkillGateway skills();
 
     MakerGateway maker();
+
+    AgentQuestSyncGateway questSync();
 }
 

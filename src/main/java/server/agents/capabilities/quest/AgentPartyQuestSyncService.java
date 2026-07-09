@@ -3,7 +3,9 @@ package server.agents.capabilities.quest;
 import client.BotClient;
 import client.Character;
 import client.QuestStatus;
-import server.quest.Quest;
+import server.agents.integration.AgentQuestSyncGateway;
+import server.agents.integration.AgentQuestSyncGatewayRuntime;
+import server.agents.integration.AgentQuestSyncHandle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,13 +14,18 @@ public final class AgentPartyQuestSyncService {
     private AgentPartyQuestSyncService() {
     }
 
-    public static void syncPartyAgentsQuestStart(Character source, Quest quest, int npc) {
+    public static void syncPartyAgentsQuestStart(Character source, int questId, int npc) {
+        syncPartyAgentsQuestStart(source, questId, npc, AgentQuestSyncGatewayRuntime.quests());
+    }
+
+    static void syncPartyAgentsQuestStart(Character source, int questId, int npc, AgentQuestSyncGateway quests) {
+        AgentQuestSyncHandle quest = quests.getQuest(questId);
         if (quest == null) {
             return;
         }
 
         for (Character agent : partyAgents(source)) {
-            if (agent.getQuest(quest).getStatus() == QuestStatus.Status.STARTED) {
+            if (quest.status(agent) == QuestStatus.Status.STARTED) {
                 continue;
             }
             quest.forceStartWithActions(agent, resolveQuestNpc(source, quest, npc));
@@ -29,16 +36,33 @@ public final class AgentPartyQuestSyncService {
         if (progress == null) {
             return;
         }
+        syncPartyAgentsQuestProgress(source, questId, infoNumber, progress, AgentQuestSyncGatewayRuntime.quests());
+    }
 
-        Quest quest = Quest.getInstance(questId);
-        int npc = resolveQuestNpc(source, quest, source.getQuest(quest).getNpc());
+    static void syncPartyAgentsQuestProgress(Character source, int questId, int infoNumber, String progress,
+                                             AgentQuestSyncGateway quests) {
+        if (progress == null) {
+            return;
+        }
+
+        AgentQuestSyncHandle quest = quests.getQuest(questId);
+        if (quest == null) {
+            return;
+        }
+        int npc = resolveQuestNpc(source, quest, quest.npc(source));
         for (Character agent : partyAgents(source)) {
             ensureQuestStarted(agent, quest, npc);
             agent.setQuestProgress(questId, infoNumber, progress);
         }
     }
 
-    public static void syncPartyAgentsQuestComplete(Character source, Quest quest, int npc, Integer selection) {
+    public static void syncPartyAgentsQuestComplete(Character source, int questId, int npc, Integer selection) {
+        syncPartyAgentsQuestComplete(source, questId, npc, selection, AgentQuestSyncGatewayRuntime.quests());
+    }
+
+    static void syncPartyAgentsQuestComplete(Character source, int questId, int npc, Integer selection,
+                                             AgentQuestSyncGateway quests) {
+        AgentQuestSyncHandle quest = quests.getQuest(questId);
         if (quest == null) {
             return;
         }
@@ -67,21 +91,21 @@ public final class AgentPartyQuestSyncService {
         return partyAgents;
     }
 
-    private static void ensureQuestStarted(Character agent, Quest quest, int npc) {
-        if (agent.getQuest(quest).getStatus() == QuestStatus.Status.STARTED) {
+    private static void ensureQuestStarted(Character agent, AgentQuestSyncHandle quest, int npc) {
+        if (quest.status(agent) == QuestStatus.Status.STARTED) {
             return;
         }
 
         quest.forceStartWithActions(agent, npc);
     }
 
-    static int resolveQuestNpc(Character source, Quest quest, int fallbackNpc) {
+    static int resolveQuestNpc(Character source, AgentQuestSyncHandle quest, int fallbackNpc) {
         if (fallbackNpc > 0) {
             return fallbackNpc;
         }
 
         if (source != null) {
-            int sourceNpc = source.getQuest(quest).getNpc();
+            int sourceNpc = quest.npc(source);
             if (sourceNpc > 0) {
                 return sourceNpc;
             }

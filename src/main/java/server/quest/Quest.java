@@ -326,7 +326,7 @@ public class Quest {
                 a.run(chr, null);
             }
             forceStart(chr, npc, false);
-            AgentPartyQuestSyncService.syncPartyAgentsQuestStart(chr, this, npc);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestStart(chr, getId(), npc);
         }
     }
 
@@ -349,7 +349,7 @@ public class Quest {
             if (!this.hasNextQuestAction()) {
                 chr.announceUpdateQuest(Character.DelayedQuestUpdate.INFO, chr.getQuest(this));
             }
-            AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, this, npc, selection);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, getId(), npc, selection);
         }
     }
 
@@ -408,7 +408,7 @@ public class Quest {
 
         chr.updateQuestStatus(newStatus);
         if (syncPartyBots) {
-            AgentPartyQuestSyncService.syncPartyAgentsQuestStart(chr, this, npc);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestStart(chr, getId(), npc);
         }
 
         return true;
@@ -432,7 +432,7 @@ public class Quest {
         chr.sendPacket(PacketCreator.showSpecialEffect(9)); // Quest completion
         chr.getMap().broadcastMessage(chr, PacketCreator.showForeignEffect(chr.getId(), 9), false); //use 9 instead of 12 for both
         if (syncPartyBots) {
-            AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, this, npc, null);
+            AgentPartyQuestSyncService.syncPartyAgentsQuestComplete(chr, getId(), npc, null);
         }
         return true;
     }

@@ -6,7 +6,8 @@ import client.Client;
 import client.QuestStatus;
 import net.server.world.Party;
 import org.junit.jupiter.api.Test;
-import server.quest.Quest;
+import server.agents.integration.AgentQuestSyncGateway;
+import server.agents.integration.AgentQuestSyncHandle;
 
 import java.util.List;
 
@@ -39,16 +40,14 @@ class AgentPartyQuestSyncServiceTest {
     @Test
     void resolvesNpcFromFallbackThenSourceQuestThenMapleAdministrator() {
         Character source = character(1, mock(Client.class));
-        Quest quest = mock(Quest.class);
-        QuestStatus status = mock(QuestStatus.class);
-        when(source.getQuest(quest)).thenReturn(status);
+        AgentQuestSyncHandle quest = mock(AgentQuestSyncHandle.class);
 
         assertEquals(2100, AgentPartyQuestSyncService.resolveQuestNpc(source, quest, 2100));
 
-        when(status.getNpc()).thenReturn(2200);
+        when(quest.npc(source)).thenReturn(2200);
         assertEquals(2200, AgentPartyQuestSyncService.resolveQuestNpc(source, quest, 0));
 
-        when(status.getNpc()).thenReturn(0);
+        when(quest.npc(source)).thenReturn(0);
         assertEquals(constants.id.NpcId.MAPLE_ADMINISTRATOR,
                 AgentPartyQuestSyncService.resolveQuestNpc(source, quest, 0));
     }
@@ -57,17 +56,14 @@ class AgentPartyQuestSyncServiceTest {
     void startsQuestForPartyAgentsThatAreNotStarted() {
         Character source = character(1, mock(Client.class));
         Character agent = character(2, new BotClient(0, 0));
-        Quest quest = mock(Quest.class);
-        QuestStatus sourceStatus = mock(QuestStatus.class);
-        QuestStatus agentStatus = mock(QuestStatus.class);
+        AgentQuestSyncHandle quest = mock(AgentQuestSyncHandle.class);
+        AgentQuestSyncGateway quests = questGateway(1000, quest);
         when(source.getParty()).thenReturn(mock(Party.class));
         when(source.getPartyMembersOnline()).thenReturn(List.of(agent));
-        when(source.getQuest(quest)).thenReturn(sourceStatus);
-        when(sourceStatus.getNpc()).thenReturn(3000);
-        when(agent.getQuest(quest)).thenReturn(agentStatus);
-        when(agentStatus.getStatus()).thenReturn(QuestStatus.Status.NOT_STARTED);
+        when(quest.npc(source)).thenReturn(3000);
+        when(quest.status(agent)).thenReturn(QuestStatus.Status.NOT_STARTED);
 
-        AgentPartyQuestSyncService.syncPartyAgentsQuestStart(source, quest, 0);
+        AgentPartyQuestSyncService.syncPartyAgentsQuestStart(source, 1000, 0, quests);
 
         verify(quest).forceStartWithActions(agent, 3000);
     }
@@ -76,16 +72,21 @@ class AgentPartyQuestSyncServiceTest {
     void doesNotRestartAlreadyStartedPartyAgents() {
         Character source = character(1, mock(Client.class));
         Character agent = character(2, new BotClient(0, 0));
-        Quest quest = mock(Quest.class);
-        QuestStatus agentStatus = mock(QuestStatus.class);
+        AgentQuestSyncHandle quest = mock(AgentQuestSyncHandle.class);
+        AgentQuestSyncGateway quests = questGateway(1000, quest);
         when(source.getParty()).thenReturn(mock(Party.class));
         when(source.getPartyMembersOnline()).thenReturn(List.of(agent));
-        when(agent.getQuest(quest)).thenReturn(agentStatus);
-        when(agentStatus.getStatus()).thenReturn(QuestStatus.Status.STARTED);
+        when(quest.status(agent)).thenReturn(QuestStatus.Status.STARTED);
 
-        AgentPartyQuestSyncService.syncPartyAgentsQuestStart(source, quest, 2000);
+        AgentPartyQuestSyncService.syncPartyAgentsQuestStart(source, 1000, 2000, quests);
 
         verify(quest, never()).forceStartWithActions(agent, 2000);
+    }
+
+    private static AgentQuestSyncGateway questGateway(int questId, AgentQuestSyncHandle quest) {
+        AgentQuestSyncGateway quests = mock(AgentQuestSyncGateway.class);
+        when(quests.getQuest(questId)).thenReturn(quest);
+        return quests;
     }
 
     private static Character character(int id, Client client) {

@@ -6879,6 +6879,13 @@ Current physics correction:
   `MakerProcessor` in `AgentMakerService`. Maker skill gating, monster-crystal
   leftover batching, trash-equip disassembly eligibility, client-lock handling,
   batch retry/abort replies, and per-step delay behavior are unchanged.
+- SPI/gateway extraction: party quest sync now calls
+  `AgentQuestSyncGatewayRuntime`/`AgentQuestSyncGateway` and
+  `AgentQuestSyncHandle` instead of importing `server.quest.Quest` in
+  `AgentPartyQuestSyncService`. Quest start, progress sync, completion sync,
+  NPC fallback resolution, party-agent filtering, and force-start-before-progress
+  behavior are unchanged. Live `Quest.getInstance` and `Quest` force-action
+  calls are isolated in `CosmicQuestSyncGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

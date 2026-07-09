@@ -2891,3 +2891,8 @@ Recent capability extraction notes:
   `AgentMakerGatewayRuntime`/`MakerGateway`; live `MakerProcessor` calls are
   isolated in `CosmicMakerGateway`. Crystal creation and trash disassembly
   behavior remain unchanged.
+- SPI/gateway extraction: `AgentPartyQuestSyncService` now uses
+  `AgentQuestSyncGatewayRuntime`/`AgentQuestSyncGateway` and
+  `AgentQuestSyncHandle`; live `server.quest.Quest` lookup and force-action
+  calls are isolated in `CosmicQuestSyncGateway`. Party quest start/progress/
+  completion sync behavior remains unchanged.

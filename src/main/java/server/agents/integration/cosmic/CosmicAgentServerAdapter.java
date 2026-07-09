@@ -1,6 +1,7 @@
 package server.agents.integration.cosmic;
 
 import server.agents.integration.AgentServerAdapter;
+import server.agents.integration.AgentQuestSyncGateway;
 import server.agents.integration.CharacterGateway;
 import server.agents.integration.CombatGateway;
 import server.agents.integration.InventoryGateway;
@@ -60,5 +61,10 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public MakerGateway maker() {
         return CosmicMakerGateway.INSTANCE;
+    }
+
+    @Override
+    public AgentQuestSyncGateway questSync() {
+        return CosmicQuestSyncGateway.INSTANCE;
     }
 }
