@@ -2479,3 +2479,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: equipped-slot trade preparation now uses
   `InventoryGateway.isCashItem`; inventory still owns equipped-slot matching,
   temporary unequip, restore tracking, and trade item preparation behavior.
+- SPI/gateway extraction: use-item classification now uses
+  `InventoryGateway.getItemEffect`; inventory still owns recovery/buff
+  classification. The gateway returns `StatEffect` temporarily to preserve
+  behavior before a later Agent-owned item-effect view is extracted.

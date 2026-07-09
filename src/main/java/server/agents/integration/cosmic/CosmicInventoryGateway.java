@@ -1,6 +1,7 @@
 package server.agents.integration.cosmic;
 
 import server.ItemInformationProvider;
+import server.StatEffect;
 import server.agents.integration.InventoryGateway;
 
 public enum CosmicInventoryGateway implements InventoryGateway {
@@ -12,6 +13,11 @@ public enum CosmicInventoryGateway implements InventoryGateway {
         synchronized (itemInfo) {
             return itemInfo.getName(itemId);
         }
+    }
+
+    @Override
+    public StatEffect getItemEffect(int itemId) {
+        return ItemInformationProvider.getInstance().getItemEffect(itemId);
     }
 
     @Override

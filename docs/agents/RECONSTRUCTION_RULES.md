@@ -6429,6 +6429,11 @@ Current physics correction:
   metadata through `InventoryGateway.isCashItem`. Equipped-slot counting,
   temporary unequip/move behavior, restore-slot tracking, and trade-preparation
   replies remain in `AgentEquippedSlotTradeService`.
+- SPI/gateway extraction: use-item classification now routes item-effect lookup
+  through `InventoryGateway.getItemEffect`. Recovery/buff classification still
+  lives in `AgentUseItemClassificationPolicy`; the gateway still returns the
+  existing `StatEffect` type as an interim compatibility seam until a later
+  Agent-owned item-effect view is introduced.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
