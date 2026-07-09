@@ -21,6 +21,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 
@@ -190,7 +191,7 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     public static void reportPotDebug(AgentRuntimeEntry entry, Character bot) {
-        reportLine(entry, AgentPotionService.autopotDebugReport(bot));
+        reportLine(entry, AgentPotionService.autopotDebugReport(bot, CosmicAgentServerAdapter.INSTANCE.inventory()));
     }
 
     public static void reportDebugStats(AgentRuntimeEntry entry, Character bot) {

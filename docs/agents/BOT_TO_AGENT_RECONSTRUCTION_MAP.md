@@ -2601,3 +2601,7 @@ Recent capability extraction notes:
   runtime callers pass `InventoryGateway` into buff selection and reporting.
   Buff consumable classification, cheap/max ordering, active/available
   summaries, and debug output remain unchanged.
+- SPI/gateway extraction: `AgentPotionService.autopotDebugReport` now receives
+  `InventoryGateway` from `AgentChatReportOperationsRuntime`; autopot item-name
+  lookup moved to the caller boundary while potion counts, chosen-slot ranking,
+  and report text stay unchanged.

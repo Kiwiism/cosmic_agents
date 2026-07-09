@@ -6561,6 +6561,10 @@ Current physics correction:
   from runtime callers instead of reaching for the Cosmic adapter inside
   `AgentBuffService`. Buff-pot scanning, cheap/max selection, item names,
   delayed use behavior, and chat/debug wording are unchanged.
+- SPI/gateway extraction: autopot debug item-name lookup now receives
+  `InventoryGateway` from the report runtime instead of reaching for the
+  Cosmic adapter inside `AgentPotionService`. Potion counting, autopot choice
+  ranking, keybind setup, and debug wording are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

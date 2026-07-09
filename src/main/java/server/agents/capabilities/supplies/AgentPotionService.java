@@ -27,7 +27,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -138,21 +138,21 @@ public final class AgentPotionService {
     }
 
     /** Owner-facing diagnostic: counts vs. selected items for each slot. */
-    public static String autopotDebugReport(Character bot) {
+    public static String autopotDebugReport(Character bot, InventoryGateway inventory) {
         int[] cnt = countPotions(bot);
         AutopotChoice choice = computeAutopotChoice(bot);
         return AgentSupplyDialogueReporter.autopotDebugReport(
                 cnt[0],
                 cnt[1],
-                describeChoice(choice.hpItemId(), choice.hpRank()),
-                describeChoice(choice.mpItemId(), choice.mpRank()));
+                describeChoice(choice.hpItemId(), choice.hpRank(), inventory),
+                describeChoice(choice.mpItemId(), choice.mpRank(), inventory));
     }
 
-    private static String describeChoice(int itemId, PotionRanking rank) {
+    private static String describeChoice(int itemId, PotionRanking rank, InventoryGateway inventory) {
         if (itemId <= 0 || rank == null) {
             return "none";
         }
-        String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(itemId);
+        String name = inventory.getItemName(itemId);
         if (name == null) name = String.valueOf(itemId);
         return AgentSupplyDialogueReporter.autopotChoice(name, itemId, rank.tier().name(), rank.value());
     }
