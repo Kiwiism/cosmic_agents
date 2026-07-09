@@ -2856,3 +2856,6 @@ Recent capability extraction notes:
   `AgentSkillGatewayRuntime` for skill names and beginner-skill lookups.
   Learned-skill tree grouping, beginner skill reporting, beginner-SP math, and
   fallback labels remain unchanged.
+- SPI/gateway extraction: `AgentCombatSkillUsePolicy` now uses
+  `AgentSkillGatewayRuntime` for skill-effect lookup. Skill-cost affordability
+  behavior remains unchanged.

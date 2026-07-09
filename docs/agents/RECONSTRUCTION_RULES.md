@@ -6826,6 +6826,10 @@ Current physics correction:
   lookup instead of importing `SkillFactory` in `AgentSkillDialogueReporter`.
   Learned-skill grouping, beginner-SP math, sorting, and fallback names are
   unchanged.
+- SPI/gateway extraction: combat skill-cost checks now call
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentCombatSkillUsePolicy`. Missing-skill rejection,
+  level guards, and skill-effect affordability checks are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -2,14 +2,19 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 
 public final class AgentCombatSkillUsePolicy {
     private AgentCombatSkillUsePolicy() {
     }
 
     public static boolean canPaySkillCost(Character bot, int skillId, int skillLevel) {
-        Skill skill = SkillFactory.getSkill(skillId);
+        return canPaySkillCost(bot, skillId, skillLevel, AgentSkillGatewayRuntime.skills());
+    }
+
+    static boolean canPaySkillCost(Character bot, int skillId, int skillLevel, SkillGateway skills) {
+        Skill skill = skills.getSkill(skillId);
         if (skill == null || skillLevel <= 0) {
             return false;
         }
