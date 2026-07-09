@@ -6,6 +6,7 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
@@ -63,7 +64,7 @@ public final class AgentSessionRuntime {
             AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
                 Character relogBot = bot(entry);
                 relogBot.saveCharToDB(true);
-                relogBot.getClient().disconnect(false, false);
+                AgentCharacterGatewayRuntime.characters().disconnect(relogBot, false, false);
                 AgentSchedulerRuntime.afterRandomDelay(10000, 10100,
                         () -> AgentSessionLifecycleRuntime.reloginBot(charId, ownerCharId, world, channel));
             });
@@ -76,7 +77,7 @@ public final class AgentSessionRuntime {
             AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
                 Character logoutBot = bot(entry);
                 logoutBot.saveCharToDB(true);
-                logoutBot.getClient().disconnect(false, false);
+                AgentCharacterGatewayRuntime.characters().disconnect(logoutBot, false, false);
             });
         });
     }
@@ -172,7 +173,7 @@ public final class AgentSessionRuntime {
             AgentSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
                 Character ownedBot = bot(owned);
                 ownedBot.saveCharToDB(true);
-                ownedBot.getClient().disconnect(false, false);
+                AgentCharacterGatewayRuntime.characters().disconnect(ownedBot, false, false);
             });
         }
     }

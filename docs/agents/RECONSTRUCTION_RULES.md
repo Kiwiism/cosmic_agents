@@ -6899,6 +6899,13 @@ Current physics correction:
   offer expiry, AI-tick preparation, and missing-map cleanup behavior are
   unchanged. Live client timestamp mutation is isolated in
   `CosmicCharacterGateway`.
+- SPI/gateway extraction: session relog/logout/owner-away disconnects now call
+  `AgentCharacterGatewayRuntime`/`CharacterGateway.disconnect` instead of
+  directly invoking `agent.getClient().disconnect(...)` in
+  `AgentSessionRuntime`. Save-before-disconnect ordering, relog world/channel
+  capture, delayed relog scheduling, logout confirmation, and owner-away batch
+  logout behavior are unchanged. Live client disconnect mutation is isolated in
+  `CosmicCharacterGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

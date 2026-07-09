@@ -32,4 +32,26 @@ class CosmicCharacterGatewayTest {
 
         verify(client, never()).updateLastPacket();
     }
+
+    @Test
+    void disconnectDelegatesToClientWhenClientExists() {
+        Character agent = mock(Character.class);
+        Client client = mock(Client.class);
+        when(agent.getClient()).thenReturn(client);
+
+        CosmicCharacterGateway.INSTANCE.disconnect(agent, false, false);
+
+        verify(client).disconnect(false, false);
+    }
+
+    @Test
+    void disconnectIgnoresMissingClient() {
+        Character agent = mock(Character.class);
+        when(agent.getClient()).thenReturn(null);
+        Client client = mock(Client.class);
+
+        CosmicCharacterGateway.INSTANCE.disconnect(agent, false, false);
+
+        verify(client, never()).disconnect(false, false);
+    }
 }

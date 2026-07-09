@@ -64,4 +64,11 @@ public enum CosmicCharacterGateway implements CharacterGateway {
             agent.getClient().updateLastPacket();
         }
     }
+
+    @Override
+    public void disconnect(Character agent, boolean shutdown, boolean cashShop) {
+        if (agent != null && agent.getClient() != null) {
+            agent.getClient().disconnect(shutdown, cashShop);
+        }
+    }
 }

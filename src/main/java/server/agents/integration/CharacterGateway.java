@@ -19,5 +19,7 @@ public interface CharacterGateway {
     Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId);
 
     void markClientHeartbeat(Character agent);
+
+    void disconnect(Character agent, boolean shutdown, boolean cashShop);
 }
 

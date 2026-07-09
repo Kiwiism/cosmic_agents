@@ -2906,3 +2906,8 @@ Recent capability extraction notes:
   `agent.getClient().updateLastPacket()` mutation is isolated in
   `CosmicCharacterGateway`. Heartbeat cadence and preflight behavior remain
   unchanged.
+- SPI/gateway extraction: `AgentSessionRuntime` now uses
+  `AgentCharacterGatewayRuntime`/`CharacterGateway.disconnect`; live
+  `agent.getClient().disconnect(...)` mutation is isolated in
+  `CosmicCharacterGateway`. Relog/logout save ordering, delays, and owner-away
+  batch logout behavior remain unchanged.
