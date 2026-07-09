@@ -6716,6 +6716,11 @@ Current physics correction:
   service/runtime no longer import `server.Trade`. Completion reactions,
   equipment tracking for received equips, thanks/freebie reply timing, and
   reset/cancel/refill behavior are unchanged.
+- Trade-window reconstruction: `AgentTradeTickRuntimeService.RuntimeCallbacks`
+  now returns `AgentTradeWindow` instead of live `server.Trade`; the integration
+  adapter wraps `Character.getTrade()` with `AgentServerTradeWindow`. Trade tick
+  lookup ordering, queued retry behavior, closed-window handling, item-add
+  dispatch, confirmation waits, and completion reactions are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

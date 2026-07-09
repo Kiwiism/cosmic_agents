@@ -22,6 +22,7 @@ import server.agents.capabilities.trade.AgentInventoryTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.trade.AgentServerTradeWindow;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;
@@ -75,7 +76,7 @@ public final class AgentInventoryRuntimeAdapters {
     public static AgentTradeTickRuntimeService.RuntimeCallbacks tradeTickRuntimeCallbacks() {
         return AgentTradeTickRuntimeService.RuntimeCallbacks.of(
                 AgentMovementTimers::tickDown,
-                Character::getTrade,
+                agent -> AgentServerTradeWindow.wrap(agent.getTrade()),
                 AgentMovementTimers::delayAfterCurrentTick,
                 AgentMovementPhysicsConfig::configuredMovementTickMs,
                 AgentRuntimeIdentityRuntime::owner,

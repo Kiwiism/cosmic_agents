@@ -2757,3 +2757,7 @@ Recent capability extraction notes:
   item/offer inspection during completion reactions. Live `server.Trade`
   coupling remains only in the server-window adapter and current-trade runtime
   lookup.
+- Trade-window reconstruction: `AgentTradeTickRuntimeService.RuntimeCallbacks`
+  now supplies `AgentTradeWindow`; `AgentInventoryRuntimeAdapters` owns the live
+  `Character.getTrade()` wrapping. The trade capability's production
+  `server.Trade` coupling is now isolated to `AgentServerTradeWindow`.

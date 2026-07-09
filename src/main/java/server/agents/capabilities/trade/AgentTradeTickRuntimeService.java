@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public final class AgentTradeTickRuntimeService {
                 agent,
                 AgentTradeTickCallbackService.tradeTickCallbacks(
                         callbacks.tickDown(),
-                        () -> AgentServerTradeWindow.wrap(callbacks.currentTrade(agent)),
+                        () -> callbacks.currentTrade(agent),
                         () -> AgentTradeBetweenBatchService.tickBetweenBatches(
                                 entry,
                                 AgentTradeBetweenBatchCallbackService.betweenBatchCallbacks(
@@ -107,7 +106,7 @@ public final class AgentTradeTickRuntimeService {
     public interface RuntimeCallbacks {
         IntUnaryOperator tickDown();
 
-        Trade currentTrade(Character agent);
+        AgentTradeWindow currentTrade(Character agent);
 
         int delayAfterCurrentTick(int durationMs);
 
@@ -122,7 +121,7 @@ public final class AgentTradeTickRuntimeService {
         boolean isBotRecipient(Character recipient);
 
         static RuntimeCallbacks of(IntUnaryOperator tickDown,
-                                   Function<Character, Trade> currentTrade,
+                                   Function<Character, AgentTradeWindow> currentTrade,
                                    IntUnaryOperator delayAfterCurrentTick,
                                    java.util.function.IntSupplier tickMs,
                                    Function<AgentRuntimeEntry, Character> owner,
@@ -136,7 +135,7 @@ public final class AgentTradeTickRuntimeService {
                 }
 
                 @Override
-                public Trade currentTrade(Character agent) {
+                public AgentTradeWindow currentTrade(Character agent) {
                     return currentTrade.apply(agent);
                 }
 
