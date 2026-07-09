@@ -140,6 +140,28 @@ class AgentRuntimeRegistryTest {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
     }
 
+    @Test
+    void findsUnclaimedOnlineAgentByNameThroughLookup() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Agent");
+        Character player = character(201, "Player");
+        when(agent.getClient()).thenReturn(mock(BotClient.class));
+        when(player.getClient()).thenReturn(mock(Client.class));
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        assertSame(agent, AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(
+                "Agent", 0, (world, name) -> agent));
+        assertNull(AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(
+                "Player", 0, (world, name) -> player));
+
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(agent, leader, null));
+
+        assertNull(AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(
+                "Agent", 0, (world, name) -> agent));
+
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
     private static Character character(int id, String name) {
         Character character = mock(Character.class);
         when(character.getId()).thenReturn(id);

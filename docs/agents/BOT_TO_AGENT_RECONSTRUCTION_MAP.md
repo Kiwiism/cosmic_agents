@@ -2769,6 +2769,10 @@ Recent capability extraction notes:
   restoration for offline Agent loading. `AgentOfflineLoadRuntime` no longer
   reaches directly into server player buff storage; disease restore behavior
   and offline-load ordering stay unchanged.
+- SPI/gateway extraction: `CharacterGateway` now exposes live world-character
+  lookup by name. `AgentRuntimeRegistry.findUnclaimedOnlineAgentByName` uses
+  this boundary while preserving BotClient detection, active-leader exclusion,
+  and null behavior.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the

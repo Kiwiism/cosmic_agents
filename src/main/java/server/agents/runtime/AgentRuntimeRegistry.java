@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.BotClient;
 import client.Character;
-import net.server.Server;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.ArrayList;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
 
 /**
  * Agent-owned lookup helpers over live Agent runtime entries.
@@ -83,13 +84,16 @@ public final class AgentRuntimeRegistry {
     }
 
     public static Character findUnclaimedOnlineAgentByName(String agentName, int world) {
-        for (var channel : Server.getInstance().getWorld(world).getChannels()) {
-            Character candidate = channel.getPlayerStorage().getCharacterByName(agentName);
-            if (isUnclaimedBotClientCharacter(candidate)) {
-                return candidate;
-            }
-        }
-        return null;
+        return findUnclaimedOnlineAgentByName(agentName, world,
+                (lookupWorld, lookupName) -> AgentCharacterGatewayRuntime.characters()
+                        .findWorldCharacterByName(lookupWorld, lookupName));
+    }
+
+    static Character findUnclaimedOnlineAgentByName(String agentName,
+                                                    int world,
+                                                    BiFunction<Integer, String, Character> characterLookup) {
+        Character candidate = characterLookup.apply(world, agentName);
+        return isUnclaimedBotClientCharacter(candidate) ? candidate : null;
     }
 
     public static boolean isUnclaimedBotClientCharacter(Character candidate) {

@@ -21,6 +21,17 @@ public enum CosmicCharacterGateway implements CharacterGateway {
     }
 
     @Override
+    public Character findWorldCharacterByName(int world, String characterName) {
+        for (var channel : Server.getInstance().getWorld(world).getChannels()) {
+            Character candidate = channel.getPlayerStorage().getCharacterByName(characterName);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId) {
         return Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId);
     }

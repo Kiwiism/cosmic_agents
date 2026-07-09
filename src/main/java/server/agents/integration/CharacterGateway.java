@@ -10,6 +10,8 @@ import java.util.Map;
 public interface CharacterGateway {
     Character findWorldCharacterById(int world, int characterId);
 
+    Character findWorldCharacterByName(int world, String characterName);
+
     Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId);
 }
 

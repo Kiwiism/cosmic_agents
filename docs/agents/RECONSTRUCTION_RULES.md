@@ -266,6 +266,10 @@ Recent reconstruction notes:
   `AgentCharacterGatewayRuntime` instead of direct server buff-storage access.
   Disease application order, null handling, client binding, map registration,
   and spawn setup remain unchanged.
+- Unclaimed online Agent lookup now resolves live characters by name through
+  `AgentCharacterGatewayRuntime` instead of iterating server world channels in
+  `AgentRuntimeRegistry`. Bot-client filtering, claimed-Agent exclusion, and
+  null handling remain unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and
