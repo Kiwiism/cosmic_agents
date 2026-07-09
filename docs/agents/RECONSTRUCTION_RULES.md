@@ -6406,6 +6406,11 @@ Current physics correction:
   `CosmicInventoryGateway`. `AgentAmmoService` still owns low-ammo detection,
   donor scoring, share quantity, dialogue timing, and trade scheduling; the
   Cosmic item-info lookup is isolated at the inventory gateway boundary.
+- SPI/gateway extraction: autopot debug item-name lookup now routes through
+  `InventoryGateway.getItemName`. `AgentPotionService` still owns potion
+  counting, ranking, keybinding setup, low-pot sharing, passive recovery, and
+  supply dialogue formatting; only the Cosmic item-name lookup moved to the
+  inventory gateway boundary.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

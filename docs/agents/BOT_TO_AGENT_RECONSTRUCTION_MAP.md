@@ -2459,3 +2459,8 @@ Recent capability extraction notes:
   ammo-share behavior, donor selection, and transfer scheduling, while the
   direct `ItemInformationProvider.getWatkForProjectile` call is isolated in the
   Cosmic inventory gateway.
+- SPI/gateway extraction: autopot debug item-name lookup now routes through
+  `InventoryGateway`/`CosmicInventoryGateway`; supplies still owns potion
+  counting, ranking, keybinding setup, share requests, and passive recovery
+  while Cosmic item metadata access continues to shrink into the inventory
+  gateway.

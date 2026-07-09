@@ -13,7 +13,6 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.keybind.KeyBinding;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.dialogue.AgentSupplyDialogueReporter;
@@ -28,6 +27,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.supplies.AgentPotionRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -141,19 +141,18 @@ public final class AgentPotionService {
     public static String autopotDebugReport(Character bot) {
         int[] cnt = countPotions(bot);
         AutopotChoice choice = computeAutopotChoice(bot);
-        ItemInformationProvider iip = ItemInformationProvider.getInstance();
         return AgentSupplyDialogueReporter.autopotDebugReport(
                 cnt[0],
                 cnt[1],
-                describeChoice(iip, choice.hpItemId(), choice.hpRank()),
-                describeChoice(iip, choice.mpItemId(), choice.mpRank()));
+                describeChoice(choice.hpItemId(), choice.hpRank()),
+                describeChoice(choice.mpItemId(), choice.mpRank()));
     }
 
-    private static String describeChoice(ItemInformationProvider iip, int itemId, PotionRanking rank) {
+    private static String describeChoice(int itemId, PotionRanking rank) {
         if (itemId <= 0 || rank == null) {
             return "none";
         }
-        String name = iip.getName(itemId);
+        String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(itemId);
         if (name == null) name = String.valueOf(itemId);
         return AgentSupplyDialogueReporter.autopotChoice(name, itemId, rank.tier().name(), rank.value());
     }

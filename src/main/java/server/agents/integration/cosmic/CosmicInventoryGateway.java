@@ -7,6 +7,11 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     INSTANCE;
 
     @Override
+    public String getItemName(int itemId) {
+        return ItemInformationProvider.getInstance().getName(itemId);
+    }
+
+    @Override
     public int getProjectileWeaponAttack(int itemId) {
         return ItemInformationProvider.getInstance().getWatkForProjectile(itemId);
     }
