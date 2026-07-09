@@ -182,8 +182,8 @@ public final class AgentInventoryTransferService {
                                 () -> AgentEquippedSlotTradeService.restoreTemporarilyUnequippedItems(entry, agent),
                                 () -> AgentManualTradeService.clearState(entry, agent),
                                 () -> AgentEquipmentService.autoEquip(agent, AgentRuntimeIdentityRuntime.owner(entry), null))),
-                () -> server.Trade.startTrade(agent),
-                server.Trade::inviteTrade,
+                () -> CosmicAgentServerAdapter.INSTANCE.trade().startTrade(agent),
+                CosmicAgentServerAdapter.INSTANCE.trade()::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
                 message -> AgentInventoryRuntime.replyNow(entry, message));
     }

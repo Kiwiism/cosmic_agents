@@ -2,8 +2,8 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.Trade;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -50,8 +50,8 @@ public final class AgentTradeSequenceRuntimeService {
         return AgentTradeSequenceCallbackService.sequenceCallbacks(
                 () -> AgentTradeRecipientService.resolveTradeRecipient(entry, agent),
                 cancelUnavailableTrade,
-                () -> Trade.startTrade(agent),
-                Trade::inviteTrade,
+                () -> CosmicAgentServerAdapter.INSTANCE.trade().startTrade(agent),
+                CosmicAgentServerAdapter.INSTANCE.trade()::inviteTrade,
                 AgentTradeDialogueService::invitationReply,
                 message -> AgentInventoryRuntime.replyNow(entry, message));
     }

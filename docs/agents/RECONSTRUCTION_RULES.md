@@ -6529,6 +6529,12 @@ Current physics correction:
   names, cash checks, and weapon-type display lookups through
   `InventoryGateway`. Optimizer math, candidate pools, dump structure, branch
   ordering, and chat/debug text content are intended to remain unchanged.
+- SPI/gateway extraction: trade lifecycle operations now have a
+  `TradeGateway` exposed from `AgentServerAdapter`. Start/invite, no-response
+  cancellation, completion, and invite-accept visit operations route through
+  the Cosmic gateway while live `Trade` window objects remain in staged trade
+  state/tick APIs. Trade sequencing, timeout replies, completion reactions,
+  and manual invite behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

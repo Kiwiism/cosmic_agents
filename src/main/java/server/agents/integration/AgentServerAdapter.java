@@ -6,5 +6,7 @@ public interface AgentServerAdapter {
     CombatGateway combat();
 
     InventoryGateway inventory();
+
+    TradeGateway trade();
 }
 

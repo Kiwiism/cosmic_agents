@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import client.Character;
-import server.Trade;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 /**
  * Integration boundary for server-side trade creation and invitation.
@@ -11,7 +11,7 @@ public final class AgentTradeInviteGateway {
     }
 
     public static void startAndInvite(Character agent, Character leader) {
-        Trade.startTrade(agent);
-        Trade.inviteTrade(agent, leader);
+        CosmicAgentServerAdapter.INSTANCE.trade().startTrade(agent);
+        CosmicAgentServerAdapter.INSTANCE.trade().inviteTrade(agent, leader);
     }
 }

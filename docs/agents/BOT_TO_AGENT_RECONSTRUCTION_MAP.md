@@ -2573,3 +2573,8 @@ Recent capability extraction notes:
   now use `InventoryGateway` for item names, cash checks, and weapon-type
   lookups. The auto-equip optimizer still owns the same candidate pools,
   branch ordering, dump shape, and debug reply behavior.
+- SPI/gateway extraction: `TradeGateway` now owns static Cosmic trade
+  lifecycle calls for start/invite, no-response cancellation, completion, and
+  invite-accept visit operations. Trade capability code still carries live
+  `Trade` window references as state/tick inputs until the later trade-window
+  abstraction slice, but direct static lifecycle calls are gateway-backed.

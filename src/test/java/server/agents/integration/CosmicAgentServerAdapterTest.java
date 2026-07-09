@@ -5,6 +5,7 @@ import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.integration.cosmic.CosmicCombatGateway;
 import server.agents.integration.cosmic.CosmicInventoryGateway;
 import server.agents.integration.cosmic.CosmicPacketGateway;
+import server.agents.integration.cosmic.CosmicTradeGateway;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -22,5 +23,10 @@ class CosmicAgentServerAdapterTest {
     @Test
     void exposesCosmicInventoryGateway() {
         assertSame(CosmicInventoryGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.inventory());
+    }
+
+    @Test
+    void exposesCosmicTradeGateway() {
+        assertSame(CosmicTradeGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.trade());
     }
 }
