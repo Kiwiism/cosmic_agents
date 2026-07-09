@@ -1,7 +1,7 @@
 package server.agents.capabilities.inventory;
 
 import server.StatEffect;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 
 import java.util.function.IntFunction;
 
@@ -25,7 +25,7 @@ public final class AgentUseItemClassificationPolicy {
     }
 
     public static StatEffect itemEffect(int itemId) {
-        return itemEffect(itemId, CosmicAgentServerAdapter.INSTANCE.inventory()::getItemEffect);
+        return itemEffect(itemId, AgentInventoryGatewayRuntime.inventory()::getItemEffect);
     }
 
     static StatEffect itemEffect(int itemId, IntFunction<StatEffect> lookup) {

@@ -2699,3 +2699,9 @@ Recent capability extraction notes:
   `CosmicAgentServerAdapter` directly. This keeps the Cosmic inventory adapter
   behind the integration seam while preserving potion, ammo, buff, Maker, shop,
   and mode-start behavior.
+- SPI/gateway extraction: dialogue report operations, combat buff-debug
+  reporting, scroll-reaction notification, and the default use-item
+  classification path now use `AgentInventoryGatewayRuntime` for live inventory
+  metadata. Inventory report text, autopot debug text, buff debug lines,
+  scroll-reaction decisions, and recovery/buff consumable classification remain
+  behavior-preserving.

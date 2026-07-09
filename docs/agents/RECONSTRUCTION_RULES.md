@@ -6654,6 +6654,11 @@ Current physics correction:
   `AgentInventoryGatewayRuntime` instead of importing the Cosmic adapter
   directly at those runtime boundaries. Potion, ammo, buff, Maker, shop, and
   mode-start behavior is unchanged.
+- SPI/gateway extraction: report operations, combat buff-debug reporting,
+  scroll-reaction notification, and default use-item effect classification now
+  obtain inventory metadata through `AgentInventoryGatewayRuntime`. Report
+  text, scroll reaction timing, recovery/buff classification, and item-effect
+  fallback behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

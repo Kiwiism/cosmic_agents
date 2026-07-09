@@ -19,9 +19,9 @@ import server.agents.capabilities.trade.AgentOfferRuntime;
 import server.agents.capabilities.supplies.AgentSupplyRuntime;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentStatusStateRuntime;
 
@@ -165,7 +165,7 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     public static void reportInventory(AgentRuntimeEntry entry, Character bot) {
-        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot, CosmicAgentServerAdapter.INSTANCE.inventory()));
+        reportLine(entry, AgentInventoryDialogueReporter.inventorySummary(bot, AgentInventoryGatewayRuntime.inventory()));
     }
 
     public static void reportMesos(AgentRuntimeEntry entry, Character bot) {
@@ -191,7 +191,7 @@ public final class AgentChatReportOperationsRuntime {
     }
 
     public static void reportPotDebug(AgentRuntimeEntry entry, Character bot) {
-        reportLine(entry, AgentPotionService.autopotDebugReport(bot, CosmicAgentServerAdapter.INSTANCE.inventory()));
+        reportLine(entry, AgentPotionService.autopotDebugReport(bot, AgentInventoryGatewayRuntime.inventory()));
     }
 
     public static void reportDebugStats(AgentRuntimeEntry entry, Character bot) {
