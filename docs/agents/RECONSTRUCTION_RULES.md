@@ -6421,6 +6421,10 @@ Current physics correction:
   query normalization, bag scanning, and safe-item filtering remain in
   `AgentInventoryNamedItemService`; the synchronized Cosmic item-name lookup is
   preserved inside `CosmicInventoryGateway`.
+- SPI/gateway extraction: use-item trade grouping now routes quest-item
+  metadata through `InventoryGateway.isQuestItem`. Trade collection still owns
+  category expansion, priority ordering, equipped-slot fallback, ammo/use/equip
+  grouping, and transfer counts; only the Cosmic quest-item check moved.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

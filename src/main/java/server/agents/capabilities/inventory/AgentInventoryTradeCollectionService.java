@@ -9,6 +9,7 @@ import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGr
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,7 +151,7 @@ public final class AgentInventoryTradeCollectionService {
                 AgentInventoryAmmoPolicy::isTradeAmmoItem,
                 ItemConstants::isEquipScroll,
                 AgentUseItemClassificationPolicy::isBuffConsumable,
-                server.ItemInformationProvider.getInstance()::isQuestItem,
+                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
                 config.YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 }

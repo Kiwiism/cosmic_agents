@@ -2472,3 +2472,7 @@ Recent capability extraction notes:
   `InventoryGateway` for item-name and quest-item metadata. Inventory still
   owns normalized query matching, cached normalized names, safe-item filtering,
   and count/collection behavior.
+- SPI/gateway extraction: use-item trade grouping now uses
+  `InventoryGateway.isQuestItem`; inventory/trade collection still owns category
+  expansion, equipped-slot fallback, priority ordering, grouping, and transfer
+  count behavior.
