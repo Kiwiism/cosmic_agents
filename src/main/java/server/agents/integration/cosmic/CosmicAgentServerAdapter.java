@@ -2,6 +2,7 @@ package server.agents.integration.cosmic;
 
 import server.agents.integration.AgentServerAdapter;
 import server.agents.integration.CombatGateway;
+import server.agents.integration.InventoryGateway;
 import server.agents.integration.PacketGateway;
 
 public final class CosmicAgentServerAdapter implements AgentServerAdapter {
@@ -18,5 +19,10 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public CombatGateway combat() {
         return CosmicCombatGateway.INSTANCE;
+    }
+
+    @Override
+    public InventoryGateway inventory() {
+        return CosmicInventoryGateway.INSTANCE;
     }
 }

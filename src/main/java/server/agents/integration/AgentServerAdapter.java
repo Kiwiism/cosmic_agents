@@ -4,5 +4,7 @@ public interface AgentServerAdapter {
     PacketGateway packets();
 
     CombatGateway combat();
+
+    InventoryGateway inventory();
 }
 

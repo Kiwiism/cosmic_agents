@@ -9,7 +9,6 @@ import server.agents.capabilities.combat.AgentCombatConfig;
 import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy;
@@ -17,6 +16,7 @@ import server.agents.capabilities.supplies.AgentAmmoSharePolicy.DonorScore;
 import server.agents.capabilities.trade.AgentSupplyShareTradeService;
 import server.agents.capabilities.supplies.AgentAmmoRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -187,7 +187,7 @@ public final class AgentAmmoService {
 
     public static List<Item> collectAmmoShareItems(Character donorBot, WeaponType needyWeaponType, int maxQty) {
         return AgentInventoryAmmoPolicy.collectShareItems(donorBot, needyWeaponType, maxQty,
-                ItemInformationProvider.getInstance()::getWatkForProjectile);
+                CosmicAgentServerAdapter.INSTANCE.inventory()::getProjectileWeaponAttack);
     }
 
     private static boolean isBetterDonor(AgentAmmoDonorPlan<AgentRuntimeEntry> candidate, AgentAmmoDonorPlan<AgentRuntimeEntry> best) {

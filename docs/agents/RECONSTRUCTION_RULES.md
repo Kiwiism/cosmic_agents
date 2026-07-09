@@ -6401,6 +6401,11 @@ Current physics correction:
   packet parsing and handler execution through `CombatGateway.dispatchSyntheticPacket`
   and `CosmicCombatGateway`. `AgentSupportSpecialMoveExecutor` still owns
   building the legacy special-move packet bytes and deciding when to dispatch.
+- SPI/gateway extraction: ammo-share projectile attack lookup now routes
+  through `InventoryGateway.getProjectileWeaponAttack` and
+  `CosmicInventoryGateway`. `AgentAmmoService` still owns low-ammo detection,
+  donor scoring, share quantity, dialogue timing, and trade scheduling; the
+  Cosmic item-info lookup is isolated at the inventory gateway boundary.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

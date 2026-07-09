@@ -2454,3 +2454,8 @@ Recent capability extraction notes:
 - SPI/gateway extraction: support special-move packet parsing and handler
   dispatch now route through `CombatGateway`/`CosmicCombatGateway`; combat still
   owns the support special-move packet byte builder and invocation decision.
+- SPI/gateway extraction: ammo-share projectile weapon-attack lookup now routes
+  through `InventoryGateway`/`CosmicInventoryGateway`; supplies still owns
+  ammo-share behavior, donor selection, and transfer scheduling, while the
+  direct `ItemInformationProvider.getWatkForProjectile` call is isolated in the
+  Cosmic inventory gateway.
