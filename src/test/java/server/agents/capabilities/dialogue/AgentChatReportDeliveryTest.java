@@ -1,4 +1,4 @@
-package server.agents.integration;
+package server.agents.capabilities.dialogue;
 
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -6,7 +6,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatReportFlow;
-import server.agents.integration.AgentChatReportRuntime;
+import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.capabilities.trade.AgentOfferRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
@@ -30,7 +30,7 @@ class AgentChatReportDeliveryTest {
                         return null;
                     });
 
-            AgentChatReportRuntime.reportHelp(entry);
+            AgentChatReportOperationsRuntime.reportHelp(entry);
         }
 
         assertEquals(AgentChatReportFlow.helpLines(), replies);
@@ -44,7 +44,7 @@ class AgentChatReportDeliveryTest {
 
         try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             offers.when(() -> AgentOfferRuntime.recommendedGearActions(entry, bot, owner))
-                    .thenReturn(new server.agents.capabilities.dialogue.AgentChatReportRuntime.RecommendedGearActions() {
+                    .thenReturn(new AgentChatReportRuntime.RecommendedGearActions() {
                         @Override
                         public boolean hasOwner() {
                             return true;
@@ -60,7 +60,7 @@ class AgentChatReportDeliveryTest {
                         }
                     });
 
-            AgentChatReportRuntime.reportRecommendedGear(entry, bot);
+            AgentChatReportOperationsRuntime.reportRecommendedGear(entry, bot);
 
             offers.verify(() -> AgentOfferRuntime.recommendedGearActions(entry, bot, owner));
         }

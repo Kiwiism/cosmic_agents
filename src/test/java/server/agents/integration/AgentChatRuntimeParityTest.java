@@ -25,7 +25,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.social.AgentScrollReactionService;
-import server.agents.integration.AgentChatReportRuntime;
+import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.runtime.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
@@ -289,7 +289,7 @@ class AgentChatRuntimeParityTest {
         when(bot.getTotalJumpStat()).thenReturn(110);
         AgentMovementProfile profile = AgentMovementProfile.fromCharacter(bot);
 
-        List<String> report = AgentChatReportRuntime.buildMovementStatsReport(bot);
+        List<String> report = AgentChatReportOperationsRuntime.buildMovementStatsReport(bot);
 
         assertEquals(List.of(
                 "speed 120% jump 110%",
@@ -316,7 +316,7 @@ class AgentChatRuntimeParityTest {
         when(bot.getTotalMoveSpeedStat()).thenReturn(140);
         when(bot.getTotalJumpStat()).thenReturn(125);
 
-        List<String> report = AgentChatReportRuntime.buildMovementStatsReport(bot);
+        List<String> report = AgentChatReportOperationsRuntime.buildMovementStatsReport(bot);
 
         assertEquals("speed 100% jump 100% (map forced; raw 140%/125%)", report.getFirst());
     }
@@ -336,7 +336,7 @@ class AgentChatRuntimeParityTest {
         when(bot.calculateMinBaseDamage(20, 0.1d)).thenReturn(50);
         when(bot.calculateMaxBaseDamage(20)).thenReturn(99);
 
-        String report = AgentChatReportRuntime.buildRangeReport(bot,
+        String report = AgentChatReportOperationsRuntime.buildRangeReport(bot,
                 new AgentMapDamageProfile(100, 40, 48));
 
         assertEquals("my dmg is 50-99, watk 20, acc 100 | hit 47% vs hardest mob (avd 40)", report);
@@ -351,7 +351,7 @@ class AgentChatRuntimeParityTest {
         when(bot.getTotalInt()).thenReturn(100);
         when(bot.getTotalLuk()).thenReturn(50);
 
-        String report = AgentChatReportRuntime.buildRangeReport(bot,
+        String report = AgentChatReportOperationsRuntime.buildRangeReport(bot,
                 new AgentMapDamageProfile(100, 30, 50));
 
         assertEquals("my dmg is 3-9, matk 200, magic acc 75 | hit 26% vs hardest mob (avd 30)", report);
@@ -417,7 +417,7 @@ class AgentChatRuntimeParityTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentMessageQueueStateRuntime.setSending(entry, true);
 
-        AgentChatReportRuntime.reportHelp(entry);
+        AgentChatReportOperationsRuntime.reportHelp(entry);
 
         assertEquals(5, AgentMessageQueueStateRuntime.size(entry));
         for (AgentQueuedMessage message : AgentMessageQueueStateRuntime.snapshot(entry)) {

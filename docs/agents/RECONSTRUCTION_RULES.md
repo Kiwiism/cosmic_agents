@@ -6288,6 +6288,13 @@ Current physics correction:
   skill-cost/application behavior, attack packet construction, cooldowns,
   alert marking, movement-window handling, and movement broadcast behavior;
   live leader/session lookup remains an explicit integration seam.
+- Chat report operation wiring now lives in
+  `server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime`,
+  separate from the pure `AgentChatReportRuntime` scheduler/formatting
+  helpers. It preserves the same report callbacks, delayed scheduling,
+  stat/range/movement/build/inventory/supply/combat report delivery, skill
+  report pending-action behavior, recommended-gear actions, and queued replies;
+  live identity and reply delivery remain integration seams.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -8,7 +8,7 @@ import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import client.Character;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.build.AgentBuildService;
-import server.agents.integration.AgentChatReportRuntime;
+import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -84,13 +84,13 @@ public final class AgentControlRuntime {
             @Override
             public void reportBuffDebug() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentChatReportRuntime.reportBuffDebug(entry, bot(entry)));
+                        AgentChatReportOperationsRuntime.reportBuffDebug(entry, bot(entry)));
             }
 
             @Override
             public void reportSkillBuffDebug() {
                 AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
-                        AgentChatReportRuntime.reportSkillBuffDebug(entry, bot(entry)));
+                        AgentChatReportOperationsRuntime.reportSkillBuffDebug(entry, bot(entry)));
             }
         };
     }

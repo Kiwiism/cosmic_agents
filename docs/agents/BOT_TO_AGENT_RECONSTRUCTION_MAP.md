@@ -2370,3 +2370,7 @@ Recent capability extraction notes:
   target selection, jump-heal assist, skill application, attack packet
   construction, cooldown/alert updates, and movement broadcast behavior while
   leaving live leader/session lookup as integration seams.
+- `AgentChatReportRuntime` integration facade has been renamed and moved to
+  `server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime`. It
+  preserves report callback wiring and delivery while leaving live identity and
+  reply delivery as integration seams.

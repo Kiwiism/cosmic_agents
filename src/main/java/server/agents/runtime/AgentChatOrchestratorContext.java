@@ -18,7 +18,7 @@ import server.agents.capabilities.dialogue.AgentChatUtilityFlow;
 import server.agents.capabilities.dialogue.AgentPendingChatActionFlow;
 import server.agents.capabilities.build.AgentBuildRuntime;
 import server.agents.capabilities.build.AgentBuildStateRuntime;
-import server.agents.integration.AgentChatReportRuntime;
+import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.dialogue.AgentControlRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentRuntime;
@@ -140,7 +140,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatReportFlow.ReportCallbacks reportCallbacks() {
-        return AgentChatReportRuntime.reportCallbacks(entry);
+        return AgentChatReportOperationsRuntime.reportCallbacks(entry);
     }
 
     @Override
