@@ -9,6 +9,7 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.supplies.AgentAmmoRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 import testutil.Items;
@@ -46,7 +47,7 @@ class AgentAmmoServiceTest {
             scheduler.when(() -> AgentAmmoRuntime.randomDelayMs(900, 1400)).thenReturn(99L);
 
             assertEquals(AgentAmmoService.OwnerAmmoShareResult.OFFERED,
-                    AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW));
+                    AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW, mock(InventoryGateway.class)));
 
             scheduler.verify(() -> AgentAmmoRuntime.randomDelayMs(900, 1400));
             scheduler.verify(() -> AgentAmmoRuntime.afterDelay(eq(99L), any(Runnable.class)));

@@ -2655,3 +2655,9 @@ Recent capability extraction notes:
   tracking, full-bag failure replies, and restoration behavior stay unchanged
   while equipped-slot trade preparation no longer reaches directly for the
   Cosmic adapter.
+- SPI/gateway extraction: `AgentAmmoService` now receives `InventoryGateway`
+  from potion/supply/mode runtime callers for ammo-share projectile metadata.
+  Low-ammo request checks, manual owner request bypasses, donor scoring,
+  cooldown/backoff state, map chat, random delays, and supply-share trade
+  scheduling stay unchanged while ammo sharing no longer reaches directly for
+  the Cosmic adapter.

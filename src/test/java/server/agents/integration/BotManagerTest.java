@@ -1239,7 +1239,10 @@ class BotManagerTest {
         backoff.put(backoffKey, Long.MAX_VALUE);
         try {
             assertEquals(AgentAmmoService.OwnerAmmoShareResult.NO_DONOR,
-                    AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW),
+                    AgentAmmoService.offerAmmoShareToOwner(
+                            entry,
+                            WeaponType.BOW,
+                            mock(server.agents.integration.InventoryGateway.class)),
                     "manual owner ammo requests should still attempt donor lookup while automatic share cooldowns are active");
         } finally {
             bots.remove(owner.getId());
@@ -1304,7 +1307,13 @@ class BotManagerTest {
         backoff.put(backoffKey, Long.MAX_VALUE);
 
         try {
-            assertTrue(AgentAmmoService.requestAmmoShare(entry, bot, WeaponType.BOW, 0, true),
+            assertTrue(AgentAmmoService.requestAmmoShare(
+                            entry,
+                            bot,
+                            WeaponType.BOW,
+                            0,
+                            true,
+                            mock(server.agents.integration.InventoryGateway.class)),
                     "player-asked bot supply checks should bypass automatic cooldown/backoff guards");
             assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
             assertEquals(Long.MAX_VALUE, backoff.get(backoffKey));

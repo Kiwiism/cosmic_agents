@@ -6618,6 +6618,11 @@ Current physics correction:
   the Cosmic adapter inside `AgentEquippedSlotTradeService`. Cash-item skipping,
   equipped-slot counting, temporary unequip ordering, restore-slot recording,
   full-bag errors, and restore behavior are unchanged.
+- SPI/gateway extraction: ammo-share item collection now receives
+  `InventoryGateway` from potion/supply/mode runtime boundaries instead of
+  reaching for the Cosmic adapter inside `AgentAmmoService`. Low-ammo checks,
+  owner/manual bypass behavior, donor selection, cooldown/backoff handling,
+  dialogue timing, and transfer scheduling are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

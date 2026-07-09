@@ -45,7 +45,10 @@ public final class AgentCommonTickRuntime {
                         entry, agent, false, AgentCombatConfig.cfg),
                 AgentMonsterControlService::releaseControlledMonsters,
                 (entry, agent) -> AgentInventoryTickRuntime.tickPassiveLoot(entry, agent),
-                (entry, agent) -> AgentPotionService.tickPotionCheck(entry, agent),
+                (entry, agent) -> AgentPotionService.tickPotionCheck(
+                        entry,
+                        agent,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()),
                 (entry, agent) -> AgentPotionService.tickPassiveRecovery(entry, agent),
                 (entry, agent) -> AgentBuildService.checkLevelUp(entry, agent),
                 (entry, agent, leader) -> AgentManagerStatusRuntime.tickAfkCheck(entry, leader),

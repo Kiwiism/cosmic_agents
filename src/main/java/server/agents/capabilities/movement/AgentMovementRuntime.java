@@ -10,6 +10,7 @@ import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.supplies.AgentPotionService;
 
@@ -75,7 +76,10 @@ public final class AgentMovementRuntime {
                 AgentSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
                     AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
-                    AgentPotionService.checkPotShareOnModeStart(entry, bot(entry));
+                    AgentPotionService.checkPotShareOnModeStart(
+                            entry,
+                            bot(entry),
+                            CosmicAgentServerAdapter.INSTANCE.inventory());
                     AgentSchedulerRuntime.afterRandomDelay(250, 750,
                             () -> AgentMovementCommandRuntime.followOwner(entry));
                 });

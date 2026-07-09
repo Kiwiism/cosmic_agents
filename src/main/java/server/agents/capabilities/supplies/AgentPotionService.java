@@ -166,7 +166,7 @@ public final class AgentPotionService {
                 AgentRuntimeConfig.cfg.POT_LOW_WARN);
     }
 
-    public static void tickPotionCheck(AgentRuntimeEntry entry, Character bot) {
+    public static void tickPotionCheck(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (AgentPotionStateRuntime.hasPotCheckDelay(entry)) {
             AgentPotionStateRuntime.tickPotCheckDelay(entry, AgentMovementTimers::tickDown);
             return;
@@ -188,7 +188,7 @@ public final class AgentPotionService {
             return;
         }
         startedAt = AgentPerformanceMonitor.start();
-        AgentAmmoService.tickAmmoShareCheck(entry, bot);
+        AgentAmmoService.tickAmmoShareCheck(entry, bot, inventory);
         AgentPerformanceMonitor.recordSince("potion-ammo-share", startedAt);
 
         startedAt = AgentPerformanceMonitor.start();
@@ -215,15 +215,15 @@ public final class AgentPotionService {
         AgentPerformanceMonitor.recordSince("potion-grind-stop", startedAt);
     }
 
-    public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot) {
+    public static void checkPotShareOnModeStart(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         AgentPotionStateRuntime.clearAllPotShareRequests(entry);
-        AgentAmmoService.checkAmmoShareOnModeStart(entry, bot);
+        AgentAmmoService.checkAmmoShareOnModeStart(entry, bot, inventory);
         requestLowPotShares(entry, bot, false);
     }
 
-    public static boolean requestLowSuppliesFromOwnerAsk(AgentRuntimeEntry entry, Character bot) {
+    public static boolean requestLowSuppliesFromOwnerAsk(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         boolean requestedPots = requestLowPotShares(entry, bot, true);
-        boolean requestedAmmo = AgentAmmoService.requestLowAmmoShare(entry, bot, true);
+        boolean requestedAmmo = AgentAmmoService.requestLowAmmoShare(entry, bot, true, inventory);
         return requestedPots || requestedAmmo;
     }
 

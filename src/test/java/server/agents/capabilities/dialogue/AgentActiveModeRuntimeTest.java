@@ -11,11 +11,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
+import server.agents.integration.InventoryGateway;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 class AgentActiveModeRuntimeTest {
     @Test
@@ -41,7 +44,10 @@ class AgentActiveModeRuntimeTest {
             assertTrue(AgentOfferStateRuntime.nextGearSuggestionAt(entry) > System.currentTimeMillis());
             offers.verify(() -> AgentOfferService.offerBestGearToSibling(entry, bot));
             potions.verify(() -> AgentPotionService.setupAutopotForBot(bot));
-            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(entry, bot));
+            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(
+                    eq(entry),
+                    eq(bot),
+                    any(InventoryGateway.class)));
         }
     }
 

@@ -12,6 +12,7 @@ import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -99,7 +100,10 @@ class AgentMovementRuntimeTest {
 
             activeMode.verify(() -> AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry));
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), anyString()));
-            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart((AgentRuntimeEntry) eq(entry), eq(bot)));
+            potions.verify(() -> AgentPotionService.checkPotShareOnModeStart(
+                    (AgentRuntimeEntry) eq(entry),
+                    eq(bot),
+                    any(InventoryGateway.class)));
             movementCommands.verify(() -> AgentMovementCommandRuntime.followOwner(entry));
         }
     }

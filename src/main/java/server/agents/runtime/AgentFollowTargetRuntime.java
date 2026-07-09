@@ -8,6 +8,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
@@ -73,6 +74,7 @@ public final class AgentFollowTargetRuntime {
     private static void checkPotShareForFollow(AgentRuntimeEntry entry) {
         AgentPotionService.checkPotShareOnModeStart(
                 entry,
-                AgentRuntimeIdentityRuntime.bot(entry));
+                AgentRuntimeIdentityRuntime.bot(entry),
+                CosmicAgentServerAdapter.INSTANCE.inventory());
     }
 }

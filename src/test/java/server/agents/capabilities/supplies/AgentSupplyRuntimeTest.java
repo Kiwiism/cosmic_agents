@@ -13,6 +13,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,7 +31,10 @@ class AgentSupplyRuntimeTest {
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class)) {
-            potions.when(() -> AgentPotionService.requestLowSuppliesFromOwnerAsk(entry, bot)).thenReturn(false);
+            potions.when(() -> AgentPotionService.requestLowSuppliesFromOwnerAsk(
+                    eq(entry),
+                    eq(bot),
+                    any(InventoryGateway.class))).thenReturn(false);
 
             AgentSupplyRuntime.handleRequestUpgradeCommand(entry, bot);
 
