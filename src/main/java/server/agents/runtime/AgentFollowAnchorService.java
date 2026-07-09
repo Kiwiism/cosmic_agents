@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
@@ -31,8 +32,8 @@ public final class AgentFollowAnchorService {
             return leader;
         }
 
-        if (leader.getParty() != null) {
-            for (Character member : leader.getPartyMembersOnline()) {
+        if (AgentPartyGatewayRuntime.party().hasParty(leader)) {
+            for (Character member : AgentPartyGatewayRuntime.party().onlineMembers(leader)) {
                 if (member != null && member.getId() == targetId && member.isLoggedinWorld()) {
                     return member;
                 }

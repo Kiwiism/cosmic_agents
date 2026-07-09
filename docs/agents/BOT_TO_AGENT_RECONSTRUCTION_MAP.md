@@ -2960,3 +2960,7 @@ Recent capability extraction notes:
   `PartyGateway.snapshot`. Live `Party`/`PartyCharacter` traversal is isolated
   in `CosmicPartyGateway`; identity checks, member order, relation resolution,
   situation text, and lifecycle refresh behavior remain unchanged.
+- SPI/gateway extraction: follow targeting, trade recipient resolution, and
+  party-quest sync now use `PartyGateway.hasParty`/`onlineMembers`. Live online
+  party-member collection is isolated in `CosmicPartyGateway`; ordering,
+  filtering, duplicate handling, and BotClient detection remain unchanged.

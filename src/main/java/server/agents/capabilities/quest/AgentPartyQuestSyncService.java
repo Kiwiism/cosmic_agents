@@ -6,6 +6,7 @@ import client.QuestStatus;
 import server.agents.integration.AgentQuestSyncGateway;
 import server.agents.integration.AgentQuestSyncGatewayRuntime;
 import server.agents.integration.AgentQuestSyncHandle;
+import server.agents.integration.AgentPartyGatewayRuntime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,12 +76,13 @@ public final class AgentPartyQuestSyncService {
     }
 
     static List<Character> partyAgents(Character source) {
-        if (source == null || source.getParty() == null || source.getClient() instanceof BotClient) {
+        if (source == null || !AgentPartyGatewayRuntime.party().hasParty(source)
+                || source.getClient() instanceof BotClient) {
             return List.of();
         }
 
         List<Character> partyAgents = new ArrayList<>();
-        for (Character member : source.getPartyMembersOnline()) {
+        for (Character member : AgentPartyGatewayRuntime.party().onlineMembers(source)) {
             if (member == null || member.getId() == source.getId()) {
                 continue;
             }

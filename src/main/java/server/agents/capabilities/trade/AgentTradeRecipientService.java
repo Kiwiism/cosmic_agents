@@ -1,6 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -26,11 +27,11 @@ public final class AgentTradeRecipientService {
             }
         }
 
-        if (owner == null || owner.getParty() == null) {
+        if (owner == null || !AgentPartyGatewayRuntime.party().hasParty(owner)) {
             return null;
         }
 
-        for (Character member : owner.getPartyMembersOnline()) {
+        for (Character member : AgentPartyGatewayRuntime.party().onlineMembers(owner)) {
             if (member != null && member.getId() == recipientId) {
                 return member;
             }

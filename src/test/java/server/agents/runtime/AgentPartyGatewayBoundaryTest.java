@@ -22,6 +22,14 @@ class AgentPartyGatewayBoundaryTest {
                 "src/main/java/server/agents/capabilities/dialogue/llm/AgentSenderRelation.java"));
         String situation = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/dialogue/llm/AgentSituationBuilder.java"));
+        String followCandidates = Files.readString(Path.of(
+                "src/main/java/server/agents/runtime/AgentFollowTargetCandidateService.java"));
+        String followAnchor = Files.readString(Path.of(
+                "src/main/java/server/agents/runtime/AgentFollowAnchorService.java"));
+        String tradeRecipient = Files.readString(Path.of(
+                "src/main/java/server/agents/capabilities/trade/AgentTradeRecipientService.java"));
+        String questSync = Files.readString(Path.of(
+                "src/main/java/server/agents/capabilities/quest/AgentPartyQuestSyncService.java"));
 
         assertFalse(lifecycle.contains("Party.leaveParty("));
         assertFalse(lifecycle.contains("Party.createParty("));
@@ -47,5 +55,13 @@ class AgentPartyGatewayBoundaryTest {
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().snapshot("));
         assertTrue(relation.contains("AgentPartyGatewayRuntime.party().snapshot(agent)"));
         assertTrue(situation.contains("AgentPartyGatewayRuntime.party().snapshot(bot)"));
+        assertFalse(followCandidates.contains("leader.getParty()"));
+        assertFalse(followAnchor.contains("leader.getParty()"));
+        assertFalse(tradeRecipient.contains("owner.getParty()"));
+        assertFalse(questSync.contains("source.getParty()"));
+        assertTrue(followCandidates.contains("AgentPartyGatewayRuntime.party().onlineMembers(leader)"));
+        assertTrue(followAnchor.contains("AgentPartyGatewayRuntime.party().onlineMembers(leader)"));
+        assertTrue(tradeRecipient.contains("AgentPartyGatewayRuntime.party().onlineMembers(owner)"));
+        assertTrue(questSync.contains("AgentPartyGatewayRuntime.party().onlineMembers(source)"));
     }
 }

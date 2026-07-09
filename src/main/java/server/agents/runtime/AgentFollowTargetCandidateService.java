@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.ArrayList;
@@ -23,8 +24,8 @@ public final class AgentFollowTargetCandidateService {
         if (leader.isLoggedinWorld()) {
             candidates.add(leader);
         }
-        if (leader.getParty() != null) {
-            for (Character member : leader.getPartyMembersOnline()) {
+        if (AgentPartyGatewayRuntime.party().hasParty(leader)) {
+            for (Character member : AgentPartyGatewayRuntime.party().onlineMembers(leader)) {
                 if (member == null || !member.isLoggedinWorld() || member.getId() == leader.getId()) {
                     continue;
                 }

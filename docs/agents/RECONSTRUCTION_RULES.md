@@ -6971,6 +6971,12 @@ Current physics correction:
   and `AgentSituationBuilder` no longer import `Party` or `PartyCharacter`.
   Party identity checks, member order, names, leader/map annotations, relation
   classification, and lifecycle refresh points remain unchanged.
+- SPI/gateway extraction: online party-presence/member reads now call
+  `PartyGateway.hasParty` and `PartyGateway.onlineMembers` in follow-candidate,
+  follow-anchor, trade-recipient, and party-quest-sync services. Online-member
+  order, login/source filters, duplicate handling, BotClient classification,
+  and null behavior remain unchanged. Direct `getParty()` and
+  `getPartyMembersOnline()` reads are isolated in `CosmicPartyGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

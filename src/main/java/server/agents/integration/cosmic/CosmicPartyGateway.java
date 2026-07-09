@@ -64,4 +64,14 @@ public final class CosmicPartyGateway implements PartyGateway {
         }
         return new AgentPartySnapshot(party.getId(), Collections.unmodifiableList(members));
     }
+
+    @Override
+    public boolean hasParty(Character character) {
+        return character.getParty() != null;
+    }
+
+    @Override
+    public List<Character> onlineMembers(Character character) {
+        return character.getPartyMembersOnline();
+    }
 }
