@@ -6699,6 +6699,12 @@ Current physics correction:
   runtime adapter boundary by `AgentServerTradeWindow`; accept timing, timeout,
   peer authorization, owner confirmation, greeting, completion, and refill
   behavior are unchanged.
+- Trade-window reconstruction: pending trade tick routing and its callback
+  factory now use `AgentTradeWindow` for current-window, accept-wait,
+  item-add, and confirmation dispatch. `AgentTradeTickRuntimeService` still
+  unwraps to live `server.Trade` only for deeper item-add and lifecycle
+  services that have not moved yet; queued retry, closed-window, batch, add,
+  confirmation, and completion ordering are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

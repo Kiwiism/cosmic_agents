@@ -2744,3 +2744,7 @@ Recent capability extraction notes:
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the
   existing `Trade` window while deeper trade lifecycle/item-add services are
   reconstructed in later slices.
+- Trade-window reconstruction: `AgentTradeTickService` and
+  `AgentTradeTickCallbackService` now dispatch current-window, accept-wait,
+  item-add, and confirmation ticks through `AgentTradeWindow`. Runtime still
+  unwraps for the deeper item-add/lifecycle services until those slices move.

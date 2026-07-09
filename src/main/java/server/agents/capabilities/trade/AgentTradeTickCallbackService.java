@@ -1,7 +1,5 @@
 package server.agents.capabilities.trade;
 
-import server.Trade;
-
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
@@ -14,12 +12,12 @@ public final class AgentTradeTickCallbackService {
 
     public static AgentTradeTickService.TradeTickCallbacks tradeTickCallbacks(
             IntUnaryOperator tickDown,
-            Supplier<Trade> currentTrade,
+            Supplier<AgentTradeWindow> currentTrade,
             BooleanSupplier tickBetweenBatches,
             Runnable handleClosedTrade,
-            Consumer<Trade> tickWaitingForAccept,
-            Predicate<Trade> tickAddingItems,
-            Consumer<Trade> tickWaitingForConfirmation) {
+            Consumer<AgentTradeWindow> tickWaitingForAccept,
+            Predicate<AgentTradeWindow> tickAddingItems,
+            Consumer<AgentTradeWindow> tickWaitingForConfirmation) {
         return AgentTradeTickService.TradeTickCallbacks.of(
                 tickDown,
                 currentTrade,

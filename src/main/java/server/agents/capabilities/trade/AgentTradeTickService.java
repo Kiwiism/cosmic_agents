@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntUnaryOperator;
@@ -19,7 +18,7 @@ public final class AgentTradeTickService {
             return;
         }
 
-        Trade trade = callbacks.currentTrade();
+        AgentTradeWindow trade = callbacks.currentTrade();
 
         if (callbacks.tickBetweenBatches()) {
             return;
@@ -46,28 +45,28 @@ public final class AgentTradeTickService {
 
     public interface TradeTickCallbacks {
         IntUnaryOperator tickDown();
-        Trade currentTrade();
+        AgentTradeWindow currentTrade();
         boolean tickBetweenBatches();
         void handleClosedTrade();
-        void tickWaitingForAccept(Trade trade);
-        boolean tickAddingItems(Trade trade);
-        void tickWaitingForConfirmation(Trade trade);
+        void tickWaitingForAccept(AgentTradeWindow trade);
+        boolean tickAddingItems(AgentTradeWindow trade);
+        void tickWaitingForConfirmation(AgentTradeWindow trade);
 
         static TradeTickCallbacks of(IntUnaryOperator tickDown,
-                                     Supplier<Trade> currentTrade,
+                                     Supplier<AgentTradeWindow> currentTrade,
                                      java.util.function.BooleanSupplier tickBetweenBatches,
                                      Runnable handleClosedTrade,
-                                     java.util.function.Consumer<Trade> tickWaitingForAccept,
-                                     java.util.function.Predicate<Trade> tickAddingItems,
-                                     java.util.function.Consumer<Trade> tickWaitingForConfirmation) {
+                                     java.util.function.Consumer<AgentTradeWindow> tickWaitingForAccept,
+                                     java.util.function.Predicate<AgentTradeWindow> tickAddingItems,
+                                     java.util.function.Consumer<AgentTradeWindow> tickWaitingForConfirmation) {
             return new TradeTickCallbacks() {
                 @Override public IntUnaryOperator tickDown() { return tickDown; }
-                @Override public Trade currentTrade() { return currentTrade.get(); }
+                @Override public AgentTradeWindow currentTrade() { return currentTrade.get(); }
                 @Override public boolean tickBetweenBatches() { return tickBetweenBatches.getAsBoolean(); }
                 @Override public void handleClosedTrade() { handleClosedTrade.run(); }
-                @Override public void tickWaitingForAccept(Trade trade) { tickWaitingForAccept.accept(trade); }
-                @Override public boolean tickAddingItems(Trade trade) { return tickAddingItems.test(trade); }
-                @Override public void tickWaitingForConfirmation(Trade trade) { tickWaitingForConfirmation.accept(trade); }
+                @Override public void tickWaitingForAccept(AgentTradeWindow trade) { tickWaitingForAccept.accept(trade); }
+                @Override public boolean tickAddingItems(AgentTradeWindow trade) { return tickAddingItems.test(trade); }
+                @Override public void tickWaitingForConfirmation(AgentTradeWindow trade) { tickWaitingForConfirmation.accept(trade); }
             };
         }
     }

@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import org.junit.jupiter.api.Test;
-import server.Trade;
 import server.agents.capabilities.trade.AgentTradeTickService.TradeTickCallbacks;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -15,12 +14,12 @@ import static org.mockito.Mockito.mock;
 class AgentTradeTickCallbackServiceTest {
     @Test
     void buildsTradeTickCallbacksFromLegacyOperations() {
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         AtomicBoolean between = new AtomicBoolean();
         AtomicBoolean closed = new AtomicBoolean();
-        AtomicReference<Trade> acceptTrade = new AtomicReference<>();
-        AtomicReference<Trade> addTrade = new AtomicReference<>();
-        AtomicReference<Trade> confirmTrade = new AtomicReference<>();
+        AtomicReference<AgentTradeWindow> acceptTrade = new AtomicReference<>();
+        AtomicReference<AgentTradeWindow> addTrade = new AtomicReference<>();
+        AtomicReference<AgentTradeWindow> confirmTrade = new AtomicReference<>();
 
         TradeTickCallbacks callbacks = AgentTradeTickCallbackService.tradeTickCallbacks(
                 value -> value - 1,

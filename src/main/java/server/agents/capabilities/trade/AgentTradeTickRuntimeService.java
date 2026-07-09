@@ -24,7 +24,7 @@ public final class AgentTradeTickRuntimeService {
                 agent,
                 AgentTradeTickCallbackService.tradeTickCallbacks(
                         callbacks.tickDown(),
-                        () -> callbacks.currentTrade(agent),
+                        () -> AgentServerTradeWindow.wrap(callbacks.currentTrade(agent)),
                         () -> AgentTradeBetweenBatchService.tickBetweenBatches(
                                 entry,
                                 AgentTradeBetweenBatchCallbackService.betweenBatchCallbacks(
@@ -65,7 +65,7 @@ public final class AgentTradeTickRuntimeService {
                         trade -> AgentTradeItemAddTickService.tickAddingItems(
                                 entry,
                                 agent,
-                                trade,
+                                AgentServerTradeWindow.unwrap(trade),
                                 AgentTradeItemAddTickCallbackService.itemAddTickCallbacks(
                                         callbacks.tickDown(),
                                         () -> AgentTradeLifecycleRuntimeService.cancelTradeSequence(
@@ -87,7 +87,7 @@ public final class AgentTradeTickRuntimeService {
                                 () -> AgentTradeLifecycleRuntimeService.completeTradeAndReact(
                                         entry,
                                         agent,
-                                        trade,
+                                        AgentServerTradeWindow.unwrap(trade),
                                         lifecycleCallbacks),
                                 () -> AgentTradeLifecycleRuntimeService.resetTradeState(entry, agent, lifecycleCallbacks))));
     }

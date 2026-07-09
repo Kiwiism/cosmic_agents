@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -59,7 +58,7 @@ class AgentTradeTickServiceTest {
     @Test
     void nonFullTradeWaitsForAccept() {
         AgentRuntimeEntry entry = activeEntry();
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         when(trade.isFullTrade()).thenReturn(false);
         List<String> events = new ArrayList<>();
 
@@ -71,7 +70,7 @@ class AgentTradeTickServiceTest {
     @Test
     void addingItemsRunsBeforeConfirmation() {
         AgentRuntimeEntry entry = activeEntry();
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         when(trade.isFullTrade()).thenReturn(true);
         List<String> events = new ArrayList<>();
         TraceCallbacks callbacks = callbacks(events, trade);
@@ -85,7 +84,7 @@ class AgentTradeTickServiceTest {
     @Test
     void confirmationRunsWhenItemsAreAddedAndBotIsNotDone() {
         AgentRuntimeEntry entry = activeEntry();
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         when(trade.isFullTrade()).thenReturn(true);
         List<String> events = new ArrayList<>();
 
@@ -97,7 +96,7 @@ class AgentTradeTickServiceTest {
     @Test
     void botDoneWaitsForClosedWindowAfterItemsAreAdded() {
         AgentRuntimeEntry entry = activeEntry();
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         when(trade.isFullTrade()).thenReturn(true);
         AgentPendingTradeStateRuntime.markBotDone(entry);
         List<String> events = new ArrayList<>();
@@ -117,17 +116,17 @@ class AgentTradeTickServiceTest {
         return entry;
     }
 
-    private static TraceCallbacks callbacks(List<String> events, Trade trade) {
+    private static TraceCallbacks callbacks(List<String> events, AgentTradeWindow trade) {
         return new TraceCallbacks(events, trade);
     }
 
     private static final class TraceCallbacks implements AgentTradeTickService.TradeTickCallbacks {
         private final List<String> events;
-        private final Trade trade;
+        private final AgentTradeWindow trade;
         boolean betweenBatch;
         boolean adding;
 
-        private TraceCallbacks(List<String> events, Trade trade) {
+        private TraceCallbacks(List<String> events, AgentTradeWindow trade) {
             this.events = events;
             this.trade = trade;
         }
@@ -138,7 +137,7 @@ class AgentTradeTickServiceTest {
         }
 
         @Override
-        public Trade currentTrade() {
+        public AgentTradeWindow currentTrade() {
             events.add("trade");
             return trade;
         }
@@ -155,18 +154,18 @@ class AgentTradeTickServiceTest {
         }
 
         @Override
-        public void tickWaitingForAccept(Trade trade) {
+        public void tickWaitingForAccept(AgentTradeWindow trade) {
             events.add("accept");
         }
 
         @Override
-        public boolean tickAddingItems(Trade trade) {
+        public boolean tickAddingItems(AgentTradeWindow trade) {
             events.add("adding");
             return adding;
         }
 
         @Override
-        public void tickWaitingForConfirmation(Trade trade) {
+        public void tickWaitingForConfirmation(AgentTradeWindow trade) {
             events.add("confirm");
         }
     }
