@@ -236,6 +236,11 @@ Recent reconstruction notes:
   boundary instead of importing the Cosmic adapter directly; item removal,
   trade slot assignment, partner packet mirroring, and restore-slot tracking are
   unchanged.
+- `AgentMapGatewayRuntime` now centralizes the first live map gateway access
+  inside `server.agents.integration`. Respawn-near-leader map changes and
+  ground-point lookup route through `MapGateway`/`CosmicMapGateway`; death-state
+  clearing, HP restore, teleport placement, movement reset, broadcast, reply,
+  and face-expression behavior are unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

@@ -2739,6 +2739,11 @@ Recent capability extraction notes:
   for immediate map-chat and whisper replies. Those packets are built and sent
   through `AgentPacketGatewayRuntime`/`PacketGateway`; reply-channel selection,
   sanitization, party fallback, and visible chat behavior stay unchanged.
+- SPI/gateway extraction: `MapGateway`/`CosmicMapGateway` now expose the first
+  live map-change and ground-point operations through `AgentMapGatewayRuntime`.
+  `AgentRespawnRuntime` uses this gateway for respawn-near-leader map changes
+  and point-below lookup; respawn ordering, placement fallback, movement reset,
+  broadcast, map reply, and face-expression behavior stay unchanged.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the
