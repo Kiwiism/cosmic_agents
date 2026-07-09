@@ -4,9 +4,9 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.integration.AgentMovementTargetSideEffects;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
@@ -56,7 +56,7 @@ public final class AgentNavigationTargetService {
                 AgentMovementStateResetService.clearNavigationState(entry);
                 Point fallbackTarget = rawTargetPos != null ? new Point(rawTargetPos) : bot.getPosition();
                 AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
+                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
                         -1, false, runAiTick);
                 return new NavigationDirective(fallbackTarget, false);
             }
@@ -106,7 +106,7 @@ public final class AgentNavigationTargetService {
                         : startRegionId == targetRegionId ? "same-region" : "no-path");
                 AgentMovementStateResetService.clearNavigationState(entry);
                 AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
+                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
                         startRegionId, false, runAiTick);
                 return new NavigationDirective(rawTargetPos, false);
             }
@@ -115,7 +115,7 @@ public final class AgentNavigationTargetService {
             if (executionDirective != null) {
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "exec");
                 AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                        AgentMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
+                        AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
                         startRegionId, true, runAiTick);
                 return executionDirective;
             }
@@ -126,7 +126,7 @@ public final class AgentNavigationTargetService {
                     selectWaypoint(entry, graph, botPos, edge),
                     shouldUsePreciseTarget(graph, entry, botPos, edge));
             AgentNavigationDebugStateRuntime.recordPathLog(entry,
-                    AgentMovementTargetSideEffects.captureTargetSnapshot(entry, rawTargetPos),
+                    AgentMovementTargetRuntime.captureTargetSnapshot(entry, rawTargetPos),
                     startRegionId, false, runAiTick);
             return new NavigationDirective(AgentNavigationDebugStateRuntime.navTargetPosition(entry), false);
         } finally {

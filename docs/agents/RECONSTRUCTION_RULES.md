@@ -6332,6 +6332,12 @@ Current physics correction:
   `server.agents.integration`. Movement chat callbacks now call
   `AgentFidgetService` directly because fidget behavior is Agent movement
   capability behavior, not a Cosmic/server boundary.
+- Reconstruction capability extraction: removed
+  `AgentMovementTargetSideEffects` from `server.agents.integration`. Movement
+  target snapshot construction now lives in
+  `server.agents.capabilities.movement.AgentMovementTargetRuntime`; only live
+  `Character` identity access remains behind the documented
+  `AgentRuntimeIdentityRuntime` boundary seam.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

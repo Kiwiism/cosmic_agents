@@ -2403,3 +2403,7 @@ Recent capability extraction notes:
 - Removed `AgentFidgetSideEffects`; fidget behavior is now called through
   `server.agents.capabilities.movement.fidget.AgentFidgetService` from movement
   callbacks instead of an integration wrapper.
+- Removed `AgentMovementTargetSideEffects`; target snapshot conversion and
+  capture now live in `server.agents.capabilities.movement.AgentMovementTargetRuntime`.
+  The capability still uses `AgentRuntimeIdentityRuntime` as the live
+  `Character`/map boundary until the broader SPI/gateway phase.
