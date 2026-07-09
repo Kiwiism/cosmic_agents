@@ -6474,6 +6474,10 @@ Current physics correction:
   type and two-handed metadata through `InventoryGateway`. Attack route
   selection, skill animation resolution, degenerate ranged handling, retreat
   checks, hitbox construction, and packet fields are unchanged.
+- SPI/gateway extraction: inventory runtime trade callbacks now route projectile
+  attack and quest-item metadata through `InventoryGateway` instead of direct
+  item-info lambdas. Callback wiring, trade availability, category profiling,
+  and transfer behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

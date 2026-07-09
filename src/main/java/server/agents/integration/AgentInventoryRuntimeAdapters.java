@@ -8,7 +8,6 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.Character;
 import config.YamlConfig;
-import server.ItemInformationProvider;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.combat.AgentAttackExecutionProvider;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
@@ -34,6 +33,7 @@ import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 
@@ -109,12 +109,16 @@ public final class AgentInventoryRuntimeAdapters {
                         .map(AgentEquipRecommendation::candidate)
                         .toList()),
                 AgentAttackExecutionProvider::getEquippedWeaponType,
-                itemId -> ItemInformationProvider.getInstance().getWatkForProjectile(itemId),
-                itemId -> ItemInformationProvider.getInstance().isQuestItem(itemId),
+                itemId -> inventory().getProjectileWeaponAttack(itemId),
+                itemId -> inventory().isQuestItem(itemId),
                 () -> YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE,
                 () -> AgentTradeCommandProfiler.profileCategory("equips"),
                 AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                 item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
                 () -> AgentRuntimeIdentityRuntime.owner(entry));
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 }

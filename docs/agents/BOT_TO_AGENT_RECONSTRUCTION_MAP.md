@@ -2518,3 +2518,7 @@ Recent capability extraction notes:
   for equipped-weapon type and two-handed metadata; basic/skill route
   selection, animation action sampling, hitbox calculation, retreat behavior,
   and packet fields stay unchanged.
+- SPI/gateway extraction: inventory runtime trade callbacks now use
+  `InventoryGateway` for projectile attack and quest-item metadata; callback
+  construction, trade availability, category profiling, and transfer behavior
+  stay unchanged.
