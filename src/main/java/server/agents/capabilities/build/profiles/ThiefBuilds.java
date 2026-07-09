@@ -1,12 +1,12 @@
 package server.agents.capabilities.build.profiles;
 
 import client.Job;
-import client.Skill;
-import client.SkillFactory;
 import constants.skills.Assassin;
 import constants.skills.Hermit;
 import constants.skills.NightLord;
 import constants.skills.Rogue;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import java.util.List;
 
 public final class ThiefBuilds {
@@ -15,11 +15,15 @@ public final class ThiefBuilds {
     }
 
     public static List<BuildStep> getBuildOrder(Job job) {
+        return getBuildOrder(job, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static List<BuildStep> getBuildOrder(Job job, SkillGateway skills) {
         return switch (job) {
             case THIEF -> thiefBuild();
             case ASSASSIN -> assassinBuild();
             case HERMIT -> hermitBuild();
-            case NIGHTLORD -> nightLordBuild();
+            case NIGHTLORD -> nightLordBuild(skills);
             default -> null;
         };
     }
@@ -28,9 +32,8 @@ public final class ThiefBuilds {
         return new BuildStep(id, to);
     }
 
-    private static int max(int skillId) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        return skill != null ? skill.getMaxLevel() : 30;
+    private static int max(int skillId, SkillGateway skills) {
+        return skills.getSkillMaxLevel(skillId, 30);
     }
 
     private static List<BuildStep> thiefBuild() {
@@ -77,7 +80,7 @@ public final class ThiefBuilds {
         );
     }
 
-    private static List<BuildStep> nightLordBuild() {
+    private static List<BuildStep> nightLordBuild(SkillGateway skills) {
         return List.of(
                 s(NightLord.SHADOW_STARS, 1),
                 s(NightLord.TRIPLE_THROW, 30),
@@ -89,8 +92,8 @@ public final class ThiefBuilds {
                 s(NightLord.VENOMOUS_STAR, 30),
                 s(NightLord.TAUNT, 30),
                 s(NightLord.MAPLE_WARRIOR, 20),
-                s(NightLord.NINJA_AMBUSH, max(NightLord.NINJA_AMBUSH)),
-                s(NightLord.MAPLE_WARRIOR, max(NightLord.MAPLE_WARRIOR))
+                s(NightLord.NINJA_AMBUSH, max(NightLord.NINJA_AMBUSH, skills)),
+                s(NightLord.MAPLE_WARRIOR, max(NightLord.MAPLE_WARRIOR, skills))
         );
     }
 }

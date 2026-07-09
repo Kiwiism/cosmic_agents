@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentBuildRuntime;
+import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,6 +101,28 @@ class AgentBuildServiceTest {
         assertEquals(1, remainingSps[3]);
         verify(bot, never()).gainSp(anyInt(), anyInt(), anyBoolean());
         verify(bot, never()).changeSkillLevel(any(Skill.class), anyByte(), anyInt(), anyLong());
+    }
+
+    @Test
+    void autoAssignSpUsesSkillGatewayForSkillLookup() {
+        Character bot = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, mock(Character.class), mock(ScheduledFuture.class));
+        int warriorBook = GameConstants.getSkillBook(Warrior.IMPROVED_HPREC / 10000);
+        int[] remainingSps = new int[5];
+        remainingSps[warriorBook] = 1;
+        Map<Integer, Integer> skillLevels = new HashMap<>();
+        Skill improvedHp = mockSkill(Warrior.IMPROVED_HPREC, 20, false);
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkill(Warrior.IMPROVED_HPREC)).thenReturn(improvedHp);
+
+        when(bot.getJob()).thenReturn(Job.WARRIOR);
+        stubSkillState(bot, remainingSps, skillLevels);
+        when(bot.getMasterLevel(any(Skill.class))).thenReturn(0);
+
+        AgentBuildService.autoAssignSp(entry, bot, skills);
+
+        assertEquals(0, remainingSps[warriorBook]);
+        assertEquals(1, skillLevels.getOrDefault(Warrior.IMPROVED_HPREC, 0));
     }
 
     @Test

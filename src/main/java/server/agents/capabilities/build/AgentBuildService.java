@@ -3,7 +3,6 @@ package server.agents.capabilities.build;
 import client.Character;
 import client.Job;
 import client.Skill;
-import client.SkillFactory;
 import client.Stat;
 import client.processor.stat.AssignAPProcessor;
 import constants.game.GameConstants;
@@ -20,6 +19,8 @@ import server.agents.capabilities.build.AgentBuildRuntime;
 import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentBuildService {
@@ -165,13 +166,17 @@ public final class AgentBuildService {
      * Hero SP is held until the owner chooses a variant.
      */
     public static void autoAssignSp(AgentRuntimeEntry entry, Character bot) {
+        autoAssignSp(entry, bot, AgentSkillGatewayRuntime.skills());
+    }
+
+    static void autoAssignSp(AgentRuntimeEntry entry, Character bot, SkillGateway skills) {
         String spVariant = AgentBuildStateRuntime.spVariant(entry);
         if (bot.getJob() == Job.HERO && spVariant == null) return;
 
-        List<BuildStep> steps = getBuildOrder(bot.getJob(), spVariant);
+        List<BuildStep> steps = getBuildOrder(bot.getJob(), spVariant, skills);
         if (steps == null) return;
 
-        autoAssignSp(bot, steps);
+        autoAssignSp(bot, steps, skills);
     }
 
     public static String respecSp(AgentRuntimeEntry entry, Character bot) {
@@ -180,6 +185,7 @@ public final class AgentBuildService {
             return "need your hero build first. say '1h' or '2h'";
         }
 
+        SkillGateway skills = AgentSkillGatewayRuntime.skills();
         List<Job> buildPath = getSupportedBuildPath(bot.getJob());
         if (buildPath == null) {
             return "dont have an sp respec build for my job yet";
@@ -216,18 +222,18 @@ public final class AgentBuildService {
         }
 
         for (Job job : buildPath) {
-            List<BuildStep> steps = getBuildOrder(job, spVariant);
+            List<BuildStep> steps = getBuildOrder(job, spVariant, skills);
             if (steps != null) {
-                autoAssignSp(bot, steps);
+                autoAssignSp(bot, steps, skills);
             }
         }
 
         return "ok, rebuilt my sp using the bot build";
     }
 
-    private static void autoAssignSp(Character bot, List<BuildStep> steps) {
+    private static void autoAssignSp(Character bot, List<BuildStep> steps, SkillGateway skills) {
         for (BuildStep step : steps) {
-            Skill skill = SkillFactory.getSkill(step.skillId());
+            Skill skill = skills.getSkill(step.skillId());
             if (skill == null) continue;
 
             int book = GameConstants.getSkillBook(step.skillId() / 10000);
@@ -281,19 +287,23 @@ public final class AgentBuildService {
     }
 
     private static List<BuildStep> getBuildOrder(Job job, String variant) {
-        List<BuildStep> warriorBuild = WarriorBuilds.getBuildOrder(job, variant);
+        return getBuildOrder(job, variant, AgentSkillGatewayRuntime.skills());
+    }
+
+    private static List<BuildStep> getBuildOrder(Job job, String variant, SkillGateway skills) {
+        List<BuildStep> warriorBuild = WarriorBuilds.getBuildOrder(job, variant, skills);
         if (warriorBuild != null) {
             return warriorBuild;
         }
-        List<BuildStep> bowmanBuild = BowmanBuilds.getBuildOrder(job);
+        List<BuildStep> bowmanBuild = BowmanBuilds.getBuildOrder(job, skills);
         if (bowmanBuild != null) {
             return bowmanBuild;
         }
-        List<BuildStep> thiefBuild = ThiefBuilds.getBuildOrder(job);
+        List<BuildStep> thiefBuild = ThiefBuilds.getBuildOrder(job, skills);
         if (thiefBuild != null) {
             return thiefBuild;
         }
-        return MageBuilds.getBuildOrder(job);
+        return MageBuilds.getBuildOrder(job, skills);
     }
 
     private static String apPromptForJob(Job job) {

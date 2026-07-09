@@ -2876,3 +2876,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: `AgentNavigationDebugOverlay` now uses
   `AgentSkillGatewayRuntime` for debug-overlay mist-effect lookup. Overlay
   effect fallback order and rendering behavior remain unchanged.
+- SPI/gateway extraction: `AgentBuildService` and the Warrior/Bowman/Thief/Mage
+  build profiles now use `AgentSkillGatewayRuntime`/`SkillGateway` for build
+  skill lookup and max-level lookup. SP assignment, build ordering, respec, and
+  AP behavior remain unchanged.

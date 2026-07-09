@@ -1,8 +1,6 @@
 package server.agents.capabilities.build.profiles;
 
 import client.Job;
-import client.Skill;
-import client.SkillFactory;
 import constants.skills.Crusader;
 import constants.skills.DarkKnight;
 import constants.skills.DragonKnight;
@@ -12,6 +10,8 @@ import constants.skills.Page;
 import constants.skills.Spearman;
 import constants.skills.Warrior;
 import constants.skills.WhiteKnight;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import java.util.List;
 
 public final class WarriorBuilds {
@@ -20,6 +20,10 @@ public final class WarriorBuilds {
     }
 
     public static List<BuildStep> getBuildOrder(Job job, String variant) {
+        return getBuildOrder(job, variant, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static List<BuildStep> getBuildOrder(Job job, String variant, SkillGateway skills) {
         return switch (job) {
             case WARRIOR -> warriorBuild();
             case FIGHTER -> fighterBuild();
@@ -27,9 +31,9 @@ public final class WarriorBuilds {
             case HERO -> "2h".equals(variant) ? hero2hBuild() : hero1hBuild();
             case PAGE -> pageBuild();
             case WHITEKNIGHT -> whiteKnightBuild();
-            case SPEARMAN -> spearmanBuild();
-            case DRAGONKNIGHT -> dragonKnightBuild();
-            case DARKKNIGHT -> darkKnightBuild();
+            case SPEARMAN -> spearmanBuild(skills);
+            case DRAGONKNIGHT -> dragonKnightBuild(skills);
+            case DARKKNIGHT -> darkKnightBuild(skills);
             default -> null;
         };
     }
@@ -38,9 +42,8 @@ public final class WarriorBuilds {
         return new BuildStep(id, to);
     }
 
-    private static int max(int skillId) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        return skill != null ? skill.getMaxLevel() : 30;
+    private static int max(int skillId, SkillGateway skills) {
+        return skills.getSkillMaxLevel(skillId, 30);
     }
 
     private static List<BuildStep> warriorBuild() {
@@ -137,56 +140,56 @@ public final class WarriorBuilds {
     }
 
     // https://royals.ms/forum/threads/a-guide-to-dark-knight-2026.230387/
-    private static List<BuildStep> spearmanBuild() {
+    private static List<BuildStep> spearmanBuild(SkillGateway skills) {
         return List.of(
                 s(Spearman.SPEAR_MASTERY, 5),
                 s(Spearman.SPEAR_BOOSTER, 2),
                 s(Spearman.SPEAR_BOOSTER, 11),
-                s(Spearman.SPEAR_MASTERY, max(Spearman.SPEAR_MASTERY)),
-                s(Spearman.SPEAR_BOOSTER, max(Spearman.SPEAR_BOOSTER)),
+                s(Spearman.SPEAR_MASTERY, max(Spearman.SPEAR_MASTERY, skills)),
+                s(Spearman.SPEAR_BOOSTER, max(Spearman.SPEAR_BOOSTER, skills)),
                 s(Spearman.IRON_WILL, 3),
-                s(Spearman.HYPER_BODY, max(Spearman.HYPER_BODY)),
-                s(Spearman.POLEARM_MASTERY, max(Spearman.POLEARM_MASTERY)),
-                s(Spearman.POLEARM_BOOSTER, max(Spearman.POLEARM_BOOSTER))
+                s(Spearman.HYPER_BODY, max(Spearman.HYPER_BODY, skills)),
+                s(Spearman.POLEARM_MASTERY, max(Spearman.POLEARM_MASTERY, skills)),
+                s(Spearman.POLEARM_BOOSTER, max(Spearman.POLEARM_BOOSTER, skills))
         );
     }
 
-    private static List<BuildStep> dragonKnightBuild() {
+    private static List<BuildStep> dragonKnightBuild(SkillGateway skills) {
         return List.of(
                 s(DragonKnight.SPEAR_CRUSHER, 1),
-                s(DragonKnight.SPEAR_CRUSHER, max(DragonKnight.SPEAR_CRUSHER)),
+                s(DragonKnight.SPEAR_CRUSHER, max(DragonKnight.SPEAR_CRUSHER, skills)),
                 s(DragonKnight.SACRIFICE, 1),
                 s(DragonKnight.SACRIFICE, 3),
-                s(DragonKnight.DRAGON_ROAR, max(DragonKnight.DRAGON_ROAR)),
+                s(DragonKnight.DRAGON_ROAR, max(DragonKnight.DRAGON_ROAR, skills)),
                 s(DragonKnight.SPEAR_DRAGON_FURY, 1),
-                s(DragonKnight.SPEAR_DRAGON_FURY, max(DragonKnight.SPEAR_DRAGON_FURY)),
+                s(DragonKnight.SPEAR_DRAGON_FURY, max(DragonKnight.SPEAR_DRAGON_FURY, skills)),
                 s(DragonKnight.ELEMENTAL_RESISTANCE, 1),
-                s(DragonKnight.ELEMENTAL_RESISTANCE, max(DragonKnight.ELEMENTAL_RESISTANCE)),
+                s(DragonKnight.ELEMENTAL_RESISTANCE, max(DragonKnight.ELEMENTAL_RESISTANCE, skills)),
                 s(DragonKnight.SACRIFICE, 5),
                 s(DragonKnight.SACRIFICE, 15),
                 s(DragonKnight.DRAGON_BLOOD, 3),
                 s(DragonKnight.POWER_CRASH, 2),
-                s(DragonKnight.POWER_CRASH, max(DragonKnight.POWER_CRASH))
+                s(DragonKnight.POWER_CRASH, max(DragonKnight.POWER_CRASH, skills))
         );
     }
 
-    private static List<BuildStep> darkKnightBuild() {
+    private static List<BuildStep> darkKnightBuild(SkillGateway skills) {
         return List.of(
                 s(DarkKnight.RUSH, 1),
                 s(DarkKnight.BERSERK, 1),
                 s(DarkKnight.BEHOLDER, 1),
-                s(DarkKnight.BERSERK, max(DarkKnight.BERSERK)),
+                s(DarkKnight.BERSERK, max(DarkKnight.BERSERK, skills)),
                 s(DarkKnight.STANCE, 1),
-                s(DarkKnight.STANCE, max(DarkKnight.STANCE)),
+                s(DarkKnight.STANCE, max(DarkKnight.STANCE, skills)),
                 s(DarkKnight.MONSTER_MAGNET, 1),
-                s(DarkKnight.MONSTER_MAGNET, max(DarkKnight.MONSTER_MAGNET)),
+                s(DarkKnight.MONSTER_MAGNET, max(DarkKnight.MONSTER_MAGNET, skills)),
                 s(DarkKnight.ACHILLES, 1),
-                s(DarkKnight.ACHILLES, max(DarkKnight.ACHILLES)),
+                s(DarkKnight.ACHILLES, max(DarkKnight.ACHILLES, skills)),
                 s(DarkKnight.BEHOLDER, 2),
-                s(DarkKnight.BEHOLDER, max(DarkKnight.BEHOLDER)),
+                s(DarkKnight.BEHOLDER, max(DarkKnight.BEHOLDER, skills)),
                 s(DarkKnight.MAPLE_WARRIOR, 10),
                 s(DarkKnight.RUSH, 5),
-                s(DarkKnight.RUSH, max(DarkKnight.RUSH)),
+                s(DarkKnight.RUSH, max(DarkKnight.RUSH, skills)),
                 s(DarkKnight.HEROS_WILL, 5)
         );
     }

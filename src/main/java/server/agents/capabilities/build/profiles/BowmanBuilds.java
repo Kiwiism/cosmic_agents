@@ -1,8 +1,6 @@
 package server.agents.capabilities.build.profiles;
 
 import client.Job;
-import client.Skill;
-import client.SkillFactory;
 import constants.skills.Archer;
 import constants.skills.Bowmaster;
 import constants.skills.Crossbowman;
@@ -10,6 +8,8 @@ import constants.skills.Hunter;
 import constants.skills.Marksman;
 import constants.skills.Ranger;
 import constants.skills.Sniper;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import java.util.List;
 
 public final class BowmanBuilds {
@@ -18,14 +18,18 @@ public final class BowmanBuilds {
     }
 
     public static List<BuildStep> getBuildOrder(Job job) {
+        return getBuildOrder(job, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static List<BuildStep> getBuildOrder(Job job, SkillGateway skills) {
         return switch (job) {
             case BOWMAN -> bowmanBuild();
             case HUNTER -> hunterBuild();
             case RANGER -> rangerBuild();
-            case BOWMASTER -> bowmasterBuild();
+            case BOWMASTER -> bowmasterBuild(skills);
             case CROSSBOWMAN -> crossbowmanBuild();
-            case SNIPER -> sniperBuild();
-            case MARKSMAN -> marksmanBuild();
+            case SNIPER -> sniperBuild(skills);
+            case MARKSMAN -> marksmanBuild(skills);
             default -> null;
         };
     }
@@ -34,9 +38,8 @@ public final class BowmanBuilds {
         return new BuildStep(id, to);
     }
 
-    private static int max(int skillId) {
-        Skill skill = SkillFactory.getSkill(skillId);
-        return skill != null ? skill.getMaxLevel() : 30;
+    private static int max(int skillId, SkillGateway skills) {
+        return skills.getSkillMaxLevel(skillId, 30);
     }
 
     private static List<BuildStep> bowmanBuild() {
@@ -118,7 +121,7 @@ public final class BowmanBuilds {
         );
     }
 
-    private static List<BuildStep> sniperBuild() {
+    private static List<BuildStep> sniperBuild(SkillGateway skills) {
         return List.of(
                 s(Sniper.PUPPET, 5),
                 s(Sniper.GOLDEN_EAGLE, 1),
@@ -127,12 +130,12 @@ public final class BowmanBuilds {
                 s(Sniper.BLIZZARD, 30),
                 s(Sniper.GOLDEN_EAGLE, 15),
                 s(Sniper.PUPPET, 20),
-                s(Sniper.MORTAL_BLOW, max(Sniper.MORTAL_BLOW)),
-                s(Sniper.THRUST, max(Sniper.THRUST))
+                s(Sniper.MORTAL_BLOW, max(Sniper.MORTAL_BLOW, skills)),
+                s(Sniper.THRUST, max(Sniper.THRUST, skills))
         );
     }
 
-    private static List<BuildStep> bowmasterBuild() {
+    private static List<BuildStep> bowmasterBuild(SkillGateway skills) {
         return List.of(
                 s(Bowmaster.HURRICANE, 1),
                 s(Bowmaster.SHARP_EYES, 7),
@@ -153,15 +156,15 @@ public final class BowmanBuilds {
                 s(Bowmaster.BOW_EXPERT, 30),
                 s(Bowmaster.HEROS_WILL, 5),
                 s(Bowmaster.CONCENTRATE, 30),
-                s(Bowmaster.PHOENIX, max(Bowmaster.PHOENIX)),
+                s(Bowmaster.PHOENIX, max(Bowmaster.PHOENIX, skills)),
                 s(Bowmaster.HAMSTRING, 15),
                 s(Bowmaster.DRAGONS_BREATH, 21),
-                s(Bowmaster.HAMSTRING, max(Bowmaster.HAMSTRING)),
-                s(Bowmaster.MAPLE_WARRIOR, max(Bowmaster.MAPLE_WARRIOR))
+                s(Bowmaster.HAMSTRING, max(Bowmaster.HAMSTRING, skills)),
+                s(Bowmaster.MAPLE_WARRIOR, max(Bowmaster.MAPLE_WARRIOR, skills))
         );
     }
 
-    private static List<BuildStep> marksmanBuild() {
+    private static List<BuildStep> marksmanBuild(SkillGateway skills) {
         return List.of(
                 s(Marksman.DRAGONS_BREATH, 1),
                 s(Marksman.FROST_PREY, 1),
@@ -177,10 +180,10 @@ public final class BowmanBuilds {
                 s(Marksman.MARKSMAN_BOOST, 30),
                 s(Marksman.PIERCING_ARROW, 30),
                 s(Marksman.MAPLE_WARRIOR, 30),
-                s(Marksman.SNIPE, max(Marksman.SNIPE)),
-                s(Marksman.FROST_PREY, max(Marksman.FROST_PREY)),
-                s(Marksman.DRAGONS_BREATH, max(Marksman.DRAGONS_BREATH)),
-                s(Marksman.BLIND, max(Marksman.BLIND)),
+                s(Marksman.SNIPE, max(Marksman.SNIPE, skills)),
+                s(Marksman.FROST_PREY, max(Marksman.FROST_PREY, skills)),
+                s(Marksman.DRAGONS_BREATH, max(Marksman.DRAGONS_BREATH, skills)),
+                s(Marksman.BLIND, max(Marksman.BLIND, skills)),
                 s(Marksman.HEROS_WILL, 5)
                 );
     }

@@ -6857,6 +6857,12 @@ Current physics correction:
   `SkillFactory` in `AgentNavigationDebugOverlay`. Evan Recovery Aura, FP
   Poison Mist, and Shadower Smoke Screen fallback order, unavailable-overlay
   messaging, and overlay drawing behavior are unchanged.
+- SPI/gateway extraction: build-profile max-level lookup and SP assignment now
+  call `AgentSkillGatewayRuntime`/`SkillGateway` instead of importing
+  `SkillFactory` in `AgentBuildService` and the Warrior/Bowman/Thief/Mage build
+  profiles. Build order, missing-skill fallback max level, fourth-job master
+  level gating, SP book selection, refund/rebuild behavior, and AP behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
