@@ -2887,3 +2887,7 @@ Recent capability extraction notes:
   `AgentSkillGatewayRuntime`/`SkillGateway` for cached support-heal skill
   lookup. Heal selection, jump-heal, cooldown, and attack-packet behavior remain
   unchanged.
+- SPI/gateway extraction: `AgentMakerService` now uses
+  `AgentMakerGatewayRuntime`/`MakerGateway`; live `MakerProcessor` calls are
+  isolated in `CosmicMakerGateway`. Crystal creation and trash disassembly
+  behavior remain unchanged.

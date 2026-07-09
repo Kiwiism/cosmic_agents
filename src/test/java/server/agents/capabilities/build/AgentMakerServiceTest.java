@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.build.AgentMakerRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.integration.MakerGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.lang.reflect.Field;
@@ -46,6 +47,21 @@ class AgentMakerServiceTest {
             replies.verify(() -> AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on"));
         } finally {
             active.remove(200);
+        }
+    }
+
+    @Test
+    void makeCrystalsNoMakerSkillReplyUsesMakerGateway() {
+        Character bot = mock(Character.class);
+        when(bot.getId()).thenReturn(300);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        MakerGateway maker = mock(MakerGateway.class);
+        when(maker.getMakerSkillLevel(bot)).thenReturn(0);
+
+        try (MockedStatic<AgentMakerRuntime> replies = mockStatic(AgentMakerRuntime.class)) {
+            AgentMakerService.handleMakeCrystals(entry, mock(InventoryGateway.class), maker);
+
+            replies.verify(() -> AgentMakerRuntime.replyNow(entry, "I can't - I don't have the Maker skill"));
         }
     }
 

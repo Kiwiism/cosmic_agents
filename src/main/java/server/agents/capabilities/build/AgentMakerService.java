@@ -8,10 +8,11 @@ import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.processor.action.MakerProcessor;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.build.AgentMakerRuntime;
+import server.agents.integration.AgentMakerGatewayRuntime;
 import server.agents.integration.InventoryGateway;
+import server.agents.integration.MakerGateway;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -26,8 +27,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Handles the bot Maker batch commands: "make monster crystals" (convert monster-leftover
- * etc stacks) and "disassemble trash" (break down trash equips). Both run through the shared
- * {@link MakerProcessor} player path, one operation per {@link #STEP_INTERVAL_MS} ms, and
+ * etc stacks) and "disassemble trash" (break down trash equips). Both run through the live
+ * maker gateway player path, one operation per {@link #STEP_INTERVAL_MS} ms, and
  * self-interrupt when the player issues a new directive (follow/stop/move/...): see
  * {@link AgentScriptTaskStateRuntime#activityEpoch(AgentRuntimeEntry)}.
  */
@@ -42,7 +43,7 @@ public final class AgentMakerService {
     private static final String[] DISASSEMBLE_VERBS = {"disassembling", "breaking down", "scrapping"};
 
     /** One Maker operation under a held client lock. Returns 0 on success, {@link #NO_MORE}
-     *  when nothing remains, otherwise a {@link MakerProcessor} failure status. */
+     *  when nothing remains, otherwise a live maker failure status. */
     @FunctionalInterface
     private interface BatchStep {
         int run(Client c);
@@ -52,8 +53,12 @@ public final class AgentMakerService {
     }
 
     public static void handleMakeCrystals(AgentRuntimeEntry entry, InventoryGateway inventory) {
+        handleMakeCrystals(entry, inventory, AgentMakerGatewayRuntime.maker());
+    }
+
+    public static void handleMakeCrystals(AgentRuntimeEntry entry, InventoryGateway inventory, MakerGateway maker) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-        if (bot == null || !guardStart(entry, bot)) {
+        if (bot == null || !guardStart(entry, bot, maker)) {
             return;
         }
 
@@ -67,17 +72,21 @@ public final class AgentMakerService {
         startBatch(entry, leftovers.size(), CRYSTAL_VERBS, "crystal",
                 c -> {
                     Integer leftover = leftovers.poll();
-                    return leftover == null ? NO_MORE : MakerProcessor.makeLeftoverCrystal(c, leftover);
+                    return leftover == null ? NO_MORE : maker.makeLeftoverCrystal(c, leftover);
                 });
     }
 
     public static void handleDisassembleTrash(AgentRuntimeEntry entry, InventoryGateway inventory) {
+        handleDisassembleTrash(entry, inventory, AgentMakerGatewayRuntime.maker());
+    }
+
+    public static void handleDisassembleTrash(AgentRuntimeEntry entry, InventoryGateway inventory, MakerGateway maker) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-        if (bot == null || !guardStart(entry, bot)) {
+        if (bot == null || !guardStart(entry, bot, maker)) {
             return;
         }
 
-        int total = collectDisassemblableTrash(entry, bot, inventory).size();
+        int total = collectDisassemblableTrash(entry, bot, inventory, maker).size();
         if (total == 0) {
             AgentMakerRuntime.replyNow(entry, "no trash equips I can disassemble");
             return;
@@ -87,29 +96,30 @@ public final class AgentMakerService {
         // looted gear during the 5s gaps, so always disassemble a currently-trash equip.
         startBatch(entry, total, DISASSEMBLE_VERBS, "trash equip",
                 c -> {
-                    List<Equip> trash = collectDisassemblableTrash(entry, bot, inventory);
-                    return trash.isEmpty() ? NO_MORE : MakerProcessor.disassembleEquip(c, trash.get(0).getPosition());
+                    List<Equip> trash = collectDisassemblableTrash(entry, bot, inventory, maker);
+                    return trash.isEmpty() ? NO_MORE : maker.disassembleEquip(c, trash.get(0).getPosition());
                 });
     }
 
     /** Trash equips (SSOT: {@link AgentInventorySellTrashService#collectSellTrashEquips}) that actually
      *  have a Maker disassembly recipe — others would just abort the batch. */
-    private static List<Equip> collectDisassemblableTrash(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
+    private static List<Equip> collectDisassemblableTrash(AgentRuntimeEntry entry, Character bot,
+                                                          InventoryGateway inventory, MakerGateway maker) {
         List<Equip> out = new ArrayList<>();
         for (Item item : AgentInventorySellTrashService.collectSellTrashEquips(entry, bot, inventory)) {
-            if (item instanceof Equip equip && MakerProcessor.canDisassemble(equip.getItemId())) {
+            if (item instanceof Equip equip && maker.canDisassemble(equip.getItemId())) {
                 out.add(equip);
             }
         }
         return out;
     }
 
-    private static boolean guardStart(AgentRuntimeEntry entry, Character bot) {
+    private static boolean guardStart(AgentRuntimeEntry entry, Character bot, MakerGateway maker) {
         if (ACTIVE.contains(bot.getId())) {
             AgentMakerRuntime.replyNow(entry, "still working on the last batch, hang on");
             return false;
         }
-        if (MakerProcessor.getMakerSkillLevel(bot) < 1) {
+        if (maker.getMakerSkillLevel(bot) < 1) {
             AgentMakerRuntime.replyNow(entry, "I can't - I don't have the Maker skill");
             return false;
         }

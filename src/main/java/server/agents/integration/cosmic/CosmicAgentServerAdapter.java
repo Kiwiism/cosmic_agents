@@ -5,6 +5,7 @@ import server.agents.integration.CharacterGateway;
 import server.agents.integration.CombatGateway;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.LifeGateway;
+import server.agents.integration.MakerGateway;
 import server.agents.integration.MapGateway;
 import server.agents.integration.PacketGateway;
 import server.agents.integration.SkillGateway;
@@ -54,5 +55,10 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public SkillGateway skills() {
         return CosmicSkillGateway.INSTANCE;
+    }
+
+    @Override
+    public MakerGateway maker() {
+        return CosmicMakerGateway.INSTANCE;
     }
 }

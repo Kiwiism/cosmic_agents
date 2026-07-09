@@ -6874,6 +6874,11 @@ Current physics correction:
   skill handling, party/self heal selection, undead target collection,
   jump-heal behavior, cooldown application, heal attack packet construction,
   and post-cast movement-window behavior are unchanged.
+- SPI/gateway extraction: Maker automation now calls
+  `AgentMakerGatewayRuntime`/`MakerGateway` instead of importing
+  `MakerProcessor` in `AgentMakerService`. Maker skill gating, monster-crystal
+  leftover batching, trash-equip disassembly eligibility, client-lock handling,
+  batch retry/abort replies, and per-step delay behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

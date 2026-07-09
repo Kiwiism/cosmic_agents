@@ -16,5 +16,7 @@ public interface AgentServerAdapter {
     LifeGateway life();
 
     SkillGateway skills();
+
+    MakerGateway maker();
 }
 
