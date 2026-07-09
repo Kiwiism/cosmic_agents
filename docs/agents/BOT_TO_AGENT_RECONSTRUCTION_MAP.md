@@ -2848,3 +2848,7 @@ Recent capability extraction notes:
   `AgentLifeGatewayRuntime` for spawn-template monster stats. Damage/avoid
   profile selection, live mob inclusion, and spawn fallback behavior remain
   unchanged.
+- SPI/gateway extraction: `SkillGateway`/`CosmicSkillGateway` now own live
+  `SkillFactory` access. `AgentCombatDialogueReporter` uses
+  `AgentSkillGatewayRuntime` for combat skill labels while fallback wording
+  remains unchanged.

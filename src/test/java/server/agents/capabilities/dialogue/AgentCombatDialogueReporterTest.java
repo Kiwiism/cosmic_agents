@@ -2,11 +2,9 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import client.Job;
-import client.SkillFactory;
 import client.inventory.Inventory;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import server.agents.integration.SkillGateway;
 import server.combat.CombatFormulaProvider;
 
 import java.util.List;
@@ -125,12 +123,11 @@ class AgentCombatDialogueReporterTest {
 
     @Test
     void shouldFormatCombatSkillLabelLikeLegacyCombatDebug() {
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
-            skillFactory.when(() -> SkillFactory.getSkillName(1001005)).thenReturn("Slash Blast");
-            skillFactory.when(() -> SkillFactory.getSkillName(999999)).thenReturn(" ");
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkillName(1001005)).thenReturn("Slash Blast");
+        when(skills.getSkillName(999999)).thenReturn(" ");
 
-            assertEquals("Slash Blast", AgentCombatDialogueReporter.combatSkillLabel(1001005));
-            assertEquals("skill#999999", AgentCombatDialogueReporter.combatSkillLabel(999999));
-        }
+        assertEquals("Slash Blast", AgentCombatDialogueReporter.combatSkillLabel(1001005, skills));
+        assertEquals("skill#999999", AgentCombatDialogueReporter.combatSkillLabel(999999, skills));
     }
 }

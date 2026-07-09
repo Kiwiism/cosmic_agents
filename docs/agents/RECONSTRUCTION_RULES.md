@@ -6817,6 +6817,10 @@ Current physics correction:
   stats instead of importing `LifeFactory` in `AgentMapDamageProfile`. Live mob
   stats, spawn-template fallback, friendly filtering, and profile selection
   order are unchanged.
+- SPI/gateway extraction: combat dialogue skill labels now call
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkillName` instead of importing
+  `SkillFactory` in `AgentCombatDialogueReporter`. Skill label fallback text
+  and combat debug formatting are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

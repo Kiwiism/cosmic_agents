@@ -1,7 +1,8 @@
 package server.agents.capabilities.dialogue;
 
 import client.Character;
-import client.SkillFactory;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.combat.CombatFormulaProvider;
 
 import java.util.List;
@@ -121,7 +122,11 @@ public final class AgentCombatDialogueReporter {
     }
 
     public static String combatSkillLabel(int skillId) {
-        String name = SkillFactory.getSkillName(skillId);
+        return combatSkillLabel(skillId, AgentSkillGatewayRuntime.skills());
+    }
+
+    static String combatSkillLabel(int skillId, SkillGateway skills) {
+        String name = skills.getSkillName(skillId);
         return (name != null && !name.isBlank()) ? name : "skill#" + skillId;
     }
 
