@@ -1,9 +1,9 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
 public final class AgentTradeMesoAddService {
@@ -12,7 +12,7 @@ public final class AgentTradeMesoAddService {
 
     public static boolean handlePendingMeso(AgentRuntimeEntry entry,
                                             Character agent,
-                                            Trade trade,
+                                            IntConsumer setTradeMeso,
                                             Runnable insufficientMesoCancel,
                                             IntSupplier addDelayMs) {
         if (!AgentPendingTradeStateRuntime.hasMesoToAdd(entry)) {
@@ -24,7 +24,7 @@ public final class AgentTradeMesoAddService {
             return true;
         }
 
-        trade.setMeso(mesos);
+        setTradeMeso.accept(mesos);
         AgentPendingTradeStateRuntime.markMesoAdded(entry);
         AgentPendingTradeStateRuntime.setTimerMs(entry, addDelayMs.getAsInt());
         return true;

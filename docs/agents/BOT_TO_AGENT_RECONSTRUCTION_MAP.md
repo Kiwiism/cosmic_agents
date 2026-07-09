@@ -2582,3 +2582,8 @@ Recent capability extraction notes:
   `InventoryGateway` factories and `AgentEquipmentOptimizationService` uses
   them for optimizer DP metadata. Existing item-info hook factories remain as
   staged compatibility for older optimizer overloads.
+- Trade-window reconstruction: `AgentTradeCategoryAnnouncementService`,
+  `AgentTradeAllItemsAddedService`, and `AgentTradeMesoAddService` no longer
+  import `server.Trade`; they receive narrow chat/meso callbacks from
+  `AgentTradeItemAddTickService`. Live trade-window ownership remains in the
+  item-add tick layer until the broader trade-window abstraction slice.

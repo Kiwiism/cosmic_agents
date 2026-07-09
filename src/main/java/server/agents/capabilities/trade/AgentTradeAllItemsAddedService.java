@@ -1,9 +1,9 @@
 package server.agents.capabilities.trade;
 
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class AgentTradeAllItemsAddedService {
@@ -11,7 +11,7 @@ public final class AgentTradeAllItemsAddedService {
     }
 
     public static boolean markCompleteIfNoMoreItems(AgentRuntimeEntry entry,
-                                                    Trade trade,
+                                                    Consumer<String> tradeChat,
                                                     Supplier<String> allDoneReply) {
         List<?> items = AgentPendingTradeStateRuntime.items(entry);
         int idx = AgentPendingTradeStateRuntime.itemIndex(entry);
@@ -21,7 +21,7 @@ public final class AgentTradeAllItemsAddedService {
 
         AgentPendingTradeStateRuntime.markAllItemsAdded(entry);
         AgentPendingTradeStateRuntime.clearTimer(entry);
-        trade.chat(allDoneReply.get());
+        tradeChat.accept(allDoneReply.get());
         return true;
     }
 }

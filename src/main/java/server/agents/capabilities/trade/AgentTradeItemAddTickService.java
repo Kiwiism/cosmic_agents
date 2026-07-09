@@ -29,7 +29,7 @@ public final class AgentTradeItemAddTickService {
         if (AgentTradeMesoAddService.handlePendingMeso(
                 entry,
                 agent,
-                trade,
+                trade::setMeso,
                 callbacks.insufficientMesoCancel(),
                 callbacks.mesoAddDelayMs())) {
             return true;
@@ -39,13 +39,13 @@ public final class AgentTradeItemAddTickService {
         int idx = AgentPendingTradeStateRuntime.itemIndex(entry);
 
         if (idx >= items.size()) {
-            AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade, callbacks.allDoneReply());
+            AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade::chat, callbacks.allDoneReply());
             return true;
         }
 
         if (AgentTradeCategoryAnnouncementService.announceBeforeFirstItem(
                 entry,
-                trade,
+                trade::chat,
                 callbacks.categoryAnnouncementDelayMs())) {
             return true;
         }

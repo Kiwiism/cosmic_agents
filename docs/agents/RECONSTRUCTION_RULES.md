@@ -6541,6 +6541,11 @@ Current physics correction:
   metadata while legacy item-info factories remain only for compatibility
   overloads. Two-handed, weapon-type, overall-slot, requirement, and equip-stat
   behavior are unchanged.
+- Trade-window reconstruction: category announcements, all-items-added chat,
+  and pending-meso setup now use narrow chat/meso callbacks instead of directly
+  owning `Trade` objects. `AgentTradeItemAddTickService` still supplies the
+  live trade window callbacks, so chat text, timers, meso checks, and item-add
+  tick ordering are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

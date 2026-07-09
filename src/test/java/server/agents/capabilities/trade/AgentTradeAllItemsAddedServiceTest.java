@@ -2,46 +2,43 @@ package server.agents.capabilities.trade;
 
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 class AgentTradeAllItemsAddedServiceTest {
     @Test
     void returnsFalseWhenItemsRemain() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        Trade trade = mock(Trade.class);
+        List<String> chat = new ArrayList<>();
         AgentTradeStateService.initializeBatch(entry, List.of(item()), 0);
 
-        boolean handled = AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade, () -> "done");
+        boolean handled = AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, chat::add, () -> "done");
 
         assertFalse(handled);
         assertFalse(AgentPendingTradeStateRuntime.allItemsAdded(entry));
-        verify(trade, never()).chat("done");
+        assertTrue(chat.isEmpty());
     }
 
     @Test
     void marksAllItemsAddedClearsTimerAndChatsWhenNoItemsRemain() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
-        Trade trade = mock(Trade.class);
+        List<String> chat = new ArrayList<>();
         AgentTradeStateService.initializeBatch(entry, List.of(item()), 0);
         AgentPendingTradeStateRuntime.incrementItemIndex(entry);
         AgentPendingTradeStateRuntime.setTimerMs(entry, 500);
 
-        boolean handled = AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, trade, () -> "done");
+        boolean handled = AgentTradeAllItemsAddedService.markCompleteIfNoMoreItems(entry, chat::add, () -> "done");
 
         assertTrue(handled);
         assertTrue(AgentPendingTradeStateRuntime.allItemsAdded(entry));
         assertEquals(0, AgentPendingTradeStateRuntime.timerMs(entry));
-        verify(trade).chat("done");
+        assertEquals(List.of("done"), chat);
     }
 
     private static Item item() {
