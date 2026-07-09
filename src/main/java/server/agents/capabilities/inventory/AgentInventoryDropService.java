@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.manipulator.InventoryManipulator;
 import config.YamlConfig;
 import constants.inventory.ItemConstants;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
@@ -112,7 +111,7 @@ public final class AgentInventoryDropService {
                             inventoryGateway::isQuestItem,
                             YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE)
                     && filter.test(item)) {
-                InventoryManipulator.drop(agent.getClient(), type, slot, item.getQuantity());
+                inventoryGateway.dropItem(agent, type, slot, item.getQuantity());
                 count++;
             }
         }

@@ -2817,3 +2817,7 @@ Recent capability extraction notes:
   inventory through `AgentInventoryGatewayRuntime` while keeping its existing
   remover test seam. Trade item copies, quantity caps, restore slots, and
   packet sends remain unchanged.
+- SPI/gateway extraction: `AgentInventoryDropService` now executes category
+  and named-item drops through `InventoryGateway.dropItem`; direct drop
+  mutation stays in `CosmicInventoryGateway`. Safe item filtering, quest-item
+  protection, matching, and reply wording remain unchanged.

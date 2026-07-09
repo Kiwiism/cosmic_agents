@@ -6780,6 +6780,10 @@ Current physics correction:
   importing `InventoryManipulator` in the trade capability. Trade item copying,
   restore-slot tracking, packet mirroring, and inventory-lock ordering are
   unchanged.
+- SPI/gateway extraction: category and named-item inventory drops now call
+  `InventoryGateway.dropItem` instead of importing `InventoryManipulator` in
+  `AgentInventoryDropService`. Safe-drop filtering, quest-item checks,
+  category matching, drop counts, and legacy reply text are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
