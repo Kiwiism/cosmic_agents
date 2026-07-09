@@ -151,6 +151,33 @@ Includes:
 - reward choice policy.
 - script-sensitive review flags.
 
+Prepared but currently unwired capability services:
+
+- `server.agents.capabilities.npc.AgentNpcInteractionCapability`
+  - Validates NPC id, map id, catalog placement, optional quest action, range,
+    approach point, and dialogue-delay estimate.
+  - Uses `NpcCatalogQuery` when available so future plans can choose realistic
+    interaction spots without hardcoding map/NPC facts in the plan.
+  - Executes only through future `NpcGateway`; without a gateway it returns a
+    validated plan result and does not touch live agent/server behavior.
+- `server.agents.capabilities.quest.AgentQuestStartCapability`
+  and `AgentQuestCompleteCapability`
+  - Validate quest status, level, job, prerequisites, required items, required
+    kills, progress values, NPC/range, and auto-complete cases from a typed
+    `AgentQuestSnapshot` plus `AgentQuestRequirement`.
+  - Amherst definitions are available as default requirement metadata for the
+    first MVP phase.
+  - Execute only through future `QuestGateway`; without a gateway they remain
+    dry-run validators.
+- `server.agents.capabilities.reactor.AgentReactorInteractionCapability`
+  - Plans reactor target selection and required item count, then executes only
+    through an optional `AgentReactorExecutionPort`.
+  - This keeps Pio-style reactor objectives testable before live runtime wiring.
+
+Post-reconstruction wiring target:
+
+`Objective -> Navigation -> NPC/Quest/Reactor capability -> Cosmic gateway adapter -> QuestState/Inventory validation`
+
 ### Inventory / Item Policy
 
 Includes:

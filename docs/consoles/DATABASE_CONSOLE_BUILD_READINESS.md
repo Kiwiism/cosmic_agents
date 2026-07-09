@@ -9,7 +9,10 @@ how first-time setup should create and populate the Database Console database.
 
 ## Current Readiness
 
-The product design is ready enough to begin implementation.
+The Database Console is no longer just a pre-implementation plan. It has an
+implemented Spring Boot API and Next.js web interface under `database-console/`.
+This document now records the current readiness model and should not be read as
+the original mockup.
 
 Ready documents:
 
@@ -21,18 +24,19 @@ Ready documents:
   - items, mobs, rewards, craft, world data, and audit tools.
   - console-owned database schema proposal.
 - `DATABASE_CONSOLE_UI_DESIGN.md`
-  - global shell.
-  - read/write mode.
+  - current implemented shell.
   - right detail dock.
   - catalog/list/grid pages.
   - account and character creation UI.
   - inventory/equipment grid UI.
+  - quest/monster-book UI.
+  - quality color settings.
   - route and API contract pattern.
 - `SERVER_CONSOLE_SCOPE.md`
   - clear split for server behavior, rates, map overrides, NPC travel, mob stat
     overrides, commands, analytics, and publish flow.
 
-Implementation should start with the smallest useful vertical slice:
+The original smallest useful vertical slice was:
 
 ```text
 First-time setup
@@ -48,6 +52,10 @@ First-time setup
 -> edit one safe field with audit
 ```
 
+That slice has been exceeded. Current follow-up work should focus on closing
+page-specific gaps, runtime override hooks, audit consistency, and documented
+server integration points rather than rebuilding the shell.
+
 ## What It Will Be Like
 
 Database Console is an operational game-data editor.
@@ -55,9 +63,9 @@ Database Console is an operational game-data editor.
 Main shell:
 
 ```text
-Top Bar: Back / Forward | Global Search | Env | Read/Write | Pending Changes
+Sticky Header: Breadcrumb / Title | Page Tabs / Actions
 +--------------------------------------------------------------------------------+
-| Left Nav       | Tabs / Search / Filters / Actions                 | Right Dock |
+| Left Nav       | Search / Filters / Actions                       | Right Dock |
 | Account        |                                                    | Selected   |
 | Create         | Main catalog, workspace, or editor                 | element    |
 | Mobs           |                                                    | details    |
@@ -67,18 +75,19 @@ Top Bar: Back / Forward | Global Search | Env | Read/Write | Pending Changes
 | World Data     |                                                    |            |
 | Audit & Tools  |                                                    |            |
 +--------------------------------------------------------------------------------+
-| Change Bar: pending changes | Validate | Apply Changes | Discard               |
+| Left Nav Footer: MySQL status | Quality settings gear | Day/Night toggle       |
 +--------------------------------------------------------------------------------+
 ```
 
 Default behavior:
 
-- open in read mode.
-- browse safely with search, filters, badges, list/grid views, and right dock.
-- switch to write mode to edit.
-- edits remain unapplied until `Apply Changes`.
-- applying creates a batch audit event.
-- leaving with unapplied changes asks: apply, discard, or return.
+- browse with search, filters, badges, list/grid views, and right dock.
+- edit through focused controls, row actions, or page-specific save buttons.
+- no global read/write toggle.
+- no global pending-change bottom bar.
+- destructive actions use custom confirmation dialogs, not browser dialogs.
+- updates show stacked bottom-right toasts.
+- right dock owns cross-links, entity details, and technical provenance.
 
 ## First-Time Setup
 
@@ -92,7 +101,7 @@ Inputs:
 - Cosmic DB name, usually `cosmic`.
 - Cosmic DB user/password.
 - Database Console DB name, fixed default `database_console`.
-- console admin account.
+- optional console admin account, if authentication is enabled later.
 - WZ/XML path, optional but recommended for icons/names/source metadata.
 - maplestory.io asset base URL, optional.
 
@@ -103,7 +112,7 @@ Setup flow:
 2. Verify required Cosmic tables exist.
 3. Create database `database_console` if missing.
 4. Run Database Console migrations.
-5. Create first console admin user.
+5. Create first console admin user only if authentication is enabled.
 6. Read Cosmic DB and WZ/XML sources.
 7. Populate read/index tables.
 8. Run validation.
@@ -127,16 +136,13 @@ Minimum tables for the first implementation:
 
 ```text
 console_schema_migrations
-console_users
-console_sessions
 console_settings
-console_change_batches
-console_change_events
 console_index_runs
 console_reference_entities
 console_reference_relationships
 console_entity_tags
 console_saved_filters
+console_audit_events
 console_validation_results
 
 # Override-ready tables, created from first setup
@@ -164,16 +170,13 @@ Create override tables from day one, even if some rows are only
 | Table | Purpose |
 | --- | --- |
 | `console_schema_migrations` | Tracks applied console DB migrations. |
-| `console_users` | Console login/admin users, separate from game accounts. |
-| `console_sessions` | Web login sessions for Database Console. |
 | `console_settings` | Console app settings: Cosmic DB connection alias, asset URL, UI preferences, setup completion. |
-| `console_change_batches` | One apply operation. |
-| `console_change_events` | Per-row/per-field before-after audit records. |
 | `console_index_runs` | Index build metadata and source versions. |
 | `console_reference_entities` | Fast lookup rows for items, mobs, maps, NPCs, quests, accounts, characters, shops, rewards, and recipes. |
 | `console_reference_relationships` | Fast graph edges such as item dropped by mob, mob appears in map, NPC appears in map, item sold by shop, quest uses item. |
 | `console_entity_tags` | Manual and generated tags/badges. |
 | `console_saved_filters` | Saved user/global filters for catalog pages. |
+| `console_audit_events` | Per-action audit records for setup, imports, edits, runtime override changes, and destructive actions. |
 | `console_validation_results` | Stored validation findings. |
 | `console_drop_overrides` | Override-ready add/patch/disable rows for mob/reactor/global drops. |
 | `console_shop_overrides` | Override-ready add/patch/disable/reorder rows for shops. |
@@ -323,12 +326,26 @@ Validate only
 
 Setup should run full rebuild once.
 
+## Deprecated Original Mockup Elements
+
+Do not reintroduce these unless the product direction changes again:
+
+- global read/write toggle.
+- global pending-change bottom bar.
+- browser `alert`, `confirm`, or `prompt`.
+- draft/apply/discard workflow for normal row edits.
+- required Database Console login.
+- catalog-first navigation for character inventory/equipment pages.
+
+Use the current page-specific save/delete controls, custom dialogs,
+bottom-right toasts, and right-inspector detail model instead.
+
 ## First Setup UI
 
 ```text
 Database Console Setup
 
-[1 Database] -> [2 Console DB] -> [3 Admin] -> [4 Assets] -> [5 Build Index] -> [6 Review]
+[1 Database] -> [2 Console DB] -> [3 Assets] -> [4 Build Index] -> [5 Review]
 
 Step 1: Cosmic Database
   Host     [localhost]

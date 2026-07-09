@@ -140,3 +140,27 @@ The Amherst run should prove these capability chains:
 Primitive `NavigationCapability` and `CombatCapability` should wrap the existing
 reconstructed nutnnut behavior first and pass parity tests before Amherst
 objective constraints are enabled.
+
+## Prepared Unwired Capability Services
+
+These services are safe to implement while reconstruction continues because they
+do not register with live ticks, bot commands, or legacy behavior:
+
+| Future Need | Prepared Service | Current State |
+| --- | --- | --- |
+| NPC interaction validation | `AgentNpcInteractionCapability` | Validates NPC/map/range/catalog action and estimates dialogue delay; returns a plan when no `NpcGateway` is present. |
+| Quest start | `AgentQuestStartCapability` | Validates Amherst quest metadata, current quest status, level/job/prerequisite rules, NPC, and range; gateway execution deferred. |
+| Quest complete | `AgentQuestCompleteCapability` | Validates started state, required items, mob kills, progress values, auto-complete cases, NPC, and range; gateway execution deferred. |
+| Reactor hit objective | `AgentReactorInteractionCapability` | Plans reactor target and item objective; live hit/loot execution remains behind `AgentReactorExecutionPort`. |
+
+Post-reconstruction wiring should add Cosmic gateway adapters only after the
+runtime capability scheduler is stable:
+
+1. `NpcGateway` calls the server-side NPC interaction path or direct validated
+   quest action.
+2. `QuestGateway` starts, completes, forfeits, or resets quests through the same
+   server rules used by player/script logic.
+3. `AgentReactorExecutionPort` triggers validated reactor hits, then lets loot
+   and inventory capabilities verify the resulting item state.
+4. Integration tests run with a resettable Amherst character and prove quest
+   status/inventory changes without using normal-runtime force-complete flows.

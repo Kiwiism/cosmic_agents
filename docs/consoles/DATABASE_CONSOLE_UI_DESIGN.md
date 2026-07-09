@@ -3,11 +3,301 @@
 Purpose:
 
 ```text
-Define a consistent UI model for Database Console Phase 1.
+Document the current implemented Database Console UI and keep future page ideas
+aligned with the real interface.
 ```
 
 The UI should feel like an operational data console, not a raw database table
-viewer and not a popup-heavy admin panel.
+viewer and not a popup-heavy admin panel. This document originally started as a
+Phase 1 design mockup; the implemented console has since changed. The current
+implementation below is the canonical direction. Older page examples further
+down should be read as reference material and adjusted to match the current
+shell when implemented.
+
+## Current Implementation Snapshot
+
+Implemented location:
+
+```text
+database-console/
+  api/   Spring Boot API, Liquibase, catalog importer, game DB access
+  web/   Next.js single-page Database Console interface
+```
+
+Current service model:
+
+- `database-console/web` serves the Next.js interface.
+- `database-console/api` reads and writes the `cosmic` game database.
+- `cosmic_database_console` stores console-owned tables, catalog indexes,
+  audit records, settings, and future override data.
+- The live Cosmic bridge can update a narrow set of online character state when
+  enabled; otherwise edits are offline database edits.
+
+Current navigation:
+
+```text
+Dashboard
+Account
+  Account Search
+  Create
+Character
+  AP / SP & Stats
+  Inventory / Storage
+  Equipment / Appearance
+  Quests / Monster Book
+Mobs
+  Mob Catalog / Drop Table
+Items
+  Item Catalog
+World Data
+  Maps
+  NPCs
+  Shops
+  Gachapon
+Audit & Tools
+  Global Audit
+Settings
+  Quality Colors
+```
+
+Current global shell:
+
+```text
++--------------------------------------------------------------------------------+
+| Left Nav | Sticky Top Header: breadcrumb/title + page tabs/actions              |
+|          +---------------------------------------------------------------------+
+|          | Main Workspace                                      | Right Inspector |
+|          | search/filter/catalog/editor/content                | when selected   |
+|          |                                                     | details/history |
+|          |                                                     | technical data  |
++--------------------------------------------------------------------------------+
+| Left Nav Footer: MySQL status | Quality settings gear | Day/Night toggle        |
++--------------------------------------------------------------------------------+
+```
+
+Important current differences from the original mockup:
+
+- no global read/write toggle.
+- no global pending-change bottom bar.
+- most edits save immediately through focused controls or row-level actions.
+- destructive actions use clean custom confirmation dialogs, not browser
+  `confirm()` dialogs.
+- update notifications stack at the bottom right and fade out automatically.
+- night mode is supported globally and persisted locally.
+- the right inspector owns entity details, cross-links, technical provenance, and
+  its own back/forward history.
+- top bars are full-width within the main shell and sit above the workspace and
+  right inspector.
+
+Current implemented page behavior:
+
+- Account Search: account grid with filters for world/status/GM level, account
+  right dock, character cards, and quick links to AP/SP, inventory/storage, and
+  equipment/appearance.
+- Create: clean account creation and character creation flow. Character creation
+  supports existing-account selection, IGN check, GM level select, starter
+  gender/skin/hair/face/equipment pools, and avatar preview.
+- AP / SP & Stats: account-first character selection, live editable stats,
+  location map autocomplete, GM level dropdown, unused AP/SP editing, AP reset
+  helpers, per-job SP reset/max-all controls, and skill level editing.
+- Inventory / Storage: 96-slot inventory grids by type, 48-slot storage grid,
+  drag/drop within grids, drag targets between inventory and storage, item
+  delete confirmation, item duplicate for inventory items, and right inspector
+  item detail/edit layout.
+- Equipment / Appearance: full avatar preview with cash-view toggle,
+  searchable hair/face selection, skin/gender controls, equip and cash equip
+  grids, equipment stat editing, equip quality border/corner indicators, and
+  right inspector item detail.
+- Quests / Monster Book: tabs for available, in-progress, completed, and monster
+  book. Quest rows show NPC icons, status actions, readable timestamps, progress
+  editing, start/forfeit/reset actions, full quest detail drawer, and clickable
+  NPC/item/mob/quest references. Monster book shows all mobs grouped by book tab
+  with 0-5 card count editing and medal-style completion icons.
+- Mob Catalog / Drop Table: regional monster explorer, global drops, monster
+  drop table editing, add-drop panel, meso drop icons, quest-id editable drop
+  requirements, chance display as percent and `1 in N`, and right inspector mob
+  details.
+- Item Catalog: catalog search with "used in game only" default, item filters,
+  grid/list style catalog cards, right inspector item details, drop/shop/gacha/
+  ownership links, and equip average stat ranges.
+- Maps: region/map browsing with right inspector map details, portals, mobs,
+  NPCs, and technical data.
+- NPCs: NPC catalog cards with icon/name/id, used-in-game badges, locations,
+  shops, and technical provenance.
+- Shops: sticky shop list, clean create-shop dialog, add-item autocomplete,
+  order/price editing, row drag handle for ordering, clean delete confirmation,
+  and right inspector item details.
+- Gachapon: sticky gachapon list, tiered rarity dropdowns, clean add-rarity
+  dialog, clean delete confirmation, individual reward chances, and right
+  inspector item details.
+- Quality Colors: settings page opened from the left-nav gear, used to configure
+  non-cash equipment quality color thresholds for custom clients.
+
+## Current Page Layouts
+
+These layouts describe the implemented direction and supersede older mockups
+where they conflict.
+
+### Account Search
+
+```text
+Header: ACCOUNT > Account Search
+Tabs: none
+
++-------------------------------------------------------------+----------------+
+| Search account/character/id | World | Status | GM Level      | Account Dock   |
++-------------------------------------------------------------+ selected acct   |
+| Account Grid                                                 | details        |
+|  [account card] [account card] [account card]                | editable acct  |
+|   world/status/gm/characters                                | fields         |
+|   Create Character action per card                           | character      |
+|                                                              | cards + links  |
++-------------------------------------------------------------+ technical      |
+```
+
+### Account / Character Create
+
+```text
+Header: ACCOUNT > Create
+
++-----------------------------------------+-------------------------------+
+| Create Account                          | Create Character              |
+|  username                               |  choose existing account       |
+|  password + visible toggle              |  selected account detail dock  |
+|  create account                         |  IGN + checker | GM level      |
+|                                         |  gender/skin/hair/face pools   |
+| Existing Account Picker                 |  starter top/bottom/shoes/wep  |
+|  account cards                          |  full avatar preview           |
++-----------------------------------------+-------------------------------+
+```
+
+### AP / SP & Stats
+
+```text
+Header: ACCOUNT > CHARACTER
+Tabs: AP/SP | Inventory | Equipment | Quests
+
++----------------------------------+--------------------------------------+
+| Account/character browser         | Stats editor                         |
+|  account list                     |  level/job/gm/map autocomplete       |
+|  character list                   |  STR DEX INT LUK + unused AP         |
+|                                   |  HP/MP/fame/location                 |
++----------------------------------+--------------------------------------+
+| Skill allocation by job tier                                             |
+| Beginner | 1st | 2nd | 3rd | 4th                                        |
+|  unused SP, Max All, Reset All in each job header                        |
+|  skill rows with value field and -/+ controls                            |
++-------------------------------------------------------------------------+
+```
+
+### Inventory / Storage
+
+```text
+Header: ACCOUNT > CHARACTER
+Tabs: AP/SP | Inventory | Equipment | Quests
+
++-------------------------------------------------------+-------------------+
+| Account/character browser + selected character summary | Item Inspector    |
++-------------------------------------------------------+ item details      |
+| Inventory grids by type, 96 slots each                 | average stats     |
+|  Equip / Use / Setup / Etc / Cash                      | source links      |
+|  square slots, icon, quantity, tooltip                 | edit values       |
+|  drag within grid                                      | save/delete       |
+|  DRAG HERE TO PUT IN STORAGE                           | technical         |
++-------------------------------------------------------+                   |
+| Account storage, 48 slots                              |                   |
+|  storage meso                                          |                   |
+|  DRAG HERE TO PUT IN INVENTORY                         |                   |
++-------------------------------------------------------+-------------------+
+```
+
+### Equipment / Appearance
+
+```text
+Header: ACCOUNT > CHARACTER
+Tabs: AP/SP | Inventory | Equipment | Quests
+
++-------------------------------------+-------------------------------------+
+| Character browser                    | Appearance                          |
+| Avatar preview                       |  searchable hair                    |
+|  cash view toggle                    |  searchable face                    |
+|  full body with equipped items       |  skin dropdown                      |
+|                                      |  gender selector                    |
++-------------------------------------+-------------------------------------+
+| Equipped items grid                  | Cash equipment grid                  |
+|  square slots                        |  square slots                        |
+|  non-cash quality border/corner      |  no equip quality border             |
+|  tooltip with stat/scroll quality    |  tooltip                             |
++-------------------------------------+-------------------------------------+
+| Selected equip edit panel + right inspector with item catalog details     |
++-------------------------------------------------------------------------+
+```
+
+### Quests / Monster Book
+
+```text
+Header: ACCOUNT > CHARACTER
+Tabs: AP/SP | Inventory | Equipment | Quests
+
++-----------------------------------+--------------------------------------+
+| Account/character browser          | Quest / Mob Inspector                |
++-----------------------------------+ full quest details                    |
+| Quest tabs                          | requirements, prerequisites           |
+|  Available                          | completion criteria                   |
+|  In Progress                        | start/actions/rewards                 |
+|  Completed                          | NPC/item/mob/quest links              |
+|  Monster Book                       | technical WZ data                     |
++-----------------------------------+--------------------------------------+
+| Selected quest editor                                                     |
+|  start / forfeit / reset actions                                          |
+|  status, count, readable timestamps, progress rows                        |
+| Monster Book: beginner/basic/intermediate/advanced/master, card 0-5        |
++-------------------------------------------------------------------------+
+```
+
+### Mob Catalog / Drop Table
+
+```text
+Header: MOBS > Catalog / Drop Table
+
++--------------------------------------------------------+------------------+
+| Monster explorer / Global drops tabs                    | Mob/Item Dock     |
+| Search and region filters                               | drops             |
+| Region cards                                            | spawn maps        |
+| Monster cards with icons                                | technical         |
++--------------------------------------------------------+------------------+
+| Selected monster drop table          | Sticky Add Drop panel                |
+|  item/meso rows                      |  item autocomplete                   |
+|  min/max/chance/quest id             |  meso option                         |
+|  percent + 1 in N                    |  chance preview                      |
+|  clean delete                        |  quest id                            |
++--------------------------------------+-------------------------------------+
+```
+
+### Shops And Gachapon
+
+```text
+Header: WORLD DATA
+Tabs: Maps | NPCs | Shops | Gachapon
+
+Shops:
++------------------------------+-----------------------------------------+
+| Sticky shop list              | Selected shop items                     |
+| search + paging               | add item autocomplete                   |
+| NPC icon/name/id              | drag handle ordering                    |
+| selected row                  | position/price edit/delete              |
++------------------------------+-----------------------------------------+
+| Clean Create Shop modal: NPC autocomplete, starter item, price, position, |
+| pitch, audit reason                                                    |
++-------------------------------------------------------------------------+
+
+Gachapon:
++------------------------------+-----------------------------------------+
+| Sticky gachapon list          | Reward rows                             |
+| search + paging               | common/uncommon/rare dropdown           |
+| selected location             | chance percent + 1 in N                 |
++------------------------------+ add rarity dialog + clean delete -------+
+```
 
 ## Visual Style
 
@@ -23,34 +313,36 @@ Principles:
 - no unnecessary popups for common edits.
 - clear selected-row and edited-cell states.
 - consistent spacing and typography across all workspaces.
+- consistent selected-card contrast between card body, text blocks, and inline
+  fields in both day and night mode.
+- square inventory/equipment grids where item identity is primarily icon,
+  tooltip, border, corner marker, and right inspector detail.
 
 General shell:
 
 ```text
 Left Navigation
-Middle Top: tabs, search, filters, actions
+Top Header: breadcrumb/title, page tabs, navigation/actions
 Middle Center: table/detail/editor
-Right Dock: detailed information for selected element
-Bottom Change Bar: unapplied changes, validate, apply changes, discard
+Right Inspector: detailed information for selected element
+Footer Controls: MySQL status, settings, day/night toggle
 ```
 
 Canonical layout:
 
 ```text
 +--------------------------------------------------------------------------------+
-| Top Bar: Back / Forward | Global Search | Env | Mode | Changes | User           |
-+----------------------+---------------------------------------------------------+
-| Left Navigation      | Tabs / Search / Filters / Actions          | Right Dock |
-|                      +---------------------------------------------+            |
-| Account              | Main center view/editing area               | Selected   |
-| Mobs                 |                                             | element    |
-| Items                |                                             | details    |
-| Rewards              |                                             | technical  |
-| Craft                |                                             | collapsed  |
-| World Data           |                                             |            |
-| Audit & Tools        |                                             |            |
-+----------------------+---------------------------------------------+------------+
-| Change Bar: pending changes | validate | apply changes | discard               |
+| Left Navigation      | Top Header: title + tabs/actions                         |
+|                      +---------------------------------------------+------------+
+| Dashboard            | Main workspace                              | Inspector  |
+| Account              | search/filter/catalog/editor                | selected   |
+| Character            |                                             | entity     |
+| Mobs                 |                                             | details    |
+| Items                |                                             | links      |
+| World Data           |                                             | technical  |
+| Audit & Tools        |                                             | provenance |
+|                      |                                             | history    |
+| MySQL | Gear | Theme |                                             |            |
 +--------------------------------------------------------------------------------+
 ```
 
@@ -70,27 +362,23 @@ Examples:
 Avoid forcing users through a separate edit page or modal for simple field
 changes.
 
-### 2. Read / Write Mode Toggle
+### 2. Focused Edits Instead Of Global Write Mode
 
-The console should have an explicit mode toggle.
+The implemented console no longer uses a global read/write toggle. Pages are
+always browseable, and editable fields expose their own edit affordance where
+the change is made.
 
-```text
-Mode: [Read] [Write]
-```
+Current edit model:
 
-Default:
+- simple numeric/text fields update from their own input or row action.
+- destructive actions require a clean custom confirmation dialog.
+- new records use focused add/create panels or clean modals.
+- page refresh should be avoided after saves; selection and scroll context should
+  remain stable whenever possible.
+- updates should notify through the bottom-right stacked notification system.
 
-- read mode.
-- no accidental edits.
-- fields can be selected, copied, inspected, and linked.
-
-Write mode:
-
-- editable cells become editable.
-- add/remove actions become available.
-- dangerous actions still require validation and confirmation.
-
-This keeps browsing fast while making modification intent explicit.
+This keeps normal browsing fast while avoiding a global mode that makes the
+whole page feel armed for editing.
 
 ### 3. Use Autocomplete For References
 
@@ -312,34 +600,35 @@ saved: brief check indicator
 failed: error state with retry/revert
 ```
 
-### 9. Apply Changes Intentionally
+### 9. Save Flow And Confirmation
 
-For risky edits, do not immediately mutate the original game DB.
+The original design used draft state and a bottom apply bar. The current
+implementation uses direct, focused saves instead.
 
-Use an unapplied-change/apply flow for:
-
-- character stats.
-- inventory creation/deletion.
-- equipment stat edits.
-- quest status edits.
-- batch drop table edits.
-- reward pool override activation.
-- any bulk import.
-
-Small safe edits may be staged locally in the page state, then require
-`Apply Changes` to write.
-
-If the user tries to navigate away with unapplied changes, show a navigation
-guard:
+Current model:
 
 ```text
-You have unapplied changes.
-
-[Apply Changes] [Discard Changes] [Return]
+Edit field or row -> validate locally/API-side -> save focused change -> toast
 ```
 
-Apply should run validation first. Blocking errors prevent apply. Warnings can
-allow apply only after explicit confirmation.
+Rules:
+
+- do not update on mere focus/click; update only when the value actually changes.
+- keep the current selected row/item/entity selected after save.
+- do not full-page refresh after normal save/delete/add operations.
+- select the nearest sensible item after delete, such as the previous occupied
+  inventory slot.
+- use custom modals for destructive actions and rarity/shop creation prompts.
+- avoid native browser `alert`, `prompt`, or `confirm`.
+- keep inline inputs visually stable while selected, especially in night mode.
+
+Still use explicit confirmation for dangerous changes:
+
+- deleting inventory/storage/shop/drop/gachapon records.
+- resetting a quest back to available.
+- forfeiting an in-progress quest.
+- creating a new shop for an NPC.
+- future account/character destructive actions.
 
 Warning examples:
 
@@ -376,55 +665,51 @@ Warning examples:
 Recommended layout:
 
 ```text
-Top Bar
-  global search
-  environment badge
-  read/write mode
-  unapplied change count
-  current user
-
 Left Nav
+  Dashboard
   Account
-  Create
+  Character
   Mobs
   Items
-  Rewards
-  Craft
   World Data
   Audit & Tools
+  footer: MySQL status, quality settings gear, day/night toggle
+
+Sticky Header
+  breadcrumb / section eyebrow
+  page title
+  page-level tabs and cross-page shortcuts
 
 Main Workspace
-  page title
   filters/search
-  primary data grid/detail panels
+  catalog cards/lists
+  editor panels
   inline editable fields
 
-Right Detail Dock
+Right Inspector
   selected entity detail
   icon/summary
   source/use relationships
   quick links
-  validation warnings
+  history back/forward
   technical details
-
-Bottom Change Bar
-  pending changes
-  validate
-  apply changes
-  discard
 ```
 
 ## First-Time Setup UI
 
-If `database_console` is missing or setup is incomplete, show setup before the
-normal console shell.
+The current local development target does not require login. Historical setup
+and auth components may still exist in code, but the active operator workflow is
+local trusted admin access.
+
+If login/setup is re-enabled for a deployed version, it should remain outside
+the main console shell and should not reintroduce a global read/write mode.
 
 Setup layout:
 
 ```text
 Database Console Setup
 
-[1 Cosmic DB] -> [2 Console DB] -> [3 Admin] -> [4 Assets] -> [5 Index] -> [6 Review]
+[1 Cosmic DB] -> [2 Console DB] -> [3 Assets] -> [4 Index] -> [5 Review]
 
 +--------------------------------------------------------------------------------+
 | Step 1: Cosmic Database                                                        |
@@ -446,18 +731,15 @@ Console database step:
 ```text
 Step 2: Console Database
 
-Database Name [ database_console ]
+Database Name [ cosmic_database_console ]
 Status        Missing / Ready / Migration Needed
 
 [Create Database] [Run Migrations]
 
 Tables to create:
   console_schema_migrations
-  console_users
-  console_sessions
   console_settings
-  console_change_batches
-  console_change_events
+  console_audit_events
   console_index_runs
   console_reference_entities
   console_reference_relationships
@@ -501,7 +783,7 @@ Review step:
 Step 6: Review
 
 Cosmic DB             connected
-Console DB            database_console
+Console DB            cosmic_database_console
 Migrations            up to date
 Admin user            created
 Reference index       built
@@ -512,7 +794,7 @@ Warnings              3
 
 Setup rules:
 
-- setup writes only to `database_console`.
+- setup writes only to `cosmic_database_console`.
 - setup only reads the original Cosmic database.
 - setup should not alter original Cosmic tables.
 - setup creates override-ready tables from the first migration.
@@ -526,24 +808,40 @@ Setup rules:
 
 Each major page should follow the same structure:
 
+Current implementation note:
+
 ```text
-Header
+Some older ASCII examples below still show bottom change bars, global mode
+controls, or draft/apply flows. Those parts are obsolete. Keep the data grouping
+ideas, but render them through the current shell: left nav, sticky header,
+focused save controls, custom confirmation modals, bottom-right toasts, and the
+right inspector.
+```
+
+```text
+Left Nav
+  current section and parent groups
+
+Sticky Header
+  breadcrumb / section eyebrow
   title
-  middle top tabs
-  primary search
-  filter builder
-  action buttons
+  top-right tabs or related page shortcuts
 
-Main Grid/List
-  dense, editable rows
-  sortable/filterable columns
-  keyboard navigation
+Workspace
+  page-local search/filter/action row
+  catalog cards, grids, lists, or editor panels
+  focused inline edits and row-level actions
 
-Right Dock
+Right Inspector
   selected row/entity detail
+  cross-links
+  collapsible relationship sections
+  technical provenance
+  back/forward entity history
 
-Change Bar
-  pending changes and apply/discard controls
+Feedback
+  bottom-right stacked toast notifications
+  custom confirmation/dialog modals where needed
 ```
 
 This creates consistency across:
@@ -554,20 +852,31 @@ This creates consistency across:
 - mob catalog/search.
 - map catalog/search.
 - character inventory.
+- character equipment and appearance.
 - quest progress.
-- rewards.
-- maker recipes.
+- character quests and monster book.
+- NPC shops.
+- gachapon reward pools.
+- quality color settings.
 
-Middle top tabs should be used for related views inside the same entity.
+Top header tabs should be used for related views in the same major section.
 
 Examples:
 
 ```text
-Item: [Overview] [Dropped By] [Sold By] [Rewards] [Used In] [Owned By] [Audit]
-Mob: [Overview] [Drop Table] [Maps] [Quests] [Audit]
-Character: [Stats] [Inventory] [Equipment] [Skills] [Quests] [Appearance] [Audit]
-Map: [Overview] [Portals] [Mobs] [NPCs] [Reactors] [Audit]
+Character: [AP / SP & Stats] [Inventory / Storage] [Equipment / Appearance] [Quests / Monster Book]
+World Data: [Maps] [NPCs] [Shops] [Gachapon]
+Mobs: [Monster explorer] [Global drops]
+Quests / Monster Book: [Quest Available] [Quest In Progress] [Quest Completed] [Monster Book]
 ```
+
+## Historical Page Mockups And Reference Notes
+
+The following examples preserve earlier design discussion and detailed page
+ideas. They are useful for future page work, but they are not canonical where
+they conflict with the current implementation snapshot above. In particular,
+do not copy old change bars, draft/apply flows, global read/write controls, or
+deep modal stacks into new implementation.
 
 ## Example: Account And Character Creation
 
@@ -2788,8 +3097,9 @@ Quest result:
   1008 Mai's Training  Maple Island  available Lv 1+
 ```
 
-Autocomplete should never write immediately. It should create an unapplied
-row/change.
+Autocomplete should never write game data by itself. Selection fills the
+focused editor row, then the page saves through its API endpoint, validation,
+confirmation when needed, and audit event.
 
 ## Editing And Validation
 
@@ -2815,7 +3125,7 @@ warning
 blocking error
 ```
 
-Only blocking errors prevent apply.
+Only blocking errors prevent save.
 
 ## Recommendations Over The Initial Idea
 
@@ -2959,23 +3269,26 @@ Indexes:
 Catalog pages should query read models/indexes instead of joining many raw
 tables live.
 
-### Unapplied Change Layer
+### Focused Save And Audit Layer
 
-Inline edits should update page/workspace state first.
+The current console uses focused saves instead of a global unapplied-change
+layer. Inline edits should validate and save only when the value actually
+changes.
 
-Apply flow:
+Focused save flow:
 
 ```text
 UI edit
--> unapplied change
--> validate
--> preview affected rows / before-after diff
--> apply transaction
+-> local/API validation
+-> focused transaction
 -> audit event
+-> toast
 -> refresh indexes affected by the change
 ```
 
-The game DB should not be written until `Apply Changes`.
+Normal game DB edits should not wait for a global `Apply Changes` button.
+Dangerous changes still require a custom confirmation modal and should preserve
+the selected entity after saving.
 
 ### Optimistic Concurrency
 
@@ -2992,7 +3305,7 @@ manual conflict resolution before apply.
 
 ### Audit Event
 
-Every applied change should create an audit event.
+Every saved change should create an audit event.
 
 Minimum fields:
 
@@ -3004,7 +3317,7 @@ Minimum fields:
 - after value.
 - timestamp.
 - reason/note if required.
-- batch/apply id.
+- request/action id.
 - source console.
 - validation warnings acknowledged.
 
@@ -3018,9 +3331,8 @@ Console DB:
 - saved filters.
 - badges/tags if manually curated.
 - override records.
-- pending/unapplied server-side change sessions if persistence is desired.
 - audit logs.
-- permissions/roles.
+- permissions/roles, if authentication is enabled later.
 
 Original Cosmic DB:
 
@@ -3041,7 +3353,7 @@ Database access rule:
 ```text
 The web UI always talks to Database Console API endpoints.
 The UI never connects directly to the original Cosmic database or
-database_console.
+cosmic_database_console.
 ```
 
 Write flow:
@@ -3049,17 +3361,18 @@ Write flow:
 ```text
 UI edit
 -> API validate
--> API creates unapplied change
--> API preview diff
--> API apply
--> service/repository writes database_console or original Cosmic DB
--> audit batch
+-> API writes focused change
+-> service/repository writes cosmic_database_console or original Cosmic DB
+-> audit event
 -> index refresh
+-> bottom-right toast / local UI refresh without losing selection
 ```
 
-Original Cosmic DB writes are allowed only through API apply operations for
-explicit original-DB edits. Override edits write to `database_console` first and
-become runtime-active only through server providers/hooks.
+Original Cosmic DB writes are allowed only through Database Console API
+operations for explicit original-DB edits. Dangerous writes use custom
+confirmation modals, not browser prompts. Override edits write to
+`cosmic_database_console` first and become runtime-active only through server
+providers/hooks.
 
 Route pattern:
 
@@ -3197,7 +3510,7 @@ POST /api/create/account/validate
 POST /api/create/character/validate
 
 payload:
-  draft
+  requestedAccountOrCharacter
   adminOverrideFlags
 
 returns:
@@ -3215,7 +3528,7 @@ POST /api/create/character/apply
 POST /api/create/account-with-character/apply
 
 payload:
-  draft
+  requestedAccountOrCharacter
   baseCreationPolicyRevision
   acknowledgedWarnings
   reason
@@ -3301,14 +3614,14 @@ Recommended route ownership:
 Implementation rule:
 
 ```text
-Do not make each page invent its own mutation model. Pages should produce
-standard change objects, then shared validation/apply/audit services execute
-them.
+Do not make each page invent its own mutation model. Pages should call focused
+domain API operations that share validation, confirmation hooks, audit logging,
+toast reporting, and selection-preserving refresh behavior.
 ```
 
 ## MVP UI Implementation Order
 
-1. Global layout: top search, left nav, main workspace, right dock, change bar.
+1. Global layout: sticky page header, left nav, main workspace, right dock.
 2. Shared entity autocomplete.
 3. Shared editable grid component.
 4. Shared detail dock component.
@@ -3317,4 +3630,4 @@ them.
 7. Item source/drop editor.
 8. Character inventory editor.
 9. Gachapon reward override editor.
-10. Audit/unapplied-change/apply workflow.
+10. Focused save, confirmation modal, toast, and audit workflow.

@@ -31,12 +31,44 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
   reconstructed movement capability.
   - Category: agent navigation correctness and movement realism.
   - Source branch: `source/dev`.
-  - Useful upstream areas:
-    - overlapped foothold ground continuity.
-    - client-true wall collidability using `zMass` groups.
+  - Useful upstream commits and defect classes:
+    - `7c0d287015` - `fix(bot): ground-walk follows foothold chain
+      across joined forks`.
+      - Defect: coordinate-based foothold lookup snaps to the wrong fork arm
+        while the real client keeps walking along the current foothold
+        `prev`/`next` chain.
+      - Agent port target: movement ground-step service and graph builder.
+    - `59c5288994` - `fix(bot-nav): skip phantom cross-region jumps onto
+      shared ground`.
+      - Defect: overlapping foothold chains can share the same physical
+        ground, causing A* to author impossible region-changing jump edges.
+      - Agent port target: navigation graph edge validation and current-region
+        continuity.
+    - `235b6aefa4` - `Fix overlapped foothold ground continuity`.
+      - Defect: navigation may preserve the correct region, but the ground
+        motor can still raw-snap to the wrong overlapping foothold.
+      - Agent port target: movement runtime should pass the resolved standing
+        foothold/region into ground-step preview.
+    - `43b9f06c8c` - `fix(bot-physics): client-true wall collidability
+      (zMass groups) + stale-route/watchdog fixes`.
+      - Defect: vertical footholds/walls can be treated as hard blockers in
+        places where the client would keep walking the foothold chain.
+      - Agent port target: airborne wall collision by `zMass`, ground walking
+        by chain/region, stale route watchdog.
+    - `f5fe4b0a4d` - `Fix foothold detour oscillation`.
+      - Defect: detour waypoint can disarm too early and fight the legal climb
+        approach.
+      - Agent port target: regression tests and waypoint hold policy.
+    - `f78f85d4bd` - `Recover off-graph travel falls`.
+      - Defect: travel can fall off the nav graph and remain wedged.
+      - Agent port target: recovery policy when current region is unknown.
+    - `8a7e7b3a55` - `fix(bot-nav): directional walk-off drops author landing
+      via execution walk-off sim; unpark -pos gate wedges`.
+      - Defect: graph-authored drop edges can be impossible to reproduce at
+        execution time.
+      - Agent port target: graph-builder/executor SSOT tests for walk-off/drop
+        landing.
     - teleport movement fragment layout.
-    - off-graph travel fall recovery.
-    - stable walk-off/drop-edge authoring and steering checks.
     - hardened bot world-map WZ loading.
   - Why it matters for agents: Amherst/Maple Island MVP can pass with simple
     navigation, but future Victoria Island pathing, vertical maps, ropes,
@@ -49,6 +81,11 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
       catalog validation checks, or graph-builder tests.
   - Validation later:
     - overlapped footholds do not create false stuck states.
+    - shared-ground overlapping foothold chains do not produce phantom
+      cross-region jump/teleport/flash-jump edges.
+    - joined fork walks follow the client-like foothold `prev`/`next` chain.
+    - high vertical footholds near map entrances do not make agents park at an
+      impossible `jump-pos`, `drop-pos`, or `climb-pos` gate.
     - wall collision matches the client on representative maps.
     - teleport/flash-jump route fragments are packet-safe.
     - fall recovery returns to a valid foothold without infinite loops.
@@ -264,13 +301,30 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
 
 ## NPC / Quest Capability Gaps
 
-- [ ] Implement `QuestCapability` read APIs.
+- [x] Prepare unwired NPC interaction validator/capability services.
+  - Added `AgentNpcInteractionCapability`, request/result models, interaction
+    type enum, and `AgentNpcInteractionValidator`.
+  - Validates NPC id, map id, catalog presence, map placement, optional
+    quest-start/quest-complete action, interaction range, approach point, and
+    dialogue-delay estimate.
+  - Uses future `NpcGateway` only when provided; no current runtime behavior is
+    changed.
+- [x] Prepare unwired quest start/complete validator/capability services.
+  - Added `AgentQuestStartCapability`, `AgentQuestCompleteCapability`,
+    `AgentQuestRequirementValidator`, `AgentQuestSnapshot`,
+    `AgentQuestRequirement`, and typed result/request/status models.
+  - Validates current status, level, job, prerequisites, required items, mob
+    kills, progress values, NPC/range, and auto-complete cases.
+  - Amherst quest metadata is used as the first default requirement source.
+  - Uses future `QuestGateway` only when provided; no current runtime behavior
+    is changed.
+- [ ] Implement live `QuestCapability` read APIs.
   - Read live quest status.
   - Check start requirements.
   - Check complete requirements.
   - Explain unmet requirements in structured reason codes.
   - Never use `forceStart` / `forceComplete` for normal runtime behavior.
-- [ ] Implement `NpcQuestInteractionCapability`.
+- [ ] Wire `NpcQuestInteractionCapability` to live Cosmic gateways after reconstruction.
   - Validate map, live NPC presence, interaction range/box, reachability,
     quest requirements, manual-review flags, and blocking agent states.
   - Execute direct quest start/complete only after validation passes.
@@ -285,6 +339,11 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
     - `OUT_OF_RANGE`
     - `UNREACHABLE`
     - `FAILED_SCRIPT`
+- [ ] Wire prepared reactor capability to live Cosmic reactor execution after reconstruction.
+  - `AgentReactorInteractionCapability` can already plan reactor objectives and
+    delegates through `AgentReactorExecutionPort` only when supplied.
+  - Add the live adapter after movement/loot/inventory capability wiring is
+    stable so reactor rewards can be verified through inventory state.
 - [ ] Implement shop interaction capability.
   - Validate NPC shop mapping.
   - Validate agent range/reachability.
@@ -300,6 +359,7 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
     - inventory space.
     - default first valid choice only when explicitly safe.
 - [ ] Add NPC/quest integration tests.
+  - Unit tests now cover unwired NPC and quest validators.
   - Start quest from valid NPC/range.
   - Reject start from wrong NPC.
   - Reject start when level/prerequisite/item requirement fails.

@@ -1,8 +1,8 @@
 # Post-Reconstruction Agent Platform Specification
 
 This document describes the intended system after the nutnnut bot
-reconstruction is complete and the Agent engine optimization track has been
-applied.
+reconstruction is complete. It now separates the immediate post-reconstruction
+gameplay proof from the later optimization/scaling track.
 
 Short description:
 
@@ -85,13 +85,22 @@ The first scale goal is:
 2000 concurrent Agents with stable server responsiveness.
 ```
 
-The first gameplay goal remains:
+The first gameplay proof goal is:
 
 ```text
-one Agent completes the Maple Island questline MVP and stops at Southperry.
+one Agent completes Amherst, then the Maple Island questline MVP, and stops at
+Southperry.
 ```
 
-The scaling goal is prioritized first after reconstruction.
+Current priority order after reconstruction:
+
+1. Prove the capability runtime and objective-capability wrapper model.
+2. Complete and test Amherst MVP.
+3. Complete and test Maple Island MVP.
+4. Decide which nutnnut legacy behaviors remain enabled, gated, or disabled as
+   legacy.
+5. Then start the Agent optimization/scaling track toward 2000 concurrent
+   Agents.
 
 ## Design Principles
 
@@ -126,10 +135,11 @@ Each major responsibility should be implemented as a package:
 
 Packages communicate through stable DTOs, events, commands, and adapters.
 
-### Gameplay Separated From Scaling
+### Gameplay Proved Before Scaling
 
-Optimization/scaling work and gameplay capability work should be separate
-tracks.
+Optimization/scaling work and gameplay capability work should remain separate
+tracks. The gameplay capability boundary should be proven first so optimization
+does not hard-code unfinished legacy behavior.
 
 Scaling track:
 
