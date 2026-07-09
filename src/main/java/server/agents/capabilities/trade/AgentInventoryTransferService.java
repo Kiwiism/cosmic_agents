@@ -54,6 +54,7 @@ public final class AgentInventoryTransferService {
                 category,
                 entry,
                 agent,
+                CosmicAgentServerAdapter.INSTANCE.inventory(),
                 (dropEntry, dropAgent) -> AgentInventorySellTrashService.collectSellTrashEquips(
                         dropEntry,
                         dropAgent,

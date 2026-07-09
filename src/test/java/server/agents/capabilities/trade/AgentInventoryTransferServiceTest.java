@@ -6,6 +6,7 @@ import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.inventory.AgentInventoryDropService;
 import server.agents.capabilities.inventory.AgentInventoryStateRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiFunction;
@@ -50,6 +51,7 @@ class AgentInventoryTransferServiceTest {
                     eq("scrolls"),
                     eq(entry),
                     eq(bot),
+                    any(InventoryGateway.class),
                     any(BiFunction.class)));
             assertEquals(AgentMovementTimers.delayAfterCurrentTick(20_000),
                     AgentInventoryStateRuntime.lootInhibitMs(entry));

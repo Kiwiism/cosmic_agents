@@ -2644,3 +2644,8 @@ Recent capability extraction notes:
   candidate collection, quest-item safety, self-upgrade and reserved-recipient
   exclusions, protected-stat checks, and item ordering stay unchanged while the
   service no longer reaches directly for the Cosmic adapter.
+- SPI/gateway extraction: `AgentInventoryDropService` now receives
+  `InventoryGateway` from the transfer/drop boundary. Drop category routing,
+  safe-item checks, quest-item filtering, named-item matching, item dropping,
+  and legacy reply text stay unchanged while drop behavior no longer reaches
+  directly for the Cosmic adapter.
