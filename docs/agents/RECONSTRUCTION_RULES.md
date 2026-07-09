@@ -6397,6 +6397,10 @@ Current physics correction:
   through `PacketGateway.broadcastSpawnMonster` and
   `PacketGateway.broadcastKillMonster`. Airshow still owns trail timing,
   object-id allocation, position, foothold, and stance setup.
+- SPI/gateway extraction: support special-move dispatch now routes synthetic
+  packet parsing and handler execution through `CombatGateway.dispatchSyntheticPacket`
+  and `CosmicCombatGateway`. `AgentSupportSpecialMoveExecutor` still owns
+  building the legacy special-move packet bytes and deciding when to dispatch.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

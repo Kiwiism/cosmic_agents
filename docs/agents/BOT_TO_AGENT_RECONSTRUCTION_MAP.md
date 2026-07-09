@@ -2451,3 +2451,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: airshow trail spawn/kill packets now route through
   `PacketGateway`; `AgentAirshowService` still owns trail timing and monster
   visual setup.
+- SPI/gateway extraction: support special-move packet parsing and handler
+  dispatch now route through `CombatGateway`/`CosmicCombatGateway`; combat still
+  owns the support special-move packet byte builder and invocation decision.
