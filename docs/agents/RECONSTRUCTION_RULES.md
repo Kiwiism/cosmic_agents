@@ -6846,6 +6846,12 @@ Current physics correction:
   `SkillFactory` in `AgentProjectileHitbox`. Learned-skill-map preference,
   passive range summing, client projectile base range, facing geometry, and
   vertical hitbox behavior are unchanged.
+- SPI/gateway extraction: passive HP/MP recovery now calls
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentPassiveRecoveryPolicy`. Standing-still gating,
+  Warrior flat HP recovery, Crusader/White Knight/Dawn Warrior flat MP
+  recovery, Magician INT-scaled MP recovery, and base recovery math are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

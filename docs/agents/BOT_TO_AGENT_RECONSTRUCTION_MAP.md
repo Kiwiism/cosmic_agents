@@ -2870,3 +2870,6 @@ Recent capability extraction notes:
   `AgentSkillGatewayRuntime` for passive projectile range skill fallback lookup.
   Learned-skill preference, range bonus math, and client hitbox geometry remain
   unchanged.
+- SPI/gateway extraction: `AgentPassiveRecoveryPolicy` now uses
+  `AgentSkillGatewayRuntime` for passive HP/MP recovery skill-effect lookup.
+  Standing-still gating and legacy recovery math remain unchanged.
