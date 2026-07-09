@@ -2545,3 +2545,8 @@ Recent capability extraction notes:
   text slot, weapon type, equip stats, level requirements, and requirement
   validation. Legacy item-info overloads remain for compatibility and focused
   tests; reserve selection behavior stays unchanged.
+- SPI/gateway extraction: equipment recommendation filtering now uses
+  gateway-backed recommendation hooks for cash checks, text slot, weapon type,
+  wearability, and requirement validation; recommendation candidate filtering,
+  future/immediate scope behavior, optimizer inputs, and summary formatting stay
+  unchanged.

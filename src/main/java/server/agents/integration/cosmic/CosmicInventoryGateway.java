@@ -85,4 +85,9 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     public boolean meetsEquipRequirements(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame) {
         return ItemInformationProvider.getInstance().meetsEquipRequirements(equip, job, level, str, dex, int_, luk, fame);
     }
+
+    @Override
+    public boolean canWearEquipment(Character agent, Equip equip, short primarySlot) {
+        return ItemInformationProvider.getInstance().canWearEquipment(agent, equip, primarySlot);
+    }
 }

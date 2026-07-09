@@ -36,5 +36,7 @@ public interface InventoryGateway {
     int getMakerCrystalFromLeftover(int leftoverId);
 
     boolean meetsEquipRequirements(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame);
+
+    boolean canWearEquipment(Character agent, Equip equip, short primarySlot);
 }
 

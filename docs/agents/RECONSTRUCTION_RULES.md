@@ -6501,6 +6501,11 @@ Current physics correction:
   text slot, weapon type, equip stats, level requirements, and requirement
   validation. The legacy item-info overloads remain for compatibility and
   focused tests; reserve selection behavior is unchanged.
+- SPI/gateway extraction: equipment recommendation filtering now uses
+  gateway-backed recommendation hooks for cash checks, text slot, weapon type,
+  wearability, and requirement validation. Recommendation candidate filtering,
+  future/immediate scope behavior, optimizer inputs, and summary formatting are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

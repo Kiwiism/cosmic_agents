@@ -7,8 +7,9 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
 import constants.inventory.EquipSlot;
-import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
+import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationHooks;
+import server.agents.integration.InventoryGateway;
 import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
@@ -48,24 +49,25 @@ public final class AgentEquipmentRecommendationService {
     private static List<AgentEquipRecommendation> findRecommendedEquips(Character receiver,
                                                                         Character holder,
                                                                         RecommendationScope scope) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
+        InventoryGateway inventory = inventory();
+        RecommendationHooks hooks = AgentEquipmentRecommendationPolicy.RecommendationHooks.from(inventory);
         Inventory holderEquipInv = holder.getInventory(InventoryType.EQUIP);
 
         Set<Equip> holderItems = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Item item : holderEquipInv.list()) {
-            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) continue;
+            if (!(item instanceof Equip equip) || inventory.isCashItem(item.getItemId())) continue;
             if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) continue;
-            String textSlot = ii.getEquipmentSlot(equip.getItemId());
+            String textSlot = inventory.getEquipmentSlot(equip.getItemId());
             if (textSlot == null) continue;
             EquipSlot eslot = EquipSlot.getFromTextSlot(textSlot);
             if (eslot == null || eslot == EquipSlot.PET_EQUIP) continue;
             if (eslot.getPrimarySlot() == 0) continue;
             short primarySlot = (short) eslot.getPrimarySlot();
             if (primarySlot == (short) -11
-                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(receiver, ii.getWeaponType(equip.getItemId()))) {
+                    && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(receiver, inventory.getWeaponType(equip.getItemId()))) {
                 continue;
             }
-            if (!AgentEquipmentRecommendationPolicy.isRecommendationCandidate(receiver, ii, equip, primarySlot, scope)) {
+            if (!AgentEquipmentRecommendationPolicy.isRecommendationCandidate(receiver, hooks, equip, primarySlot, scope)) {
                 continue;
             }
             holderItems.add(equip);
@@ -117,25 +119,26 @@ public final class AgentEquipmentRecommendationService {
                                                                       RecommendationScope scope) {
         if (!(holderItem instanceof Equip candidate)) return null;
 
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        if (ii.isCash(candidate.getItemId())) return null;
+        InventoryGateway inventory = inventory();
+        RecommendationHooks hooks = AgentEquipmentRecommendationPolicy.RecommendationHooks.from(inventory);
+        if (inventory.isCashItem(candidate.getItemId())) return null;
         if (holderItem.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) return null;
 
-        String textSlot = ii.getEquipmentSlot(candidate.getItemId());
+        String textSlot = inventory.getEquipmentSlot(candidate.getItemId());
         if (textSlot == null) return null;
         EquipSlot slot = EquipSlot.getFromTextSlot(textSlot);
         if (slot == null || slot == EquipSlot.PET_EQUIP) return null;
         short primarySlot = (short) slot.getPrimarySlot();
         if (primarySlot == 0) return null;
         if (primarySlot == (short) -11
-                && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(receiver, ii.getWeaponType(candidate.getItemId()))) {
+                && !AgentWeaponCompatibilityPolicy.isWeaponCompatible(receiver, inventory.getWeaponType(candidate.getItemId()))) {
             return null;
         }
-        if (!AgentEquipmentRecommendationPolicy.isRecommendationCandidate(receiver, ii, candidate, primarySlot, scope)) {
+        if (!AgentEquipmentRecommendationPolicy.isRecommendationCandidate(receiver, hooks, candidate, primarySlot, scope)) {
             return null;
         }
         if (scope == RecommendationScope.IMMEDIATE
-                && !AgentEquipmentReservePolicy.isEquipUsefulToAgent(receiver, ii, candidate)) {
+                && !AgentEquipmentReservePolicy.isEquipUsefulToAgent(receiver, hooks, candidate)) {
             return null;
         }
 
@@ -159,7 +162,11 @@ public final class AgentEquipmentRecommendationService {
         return formatRecommendationSummary(
                 recommendations,
                 maxItems,
-                CosmicAgentServerAdapter.INSTANCE.inventory()::getItemName);
+                inventory()::getItemName);
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 
     static String formatRecommendationSummary(List<AgentEquipRecommendation> recommendations,
