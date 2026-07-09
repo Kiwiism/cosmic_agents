@@ -6,8 +6,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,7 +57,7 @@ public final class AgentEquipmentPlanExecutor {
     }
 
     public static void unequipInfeasibleEquipped(Character agent) {
-        unequipInfeasibleEquipped(agent, InfeasibleEquipHooks.live(CosmicAgentServerAdapter.INSTANCE.inventory()));
+        unequipInfeasibleEquipped(agent, InfeasibleEquipHooks.live(AgentInventoryGatewayRuntime.inventory()));
     }
 
     static void unequipInfeasibleEquipped(Character agent, InfeasibleEquipHooks hooks) {

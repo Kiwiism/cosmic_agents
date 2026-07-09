@@ -6659,6 +6659,12 @@ Current physics correction:
   obtain inventory metadata through `AgentInventoryGatewayRuntime`. Report
   text, scroll reaction timing, recovery/buff classification, and item-effect
   fallback behavior are unchanged.
+- SPI/gateway extraction: equipment live hooks and combat attack metadata now
+  obtain inventory metadata through `AgentInventoryGatewayRuntime` instead of
+  importing the concrete Cosmic adapter. Auto-equip, optimizer hook creation,
+  reserve checks, recommendation filtering, unequip behavior, infeasible-equip
+  cleanup, and equipped-weapon attack metadata are unchanged; deeper
+  `ItemInformationProvider` compatibility signatures remain staged for later.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

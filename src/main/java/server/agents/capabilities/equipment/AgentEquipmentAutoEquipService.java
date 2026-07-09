@@ -35,8 +35,8 @@ import server.agents.capabilities.equipment.AgentWeaponCompatibilityPolicy;
 import server.agents.capabilities.equipment.AgentWeaponScoreBreakdown;
 import server.agents.capabilities.dialogue.AgentRangeReportService;
 import server.agents.capabilities.equipment.AgentEquipmentRuntime;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -157,7 +157,7 @@ public final class AgentEquipmentAutoEquipService {
 
     public static List<String> autoEquipDebug(Character bot) {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
-        InventoryGateway inventory = CosmicAgentServerAdapter.INSTANCE.inventory();
+        InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         Inventory eqpInv = bot.getInventory(InventoryType.EQUIP);
         Inventory eqdInv = bot.getInventory(InventoryType.EQUIPPED);
         AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(bot);
@@ -278,7 +278,7 @@ public final class AgentEquipmentAutoEquipService {
             Map<Short, List<Equip>> bySlot, List<Short> dpSlots, List<Equip> weaponPool,
             List<?> branches, boolean anyCap) {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        InventoryGateway inventory = CosmicAgentServerAdapter.INSTANCE.inventory();
+        InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         String botName = bot != null ? bot.getName() : "unknown";
         String safeName = botName.replaceAll("[^a-zA-Z0-9_-]", "_");
         String filename = "equiplog-" + safeName + "-" + now.format(EQUIP_LOG_FILE_FMT) + ".txt";

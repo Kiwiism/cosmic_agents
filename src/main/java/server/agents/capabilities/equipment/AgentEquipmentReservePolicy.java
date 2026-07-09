@@ -9,8 +9,8 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import constants.inventory.EquipSlot;
 import server.ItemInformationProvider;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -356,7 +356,7 @@ public final class AgentEquipmentReservePolicy {
     }
 
     private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
+        return AgentInventoryGatewayRuntime.inventory();
     }
 
     private static String selfReserveTrackKey(Character agent, EquipUsefulnessHooks hooks, Equip equip) {

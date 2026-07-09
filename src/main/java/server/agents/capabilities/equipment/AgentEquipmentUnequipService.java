@@ -5,8 +5,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public final class AgentEquipmentUnequipService {
     }
 
     public static String unequipAll(Character agent) {
-        return unequipAll(agent, UnequipHooks.live(CosmicAgentServerAdapter.INSTANCE.inventory()));
+        return unequipAll(agent, UnequipHooks.live(AgentInventoryGatewayRuntime.inventory()));
     }
 
     static String unequipAll(Character agent, UnequipHooks hooks) {
@@ -68,7 +68,7 @@ public final class AgentEquipmentUnequipService {
     }
 
     public static String unequipSlot(Character agent, short[] slots) {
-        return unequipSlot(agent, slots, UnequipHooks.live(CosmicAgentServerAdapter.INSTANCE.inventory()));
+        return unequipSlot(agent, slots, UnequipHooks.live(AgentInventoryGatewayRuntime.inventory()));
     }
 
     static String unequipSlot(Character agent, short[] slots, UnequipHooks hooks) {

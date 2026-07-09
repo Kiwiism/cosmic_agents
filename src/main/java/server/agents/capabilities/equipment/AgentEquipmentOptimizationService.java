@@ -9,8 +9,8 @@ import client.inventory.Item;
 import constants.inventory.EquipSlot;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +34,7 @@ public final class AgentEquipmentOptimizationService {
                                                                        Collection<Equip> extras,
                                                                        RecommendationScope scope) {
         ItemInformationProvider itemInfo = ItemInformationProvider.getInstance();
-        InventoryGateway inventory = CosmicAgentServerAdapter.INSTANCE.inventory();
+        InventoryGateway inventory = AgentInventoryGatewayRuntime.inventory();
         Inventory equipInventory = agent.getInventory(InventoryType.EQUIP);
         Inventory equippedInventory = agent.getInventory(InventoryType.EQUIPPED);
         AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(agent);

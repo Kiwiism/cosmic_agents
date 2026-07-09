@@ -2705,3 +2705,9 @@ Recent capability extraction notes:
   metadata. Inventory report text, autopot debug text, buff debug lines,
   scroll-reaction decisions, and recovery/buff consumable classification remain
   behavior-preserving.
+- SPI/gateway extraction: equipment optimizer/recommendation/reserve/unequip
+  live hooks and combat attack metadata now use `AgentInventoryGatewayRuntime`
+  for live inventory metadata instead of importing the concrete Cosmic adapter.
+  Existing item-info compatibility method signatures remain as staged seams,
+  while auto-equip, recommendation, reserve, unequip, infeasible-cleanup, and
+  attack route metadata behavior remain unchanged.

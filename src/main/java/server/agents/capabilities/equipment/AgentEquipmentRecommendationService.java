@@ -9,8 +9,8 @@ import config.YamlConfig;
 import constants.inventory.EquipSlot;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationHooks;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -166,7 +166,7 @@ public final class AgentEquipmentRecommendationService {
     }
 
     private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
+        return AgentInventoryGatewayRuntime.inventory();
     }
 
     static String formatRecommendationSummary(List<AgentEquipRecommendation> recommendations,

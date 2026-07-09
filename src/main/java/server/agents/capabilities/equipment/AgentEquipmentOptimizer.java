@@ -6,8 +6,8 @@ import client.inventory.Equip;
 import client.inventory.WeaponType;
 import server.ItemInformationProvider;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.combat.CombatFormulaProvider;
 
 import java.util.ArrayList;
@@ -495,7 +495,7 @@ public final class AgentEquipmentOptimizer {
     }
 
     private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
+        return AgentInventoryGatewayRuntime.inventory();
     }
 
     private static boolean[] scanReqRelevantDims(Map<Short, List<Equip>> bySlot,
