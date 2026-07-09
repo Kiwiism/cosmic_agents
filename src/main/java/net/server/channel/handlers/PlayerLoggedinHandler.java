@@ -58,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.life.MobSkill;
+import server.doubleagent.DoubleAgentService;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
@@ -160,10 +161,15 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
             boolean newcomer = false;
             if (player == null) {
                 try {
+                    DoubleAgentService.restoreActiveBeforeLogin(cid);
                     player = Character.loadCharFromDB(cid, c, true);
                     newcomer = true;
                 } catch (SQLException e) {
                     e.printStackTrace();
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
+                    c.disconnect(true, false);
+                    return;
                 }
 
                 if (player == null) { //If you are still getting null here then please just uninstall the game >.>, we dont need you fucking with the logs

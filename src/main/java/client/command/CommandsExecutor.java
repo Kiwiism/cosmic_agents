@@ -47,6 +47,7 @@ import client.command.commands.gm0.StatDexCommand;
 import client.command.commands.gm0.StatIntCommand;
 import client.command.commands.gm0.StatLukCommand;
 import client.command.commands.gm0.StatStrCommand;
+import client.command.commands.gm0.DoubleAgentRestoreCommand;
 import client.command.commands.gm0.TimeCommand;
 import client.command.commands.gm0.ToggleExpCommand;
 import client.command.commands.gm0.UptimeCommand;
@@ -390,6 +391,8 @@ public class CommandsExecutor {
         addCommand("mobhp", MobHpCommand.class);
         addCommand("dress", DressingRoomCommand.class);
         addCommand("dresscash", DressingRoomCashCommand.class);
+        addCommand("doubleagentrestore", DoubleAgentRestoreCommand.class);
+        addCommand("tagrestore", DoubleAgentRestoreCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);
     }

@@ -110,4 +110,13 @@
         <sqlFile path="db/tables/025-bot-ownership.sql"/>
     </changeSet>
 
+    <changeSet id="26" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="character_tag_sessions"/>
+            </not>
+        </preConditions>
+        <sqlFile path="db/tables/026-tag-overlay.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
