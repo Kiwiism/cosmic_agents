@@ -7,6 +7,7 @@ import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.cosmic.CosmicPacketGateway;
+import server.life.Monster;
 import server.maps.MapleMap;
 import server.maps.Mist;
 import tools.PacketCreator;
@@ -151,5 +152,37 @@ class CosmicPacketGatewayTest {
 
         verify(mist).makeFakeSpawnData(1);
         verify(recipient).sendPacket(packet);
+    }
+
+    @Test
+    void broadcastSpawnMonsterBuildsPacketAndBroadcastsThroughMap() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Packet packet = mock(Packet.class);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.spawnMonster(monster, true)).thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.broadcastSpawnMonster(map, monster, true);
+
+            packets.verify(() -> PacketCreator.spawnMonster(monster, true));
+            verify(map).broadcastMessage(packet);
+        }
+    }
+
+    @Test
+    void broadcastKillMonsterBuildsPacketAndBroadcastsAtPosition() {
+        MapleMap map = mock(MapleMap.class);
+        Packet packet = mock(Packet.class);
+        java.awt.Point position = new java.awt.Point(10, 20);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.killMonster(777, 1)).thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.broadcastKillMonster(map, 777, 1, position);
+
+            packets.verify(() -> PacketCreator.killMonster(777, 1));
+            verify(map).broadcastMessage(packet, position);
+        }
     }
 }

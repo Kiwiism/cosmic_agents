@@ -3,8 +3,11 @@ package server.agents.integration;
 import client.Character;
 import client.inventory.Item;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
+import server.life.Monster;
+import server.maps.MapleMap;
 import server.maps.Mist;
 
+import java.awt.Point;
 import java.util.Map;
 
 public interface PacketGateway {
@@ -40,5 +43,9 @@ public interface PacketGateway {
                                int pos_y);
 
     void sendMistFakeSpawn(Character recipient, Mist mist, int level);
+
+    void broadcastSpawnMonster(MapleMap map, Monster monster, boolean newSpawn);
+
+    void broadcastKillMonster(MapleMap map, int objectId, int animation, Point position);
 }
 

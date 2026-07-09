@@ -16,7 +16,6 @@ import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
-import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -219,9 +218,10 @@ public final class AgentAirshowService {
         trail.setPosition(position);
         trail.setFh(AgentMovementPhysicsStateRuntime.lastGroundFhId(entry));
         trail.setStance(CharacterStance.STAND_RIGHT_STANCE);
-        map.broadcastMessage(PacketCreator.spawnMonster(trail, true));
+        CosmicAgentServerAdapter.INSTANCE.packets().broadcastSpawnMonster(map, trail, true);
         TimerManager.getInstance().schedule(
-                () -> map.broadcastMessage(PacketCreator.killMonster(trail.getObjectId(), 1), trail.getPosition()),
+                () -> CosmicAgentServerAdapter.INSTANCE.packets().broadcastKillMonster(
+                        map, trail.getObjectId(), 1, trail.getPosition()),
                 TRAIL_DEATH_DELAY_MS);
     }
 

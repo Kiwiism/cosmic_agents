@@ -6393,6 +6393,10 @@ Current physics correction:
   through `PacketGateway.sendMistFakeSpawn`, moving direct client packet send out
   of the navigation capability. Overlay geometry and mist object allocation stay
   in `AgentNavigationDebugOverlay`.
+- SPI/gateway extraction: airshow trail spawn/kill monster packets now route
+  through `PacketGateway.broadcastSpawnMonster` and
+  `PacketGateway.broadcastKillMonster`. Airshow still owns trail timing,
+  object-id allocation, position, foothold, and stance setup.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -7,10 +7,13 @@ import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
 import net.packet.Packet;
 import net.server.channel.handlers.AbstractDealDamageHandler.AttackTarget;
+import server.life.Monster;
 import server.agents.integration.PacketGateway;
+import server.maps.MapleMap;
 import server.maps.Mist;
 import tools.PacketCreator;
 
+import java.awt.Point;
 import java.util.Map;
 
 /**
@@ -106,5 +109,25 @@ public enum CosmicPacketGateway implements PacketGateway {
             return;
         }
         recipient.sendPacket(mist.makeFakeSpawnData(level));
+    }
+
+    @Override
+    public void broadcastSpawnMonster(MapleMap map, Monster monster, boolean newSpawn) {
+        if (map == null || monster == null) {
+            return;
+        }
+        map.broadcastMessage(PacketCreator.spawnMonster(monster, newSpawn));
+    }
+
+    @Override
+    public void broadcastKillMonster(MapleMap map, int objectId, int animation, Point position) {
+        if (map == null) {
+            return;
+        }
+        if (position == null) {
+            map.broadcastMessage(PacketCreator.killMonster(objectId, animation));
+            return;
+        }
+        map.broadcastMessage(PacketCreator.killMonster(objectId, animation), position);
     }
 }

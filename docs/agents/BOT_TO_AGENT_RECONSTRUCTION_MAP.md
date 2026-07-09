@@ -2448,3 +2448,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: navigation debug overlay mist spawn packets now route
   through `PacketGateway.sendMistFakeSpawn`; navigation still owns overlay
   geometry, effect selection, and object id allocation.
+- SPI/gateway extraction: airshow trail spawn/kill packets now route through
+  `PacketGateway`; `AgentAirshowService` still owns trail timing and monster
+  visual setup.
