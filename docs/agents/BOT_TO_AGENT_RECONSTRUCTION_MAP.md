@@ -2532,3 +2532,7 @@ Recent capability extraction notes:
   `InventoryGateway`; Maker skill gating, leftover counting, batch scheduling,
   MakerProcessor execution, disassembly filtering, and interruption behavior
   stay unchanged.
+- SPI/gateway extraction: equipment optimizer weapon-cycle scoring now uses
+  `InventoryGateway` for weapon-type metadata; DP state generation, requirement
+  validation, Pareto pruning, score comparison, and attack-cycle timing stay
+  unchanged.

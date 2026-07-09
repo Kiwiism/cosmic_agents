@@ -6,6 +6,8 @@ import client.inventory.Equip;
 import client.inventory.WeaponType;
 import server.ItemInformationProvider;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.combat.CombatFormulaProvider;
 
 import java.util.ArrayList;
@@ -470,7 +472,7 @@ public final class AgentEquipmentOptimizer {
             if (profile == null) {
                 return 0;
             }
-            WeaponType weaponType = ItemInformationProvider.getInstance().getWeaponType(itemId);
+            WeaponType weaponType = inventory().getWeaponType(itemId);
             AgentAttackDataProvider.AttackAnimationSpec attackSpec =
                     provider.getBasicAttackSpec(profile.getAttack(), weaponType);
             int rawAnimationDelayMs = provider.getBodyStanceDurationMs(attackSpec.primaryAction());
@@ -490,6 +492,10 @@ public final class AgentEquipmentOptimizer {
 
     private interface EquipStatsLookup {
         Map<String, Integer> getEquipStats(int itemId);
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 
     private static boolean[] scanReqRelevantDims(Map<Short, List<Equip>> bySlot,

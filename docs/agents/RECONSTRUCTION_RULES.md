@@ -6488,6 +6488,10 @@ Current physics correction:
   `InventoryGateway`. Maker skill checks, leftover counting, batch scheduling,
   MakerProcessor execution, disassembly filtering, and interruption behavior are
   unchanged.
+- SPI/gateway extraction: equipment optimizer weapon-cycle scoring now routes
+  weapon-type metadata through `InventoryGateway`. DP state generation,
+  requirement validation, Pareto pruning, score comparison, and attack-cycle
+  timing behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
