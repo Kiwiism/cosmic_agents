@@ -1,9 +1,12 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import client.inventory.Item;
 import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
@@ -45,10 +48,14 @@ public final class AgentTradeLifecycleService {
                                              Character agent,
                                              Trade trade,
                                              LifecycleCallbacks callbacks) {
+        Trade partner = trade.getPartner();
+        List<Item> partnerItems = partner != null ? partner.getItems() : Collections.emptyList();
+        boolean receivedSomething = partner != null && partner.hasAnyOffer();
         AgentTradeCompletionService.completeAndReact(
                 entry,
                 agent,
-                trade,
+                partnerItems,
+                receivedSomething,
                 () -> callbacks.randomReplyDelayMs(800, 1300),
                 callbacks::tradeThanksReply,
                 callbacks::tradeFreebieReply,

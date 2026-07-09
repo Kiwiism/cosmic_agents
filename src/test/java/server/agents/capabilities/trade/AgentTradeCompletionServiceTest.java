@@ -17,21 +17,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 class AgentTradeCompletionServiceTest {
     @Test
     void receivedTradeSnapshotsOwnerGivenEquipsCompletesAndThanks() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
-        Trade partner = mock(Trade.class);
         Item equip = new Item(1002000, (short) 1, (short) 1);
         AtomicBoolean delayedReply = new AtomicBoolean(false);
-
-        when(trade.getPartner()).thenReturn(partner);
-        when(partner.getItems()).thenReturn(List.of(equip));
-        when(partner.hasAnyOffer()).thenReturn(true);
 
         try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
              MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
@@ -45,7 +38,8 @@ class AgentTradeCompletionServiceTest {
             AgentTradeCompletionService.completeAndReact(
                     entry,
                     agent,
-                    trade,
+                    List.of(equip),
+                    true,
                     () -> 900L,
                     () -> "thanks",
                     () -> "freebie",
@@ -64,7 +58,6 @@ class AgentTradeCompletionServiceTest {
     void emptyTradeMaySendFreebieReaction() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
 
         try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
              MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
@@ -77,7 +70,8 @@ class AgentTradeCompletionServiceTest {
             AgentTradeCompletionService.completeAndReact(
                     entry,
                     agent,
-                    trade,
+                    List.of(),
+                    false,
                     () -> 800L,
                     () -> "thanks",
                     () -> "freebie",

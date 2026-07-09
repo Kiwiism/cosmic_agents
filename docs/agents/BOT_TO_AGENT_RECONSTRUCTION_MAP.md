@@ -2591,3 +2591,8 @@ Recent capability extraction notes:
   imports `server.Trade`; it receives a partner-confirmed callback from
   `AgentTradeTickRuntimeService`. Confirmation timing, bot-recipient auto-done,
   timeout reply, and cancellation behavior remain unchanged.
+- Trade-window reconstruction: `AgentTradeCompletionService` no longer imports
+  `server.Trade`; it receives partner item and offer snapshots from
+  `AgentTradeLifecycleService`. Owner-given equip tracking, completion through
+  the trade gateway, delayed thanks replies, and freebie reactions remain
+  unchanged.

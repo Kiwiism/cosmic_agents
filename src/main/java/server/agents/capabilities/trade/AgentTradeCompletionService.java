@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import constants.inventory.ItemConstants;
-import server.Trade;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.integration.cosmic.CosmicAgentServerAdapter;
@@ -21,21 +20,21 @@ public final class AgentTradeCompletionService {
 
     public static void completeAndReact(AgentRuntimeEntry entry,
                                         Character agent,
-                                        Trade trade,
+                                        Iterable<Item> partnerItems,
+                                        boolean receivedSomething,
                                         LongSupplier replyDelayMs,
                                         Supplier<String> thanksReply,
                                         Supplier<String> freebieReply,
                                         IntSupplier freebieRoll,
                                         BooleanSupplier glareExpression) {
-        if (trade.getPartner() != null) {
-            for (Item item : trade.getPartner().getItems()) {
+        if (partnerItems != null) {
+            for (Item item : partnerItems) {
                 if (ItemConstants.getInventoryType(item.getItemId()) == InventoryType.EQUIP) {
                     AgentPendingTradeStateRuntime.addOwnerGivenItem(entry, item);
                 }
             }
         }
 
-        boolean receivedSomething = trade.getPartner() != null && trade.getPartner().hasAnyOffer();
         CosmicAgentServerAdapter.INSTANCE.trade().completeTrade(agent);
         long replyDelay = replyDelayMs.getAsLong();
         if (receivedSomething) {

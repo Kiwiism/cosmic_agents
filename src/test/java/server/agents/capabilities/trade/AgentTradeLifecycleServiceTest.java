@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentTradeLifecycleServiceTest {
@@ -63,6 +64,8 @@ class AgentTradeLifecycleServiceTest {
     void completeTradeAndReactUsesLegacyReplyCallbacks() {
         Character agent = mock(Character.class);
         Trade trade = mock(Trade.class);
+        Trade partner = mock(Trade.class);
+        Item equip = new Item(1002000, (short) 1, (short) 1);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.delay = 900;
@@ -70,6 +73,9 @@ class AgentTradeLifecycleServiceTest {
         callbacks.freebie = "freebie";
         callbacks.roll = 7;
         callbacks.glare = true;
+        when(trade.getPartner()).thenReturn(partner);
+        when(partner.getItems()).thenReturn(java.util.List.of(equip));
+        when(partner.hasAnyOffer()).thenReturn(true);
 
         try (MockedStatic<AgentTradeCompletionService> completions = mockStatic(AgentTradeCompletionService.class)) {
             AgentTradeLifecycleService.completeTradeAndReact(entry, agent, trade, callbacks);
@@ -77,13 +83,18 @@ class AgentTradeLifecycleServiceTest {
             completions.verify(() -> AgentTradeCompletionService.completeAndReact(
                     org.mockito.ArgumentMatchers.eq(entry),
                     org.mockito.ArgumentMatchers.eq(agent),
-                    org.mockito.ArgumentMatchers.eq(trade),
+                    org.mockito.ArgumentMatchers.eq(java.util.List.of(equip)),
+                    org.mockito.ArgumentMatchers.eq(true),
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any(),
                     org.mockito.ArgumentMatchers.any()));
         }
+
+        verify(trade).getPartner();
+        verify(partner).getItems();
+        verify(partner).hasAnyOffer();
     }
 
     @Test
