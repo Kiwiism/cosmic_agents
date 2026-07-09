@@ -13,7 +13,7 @@ import server.agents.capabilities.combat.AgentCombatActionLockRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.integration.AgentCombatDamageRuntime;
 import server.agents.capabilities.combat.AgentCombatDeathRuntime;
-import server.agents.integration.AgentCombatHealRuntime;
+import server.agents.capabilities.combat.AgentCombatHealRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheRuntime;
 
 import java.util.function.Consumer;

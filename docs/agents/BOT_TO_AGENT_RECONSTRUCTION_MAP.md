@@ -2365,3 +2365,8 @@ Recent capability extraction notes:
   `server.agents.capabilities.combat`. It preserves action-state clearing,
   dead pose marking, movement broadcast, dead-state timing, and optional map
   death dialogue.
+- `AgentCombatHealRuntime` now lives in
+  `server.agents.capabilities.combat`. It preserves support-heal readiness,
+  target selection, jump-heal assist, skill application, attack packet
+  construction, cooldown/alert updates, and movement broadcast behavior while
+  leaving live leader/session lookup as integration seams.

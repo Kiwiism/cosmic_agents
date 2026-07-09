@@ -6282,6 +6282,12 @@ Current physics correction:
   `server.agents.capabilities.combat.AgentCombatDeathRuntime`. It preserves
   the same action-state clearing, dead pose marking, movement broadcast,
   dead-state timer entry, and optional map death dialogue.
+- Support-heal combat orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatHealRuntime`. It preserves the
+  same heal readiness checks, party/undead target selection, jump-heal assist,
+  skill-cost/application behavior, attack packet construction, cooldowns,
+  alert marking, movement-window handling, and movement broadcast behavior;
+  live leader/session lookup remains an explicit integration seam.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
