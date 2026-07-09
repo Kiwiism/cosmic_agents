@@ -6821,6 +6821,11 @@ Current physics correction:
   `AgentSkillGatewayRuntime`/`SkillGateway.getSkillName` instead of importing
   `SkillFactory` in `AgentCombatDialogueReporter`. Skill label fallback text
   and combat debug formatting are unchanged.
+- SPI/gateway extraction: skill-report dialogue now calls
+  `AgentSkillGatewayRuntime`/`SkillGateway` for skill names and beginner-skill
+  lookup instead of importing `SkillFactory` in `AgentSkillDialogueReporter`.
+  Learned-skill grouping, beginner-SP math, sorting, and fallback names are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

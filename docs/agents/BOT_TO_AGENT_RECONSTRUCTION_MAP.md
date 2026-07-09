@@ -2852,3 +2852,7 @@ Recent capability extraction notes:
   `SkillFactory` access. `AgentCombatDialogueReporter` uses
   `AgentSkillGatewayRuntime` for combat skill labels while fallback wording
   remains unchanged.
+- SPI/gateway extraction: `AgentSkillDialogueReporter` now uses
+  `AgentSkillGatewayRuntime` for skill names and beginner-skill lookups.
+  Learned-skill tree grouping, beginner skill reporting, beginner-SP math, and
+  fallback labels remain unchanged.

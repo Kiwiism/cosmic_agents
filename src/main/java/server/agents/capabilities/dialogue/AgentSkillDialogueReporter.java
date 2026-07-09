@@ -2,8 +2,9 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import constants.game.GameConstants;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +17,11 @@ public final class AgentSkillDialogueReporter {
     }
 
     public static Map<Integer, List<AgentSkillReportFlow.SkillLine>> collectLearnedSkillTrees(Character agent) {
+        return collectLearnedSkillTrees(agent, AgentSkillGatewayRuntime.skills());
+    }
+
+    static Map<Integer, List<AgentSkillReportFlow.SkillLine>> collectLearnedSkillTrees(Character agent,
+                                                                                      SkillGateway skillsGateway) {
         Map<Integer, List<AgentSkillReportFlow.SkillLine>> skillTrees = new TreeMap<>();
         for (Map.Entry<Skill, Character.SkillEntry> entry : agent.getSkills().entrySet()) {
             Skill skill = entry.getKey();
@@ -32,7 +38,7 @@ public final class AgentSkillDialogueReporter {
             int treeId = skillId / 10000;
             skillTrees.computeIfAbsent(treeId, ignored -> new ArrayList<>())
                     .add(new AgentSkillReportFlow.SkillLine(
-                            skillId, skillName(skillId), skillEntry.skillevel));
+                            skillId, skillName(skillId, skillsGateway), skillEntry.skillevel));
         }
 
         for (List<AgentSkillReportFlow.SkillLine> skills : skillTrees.values()) {
@@ -42,6 +48,11 @@ public final class AgentSkillDialogueReporter {
     }
 
     public static List<AgentSkillReportFlow.SkillLine> collectLearnedBeginnerSkills(Character agent) {
+        return collectLearnedBeginnerSkills(agent, AgentSkillGatewayRuntime.skills());
+    }
+
+    static List<AgentSkillReportFlow.SkillLine> collectLearnedBeginnerSkills(Character agent,
+                                                                            SkillGateway skillsGateway) {
         List<AgentSkillReportFlow.SkillLine> beginnerSkills = new ArrayList<>();
         for (Map.Entry<Skill, Character.SkillEntry> entry : agent.getSkills().entrySet()) {
             Skill skill = entry.getKey();
@@ -56,7 +67,7 @@ public final class AgentSkillDialogueReporter {
             }
 
             beginnerSkills.add(new AgentSkillReportFlow.SkillLine(
-                    skillId, skillName(skillId), skillEntry.skillevel));
+                    skillId, skillName(skillId, skillsGateway), skillEntry.skillevel));
         }
 
         beginnerSkills.sort(Comparator.comparingInt(AgentSkillReportFlow.SkillLine::id));
@@ -64,10 +75,14 @@ public final class AgentSkillDialogueReporter {
     }
 
     public static int remainingBeginnerSp(Character agent) {
+        return remainingBeginnerSp(agent, AgentSkillGatewayRuntime.skills());
+    }
+
+    static int remainingBeginnerSp(Character agent, SkillGateway skillsGateway) {
         int usedBeginnerSp = 0;
         int beginnerSkillBase = agent.getJobType() * 10000000 + 1000;
         for (int i = 0; i < 3; i++) {
-            Skill skill = SkillFactory.getSkill(beginnerSkillBase + i);
+            Skill skill = skillsGateway.getSkill(beginnerSkillBase + i);
             if (skill != null) {
                 usedBeginnerSp += agent.getSkillLevel(skill);
             }
@@ -77,7 +92,11 @@ public final class AgentSkillDialogueReporter {
     }
 
     static String skillName(int skillId) {
-        String name = SkillFactory.getSkillName(skillId);
+        return skillName(skillId, AgentSkillGatewayRuntime.skills());
+    }
+
+    static String skillName(int skillId, SkillGateway skillsGateway) {
+        String name = skillsGateway.getSkillName(skillId);
         return name != null && !name.isBlank() ? name : String.valueOf(skillId);
     }
 }

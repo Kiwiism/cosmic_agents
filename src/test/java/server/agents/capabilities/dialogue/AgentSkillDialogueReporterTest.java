@@ -2,10 +2,8 @@ package server.agents.capabilities.dialogue;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import server.agents.integration.SkillGateway;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,20 +25,18 @@ class AgentSkillDialogueReporterTest {
         skills.put(earlier, new Character.SkillEntry((byte) 10, 0, -1));
         skills.put(beginner, new Character.SkillEntry((byte) 3, 0, -1));
         when(agent.getSkills()).thenReturn(skills);
+        SkillGateway skillsGateway = mock(SkillGateway.class);
+        when(skillsGateway.getSkillName(1101005)).thenReturn("Rage");
+        when(skillsGateway.getSkillName(1100001)).thenReturn("Sword Mastery");
 
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
-            skillFactory.when(() -> SkillFactory.getSkillName(1101005)).thenReturn("Rage");
-            skillFactory.when(() -> SkillFactory.getSkillName(1100001)).thenReturn("Sword Mastery");
+        Map<Integer, List<AgentSkillReportFlow.SkillLine>> report =
+                AgentSkillDialogueReporter.collectLearnedSkillTrees(agent, skillsGateway);
 
-            Map<Integer, List<AgentSkillReportFlow.SkillLine>> report =
-                    AgentSkillDialogueReporter.collectLearnedSkillTrees(agent);
-
-            assertEquals(List.of(110), List.copyOf(report.keySet()));
-            assertEquals(List.of(
-                    new AgentSkillReportFlow.SkillLine(1100001, "Sword Mastery", 10),
-                    new AgentSkillReportFlow.SkillLine(1101005, "Rage", 20)),
-                    report.get(110));
-        }
+        assertEquals(List.of(110), List.copyOf(report.keySet()));
+        assertEquals(List.of(
+                new AgentSkillReportFlow.SkillLine(1100001, "Sword Mastery", 10),
+                new AgentSkillReportFlow.SkillLine(1101005, "Rage", 20)),
+                report.get(110));
     }
 
     @Test
@@ -52,14 +48,12 @@ class AgentSkillDialogueReporterTest {
         skills.put(job, new Character.SkillEntry((byte) 10, 0, -1));
         skills.put(beginner, new Character.SkillEntry((byte) 3, 0, -1));
         when(agent.getSkills()).thenReturn(skills);
+        SkillGateway skillsGateway = mock(SkillGateway.class);
+        when(skillsGateway.getSkillName(1000)).thenReturn("Three Snails");
 
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
-            skillFactory.when(() -> SkillFactory.getSkillName(1000)).thenReturn("Three Snails");
-
-            assertEquals(List.of(
-                    new AgentSkillReportFlow.SkillLine(1000, "Three Snails", 3)),
-                    AgentSkillDialogueReporter.collectLearnedBeginnerSkills(agent));
-        }
+        assertEquals(List.of(
+                new AgentSkillReportFlow.SkillLine(1000, "Three Snails", 3)),
+                AgentSkillDialogueReporter.collectLearnedBeginnerSkills(agent, skillsGateway));
     }
 
     @Test
@@ -73,22 +67,19 @@ class AgentSkillDialogueReporterTest {
         when(agent.getSkillLevel(first)).thenReturn((byte) 1);
         when(agent.getSkillLevel(second)).thenReturn((byte) 2);
         when(agent.getSkillLevel(third)).thenReturn((byte) 0);
+        SkillGateway skillsGateway = mock(SkillGateway.class);
+        when(skillsGateway.getSkill(1000)).thenReturn(first);
+        when(skillsGateway.getSkill(1001)).thenReturn(second);
+        when(skillsGateway.getSkill(1002)).thenReturn(third);
 
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
-            skillFactory.when(() -> SkillFactory.getSkill(1000)).thenReturn(first);
-            skillFactory.when(() -> SkillFactory.getSkill(1001)).thenReturn(second);
-            skillFactory.when(() -> SkillFactory.getSkill(1002)).thenReturn(third);
-
-            assertEquals(3, AgentSkillDialogueReporter.remainingBeginnerSp(agent));
-        }
+        assertEquals(3, AgentSkillDialogueReporter.remainingBeginnerSp(agent, skillsGateway));
     }
 
     @Test
     void shouldUseSkillIdWhenSkillNameIsMissing() {
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class)) {
-            skillFactory.when(() -> SkillFactory.getSkillName(999999)).thenReturn(" ");
+        SkillGateway skillsGateway = mock(SkillGateway.class);
+        when(skillsGateway.getSkillName(999999)).thenReturn(" ");
 
-            assertEquals("999999", AgentSkillDialogueReporter.skillName(999999));
-        }
+        assertEquals("999999", AgentSkillDialogueReporter.skillName(999999, skillsGateway));
     }
 }
