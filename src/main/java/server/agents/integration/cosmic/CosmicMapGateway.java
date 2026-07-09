@@ -50,6 +50,22 @@ public enum CosmicMapGateway implements MapGateway {
     }
 
     @Override
+    public boolean enterPortal(Character agent, int portalId) {
+        if (agent == null || agent.getMap() == null) {
+            return false;
+        }
+        var portal = agent.getMap().getPortal(portalId);
+        if (portal == null || !portal.getPortalStatus()) {
+            return false;
+        }
+
+        int oldMapId = agent.getMapId();
+        Point oldPos = agent.getPosition();
+        portal.enterPortal(agent.getClient());
+        return agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
+    }
+
+    @Override
     public Point pointBelow(MapleMap map, Point position) {
         if (map == null || position == null) {
             return null;

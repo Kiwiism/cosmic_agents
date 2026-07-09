@@ -18,6 +18,8 @@ public interface MapGateway {
 
     void changeMapNear(Character agent, MapleMap map, Point position);
 
+    boolean enterPortal(Character agent, int portalId);
+
     Point pointBelow(MapleMap map, Point position);
 }
 

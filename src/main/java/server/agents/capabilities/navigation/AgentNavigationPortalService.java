@@ -3,10 +3,9 @@ package server.agents.capabilities.navigation;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.MapGateway;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.maps.Portal;
-
-import java.awt.Point;
 
 /**
  * Agent-owned portal edge execution for navigation.
@@ -18,10 +17,14 @@ public final class AgentNavigationPortalService {
     }
 
     public static boolean tryExecutePortal(AgentRuntimeEntry entry, Character agent, int portalId) {
+        return tryExecutePortal(entry, agent, portalId, AgentMapGatewayRuntime.map());
+    }
+
+    public static boolean tryExecutePortal(AgentRuntimeEntry entry, Character agent, int portalId, MapGateway maps) {
         if (AgentNavigationDebugStateRuntime.portalUseOnCooldown(entry, System.currentTimeMillis())) {
             return false;
         }
-        if (!usePortal(agent, portalId)) {
+        if (!maps.enterPortal(agent, portalId)) {
             return false;
         }
 
@@ -30,17 +33,5 @@ public final class AgentNavigationPortalService {
         AgentMovementStateResetService.clearNavigationState(entry);
         AgentMovementStateResetService.resetEntryState(entry);
         return true;
-    }
-
-    private static boolean usePortal(Character agent, int portalId) {
-        Portal portal = agent.getMap().getPortal(portalId);
-        if (portal == null || !portal.getPortalStatus()) {
-            return false;
-        }
-
-        int oldMapId = agent.getMapId();
-        Point oldPos = agent.getPosition();
-        portal.enterPortal(agent.getClient());
-        return agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
     }
 }

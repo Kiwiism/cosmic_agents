@@ -6886,6 +6886,12 @@ Current physics correction:
   NPC fallback resolution, party-agent filtering, and force-start-before-progress
   behavior are unchanged. Live `Quest.getInstance` and `Quest` force-action
   calls are isolated in `CosmicQuestSyncGateway`.
+- SPI/gateway extraction: navigation portal entry now calls
+  `AgentMapGatewayRuntime`/`MapGateway.enterPortal` instead of invoking
+  `Portal.enterPortal(agent.getClient())` inside
+  `AgentNavigationPortalService`. Portal status checks, old map/position
+  transition detection, portal cooldown, and navigation state reset behavior
+  are unchanged. Live client portal entry is isolated in `CosmicMapGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

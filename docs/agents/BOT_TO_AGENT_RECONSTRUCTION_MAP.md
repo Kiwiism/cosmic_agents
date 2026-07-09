@@ -2896,3 +2896,8 @@ Recent capability extraction notes:
   `AgentQuestSyncHandle`; live `server.quest.Quest` lookup and force-action
   calls are isolated in `CosmicQuestSyncGateway`. Party quest start/progress/
   completion sync behavior remains unchanged.
+- SPI/gateway extraction: `AgentNavigationPortalService` now uses
+  `AgentMapGatewayRuntime`/`MapGateway.enterPortal`; live portal status lookup,
+  `Portal.enterPortal(agent.getClient())`, and map/position transition detection
+  are isolated in `CosmicMapGateway`. Portal cooldown and navigation-state reset
+  behavior remain unchanged.
