@@ -115,7 +115,8 @@ public final class AgentInventoryRuntimeAdapters {
                 () -> AgentTradeCommandProfiler.profileCategory("equips"),
                 AgentEquipmentReservePolicy::collectPotentialSelfUpgradeItems,
                 item -> AgentOfferService.isReservedForOtherRecipients(entry, agent, item),
-                () -> AgentRuntimeIdentityRuntime.owner(entry));
+                () -> AgentRuntimeIdentityRuntime.owner(entry),
+                AgentInventoryRuntimeAdapters::inventory);
     }
 
     private static InventoryGateway inventory() {

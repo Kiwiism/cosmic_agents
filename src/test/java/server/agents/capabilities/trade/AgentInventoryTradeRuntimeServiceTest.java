@@ -7,6 +7,7 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.Set;
@@ -43,7 +44,8 @@ class AgentInventoryTradeRuntimeServiceTest {
                         () -> false,
                         ignored -> Set.of(),
                         ignored -> false,
-                        () -> owner));
+                        () -> owner,
+                        AgentInventoryTradeRuntimeServiceTest::inventoryGateway));
 
         assertEquals(List.of(recommended), items);
         assertTrue(recommendationCalled.get());
@@ -81,7 +83,8 @@ class AgentInventoryTradeRuntimeServiceTest {
                         () -> false,
                         ignored -> Set.of(),
                         ignored -> false,
-                        () -> null));
+                        () -> null,
+                        AgentInventoryTradeRuntimeServiceTest::inventoryGateway));
 
         assertEquals(List.of(otherArrow), groups.nonOwn());
         assertEquals(List.of(ownArrow), groups.own());
@@ -94,5 +97,11 @@ class AgentInventoryTradeRuntimeServiceTest {
         when(item.getItemId()).thenReturn(itemId);
         when(item.getQuantity()).thenReturn((short) quantity);
         return item;
+    }
+
+    private static InventoryGateway inventoryGateway() {
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        when(inventory.isQuestItem(org.mockito.ArgumentMatchers.anyInt())).thenReturn(false);
+        return inventory;
     }
 }

@@ -6598,6 +6598,11 @@ Current physics correction:
   for the Cosmic adapter inside `AgentScrollReactionService`. Nearby-Agent
   detection, per-Agent jitter, streak/load scaling, emote/chat/fidget chances,
   cooldowns, and reaction text selection are unchanged.
+- SPI/gateway extraction: trade collection category expansion now receives
+  `InventoryGateway` from trade/runtime callers instead of reaching for the
+  Cosmic adapter inside `AgentInventoryTradeCollectionService`. Recommended,
+  name, scroll, potion, buff, use, ammo, equip, trash, reserved-equip, and ETC
+  trade collection behavior is unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

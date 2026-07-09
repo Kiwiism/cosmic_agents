@@ -5,6 +5,7 @@ import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.Set;
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentTradeTickRuntimeServiceTest {
     @Test
@@ -76,7 +78,8 @@ class AgentTradeTickRuntimeServiceTest {
                 () -> false,
                 ignored -> Set.of(),
                 ignored -> false,
-                () -> null);
+                () -> null,
+                AgentTradeTickRuntimeServiceTest::inventoryGateway);
     }
 
     private static AgentTradeLifecycleRuntimeService.RuntimeCallbacks lifecycleCallbacks() {
@@ -91,5 +94,11 @@ class AgentTradeTickRuntimeServiceTest {
                 (minMs, maxMs) -> minMs,
                 () -> "thanks",
                 () -> "freebie");
+    }
+
+    private static InventoryGateway inventoryGateway() {
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        when(inventory.isQuestItem(org.mockito.ArgumentMatchers.anyInt())).thenReturn(false);
+        return inventory;
     }
 }

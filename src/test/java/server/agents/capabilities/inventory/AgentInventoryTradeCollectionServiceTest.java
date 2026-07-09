@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService.PreparedTradeItems;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +37,8 @@ class AgentInventoryTradeCollectionServiceTest {
                 List::of,
                 () -> groups(List.of(), List.of(), List.of()),
                 () -> new AmmoTradeGroups(List.of(), List.of()),
-                mock(Character.class));
+                mock(Character.class),
+                inventoryGateway());
 
         assertEquals("top", fragmentSeen.get());
         assertEquals(List.of(equipped), prepared.items());
@@ -55,7 +57,8 @@ class AgentInventoryTradeCollectionServiceTest {
                 List::of,
                 () -> groups(List.of(), List.of(), List.of()),
                 () -> new AmmoTradeGroups(List.of(), List.of()),
-                mock(Character.class));
+                mock(Character.class),
+                inventoryGateway());
 
         assertEquals(List.of(named), prepared.items());
         assertEquals(null, prepared.errorMessage());
@@ -75,7 +78,8 @@ class AgentInventoryTradeCollectionServiceTest {
                     return List.of(recommended);
                 },
                 () -> groups(List.of(), List.of(), List.of()),
-                () -> new AmmoTradeGroups(List.of(), List.of()));
+                () -> new AmmoTradeGroups(List.of(), List.of()),
+                inventoryGateway());
 
         assertEquals(List.of(), withoutOwner);
         assertFalse(called.get());
@@ -86,7 +90,8 @@ class AgentInventoryTradeCollectionServiceTest {
                 mock(Character.class),
                 () -> List.of(recommended),
                 () -> groups(List.of(), List.of(), List.of()),
-                () -> new AmmoTradeGroups(List.of(), List.of()));
+                () -> new AmmoTradeGroups(List.of(), List.of()),
+                inventoryGateway());
 
         assertEquals(List.of(recommended), withOwner);
     }
@@ -103,28 +108,32 @@ class AgentInventoryTradeCollectionServiceTest {
                 mock(Character.class),
                 List::of,
                 () -> groups(List.of(normal), List.of(other), List.of(self)),
-                () -> new AmmoTradeGroups(List.of(), List.of()));
+                () -> new AmmoTradeGroups(List.of(), List.of()),
+                inventoryGateway());
         List<Item> trash = AgentInventoryTradeCollectionService.collectItems(
                 "trash",
                 mock(Character.class),
                 mock(Character.class),
                 List::of,
                 () -> groups(List.of(normal), List.of(other), List.of(self)),
-                () -> new AmmoTradeGroups(List.of(), List.of()));
+                () -> new AmmoTradeGroups(List.of(), List.of()),
+                inventoryGateway());
         List<Item> reservedPage = AgentInventoryTradeCollectionService.collectItems(
                 "equips:reserved:1",
                 mock(Character.class),
                 mock(Character.class),
                 List::of,
                 () -> groups(List.of(normal), List.of(other), List.of(self)),
-                () -> new AmmoTradeGroups(List.of(), List.of()));
+                () -> new AmmoTradeGroups(List.of(), List.of()),
+                inventoryGateway());
         List<Item> reservedOther = AgentInventoryTradeCollectionService.collectItems(
                 "equips:reserved_for_other",
                 mock(Character.class),
                 mock(Character.class),
                 List::of,
                 () -> groups(List.of(normal), List.of(other), List.of(self)),
-                () -> new AmmoTradeGroups(List.of(), List.of()));
+                () -> new AmmoTradeGroups(List.of(), List.of()),
+                inventoryGateway());
 
         assertEquals(List.of(normal, other, self), equips);
         assertEquals(List.of(normal), trash);
@@ -140,13 +149,13 @@ class AgentInventoryTradeCollectionServiceTest {
 
         assertEquals(List.of(nonOwn, own), AgentInventoryTradeCollectionService.collectItems(
                 "ammo", mock(Character.class), mock(Character.class), List::of,
-                () -> groups(List.of(), List.of(), List.of()), () -> groups));
+                () -> groups(List.of(), List.of(), List.of()), () -> groups, inventoryGateway()));
         assertEquals(List.of(nonOwn), AgentInventoryTradeCollectionService.collectItems(
                 "ammo:non_own", mock(Character.class), mock(Character.class), List::of,
-                () -> groups(List.of(), List.of(), List.of()), () -> groups));
+                () -> groups(List.of(), List.of(), List.of()), () -> groups, inventoryGateway()));
         assertEquals(List.of(own), AgentInventoryTradeCollectionService.collectItems(
                 "ammo:own", mock(Character.class), mock(Character.class), List::of,
-                () -> groups(List.of(), List.of(), List.of()), () -> groups));
+                () -> groups(List.of(), List.of(), List.of()), () -> groups, inventoryGateway()));
     }
 
     @Test
@@ -216,5 +225,11 @@ class AgentInventoryTradeCollectionServiceTest {
         when(item.getItemId()).thenReturn(itemId);
         when(item.getPosition()).thenReturn(position);
         return item;
+    }
+
+    private static InventoryGateway inventoryGateway() {
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        when(inventory.isQuestItem(org.mockito.ArgumentMatchers.anyInt())).thenReturn(false);
+        return inventory;
     }
 }

@@ -9,7 +9,7 @@ import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGr
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.AmmoGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.EquipsGroup;
 import server.agents.capabilities.inventory.AgentInventoryTradePolicy.UseTradeGroups;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,8 @@ public final class AgentInventoryTradeCollectionService {
                                                        Supplier<List<Item>> recommendedItems,
                                                        Supplier<AgentEquipTradeGroups> equipGroups,
                                                        Supplier<AmmoTradeGroups> ammoGroups,
-                                                       Character owner) {
+                                                       Character owner,
+                                                       InventoryGateway inventory) {
         if (category != null && category.startsWith("name:")) {
             String fragment = category.substring(5).trim();
             PreparedTradeItems equippedSlotItems = equippedSlotPreparer.apply(fragment);
@@ -41,7 +42,7 @@ public final class AgentInventoryTradeCollectionService {
         }
 
         return new PreparedTradeItems(
-                collectItems(category, agent, owner, recommendedItems, equipGroups, ammoGroups),
+                collectItems(category, agent, owner, recommendedItems, equipGroups, ammoGroups, inventory),
                 null);
     }
 
@@ -50,7 +51,8 @@ public final class AgentInventoryTradeCollectionService {
                                           Character owner,
                                           Supplier<List<Item>> recommendedItems,
                                           Supplier<AgentEquipTradeGroups> equipGroups,
-                                          Supplier<AmmoTradeGroups> ammoGroups) {
+                                          Supplier<AmmoTradeGroups> ammoGroups,
+                                          InventoryGateway inventory) {
         List<Item> result = new ArrayList<>();
         switch (category) {
             case "recommended" -> {
@@ -61,17 +63,17 @@ public final class AgentInventoryTradeCollectionService {
             case "scrolls" -> {
                 result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.USE,
                         item -> ItemConstants.isEquipScroll(item.getItemId()),
-                        CosmicAgentServerAdapter.INSTANCE.inventory()));
+                        inventory));
                 result = AgentInventoryTradePolicy.prioritizeScrollTradeItems(result, owner);
             }
             case "pots" -> result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.USE,
                     item -> AgentUseItemClassificationPolicy.isRecoveryPotion(item.getItemId()),
-                    CosmicAgentServerAdapter.INSTANCE.inventory()));
+                    inventory));
             case "buff" -> result.addAll(AgentInventoryCollectionService.collectFromBag(agent, InventoryType.USE,
                     item -> AgentUseItemClassificationPolicy.isBuffConsumable(item.getItemId()),
-                    CosmicAgentServerAdapter.INSTANCE.inventory()));
+                    inventory));
             case "use" -> {
-                UseTradeGroups groups = classifyUseTradeGroups(agent, owner);
+                UseTradeGroups groups = classifyUseTradeGroups(agent, owner, inventory);
                 result.addAll(groups.uncategorized());
                 result.addAll(groups.categorized());
             }
@@ -87,7 +89,7 @@ public final class AgentInventoryTradeCollectionService {
                         agent,
                         InventoryType.ETC,
                         item -> true,
-                        CosmicAgentServerAdapter.INSTANCE.inventory()));
+                        inventory));
                 result = AgentInventoryTradePolicy.prioritizeEtcTradeItems(result, owner);
             }
             default -> {
@@ -105,7 +107,7 @@ public final class AgentInventoryTradeCollectionService {
                             result.addAll(AgentInventoryNamedItemService.collectNamedItems(
                                     agent,
                                     category.substring(5),
-                                    CosmicAgentServerAdapter.INSTANCE.inventory()));
+                                    inventory));
                         }
                     }
                 }
@@ -155,13 +157,13 @@ public final class AgentInventoryTradeCollectionService {
         return collectedItemQuantity.getAsInt();
     }
 
-    public static UseTradeGroups classifyUseTradeGroups(Character agent, Character recipient) {
+    public static UseTradeGroups classifyUseTradeGroups(Character agent, Character recipient, InventoryGateway inventory) {
         return AgentInventoryTradePolicy.classifyUseTradeGroups(agent, recipient,
                 AgentUseItemClassificationPolicy::isRecoveryPotion,
                 AgentInventoryAmmoPolicy::isTradeAmmoItem,
                 ItemConstants::isEquipScroll,
                 AgentUseItemClassificationPolicy::isBuffConsumable,
-                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
+                inventory::isQuestItem,
                 config.YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
     }
 }

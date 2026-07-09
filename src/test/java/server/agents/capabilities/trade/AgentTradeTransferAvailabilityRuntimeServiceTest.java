@@ -4,6 +4,7 @@ import client.Character;
 import client.inventory.Item;
 import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -99,6 +100,13 @@ class AgentTradeTransferAvailabilityRuntimeServiceTest {
                 () -> false,
                 ignored -> Set.of(),
                 ignored -> false,
-                () -> null);
+                () -> null,
+                AgentTradeTransferAvailabilityRuntimeServiceTest::inventoryGateway);
+    }
+
+    private static InventoryGateway inventoryGateway() {
+        InventoryGateway inventory = mock(InventoryGateway.class);
+        when(inventory.isQuestItem(org.mockito.ArgumentMatchers.anyInt())).thenReturn(false);
+        return inventory;
     }
 }

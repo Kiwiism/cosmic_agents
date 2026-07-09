@@ -148,7 +148,8 @@ public final class AgentInventoryTransferService {
                 AgentTradeItemCollectionService.TradeItemCollectionCallbacks.of(
                         () -> recommendedItems(entry, agent),
                         () -> classifyEquipTradeGroups(entry, agent),
-                        () -> classifyAmmoTradeGroups(agent)));
+                        () -> classifyAmmoTradeGroups(agent)),
+                CosmicAgentServerAdapter.INSTANCE.inventory());
     }
 
     private static void startTradeSequence(String category,
@@ -226,7 +227,8 @@ public final class AgentInventoryTransferService {
                 () -> recommendedItems(entry, agent),
                 () -> classifyEquipTradeGroups(entry, agent),
                 () -> classifyAmmoTradeGroups(agent),
-                AgentRuntimeIdentityRuntime.owner(entry));
+                AgentRuntimeIdentityRuntime.owner(entry),
+                CosmicAgentServerAdapter.INSTANCE.inventory());
     }
 
     private static List<Item> collectReservedEquipTradePage(String category, AgentRuntimeEntry entry, Character agent) {

@@ -2633,3 +2633,9 @@ Recent capability extraction notes:
   scroll success-rate metadata. Reaction eligibility, delay scheduling,
   streak/load chance scaling, emote/chat/fidget side effects, and cooldown
   behavior stay unchanged.
+- SPI/gateway extraction: `AgentInventoryTradeCollectionService` now receives
+  `InventoryGateway` through trade collection/runtime callers. Category
+  expansion, safe bag collection, named-item fallback, equipped-slot fallback,
+  use/ammo/equip grouping, reserved-equip pages, and priority ordering stay
+  unchanged while Cosmic inventory metadata lookup remains at the caller
+  boundary.

@@ -5,6 +5,7 @@ import client.inventory.Item;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryTradeCollectionService;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -16,14 +17,16 @@ public final class AgentTradeItemCollectionService {
     public static List<Item> collectItems(String category,
                                           Character agent,
                                           Character owner,
-                                          TradeItemCollectionCallbacks callbacks) {
+                                          TradeItemCollectionCallbacks callbacks,
+                                          InventoryGateway inventory) {
         return AgentInventoryTradeCollectionService.collectItems(
                 category,
                 agent,
                 owner,
                 callbacks::recommendedItems,
                 callbacks::equipTradeGroups,
-                callbacks::ammoTradeGroups);
+                callbacks::ammoTradeGroups,
+                inventory);
     }
 
     public interface TradeItemCollectionCallbacks {

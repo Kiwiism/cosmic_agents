@@ -10,6 +10,7 @@ import server.agents.capabilities.inventory.AgentEquipTradeClassificationService
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentEquipTradeSlowLogService;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
+import server.agents.integration.InventoryGateway;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,8 @@ public final class AgentInventoryTradeRuntimeService {
                                 agent,
                                 callbacks::collectRecommendedItems),
                         () -> classifyEquipTradeGroups(agent, callbacks),
-                        () -> classifyAmmoTradeGroups(agent, callbacks)));
+                        () -> classifyAmmoTradeGroups(agent, callbacks)),
+                callbacks.inventory());
     }
 
     public static AmmoTradeGroups classifyAmmoTradeGroups(Character agent, RuntimeCallbacks callbacks) {
@@ -87,6 +89,8 @@ public final class AgentInventoryTradeRuntimeService {
 
         Character owner();
 
+        InventoryGateway inventory();
+
         static RuntimeCallbacks of(BiFunction<Character, Character, List<Item>> collectRecommendedItems,
                                    Function<Character, WeaponType> equippedWeaponType,
                                    IntUnaryOperator projectileWatk,
@@ -95,7 +99,8 @@ public final class AgentInventoryTradeRuntimeService {
                                    BooleanSupplier profileEquips,
                                    Function<Character, Set<Item>> collectPotentialSelfUpgradeItems,
                                    Predicate<Item> isReservedForOtherRecipients,
-                                   Supplier<Character> owner) {
+                                   Supplier<Character> owner,
+                                   Supplier<InventoryGateway> inventory) {
             return new RuntimeCallbacks() {
                 @Override
                 public List<Item> collectRecommendedItems(Character owner, Character agent) {
@@ -140,6 +145,11 @@ public final class AgentInventoryTradeRuntimeService {
                 @Override
                 public Character owner() {
                     return owner.get();
+                }
+
+                @Override
+                public InventoryGateway inventory() {
+                    return inventory.get();
                 }
             };
         }
