@@ -3,7 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 
 import java.awt.Point;
 import java.util.function.BiFunction;
@@ -49,7 +49,7 @@ public final class AgentMovementOnlyRuntime {
                         config.outOfBoundsTeleportDistance()),
                 AgentMovementOnlyMapChangeRuntime::handleMapChange,
                 (shopEntry, shopAgent) -> AgentShopService.tickShopVisit(
-                        shopEntry, shopAgent, CosmicAgentServerAdapter.INSTANCE.inventory()),
+                        shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
                 AgentShopStateRuntime::activeShopTargetPosition,
                 AgentShopStateRuntime::shopApproachDelayMs,
                 (entry, agent, target, nowMs) -> AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(

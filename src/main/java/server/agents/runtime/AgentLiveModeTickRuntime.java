@@ -2,7 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 
 import java.awt.Point;
 
@@ -187,10 +187,10 @@ public final class AgentLiveModeTickRuntime {
 
     private static boolean tickShopVisit(AgentRuntimeEntry entry, Character agent, boolean perf) {
         if (!perf) {
-            return AgentShopService.tickShopVisit(entry, agent, CosmicAgentServerAdapter.INSTANCE.inventory());
+            return AgentShopService.tickShopVisit(entry, agent, AgentInventoryGatewayRuntime.inventory());
         }
         long startedAt = System.nanoTime();
-        boolean consumed = AgentShopService.tickShopVisit(entry, agent, CosmicAgentServerAdapter.INSTANCE.inventory());
+        boolean consumed = AgentShopService.tickShopVisit(entry, agent, AgentInventoryGatewayRuntime.inventory());
         AgentPerformanceMonitor.record("tick-shop-visit", System.nanoTime() - startedAt);
         return consumed;
     }

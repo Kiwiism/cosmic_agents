@@ -6674,6 +6674,11 @@ Current physics correction:
   obtains combat gateway access through `AgentCombatGatewayRuntime` instead of
   importing the concrete Cosmic adapter. Packet bytes, dispatch timing, and
   handler behavior are unchanged.
+- SPI/gateway extraction: remaining runtime inventory lookups for follow-target
+  potion sharing, shop visit ticks, map-change shop transitions, movement-only
+  shop ticks, and nearest-town return scroll metadata now route through
+  `AgentInventoryGatewayRuntime`. Follow setup, shop sequencing, map-change
+  handling, movement-only ticks, and return-scroll behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -12,7 +12,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 
 import java.util.function.Consumer;
 
@@ -39,7 +39,7 @@ public final class AgentMapTransitionRuntime {
                         issueFollow,
                         AgentPqRuntime::resetKpqStage5Claimed,
                         (shopEntry, shopAgent) -> AgentShopService.onMapChange(
-                                shopEntry, shopAgent, CosmicAgentServerAdapter.INSTANCE.inventory()),
+                                shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
                         AgentManagerStatusRuntime::checkManagerStatus));
     }
 

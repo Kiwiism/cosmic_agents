@@ -5,7 +5,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.StatEffect;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 
 /**
  * Agent runtime helper for using a Return Scroll - Nearest Town.
@@ -30,7 +30,7 @@ public final class AgentReturnScrollService {
             }
             StatEffect effect;
             try {
-                effect = CosmicAgentServerAdapter.INSTANCE.inventory().getItemEffect(RETURN_SCROLL_NEAREST_TOWN);
+                effect = AgentInventoryGatewayRuntime.inventory().getItemEffect(RETURN_SCROLL_NEAREST_TOWN);
             } catch (Exception e) {
                 return false;
             }

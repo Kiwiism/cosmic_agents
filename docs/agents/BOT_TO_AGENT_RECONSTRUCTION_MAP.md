@@ -2721,3 +2721,8 @@ Recent capability extraction notes:
   `AgentCombatGatewayRuntime` for synthetic packet handling. The combat
   capability still builds the same legacy packet bytes, while gateway dispatch
   remains isolated behind the Agent integration boundary.
+- SPI/gateway extraction: runtime follow/shop/map-change/movement-only/return
+  scroll inventory metadata lookups now use `AgentInventoryGatewayRuntime`.
+  This removes the remaining direct concrete inventory adapter imports from
+  runtime/capability code while preserving follow setup, shop visit/map-change
+  sequencing, movement-only shop ticks, and nearest-town return scroll use.
