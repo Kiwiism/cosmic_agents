@@ -4,6 +4,7 @@ import client.BotClient;
 import client.Character;
 import config.YamlConfig;
 import net.server.Server;
+import server.agents.integration.AgentMapGatewayRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -36,7 +37,7 @@ public final class AgentOfflineLoadRuntime {
                 BotClient::new,
                 (characterId, client) -> Character.loadCharFromDB(characterId, client, true),
                 characterId -> Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId),
-                (world, channel, mapId) -> Server.getInstance().getChannel(world, channel).getMapFactory().getMap(mapId),
+                AgentMapGatewayRuntime.map()::resolveMap,
                 AgentSpawnPositionService::resolveSpawnPosition,
                 agent -> {
                     agent.resetPlayerRates();
@@ -46,8 +47,8 @@ public final class AgentOfflineLoadRuntime {
                     agent.setWorldRates();
                     agent.updateCouponRates();
                 },
-                (world, channel, agent) -> Server.getInstance().getChannel(world, channel).addPlayer(agent),
-                (world, channel, agent) -> Server.getInstance().getChannel(world, channel).getWorldServer().addPlayer(agent),
-                MapleMap::addPlayer);
+                AgentMapGatewayRuntime.map()::addChannelPlayer,
+                AgentMapGatewayRuntime.map()::addWorldPlayer,
+                AgentMapGatewayRuntime.map()::addMapPlayer);
     }
 }

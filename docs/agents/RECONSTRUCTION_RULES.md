@@ -250,6 +250,11 @@ Recent reconstruction notes:
   position)` operation through `AgentMapGatewayRuntime`. The follow map-change
   predicate, ground-point fallback, idle-on-ground call, and movement-state
   reset order are unchanged.
+- Offline Agent loading now routes map resolution and channel/world/map player
+  registration through `AgentMapGatewayRuntime`. Character loading, disease
+  restoration, rate initialization, spawn-position resolution, client binding,
+  entered-channel state, map visit, and disease-expiry task ordering are
+  unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

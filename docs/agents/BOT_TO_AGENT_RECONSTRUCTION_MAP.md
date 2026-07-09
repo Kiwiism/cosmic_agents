@@ -2752,6 +2752,10 @@ Recent capability extraction notes:
   cross-map follow `changeMap(map, position)` call through
   `AgentMapGatewayRuntime`. Follow eligibility checks, spawn-position fallback,
   idle-on-ground, and reset ordering stay unchanged.
+- SPI/gateway extraction: `AgentOfflineLoadRuntime` now routes map resolution
+  and channel/world/map player registration through `AgentMapGatewayRuntime`.
+  Offline character loading, disease restore, spawn positioning, rate setup,
+  client binding, map visit, and disease task startup stay unchanged.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the

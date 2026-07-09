@@ -3,11 +3,35 @@ package server.agents.integration.cosmic;
 import client.Character;
 import server.agents.integration.MapGateway;
 import server.maps.MapleMap;
+import net.server.Server;
 
 import java.awt.Point;
 
 public enum CosmicMapGateway implements MapGateway {
     INSTANCE;
+
+    @Override
+    public MapleMap resolveMap(int world, int channel, int mapId) {
+        return Server.getInstance().getChannel(world, channel).getMapFactory().getMap(mapId);
+    }
+
+    @Override
+    public void addChannelPlayer(int world, int channel, Character agent) {
+        Server.getInstance().getChannel(world, channel).addPlayer(agent);
+    }
+
+    @Override
+    public void addWorldPlayer(int world, int channel, Character agent) {
+        Server.getInstance().getChannel(world, channel).getWorldServer().addPlayer(agent);
+    }
+
+    @Override
+    public void addMapPlayer(MapleMap map, Character agent) {
+        if (map == null || agent == null) {
+            return;
+        }
+        map.addPlayer(agent);
+    }
 
     @Override
     public void changeMap(Character agent, MapleMap map, Point position) {
