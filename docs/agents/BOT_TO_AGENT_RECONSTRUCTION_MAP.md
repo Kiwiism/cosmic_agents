@@ -2883,3 +2883,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: `AgentCombatBuffRuntime` now uses
   `AgentSkillGatewayRuntime`/`SkillGateway` for support-buff skill lookup.
   Party-support and self-buff timing/classification behavior remains unchanged.
+- SPI/gateway extraction: `AgentCombatHealRuntime` now uses
+  `AgentSkillGatewayRuntime`/`SkillGateway` for cached support-heal skill
+  lookup. Heal selection, jump-heal, cooldown, and attack-packet behavior remain
+  unchanged.

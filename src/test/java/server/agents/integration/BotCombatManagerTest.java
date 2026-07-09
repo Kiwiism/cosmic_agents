@@ -1121,6 +1121,21 @@ class BotCombatManagerTest {
     }
 
     @Test
+    void supportHealRuntimeUsesSkillGatewayForCachedHealSkill() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentModeStateRuntime.setFollowing(entry, true);
+        AgentCombatSkillCacheStateRuntime.setHealSkillId(entry, Cleric.HEAL);
+        Skill heal = new Skill(Cleric.HEAL);
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkill(Cleric.HEAL)).thenReturn(heal);
+        when(bot.getSkillLevel(heal)).thenReturn((byte) 0);
+
+        assertFalse(AgentCombatHealRuntime.tickSupportHealing(entry, bot, AgentCombatConfig.cfg, skills));
+    }
+
+    @Test
     void combatActionStateRuntimeClearsTargetAndActionLocks() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);

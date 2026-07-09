@@ -6,10 +6,11 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentFollowAnchorService;
 import server.agents.runtime.AgentModeStateRuntime;
@@ -26,6 +27,11 @@ public final class AgentCombatHealRuntime {
     }
 
     public static boolean tickSupportHealing(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config) {
+        return tickSupportHealing(entry, bot, config, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static boolean tickSupportHealing(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,
+                                             SkillGateway skills) {
         int healSkillId = AgentCombatSkillCacheStateRuntime.healSkillId(entry);
         if (!AgentCombatSupportPolicy.shouldTickSupportHealing(
                 AgentCombatCooldownStateRuntime.blocksGroundedAttack(entry, AgentMovementStateRuntime.inAir(entry)),
@@ -37,7 +43,7 @@ public final class AgentCombatHealRuntime {
             return false;
         }
 
-        Skill skill = SkillFactory.getSkill(healSkillId);
+        Skill skill = skills.getSkill(healSkillId);
         int lvl = bot.getSkillLevel(skill);
         if (lvl <= 0) return false;
         StatEffect fx = skill.getEffect(lvl);

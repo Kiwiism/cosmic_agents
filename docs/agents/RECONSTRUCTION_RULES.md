@@ -6868,6 +6868,12 @@ Current physics correction:
   `SkillFactory` in `AgentCombatBuffRuntime`. Buff tick gating, party-support
   preference, cooldown checks, active-support classification, special-move
   dispatch, debug summaries, and support-cast timing behavior are unchanged.
+- SPI/gateway extraction: support-heal runtime skill lookup now calls
+  `AgentSkillGatewayRuntime`/`SkillGateway.getSkill` instead of importing
+  `SkillFactory` in `AgentCombatHealRuntime`. Heal tick gating, cached heal
+  skill handling, party/self heal selection, undead target collection,
+  jump-heal behavior, cooldown application, heal attack packet construction,
+  and post-cast movement-window behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
