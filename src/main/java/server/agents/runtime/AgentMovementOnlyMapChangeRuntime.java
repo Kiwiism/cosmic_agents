@@ -9,6 +9,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 public final class AgentMovementOnlyMapChangeRuntime {
     private AgentMovementOnlyMapChangeRuntime() {
@@ -24,7 +25,8 @@ public final class AgentMovementOnlyMapChangeRuntime {
                         AgentMovementPoseService::teleportTo,
                         AgentMovementStateResetService::resetEntryStateAfterTeleport,
                         AgentMovementBroadcastService::broadcastMovement,
-                        AgentShopService::onMapChange,
+                        (shopEntry, shopAgent) -> AgentShopService.onMapChange(
+                                shopEntry, shopAgent, CosmicAgentServerAdapter.INSTANCE.inventory()),
                         AgentManagerStatusRuntime::checkManagerStatus));
     }
 }

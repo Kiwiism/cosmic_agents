@@ -25,7 +25,7 @@ import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 import server.agents.capabilities.shop.AgentShopRuntime;
 import server.agents.capabilities.supplies.AgentCombatAmmoCheckRuntime;
 import server.agents.runtime.AgentRandom;
@@ -50,21 +50,8 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.IntUnaryOperator;
 
 public final class AgentShopService {
-
-    // Test seam: ItemInformationProvider's WZ/DB static initializer can't run in unit tests,
-    // so projectile attack / slot-max lookups go through overridable hooks (see AgentShopServiceTest).
-    @FunctionalInterface
-    interface SlotMaxLookup {
-        short slotMax(Character bot, int itemId);
-    }
-
-    static IntUnaryOperator projectileWatk =
-            CosmicAgentServerAdapter.INSTANCE.inventory()::getProjectileWeaponAttack;
-    static SlotMaxLookup ammoSlotMax =
-            (bot, id) -> CosmicAgentServerAdapter.INSTANCE.inventory().getSlotMax(bot, id);
 
     private static final int SHOP_MANHATTAN_RADIUS = 200;
     private static final int SHOP_ARRIVE_DIST = 100;
@@ -89,16 +76,16 @@ public final class AgentShopService {
 
     private record ShopSlotItem(short slot, ShopItem shopItem) {}
 
-    public static void onMapChange(AgentRuntimeEntry entry, Character bot) {
+    public static void onMapChange(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         clearShopState(entry);
 
-        NpcShopMatch match = findBestShop(bot, false);
+        NpcShopMatch match = findBestShop(bot, false, inventory);
         if (match == null) {
             return;
         }
 
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
-        boolean needsRecharge = needsRechargeForShop(bot, wt, ammoTriggerThreshold());
+        boolean needsRecharge = needsRechargeForShop(bot, wt, ammoTriggerThreshold(), inventory);
         boolean needsAmmoForShop = needsFixedAmmoForShop(bot, match.shop, wt, ammoTriggerThreshold());
         int[] pots = AgentPotionService.countPotions(bot);
         int potTrigger = AgentRuntimeConfig.cfg.POT_LOW_WARN * POT_TRIGGER_THRESHOLD;
@@ -116,12 +103,11 @@ public final class AgentShopService {
         startShopVisit(entry, bot, match);
     }
 
-    public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot) {
+    public static void requestSellTrashVisit(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (entry == null || bot == null || bot.getMap() == null) {
             return;
         }
-        if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot,
-                CosmicAgentServerAdapter.INSTANCE.inventory()).isEmpty()) {
+        if (AgentInventorySellTrashService.collectSellTrashEquips(entry, bot, inventory).isEmpty()) {
             AgentShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNoTrashEquipsReply());
             return;
         }
@@ -131,7 +117,7 @@ public final class AgentShopService {
             return;
         }
 
-        NpcShopMatch match = findBestShop(bot, true);
+        NpcShopMatch match = findBestShop(bot, true, inventory);
         if (match == null) {
             AgentShopStateRuntime.setShopSellTrashPending(entry, false);
             AgentShopRuntime.replyNow(entry, AgentDialogueCatalog.shopNotFoundReply());
@@ -151,7 +137,7 @@ public final class AgentShopService {
                 System.currentTimeMillis());
     }
 
-    public static boolean tickShopVisit(AgentRuntimeEntry entry, Character bot) {
+    public static boolean tickShopVisit(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (!AgentShopStateRuntime.shopVisitPending(entry)) {
             return false;
         }
@@ -187,7 +173,7 @@ public final class AgentShopService {
                 AgentShopStateRuntime.markShopSequenceActive(entry, System.currentTimeMillis());
                 AgentShopRuntime.sayMapNow(bot, AgentDialogueSelector.randomReply(AgentDialogueCatalog.shoppingReplies()));
                 Point npcPos = AgentShopStateRuntime.shopNpcPosition(entry);
-                scheduleShopStep(entry, () -> executePurchases(entry, bot, npcPos));
+                scheduleShopStep(entry, () -> executePurchases(entry, bot, inventory, npcPos));
             }
             return true;
         }
@@ -204,7 +190,7 @@ public final class AgentShopService {
         return AgentShopApproachPolicy.manhattan(a, b);
     }
 
-    private static NpcShopMatch findBestShop(Character bot, boolean allowAnyShop) {
+    private static NpcShopMatch findBestShop(Character bot, boolean allowAnyShop, InventoryGateway inventory) {
         List<MapObject> objects = bot.getMap().getMapObjectsInRange(
                 new Point(0, 0), Double.POSITIVE_INFINITY,
                 Arrays.asList(MapObjectType.NPC));
@@ -218,19 +204,19 @@ public final class AgentShopService {
             if (shop == null) {
                 continue;
             }
-            if (allowAnyShop || shopHasAnythingNeeded(bot, shop)) {
+            if (allowAnyShop || shopHasAnythingNeeded(bot, shop, inventory)) {
                 return new NpcShopMatch(npc, shop, npc.getPosition());
             }
         }
         return null;
     }
 
-    private static boolean shopHasAnythingNeeded(Character bot, Shop shop) {
+    private static boolean shopHasAnythingNeeded(Character bot, Shop shop, InventoryGateway inventory) {
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         if (needsFixedAmmoForShop(bot, shop, wt, ammoTriggerThreshold())) {
             return true;
         }
-        if (needsRechargeForShop(bot, wt, ammoTriggerThreshold())) {
+        if (needsRechargeForShop(bot, wt, ammoTriggerThreshold(), inventory)) {
             return true;
         }
         int[] pots = AgentPotionService.countPotions(bot);
@@ -243,7 +229,7 @@ public final class AgentShopService {
         return false;
     }
 
-    private static void executePurchases(AgentRuntimeEntry entry, Character bot, Point npcPos) {
+    private static void executePurchases(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory, Point npcPos) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopKeeperUnreachableReply());
             return;
@@ -252,9 +238,9 @@ public final class AgentShopService {
         WeaponType wt = AgentAttackExecutionProvider.getEquippedWeaponType(bot);
         List<AgentShopPurchaseAction<AgentRuntimeEntry>> actions = new ArrayList<>();
 
-        if (shouldRechargeWhileShopping(bot, wt)) {
+        if (shouldRechargeWhileShopping(bot, wt, inventory)) {
             actions.add((sequence, shop) -> {
-                AgentShopBuyReport recharge = doRecharge(bot, shop, wt);
+                AgentShopBuyReport recharge = doRecharge(bot, shop, wt, sequence.inventory());
                 if (recharge.quantity() > 0) {
                     int recharged = recharge.quantity();
                     String ammoName = wt == WeaponType.GUN ? "bullets" : "throwing stars";
@@ -282,7 +268,7 @@ public final class AgentShopService {
             return sequence;
         });
 
-        runPurchaseStep(new AgentShopPurchaseSequence<>(entry, bot, npcPos, actions, new ArrayList<>(), null), 0);
+        runPurchaseStep(new AgentShopPurchaseSequence<>(entry, bot, inventory, npcPos, actions, new ArrayList<>(), null), 0);
     }
 
     private static void runPurchaseStep(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence, int index) {
@@ -326,7 +312,7 @@ public final class AgentShopService {
                 return;
             }
             if (sequence.firstShortfall() != null) {
-                AgentShopRuntime.sayMapNow(sequence.bot(), buildShortfallMessage(sequence.firstShortfall()));
+                AgentShopRuntime.sayMapNow(sequence.bot(), buildShortfallMessage(sequence.firstShortfall(), sequence.inventory()));
             } else if (announceIfEmpty && sequence.bought().isEmpty()) {
                 // Never end a resupply visit silently: nothing was bought and nothing fell short.
                 AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopEmptyResupplyReply());
@@ -347,8 +333,8 @@ public final class AgentShopService {
     }
 
     private static void startSellTrashSequence(AgentShopPurchaseSequence<AgentRuntimeEntry> sequence) {
-        List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(sequence.entry(), sequence.bot(),
-                CosmicAgentServerAdapter.INSTANCE.inventory());
+        List<Item> items = AgentInventorySellTrashService.collectSellTrashEquips(
+                sequence.entry(), sequence.bot(), sequence.inventory());
         if (items.isEmpty()) {
             AgentShopStateRuntime.setShopSellTrashPending(sequence.entry(), false);
             AgentShopRuntime.sayMapNow(sequence.bot(), AgentDialogueCatalog.shopNoTrashEquipsReply());
@@ -366,11 +352,12 @@ public final class AgentShopService {
                         Collections.newSetFromMap(new IdentityHashMap<>()),
                         plan,
                         sequence.bought(),
-                        sequence.firstShortfall()));
+                        sequence.firstShortfall(),
+                        sequence.inventory()));
     }
 
     private static void runSellTrashStep(AgentRuntimeEntry entry, Character bot, Point npcPos, int soldCount, Set<Item> failedItems, List<Item> plan,
-                                         List<String> bought, AgentShopBuyReport firstShortfall) {
+                                         List<String> bought, AgentShopBuyReport firstShortfall, InventoryGateway inventory) {
         if (!isShopSequenceValid(entry, bot, npcPos)) {
             abortShop(entry, bot, AgentDialogueCatalog.shopSellInterruptedReply());
             return;
@@ -390,14 +377,14 @@ public final class AgentShopService {
             } else if (soldCount == 0) {
                 AgentShopRuntime.sayMapNow(bot, AgentDialogueCatalog.shopNoTrashEquipsReply());
             }
-            finishPurchaseSequence(new AgentShopPurchaseSequence<>(entry, bot, npcPos, List.of(), bought, firstShortfall), false);
+            finishPurchaseSequence(new AgentShopPurchaseSequence<>(entry, bot, inventory, npcPos, List.of(), bought, firstShortfall), false);
             return;
         }
 
         Item item = items.get(0);
         if (!AgentInventoryItemPolicy.hasItem(bot, item)) {
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall));
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall, inventory));
             return;
         }
 
@@ -416,13 +403,13 @@ public final class AgentShopService {
         if (AgentInventoryItemPolicy.hasItem(bot, item)) {
             failedItems.add(item);
             scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall));
+                    () -> runSellTrashStep(entry, bot, npcPos, soldCount, failedItems, plan, bought, firstShortfall, inventory));
             return;
         }
 
         int nextSoldCount = soldCount + 1;
         scheduleShopStep(entry, SELL_TRASH_STEP_DELAY_MS,
-                () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall));
+                () -> runSellTrashStep(entry, bot, npcPos, nextSoldCount, failedItems, plan, bought, firstShortfall, inventory));
     }
 
     private static AgentShopPurchaseSequence<AgentRuntimeEntry> appendBuyReport(
@@ -430,7 +417,7 @@ public final class AgentShopService {
             AgentShopBuyReport report,
             String fallbackName) {
         if (report.quantity() > 0) {
-            sequence.bought().add(report.quantity() + " " + resolveItemName(report.itemId(), fallbackName));
+            sequence.bought().add(report.quantity() + " " + resolveItemName(report.itemId(), fallbackName, sequence.inventory()));
         }
         return sequence.withFirstShortfall(report);
     }
@@ -458,17 +445,17 @@ public final class AgentShopService {
     // weapon) is below the threshold AND has a partial stack that can actually be refilled.
     // Keying on the best item means a pile of weaker stars can't mask a depleted good stack,
     // and the partial-stack check stops pointless trips/silent no-ops when nothing is refillable.
-    private static boolean needsRechargeForShop(Character bot, WeaponType wt, int threshold) {
+    private static boolean needsRechargeForShop(Character bot, WeaponType wt, int threshold, InventoryGateway inventory) {
         return AgentShopAmmoPolicy.needsRecharge(
                 bot.getInventory(InventoryType.USE).list(),
                 wt,
                 threshold,
-                projectileWatk,
-                itemId -> ammoSlotMax.slotMax(bot, itemId));
+                inventory::getProjectileWeaponAttack,
+                itemId -> inventory.getSlotMax(bot, itemId));
     }
 
-    static boolean shouldRechargeWhileShopping(Character bot, WeaponType wt) {
-        return needsRechargeForShop(bot, wt, ammoTriggerThreshold());
+    static boolean shouldRechargeWhileShopping(Character bot, WeaponType wt, InventoryGateway inventory) {
+        return needsRechargeForShop(bot, wt, ammoTriggerThreshold(), inventory);
     }
 
     static boolean shouldBuyFixedAmmoWhileShopping(Character bot, WeaponType wt) {
@@ -512,15 +499,11 @@ public final class AgentShopService {
         return buyFixedCostItem(bot, shop, ammo, Math.max(0, target - current), 1000);
     }
 
-    private static int bestRechargeAmmoId(Character bot, WeaponType wt) {
-        return AgentShopAmmoPolicy.bestRechargeAmmoId(bot.getInventory(InventoryType.USE).list(), wt, projectileWatk);
-    }
-
     private static boolean matchesRechargeWeapon(int itemId, WeaponType wt) {
         return AgentShopAmmoPolicy.matchesRechargeWeapon(itemId, wt);
     }
 
-    private static AgentShopBuyReport doRecharge(Character bot, Shop shop, WeaponType wt) {
+    private static AgentShopBuyReport doRecharge(Character bot, Shop shop, WeaponType wt, InventoryGateway inventory) {
         // Only recharge ammo matching the equipped weapon (claw->stars, gun->bullets) and only
         // the best stacks by attack: recharging off-weapon or low-tier leftovers just wastes meso,
         // and an off-weapon failure must never short-circuit the real ammo refill.
@@ -530,13 +513,13 @@ public final class AgentShopService {
             if (!ItemConstants.isRechargeable(id) || !matchesRechargeWeapon(id, wt)) {
                 continue;
             }
-            if (item.getQuantity() >= ammoSlotMax.slotMax(bot, id)) {
+            if (item.getQuantity() >= inventory.getSlotMax(bot, id)) {
                 continue;
             }
             refillable.add(item);
         }
         refillable.sort((a, b) -> Integer.compare(
-                projectileWatk.applyAsInt(b.getItemId()), projectileWatk.applyAsInt(a.getItemId())));
+                inventory.getProjectileWeaponAttack(b.getItemId()), inventory.getProjectileWeaponAttack(a.getItemId())));
 
         int recharged = 0;
         int attempted = 0;
@@ -626,8 +609,8 @@ public final class AgentShopService {
         return new AgentShopBuyReport(item.shopItem.getItemId(), totalBought, desiredQuantity, reason);
     }
 
-    private static String buildShortfallMessage(AgentShopBuyReport report) {
-        String itemName = resolveItemName(report.itemId(), "item");
+    private static String buildShortfallMessage(AgentShopBuyReport report, InventoryGateway inventory) {
+        String itemName = resolveItemName(report.itemId(), "item", inventory);
         String got = GameConstants.numberWithCommas(report.quantity());
         String want = GameConstants.numberWithCommas(report.requestedQuantity());
         return switch (report.reason()) {
@@ -637,8 +620,8 @@ public final class AgentShopService {
         };
     }
 
-    private static String resolveItemName(int itemId, String fallbackName) {
-        String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(itemId);
+    private static String resolveItemName(int itemId, String fallbackName, InventoryGateway inventory) {
+        String name = inventory.getItemName(itemId);
         return name != null ? name : fallbackName;
     }
 

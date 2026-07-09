@@ -211,6 +211,11 @@ Recent reconstruction notes:
   names after shell deletion. They are naming artifacts only, not dependencies
   on the removed bot package, and should be renamed by capability in a later
   semantic cleanup branch.
+- Shop resupply and sell-trash metadata lookup now accepts an explicit
+  `InventoryGateway` from runtime callers. `AgentShopService` no longer reaches
+  directly into the Cosmic adapter for projectile attack, slot max, sell-trash
+  classification, or item-name shortfall messages; behavior, timing, shop
+  purchase ordering, and replies are unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

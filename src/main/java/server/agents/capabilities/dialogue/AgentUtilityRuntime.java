@@ -42,7 +42,8 @@ public final class AgentUtilityRuntime {
             public void sellTrash() {
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
                 AgentSchedulerRuntime.afterRandomDelay(500, 700,
-                        () -> AgentShopService.requestSellTrashVisit(entry, bot));
+                        () -> AgentShopService.requestSellTrashVisit(
+                                entry, bot, CosmicAgentServerAdapter.INSTANCE.inventory()));
             }
 
             @Override

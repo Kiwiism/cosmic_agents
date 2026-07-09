@@ -183,6 +183,13 @@ Recent map updates:
   scheduled share execution. Low-ammo thresholds, cooldown/backoff keys, donor
   scoring, same-ammo surplus donation, random delays, offer dialogue, and
   supply-share transfer behavior remain unchanged.
+- `AgentShopService` now receives `InventoryGateway` from runtime callers for
+  map-change resupply checks, sell-trash shop visits, shop tick purchase
+  sequences, recharge metadata, and shortfall item names. Runtime boundaries
+  still provide the Cosmic inventory gateway, while the shop capability no
+  longer performs direct Cosmic adapter lookup for those metadata reads.
+  Shop approach timing, purchase/recharge order, sell-trash sequencing, and
+  dialogue output remain unchanged.
 - `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
   `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
   `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across

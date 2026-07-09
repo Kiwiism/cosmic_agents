@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentTradeInviteGateway;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -32,7 +33,8 @@ class AgentUtilityRuntimeTest {
 
             AgentUtilityRuntime.utilityCallbacks(entry).sellTrash();
 
-            shops.verify(() -> AgentShopService.requestSellTrashVisit((AgentRuntimeEntry) entry, bot));
+            shops.verify(() -> AgentShopService.requestSellTrashVisit(
+                    eq((AgentRuntimeEntry) entry), eq(bot), any(InventoryGateway.class)));
         }
     }
 

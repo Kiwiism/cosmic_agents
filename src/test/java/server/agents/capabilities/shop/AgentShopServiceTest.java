@@ -24,13 +24,13 @@ import testutil.Items;
 
 import java.awt.*;
 import java.util.List;
-import java.util.function.IntUnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -49,7 +49,7 @@ class AgentShopServiceTest {
                             any(AgentRuntimeEntry.class), any(Character.class), any(InventoryGateway.class)))
                     .thenReturn(List.of());
 
-            AgentShopService.requestSellTrashVisit(entry, bot);
+            AgentShopService.requestSellTrashVisit(entry, bot, inventoryGateway());
 
             replies.verify(() -> AgentShopRuntime.replyNow(entry, "no trash equips worth selling"));
         }
@@ -66,8 +66,8 @@ class AgentShopServiceTest {
         when(map.getMapObjectsInRange(any(Point.class), anyDouble(), any())).thenReturn(List.of(npc));
         when(shop.getItems()).thenReturn(List.of());
 
-        try (Seam seam = withStarStats();
-             MockedStatic<AgentAttackExecutionProvider> attacks =
+        InventoryGateway inventory = starStatsInventory();
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
@@ -77,7 +77,7 @@ class AgentShopServiceTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
-            AgentShopService.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot, inventory);
         }
 
         assertFalse(AgentShopStateRuntime.shopVisitPending(entry));
@@ -94,8 +94,8 @@ class AgentShopServiceTest {
         when(map.getMapObjectsInRange(any(Point.class), anyDouble(), any())).thenReturn(List.of(npc));
         when(shop.getItems()).thenReturn(List.of());
 
-        try (Seam seam = withStarStats();
-             MockedStatic<AgentAttackExecutionProvider> attacks =
+        InventoryGateway inventory = starStatsInventory();
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      mockStatic(AgentAttackExecutionProvider.class, org.mockito.Mockito.CALLS_REAL_METHODS);
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<ShopFactory> shops = mockStatic(ShopFactory.class)) {
@@ -105,7 +105,7 @@ class AgentShopServiceTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.CLAW);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
-            AgentShopService.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot, inventory);
         }
 
         assertTrue(AgentShopStateRuntime.shopVisitPending(entry));
@@ -119,10 +119,9 @@ class AgentShopServiceTest {
                 new int[]{1000, 1000, 1000, 1000, 1000});
         bot.getInventory(InventoryType.USE).addItem(Items.itemWithQuantity(2070018, 800));
 
-        try (Seam seam = withStarStats()) {
-            assertTrue(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
-            assertTrue(AgentShopService.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
-        }
+        InventoryGateway inventory = starStatsInventory();
+        assertTrue(entryWouldTriggerShopVisit(bot, WeaponType.CLAW, inventory));
+        assertTrue(AgentShopService.shouldRechargeWhileShopping(bot, WeaponType.CLAW, inventory));
     }
 
     @Test
@@ -130,17 +129,16 @@ class AgentShopServiceTest {
         // Best star (2070018) is full and above threshold; a near-empty weak star must not trigger.
         Character bot = clawBotWithStarItems(new int[]{2070000, 2070018}, new int[]{50, 5000});
 
-        try (Seam seam = withStarStats()) {
-            assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.CLAW));
-            assertFalse(AgentShopService.shouldRechargeWhileShopping(bot, WeaponType.CLAW));
-        }
+        InventoryGateway inventory = starStatsInventory();
+        assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.CLAW, inventory));
+        assertFalse(AgentShopService.shouldRechargeWhileShopping(bot, WeaponType.CLAW, inventory));
     }
 
     @Test
     void shouldBuyArrowsWhileShoppingWhenBelowTargetButAboveTrigger() {
         Character bot = bowBotWithArrows(4500);
 
-        assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.BOW));
+        assertFalse(entryWouldTriggerShopVisit(bot, WeaponType.BOW, inventoryGateway()));
         assertTrue(AgentShopService.shouldBuyFixedAmmoWhileShopping(bot, WeaponType.BOW));
     }
 
@@ -173,7 +171,7 @@ class AgentShopServiceTest {
                             any(AgentRuntimeEntry.class), any(Character.class), any(InventoryGateway.class)))
                     .thenReturn(List.of(mock(Item.class)));
 
-            AgentShopService.requestSellTrashVisit(entry, bot);
+            AgentShopService.requestSellTrashVisit(entry, bot, inventoryGateway());
         }
 
         assertTrue(AgentShopStateRuntime.shopVisitPending(entry));
@@ -203,22 +201,18 @@ class AgentShopServiceTest {
         return bot;
     }
 
-    // Stub the ItemInformationProvider-backed seam: star 2070018 is the strongest, all stacks
-    // are well under slot-max so any partial stack counts as refillable. Restored on close.
-    private static Seam withStarStats() {
-        IntUnaryOperator prevWatk = AgentShopService.projectileWatk;
-        AgentShopService.SlotMaxLookup prevSlot = AgentShopService.ammoSlotMax;
-        AgentShopService.projectileWatk = id -> id == 2070018 ? 50 : 10;
-        AgentShopService.ammoSlotMax = (bot, id) -> (short) 10000;
-        return new Seam(prevWatk, prevSlot);
+    // Stub the ItemInformationProvider-backed gateway: star 2070018 is the strongest, all stacks
+    // are well under slot-max so any partial stack counts as refillable.
+    private static InventoryGateway starStatsInventory() {
+        InventoryGateway inventory = inventoryGateway();
+        when(inventory.getProjectileWeaponAttack(2070018)).thenReturn(50);
+        when(inventory.getProjectileWeaponAttack(2070000)).thenReturn(10);
+        when(inventory.getSlotMax(any(Character.class), anyInt())).thenReturn((short) 10000);
+        return inventory;
     }
 
-    private record Seam(IntUnaryOperator watk, AgentShopService.SlotMaxLookup slot) implements AutoCloseable {
-        @Override
-        public void close() {
-            AgentShopService.projectileWatk = watk;
-            AgentShopService.ammoSlotMax = slot;
-        }
+    private static InventoryGateway inventoryGateway() {
+        return mock(InventoryGateway.class);
     }
 
     private static Character bowBotWithArrows(int quantity) {
@@ -233,7 +227,7 @@ class AgentShopServiceTest {
         return bot;
     }
 
-    private static boolean entryWouldTriggerShopVisit(Character bot, WeaponType weaponType) {
+    private static boolean entryWouldTriggerShopVisit(Character bot, WeaponType weaponType, InventoryGateway inventory) {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         MapleMap map = bot.getMap();
         NPC npc = shopNpc(new Point(20, 0));
@@ -252,7 +246,7 @@ class AgentShopServiceTest {
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(weaponType);
             potions.when(() -> AgentPotionService.countPotions(bot)).thenReturn(new int[]{9999, 9999});
 
-            AgentShopService.onMapChange(entry, bot);
+            AgentShopService.onMapChange(entry, bot, inventory);
         }
 
         return AgentShopStateRuntime.shopVisitPending(entry);
