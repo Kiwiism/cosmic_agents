@@ -5,6 +5,7 @@ import client.Job;
 import client.inventory.Equip;
 import client.inventory.WeaponType;
 import server.ItemInformationProvider;
+import server.agents.integration.InventoryGateway;
 
 import java.util.Map;
 
@@ -50,6 +51,35 @@ public interface AgentEquipmentOptimizerHooks {
         };
     }
 
+    static AgentEquipmentOptimizerHooks from(InventoryGateway inventory) {
+        return new AgentEquipmentOptimizerHooks() {
+            @Override
+            public boolean isTwoHanded(int itemId) {
+                return inventory.isTwoHandedWeapon(itemId);
+            }
+
+            @Override
+            public WeaponType getWeaponType(int itemId) {
+                return inventory.getWeaponType(itemId);
+            }
+
+            @Override
+            public boolean isOverall(int itemId) {
+                return "MaPn".equals(inventory.getEquipmentSlot(itemId));
+            }
+
+            @Override
+            public boolean meetsReqs(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame) {
+                return inventory.meetsEquipRequirements(equip, job, level, str, dex, int_, luk, fame);
+            }
+
+            @Override
+            public Map<String, Integer> getEquipStats(int itemId) {
+                return inventory.getEquipStats(itemId);
+            }
+        };
+    }
+
     static AgentEquipmentOptimizerHooks futureFrom(ItemInformationProvider ii, Character agent) {
         final Job agentJob = agent != null ? agent.getJob() : null;
         final int effectiveLevel = agent != null && agent.getLevel() > 0 ? agent.getLevel() : Short.MAX_VALUE;
@@ -79,6 +109,39 @@ public interface AgentEquipmentOptimizerHooks {
             @Override
             public Map<String, Integer> getEquipStats(int itemId) {
                 return ii.getEquipStats(itemId);
+            }
+        };
+    }
+
+    static AgentEquipmentOptimizerHooks futureFrom(InventoryGateway inventory, Character agent) {
+        final Job agentJob = agent != null ? agent.getJob() : null;
+        final int effectiveLevel = agent != null && agent.getLevel() > 0 ? agent.getLevel() : Short.MAX_VALUE;
+        final int effectiveFame = agent != null ? agent.getFame() : 0;
+        final int max = Integer.MAX_VALUE / 4;
+        return new AgentEquipmentOptimizerHooks() {
+            @Override
+            public boolean isTwoHanded(int itemId) {
+                return inventory.isTwoHandedWeapon(itemId);
+            }
+
+            @Override
+            public WeaponType getWeaponType(int itemId) {
+                return inventory.getWeaponType(itemId);
+            }
+
+            @Override
+            public boolean isOverall(int itemId) {
+                return "MaPn".equals(inventory.getEquipmentSlot(itemId));
+            }
+
+            @Override
+            public boolean meetsReqs(Equip equip, Job job, int level, int str, int dex, int int_, int luk, int fame) {
+                return inventory.meetsEquipRequirements(equip, agentJob, effectiveLevel, max, max, max, max, effectiveFame);
+            }
+
+            @Override
+            public Map<String, Integer> getEquipStats(int itemId) {
+                return inventory.getEquipStats(itemId);
             }
         };
     }

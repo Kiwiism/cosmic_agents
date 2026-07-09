@@ -2578,3 +2578,7 @@ Recent capability extraction notes:
   invite-accept visit operations. Trade capability code still carries live
   `Trade` window references as state/tick inputs until the later trade-window
   abstraction slice, but direct static lifecycle calls are gateway-backed.
+- SPI/gateway extraction: `AgentEquipmentOptimizerHooks` now exposes
+  `InventoryGateway` factories and `AgentEquipmentOptimizationService` uses
+  them for optimizer DP metadata. Existing item-info hook factories remain as
+  staged compatibility for older optimizer overloads.

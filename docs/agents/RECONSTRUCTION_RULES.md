@@ -6535,6 +6535,12 @@ Current physics correction:
   the Cosmic gateway while live `Trade` window objects remain in staged trade
   state/tick APIs. Trade sequencing, timeout replies, completion reactions,
   and manual invite behavior are unchanged.
+- SPI/gateway extraction: equipment optimizer hook construction now has
+  `InventoryGateway` factories for current and future-scope checks.
+  `AgentEquipmentOptimizationService` uses those factories for optimizer DP
+  metadata while legacy item-info factories remain only for compatibility
+  overloads. Two-handed, weapon-type, overall-slot, requirement, and equip-stat
+  behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

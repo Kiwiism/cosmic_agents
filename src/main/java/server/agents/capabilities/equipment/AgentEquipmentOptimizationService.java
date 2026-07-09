@@ -102,8 +102,8 @@ public final class AgentEquipmentOptimizationService {
 
         AgentEquipmentStatSnapshot naked = nakedBase(agent, itemInfo, equippedInventory);
         AgentEquipmentOptimizerHooks hooks = scope == RecommendationScope.IMMEDIATE
-                ? AgentEquipmentOptimizerHooks.from(itemInfo)
-                : AgentEquipmentOptimizerHooks.futureFrom(itemInfo, agent);
+                ? AgentEquipmentOptimizerHooks.from(inventory)
+                : AgentEquipmentOptimizerHooks.futureFrom(inventory, agent);
         Map<Short, Equip> bestPicks = null;
         AgentEquipmentScore bestScore = null;
         Equip bestWeapon = null;
