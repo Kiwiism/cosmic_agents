@@ -27,6 +27,7 @@ import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
 import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
+import server.agents.integration.SkillGateway;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 
@@ -1197,15 +1198,15 @@ class BotCombatManagerTest {
         Skill powerStrike = skillWithAttackBox(Warrior.POWER_STRIKE, 1, 1, 180,
                 new Rectangle(90, 150, 120, 80));
         when(bot.getSkillLevel(powerStrike)).thenReturn((byte) 1);
+        SkillGateway skills = mock(SkillGateway.class);
+        when(skills.getSkill(Warrior.POWER_STRIKE)).thenReturn(powerStrike);
 
-        try (MockedStatic<SkillFactory> skillFactory = Mockito.mockStatic(SkillFactory.class);
-             MockedStatic<AgentAttackExecutionProvider> attacks =
+        try (MockedStatic<AgentAttackExecutionProvider> attacks =
                      Mockito.mockStatic(AgentAttackExecutionProvider.class, Mockito.CALLS_REAL_METHODS)) {
-            skillFactory.when(() -> SkillFactory.getSkill(Warrior.POWER_STRIKE)).thenReturn(powerStrike);
             attacks.when(() -> AgentAttackExecutionProvider.getEquippedWeaponType(bot)).thenReturn(WeaponType.SWORD1H);
 
             AgentAttackPlan plan = AgentSkillAttackPlanRuntime.planSkillAttack(
-                    bot, target, Warrior.POWER_STRIKE, AgentCombatConfig.cfg);
+                    bot, target, Warrior.POWER_STRIKE, AgentCombatConfig.cfg, skills);
 
             assertNotNull(plan);
             assertEquals(Warrior.POWER_STRIKE, plan.skillId);

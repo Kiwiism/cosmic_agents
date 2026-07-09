@@ -2,11 +2,12 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import client.Skill;
-import client.SkillFactory;
 import client.inventory.WeaponType;
 import constants.skills.DragonKnight;
 import server.StatEffect;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;
+import server.agents.integration.AgentSkillGatewayRuntime;
+import server.agents.integration.SkillGateway;
 import server.life.Monster;
 
 import java.awt.Rectangle;
@@ -18,7 +19,12 @@ public final class AgentSkillAttackPlanRuntime {
 
     public static AgentAttackPlan planSkillAttack(Character bot, Monster primaryTarget, int skillId,
                                                   AgentCombatConfig.Config config) {
-        Skill skill = SkillFactory.getSkill(skillId);
+        return planSkillAttack(bot, primaryTarget, skillId, config, AgentSkillGatewayRuntime.skills());
+    }
+
+    public static AgentAttackPlan planSkillAttack(Character bot, Monster primaryTarget, int skillId,
+                                                  AgentCombatConfig.Config config, SkillGateway skills) {
+        Skill skill = skills.getSkill(skillId);
         int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
         StatEffect effect = skill == null || skillLevel <= 0 ? null : skill.getEffect(skillLevel);
         AgentSkillAttackPlanner.SkillAttackReadiness readiness = AgentSkillAttackPlanner.skillAttackReadiness(

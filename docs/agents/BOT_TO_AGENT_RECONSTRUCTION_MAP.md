@@ -2862,3 +2862,7 @@ Recent capability extraction notes:
 - SPI/gateway extraction: `AgentCombatImmediateTargetPolicy` now uses
   `AgentSkillGatewayRuntime` for cached projectile skill lookup. Immediate
   target eligibility behavior remains unchanged.
+- SPI/gateway extraction: `AgentSkillAttackPlanRuntime` now uses
+  `AgentSkillGatewayRuntime` for attack skill lookup. Skill attack plan
+  readiness, hitbox, target collection, Dragon Roar support gating, and packet
+  timing behavior remain unchanged.
