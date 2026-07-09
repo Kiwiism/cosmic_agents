@@ -17,6 +17,7 @@ import server.agents.capabilities.combat.AgentCombatPlanRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetRuntime;
 import server.StatEffect;
+import server.agents.integration.InventoryGateway;
 import server.combat.CombatFormulaProvider;
 import server.life.Monster;
 
@@ -60,7 +61,10 @@ class AgentCombatReportRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
         try (MockedStatic<AgentBuffService> buffs = mockStatic(AgentBuffService.class)) {
-            buffs.when(() -> AgentBuffService.getDebugLines(entry, bot)).thenReturn(List.of("buff"));
+            buffs.when(() -> AgentBuffService.getDebugLines(
+                    org.mockito.ArgumentMatchers.eq(entry),
+                    org.mockito.ArgumentMatchers.eq(bot),
+                    org.mockito.ArgumentMatchers.any(InventoryGateway.class))).thenReturn(List.of("buff"));
             assertEquals(List.of("buff"), AgentCombatReportRuntime.buffDebugLines(entry, bot));
         }
     }

@@ -12,7 +12,6 @@ import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.StatEffect;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;
@@ -53,7 +52,7 @@ public final class AgentBuffService {
 
     private AgentBuffService() {}
 
-    public static void tick(AgentRuntimeEntry entry, Character bot) {
+    public static void tick(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (!AgentBuffStateRuntime.enabled(entry)) return;
 
         long now = System.currentTimeMillis();
@@ -62,7 +61,7 @@ public final class AgentBuffService {
 
         if (bot.getMap().getAllMonsters().stream().noneMatch(Monster::isAlive)) return;
 
-        List<SelectedBuff> selected = buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry));
+        List<SelectedBuff> selected = buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry), inventory);
         if (selected.isEmpty()) {
             noteDecision(entry, "no buff pots in bag");
             return;
@@ -75,7 +74,7 @@ public final class AgentBuffService {
 
             Item item = choice.item();
             short beforeQty = item.getQuantity();
-            String itemName = itemName(item.getItemId());
+            String itemName = itemName(item.getItemId(), inventory);
 
             if (!UseItemHandler.consumeUseItem(bot, item.getPosition(), item.getItemId())) {
                 noteDecision(entry, "tried " + itemName + " but apply failed");
@@ -90,23 +89,23 @@ public final class AgentBuffService {
         noteDecision(entry, "buff pots ready, but all matching stats are already active");
     }
 
-    public static String getChatSummary(boolean enabled, boolean cheapMode, Character bot) {
-        List<ActiveBuff> active = collectActiveItemBuffs(bot);
-        List<SelectedBuff> available = buildSelection(bot, cheapMode);
+    public static String getChatSummary(boolean enabled, boolean cheapMode, Character bot, InventoryGateway inventory) {
+        List<ActiveBuff> active = collectActiveItemBuffs(bot, inventory);
+        List<SelectedBuff> available = buildSelection(bot, cheapMode, inventory);
 
         return AgentBuffDialogueReporter.chatSummary(
                 enabled,
                 cheapMode,
                 summarizeActive(active, 2, bot),
-                summarizeAvailable(available, 2, bot));
+                summarizeAvailable(available, 2, bot, inventory));
     }
 
-    public static List<String> getDebugLines(AgentRuntimeEntry entry, Character bot) {
+    public static List<String> getDebugLines(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         return AgentBuffDialogueReporter.debugLines(
                 AgentBuffStateRuntime.enabled(entry),
                 AgentBuffStateRuntime.cheapMode(entry),
-                summarizeActive(collectActiveItemBuffs(bot), 5, bot),
-                summarizeAvailable(buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry)), 5, bot));
+                summarizeActive(collectActiveItemBuffs(bot, inventory), 5, bot),
+                summarizeAvailable(buildSelection(bot, AgentBuffStateRuntime.cheapMode(entry), inventory), 5, bot, inventory));
     }
 
     public static String formatDebugState(AgentRuntimeEntry entry) {
@@ -115,7 +114,7 @@ public final class AgentBuffService {
                 AgentBuffStateRuntime.cheapMode(entry));
     }
 
-    private static List<SelectedBuff> buildSelection(Character bot, boolean cheapMode) {
+    private static List<SelectedBuff> buildSelection(Character bot, boolean cheapMode, InventoryGateway inventory) {
         Inventory use = bot.getInventory(InventoryType.USE);
         Map<List<BuffStat>, SelectedBuff> best = new LinkedHashMap<>();
 
@@ -124,10 +123,8 @@ public final class AgentBuffService {
             if (item == null || item.getQuantity() <= 0) continue;
 
             int itemId = item.getItemId();
-            if (!AgentUseItemClassificationPolicy.isBuffConsumable(itemId)) continue;
-
-            StatEffect fx = fxCache.computeIfAbsent(itemId, AgentUseItemClassificationPolicy::itemEffect);
-            if (fx == null || fx.getStatups().isEmpty()) continue;
+            StatEffect fx = fxCache.computeIfAbsent(itemId, id -> itemEffect(id, inventory));
+            if (!AgentUseItemClassificationPolicy.isBuffConsumable(fx)) continue;
 
             List<BuffStat> statKey = buildStatKey(bot, fx);
             if (statKey.isEmpty()) continue;
@@ -149,7 +146,7 @@ public final class AgentBuffService {
             if (scoreCmp != 0) {
                 return scoreCmp;
             }
-            return itemName(left.item().getItemId()).compareTo(itemName(right.item().getItemId()));
+            return itemName(left.item().getItemId(), inventory).compareTo(itemName(right.item().getItemId(), inventory));
         });
         return result;
     }
@@ -185,7 +182,7 @@ public final class AgentBuffService {
         return CombatFormulaProvider.getInstance().calculateMobHitChance(bot, ref) < ACC_HIT_THRESHOLD;
     }
 
-    private static List<ActiveBuff> collectActiveItemBuffs(Character bot) {
+    private static List<ActiveBuff> collectActiveItemBuffs(Character bot, InventoryGateway inventory) {
         List<ActiveBuff> active = new ArrayList<>();
 
         for (PlayerBuffValueHolder holder : bot.getAllBuffs()) {
@@ -195,7 +192,7 @@ public final class AgentBuffService {
             }
 
             int itemId = effect.getSourceId();
-            if (!AgentUseItemClassificationPolicy.isBuffConsumable(itemId)) {
+            if (!AgentUseItemClassificationPolicy.isBuffConsumable(itemEffect(itemId, inventory))) {
                 continue;
             }
             if (buildStatKey(bot, effect).isEmpty()) {
@@ -206,7 +203,7 @@ public final class AgentBuffService {
                     ? Math.max(0, effect.getDuration() - holder.usedTime)
                     : 0;
             active.add(new ActiveBuff(itemId,
-                    itemName(itemId),
+                    itemName(itemId, inventory),
                     effect,
                     remainingMs));
         }
@@ -295,7 +292,7 @@ public final class AgentBuffService {
         return joiner.toString().toLowerCase(Locale.ROOT);
     }
 
-    private static String summarizeAvailable(List<SelectedBuff> available, int limit, Character bot) {
+    private static String summarizeAvailable(List<SelectedBuff> available, int limit, Character bot, InventoryGateway inventory) {
         if (available.isEmpty()) {
             return "none in bag";
         }
@@ -304,7 +301,7 @@ public final class AgentBuffService {
         int count = Math.min(limit, available.size());
         for (int i = 0; i < count; i++) {
             SelectedBuff buff = available.get(i);
-            joiner.add(itemName(buff.item().getItemId()) + " x" + buff.item().getQuantity()
+            joiner.add(itemName(buff.item().getItemId(), inventory) + " x" + buff.item().getQuantity()
                     + " [" + formatStatList(bot, buff.effect()) + "]");
         }
         if (available.size() > limit) {
@@ -339,12 +336,16 @@ public final class AgentBuffService {
         AgentBuffStateRuntime.noteDecision(entry, System.currentTimeMillis(), summary);
     }
 
-    private static String itemName(int itemId) {
-        return safeName(inventory().getItemName(itemId), itemId);
+    private static StatEffect itemEffect(int itemId, InventoryGateway inventory) {
+        try {
+            return inventory.getItemEffect(itemId);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
+    private static String itemName(int itemId, InventoryGateway inventory) {
+        return safeName(inventory.getItemName(itemId), itemId);
     }
 
     private static String safeName(String name, int itemId) {

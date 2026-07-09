@@ -2596,3 +2596,8 @@ Recent capability extraction notes:
   `AgentTradeLifecycleService`. Owner-given equip tracking, completion through
   the trade gateway, delayed thanks replies, and freebie reactions remain
   unchanged.
+- SPI/gateway extraction: `AgentBuffService` no longer reaches directly for
+  `CosmicAgentServerAdapter`; common-tick, control-chat, and combat-report
+  runtime callers pass `InventoryGateway` into buff selection and reporting.
+  Buff consumable classification, cheap/max ordering, active/available
+  summaries, and debug output remain unchanged.

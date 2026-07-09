@@ -6556,6 +6556,11 @@ Current physics correction:
   `AgentTradeLifecycleService` still adapts the current trade window, so
   owner-given equip tracking, trade completion, delayed thanks replies, and
   occasional freebie reactions are unchanged.
+- SPI/gateway extraction: consumable buff selection, active-buff summaries,
+  available-buff summaries, and debug lines now receive `InventoryGateway`
+  from runtime callers instead of reaching for the Cosmic adapter inside
+  `AgentBuffService`. Buff-pot scanning, cheap/max selection, item names,
+  delayed use behavior, and chat/debug wording are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

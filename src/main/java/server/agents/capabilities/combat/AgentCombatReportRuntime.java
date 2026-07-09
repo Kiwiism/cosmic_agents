@@ -5,6 +5,7 @@ import net.server.PlayerBuffValueHolder;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.combat.AgentCombatTargetRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
@@ -54,7 +55,7 @@ public final class AgentCombatReportRuntime {
     }
 
     public static List<String> buffDebugLines(AgentRuntimeEntry entry, Character bot) {
-        return AgentBuffService.getDebugLines(entry, bot);
+        return AgentBuffService.getDebugLines(entry, bot, CosmicAgentServerAdapter.INSTANCE.inventory());
     }
 
     public static List<String> skillBuffDebugLines(AgentRuntimeEntry entry, Character bot) {

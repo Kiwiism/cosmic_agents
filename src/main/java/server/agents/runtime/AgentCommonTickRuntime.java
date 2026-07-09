@@ -15,6 +15,7 @@ import server.agents.capabilities.combat.AgentCombatDamageRuntime;
 import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.capabilities.combat.AgentCombatHealRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.function.Consumer;
 
@@ -59,7 +60,7 @@ public final class AgentCommonTickRuntime {
                         entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentCombatBuffRuntime.tickBuffs(
                         entry, agent, AgentCombatConfig.cfg),
-                AgentBuffService::tick,
+                (entry, agent) -> AgentBuffService.tick(entry, agent, CosmicAgentServerAdapter.INSTANCE.inventory()),
                 AgentActionLockPhysicsRuntime::tickActionLocked);
     }
 }
