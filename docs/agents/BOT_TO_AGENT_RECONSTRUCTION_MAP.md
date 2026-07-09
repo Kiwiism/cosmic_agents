@@ -2394,3 +2394,12 @@ Recent capability extraction notes:
   handling, stop-command dispatch, save/disconnect/relogin scheduling, and
   replies while leaving save/disconnect/relogin and reply delivery as
   integration seams.
+- Remaining `server.agents.integration` `Agent*Runtime` classes are intentional
+  boundary seams: `AgentReplyRuntime` owns Cosmic chat/whisper/party packet
+  delivery and reply-queue dispatch; `AgentRuntimeIdentityRuntime` owns live
+  Cosmic `Character`/`MapleMap` identity access for `AgentRuntimeEntry`. These
+  are retained until the broader SPI/gateway extraction replaces direct Cosmic
+  types.
+- Removed `AgentFidgetSideEffects`; fidget behavior is now called through
+  `server.agents.capabilities.movement.fidget.AgentFidgetService` from movement
+  callbacks instead of an integration wrapper.

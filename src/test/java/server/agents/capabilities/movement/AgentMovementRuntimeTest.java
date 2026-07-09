@@ -10,7 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
 import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
-import server.agents.integration.AgentFidgetSideEffects;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -111,7 +111,7 @@ class AgentMovementRuntimeTest {
 
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
-             MockedStatic<AgentFidgetSideEffects> fidgets = mockStatic(AgentFidgetSideEffects.class);
+             MockedStatic<AgentFidgetService> fidgets = mockStatic(AgentFidgetService.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentMovementStatusRuntime> status = mockStatic(AgentMovementStatusRuntime.class)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
@@ -123,7 +123,7 @@ class AgentMovementRuntimeTest {
             AgentMovementRuntime.movementCallbacks(entry).greeting();
 
             verify(bot).changeFaceExpression(AgentEmote.HAPPY.getValue());
-            fidgets.verify(() -> AgentFidgetSideEffects.maybeStartGreetingFidget(eq(entry), anyInt()));
+            fidgets.verify(() -> AgentFidgetService.maybeStartGreetingFidget(eq(entry), anyInt()));
             replies.verify(() -> AgentReplyRuntime.queueReply(eq(entry), anyString()));
             status.verify(() -> AgentMovementStatusRuntime.checkMovementStatus(entry, bot));
         }

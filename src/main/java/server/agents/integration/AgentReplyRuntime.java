@@ -15,8 +15,8 @@ import net.server.world.Party;
 import tools.PacketCreator;
 
 /**
- * Temporary Agent-owned adapter from Agent runtime message fields to the
- * Agent reply queue runtime.
+ * Boundary adapter from Agent reply queues to Cosmic chat, whisper, party, and
+ * packet delivery.
  */
 public final class AgentReplyRuntime {
     private AgentReplyRuntime() {

@@ -7,7 +7,7 @@ import server.agents.capabilities.dialogue.AgentActiveModeRuntime;
 import server.agents.capabilities.dialogue.AgentEmote;
 
 import server.agents.capabilities.dialogue.AgentChatMovementFlow;
-import server.agents.integration.AgentFidgetSideEffects;
+import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -17,8 +17,8 @@ import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Agent-owned movement chat facade. Live identity, reply delivery, and fidget
- * side effects remain temporary integration seams.
+ * Agent-owned movement chat facade. Live identity and reply delivery remain
+ * explicit integration seams.
  */
 public final class AgentMovementRuntime {
     private AgentMovementRuntime() {
@@ -107,7 +107,7 @@ public final class AgentMovementRuntime {
             public void fidget() {
                 AgentSchedulerRuntime.afterRandomDelay(250, 500, () -> {
                     bot(entry).changeFaceExpression(AgentMovementStatusRuntime.randomFidgetExpression());
-                    AgentFidgetSideEffects.maybeStartSocialFidget(entry);
+                    AgentFidgetService.maybeStartSocialFidget(entry);
                 });
             }
 
@@ -115,7 +115,7 @@ public final class AgentMovementRuntime {
             public void greeting() {
                 AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
                     bot(entry).changeFaceExpression(AgentEmote.HAPPY.getValue());
-                    AgentFidgetSideEffects.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
+                    AgentFidgetService.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                     AgentReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());
                     AgentMovementStatusRuntime.checkMovementStatus(entry, bot(entry));
                 });

@@ -7,7 +7,8 @@ import server.maps.MapleMap;
 import java.awt.Point;
 
 /**
- * Agent-owned adapter for temporary AgentRuntimeEntry-backed live runtime identity.
+ * Boundary adapter from Agent runtime entries to live Cosmic Character and map
+ * identity.
  */
 public final class AgentRuntimeIdentityRuntime {
     private AgentRuntimeIdentityRuntime() {

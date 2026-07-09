@@ -6320,6 +6320,18 @@ Current physics correction:
   stay/logout handling, save/disconnect timing, and relog scheduling. Direct
   save/disconnect/relogin side effects and reply delivery remain explicit
   integration seams.
+- Reconstruction capability extraction audit: the only remaining
+  `Agent*Runtime` classes under `server.agents.integration` are
+  `AgentReplyRuntime` and `AgentRuntimeIdentityRuntime`. `AgentReplyRuntime`
+  is the Cosmic chat/whisper/party packet delivery and reply-queue dispatch
+  boundary. `AgentRuntimeIdentityRuntime` is the live Cosmic `Character` and
+  `MapleMap` identity boundary for `AgentRuntimeEntry`. Capability, runtime,
+  plan, and monitoring modules may depend on these two seams until the broader
+  SPI/gateway phase replaces direct `Character`/packet access.
+- Reconstruction capability extraction: removed `AgentFidgetSideEffects` from
+  `server.agents.integration`. Movement chat callbacks now call
+  `AgentFidgetService` directly because fidget behavior is Agent movement
+  capability behavior, not a Cosmic/server boundary.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
