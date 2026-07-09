@@ -216,6 +216,11 @@ Recent reconstruction notes:
   directly into the Cosmic adapter for projectile attack, slot max, sell-trash
   classification, or item-name shortfall messages; behavior, timing, shop
   purchase ordering, and replies are unchanged.
+- `AgentInventoryGatewayRuntime` centralizes the live Cosmic inventory gateway
+  accessor inside `server.agents.integration`. Offer and inventory runtime
+  adapter code that still needs legacy metadata now goes through that boundary
+  instead of importing the Cosmic adapter directly; offer decisions and trade
+  routing are unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

@@ -33,7 +33,6 @@ import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.equipment.AgentEquipmentService;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 
@@ -124,6 +123,6 @@ public final class AgentInventoryRuntimeAdapters {
     }
 
     private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
+        return AgentInventoryGatewayRuntime.inventory();
     }
 }

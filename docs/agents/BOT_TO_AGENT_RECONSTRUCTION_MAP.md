@@ -190,6 +190,12 @@ Recent map updates:
   longer performs direct Cosmic adapter lookup for those metadata reads.
   Shop approach timing, purchase/recharge order, sell-trash sequencing, and
   dialogue output remain unchanged.
+- `AgentInventoryGatewayRuntime` now owns the live inventory gateway lookup in
+  `server.agents.integration`. `AgentOfferService` and
+  `AgentInventoryRuntimeAdapters` use this integration boundary instead of
+  importing the Cosmic adapter directly for legacy metadata. This is a boundary
+  cleanup only; offer prompts, gear reservation decisions, throwing-star
+  comparisons, and inventory transfer routing are unchanged.
 - `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
   `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
   `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across

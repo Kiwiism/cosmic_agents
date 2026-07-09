@@ -19,8 +19,8 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.trade.AgentOfferRuntime;
+import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -652,7 +652,7 @@ public final class AgentOfferService {
     }
 
     private static InventoryGateway inventory() {
-        return CosmicAgentServerAdapter.INSTANCE.inventory();
+        return AgentInventoryGatewayRuntime.inventory();
     }
 
     private static Character resolveReservedOfferRecipient(AgentRuntimeEntry entry, Character bot, int recipientId) {
