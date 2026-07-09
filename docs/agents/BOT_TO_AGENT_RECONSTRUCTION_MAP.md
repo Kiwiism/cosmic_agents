@@ -2476,3 +2476,6 @@ Recent capability extraction notes:
   `InventoryGateway.isQuestItem`; inventory/trade collection still owns category
   expansion, equipped-slot fallback, priority ordering, grouping, and transfer
   count behavior.
+- SPI/gateway extraction: equipped-slot trade preparation now uses
+  `InventoryGateway.isCashItem`; inventory still owns equipped-slot matching,
+  temporary unequip, restore tracking, and trade item preparation behavior.

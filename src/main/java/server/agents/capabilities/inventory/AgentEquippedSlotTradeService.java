@@ -7,8 +7,8 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
-import server.ItemInformationProvider;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.util.function.IntPredicate;
 import java.util.function.Function;
 
 public final class AgentEquippedSlotTradeService {
-    static IntPredicate cashItemLookup = itemId -> ItemInformationProvider.getInstance().isCash(itemId);
+    static IntPredicate cashItemLookup = itemId -> CosmicAgentServerAdapter.INSTANCE.inventory().isCashItem(itemId);
 
     public record PreparedTradeItems(List<Item> items, String errorMessage) {
     }

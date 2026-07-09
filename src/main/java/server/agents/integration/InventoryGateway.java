@@ -6,5 +6,7 @@ public interface InventoryGateway {
     int getProjectileWeaponAttack(int itemId);
 
     boolean isQuestItem(int itemId);
+
+    boolean isCashItem(int itemId);
 }
 

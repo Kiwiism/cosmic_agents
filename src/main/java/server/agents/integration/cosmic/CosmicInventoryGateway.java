@@ -23,4 +23,9 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     public boolean isQuestItem(int itemId) {
         return ItemInformationProvider.getInstance().isQuestItem(itemId);
     }
+
+    @Override
+    public boolean isCashItem(int itemId) {
+        return ItemInformationProvider.getInstance().isCash(itemId);
+    }
 }

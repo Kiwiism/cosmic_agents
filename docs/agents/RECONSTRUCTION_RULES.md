@@ -6425,6 +6425,10 @@ Current physics correction:
   metadata through `InventoryGateway.isQuestItem`. Trade collection still owns
   category expansion, priority ordering, equipped-slot fallback, ammo/use/equip
   grouping, and transfer counts; only the Cosmic quest-item check moved.
+- SPI/gateway extraction: equipped-slot trade preparation now routes cash-item
+  metadata through `InventoryGateway.isCashItem`. Equipped-slot counting,
+  temporary unequip/move behavior, restore-slot tracking, and trade-preparation
+  replies remain in `AgentEquippedSlotTradeService`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
