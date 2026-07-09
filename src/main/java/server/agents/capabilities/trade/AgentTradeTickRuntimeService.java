@@ -80,7 +80,7 @@ public final class AgentTradeTickRuntimeService {
                         trade -> AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                                 entry,
                                 agent,
-                                trade,
+                                trade::isPartnerConfirmed,
                                 callbacks.tickMs(),
                                 () -> callbacks.resolveTradeRecipient(entry, agent),
                                 callbacks::isBotRecipient,

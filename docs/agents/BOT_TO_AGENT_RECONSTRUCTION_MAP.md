@@ -2587,3 +2587,7 @@ Recent capability extraction notes:
   import `server.Trade`; they receive narrow chat/meso callbacks from
   `AgentTradeItemAddTickService`. Live trade-window ownership remains in the
   item-add tick layer until the broader trade-window abstraction slice.
+- Trade-window reconstruction: `AgentTradeConfirmWaitService` no longer
+  imports `server.Trade`; it receives a partner-confirmed callback from
+  `AgentTradeTickRuntimeService`. Confirmation timing, bot-recipient auto-done,
+  timeout reply, and cancellation behavior remain unchanged.

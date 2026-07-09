@@ -1,12 +1,12 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
 import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -18,7 +18,7 @@ public final class AgentTradeConfirmWaitService {
 
     public static boolean tickWaitingForConfirmation(AgentRuntimeEntry entry,
                                                      Character agent,
-                                                     Trade trade,
+                                                     BooleanSupplier partnerConfirmed,
                                                      int tickMs,
                                                      Supplier<Character> recipientResolver,
                                                      Predicate<Character> botRecipient,
@@ -27,7 +27,7 @@ public final class AgentTradeConfirmWaitService {
         AgentPendingTradeStateRuntime.addTimerMs(entry, tickMs);
         Character recipient = recipientResolver.get();
         boolean recipientIsBot = recipient != null && botRecipient.test(recipient);
-        if (recipientIsBot || trade.isPartnerConfirmed()) {
+        if (recipientIsBot || partnerConfirmed.getAsBoolean()) {
             completeTrade.run();
             AgentPendingTradeStateRuntime.markBotDone(entry);
             AgentPendingTradeStateRuntime.clearTimer(entry);

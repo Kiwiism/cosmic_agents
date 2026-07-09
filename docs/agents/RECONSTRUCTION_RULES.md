@@ -6546,6 +6546,11 @@ Current physics correction:
   owning `Trade` objects. `AgentTradeItemAddTickService` still supplies the
   live trade window callbacks, so chat text, timers, meso checks, and item-add
   tick ordering are unchanged.
+- Trade-window reconstruction: confirmation-wait logic now consumes a narrow
+  partner-confirmed callback instead of owning the live `Trade` object.
+  `AgentTradeTickRuntimeService` still adapts the current trade window, so bot
+  recipient auto-confirm, partner-confirmed completion, timeout replies, and
+  no-response cancellation behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

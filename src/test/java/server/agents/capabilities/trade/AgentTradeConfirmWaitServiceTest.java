@@ -15,23 +15,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
 
 class AgentTradeConfirmWaitServiceTest {
     @Test
     void partnerConfirmedCompletesMarksDoneAndClearsTimer() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
         AtomicBoolean completed = new AtomicBoolean(false);
         AtomicBoolean reset = new AtomicBoolean(false);
         AgentPendingTradeStateRuntime.setTimerMs(entry, 500);
-        when(trade.isPartnerConfirmed()).thenReturn(true);
 
         boolean handled = AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                 entry,
                 agent,
-                trade,
+                () -> true,
                 100,
                 () -> null,
                 recipient -> false,
@@ -50,13 +47,12 @@ class AgentTradeConfirmWaitServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
         Character recipient = mock(Character.class);
-        Trade trade = mock(Trade.class);
         AtomicBoolean completed = new AtomicBoolean(false);
 
         AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                 entry,
                 agent,
-                trade,
+                () -> false,
                 100,
                 () -> recipient,
                 found -> true,
@@ -72,7 +68,6 @@ class AgentTradeConfirmWaitServiceTest {
     void belowTimeoutOnlyAddsTimer() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
         AtomicBoolean completed = new AtomicBoolean(false);
         AtomicBoolean reset = new AtomicBoolean(false);
 
@@ -81,7 +76,7 @@ class AgentTradeConfirmWaitServiceTest {
             AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                     entry,
                     agent,
-                    trade,
+                    () -> false,
                     100,
                     () -> null,
                     recipient -> false,
@@ -100,7 +95,6 @@ class AgentTradeConfirmWaitServiceTest {
     void overTimeoutRepliesCancelsAndResets() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
         AtomicBoolean reset = new AtomicBoolean(false);
         AgentPendingTradeStateRuntime.setTimerMs(entry, 59_950);
 
@@ -109,7 +103,7 @@ class AgentTradeConfirmWaitServiceTest {
             AgentTradeConfirmWaitService.tickWaitingForConfirmation(
                     entry,
                     agent,
-                    trade,
+                    () -> false,
                     100,
                     () -> null,
                     recipient -> false,
