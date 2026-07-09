@@ -6511,6 +6511,11 @@ Current physics correction:
   `ItemInformationProvider` through `AgentOfferService`. Sibling/leader
   recipient priority, proactive-upgrade FUTURE classification, reserved-item
   trade filtering, and prompt behavior are unchanged.
+- SPI/gateway extraction: live auto-equip infeasible-equipment cleanup now
+  enters `AgentEquipmentPlanExecutor` through gateway-backed cash and
+  wearability hooks. The legacy item-info overload remains as a compatibility
+  seam, while cash-skip behavior, wearability checks, selected slots, and
+  unequip execution order are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

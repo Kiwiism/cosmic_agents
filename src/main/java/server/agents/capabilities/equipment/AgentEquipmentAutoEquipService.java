@@ -135,7 +135,7 @@ public final class AgentEquipmentAutoEquipService {
             // Sweep currently-equipped items whose reqs aren't met against the bot's now-final
             // stats. This catches gear left equipped via prior trade-debug or stat changes that
             // would otherwise stick because applyEquipPlan only emits moves into occupied slots.
-            AgentEquipmentPlanExecutor.unequipInfeasibleEquipped(bot, ii);
+            AgentEquipmentPlanExecutor.unequipInfeasibleEquipped(bot);
         }
 
         if (anyCapHit) {

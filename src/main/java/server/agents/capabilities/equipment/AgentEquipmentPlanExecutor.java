@@ -7,6 +7,8 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.ItemInformationProvider;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,16 +58,34 @@ public final class AgentEquipmentPlanExecutor {
     }
 
     public static void unequipInfeasibleEquipped(Character agent, ItemInformationProvider itemInfo) {
+        unequipInfeasibleEquipped(agent, new InfeasibleEquipHooks() {
+            @Override
+            public boolean isCashItem(int itemId) {
+                return itemInfo.isCash(itemId);
+            }
+
+            @Override
+            public boolean canWearEquipment(Character candidate, Equip equip, short primarySlot) {
+                return itemInfo.canWearEquipment(candidate, equip, primarySlot);
+            }
+        });
+    }
+
+    public static void unequipInfeasibleEquipped(Character agent) {
+        unequipInfeasibleEquipped(agent, InfeasibleEquipHooks.live(CosmicAgentServerAdapter.INSTANCE.inventory()));
+    }
+
+    static void unequipInfeasibleEquipped(Character agent, InfeasibleEquipHooks hooks) {
         Inventory equippedInventory = agent.getInventory(InventoryType.EQUIPPED);
         List<Short> bad = new ArrayList<>();
         for (Item item : equippedInventory.list()) {
             if (!(item instanceof Equip equip)) {
                 continue;
             }
-            if (itemInfo.isCash(equip.getItemId())) {
+            if (hooks.isCashItem(equip.getItemId())) {
                 continue;
             }
-            if (!itemInfo.canWearEquipment(agent, equip, equip.getPosition())) {
+            if (!hooks.canWearEquipment(agent, equip, equip.getPosition())) {
                 bad.add(equip.getPosition());
             }
         }
@@ -77,5 +97,25 @@ public final class AgentEquipmentPlanExecutor {
             slots[i] = bad.get(i);
         }
         AgentEquipmentUnequipService.unequipSlot(agent, slots);
+    }
+
+    interface InfeasibleEquipHooks {
+        boolean isCashItem(int itemId);
+
+        boolean canWearEquipment(Character agent, Equip equip, short primarySlot);
+
+        static InfeasibleEquipHooks live(InventoryGateway inventory) {
+            return new InfeasibleEquipHooks() {
+                @Override
+                public boolean isCashItem(int itemId) {
+                    return inventory.isCashItem(itemId);
+                }
+
+                @Override
+                public boolean canWearEquipment(Character agent, Equip equip, short primarySlot) {
+                    return inventory.canWearEquipment(agent, equip, primarySlot);
+                }
+            };
+        }
     }
 }

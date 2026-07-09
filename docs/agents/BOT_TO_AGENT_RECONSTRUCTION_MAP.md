@@ -2555,3 +2555,8 @@ Recent capability extraction notes:
   Equip)` path. `AgentOfferService` no longer passes `ItemInformationProvider`
   into reserve checks; recipient priority, proactive-upgrade FUTURE routing,
   reserved-item filtering, and offer prompts stay unchanged.
+- SPI/gateway extraction: live auto-equip infeasible-equipment cleanup now uses
+  gateway-backed cash and wearability hooks in `AgentEquipmentPlanExecutor`.
+  The compatibility item-info overload remains for staged callers/tests; cash
+  skipping, wearability decisions, and eventual unequip execution stay
+  unchanged.
