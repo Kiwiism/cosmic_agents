@@ -2522,3 +2522,9 @@ Recent capability extraction notes:
   `InventoryGateway` for projectile attack and quest-item metadata; callback
   construction, trade availability, category profiling, and transfer behavior
   stay unchanged.
+- SPI/gateway extraction: trade offer item names, cash-equip checks,
+  weapon-type compatibility, and throwing-star attack values now use
+  `InventoryGateway`; offer prompts, recipient priority, proactive upgrade
+  checks, sibling/owner routing, and transfer scheduling stay unchanged. The
+  remaining item-info calls in this class are tied to equipment reserve-policy
+  signatures and remain for the equipment gateway slice.

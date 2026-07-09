@@ -6478,6 +6478,12 @@ Current physics correction:
   attack and quest-item metadata through `InventoryGateway` instead of direct
   item-info lambdas. Callback wiring, trade availability, category profiling,
   and transfer behavior are unchanged.
+- SPI/gateway extraction: trade offer item names, cash-equip filtering, weapon
+  compatibility metadata, and throwing-star attack values now route through
+  `InventoryGateway`. Offer prompt wording, recipient selection, proactive
+  upgrade logic, sibling/owner priority, and trade scheduling are unchanged.
+  Deeper equipment reserve checks still use the existing item-info signatures
+  until the equipment policy gateway slice.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

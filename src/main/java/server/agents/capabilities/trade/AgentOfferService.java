@@ -20,6 +20,8 @@ import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryItemPolicy;
 import server.agents.capabilities.trade.AgentOfferRuntime;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -339,7 +341,7 @@ public final class AgentOfferService {
      * other tokens use "+" since they are bonus values ("+3 str", "+3 att").
      */
     static String formatItemSpecifier(Item item, Character audience) {
-        String name = ItemInformationProvider.getInstance().getName(item.getItemId());
+        String name = inventory().getItemName(item.getItemId());
         if (name == null || name.isBlank()) {
             name = String.valueOf(item.getItemId());
         }
@@ -464,11 +466,10 @@ public final class AgentOfferService {
     }
 
     private static List<Equip> collectOfferableEquips(Character donor) {
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Inventory equipInv = donor.getInventory(InventoryType.EQUIP);
         List<Equip> offerable = new ArrayList<>();
         for (Item item : equipInv.list()) {
-            if (!(item instanceof Equip equip) || ii.isCash(item.getItemId())) {
+            if (!(item instanceof Equip equip) || inventory().isCashItem(item.getItemId())) {
                 continue;
             }
             if (item.isUntradeable() && !YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE) {
@@ -500,11 +501,10 @@ public final class AgentOfferService {
         if (!(item instanceof Equip equip)) {
             return true;
         }
-        ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (!ItemConstants.isWeapon(equip.getItemId())) {
             return true;
         }
-        return isWeaponOfferCompatible(recipient, ii.getWeaponType(equip.getItemId()));
+        return isWeaponOfferCompatible(recipient, inventory().getWeaponType(equip.getItemId()));
     }
 
     public static boolean isWeaponOfferCompatible(Character recipient, WeaponType weaponType) {
@@ -651,7 +651,11 @@ public final class AgentOfferService {
     }
 
     private static int throwingStarAttack(Item item) {
-        return ItemInformationProvider.getInstance().getWatkForProjectile(item.getItemId());
+        return inventory().getProjectileWeaponAttack(item.getItemId());
+    }
+
+    private static InventoryGateway inventory() {
+        return CosmicAgentServerAdapter.INSTANCE.inventory();
     }
 
     private static Character resolveReservedOfferRecipient(AgentRuntimeEntry entry, Character bot, int recipientId) {
