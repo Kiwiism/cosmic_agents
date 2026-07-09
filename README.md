@@ -1,60 +1,185 @@
-﻿# Cosmic
-Cosmic is a server emulator for Global MapleStory (GMS) version 83.
+﻿# Cosmic Agents
 
-## This fork's custom features (check config.yaml)
-- BOTS, I know you are here because of my AI companion bots :) check [README_SERVER_BOTS.md](README_SERVER_BOTS.md)
-- Scroll Success Bonus: adds a flat bonus % to all scroll success chances
-- Maker Skills: Black/Dark crystal only improves stats and never decreases
-- Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll, inspired by MapleRoyals)
-- Progressive EXP rate (ex. 2x at lv1, 3x at lv 30, 4x at lv 70 ...)
-- All untradable items are tradable(by dropping, they wont disappear)
+Cosmic Agents is an experimental Global MapleStory v83 server project built on
+top of [P0nk/Cosmic](https://github.com/P0nk/Cosmic). It keeps Cosmic's server
+foundation while reconstructing the AI companion/bot work from
+[nutnnut/Cosmic](https://github.com/nutnnut/Cosmic) into a cleaner, modular,
+server-validated Agent platform.
 
-## Introduction
+The long-term goal is a living server population: Agents that can navigate,
+fight, loot, quest, shop, trade, build personal profiles, participate in the
+economy, and eventually accept LLM-directed high-level goals while still obeying
+the same server-side validation rules as normal gameplay.
 
-Cosmic launched on March 2021. It is based on code from a long line of server emulators spanning over a decade - starting with OdinMS (2008) and ending with HeavenMS (2019).
+> Status: active reconstruction. This branch is for architecture, tooling, and
+> research toward autonomous Agents. Treat it as experimental rather than a
+> production-ready server release.
 
-This is mainly a Java based project, but there are also a bunch of scripts written in JavaScript.
+## Credits And Upstream Lineage
 
-Head developer and maintainer: __Ponk__.\
-Contributors: a lot of people over the years, and hopefully more to come. Big thanks to everyone who has contributed so far!
+- [P0nk/Cosmic](https://github.com/P0nk/Cosmic) is the upstream v83 server base.
+  Cosmic was created and maintained by Ponk with contributions from the wider
+  Cosmic community.
+- [nutnnut/Cosmic](https://github.com/nutnnut/Cosmic) is the source of the AI
+  companion/bot baseline being reconstructed here.
+- Cosmic itself descends from the OdinMS and HeavenMS emulator lineage.
 
-Join the Discord server where most of the discussions take place: https://discord.gg/JU5aQapVZK
+This repository is not the official Cosmic project. It is a research fork for
+Agent architecture, tooling, cataloging, and future autonomy work.
 
-### Goals
-What we are working towards.
-* __Vanilla gameplay__ - stay as close to the original game as possible (within reason).
-* __Ease of use__ - getting started should be frictionless and contributing to the project straightforward.
-* __Reduce technical debt__ - making changes should be easy without causing unintended side effects.
-* __Modern tools & technologies__ - stay appealing by continuously improving the code and the project as a whole. 
+## Reconstruction Baseline
 
-### Non-goals
-Explicitly excluded from the scope of the project.
-* __Custom gameplay features__ - existing custom features will be removed over time and new ones are unlikely to be added.
-* __Client development__ - this project is focused on the server. Please go elsewhere for client related questions.
-* __Public server__ - there will not be an official Cosmic server open to the public. Feel free to launch your own server __at your own risk__. No support will be provided.
+The Agent reconstruction started from nutnnut's `source/master` branch:
 
-## Project setup
+- nutnnut/Cosmic baseline: `5f0447172e501d85bc406be2599f0a010a82a2d2`
+- P0nk/Cosmic comparison baseline: `fec53bc7714dc0f1ae3f50b2986cdf2727e0912a`
+- Reconstruction branch: `reconstruction/source-master-agent-base`
 
-### Contribute
-You may contribute to the project in various ways, mainly through GitHub:
-* Providing improvements to the code through a [Pull Request](https://github.com/P0nk/Cosmic/pulls) from your own fork. 
-* Reporting a bug by creating an [Issue](https://github.com/P0nk/Cosmic/issues).
-* Providing information to existing issues or reviewing pull requests that others have made.
-* ...and in other ways that I haven't thought of!
+That nutnnut `source/master` baseline already included the merge commit
+`8987c5762 Merge branch 'experimental'`. For this project, that merged master is
+treated as the legacy behavior baseline to preserve first, then reshape.
 
-### Continuous integration
-A GitHub Actions pipeline is set up to run the build automatically when a new pull request is opened or commits are pushed to an existing one. This ensures that the code compiles and all the tests pass.
+Not every feature from every nutnnut branch is imported here. Branches such as
+`source/dev`, `source/fix-queststatus-notstarted-bloat`,
+`source/fix-monster-crystal-level`, and `source/mob-rate` are review sources,
+not automatically merged behavior. They should be evaluated and ported
+selectively after the Agent reconstruction boundary is stable.
 
-Once a pull request is merged, a tag with the new version is automatically created.
+WZ asset differences from nutnnut are also not adopted wholesale. The intended
+base is Cosmic-compatible server/client data, with targeted asset changes only
+when catalog, foothold, navigation, or gameplay review shows they are needed.
 
-### Discord integration
-Most GitHub activity is pushed to a Discord channel for visibility. This works by leveraging a webhook. The activity includes (but is not limited to): merged commits, created PRs, comments, and new tags.
+## Project Vision
 
-### Versioning
-The project follows the [semantic versioning](https://semver.org/) scheme using git tags.
-* *Bug fixes* are treated as PATCH: 1.2.__3__ -> 1.2.__4__
-* *General changes or improvements* are treated as MINOR: 1.__2__.3 -> 1.__3.0__
-* *Major changes* are treated as MAJOR: __1__.2.3 -> __2.0.0__
+The reconstruction takes a useful but tightly-coupled companion/bot system and
+turns it into an Agent engine with clearer ownership:
+
+```text
+Old shape:
+  one large bot system with many behaviors tied together
+
+Target shape:
+  modular Agent runtime
+  + capabilities
+  + server adapters
+  + policies
+  + events
+  + catalogs
+  + profiles
+  + future LLM control
+```
+
+The first win is structure, not flashy new gameplay. The current philosophy is:
+
+```text
+Preserve behavior.
+Then improve structure.
+Then prove core capabilities.
+Then optimize scale.
+Then add deeper autonomy.
+```
+
+## What This Repository Contains
+
+### Agent Engine Reconstruction
+
+The old bot runtime is being moved into `server.agents` with separated modules
+for runtime state, commands, dialogue, integration, movement, combat, loot, and
+future capabilities.
+
+The intended design uses:
+
+- capability modules for focused behavior such as navigation, combat, loot,
+  inventory, NPC interaction, questing, shops, and trade.
+- adapter boundaries so server-specific code stays isolated from portable Agent
+  logic.
+- event-driven updates so profiles, telemetry, and future learning systems can
+  react without living inside the core tick loop.
+- policy and validator layers so Agents still respect range, level,
+  prerequisites, map state, item state, and server rules.
+- plan/objective cards so Agents can pursue structured goals such as Amherst or
+  Maple Island questline milestones.
+
+### Catalog Platform
+
+The catalog work is the knowledge layer for Agents and future LLM tooling. It is
+intended to build fast lookup data from WZ/XML, SQL tables, scripts, and
+overrides without taxing the live game server.
+
+Catalogs are planned to answer questions such as:
+
+- where an NPC exists and what actions it supports.
+- which quests can start or complete at an NPC.
+- what map, mob, drop, shop, reward, reactor, or portal data exists.
+- where an Agent can stand near an NPC for more natural interaction.
+- what dialogue length or interaction delay should be simulated.
+- how a future LLM can query game knowledge safely through a middle layer.
+
+### Database Console
+
+This branch also contains the Database Console work: a web-based admin interface
+for inspecting and editing game data through an API instead of directly editing
+tables by hand.
+
+Its phase-one direction includes:
+
+- accounts, characters, stats, AP/SP, location, inventory, storage, equipment,
+  appearance, quests, and monster book data.
+- mobs, item catalogs, drop tables, NPC shops, and gachapon pools.
+- right-dock detail views, MapleStory icons, autocomplete for game IDs, and
+  safer UI workflows for common edits.
+- future database-backed overrides for selected hardcoded or script-backed
+  reward systems.
+
+Do not expose the Database Console publicly without adding proper authentication
+and network hardening. It is powerful admin tooling.
+
+### Future Platforms
+
+Several systems are documented for later implementation after the Agent runtime
+is stable:
+
+- Agent profile system for personalities, builds, preferences, relationship
+  memory, decision journals, and self-adaptation.
+- economy engine for dynamic demand, prices, item valuation, taxes, inflation,
+  market manipulation resistance, and Agent market behavior.
+- server console for runtime configuration, map overrides, spawn policy, travel
+  rules, analytics, and operational controls.
+- LLM control layer where an LLM assigns high-level tasks while the Agent engine
+  handles validated low-level execution.
+- scaling runtime for thousands of Agents through visibility-aware simulation,
+  background shortcuts, route ETA, batched persistence, and load shedding.
+
+## Current Roadmap
+
+1. Finish reconstructing nutnnut's original bot behavior into the Agent runtime.
+2. Prove a capability-first baseline with Amherst MVP, then Maple Island
+   questline MVP.
+3. Decide which legacy nutnnut behavior remains enabled and which becomes
+   legacy/off-by-default.
+4. Optimize the Agent engine toward the target of roughly 2,000 concurrent
+   Agents while keeping player responsiveness stable.
+5. Expand profiles, economy, plan cards, catalogs, and LLM integration once the
+   base engine is proven.
+
+## Documentation Map
+
+Useful project documents:
+
+- [Agent Engine Vision And Reconstruction Overview](docs/agents/AGENT_ENGINE_VISION_AND_RECONSTRUCTION_OVERVIEW.md)
+- [Post-Reconstruction Agent Platform Specification](docs/agents/POST_RECONSTRUCTION_AGENT_PLATFORM_SPECIFICATION.md)
+- [Agent Reconstruction Baseline](docs/agents/RECONSTRUCTION_BASELINE.md)
+- [Agent Fix TODO](docs/agents/AGENT_FIX_TODO.md)
+- [Agent Engine Scaling Track](docs/agents/AGENT_ENGINE_SCALING_TRACK.md)
+- [Catalog Platform Architecture](docs/agents/catalog-platform/CATALOG_PLATFORM_ARCHITECTURE.md)
+- [Database Console UI Design](docs/consoles/DATABASE_CONSOLE_UI_DESIGN.md)
+- [Server Console Scope](docs/consoles/SERVER_CONSOLE_SCOPE.md)
+- [nutnnut Over Cosmic Review](docs/NUTNNUT_OVER_COSMIC_REVIEW.md)
+
+## Original Cosmic Setup Notes
+
+The setup notes below are inherited from P0nk/Cosmic and remain useful for
+running the base server locally.
 
 ## Getting started
 Follow along as I go through the steps to play the game on your local computer from start to finish. I won't go into extreme detail, so if you don't have prior experience with Java or git, you might struggle.
