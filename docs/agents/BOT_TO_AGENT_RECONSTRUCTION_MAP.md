@@ -2427,3 +2427,6 @@ Recent capability extraction notes:
   `AgentMovementBroadcastService`;
   `server.agents.integration.cosmic.CosmicAgentServerAdapter` exposes the packet
   gateway through `AgentServerAdapter`.
+- SPI/gateway extraction: fidget close-range visual attack packets now route
+  through the same packet gateway, removing direct `PacketCreator.closeRangeAttack`
+  and map broadcast calls from `AgentFidgetService`.

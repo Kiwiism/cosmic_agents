@@ -51,4 +51,23 @@ class CosmicPacketGatewayTest {
             packets.verifyNoInteractions();
         }
     }
+
+    @Test
+    void broadcastCloseRangeAttackBuildsPacketAndBroadcastsThroughMap() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        Packet packet = mock(Packet.class);
+
+        when(agent.getMap()).thenReturn(map);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.closeRangeAttack(agent, 1, 2, 3, 4, java.util.Map.of(), 5, 6, 7))
+                    .thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.broadcastCloseRangeAttack(agent, 1, 2, 3, 4, java.util.Map.of(), 5, 6, 7);
+
+            packets.verify(() -> PacketCreator.closeRangeAttack(agent, 1, 2, 3, 4, java.util.Map.of(), 5, 6, 7));
+            verify(map).broadcastMessage(agent, packet, false);
+        }
+    }
 }

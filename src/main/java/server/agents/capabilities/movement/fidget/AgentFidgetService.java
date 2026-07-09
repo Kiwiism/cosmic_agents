@@ -15,8 +15,8 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
-import net.packet.Packet;
 import server.agents.capabilities.movement.fidget.AgentFidgetRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
@@ -27,7 +27,6 @@ import server.agents.runtime.AgentTickStateRuntime;
 import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
-import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.Map;
@@ -494,7 +493,7 @@ public final class AgentFidgetService {
         }
 
         int direction = AgentAttackExecutionProvider.bodyActionId("proneStab", "stabO1", null);
-        Packet attackPacket = PacketCreator.closeRangeAttack(
+        CosmicAgentServerAdapter.INSTANCE.packets().broadcastCloseRangeAttack(
                 bot,
                 0,
                 0,
@@ -504,6 +503,5 @@ public final class AgentFidgetService {
                 4,
                 direction,
                 0);
-        bot.getMap().broadcastMessage(bot, attackPacket, false);
     }
 }

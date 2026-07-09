@@ -6366,6 +6366,10 @@ Current physics correction:
   exposes this concrete gateway through the `AgentServerAdapter` seam. Movement
   capability code delegates packet construction and map broadcast to this
   boundary.
+- SPI/gateway extraction: `PacketGateway` also owns close-range attack packet
+  broadcast for fidget visuals. `AgentFidgetService` now delegates
+  `PacketCreator.closeRangeAttack` and map broadcast side effects to the Cosmic
+  packet gateway while preserving the same prone visual packet values.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
