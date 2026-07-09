@@ -274,6 +274,12 @@ Recent reconstruction notes:
   lookups through `AgentCharacterGatewayRuntime`. Owner registration,
   authorization rules, DB fallback queries, denial text, and registration
   writes are unchanged; only the live world scan moved behind the gateway.
+- The live `server.Trade` window adapter moved from the trade capability into
+  `server.agents.integration.AgentServerTradeWindow`. Manual trade acceptance
+  now receives current-window lookup as a callback from the runtime adapter, so
+  capability logic depends on `AgentTradeWindow` while trade state identity,
+  greeting, timeout, invite-accept, completion, and packet-visible behavior are
+  unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

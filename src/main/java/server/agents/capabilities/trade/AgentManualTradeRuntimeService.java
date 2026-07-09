@@ -1,6 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import server.agents.integration.AgentServerTradeWindow;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiConsumer;
@@ -49,7 +50,8 @@ public final class AgentManualTradeRuntimeService {
                                                 inviter,
                                                 pendingTrade,
                                                 500 + callbacks.tickMs(),
-                                                callbacks::tickDown),
+                                                callbacks::tickDown,
+                                                currentOwner -> AgentServerTradeWindow.wrap(currentOwner.getTrade())),
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
                                                 entry,
                                                 tradeAgent,
@@ -68,7 +70,8 @@ public final class AgentManualTradeRuntimeService {
                                                 inviter,
                                                 pendingTrade,
                                                 500 + callbacks.tickMs(),
-                                                callbacks::tickDown),
+                                                callbacks::tickDown,
+                                                currentOwner -> AgentServerTradeWindow.wrap(currentOwner.getTrade())),
                                         AgentManualTradeService::sendGreetingOnce,
                                         callbacks::manualTradeGreeting,
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(

@@ -22,7 +22,6 @@ import server.agents.capabilities.trade.AgentInventoryTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeRuntimeService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentOfferService;
-import server.agents.capabilities.trade.AgentServerTradeWindow;
 import server.agents.capabilities.trade.AgentTradeCommandProfiler;
 import server.agents.capabilities.trade.AgentTradeDialogueService;
 import server.agents.capabilities.trade.AgentTradeLifecycleRuntimeService;

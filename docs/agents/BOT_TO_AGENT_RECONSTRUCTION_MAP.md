@@ -2777,6 +2777,12 @@ Recent capability extraction notes:
   `AgentCharacterGatewayRuntime` for online character-by-id/name resolution.
   Ownership checks, automatic same-account registration, DB fallback, and
   denial/registration behavior stay unchanged.
+- Trade-window reconstruction: the live `server.Trade` adapter has moved to
+  `server.agents.integration.AgentServerTradeWindow`. Manual trade capability
+  code now accepts current-window lookup from its runtime adapter and stays on
+  the `AgentTradeWindow` abstraction for invite acceptance, preserving the
+  existing visit-trade, full-trade check, greeting, timeout, and completion
+  behavior.
 - Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
   callback, and greeting services now depend on `AgentTradeWindow` instead of
   `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the

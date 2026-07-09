@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.Trade;
+import server.agents.integration.AgentServerTradeWindow;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -92,7 +93,13 @@ class AgentManualTradeServiceTest {
         when(trade.getNumber()).thenReturn((byte) 1);
 
         AgentTradeWindow result = AgentManualTradeService.acceptInviteWhenReady(
-                entry, bot, inviter, AgentServerTradeWindow.wrap(trade), 600, value -> 100);
+                entry,
+                bot,
+                inviter,
+                AgentServerTradeWindow.wrap(trade),
+                600,
+                value -> 100,
+                tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()));
 
         assertSame(trade, result.identity());
         assertEquals(100, AgentManualTradeStateRuntime.acceptDelayMs(entry));
@@ -111,7 +118,13 @@ class AgentManualTradeServiceTest {
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
             AgentTradeWindow result = AgentManualTradeService.acceptInviteWhenReady(
-                    entry, bot, inviter, AgentServerTradeWindow.wrap(trade), 600, value -> 0);
+                    entry,
+                    bot,
+                    inviter,
+                    AgentServerTradeWindow.wrap(trade),
+                    600,
+                    value -> 0,
+                    tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()));
 
             trades.verify(() -> Trade.visitTrade(bot, inviter));
             assertSame(joinedTrade, result.identity());

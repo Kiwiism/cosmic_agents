@@ -1,8 +1,9 @@
-package server.agents.capabilities.trade;
+package server.agents.integration;
 
 import client.Character;
 import client.inventory.Item;
 import server.Trade;
+import server.agents.capabilities.trade.AgentTradeWindow;
 
 import java.util.List;
 
@@ -15,13 +16,6 @@ public final class AgentServerTradeWindow implements AgentTradeWindow {
 
     public static AgentTradeWindow wrap(Trade trade) {
         return trade == null ? null : new AgentServerTradeWindow(trade);
-    }
-
-    public static Trade unwrap(AgentTradeWindow window) {
-        if (window instanceof AgentServerTradeWindow serverWindow) {
-            return serverWindow.trade;
-        }
-        return null;
     }
 
     @Override

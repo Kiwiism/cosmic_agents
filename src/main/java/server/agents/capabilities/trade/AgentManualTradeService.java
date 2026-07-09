@@ -6,6 +6,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 
@@ -76,7 +77,8 @@ public final class AgentManualTradeService {
                                                          Character inviter,
                                                          AgentTradeWindow trade,
                                                          int delayMs,
-                                                         IntUnaryOperator tickDown) {
+                                                         IntUnaryOperator tickDown,
+                                                         Function<Character, AgentTradeWindow> currentTradeWindow) {
         if (trade.number() != 1) {
             return trade;
         }
@@ -90,7 +92,7 @@ public final class AgentManualTradeService {
         }
 
         AgentTradeGatewayRuntime.trade().visitTrade(agent, inviter);
-        AgentTradeWindow joined = AgentServerTradeWindow.wrap(agent.getTrade());
+        AgentTradeWindow joined = currentTradeWindow.apply(agent);
         if (joined == null || !joined.isFullTrade()) {
             return null;
         }
