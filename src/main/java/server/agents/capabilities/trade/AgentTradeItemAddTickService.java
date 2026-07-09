@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import client.inventory.Item;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -16,7 +15,7 @@ public final class AgentTradeItemAddTickService {
 
     public static boolean tickAddingItems(AgentRuntimeEntry entry,
                                           Character agent,
-                                          Trade trade,
+                                          AgentTradeWindow trade,
                                           ItemAddTickCallbacks callbacks) {
         if (AgentPendingTradeStateRuntime.allItemsAdded(entry)) {
             return false;

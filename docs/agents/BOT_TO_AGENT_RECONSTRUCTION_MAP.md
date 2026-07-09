@@ -2748,3 +2748,7 @@ Recent capability extraction notes:
   `AgentTradeTickCallbackService` now dispatch current-window, accept-wait,
   item-add, and confirmation ticks through `AgentTradeWindow`. Runtime still
   unwraps for the deeper item-add/lifecycle services until those slices move.
+- Trade-window reconstruction: `AgentTradeItemAddService` and
+  `AgentTradeItemAddTickService` now use `AgentTradeWindow` for item add,
+  meso add, partner packet recipient lookup, and trade chat. The concrete
+  `server.Trade` item/meso calls are isolated in `AgentServerTradeWindow`.

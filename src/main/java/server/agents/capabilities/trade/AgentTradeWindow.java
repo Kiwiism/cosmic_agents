@@ -1,6 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import client.inventory.Item;
 
 public interface AgentTradeWindow {
     Object identity();
@@ -16,4 +17,8 @@ public interface AgentTradeWindow {
     int number();
 
     void chat(String message);
+
+    boolean addItem(Item item);
+
+    void setMeso(int meso);
 }

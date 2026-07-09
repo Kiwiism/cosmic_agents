@@ -1,6 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
+import client.inventory.Item;
 import server.Trade;
 
 public final class AgentServerTradeWindow implements AgentTradeWindow {
@@ -54,5 +55,15 @@ public final class AgentServerTradeWindow implements AgentTradeWindow {
     @Override
     public void chat(String message) {
         trade.chat(message);
+    }
+
+    @Override
+    public boolean addItem(Item item) {
+        return trade.addItem(item);
+    }
+
+    @Override
+    public void setMeso(int meso) {
+        trade.setMeso(meso);
     }
 }

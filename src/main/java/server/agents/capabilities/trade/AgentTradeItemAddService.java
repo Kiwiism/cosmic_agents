@@ -5,7 +5,6 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
-import server.Trade;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -15,7 +14,7 @@ public final class AgentTradeItemAddService {
     private AgentTradeItemAddService() {
     }
 
-    public static boolean addNextItem(AgentRuntimeEntry entry, Character agent, Trade trade, int delayMs) {
+    public static boolean addNextItem(AgentRuntimeEntry entry, Character agent, AgentTradeWindow trade, int delayMs) {
         return addNextItem(
                 entry,
                 agent,
@@ -29,7 +28,7 @@ public final class AgentTradeItemAddService {
 
     static boolean addNextItem(AgentRuntimeEntry entry,
                                Character agent,
-                               Trade trade,
+                               AgentTradeWindow trade,
                                int delayMs,
                                InventoryRemover inventoryRemover,
                                TradeItemPacketSender packetSender) {
@@ -61,8 +60,8 @@ public final class AgentTradeItemAddService {
                 AgentPendingTradeStateRuntime.transferRestoreSlot(entry, item, tradeItem);
                 inventoryRemover.remove(agent, invType, item.getPosition(), tradeQty, false);
                 packetSender.send(agent, (byte) 0, tradeItem);
-                if (trade.getPartner() != null) {
-                    packetSender.send(trade.getPartner().getChr(), (byte) 1, tradeItem);
+                if (trade.partner() != null) {
+                    packetSender.send(trade.partner().character(), (byte) 1, tradeItem);
                 }
             }
             return true;

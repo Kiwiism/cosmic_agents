@@ -6705,6 +6705,12 @@ Current physics correction:
   unwraps to live `server.Trade` only for deeper item-add and lifecycle
   services that have not moved yet; queued retry, closed-window, batch, add,
   confirmation, and completion ordering are unchanged.
+- Trade-window reconstruction: item-add and item-add tick services now use
+  `AgentTradeWindow` for item placement, meso placement, partner lookup, and
+  trade chat. The live `server.Trade` item-add/meso operations stay behind
+  `AgentServerTradeWindow`; inventory locking, restore-slot tracking,
+  quantity caps, packet emission, category announcements, all-done chat, and
+  meso cancellation behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

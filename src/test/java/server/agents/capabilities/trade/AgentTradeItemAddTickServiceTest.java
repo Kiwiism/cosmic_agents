@@ -4,7 +4,6 @@ import client.Character;
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -28,7 +27,7 @@ class AgentTradeItemAddTickServiceTest {
         assertFalse(AgentTradeItemAddTickService.tickAddingItems(
                 entry,
                 mock(Character.class),
-                mock(Trade.class),
+                mock(AgentTradeWindow.class),
                 callbacks()));
     }
 
@@ -40,7 +39,7 @@ class AgentTradeItemAddTickServiceTest {
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
                 entry,
                 mock(Character.class),
-                mock(Trade.class),
+                mock(AgentTradeWindow.class),
                 callbacks()));
 
         assertEquals(400, AgentPendingTradeStateRuntime.timerMs(entry));
@@ -50,7 +49,7 @@ class AgentTradeItemAddTickServiceTest {
     void cancelsWhenPendingMesoIsNoLongerAvailable() {
         AgentRuntimeEntry entry = entry();
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         AtomicBoolean cancelled = new AtomicBoolean(false);
         AgentPendingTradeStateRuntime.setMeso(entry, 1_000);
         when(agent.getMeso()).thenReturn(500);
@@ -67,7 +66,7 @@ class AgentTradeItemAddTickServiceTest {
     @Test
     void marksCompleteWhenNoMoreItemsRemain() {
         AgentRuntimeEntry entry = entry();
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         AgentPendingTradeStateRuntime.setItems(entry, List.of());
 
         assertTrue(AgentTradeItemAddTickService.tickAddingItems(
@@ -83,7 +82,7 @@ class AgentTradeItemAddTickServiceTest {
     @Test
     void announcesCategoryBeforeFirstItem() {
         AgentRuntimeEntry entry = entry();
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         AgentPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
         AgentPendingTradeStateRuntime.setCategoryMessage(entry, "scrolls here");
 
@@ -101,7 +100,7 @@ class AgentTradeItemAddTickServiceTest {
     void addsNextItemWhenReady() {
         AgentRuntimeEntry entry = entry();
         Character agent = mock(Character.class);
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         AgentPendingTradeStateRuntime.setItems(entry, List.of(mock(Item.class)));
 
         try (MockedStatic<AgentTradeItemAddService> addService = mockStatic(AgentTradeItemAddService.class)) {

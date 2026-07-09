@@ -65,7 +65,7 @@ public final class AgentTradeTickRuntimeService {
                         trade -> AgentTradeItemAddTickService.tickAddingItems(
                                 entry,
                                 agent,
-                                AgentServerTradeWindow.unwrap(trade),
+                                trade,
                                 AgentTradeItemAddTickCallbackService.itemAddTickCallbacks(
                                         callbacks.tickDown(),
                                         () -> AgentTradeLifecycleRuntimeService.cancelTradeSequence(
