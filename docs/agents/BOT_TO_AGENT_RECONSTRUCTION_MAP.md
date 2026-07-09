@@ -210,6 +210,11 @@ Recent map updates:
   manual-trade timeout behavior, invite acceptance, supply-share retries,
   sequence callbacks, timeout replies, cancel/reset order, completion reactions,
   and visible reply timing.
+- `AgentPacketGatewayRuntime` now owns the live packet gateway lookup in
+  `server.agents.integration`. `AgentTradeItemAddService` uses that boundary
+  for trade item-add packet emission instead of importing the Cosmic adapter
+  directly. Inventory removal, copied trade item slot/quantity assignment,
+  partner packet mirroring, and restore-slot bookkeeping are unchanged.
 - `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
   `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
   `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across

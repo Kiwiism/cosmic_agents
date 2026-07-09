@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import server.Trade;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public final class AgentTradeItemAddService {
                 (character, type, slot, quantity, fromDrop) ->
                         InventoryManipulator.removeFromSlot(character.getClient(), type, slot, quantity, fromDrop),
                 (recipient, number, item) ->
-                        CosmicAgentServerAdapter.INSTANCE.packets().sendTradeItemAdd(recipient, number, item));
+                        AgentPacketGatewayRuntime.packets().sendTradeItemAdd(recipient, number, item));
     }
 
     static boolean addNextItem(AgentRuntimeEntry entry,

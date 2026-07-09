@@ -231,6 +231,11 @@ Recent reconstruction notes:
   adapter directly. Manual trade, supply-share trade, sequence opening,
   invite/confirm timeouts, cancellations, completion reactions, and replies are
   unchanged.
+- `AgentPacketGatewayRuntime` centralizes live packet gateway access inside
+  `server.agents.integration`. Trade item-add packet emission now uses that
+  boundary instead of importing the Cosmic adapter directly; item removal,
+  trade slot assignment, partner packet mirroring, and restore-slot tracking are
+  unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and
