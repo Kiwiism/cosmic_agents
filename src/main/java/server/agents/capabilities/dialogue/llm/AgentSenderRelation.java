@@ -1,8 +1,9 @@
 package server.agents.capabilities.dialogue.llm;
 
 import client.Character;
-import net.server.world.Party;
-import net.server.world.PartyCharacter;
+import server.agents.integration.AgentPartyGatewayRuntime;
+import server.agents.integration.AgentPartyMemberSnapshot;
+import server.agents.integration.AgentPartySnapshot;
 
 public enum AgentSenderRelation {
     OWNER, PARTY, STRANGER;
@@ -14,10 +15,10 @@ public enum AgentSenderRelation {
         if (leader != null && leader.getId() == sender.getId()) {
             return OWNER;
         }
-        Party party = agent.getParty();
+        AgentPartySnapshot party = AgentPartyGatewayRuntime.party().snapshot(agent);
         if (party != null) {
-            for (PartyCharacter member : party.getMembers()) {
-                if (member.getId() == sender.getId()) {
+            for (AgentPartyMemberSnapshot member : party.members()) {
+                if (member.id() == sender.getId()) {
                     return PARTY;
                 }
             }

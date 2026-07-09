@@ -2955,3 +2955,8 @@ Recent capability extraction notes:
   through `PartyGateway.sendPartyChat`; live party/world-server dispatch is
   isolated in `CosmicPartyGateway`. Sanitization, availability checks, speaker
   identity, and map-chat fallback remain unchanged.
+- SPI/gateway extraction: lifecycle and dialogue/LLM party reads now consume
+  `AgentPartySnapshot` and `AgentPartyMemberSnapshot` from
+  `PartyGateway.snapshot`. Live `Party`/`PartyCharacter` traversal is isolated
+  in `CosmicPartyGateway`; identity checks, member order, relation resolution,
+  situation text, and lifecycle refresh behavior remain unchanged.

@@ -6965,6 +6965,12 @@ Current physics correction:
   the live world server inside `AgentReplyRuntime`. Chat sanitization, party/
   client/world availability checks, speaker name, and map-chat fallback remain
   unchanged. Live party delivery is isolated in `CosmicPartyGateway`.
+- SPI/gateway extraction: party identity/member reads now use immutable
+  `AgentPartySnapshot`/`AgentPartyMemberSnapshot` values from
+  `PartyGateway.snapshot`. `AgentPartyLifecycleService`, `AgentSenderRelation`,
+  and `AgentSituationBuilder` no longer import `Party` or `PartyCharacter`.
+  Party identity checks, member order, names, leader/map annotations, relation
+  classification, and lifecycle refresh points remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

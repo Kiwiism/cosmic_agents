@@ -4,7 +4,13 @@ import client.Character;
 import net.server.world.Party;
 import net.server.world.PartyCharacter;
 import net.server.world.PartyOperation;
+import server.agents.integration.AgentPartyMemberSnapshot;
+import server.agents.integration.AgentPartySnapshot;
 import server.agents.integration.PartyGateway;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class CosmicPartyGateway implements PartyGateway {
     public static final CosmicPartyGateway INSTANCE = new CosmicPartyGateway();
@@ -43,5 +49,19 @@ public final class CosmicPartyGateway implements PartyGateway {
         }
         speaker.getClient().getWorldServer().partyChat(party, message, speaker.getName());
         return true;
+    }
+
+    @Override
+    public AgentPartySnapshot snapshot(Character character) {
+        Party party = character.getParty();
+        if (party == null) {
+            return null;
+        }
+        List<AgentPartyMemberSnapshot> members = new ArrayList<>();
+        for (PartyCharacter member : party.getMembers()) {
+            members.add(member == null ? null : new AgentPartyMemberSnapshot(
+                    member.getId(), member.getName(), member.isLeader(), member.getMapId()));
+        }
+        return new AgentPartySnapshot(party.getId(), Collections.unmodifiableList(members));
     }
 }

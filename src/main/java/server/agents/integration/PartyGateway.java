@@ -12,5 +12,7 @@ public interface PartyGateway {
     void publishAgentOnline(Character agent, int partyId);
 
     boolean sendPartyChat(Character speaker, String message);
+
+    AgentPartySnapshot snapshot(Character character);
 }
 

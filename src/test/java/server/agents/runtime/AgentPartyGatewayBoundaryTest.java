@@ -18,6 +18,10 @@ class AgentPartyGatewayBoundaryTest {
                 "src/main/java/server/agents/integration/cosmic/CosmicPartyGateway.java"));
         String replies = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/AgentReplyRuntime.java"));
+        String relation = Files.readString(Path.of(
+                "src/main/java/server/agents/capabilities/dialogue/llm/AgentSenderRelation.java"));
+        String situation = Files.readString(Path.of(
+                "src/main/java/server/agents/capabilities/dialogue/llm/AgentSituationBuilder.java"));
 
         assertFalse(lifecycle.contains("Party.leaveParty("));
         assertFalse(lifecycle.contains("Party.createParty("));
@@ -26,8 +30,8 @@ class AgentPartyGatewayBoundaryTest {
         assertFalse(lifecycle.contains("PartyOperation.LOG_ONOFF"));
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().leaveCurrentParty(agent)"));
         assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().createAgentParty(leader)"));
-        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().joinAgentParty(agent, leaderParty.getId())"));
-        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().publishAgentOnline(agent, leaderParty.getId())"));
+        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().joinAgentParty(agent, leaderParty.id())"));
+        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().publishAgentOnline(agent, leaderParty.id())"));
         assertTrue(gateway.contains("Party.leaveParty(agent.getParty(), agent.getClient())"));
         assertTrue(gateway.contains("Party.createParty(leader, true)"));
         assertTrue(gateway.contains("Party.joinParty(agent, partyId, true)"));
@@ -37,5 +41,11 @@ class AgentPartyGatewayBoundaryTest {
         assertFalse(replies.contains("getWorldServer().partyChat("));
         assertTrue(replies.contains("AgentPartyGatewayRuntime.party().sendPartyChat("));
         assertTrue(gateway.contains("getWorldServer().partyChat(party, message, speaker.getName())"));
+        assertFalse(lifecycle.contains("import net.server.world.Party"));
+        assertFalse(relation.contains("import net.server.world.Party"));
+        assertFalse(situation.contains("import net.server.world.Party"));
+        assertTrue(lifecycle.contains("AgentPartyGatewayRuntime.party().snapshot("));
+        assertTrue(relation.contains("AgentPartyGatewayRuntime.party().snapshot(agent)"));
+        assertTrue(situation.contains("AgentPartyGatewayRuntime.party().snapshot(bot)"));
     }
 }

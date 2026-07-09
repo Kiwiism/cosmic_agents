@@ -1,7 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
-import net.server.world.Party;
+import server.agents.integration.AgentPartySnapshot;
 import server.agents.integration.AgentPartyGatewayRuntime;
 
 /**
@@ -12,27 +12,27 @@ public final class AgentPartyLifecycleService {
     }
 
     public static void joinAgentToLeaderParty(Character leader, Character agent) {
-        Party agentParty = agent.getParty();
+        AgentPartySnapshot agentParty = AgentPartyGatewayRuntime.party().snapshot(agent);
         if (agentParty != null) {
-            Party leaderParty = leader.getParty();
-            if (leaderParty != null && agentParty.getId() == leaderParty.getId()) {
-                AgentPartyGatewayRuntime.party().publishAgentOnline(agent, leaderParty.getId());
+            AgentPartySnapshot leaderParty = AgentPartyGatewayRuntime.party().snapshot(leader);
+            if (leaderParty != null && agentParty.id() == leaderParty.id()) {
+                AgentPartyGatewayRuntime.party().publishAgentOnline(agent, leaderParty.id());
                 agent.updatePartyMemberHP();
                 return;
             }
             AgentPartyGatewayRuntime.party().leaveCurrentParty(agent);
         }
-        Party leaderParty = leader.getParty();
+        AgentPartySnapshot leaderParty = AgentPartyGatewayRuntime.party().snapshot(leader);
         if (leaderParty == null) {
             if (!AgentPartyGatewayRuntime.party().createAgentParty(leader)) {
                 return;
             }
-            leaderParty = leader.getParty();
+            leaderParty = AgentPartyGatewayRuntime.party().snapshot(leader);
         }
         if (leaderParty == null) {
             return;
         }
-        if (AgentPartyGatewayRuntime.party().joinAgentParty(agent, leaderParty.getId())) {
+        if (AgentPartyGatewayRuntime.party().joinAgentParty(agent, leaderParty.id())) {
             agent.updatePartyMemberHP();
         }
     }

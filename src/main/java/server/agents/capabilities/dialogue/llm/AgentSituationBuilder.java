@@ -2,8 +2,9 @@ package server.agents.capabilities.dialogue.llm;
 
 import client.Character;
 import constants.game.ExpTable;
-import net.server.world.Party;
-import net.server.world.PartyCharacter;
+import server.agents.integration.AgentPartyGatewayRuntime;
+import server.agents.integration.AgentPartyMemberSnapshot;
+import server.agents.integration.AgentPartySnapshot;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -124,17 +125,17 @@ public final class AgentSituationBuilder {
     }
 
     private static String describeParty(Character bot) {
-        Party party = bot.getParty();
+        AgentPartySnapshot party = AgentPartyGatewayRuntime.party().snapshot(bot);
         if (party == null) return "";
         int myMapId = bot.getMapId();
         StringBuilder sb = new StringBuilder();
         boolean first = true;
-        for (PartyCharacter m : party.getMembers()) {
-            if (m == null || m.getId() == bot.getId()) continue;
+        for (AgentPartyMemberSnapshot m : party.members()) {
+            if (m == null || m.id() == bot.getId()) continue;
             if (!first) sb.append(", ");
-            sb.append(m.getName());
-            if (m.isLeader()) sb.append(" (leader)");
-            if (m.getMapId() != myMapId) sb.append(" (elsewhere)");
+            sb.append(m.name());
+            if (m.leader()) sb.append(" (leader)");
+            if (m.mapId() != myMapId) sb.append(" (elsewhere)");
             first = false;
         }
         return sb.toString();
