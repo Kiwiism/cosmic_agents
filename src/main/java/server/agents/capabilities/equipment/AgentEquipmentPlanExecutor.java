@@ -6,7 +6,6 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
-import server.ItemInformationProvider;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
@@ -55,20 +54,6 @@ public final class AgentEquipmentPlanExecutor {
             InventoryManipulator.handleItemMove(agent.getClient(), InventoryType.EQUIP,
                     position, slot, (short) 1);
         }
-    }
-
-    public static void unequipInfeasibleEquipped(Character agent, ItemInformationProvider itemInfo) {
-        unequipInfeasibleEquipped(agent, new InfeasibleEquipHooks() {
-            @Override
-            public boolean isCashItem(int itemId) {
-                return itemInfo.isCash(itemId);
-            }
-
-            @Override
-            public boolean canWearEquipment(Character candidate, Equip equip, short primarySlot) {
-                return itemInfo.canWearEquipment(candidate, equip, primarySlot);
-            }
-        });
     }
 
     public static void unequipInfeasibleEquipped(Character agent) {

@@ -6516,6 +6516,15 @@ Current physics correction:
   wearability hooks. The legacy item-info overload remains as a compatibility
   seam, while cash-skip behavior, wearability checks, selected slots, and
   unequip execution order are unchanged.
+- SPI/gateway cleanup: unused item-info compatibility overloads were removed
+  from equipment recommendation filtering, debug row formatting, infeasible
+  cleanup, and the public equipment service reserve facade. Live callers were
+  already on gateway-backed hooks; recommendation decisions, debug formatting,
+  infeasible cleanup, and reserve behavior are unchanged.
+- SPI/gateway extraction: optimizer extra-item recommendation filtering now
+  calls `AgentEquipmentRecommendationPolicy` with `InventoryGateway` hooks.
+  The surrounding optimizer still contains staged item-info metadata seams, but
+  extra-offer candidate acceptance/rejection behavior is unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

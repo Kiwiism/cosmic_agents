@@ -2560,3 +2560,12 @@ Recent capability extraction notes:
   The compatibility item-info overload remains for staged callers/tests; cash
   skipping, wearability decisions, and eventual unequip execution stay
   unchanged.
+- SPI/gateway cleanup: unused item-info overloads were removed from
+  `AgentEquipmentRecommendationPolicy`, `AgentEquipmentDebugReportFormatter`,
+  `AgentEquipmentPlanExecutor`, and `AgentEquipmentService`. Remaining
+  item-info signatures are active staged seams in the auto-equip/reserve/
+  optimizer cluster rather than dead public facades.
+- SPI/gateway extraction: `AgentEquipmentOptimizationService` now uses
+  `InventoryGateway` recommendation hooks when checking extra/offered
+  equipment candidates. Candidate gates and optimizer behavior stay unchanged
+  while the larger optimizer metadata cluster remains a later extraction slice.

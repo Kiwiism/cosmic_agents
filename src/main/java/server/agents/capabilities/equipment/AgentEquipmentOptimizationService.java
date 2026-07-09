@@ -9,6 +9,8 @@ import client.inventory.Item;
 import constants.inventory.EquipSlot;
 import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentRecommendationPolicy.RecommendationScope;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +34,7 @@ public final class AgentEquipmentOptimizationService {
                                                                        Collection<Equip> extras,
                                                                        RecommendationScope scope) {
         ItemInformationProvider itemInfo = ItemInformationProvider.getInstance();
+        InventoryGateway inventory = CosmicAgentServerAdapter.INSTANCE.inventory();
         Inventory equipInventory = agent.getInventory(InventoryType.EQUIP);
         Inventory equippedInventory = agent.getInventory(InventoryType.EQUIPPED);
         AgentMapDamageProfile mob = AgentMapDamageProfile.snapshotByAvoid(agent);
@@ -39,6 +42,8 @@ public final class AgentEquipmentOptimizationService {
         Map<Short, List<Equip>> bySlot = scope == RecommendationScope.IMMEDIATE
                 ? collectAutoEquipCandidates(agent, itemInfo, equipInventory, equippedInventory, null)
                 : collectFutureEquipCandidates(agent, itemInfo, equipInventory, equippedInventory);
+        AgentEquipmentRecommendationPolicy.RecommendationHooks recommendationHooks =
+                AgentEquipmentRecommendationPolicy.RecommendationHooks.from(inventory);
         for (Equip extra : extras) {
             if (extra == null || itemInfo.isCash(extra.getItemId())) {
                 continue;
@@ -61,7 +66,7 @@ public final class AgentEquipmentOptimizationService {
                 continue;
             }
             if (!AgentEquipmentRecommendationPolicy.isRecommendationCandidate(
-                    agent, itemInfo, extra, primarySlot, scope)) {
+                    agent, recommendationHooks, extra, primarySlot, scope)) {
                 continue;
             }
             short key = AgentEquipmentSlotResolver.isRingSlot(primarySlot) ? (short) -12 : primarySlot;

@@ -2,7 +2,6 @@ package server.agents.capabilities.equipment;
 
 import client.Character;
 import client.inventory.Equip;
-import server.ItemInformationProvider;
 import server.agents.integration.InventoryGateway;
 
 import java.util.Map;
@@ -16,23 +15,6 @@ public final class AgentEquipmentDebugReportFormatter {
         String getEquipmentSlot(int itemId);
         Map<String, Integer> getEquipStats(int itemId);
         int getEquipLevelReq(int itemId);
-
-        static ItemInfo from(ItemInformationProvider ii) {
-            return new ItemInfo() {
-                @Override public String getName(int itemId) {
-                    return ii.getName(itemId);
-                }
-                @Override public String getEquipmentSlot(int itemId) {
-                    return ii.getEquipmentSlot(itemId);
-                }
-                @Override public Map<String, Integer> getEquipStats(int itemId) {
-                    return ii.getEquipStats(itemId);
-                }
-                @Override public int getEquipLevelReq(int itemId) {
-                    return ii.getEquipLevelReq(itemId);
-                }
-            };
-        }
 
         static ItemInfo from(InventoryGateway inventory) {
             return new ItemInfo() {
@@ -56,14 +38,6 @@ public final class AgentEquipmentDebugReportFormatter {
         return String.format("%-3s %-30s %-7s %4s %4s %4s %4s %4s %4s %4s %4s %4s %4s %5s %5s%s   reqs%n",
                 "pos", "name", "slot", "STR", "DEX", "INT", "LUK", "WAK", "MAK", "WDF", "MDF", "ACC", "AVD", "HP", "MP",
                 includeSelfReserve ? "  SELF" : "");
-    }
-
-    public static void appendItemRow(StringBuilder sb,
-                                     ItemInformationProvider ii,
-                                     Equip equip,
-                                     short position,
-                                     Boolean selfReserve) {
-        appendItemRow(sb, ItemInfo.from(ii), equip, position, selfReserve);
     }
 
     public static void appendItemRow(StringBuilder sb,
