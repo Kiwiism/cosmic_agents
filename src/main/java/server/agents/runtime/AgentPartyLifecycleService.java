@@ -2,8 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import net.server.world.Party;
-import net.server.world.PartyCharacter;
-import net.server.world.PartyOperation;
 import server.agents.integration.AgentPartyGatewayRuntime;
 
 /**
@@ -18,10 +16,7 @@ public final class AgentPartyLifecycleService {
         if (agentParty != null) {
             Party leaderParty = leader.getParty();
             if (leaderParty != null && agentParty.getId() == leaderParty.getId()) {
-                PartyCharacter partyCharacter = new PartyCharacter(agent);
-                partyCharacter.setChannel(agent.getClient().getChannel());
-                partyCharacter.setMapId(agent.getMapId());
-                agent.getWorldServer().updateParty(leaderParty.getId(), PartyOperation.LOG_ONOFF, partyCharacter);
+                AgentPartyGatewayRuntime.party().publishAgentOnline(agent, leaderParty.getId());
                 agent.updatePartyMemberHP();
                 return;
             }

@@ -8,5 +8,7 @@ public interface PartyGateway {
     boolean createAgentParty(Character leader);
 
     boolean joinAgentParty(Character agent, int partyId);
+
+    void publishAgentOnline(Character agent, int partyId);
 }
 

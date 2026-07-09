@@ -6948,6 +6948,12 @@ Current physics correction:
   Existing leader-party lookup, null checks, Agent-party flag, success gating,
   and post-join HP refresh are unchanged. Live Cosmic party joining is isolated
   in `CosmicPartyGateway`.
+- SPI/gateway extraction: same-party online-state publication now calls
+  `AgentPartyGatewayRuntime`/`PartyGateway.publishAgentOnline` instead of
+  constructing `PartyCharacter` and dispatching `PartyOperation.LOG_ONOFF`
+  inside `AgentPartyLifecycleService`. Same-party identity checks, channel/map
+  values, world update, HP refresh, and early return behavior are unchanged.
+  Live Cosmic party-member projection is isolated in `CosmicPartyGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
