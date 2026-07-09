@@ -2436,3 +2436,6 @@ Recent capability extraction notes:
 - SPI/gateway extraction: navigation debug overlay cleanup now routes mist
   removal through `PacketGateway.sendRemoveMist` instead of calling
   `PacketCreator.removeMist` directly from the navigation capability.
+- SPI/gateway extraction: loot cleanup now routes stale drop removal packets
+  through `PacketGateway.sendRemoveItemFromMap`; looting still owns the
+  visible-player and BotClient filtering behavior.

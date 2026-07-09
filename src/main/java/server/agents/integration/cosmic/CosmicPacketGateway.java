@@ -60,4 +60,12 @@ public enum CosmicPacketGateway implements PacketGateway {
         }
         recipient.sendPacket(PacketCreator.removeMist(objectId));
     }
+
+    @Override
+    public void sendRemoveItemFromMap(Character recipient, int objectId, int animation, int fromCharacterId) {
+        if (recipient == null) {
+            return;
+        }
+        recipient.sendPacket(PacketCreator.removeItemFromMap(objectId, animation, fromCharacterId));
+    }
 }

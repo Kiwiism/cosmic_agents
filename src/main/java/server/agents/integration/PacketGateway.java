@@ -19,5 +19,7 @@ public interface PacketGateway {
                                    int display);
 
     void sendRemoveMist(Character recipient, int objectId);
+
+    void sendRemoveItemFromMap(Character recipient, int objectId, int animation, int fromCharacterId);
 }
 

@@ -85,4 +85,19 @@ class CosmicPacketGatewayTest {
             verify(recipient).sendPacket(packet);
         }
     }
+
+    @Test
+    void sendRemoveItemFromMapBuildsPacketAndSendsToRecipient() {
+        Character recipient = mock(Character.class);
+        Packet packet = mock(Packet.class);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.removeItemFromMap(7, 1, 0)).thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.sendRemoveItemFromMap(recipient, 7, 1, 0);
+
+            packets.verify(() -> PacketCreator.removeItemFromMap(7, 1, 0));
+            verify(recipient).sendPacket(packet);
+        }
+    }
 }
