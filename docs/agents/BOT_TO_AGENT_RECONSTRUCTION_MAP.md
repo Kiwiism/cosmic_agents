@@ -203,6 +203,13 @@ Recent map updates:
   directly. Drop-vs-trade choice handling, transfer availability checks, item
   collection, equip/ammo classification, batch opening, invitation replies, and
   trade start/invite ordering are unchanged.
+- Manual trade, supply-share trade, trade sequence runtime, cancellation,
+  invite-wait, confirm-wait, and completion services now call trade lifecycle
+  operations through `AgentTradeGatewayRuntime`. This removes direct Cosmic
+  adapter imports from those simple trade lifecycle services while preserving
+  manual-trade timeout behavior, invite acceptance, supply-share retries,
+  sequence callbacks, timeout replies, cancel/reset order, completion reactions,
+  and visible reply timing.
 - `AgentInventoryTickRuntime`, `AgentInventoryTransferService`,
   `AgentManualTradeRuntimeService`, `AgentTradeTickRuntimeService`, and
   `AgentTradeLifecycleRuntimeService` now accept `AgentRuntimeEntry` across

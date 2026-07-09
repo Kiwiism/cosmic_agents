@@ -226,6 +226,11 @@ Recent reconstruction notes:
   inventory/trade gateway runtime boundaries instead of importing the Cosmic
   adapter directly; transfer routing, drop handling, item collection,
   classification, trade start/invite order, and replies are unchanged.
+- Simple trade lifecycle services now route start/invite/cancel/complete/visit
+  calls through `AgentTradeGatewayRuntime` instead of importing the Cosmic
+  adapter directly. Manual trade, supply-share trade, sequence opening,
+  invite/confirm timeouts, cancellations, completion reactions, and replies are
+  unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

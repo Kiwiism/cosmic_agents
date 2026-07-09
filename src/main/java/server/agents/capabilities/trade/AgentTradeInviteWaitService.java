@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeInviteWaitService {
@@ -19,7 +19,7 @@ public final class AgentTradeInviteWaitService {
         AgentPendingTradeStateRuntime.addTimerMs(entry, tickMs);
         if (AgentPendingTradeStateRuntime.timerMs(entry) > REQUEST_TIMEOUT_MS) {
             AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeRequestTimeoutReply());
-            CosmicAgentServerAdapter.INSTANCE.trade().cancelNoResponse(agent);
+            AgentTradeGatewayRuntime.trade().cancelNoResponse(agent);
             resetTradeState.run();
         }
     }

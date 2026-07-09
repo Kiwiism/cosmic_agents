@@ -7,7 +7,7 @@ import client.inventory.Item;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -76,8 +76,8 @@ public final class AgentSupplyShareTradeService {
                     AgentInventoryRuntime.replyNow(entry, "can't trade right now, stopping");
                     AgentTradeStateService.clearSequence(entry);
                 },
-                () -> CosmicAgentServerAdapter.INSTANCE.trade().startTrade(agent),
-                CosmicAgentServerAdapter.INSTANCE.trade()::inviteTrade,
+                () -> AgentTradeGatewayRuntime.trade().startTrade(agent),
+                AgentTradeGatewayRuntime.trade()::inviteTrade,
                 () -> AgentDialogueSelector.randomReply(AgentDialogueCatalog.tradeInvitationReplies()),
                 message -> AgentInventoryRuntime.replyNow(entry, message));
     }

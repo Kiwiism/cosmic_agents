@@ -2,7 +2,7 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import server.Trade;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.Set;
@@ -50,7 +50,7 @@ public final class AgentManualTradeService {
             return false;
         }
 
-        CosmicAgentServerAdapter.INSTANCE.trade().cancelNoResponse(agent);
+        AgentTradeGatewayRuntime.trade().cancelNoResponse(agent);
         clearState(entry, agent);
         return true;
     }
@@ -90,7 +90,7 @@ public final class AgentManualTradeService {
             return trade;
         }
 
-        CosmicAgentServerAdapter.INSTANCE.trade().visitTrade(agent, inviter);
+        AgentTradeGatewayRuntime.trade().visitTrade(agent, inviter);
         Trade joined = agent.getTrade();
         if (joined == null || !joined.isFullTrade()) {
             return null;

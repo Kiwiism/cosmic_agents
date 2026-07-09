@@ -6,7 +6,7 @@ import client.inventory.Item;
 import constants.inventory.ItemConstants;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BooleanSupplier;
@@ -35,7 +35,7 @@ public final class AgentTradeCompletionService {
             }
         }
 
-        CosmicAgentServerAdapter.INSTANCE.trade().completeTrade(agent);
+        AgentTradeGatewayRuntime.trade().completeTrade(agent);
         long replyDelay = replyDelayMs.getAsLong();
         if (receivedSomething) {
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());

@@ -3,7 +3,7 @@ package server.agents.capabilities.trade;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueCatalog;
 import server.agents.capabilities.inventory.AgentInventoryRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BooleanSupplier;
@@ -33,7 +33,7 @@ public final class AgentTradeConfirmWaitService {
             AgentPendingTradeStateRuntime.clearTimer(entry);
         } else if (AgentPendingTradeStateRuntime.timerMs(entry) > CONFIRM_TIMEOUT_MS) {
             AgentInventoryRuntime.replyNow(entry, AgentDialogueCatalog.tradeConfirmTimeoutReply());
-            CosmicAgentServerAdapter.INSTANCE.trade().cancelNoResponse(agent);
+            AgentTradeGatewayRuntime.trade().cancelNoResponse(agent);
             resetTradeState.run();
         }
         return true;
