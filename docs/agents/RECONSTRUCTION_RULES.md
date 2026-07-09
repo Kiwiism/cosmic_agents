@@ -259,6 +259,9 @@ Recent reconstruction notes:
   new `CharacterGateway`/`CosmicCharacterGateway` boundary. Tick-time leader
   refresh and relogin leader resolution still read the same world player
   storage and preserve the same null/fallback behavior.
+- Support special-move packet building now obtains the current server
+  timestamp through `AgentCombatGatewayRuntime`. Packet construction,
+  synthetic dispatch, validation, and handler invocation remain unchanged.
 - The first semantic cleanup slice renamed the foundational identity,
   scheduler, reply-channel, reply-runtime, and message-queue adapters to
   neutral `Agent*` names. This was a type/file/import rename only; behavior and

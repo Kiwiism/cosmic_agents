@@ -17,7 +17,7 @@ public final class AgentSupportSpecialMoveExecutor {
                 agent,
                 skill.getId(),
                 skillLevel,
-                net.server.Server.getInstance().getCurrentTimestamp());
+                AgentCombatGatewayRuntime.combat().currentTimestamp());
         return AgentCombatGatewayRuntime.combat().dispatchSyntheticPacket(agent, packetBytes);
     }
 }

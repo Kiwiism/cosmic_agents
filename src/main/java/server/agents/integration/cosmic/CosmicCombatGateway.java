@@ -7,6 +7,7 @@ import net.PacketHandler;
 import net.PacketProcessor;
 import net.packet.ByteBufInPacket;
 import net.packet.InPacket;
+import net.server.Server;
 import server.agents.integration.CombatGateway;
 
 /**
@@ -15,6 +16,11 @@ import server.agents.integration.CombatGateway;
  */
 public enum CosmicCombatGateway implements CombatGateway {
     INSTANCE;
+
+    @Override
+    public int currentTimestamp() {
+        return Server.getInstance().getCurrentTimestamp();
+    }
 
     @Override
     public boolean dispatchSyntheticPacket(Character agent, byte[] packetBytes) {
