@@ -6802,6 +6802,11 @@ Current physics correction:
   `AgentStarterKitService`. First-job eligibility, inventory-space checks,
   grant ordering, warning logs, and auto-equip/build-status follow-up behavior
   are unchanged.
+- SPI/gateway extraction: KPQ Stage 1 coupon/pass exchange now calls
+  `InventoryGateway.removeById` and `InventoryGateway.addItem` instead of
+  importing `InventoryManipulator` in `AgentKpqStage1`. Coupon-count gating,
+  pass grant, grid-question reset, and queued pass-delivery dialogue are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

@@ -104,6 +104,12 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     }
 
     @Override
+    public void removeById(Character agent, InventoryType type, int itemId, int quantity, boolean fromDrop,
+                           boolean consume) {
+        InventoryManipulator.removeById(agent.getClient(), type, itemId, quantity, fromDrop, consume);
+    }
+
+    @Override
     public void moveItem(Character agent, InventoryType type, short sourceSlot, short destinationSlot, short quantity) {
         InventoryManipulator.handleItemMove(agent.getClient(), type, sourceSlot, destinationSlot, quantity);
     }

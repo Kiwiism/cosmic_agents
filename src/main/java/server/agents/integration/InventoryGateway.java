@@ -44,6 +44,8 @@ public interface InventoryGateway {
 
     void removeFromSlot(Character agent, InventoryType type, short slot, short quantity, boolean fromDrop);
 
+    void removeById(Character agent, InventoryType type, int itemId, int quantity, boolean fromDrop, boolean consume);
+
     void moveItem(Character agent, InventoryType type, short sourceSlot, short destinationSlot, short quantity);
 
     boolean addItem(Character agent, int itemId, short quantity);

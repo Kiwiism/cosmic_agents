@@ -2,9 +2,10 @@ package server.agents.capabilities.partyquest.kpq;
 
 import client.Character;
 import client.inventory.InventoryType;
-import client.inventory.manipulator.InventoryManipulator;
 import scripting.event.EventInstanceManager;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
+import server.agents.integration.AgentInventoryGatewayRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptContext;
 import server.agents.plans.AgentScriptStep;
@@ -170,13 +171,19 @@ public final class AgentKpqStage1 {
 
     private static void exchangeCoupons(AgentScriptContext ctx) {
         int target = AgentPqRuntime.kpqCouponTarget(ctx.entry());
-        if (ctx.bot().getItemQuantity(ITEM_COUPON, false) >= target) {
-            InventoryManipulator.removeById(ctx.bot().getClient(), InventoryType.ETC, ITEM_COUPON, target, false, false);
-            InventoryManipulator.addById(ctx.bot().getClient(), ITEM_PASS, (short) 1);
-            EventInstanceManager eim = ctx.bot().getEventInstance();
-            if (eim != null) eim.gridInsert(ctx.bot(), 0);
-        }
+        exchangeCouponsForPass(ctx.bot(), target, AgentInventoryGatewayRuntime.inventory());
         AgentPqRuntime.queueSay(ctx.entry(), "Got my pass! Bringing it to you.");
+    }
+
+    static boolean exchangeCouponsForPass(Character bot, int target, InventoryGateway inventory) {
+        if (bot.getItemQuantity(ITEM_COUPON, false) < target) {
+            return false;
+        }
+        inventory.removeById(bot, InventoryType.ETC, ITEM_COUPON, target, false, false);
+        inventory.addItem(bot, ITEM_PASS, (short) 1);
+        EventInstanceManager eim = bot.getEventInstance();
+        if (eim != null) eim.gridInsert(bot, 0);
+        return true;
     }
 
     private static void queuePassDelivery(AgentScriptContext ctx) {

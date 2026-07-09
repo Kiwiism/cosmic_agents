@@ -2836,3 +2836,7 @@ Recent capability extraction notes:
   kit items through `InventoryGateway.addItem`. Eligibility checks, inventory
   capacity guards, grant order, and post-job-advance follow-up remain
   unchanged.
+- SPI/gateway extraction: `AgentKpqStage1` now exchanges KPQ coupons for passes
+  through `InventoryGateway.removeById` and `InventoryGateway.addItem`. Coupon
+  thresholds, pass grant behavior, event-grid reset, and delivery flow remain
+  unchanged.
