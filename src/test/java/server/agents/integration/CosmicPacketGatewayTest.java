@@ -70,4 +70,19 @@ class CosmicPacketGatewayTest {
             verify(map).broadcastMessage(agent, packet, false);
         }
     }
+
+    @Test
+    void sendRemoveMistBuildsPacketAndSendsToRecipient() {
+        Character recipient = mock(Character.class);
+        Packet packet = mock(Packet.class);
+
+        try (MockedStatic<PacketCreator> packets = mockStatic(PacketCreator.class)) {
+            packets.when(() -> PacketCreator.removeMist(456)).thenReturn(packet);
+
+            CosmicPacketGateway.INSTANCE.sendRemoveMist(recipient, 456);
+
+            packets.verify(() -> PacketCreator.removeMist(456));
+            verify(recipient).sendPacket(packet);
+        }
+    }
 }

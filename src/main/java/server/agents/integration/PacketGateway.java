@@ -17,5 +17,7 @@ public interface PacketGateway {
                                    int speed,
                                    int direction,
                                    int display);
+
+    void sendRemoveMist(Character recipient, int objectId);
 }
 

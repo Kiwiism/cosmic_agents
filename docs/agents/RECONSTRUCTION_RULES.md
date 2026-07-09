@@ -6373,6 +6373,9 @@ Current physics correction:
 - SPI/gateway extraction: `AgentAirshowService` now reuses `PacketGateway` for
   airshow movement packets. Airshow monster trail spawn/kill packets remain a
   documented follow-up gateway slice.
+- SPI/gateway extraction: navigation debug overlay mist removal now routes
+  through `PacketGateway.sendRemoveMist`, moving `PacketCreator.removeMist` and
+  direct client packet send out of the navigation capability.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

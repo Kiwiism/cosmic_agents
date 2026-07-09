@@ -52,4 +52,12 @@ public enum CosmicPacketGateway implements PacketGateway {
                 display);
         agent.getMap().broadcastMessage(agent, attackPacket, false);
     }
+
+    @Override
+    public void sendRemoveMist(Character recipient, int objectId) {
+        if (recipient == null) {
+            return;
+        }
+        recipient.sendPacket(PacketCreator.removeMist(objectId));
+    }
 }

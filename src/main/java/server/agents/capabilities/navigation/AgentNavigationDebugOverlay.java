@@ -11,13 +11,13 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
 import server.TimerManager;
 import server.maps.MapleMap;
 import server.maps.Mist;
-import tools.PacketCreator;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -239,7 +239,7 @@ public final class AgentNavigationDebugOverlay {
             state.clearTask.cancel(false);
         }
         for (int objectId : state.objectIds) {
-            viewer.sendPacket(PacketCreator.removeMist(objectId));
+            CosmicAgentServerAdapter.INSTANCE.packets().sendRemoveMist(viewer, objectId);
         }
     }
 
