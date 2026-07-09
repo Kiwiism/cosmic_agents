@@ -6593,6 +6593,11 @@ Current physics correction:
   `AgentKpqStage5`. Stage-clear detection, reward claiming, claimed-state
   marking, item-delta selection, fallback item-id text, and queued PQ chat are
   unchanged.
+- SPI/gateway extraction: scroll-reaction success-rate lookup now receives
+  `InventoryGateway` from the scroll notification boundary instead of reaching
+  for the Cosmic adapter inside `AgentScrollReactionService`. Nearby-Agent
+  detection, per-Agent jitter, streak/load scaling, emote/chat/fidget chances,
+  cooldowns, and reaction text selection are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

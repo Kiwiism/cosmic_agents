@@ -2628,3 +2628,8 @@ Recent capability extraction notes:
   through `AgentPartyQuestHooks` for reward item-name formatting. Stage 5 clear
   detection, reward claiming, claimed-state tracking, reward delta detection,
   fallback item-id wording, and queued reward chat stay unchanged.
+- SPI/gateway extraction: `AgentScrollReactionService` now receives
+  `InventoryGateway` through `AgentScrollReactionNotificationService` for
+  scroll success-rate metadata. Reaction eligibility, delay scheduling,
+  streak/load chance scaling, emote/chat/fidget side effects, and cooldown
+  behavior stay unchanged.

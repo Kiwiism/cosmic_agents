@@ -5,6 +5,7 @@ import client.inventory.Equip;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.TimerManager;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeRegistry;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -34,10 +35,11 @@ class AgentScrollReactionNotificationServiceTest {
 
             verify(inlineTimer).schedule(any(Runnable.class), eq(0L));
             reactions.verify(() -> AgentScrollReactionService.handleScrollEvent(
-                    source,
-                    Equip.ScrollResult.SUCCESS,
-                    2040001,
-                    AgentRuntimeRegistry.entriesByLeaderId().values()));
+                    eq(source),
+                    eq(Equip.ScrollResult.SUCCESS),
+                    eq(2040001),
+                    eq(AgentRuntimeRegistry.entriesByLeaderId().values()),
+                    any(InventoryGateway.class)));
         }
     }
 }

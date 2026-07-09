@@ -10,7 +10,7 @@ import server.agents.capabilities.social.AgentScrollReactionRuntime;
 import client.Character;
 import client.inventory.Equip;
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.*;
@@ -74,7 +74,8 @@ public final class AgentScrollReactionService {
     public static void handleScrollEvent(Character source,
                                          Equip.ScrollResult result,
                                          int scrollItemId,
-                                         Collection<? extends List<? extends AgentRuntimeEntry>> allEntries) {
+                                         Collection<? extends List<? extends AgentRuntimeEntry>> allEntries,
+                                         InventoryGateway inventory) {
         if (source == null || source.getMap() == null || result == null || allEntries == null) {
             return;
         }
@@ -94,7 +95,7 @@ public final class AgentScrollReactionService {
         long now = System.currentTimeMillis();
         boolean success = result == Equip.ScrollResult.SUCCESS;
         int mapId = source.getMapId();
-        int scrollSuccessRate = resolveScrollSuccessRate(scrollItemId);
+        int scrollSuccessRate = resolveScrollSuccessRate(scrollItemId, inventory);
 
         for (List<? extends AgentRuntimeEntry> entries : allEntries) {
             for (AgentRuntimeEntry entry : entries) {
@@ -228,11 +229,11 @@ public final class AgentScrollReactionService {
         return AgentDialogueSelector.randomReply(success ? SCROLL_SUCCESS_REACTIONS : SCROLL_FAIL_REACTIONS);
     }
 
-    private static int resolveScrollSuccessRate(int scrollItemId) {
+    static int resolveScrollSuccessRate(int scrollItemId, InventoryGateway inventory) {
         if (scrollItemId <= 0) {
             return 0;
         }
-        Map<String, Integer> stats = CosmicAgentServerAdapter.INSTANCE.inventory().getEquipStats(scrollItemId);
+        Map<String, Integer> stats = inventory.getEquipStats(scrollItemId);
         if (stats == null) {
             return 0;
         }
