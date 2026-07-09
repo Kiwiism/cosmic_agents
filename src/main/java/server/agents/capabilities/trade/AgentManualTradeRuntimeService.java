@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiConsumer;
@@ -27,14 +26,14 @@ public final class AgentManualTradeRuntimeService {
                 owner,
                 AgentManualTradeCallbackService.manualTradeTickCallbacks(
                         () -> callbacks.hasActiveSequence(entry),
-                        Character::getTrade,
+                        tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()),
                         clearAgent -> AgentManualTradeService.clearState(entry, clearAgent),
                         (tradeAgent, trade) -> AgentManualTradeService.beginOrTickTimeout(
                                 entry,
                                 tradeAgent,
                                 trade,
                                 callbacks::tickDown),
-                        Character::getTrade,
+                        tradeOwner -> AgentServerTradeWindow.wrap(tradeOwner.getTrade()),
                         (tradeAgent, tradeOwner, trade, isOwnerTrade) -> AgentManualPeerTradeService.tickPeerTrade(
                                 entry,
                                 tradeAgent,
@@ -54,7 +53,7 @@ public final class AgentManualTradeRuntimeService {
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
                                                 entry,
                                                 tradeAgent,
-                                                completedTrade,
+                                                AgentServerTradeWindow.unwrap(completedTrade),
                                                 lifecycleCallbacks),
                                         peerOwner -> callbacks.refillEquipment(tradeAgent, peerOwner),
                                         AgentManualTradeService::clearGreeting)),
@@ -75,7 +74,7 @@ public final class AgentManualTradeRuntimeService {
                                         completedTrade -> AgentTradeLifecycleService.completeTradeAndReact(
                                                 entry,
                                                 tradeAgent,
-                                                completedTrade,
+                                                AgentServerTradeWindow.unwrap(completedTrade),
                                                 lifecycleCallbacks),
                                         refillOwner -> callbacks.refillEquipment(tradeAgent, refillOwner)))));
     }

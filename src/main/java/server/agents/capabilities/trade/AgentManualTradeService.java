@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.integration.AgentTradeGatewayRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -23,19 +22,19 @@ public final class AgentManualTradeService {
 
     public static boolean beginOrTickTimeout(AgentRuntimeEntry entry,
                                              Character agent,
-                                             Trade trade,
+                                             AgentTradeWindow trade,
                                              IntUnaryOperator tickDown) {
         return beginOrTickTimeout(entry, agent, trade, DEFAULT_MANUAL_TRADE_TIMEOUT_MS, tickDown);
     }
 
     public static boolean beginOrTickTimeout(AgentRuntimeEntry entry,
                                              Character agent,
-                                             Trade trade,
+                                             AgentTradeWindow trade,
                                              int timeoutMs,
                                              IntUnaryOperator tickDown) {
-        if (trade != AgentManualTradeStateRuntime.tradeRef(entry)) {
+        if (trade.identity() != AgentManualTradeStateRuntime.tradeRef(entry)) {
             clearGreeting(agent);
-            AgentManualTradeStateRuntime.beginTrade(entry, trade, timeoutMs);
+            AgentManualTradeStateRuntime.beginTrade(entry, trade.identity(), timeoutMs);
             return false;
         }
 
@@ -66,19 +65,19 @@ public final class AgentManualTradeService {
         }
     }
 
-    public static void sendGreetingOnce(Character agent, Trade trade, Supplier<String> greeting) {
+    public static void sendGreetingOnce(Character agent, AgentTradeWindow trade, Supplier<String> greeting) {
         if (agent != null && trade != null && GREETING_SENT.add(agent.getId())) {
             trade.chat(greeting.get());
         }
     }
 
-    public static Trade acceptInviteWhenReady(AgentRuntimeEntry entry,
-                                              Character agent,
-                                              Character inviter,
-                                              Trade trade,
-                                              int delayMs,
-                                              IntUnaryOperator tickDown) {
-        if (trade.getNumber() != 1) {
+    public static AgentTradeWindow acceptInviteWhenReady(AgentRuntimeEntry entry,
+                                                         Character agent,
+                                                         Character inviter,
+                                                         AgentTradeWindow trade,
+                                                         int delayMs,
+                                                         IntUnaryOperator tickDown) {
+        if (trade.number() != 1) {
             return trade;
         }
 
@@ -91,7 +90,7 @@ public final class AgentManualTradeService {
         }
 
         AgentTradeGatewayRuntime.trade().visitTrade(agent, inviter);
-        Trade joined = agent.getTrade();
+        AgentTradeWindow joined = AgentServerTradeWindow.wrap(agent.getTrade());
         if (joined == null || !joined.isFullTrade()) {
             return null;
         }

@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentManualPeerTradeService {
@@ -11,25 +10,25 @@ public final class AgentManualPeerTradeService {
     public static boolean tickPeerTrade(AgentRuntimeEntry entry,
                                         Character agent,
                                         Character owner,
-                                        Trade trade,
+                                        AgentTradeWindow trade,
                                         boolean ownerTrade,
                                         PeerTradeCallbacks callbacks) {
         if (ownerTrade) {
             return false;
         }
 
-        Trade partner = trade.getPartner();
+        AgentTradeWindow partner = trade.partner();
         boolean peerTrade = partner != null
-                && callbacks.isPeerAgent(partner.getChr())
+                && callbacks.isPeerAgent(partner.character())
                 && owner != null
-                && callbacks.isAuthorizedPeer(partner.getChr().getId(), owner.getId());
+                && callbacks.isAuthorizedPeer(partner.character().getId(), owner.getId());
         if (!peerTrade) {
             callbacks.clearGreeting(agent);
             return true;
         }
 
         if (!trade.isFullTrade()) {
-            trade = callbacks.acceptInvite(partner.getChr(), trade);
+            trade = callbacks.acceptInvite(partner.character(), trade);
             if (trade == null || !trade.isFullTrade()) {
                 return true;
             }
@@ -45,15 +44,15 @@ public final class AgentManualPeerTradeService {
     public interface PeerTradeCallbacks {
         boolean isPeerAgent(Character peer);
         boolean isAuthorizedPeer(int peerCharacterId, int ownerCharacterId);
-        Trade acceptInvite(Character inviter, Trade trade);
-        void completeTrade(Trade trade);
+        AgentTradeWindow acceptInvite(Character inviter, AgentTradeWindow trade);
+        void completeTrade(AgentTradeWindow trade);
         void refillEquipment(Character owner);
         void clearGreeting(Character agent);
 
         static PeerTradeCallbacks of(java.util.function.Predicate<Character> isPeerAgent,
                                      java.util.function.BiPredicate<Integer, Integer> isAuthorizedPeer,
-                                     java.util.function.BiFunction<Character, Trade, Trade> acceptInvite,
-                                     java.util.function.Consumer<Trade> completeTrade,
+                                     java.util.function.BiFunction<Character, AgentTradeWindow, AgentTradeWindow> acceptInvite,
+                                     java.util.function.Consumer<AgentTradeWindow> completeTrade,
                                      java.util.function.Consumer<Character> refillEquipment,
                                      java.util.function.Consumer<Character> clearGreeting) {
             return new PeerTradeCallbacks() {
@@ -61,10 +60,10 @@ public final class AgentManualPeerTradeService {
                 @Override public boolean isAuthorizedPeer(int peerCharacterId, int ownerCharacterId) {
                     return isAuthorizedPeer.test(peerCharacterId, ownerCharacterId);
                 }
-                @Override public Trade acceptInvite(Character inviter, Trade trade) {
+                @Override public AgentTradeWindow acceptInvite(Character inviter, AgentTradeWindow trade) {
                     return acceptInvite.apply(inviter, trade);
                 }
-                @Override public void completeTrade(Trade trade) { completeTrade.accept(trade); }
+                @Override public void completeTrade(AgentTradeWindow trade) { completeTrade.accept(trade); }
                 @Override public void refillEquipment(Character owner) { refillEquipment.accept(owner); }
                 @Override public void clearGreeting(Character agent) { clearGreeting.accept(agent); }
             };

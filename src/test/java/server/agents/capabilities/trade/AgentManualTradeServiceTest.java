@@ -24,7 +24,8 @@ class AgentManualTradeServiceTest {
         Trade trade = mock(Trade.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, 60_000, value -> value);
+        boolean cancelled = AgentManualTradeService.beginOrTickTimeout(
+                entry, bot, AgentServerTradeWindow.wrap(trade), 60_000, value -> value);
 
         assertFalse(cancelled);
         assertSame(trade, AgentManualTradeStateRuntime.tradeRef(entry));
@@ -37,7 +38,8 @@ class AgentManualTradeServiceTest {
         Trade trade = mock(Trade.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, value -> value);
+        boolean cancelled = AgentManualTradeService.beginOrTickTimeout(
+                entry, bot, AgentServerTradeWindow.wrap(trade), value -> value);
 
         assertFalse(cancelled);
         assertSame(trade, AgentManualTradeStateRuntime.tradeRef(entry));
@@ -53,7 +55,8 @@ class AgentManualTradeServiceTest {
         AgentManualTradeStateRuntime.beginTrade(entry, trade, 100);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
-            boolean cancelled = AgentManualTradeService.beginOrTickTimeout(entry, bot, trade, 60_000, value -> 0);
+            boolean cancelled = AgentManualTradeService.beginOrTickTimeout(
+                    entry, bot, AgentServerTradeWindow.wrap(trade), 60_000, value -> 0);
 
             assertTrue(cancelled);
             trades.verify(() -> Trade.cancelTrade(bot, Trade.TradeResult.NO_RESPONSE));
@@ -69,13 +72,13 @@ class AgentManualTradeServiceTest {
         Trade trade = mock(Trade.class);
 
         AgentManualTradeService.clearGreeting(bot);
-        AgentManualTradeService.sendGreetingOnce(bot, trade, () -> "hi");
-        AgentManualTradeService.sendGreetingOnce(bot, trade, () -> "hi again");
+        AgentManualTradeService.sendGreetingOnce(bot, AgentServerTradeWindow.wrap(trade), () -> "hi");
+        AgentManualTradeService.sendGreetingOnce(bot, AgentServerTradeWindow.wrap(trade), () -> "hi again");
 
         verify(trade, times(1)).chat("hi");
 
         AgentManualTradeService.clearGreeting(bot);
-        AgentManualTradeService.sendGreetingOnce(bot, trade, () -> "hi after clear");
+        AgentManualTradeService.sendGreetingOnce(bot, AgentServerTradeWindow.wrap(trade), () -> "hi after clear");
 
         verify(trade).chat("hi after clear");
     }
@@ -88,9 +91,10 @@ class AgentManualTradeServiceTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
         when(trade.getNumber()).thenReturn((byte) 1);
 
-        Trade result = AgentManualTradeService.acceptInviteWhenReady(entry, bot, inviter, trade, 600, value -> 100);
+        AgentTradeWindow result = AgentManualTradeService.acceptInviteWhenReady(
+                entry, bot, inviter, AgentServerTradeWindow.wrap(trade), 600, value -> 100);
 
-        assertSame(trade, result);
+        assertSame(trade, result.identity());
         assertEquals(100, AgentManualTradeStateRuntime.acceptDelayMs(entry));
     }
 
@@ -106,10 +110,11 @@ class AgentManualTradeServiceTest {
         when(joinedTrade.isFullTrade()).thenReturn(true);
 
         try (MockedStatic<Trade> trades = mockStatic(Trade.class)) {
-            Trade result = AgentManualTradeService.acceptInviteWhenReady(entry, bot, inviter, trade, 600, value -> 0);
+            AgentTradeWindow result = AgentManualTradeService.acceptInviteWhenReady(
+                    entry, bot, inviter, AgentServerTradeWindow.wrap(trade), 600, value -> 0);
 
             trades.verify(() -> Trade.visitTrade(bot, inviter));
-            assertSame(joinedTrade, result);
+            assertSame(joinedTrade, result.identity());
         }
     }
 }

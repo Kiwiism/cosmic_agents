@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.Trade;
 import server.agents.capabilities.trade.AgentManualOwnerTradeService.OwnerTradeCallbacks;
 import server.agents.capabilities.trade.AgentManualPeerTradeService.PeerTradeCallbacks;
 import server.agents.capabilities.trade.AgentManualTradeTickService.ManualTradeTickCallbacks;
@@ -21,9 +20,9 @@ class AgentManualTradeCallbackServiceTest {
     void buildsManualTradeTickCallbacksFromLegacyOperations() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         AtomicReference<Character> cleared = new AtomicReference<>();
-        AtomicReference<Trade> ownerTrade = new AtomicReference<>(trade);
+        AtomicReference<AgentTradeWindow> ownerTrade = new AtomicReference<>(trade);
         AtomicBoolean peerTicked = new AtomicBoolean();
         AtomicBoolean ownerTicked = new AtomicBoolean();
 
@@ -60,9 +59,9 @@ class AgentManualTradeCallbackServiceTest {
     void buildsPeerTradeCallbacksFromLegacyOperations() {
         Character peer = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade trade = mock(Trade.class);
-        Trade accepted = mock(Trade.class);
-        AtomicReference<Trade> completed = new AtomicReference<>();
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
+        AgentTradeWindow accepted = mock(AgentTradeWindow.class);
+        AtomicReference<AgentTradeWindow> completed = new AtomicReference<>();
         AtomicReference<Character> refilled = new AtomicReference<>();
         AtomicReference<Character> cleared = new AtomicReference<>();
 
@@ -91,10 +90,10 @@ class AgentManualTradeCallbackServiceTest {
         Character inviter = mock(Character.class);
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade trade = mock(Trade.class);
-        Trade accepted = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
+        AgentTradeWindow accepted = mock(AgentTradeWindow.class);
         AtomicReference<Supplier<String>> greeting = new AtomicReference<>();
-        AtomicReference<Trade> completed = new AtomicReference<>();
+        AtomicReference<AgentTradeWindow> completed = new AtomicReference<>();
         AtomicReference<Character> refilled = new AtomicReference<>();
 
         OwnerTradeCallbacks callbacks = AgentManualTradeCallbackService.ownerTradeCallbacks(

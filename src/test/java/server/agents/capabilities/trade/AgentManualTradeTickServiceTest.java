@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.Trade;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,7 +40,7 @@ class AgentManualTradeTickServiceTest {
     void stopsWhenTimeoutHandlerCancelsTrade() {
         Character agent = mock(Character.class);
         TraceCallbacks callbacks = new TraceCallbacks();
-        callbacks.agentTrade.set(mock(Trade.class));
+        callbacks.agentTrade.set(mock(AgentTradeWindow.class));
         callbacks.timeoutHandled = true;
 
         AgentManualTradeTickService.tickManualTrade(agent, mock(Character.class), callbacks);
@@ -54,7 +53,7 @@ class AgentManualTradeTickServiceTest {
     void waitsWhenNoOwnerIsAvailable() {
         Character agent = mock(Character.class);
         TraceCallbacks callbacks = new TraceCallbacks();
-        callbacks.agentTrade.set(mock(Trade.class));
+        callbacks.agentTrade.set(mock(AgentTradeWindow.class));
 
         AgentManualTradeTickService.tickManualTrade(agent, null, callbacks);
 
@@ -67,7 +66,7 @@ class AgentManualTradeTickServiceTest {
     void routesPeerTradeBeforeOwnerTrade() {
         Character agent = mock(Character.class);
         Character owner = owner(7);
-        Trade trade = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         callbacksPartnerless(trade);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.agentTrade.set(trade);
@@ -83,11 +82,13 @@ class AgentManualTradeTickServiceTest {
     void routesOwnerTradeWhenPeerServiceDoesNotHandleOwnerWindow() {
         Character agent = mock(Character.class);
         Character owner = owner(7);
-        Trade trade = mock(Trade.class);
-        Trade ownerTrade = mock(Trade.class);
-        when(trade.getPartner()).thenReturn(ownerTrade);
-        when(ownerTrade.getPartner()).thenReturn(trade);
-        when(ownerTrade.getChr()).thenReturn(owner);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
+        AgentTradeWindow ownerTrade = mock(AgentTradeWindow.class);
+        when(trade.identity()).thenReturn(trade);
+        when(ownerTrade.identity()).thenReturn(ownerTrade);
+        when(trade.partner()).thenReturn(ownerTrade);
+        when(ownerTrade.partner()).thenReturn(trade);
+        when(ownerTrade.character()).thenReturn(owner);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.agentTrade.set(trade);
         callbacks.ownerTrade.set(ownerTrade);
@@ -106,16 +107,16 @@ class AgentManualTradeTickServiceTest {
         return owner;
     }
 
-    private static void callbacksPartnerless(Trade trade) {
-        when(trade.getPartner()).thenReturn(null);
+    private static void callbacksPartnerless(AgentTradeWindow trade) {
+        when(trade.partner()).thenReturn(null);
     }
 
     private static final class TraceCallbacks implements AgentManualTradeTickService.ManualTradeTickCallbacks {
         boolean activeSequence;
         boolean timeoutHandled;
         boolean peerHandled;
-        final AtomicReference<Trade> agentTrade = new AtomicReference<>();
-        final AtomicReference<Trade> ownerTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> agentTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> ownerTrade = new AtomicReference<>();
         final AtomicBoolean agentTradeRead = new AtomicBoolean();
         final AtomicBoolean cleared = new AtomicBoolean();
         final AtomicReference<Character> clearedAgent = new AtomicReference<>();
@@ -124,7 +125,7 @@ class AgentManualTradeTickServiceTest {
         final AtomicBoolean peerTradeTicked = new AtomicBoolean();
         final AtomicBoolean peerReceivedOwnerTrade = new AtomicBoolean();
         final AtomicBoolean ownerTradeTicked = new AtomicBoolean();
-        final AtomicReference<Trade> ownerTickTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> ownerTickTrade = new AtomicReference<>();
 
         @Override
         public boolean hasActiveSequence() {
@@ -132,7 +133,7 @@ class AgentManualTradeTickServiceTest {
         }
 
         @Override
-        public Trade agentTrade(Character agent) {
+        public AgentTradeWindow agentTrade(Character agent) {
             agentTradeRead.set(true);
             return agentTrade.get();
         }
@@ -144,26 +145,26 @@ class AgentManualTradeTickServiceTest {
         }
 
         @Override
-        public boolean beginOrTickTimeout(Character agent, Trade trade) {
+        public boolean beginOrTickTimeout(Character agent, AgentTradeWindow trade) {
             timeoutChecked.set(true);
             return timeoutHandled;
         }
 
         @Override
-        public Trade ownerTrade(Character owner) {
+        public AgentTradeWindow ownerTrade(Character owner) {
             ownerTradeRead.set(true);
             return ownerTrade.get();
         }
 
         @Override
-        public boolean tickPeerTrade(Character agent, Character owner, Trade trade, boolean ownerTrade) {
+        public boolean tickPeerTrade(Character agent, Character owner, AgentTradeWindow trade, boolean ownerTrade) {
             peerTradeTicked.set(true);
             peerReceivedOwnerTrade.set(ownerTrade);
             return peerHandled;
         }
 
         @Override
-        public void tickOwnerTrade(Character agent, Character owner, Trade trade) {
+        public void tickOwnerTrade(Character agent, Character owner, AgentTradeWindow trade) {
             ownerTradeTicked.set(true);
             ownerTickTrade.set(trade);
         }

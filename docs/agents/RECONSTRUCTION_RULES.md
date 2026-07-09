@@ -6693,6 +6693,12 @@ Current physics correction:
   instead of importing `PacketCreator` in `AgentReplyRuntime`. Reply-channel
   selection, sanitization, party fallback, and visible chat behavior are
   unchanged.
+- Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
+  callback, and greeting orchestration now use the Agent-owned
+  `AgentTradeWindow` seam. The live `server.Trade` object is wrapped only at the
+  runtime adapter boundary by `AgentServerTradeWindow`; accept timing, timeout,
+  peer authorization, owner confirmation, greeting, completion, and refill
+  behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

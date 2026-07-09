@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.Trade;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,7 +22,7 @@ class AgentManualPeerTradeServiceTest {
                 entry(),
                 mock(Character.class),
                 mock(Character.class),
-                mock(Trade.class),
+                mock(AgentTradeWindow.class),
                 true,
                 callbacks);
 
@@ -35,11 +34,11 @@ class AgentManualPeerTradeServiceTest {
     void nonPeerTradeClearsGreetingAndStopsManualBranch() {
         Character agent = mock(Character.class);
         Character owner = owner(10);
-        Trade trade = mock(Trade.class);
-        Trade partner = mock(Trade.class);
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
+        AgentTradeWindow partner = mock(AgentTradeWindow.class);
         Character peer = owner(20);
-        when(trade.getPartner()).thenReturn(partner);
-        when(partner.getChr()).thenReturn(peer);
+        when(trade.partner()).thenReturn(partner);
+        when(partner.character()).thenReturn(peer);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         boolean handled = AgentManualPeerTradeService.tickPeerTrade(
@@ -58,7 +57,7 @@ class AgentManualPeerTradeServiceTest {
     void peerTradeWaitsUntilInviteAcceptedAndFull() {
         Character agent = mock(Character.class);
         Character owner = owner(10);
-        Trade trade = peerTrade(owner(20), false, false);
+        AgentTradeWindow trade = peerTrade(owner(20), false, false);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.peerAgent = true;
         callbacks.authorized = true;
@@ -81,7 +80,7 @@ class AgentManualPeerTradeServiceTest {
     void peerTradeCompletesAndRefillsWhenPartnerConfirmed() {
         Character agent = mock(Character.class);
         Character owner = owner(10);
-        Trade trade = peerTrade(owner(20), true, true);
+        AgentTradeWindow trade = peerTrade(owner(20), true, true);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.peerAgent = true;
         callbacks.authorized = true;
@@ -110,13 +109,13 @@ class AgentManualPeerTradeServiceTest {
         return character;
     }
 
-    private static Trade peerTrade(Character peer, boolean full, boolean confirmed) {
-        Trade trade = mock(Trade.class);
-        Trade partner = mock(Trade.class);
-        when(trade.getPartner()).thenReturn(partner);
+    private static AgentTradeWindow peerTrade(Character peer, boolean full, boolean confirmed) {
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
+        AgentTradeWindow partner = mock(AgentTradeWindow.class);
+        when(trade.partner()).thenReturn(partner);
         when(trade.isFullTrade()).thenReturn(full);
         when(trade.isPartnerConfirmed()).thenReturn(confirmed);
-        when(partner.getChr()).thenReturn(peer);
+        when(partner.character()).thenReturn(peer);
         return trade;
     }
 
@@ -125,9 +124,9 @@ class AgentManualPeerTradeServiceTest {
         boolean authorized;
         final AtomicBoolean clearedGreeting = new AtomicBoolean();
         final AtomicBoolean completed = new AtomicBoolean();
-        final AtomicReference<Trade> completedTrade = new AtomicReference<>();
-        final AtomicReference<Trade> acceptedTrade = new AtomicReference<>();
-        final AtomicReference<Trade> acceptedInputTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> completedTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> acceptedTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> acceptedInputTrade = new AtomicReference<>();
         final AtomicReference<Character> refillOwner = new AtomicReference<>();
 
         @Override
@@ -141,13 +140,13 @@ class AgentManualPeerTradeServiceTest {
         }
 
         @Override
-        public Trade acceptInvite(Character inviter, Trade trade) {
+        public AgentTradeWindow acceptInvite(Character inviter, AgentTradeWindow trade) {
             acceptedInputTrade.set(trade);
             return acceptedTrade.get();
         }
 
         @Override
-        public void completeTrade(Trade trade) {
+        public void completeTrade(AgentTradeWindow trade) {
             completed.set(true);
             completedTrade.set(trade);
         }

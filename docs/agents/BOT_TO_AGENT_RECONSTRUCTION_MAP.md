@@ -2739,3 +2739,8 @@ Recent capability extraction notes:
   for immediate map-chat and whisper replies. Those packets are built and sent
   through `AgentPacketGatewayRuntime`/`PacketGateway`; reply-channel selection,
   sanitization, party fallback, and visible chat behavior stay unchanged.
+- Trade-window reconstruction: manual trade timeout, peer-trade, owner-trade,
+  callback, and greeting services now depend on `AgentTradeWindow` instead of
+  `server.Trade`. `AgentServerTradeWindow` is the live Cosmic adapter for the
+  existing `Trade` window while deeper trade lifecycle/item-add services are
+  reconstructed in later slices.

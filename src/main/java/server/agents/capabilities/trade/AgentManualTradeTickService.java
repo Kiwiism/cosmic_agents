@@ -1,10 +1,7 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -21,7 +18,7 @@ public final class AgentManualTradeTickService {
             return;
         }
 
-        Trade trade = callbacks.agentTrade(agent);
+        AgentTradeWindow trade = callbacks.agentTrade(agent);
         if (trade == null) {
             callbacks.clearState(agent);
             return;
@@ -35,12 +32,14 @@ public final class AgentManualTradeTickService {
             return;
         }
 
-        Trade ownerTrade = callbacks.ownerTrade(owner);
-        Trade partner = trade.getPartner();
+        AgentTradeWindow ownerTrade = callbacks.ownerTrade(owner);
+        AgentTradeWindow partner = trade.partner();
         boolean ownerTradeActive = ownerTrade != null
-                && partner == ownerTrade
-                && ownerTrade.getPartner() == trade
-                && owner.getId() == ownerTrade.getChr().getId();
+                && partner != null
+                && partner.identity() == ownerTrade.identity()
+                && ownerTrade.partner() != null
+                && ownerTrade.partner().identity() == trade.identity()
+                && owner.getId() == ownerTrade.character().getId();
         if (callbacks.tickPeerTrade(agent, owner, trade, ownerTradeActive)) {
             return;
         }
@@ -50,18 +49,18 @@ public final class AgentManualTradeTickService {
 
     public interface ManualTradeTickCallbacks {
         boolean hasActiveSequence();
-        Trade agentTrade(Character agent);
+        AgentTradeWindow agentTrade(Character agent);
         void clearState(Character agent);
-        boolean beginOrTickTimeout(Character agent, Trade trade);
-        Trade ownerTrade(Character owner);
-        boolean tickPeerTrade(Character agent, Character owner, Trade trade, boolean ownerTrade);
-        void tickOwnerTrade(Character agent, Character owner, Trade trade);
+        boolean beginOrTickTimeout(Character agent, AgentTradeWindow trade);
+        AgentTradeWindow ownerTrade(Character owner);
+        boolean tickPeerTrade(Character agent, Character owner, AgentTradeWindow trade, boolean ownerTrade);
+        void tickOwnerTrade(Character agent, Character owner, AgentTradeWindow trade);
 
         static ManualTradeTickCallbacks of(BooleanSupplier hasActiveSequence,
-                                          Function<Character, Trade> agentTrade,
+                                          Function<Character, AgentTradeWindow> agentTrade,
                                           Consumer<Character> clearState,
-                                          BiPredicate<Character, Trade> beginOrTickTimeout,
-                                          Function<Character, Trade> ownerTrade,
+                                          BiPredicate<Character, AgentTradeWindow> beginOrTickTimeout,
+                                          Function<Character, AgentTradeWindow> ownerTrade,
                                           PeerTradeTicker tickPeerTrade,
                                           OwnerTradeTicker tickOwnerTrade) {
             return new ManualTradeTickCallbacks() {
@@ -71,7 +70,7 @@ public final class AgentManualTradeTickService {
                 }
 
                 @Override
-                public Trade agentTrade(Character agent) {
+                public AgentTradeWindow agentTrade(Character agent) {
                     return agentTrade.apply(agent);
                 }
 
@@ -81,22 +80,22 @@ public final class AgentManualTradeTickService {
                 }
 
                 @Override
-                public boolean beginOrTickTimeout(Character agent, Trade trade) {
+                public boolean beginOrTickTimeout(Character agent, AgentTradeWindow trade) {
                     return beginOrTickTimeout.test(agent, trade);
                 }
 
                 @Override
-                public Trade ownerTrade(Character owner) {
+                public AgentTradeWindow ownerTrade(Character owner) {
                     return ownerTrade.apply(owner);
                 }
 
                 @Override
-                public boolean tickPeerTrade(Character agent, Character owner, Trade trade, boolean ownerTrade) {
+                public boolean tickPeerTrade(Character agent, Character owner, AgentTradeWindow trade, boolean ownerTrade) {
                     return tickPeerTrade.tick(agent, owner, trade, ownerTrade);
                 }
 
                 @Override
-                public void tickOwnerTrade(Character agent, Character owner, Trade trade) {
+                public void tickOwnerTrade(Character agent, Character owner, AgentTradeWindow trade) {
                     tickOwnerTrade.accept(agent, owner, trade);
                 }
             };
@@ -105,11 +104,11 @@ public final class AgentManualTradeTickService {
 
     @FunctionalInterface
     public interface PeerTradeTicker {
-        boolean tick(Character agent, Character owner, Trade trade, boolean ownerTrade);
+        boolean tick(Character agent, Character owner, AgentTradeWindow trade, boolean ownerTrade);
     }
 
     @FunctionalInterface
     public interface OwnerTradeTicker {
-        void accept(Character agent, Character owner, Trade trade);
+        void accept(Character agent, Character owner, AgentTradeWindow trade);
     }
 }

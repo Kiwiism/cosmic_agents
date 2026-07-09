@@ -2,7 +2,6 @@ package server.agents.capabilities.trade;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.Trade;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,7 +18,7 @@ class AgentManualOwnerTradeServiceTest {
     void waitsWhenOwnerInviteHasNotBecomeFullTrade() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade trade = trade(false, false);
+        AgentTradeWindow trade = trade(false, false);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.acceptedTrade.set(trade);
 
@@ -35,7 +34,7 @@ class AgentManualOwnerTradeServiceTest {
     void sendsGreetingOnceFullTradeIsAvailable() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade trade = trade(true, false);
+        AgentTradeWindow trade = trade(true, false);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         AgentManualOwnerTradeService.tickOwnerTrade(agent, owner, trade, callbacks);
@@ -50,8 +49,8 @@ class AgentManualOwnerTradeServiceTest {
     void acceptsInviteThenGreetsWhenJoinedTradeIsFull() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade pendingTrade = trade(false, false);
-        Trade joinedTrade = trade(true, false);
+        AgentTradeWindow pendingTrade = trade(false, false);
+        AgentTradeWindow joinedTrade = trade(true, false);
         TraceCallbacks callbacks = new TraceCallbacks();
         callbacks.acceptedTrade.set(joinedTrade);
 
@@ -66,7 +65,7 @@ class AgentManualOwnerTradeServiceTest {
     void completesAndRefillsWhenOwnerConfirmed() {
         Character agent = mock(Character.class);
         Character owner = mock(Character.class);
-        Trade trade = trade(true, true);
+        AgentTradeWindow trade = trade(true, true);
         TraceCallbacks callbacks = new TraceCallbacks();
 
         AgentManualOwnerTradeService.tickOwnerTrade(agent, owner, trade, callbacks);
@@ -76,33 +75,33 @@ class AgentManualOwnerTradeServiceTest {
         assertSame(owner, callbacks.refillOwner.get());
     }
 
-    private static Trade trade(boolean full, boolean partnerConfirmed) {
-        Trade trade = mock(Trade.class);
+    private static AgentTradeWindow trade(boolean full, boolean partnerConfirmed) {
+        AgentTradeWindow trade = mock(AgentTradeWindow.class);
         when(trade.isFullTrade()).thenReturn(full);
         when(trade.isPartnerConfirmed()).thenReturn(partnerConfirmed);
         return trade;
     }
 
     private static final class TraceCallbacks implements AgentManualOwnerTradeService.OwnerTradeCallbacks {
-        final AtomicReference<Trade> acceptedTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> acceptedTrade = new AtomicReference<>();
         final AtomicReference<Character> acceptInviter = new AtomicReference<>();
-        final AtomicReference<Trade> acceptInputTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> acceptInputTrade = new AtomicReference<>();
         final AtomicBoolean greeted = new AtomicBoolean();
         final AtomicReference<Character> greetingAgent = new AtomicReference<>();
-        final AtomicReference<Trade> greetingTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> greetingTrade = new AtomicReference<>();
         final AtomicBoolean completed = new AtomicBoolean();
-        final AtomicReference<Trade> completedTrade = new AtomicReference<>();
+        final AtomicReference<AgentTradeWindow> completedTrade = new AtomicReference<>();
         final AtomicReference<Character> refillOwner = new AtomicReference<>();
 
         @Override
-        public Trade acceptInvite(Character inviter, Trade trade) {
+        public AgentTradeWindow acceptInvite(Character inviter, AgentTradeWindow trade) {
             acceptInviter.set(inviter);
             acceptInputTrade.set(trade);
             return acceptedTrade.get();
         }
 
         @Override
-        public void sendGreeting(Character agent, Trade trade, Supplier<String> greeting) {
+        public void sendGreeting(Character agent, AgentTradeWindow trade, Supplier<String> greeting) {
             greeted.set(true);
             greetingAgent.set(agent);
             greetingTrade.set(trade);
@@ -115,7 +114,7 @@ class AgentManualOwnerTradeServiceTest {
         }
 
         @Override
-        public void completeTrade(Trade trade) {
+        public void completeTrade(AgentTradeWindow trade) {
             completed.set(true);
             completedTrade.set(trade);
         }

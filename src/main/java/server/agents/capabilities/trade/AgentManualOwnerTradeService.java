@@ -1,7 +1,6 @@
 package server.agents.capabilities.trade;
 
 import client.Character;
-import server.Trade;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -13,7 +12,7 @@ public final class AgentManualOwnerTradeService {
 
     public static void tickOwnerTrade(Character agent,
                                       Character owner,
-                                      Trade trade,
+                                      AgentTradeWindow trade,
                                       OwnerTradeCallbacks callbacks) {
         if (!trade.isFullTrade()) {
             trade = callbacks.acceptInvite(owner, trade);
@@ -31,25 +30,25 @@ public final class AgentManualOwnerTradeService {
     }
 
     public interface OwnerTradeCallbacks {
-        Trade acceptInvite(Character inviter, Trade trade);
-        void sendGreeting(Character agent, Trade trade, Supplier<String> greeting);
+        AgentTradeWindow acceptInvite(Character inviter, AgentTradeWindow trade);
+        void sendGreeting(Character agent, AgentTradeWindow trade, Supplier<String> greeting);
         Supplier<String> manualTradeGreeting();
-        void completeTrade(Trade trade);
+        void completeTrade(AgentTradeWindow trade);
         void refillEquipment(Character owner);
 
-        static OwnerTradeCallbacks of(BiFunction<Character, Trade, Trade> acceptInvite,
+        static OwnerTradeCallbacks of(BiFunction<Character, AgentTradeWindow, AgentTradeWindow> acceptInvite,
                                       GreetingSender sendGreeting,
                                       Supplier<String> manualTradeGreeting,
-                                      Consumer<Trade> completeTrade,
+                                      Consumer<AgentTradeWindow> completeTrade,
                                       Consumer<Character> refillEquipment) {
             return new OwnerTradeCallbacks() {
                 @Override
-                public Trade acceptInvite(Character inviter, Trade trade) {
+                public AgentTradeWindow acceptInvite(Character inviter, AgentTradeWindow trade) {
                     return acceptInvite.apply(inviter, trade);
                 }
 
                 @Override
-                public void sendGreeting(Character agent, Trade trade, Supplier<String> greeting) {
+                public void sendGreeting(Character agent, AgentTradeWindow trade, Supplier<String> greeting) {
                     sendGreeting.send(agent, trade, greeting);
                 }
 
@@ -59,7 +58,7 @@ public final class AgentManualOwnerTradeService {
                 }
 
                 @Override
-                public void completeTrade(Trade trade) {
+                public void completeTrade(AgentTradeWindow trade) {
                     completeTrade.accept(trade);
                 }
 
@@ -73,6 +72,6 @@ public final class AgentManualOwnerTradeService {
 
     @FunctionalInterface
     public interface GreetingSender {
-        void send(Character agent, Trade trade, Supplier<String> greeting);
+        void send(Character agent, AgentTradeWindow trade, Supplier<String> greeting);
     }
 }
