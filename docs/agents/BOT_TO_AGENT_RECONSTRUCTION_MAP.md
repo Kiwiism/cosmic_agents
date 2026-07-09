@@ -2487,3 +2487,7 @@ Recent capability extraction notes:
   scroll use now use `InventoryGateway` for item-effect and quest-item metadata;
   dialogue formatting, safe mention filtering, effect application, and item
   removal behavior stay in their existing Agent modules.
+- SPI/gateway extraction: sell-trash equip protection now uses
+  `InventoryGateway` for equip stats, base equip lookup, and quest-item checks;
+  inventory still owns sell-trash filtering, protected-stat policy, self-upgrade
+  exclusion, reserved-recipient exclusion, and sort behavior.

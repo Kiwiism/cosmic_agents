@@ -5,9 +5,10 @@ import client.inventory.Equip;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import config.YamlConfig;
-import server.ItemInformationProvider;
 import server.agents.capabilities.equipment.AgentEquipmentReservePolicy;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.integration.InventoryGateway;
+import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -20,17 +21,17 @@ public final class AgentInventorySellTrashService {
 
     public static List<Item> collectSellTrashEquips(AgentRuntimeEntry entry, Character agent) {
         List<Item> normalTradeEquips = collectNormalTradeEquips(entry, agent);
-        return collectSellTrashEquips(normalTradeEquips, ItemInformationProvider.getInstance());
+        return collectSellTrashEquips(normalTradeEquips, CosmicAgentServerAdapter.INSTANCE.inventory());
     }
 
-    static List<Item> collectSellTrashEquips(List<Item> normalTradeEquips, ItemInformationProvider ii) {
+    static List<Item> collectSellTrashEquips(List<Item> normalTradeEquips, InventoryGateway inventory) {
         if (normalTradeEquips.isEmpty()) {
             return normalTradeEquips;
         }
 
         List<Item> result = new ArrayList<>(normalTradeEquips.size());
         for (Item item : normalTradeEquips) {
-            if (item instanceof Equip equip && !AgentInventorySellTrashPolicy.shouldKeepForSellTrash(ii, equip)) {
+            if (item instanceof Equip equip && !AgentInventorySellTrashPolicy.shouldKeepForSellTrash(inventory, equip)) {
                 result.add(item);
             }
         }
@@ -39,7 +40,7 @@ public final class AgentInventorySellTrashService {
 
     private static List<Item> collectNormalTradeEquips(AgentRuntimeEntry entry, Character agent) {
         List<Item> all = AgentInventoryItemPolicy.collectSafeItems(agent, InventoryType.EQUIP, item -> true,
-                ItemInformationProvider.getInstance()::isQuestItem,
+                CosmicAgentServerAdapter.INSTANCE.inventory()::isQuestItem,
                 YamlConfig.config.server.UNTRADEABLE_ITEMS_TRADEABLE);
         Set<Item> selfKeep = AgentEquipmentReservePolicy.collectPotentialSelfUpgradeItems(agent);
 

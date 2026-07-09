@@ -2,7 +2,7 @@ package server.agents.capabilities.inventory;
 
 import client.inventory.Equip;
 import constants.inventory.ItemConstants;
-import server.ItemInformationProvider;
+import server.agents.integration.InventoryGateway;
 
 import java.util.Map;
 
@@ -10,13 +10,18 @@ public final class AgentInventorySellTrashPolicy {
     private AgentInventorySellTrashPolicy() {
     }
 
-    public static boolean shouldKeepForSellTrash(ItemInformationProvider ii, Equip equip) {
+    public static boolean shouldKeepForSellTrash(InventoryGateway inventory, Equip equip) {
+        return shouldKeepForSellTrash(
+                equip,
+                inventory != null ? inventory.getEquipStats(equip.getItemId()) : null,
+                inventory != null ? inventory.getEquipById(equip.getItemId()) : null);
+    }
+
+    private static boolean shouldKeepForSellTrash(Equip equip, Map<String, Integer> stats, Equip baseEquip) {
         if (equip.getLevel() > 0) {
             return true;
         }
-        Map<String, Integer> stats = ii != null ? ii.getEquipStats(equip.getItemId()) : null;
         if (ItemConstants.isWeapon(equip.getItemId())) {
-            Equip baseEquip = ii != null ? (Equip) ii.getEquipById(equip.getItemId()) : null;
             if (hasProtectedSellTrashWeaponStat(stats, equip, baseEquip)) {
                 return true;
             }

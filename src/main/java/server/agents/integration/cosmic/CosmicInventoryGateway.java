@@ -1,8 +1,11 @@
 package server.agents.integration.cosmic;
 
+import client.inventory.Equip;
 import server.ItemInformationProvider;
 import server.StatEffect;
 import server.agents.integration.InventoryGateway;
+
+import java.util.Map;
 
 public enum CosmicInventoryGateway implements InventoryGateway {
     INSTANCE;
@@ -33,5 +36,15 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     @Override
     public boolean isCashItem(int itemId) {
         return ItemInformationProvider.getInstance().isCash(itemId);
+    }
+
+    @Override
+    public Map<String, Integer> getEquipStats(int itemId) {
+        return ItemInformationProvider.getInstance().getEquipStats(itemId);
+    }
+
+    @Override
+    public Equip getEquipById(int itemId) {
+        return (Equip) ItemInformationProvider.getInstance().getEquipById(itemId);
     }
 }

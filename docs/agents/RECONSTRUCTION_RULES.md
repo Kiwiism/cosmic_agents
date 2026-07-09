@@ -6438,6 +6438,11 @@ Current physics correction:
   scroll use now route item-effect and quest-item metadata through
   `InventoryGateway`. Dialogue formatting, safe-to-mention rules, return-scroll
   item search, effect application, and inventory removal behavior are unchanged.
+- SPI/gateway extraction: sell-trash equip protection now routes equip metadata
+  through `InventoryGateway.getEquipStats` and `InventoryGateway.getEquipById`.
+  Sell-trash filtering, protected stat thresholds, mage/weapon attack checks,
+  self-upgrade exclusions, reserved-recipient exclusions, and sorting behavior
+  are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
