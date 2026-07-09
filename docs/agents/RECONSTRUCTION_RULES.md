@@ -6307,6 +6307,13 @@ Current physics correction:
   damage profile/target construction, route application, cooldown updates,
   facing memory, and alert marking; packet-visible route application remains
   behind the existing attack execution provider seam.
+- Combat damage, mob-touch damage, fall damage, death transition, and knockback
+  orchestration now lives in
+  `server.agents.capabilities.combat.AgentCombatDamageRuntime`. It preserves
+  damage rolling, cooldowns, packet-visible damage broadcast, HP/autopot
+  mutation, death entry, stance/knockback checks, knockback state, and movement
+  broadcast behavior. The direct HP mutation and packet broadcast calls are
+  intentionally documented as the next gateway split.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

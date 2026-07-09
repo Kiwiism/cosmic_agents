@@ -11,7 +11,7 @@ import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.combat.AgentCombatActionLockRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
-import server.agents.integration.AgentCombatDamageRuntime;
+import server.agents.capabilities.combat.AgentCombatDamageRuntime;
 import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.capabilities.combat.AgentCombatHealRuntime;
 import server.agents.capabilities.combat.AgentCombatSkillCacheRuntime;

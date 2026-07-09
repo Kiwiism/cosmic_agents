@@ -2384,3 +2384,8 @@ Recent capability extraction notes:
   attack-info construction, damage target construction, route application,
   cooldown, facing, and alert behavior while leaving route application behind
   the existing execution provider seam.
+- `AgentCombatDamageRuntime` now lives in
+  `server.agents.capabilities.combat`. It preserves mob/fall damage,
+  HP/autopot mutation, packet-visible damage broadcast, death entry, knockback,
+  cooldown, alert, and movement broadcast behavior; direct HP mutation and
+  packet broadcast calls remain the next explicit gateway split.

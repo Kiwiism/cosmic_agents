@@ -1,7 +1,4 @@
-package server.agents.integration;
-
-import server.agents.capabilities.combat.AgentCombatAlertRuntime;
-import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
@@ -9,13 +6,6 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 
 import client.BuffStat;
 import client.Character;
-import server.agents.capabilities.combat.AgentCombatActionStateRuntime;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatDeathRuntime;
-import server.agents.capabilities.combat.AgentCombatTargetEligibilityPolicy;
-import server.agents.capabilities.combat.AgentFallDamageCalculator;
-import server.agents.capabilities.combat.AgentMobKnockbackPolicy;
-import server.agents.capabilities.combat.AgentMobTouchRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentKnockbackMovementService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
