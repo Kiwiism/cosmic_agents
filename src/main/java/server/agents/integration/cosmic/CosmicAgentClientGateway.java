@@ -25,4 +25,19 @@ public enum CosmicAgentClientGateway implements AgentClientGateway {
     public Character loadBackingCharacter(int characterId, Client client) throws SQLException {
         return Character.loadCharFromDB(characterId, client, true);
     }
+
+    @Override
+    public boolean hasClient(Character character) {
+        return character.getClient() != null;
+    }
+
+    @Override
+    public boolean tryAcquire(Character character) {
+        return character.getClient().tryacquireClient();
+    }
+
+    @Override
+    public void release(Character character) {
+        character.getClient().releaseClient();
+    }
 }

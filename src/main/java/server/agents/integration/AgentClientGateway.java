@@ -11,4 +11,10 @@ public interface AgentClientGateway {
     int createBackingCharacter(Client client, String name);
 
     Character loadBackingCharacter(int characterId, Client client) throws SQLException;
+
+    boolean hasClient(Character character);
+
+    boolean tryAcquire(Character character);
+
+    void release(Character character);
 }

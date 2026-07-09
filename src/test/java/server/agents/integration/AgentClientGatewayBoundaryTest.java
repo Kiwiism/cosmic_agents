@@ -18,6 +18,8 @@ class AgentClientGatewayBoundaryTest {
                 "src/main/java/server/agents/runtime/AgentOfflineLoadRuntime.java"));
         String offlineService = Files.readString(Path.of(
                 "src/main/java/server/agents/runtime/AgentOfflineLoadService.java"));
+        String maker = Files.readString(Path.of(
+                "src/main/java/server/agents/capabilities/build/AgentMakerService.java"));
         String cosmic = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/cosmic/CosmicAgentClientGateway.java"));
 
@@ -25,8 +27,11 @@ class AgentClientGatewayBoundaryTest {
         assertFalse(spawn.contains("BotCreator"));
         assertFalse(offlineRuntime.contains("BotClient"));
         assertFalse(offlineService.contains("BotClient"));
+        assertFalse(maker.contains("import client.Client"));
+        assertFalse(maker.contains("bot.getClient()"));
         assertTrue(spawn.contains("AgentClientGatewayRuntime.clients()"));
         assertTrue(offlineRuntime.contains("AgentClientGatewayRuntime.clients()"));
+        assertTrue(maker.contains("AgentClientGatewayRuntime.clients().tryAcquire(bot)"));
         assertTrue(cosmic.contains("new BotClient(world, channel)"));
         assertTrue(cosmic.contains("BotCreator.createCharacter(client, name)"));
     }

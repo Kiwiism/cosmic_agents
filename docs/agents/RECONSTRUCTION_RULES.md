@@ -6990,6 +6990,12 @@ Current physics correction:
   `BotClient` or `BotCreator`; the exact concrete client/creator/load calls are
   isolated in `CosmicAgentClientGateway`. Account setup and offline-load order
   remain unchanged.
+- SPI/gateway extraction: Maker batch client presence/locking now calls
+  `AgentClientGateway.hasClient`/`tryAcquire`/`release`, while
+  `MakerGateway` accepts the Agent character and isolates live client lookup in
+  `CosmicMakerGateway`. No-client abort, lock-contention retry delay, lock
+  release, step status handling, crystal/disassembly operations, and batch
+  timing remain unchanged. `AgentMakerService` no longer imports `Client`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

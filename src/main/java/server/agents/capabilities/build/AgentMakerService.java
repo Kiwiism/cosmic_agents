@@ -3,7 +3,6 @@ package server.agents.capabilities.build;
 import server.agents.plans.AgentScriptTaskStateRuntime;
 
 import client.Character;
-import client.Client;
 import client.inventory.Equip;
 import client.inventory.Inventory;
 import client.inventory.InventoryType;
@@ -11,6 +10,7 @@ import client.inventory.Item;
 import server.agents.capabilities.inventory.AgentInventorySellTrashService;
 import server.agents.capabilities.build.AgentMakerRuntime;
 import server.agents.integration.AgentMakerGatewayRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.integration.MakerGateway;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -46,7 +46,7 @@ public final class AgentMakerService {
      *  when nothing remains, otherwise a live maker failure status. */
     @FunctionalInterface
     private interface BatchStep {
-        int run(Client c);
+        int run(Character agent);
     }
 
     private AgentMakerService() {
@@ -70,9 +70,9 @@ public final class AgentMakerService {
         }
 
         startBatch(entry, leftovers.size(), CRYSTAL_VERBS, "crystal",
-                c -> {
+                agent -> {
                     Integer leftover = leftovers.poll();
-                    return leftover == null ? NO_MORE : maker.makeLeftoverCrystal(c, leftover);
+                    return leftover == null ? NO_MORE : maker.makeLeftoverCrystal(agent, leftover);
                 });
     }
 
@@ -95,9 +95,9 @@ public final class AgentMakerService {
         // Re-scan each step rather than caching slots: a freed EQUIP slot can be refilled by
         // looted gear during the 5s gaps, so always disassemble a currently-trash equip.
         startBatch(entry, total, DISASSEMBLE_VERBS, "trash equip",
-                c -> {
+                agent -> {
                     List<Equip> trash = collectDisassemblableTrash(entry, bot, inventory, maker);
-                    return trash.isEmpty() ? NO_MORE : maker.disassembleEquip(c, trash.get(0).getPosition());
+                    return trash.isEmpty() ? NO_MORE : maker.disassembleEquip(agent, trash.get(0).getPosition());
                 });
     }
 
@@ -180,12 +180,11 @@ public final class AgentMakerService {
             return;
         }
 
-        Client c = bot.getClient();
-        if (c == null) {
+        if (!AgentClientGatewayRuntime.clients().hasClient(bot)) {
             ACTIVE.remove(bot.getId());
             return;
         }
-        if (!c.tryacquireClient()) {
+        if (!AgentClientGatewayRuntime.clients().tryAcquire(bot)) {
             // transient contention (a trade/packet in flight) — retry without consuming the step.
             // The bot keeps doing whatever it's doing; crafting just slots into the next free moment.
             AgentMakerRuntime.afterRandomDelay(600, 900, () -> runStep(entry, step, noun, epoch, done));
@@ -193,9 +192,9 @@ public final class AgentMakerService {
         }
         int status;
         try {
-            status = step.run(c);
+            status = step.run(bot);
         } finally {
-            c.releaseClient();
+            AgentClientGatewayRuntime.clients().release(bot);
         }
 
         if (status == NO_MORE) {

@@ -1,7 +1,6 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
-import client.Client;
 import client.processor.action.MakerProcessor;
 import server.agents.integration.MakerGateway;
 
@@ -9,13 +8,13 @@ public enum CosmicMakerGateway implements MakerGateway {
     INSTANCE;
 
     @Override
-    public int makeLeftoverCrystal(Client client, int leftoverItemId) {
-        return MakerProcessor.makeLeftoverCrystal(client, leftoverItemId);
+    public int makeLeftoverCrystal(Character agent, int leftoverItemId) {
+        return MakerProcessor.makeLeftoverCrystal(agent.getClient(), leftoverItemId);
     }
 
     @Override
-    public int disassembleEquip(Client client, short slot) {
-        return MakerProcessor.disassembleEquip(client, slot);
+    public int disassembleEquip(Character agent, short slot) {
+        return MakerProcessor.disassembleEquip(agent.getClient(), slot);
     }
 
     @Override

@@ -1,12 +1,11 @@
 package server.agents.integration;
 
 import client.Character;
-import client.Client;
 
 public interface MakerGateway {
-    int makeLeftoverCrystal(Client client, int leftoverItemId);
+    int makeLeftoverCrystal(Character agent, int leftoverItemId);
 
-    int disassembleEquip(Client client, short slot);
+    int disassembleEquip(Character agent, short slot);
 
     boolean canDisassemble(int itemId);
 

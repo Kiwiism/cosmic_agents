@@ -2973,3 +2973,8 @@ Recent capability extraction notes:
   Concrete `BotClient`, `BotCreator`, and `Character.loadCharFromDB` calls are
   isolated in `CosmicAgentClientGateway`; account binding, disease restore,
   rates, registration, map placement, and startup ordering remain unchanged.
+- SPI/gateway extraction: `AgentMakerService` now uses `AgentClientGateway` for
+  client presence/locking and passes Agent characters to `MakerGateway`.
+  Concrete client access remains in the Cosmic client/Maker gateways; no-client
+  abort, contention retry, lock release, operation status, and timing remain
+  unchanged.
