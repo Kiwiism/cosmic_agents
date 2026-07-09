@@ -56,6 +56,16 @@ public enum CosmicInventoryGateway implements InventoryGateway {
     }
 
     @Override
+    public String getEquipmentSlot(int itemId) {
+        return ItemInformationProvider.getInstance().getEquipmentSlot(itemId);
+    }
+
+    @Override
+    public int getEquipLevelRequirement(int itemId) {
+        return ItemInformationProvider.getInstance().getEquipLevelReq(itemId);
+    }
+
+    @Override
     public WeaponType getWeaponType(int itemId) {
         return ItemInformationProvider.getInstance().getWeaponType(itemId);
     }

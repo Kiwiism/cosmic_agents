@@ -6492,6 +6492,10 @@ Current physics correction:
   weapon-type metadata through `InventoryGateway`. DP state generation,
   requirement validation, Pareto pruning, score comparison, and attack-cycle
   timing behavior are unchanged.
+- SPI/gateway extraction: auto-equip debug dump item rows now route item name,
+  text slot, equip stats, and level requirement metadata through
+  `InventoryGateway`. Dump layout, self-reserve flags, optimizer inputs, and
+  equipment selection behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

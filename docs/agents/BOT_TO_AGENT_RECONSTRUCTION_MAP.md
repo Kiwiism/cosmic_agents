@@ -2536,3 +2536,7 @@ Recent capability extraction notes:
   `InventoryGateway` for weapon-type metadata; DP state generation, requirement
   validation, Pareto pruning, score comparison, and attack-cycle timing stay
   unchanged.
+- SPI/gateway extraction: auto-equip debug dump item rows now use
+  `InventoryGateway` for item name, text slot, equip stats, and level
+  requirement metadata; dump layout, self-reserve flags, optimizer inputs, and
+  equipment selection behavior stay unchanged.

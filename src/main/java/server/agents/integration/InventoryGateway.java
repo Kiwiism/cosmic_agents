@@ -24,6 +24,10 @@ public interface InventoryGateway {
 
     Equip getEquipById(int itemId);
 
+    String getEquipmentSlot(int itemId);
+
+    int getEquipLevelRequirement(int itemId);
+
     WeaponType getWeaponType(int itemId);
 
     boolean isTwoHandedWeapon(int itemId);

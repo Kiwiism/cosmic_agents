@@ -3,6 +3,7 @@ package server.agents.capabilities.equipment;
 import client.Character;
 import client.inventory.Equip;
 import server.ItemInformationProvider;
+import server.agents.integration.InventoryGateway;
 
 import java.util.Map;
 
@@ -32,6 +33,23 @@ public final class AgentEquipmentDebugReportFormatter {
                 }
             };
         }
+
+        static ItemInfo from(InventoryGateway inventory) {
+            return new ItemInfo() {
+                @Override public String getName(int itemId) {
+                    return inventory.getItemName(itemId);
+                }
+                @Override public String getEquipmentSlot(int itemId) {
+                    return inventory.getEquipmentSlot(itemId);
+                }
+                @Override public Map<String, Integer> getEquipStats(int itemId) {
+                    return inventory.getEquipStats(itemId);
+                }
+                @Override public int getEquipLevelReq(int itemId) {
+                    return inventory.getEquipLevelRequirement(itemId);
+                }
+            };
+        }
     }
 
     public static String itemHeader(boolean includeSelfReserve) {
@@ -46,6 +64,14 @@ public final class AgentEquipmentDebugReportFormatter {
                                      short position,
                                      Boolean selfReserve) {
         appendItemRow(sb, ItemInfo.from(ii), equip, position, selfReserve);
+    }
+
+    public static void appendItemRow(StringBuilder sb,
+                                     InventoryGateway inventory,
+                                     Equip equip,
+                                     short position,
+                                     Boolean selfReserve) {
+        appendItemRow(sb, ItemInfo.from(inventory), equip, position, selfReserve);
     }
 
     static void appendItemRow(StringBuilder sb, ItemInfo itemInfo, Equip equip, short position, Boolean selfReserve) {
