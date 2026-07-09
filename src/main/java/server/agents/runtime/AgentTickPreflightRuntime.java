@@ -4,6 +4,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 
 public final class AgentTickPreflightRuntime {
@@ -32,7 +33,7 @@ public final class AgentTickPreflightRuntime {
                         agent,
                         nowMs,
                         heartbeatIntervalMs,
-                        heartbeatAgent -> heartbeatAgent.getClient().updateLastPacket(),
+                        heartbeatAgent -> AgentCharacterGatewayRuntime.characters().markClientHeartbeat(heartbeatAgent),
                         AgentMovementBroadcastService::broadcastMovement),
                 AgentOfferService::expirePendingOffer,
                 (entry, movementTickMs, aiTickMs, tickAtMs) ->

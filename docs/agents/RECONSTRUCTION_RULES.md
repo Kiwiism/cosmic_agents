@@ -6892,6 +6892,13 @@ Current physics correction:
   `AgentNavigationPortalService`. Portal status checks, old map/position
   transition detection, portal cooldown, and navigation state reset behavior
   are unchanged. Live client portal entry is isolated in `CosmicMapGateway`.
+- SPI/gateway extraction: tick-preflight heartbeat marking now calls
+  `AgentCharacterGatewayRuntime`/`CharacterGateway.markClientHeartbeat` instead
+  of directly invoking `agent.getClient().updateLastPacket()` in
+  `AgentTickPreflightRuntime`. Heartbeat interval gating, movement broadcast,
+  offer expiry, AI-tick preparation, and missing-map cleanup behavior are
+  unchanged. Live client timestamp mutation is isolated in
+  `CosmicCharacterGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

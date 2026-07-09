@@ -57,4 +57,11 @@ public enum CosmicCharacterGateway implements CharacterGateway {
     public Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId) {
         return Server.getInstance().getPlayerBuffStorage().getDiseasesFromStorage(characterId);
     }
+
+    @Override
+    public void markClientHeartbeat(Character agent) {
+        if (agent != null && agent.getClient() != null) {
+            agent.getClient().updateLastPacket();
+        }
+    }
 }

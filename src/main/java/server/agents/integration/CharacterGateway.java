@@ -17,5 +17,7 @@ public interface CharacterGateway {
     Character findOnlineCharacterByName(String characterName);
 
     Map<Disease, Pair<Long, MobSkill>> loadStoredDiseases(int characterId);
+
+    void markClientHeartbeat(Character agent);
 }
 

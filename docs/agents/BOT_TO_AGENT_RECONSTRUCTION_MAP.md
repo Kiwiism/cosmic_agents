@@ -2901,3 +2901,8 @@ Recent capability extraction notes:
   `Portal.enterPortal(agent.getClient())`, and map/position transition detection
   are isolated in `CosmicMapGateway`. Portal cooldown and navigation-state reset
   behavior remain unchanged.
+- SPI/gateway extraction: `AgentTickPreflightRuntime` now uses
+  `AgentCharacterGatewayRuntime`/`CharacterGateway.markClientHeartbeat`; live
+  `agent.getClient().updateLastPacket()` mutation is isolated in
+  `CosmicCharacterGateway`. Heartbeat cadence and preflight behavior remain
+  unchanged.
