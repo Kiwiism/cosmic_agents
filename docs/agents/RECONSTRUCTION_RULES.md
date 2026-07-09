@@ -6587,6 +6587,12 @@ Current physics correction:
   `AgentInventoryCollectionService`. Slot-order traversal, untradeable rules,
   quest-item filtering, equip-bag grouping, scroll/potion/buff/etc collection,
   and trade classification behavior are unchanged.
+- SPI/gateway extraction: KPQ Stage 5 reward announcement item-name lookup now
+  receives `InventoryGateway` from common tick runtime through
+  `AgentPartyQuestHooks` instead of reaching for the Cosmic adapter inside
+  `AgentKpqStage5`. Stage-clear detection, reward claiming, claimed-state
+  marking, item-delta selection, fallback item-id text, and queued PQ chat are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

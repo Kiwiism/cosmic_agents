@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.partyquest.kpq.AgentKpqStage1;
 import server.agents.capabilities.partyquest.kpq.AgentKpqStage5;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
+import server.agents.integration.InventoryGateway;
 import server.agents.plans.AgentScript;
 import server.agents.plans.AgentScriptRunner;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -20,9 +21,9 @@ public final class AgentPartyQuestHooks {
 
     private AgentPartyQuestHooks() {}
 
-    public static void tick(AgentRuntimeEntry entry, Character bot, Character owner) {
+    public static void tick(AgentRuntimeEntry entry, Character bot, Character owner, InventoryGateway inventory) {
         AgentScriptRunner.tick(entry, bot, owner, SCRIPTS);
-        AgentKpqStage5.tick(entry, bot);
+        AgentKpqStage5.tick(entry, bot, inventory);
     }
 
     /**

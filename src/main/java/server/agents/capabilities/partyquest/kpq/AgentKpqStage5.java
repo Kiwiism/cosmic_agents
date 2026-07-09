@@ -6,7 +6,7 @@ import client.inventory.InventoryType;
 import client.inventory.Item;
 import scripting.event.EventInstanceManager;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
-import server.agents.integration.cosmic.CosmicAgentServerAdapter;
+import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.HashMap;
@@ -20,7 +20,7 @@ public final class AgentKpqStage5 {
 
     static final int KPQ_STAGE5_MAP = 103000804;
 
-    public static void tick(AgentRuntimeEntry entry, Character bot) {
+    public static void tick(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         if (bot.getMapId() != KPQ_STAGE5_MAP) return;
         if (AgentPqRuntime.kpqStage5Claimed(entry)) return;
 
@@ -31,7 +31,7 @@ public final class AgentKpqStage5 {
         boolean success = eim.giveEventReward(bot);
         if (success) {
             AgentPqRuntime.markKpqStage5Claimed(entry);
-            String reward = findNewItem(before, snapshotInventory(bot));
+            String reward = findNewItem(before, snapshotInventory(bot), inventory);
             AgentPqRuntime.queueSay(entry, reward != null ? "r, I got " + reward : "r");
         }
     }
@@ -51,11 +51,11 @@ public final class AgentKpqStage5 {
         return snap;
     }
 
-    private static String findNewItem(Map<Integer, Integer> before, Map<Integer, Integer> after) {
+    static String findNewItem(Map<Integer, Integer> before, Map<Integer, Integer> after, InventoryGateway inventory) {
         for (Map.Entry<Integer, Integer> e : after.entrySet()) {
             int delta = e.getValue() - before.getOrDefault(e.getKey(), 0);
             if (delta > 0) {
-                String name = CosmicAgentServerAdapter.INSTANCE.inventory().getItemName(e.getKey());
+                String name = inventory.getItemName(e.getKey());
                 return (delta > 1 ? delta + "x " : "") + (name != null ? name : "item " + e.getKey());
             }
         }

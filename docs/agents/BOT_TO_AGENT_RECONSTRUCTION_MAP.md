@@ -2624,3 +2624,7 @@ Recent capability extraction notes:
   bag collection. Inventory/trade/equip-group callers still own category
   selection, priority ordering, grouping, and callback wiring; safe-item
   filtering and slot-order traversal stay unchanged.
+- SPI/gateway extraction: `AgentKpqStage5` now receives `InventoryGateway`
+  through `AgentPartyQuestHooks` for reward item-name formatting. Stage 5 clear
+  detection, reward claiming, claimed-state tracking, reward delta detection,
+  fallback item-id wording, and queued reward chat stay unchanged.

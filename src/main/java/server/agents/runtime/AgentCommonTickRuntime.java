@@ -51,7 +51,11 @@ public final class AgentCommonTickRuntime {
                 (entry, agent, leader) -> AgentManagerStatusRuntime.tickAfkCheck(entry, leader),
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(entry, agent),
                 (entry, agent) -> AgentInventoryTickRuntime.tickManualTrade(entry, agent),
-                AgentPartyQuestHooks::tick,
+                (entry, agent, leader) -> AgentPartyQuestHooks.tick(
+                        entry,
+                        agent,
+                        leader,
+                        CosmicAgentServerAdapter.INSTANCE.inventory()),
                 tickScriptTasks,
                 AgentPartyQuestHooks::isNpcLocked,
                 AgentCombatActionLockRuntime::tickActionLock,
