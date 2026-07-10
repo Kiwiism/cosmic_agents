@@ -5011,7 +5011,7 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while patrol region, map id,
   and wander target route through Agent runtime state.
 - Active grind target and search cadence state now lives in
-  `AgentGrindTargetState`. `BotEntry` temporarily hosts the Agent-owned state
+  `server.agents.capabilities.combat.AgentGrindTargetState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while combat target selection and search cooldowns route through
   Agent runtime state.
 - Grind loot target and retry suppression state now lives in
@@ -7240,6 +7240,9 @@ Current physics correction:
 - Capability state ownership: `AgentGrindWanderState` now lives under
   `capabilities.combat`. Zero/unset state, sign normalization, and clear
   behavior remain unchanged; random direction selection remains in its adapter.
+- Capability state ownership: `AgentGrindTargetState` now lives under
+  `capabilities.combat`. Target references, search timestamp defaults,
+  setters, and independent clear operations remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

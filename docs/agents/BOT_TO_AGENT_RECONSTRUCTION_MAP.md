@@ -3178,3 +3178,6 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentGrindWanderState` moved from
   generic runtime to `capabilities.combat`; zero state, sign normalization, and
   clear behavior remain unchanged.
+- Capability state ownership: the concrete `AgentGrindTargetState` moved from
+  generic runtime to `capabilities.combat`; target and next-search fields,
+  defaults, setters, and independent clears remain unchanged.
