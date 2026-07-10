@@ -1,7 +1,7 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.regex.Matcher;

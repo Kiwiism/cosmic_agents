@@ -1141,7 +1141,7 @@ Recent reconstruction notes:
   leader yellow-message delivery. The same `dismiss`, `disown`, and `release`
   aliases plus the legacy success/failure messages are preserved.
 - Formation chat command parsing and formation-state mutation now lives in
-  `server.agents.runtime.AgentFormationCommandService`. BotManager keeps a
+  `server.agents.capabilities.movement.AgentFormationCommandService`. BotManager keeps a
   temporary compatibility hook bundle for active entries, stored formation
   state, offset application, first-Agent replies, and leader yellow messages.
   The same help text, snap status, snap on/off/default behavior, type/px
@@ -7083,6 +7083,11 @@ Current physics correction:
   `capabilities.movement`. Formation types, offset formulas, random range,
   leader/default lookup, shared live formation storage, and offset assignment
   are unchanged; runtime formation wiring continues to use the same service.
+- Capability ownership: `AgentFormationCommandService` now lives under
+  `capabilities.movement`. Formation aliases, help/status replies, pixel and
+  snap parsing, state writes, offset application, and first-entry/leader reply
+  selection are unchanged; `AgentFormationCommandRuntime` remains the wiring
+  adapter.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

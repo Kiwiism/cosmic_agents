@@ -1583,7 +1583,7 @@ Recent map updates:
   temporary hooks for dismiss lifecycle delegation and leader yellow-message
   delivery while the Agent runtime owns the legacy aliases and response text.
 - Formation chat command parsing and formation-state mutation moved from
-  BotManager to `server.agents.runtime.AgentFormationCommandService`.
+  BotManager to `server.agents.capabilities.movement.AgentFormationCommandService`.
   BotManager now supplies temporary hooks for active entries, stored formation
   state, offset application, first-Agent replies, and leader yellow messages.
 - Group supply responder selection moved from BotManager to
@@ -2301,7 +2301,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#movement-command-runtime` | `server.agents.capabilities.movement.AgentMovementCommandRuntime` | `MIGRATED_TO_AGENT`; follow, stop, move-to, farm-here, patrol, and grind command entry points now accept `AgentRuntimeEntry` while preserving prepared-mode ordering, script-task clearing, shop cancellation, patrol-region lookup, missing-region reply text, navigation-state clearing, and mode transitions |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; fidget runtime now accepts `AgentRuntimeEntry` while preserving idle/social/speed-mismatch selection, prone/sideways/jump behavior, return-to-origin, movement broadcasts, and visual prone-attack packets |
 | `src/main/java/server/bots/BotManager.java#formation-state` | `server.agents.capabilities.movement.AgentFormationService` | `MIGRATED_TO_AGENT`; formation state lookup and offset application now accept Agent runtime entries while preserving formation store access, leader/default resolution, and offset assignment patterns |
-| `src/main/java/server/bots/BotManager.java#formation-command` | `server.agents.runtime.AgentFormationCommandService` | `MIGRATED_TO_AGENT`; formation command handling now accepts Agent runtime entries while preserving command matching, help/status replies, snap range updates, formation writes, offset application, and first-entry/leader reply routing |
+| `src/main/java/server/bots/BotManager.java#formation-command` | `server.agents.capabilities.movement.AgentFormationCommandService` | `MIGRATED_TO_AGENT`; formation command handling now accepts Agent runtime entries while preserving command matching, help/status replies, snap range updates, formation writes, offset application, and first-entry/leader reply routing |
 | `src/main/java/server/bots/BotManager.java#common-tick-systems` | `server.agents.runtime.AgentCommonTickService` | `MIGRATED_TO_AGENT`; common per-tick system ordering now accepts `AgentRuntimeEntry` while preserving mob damage, death short-circuiting, monster release, passive loot/trade gating, potion and recovery ticks, build level-up checks, AFK/status checks, trade/manual-trade, PQ/script/NPC-lock gates, action-lock handling, AI-gated combat systems, and final action-lock return behavior. Mob-touch sweep runtime now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotManager.java#live-mode-tick` | `server.agents.runtime.AgentLiveModeTickService` | `MIGRATED_TO_AGENT`; live-mode tick phase ordering now accepts `AgentRuntimeEntry` while preserving shop-visit, follow-opportunity, follow-idle, scripted-move combat, anchored farm, grind dispatch, target propagation, consumed-tick short-circuits, and final movement tail behavior |
 | `src/main/java/server/bots/BotManager.java#grind-mode-tick` | `server.agents.runtime.AgentGrindModeRuntime`, `server.agents.capabilities.combat.AgentGrindModeTickService` | `MIGRATED_TO_AGENT`; grind-mode tick entry points now accept `AgentRuntimeEntry` while preserving target seek, loot validation/refresh, no-target fallback, commitment, ranged engagement, navigation-tail resolution, seek range, and loot radius behavior. Some downstream grind callbacks still adapt to the temporary BotEntry shell |
@@ -3042,3 +3042,7 @@ Recent capability extraction notes:
   `capabilities.movement`. Formation state storage, leader/default resolution,
   every offset formula and random range, and live offset application remain
   unchanged.
+- Capability ownership: `AgentFormationCommandService` moved from generic
+  runtime to `capabilities.movement`. Command matching, legacy aliases,
+  help/status text, snap handling, formation mutation, offset application, and
+  reply routing remain unchanged.
