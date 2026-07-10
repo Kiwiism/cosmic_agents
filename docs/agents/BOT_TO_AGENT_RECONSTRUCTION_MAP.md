@@ -1639,7 +1639,7 @@ Recent map updates:
   supplies temporary foothold, grounding, teleport, reset, broadcast, shop, and
   status hooks.
 - Grind-mode dispatch moved from BotManager to
-  `server.agents.runtime.AgentGrindModeDispatchService`. BotManager now supplies
+  `server.agents.capabilities.combat.AgentGrindModeDispatchService`. BotManager now supplies
   only the temporary grind tick hook and performance timing; the grind decision
   pipeline itself remains in `AgentGrindModeTickService`.
 - Final movement-tail dispatch moved from BotManager to
@@ -3107,3 +3107,6 @@ Recent capability extraction notes:
   runtime to `capabilities.combat`. Anchor validation, attack/idle branches,
   target-state updates, precise movement, and callback ordering remain
   unchanged.
+- Capability ownership: `AgentGrindModeDispatchService` moved from generic
+  runtime to `capabilities.combat`. Mode gating, fall-through target retention,
+  and grind callback result propagation remain unchanged.

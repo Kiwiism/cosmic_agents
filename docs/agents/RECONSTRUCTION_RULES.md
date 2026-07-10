@@ -4354,7 +4354,7 @@ Recent reconstruction notes:
   temporary compatibility adapter for movement-core stepping and performance
   timing. The same default fall-through target and AI-tick flag are preserved.
 - Grind-mode dispatch now lives in
-  `server.agents.runtime.AgentGrindModeDispatchService`. BotManager keeps a
+  `server.agents.capabilities.combat.AgentGrindModeDispatchService`. BotManager keeps a
   temporary compatibility adapter for the existing grind tick hook and
   performance timing. The same grind-mode gate, consumed-tick result, and target
   update semantics are preserved.
@@ -7158,6 +7158,9 @@ Current physics correction:
   `capabilities.combat`. Anchor/map validation, idle fallback, local attack
   gating and short-circuit, near-anchor target clearing/ground idle, precise
   targeting, and movement dispatch remain unchanged.
+- Capability ownership: `AgentGrindModeDispatchService` now lives under
+  `capabilities.combat`. Non-grind fall-through and active-grind callback/result
+  propagation remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
