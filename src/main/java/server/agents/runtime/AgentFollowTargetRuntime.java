@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowTargetCandidateService;
+
 import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;

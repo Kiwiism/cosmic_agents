@@ -1558,7 +1558,7 @@ Recent map updates:
   BotManager now supplies only the temporary route-entry hook while Agent trade
   owns the pending-offer, recipient, and same-map checks.
 - Follow-target candidate assembly moved from BotManager to
-  `server.agents.runtime.AgentFollowTargetCandidateService`. BotManager now
+  `server.agents.capabilities.follow.AgentFollowTargetCandidateService`. BotManager now
   supplies only a temporary sibling-entry lookup hook while Agent runtime owns
   the leader/party/sibling ordering and duplicate filtering.
 - Follow-target command application moved from BotManager to
@@ -2297,7 +2297,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#recovery-teleport` | `server.agents.runtime.AgentRecoveryTeleportService` | `MIGRATED_TO_AGENT`; recovery teleport distance handling now accepts `AgentRuntimeEntry` while preserving target distance checks, out-of-bounds checks, grind-party constraints, shop-visit suppression, multiplier math, grounding lookup, teleport/reset, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#follow-map-sync` | `server.agents.runtime.AgentFollowMapSyncService` | `MIGRATED_TO_AGENT`; cross-map follow synchronization now accepts `AgentRuntimeEntry` while preserving follow-mode gating, same-map/null-anchor skip behavior, grounded anchor spawn selection, idle-on-ground, map change, and movement reset side effects |
 | `src/main/java/server/bots/BotManager.java#follow-target-command` | `server.agents.runtime.AgentFollowTargetCommandService` | `MIGRATED_TO_AGENT`; follow-target command application now accepts `AgentRuntimeEntry` collections while preserving target resolution, null/missing/self-target filtering, reply queuing, delay scheduling, auto-equip, potion sharing, and follow-start ordering |
-| `src/main/java/server/bots/BotManager.java#follow-target-candidates` | `server.agents.runtime.AgentFollowTargetCandidateService` | `MIGRATED_TO_AGENT`; follow-target candidate selection now accepts Agent runtime sibling entries while preserving leader inclusion, party-member filtering, sibling-agent filtering, and duplicate suppression |
+| `src/main/java/server/bots/BotManager.java#follow-target-candidates` | `server.agents.capabilities.follow.AgentFollowTargetCandidateService` | `MIGRATED_TO_AGENT`; follow-target candidate selection now accepts Agent runtime sibling entries while preserving leader inclusion, party-member filtering, sibling-agent filtering, and duplicate suppression |
 | `src/main/java/server/bots/BotManager.java#movement-command-runtime` | `server.agents.capabilities.movement.AgentMovementCommandRuntime` | `MIGRATED_TO_AGENT`; follow, stop, move-to, farm-here, patrol, and grind command entry points now accept `AgentRuntimeEntry` while preserving prepared-mode ordering, script-task clearing, shop cancellation, patrol-region lookup, missing-region reply text, navigation-state clearing, and mode transitions |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; fidget runtime now accepts `AgentRuntimeEntry` while preserving idle/social/speed-mismatch selection, prone/sideways/jump behavior, return-to-origin, movement broadcasts, and visual prone-attack packets |
 | `src/main/java/server/bots/BotManager.java#formation-state` | `server.agents.runtime.AgentFormationService` | `MIGRATED_TO_AGENT`; formation state lookup and offset application now accept Agent runtime entries while preserving formation store access, leader/default resolution, and offset assignment patterns |
@@ -2988,3 +2988,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFollowAnchorService` moved from generic runtime
   to `capabilities.follow`. Combat, navigation, target snapshot, and plan
   execution callers retain the same resolver methods and fallback behavior.
+- Capability ownership: `AgentFollowTargetCandidateService` moved from generic
+  runtime to `capabilities.follow`. Candidate ordering, party/sibling filters,
+  and duplicate suppression remain unchanged.

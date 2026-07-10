@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowTargetCandidateService;
+
 import client.Character;
 import net.server.world.Party;
 import org.junit.jupiter.api.Test;

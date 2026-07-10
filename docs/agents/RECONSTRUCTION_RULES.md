@@ -1112,7 +1112,7 @@ Recent reconstruction notes:
   BotManager keeps only the temporary route-entry hook. The same pending-offer,
   recipient, and same-map checks are preserved.
 - Follow-target candidate assembly now lives in
-  `server.agents.runtime.AgentFollowTargetCandidateService`. BotManager keeps
+  `server.agents.capabilities.follow.AgentFollowTargetCandidateService`. BotManager keeps
   only a temporary sibling-entry lookup hook. The same leader, party-member,
   online sibling-Agent ordering and duplicate filtering are preserved.
 - Follow-target command application now lives in
@@ -7013,6 +7013,10 @@ Current physics correction:
   navigation region, target snapshot, and plan-execution callers use the same
   resolver methods; leader fallback, party/sibling lookup order, login checks,
   and target-id behavior are unchanged.
+- Capability ownership: `AgentFollowTargetCandidateService` now lives under
+  `capabilities.follow`. The runtime adapter still supplies sibling entries;
+  leader inclusion, online party-member order, sibling filtering, and duplicate
+  suppression are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

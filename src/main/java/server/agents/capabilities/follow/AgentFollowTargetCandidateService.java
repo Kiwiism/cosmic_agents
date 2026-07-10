@@ -1,8 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.follow;
 
 import client.Character;
 import server.agents.integration.AgentPartyGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
