@@ -57,6 +57,9 @@ Current state note:
   Runtime/session code now uses `server.agents.runtime.AgentRuntimeEntry`
   directly, while historical `server.bots` paths remain in this document only
   as baseline references.
+- The ownership reconstruction is now structurally complete. Every retained
+  runtime class is classified, operational Cosmic calls are gateway-bounded, and
+  the final evidence/gaps are recorded in `RECONSTRUCTION_COMPLETION_AUDIT.md`.
 
 Important baseline note:
 

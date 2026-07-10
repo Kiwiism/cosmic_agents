@@ -14,6 +14,9 @@ The authoritative classification of every retained runtime class is maintained
 in `AGENT_RUNTIME_CLASSIFICATION.md` and enforced by
 `AgentRuntimeClassificationTest`.
 
+Final automated evidence and remaining live/movement validation gaps are recorded
+in `RECONSTRUCTION_COMPLETION_AUDIT.md`.
+
 Recent map updates:
 
 - Integration runtime adapter audit has started. Current classification:

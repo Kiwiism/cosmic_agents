@@ -8,6 +8,10 @@ Remaining intentional Cosmic domain-model dependencies are recorded in
 `AGENT_COSMIC_COUPLING.md`; operational boundary rules are enforced by
 `AgentCosmicBoundaryAuditTest`.
 
+The final ownership inventory, automated test evidence, known baseline failures,
+and live-validation requirements are recorded in
+`RECONSTRUCTION_COMPLETION_AUDIT.md`.
+
 The reconstruction model is: move behavior from one large bot bin into specialized Agent bins without changing observable behavior.
 
 Rules:
