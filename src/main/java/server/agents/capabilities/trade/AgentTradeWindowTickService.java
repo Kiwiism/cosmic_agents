@@ -1,6 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.trade;
 
 import client.Character;
+import server.agents.integration.AgentTradeGatewayRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 public final class AgentTradeWindowTickService {
     private AgentTradeWindowTickService() {
@@ -14,7 +16,7 @@ public final class AgentTradeWindowTickService {
     public static boolean tickIfTradeWindowOpen(AgentRuntimeEntry entry,
                                                 Character agent,
                                                 PhysicsOnlyTick physicsOnlyTick) {
-        if (agent.getTrade() == null) {
+        if (AgentTradeGatewayRuntime.trade().currentWindow(agent) == null) {
             return false;
         }
 

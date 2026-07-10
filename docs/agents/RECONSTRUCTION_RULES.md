@@ -4308,7 +4308,7 @@ Recent reconstruction notes:
   AI cadence preparation. The same early-return order and tick timestamp input
   are preserved.
 - Trade-window tick dispatch now lives in
-  `server.agents.runtime.AgentTradeWindowTickService`. BotManager keeps a
+  `server.agents.capabilities.trade.AgentTradeWindowTickService`. BotManager keeps a
   temporary compatibility adapter for the physics-only tick body and performance
   timing. The same `getTrade() != null` consumed-tick behavior is preserved.
 - Shop-visit tick dispatch now lives in
@@ -7058,6 +7058,11 @@ Current physics correction:
   under `capabilities.supplies`. Return-scroll ID matching, inventory traversal,
   effect lookup/apply failure behavior, one-item removal, and leader-safety
   invocation remain unchanged.
+- Capability ownership/SPI: `AgentTradeWindowTickService` now lives under
+  `capabilities.trade` and detects open windows through
+  `TradeGateway.currentWindow` instead of `Character.getTrade`. Open/closed
+  gating, physics-only callback dispatch, and consumed-tick behavior are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

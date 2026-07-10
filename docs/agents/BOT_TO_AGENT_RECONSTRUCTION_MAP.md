@@ -1670,7 +1670,7 @@ Recent map updates:
   temporary hooks for the existing shop visit tick body and movement-core
   stepping while Agent runtime owns the pending/delay/target consumed-tick flow.
 - Trade-window tick dispatch moved from BotManager to
-  `server.agents.runtime.AgentTradeWindowTickService`. BotManager now supplies
+  `server.agents.capabilities.trade.AgentTradeWindowTickService`. BotManager now supplies
   only the temporary physics-only tick hook while the Agent runtime owns the
   trade-open consumed-tick decision.
 - Tick preflight sequencing moved from BotManager to
@@ -2287,7 +2287,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#live-tick-context` | `server.agents.runtime.AgentLiveTickContextService` | `MIGRATED_TO_AGENT`; live tick context preparation and observed leader motion updates now accept `AgentRuntimeEntry` while preserving movement profile refresh, follow-anchor resolution, target snapshot capture, map-change cleanup, and follow-action cleanup ordering |
 | `src/main/java/server/bots/BotManager.java#tick-core` | `server.agents.runtime.AgentTickCoreService` | `MIGRATED_TO_AGENT`; tick core orchestration now accepts `AgentRuntimeEntry` while preserving preflight, leader-resolution, inactive-leader, ownerless, death, live-context, live-gate, and live-mode ordering. `AgentTickCoreRuntime` remains the temporary compatibility bridge to BotEntry-shaped downstream callbacks |
 | `src/main/java/server/bots/BotManager.java#tick-preflight` | `server.agents.runtime.AgentTickPreflightService` | `MIGRATED_TO_AGENT`; tick preflight now accepts `AgentRuntimeEntry` while preserving null handling, airshow skip, movement-delay skip, missing-map cleanup, heartbeat, offer expiry, and AI tick preparation ordering |
-| `src/main/java/server/bots/BotManager.java#trade-window-tick` | `server.agents.runtime.AgentTradeWindowTickService` | `MIGRATED_TO_AGENT`; trade-window tick gating now accepts `AgentRuntimeEntry` while preserving open-trade detection, physics-only tick dispatch, and consumed-tick behavior |
+| `src/main/java/server/bots/BotManager.java#trade-window-tick` | `server.agents.capabilities.trade.AgentTradeWindowTickService` | `MIGRATED_TO_AGENT`; trade-window tick gating now accepts `AgentRuntimeEntry` while preserving open-trade detection, physics-only tick dispatch, and consumed-tick behavior |
 | `src/main/java/server/bots/BotManager.java#ownerless-tick` | `server.agents.runtime.AgentOwnerlessTickService` | `MIGRATED_TO_AGENT`; ownerless tick handling now accepts `AgentRuntimeEntry` while preserving follow-mode clearing, map-change grounding short-circuit, standalone move-target ticking, and idle fallback behavior |
 | `src/main/java/server/bots/BotManager.java#death-tick` | `server.agents.runtime.AgentDeathTickService`, `server.agents.runtime.AgentRespawnRuntime` | `MIGRATED_TO_AGENT`; death tick and respawn-near-leader handling now accept `AgentRuntimeEntry` while preserving dead-state entry checks, respawn timing, HP restore, map-change, grounding, teleport, reset, movement broadcast, map speech, and glare emote behavior |
 | `src/main/java/server/bots/BotManager.java#leader-safety-runtime` | `server.agents.runtime.AgentLeaderSafetyRuntime` | `MIGRATED_TO_AGENT`; inactive-leader runtime now accepts `AgentRuntimeEntry` while preserving active-return cleanup, town eligibility, safe-mode entry, town-scroll fallback, formation target selection, map-change grounding, movement reset, and return announcements |
@@ -3021,3 +3021,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentReturnScrollService` moved from generic runtime
   to `capabilities.supplies`. Item selection, effect application, failure cases,
   and one-scroll consumption remain unchanged.
+- Capability ownership/SPI: `AgentTradeWindowTickService` moved from generic
+  runtime to `capabilities.trade` and reads the abstract window through
+  `TradeGateway.currentWindow`. Trade gating and physics-only tick behavior
+  remain unchanged.

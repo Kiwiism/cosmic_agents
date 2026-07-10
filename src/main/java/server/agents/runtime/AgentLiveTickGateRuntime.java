@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.trade.AgentTradeWindowTickService;
+
 import client.Character;
 import java.util.function.Consumer;
 
