@@ -5,10 +5,7 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.plans.AgentScriptTaskStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
-/**
- * Temporary Agent-owned bridge for party-quest dialogue while PQ automation
- * still lives in the legacy bot runtime.
- */
+/** Connects party-quest capability state to shared Agent reply and plan state services. */
 public final class AgentPqRuntime {
     private AgentPqRuntime() {
     }

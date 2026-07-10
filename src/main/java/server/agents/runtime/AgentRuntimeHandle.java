@@ -1,8 +1,5 @@
 package server.agents.runtime;
 
-/**
- * Temporary Agent-owned runtime token used while the removed legacy bot shell is
- * being split into Agent runtime/session state.
- */
+/** Minimal identity contract shared by Agent runtime lifecycle services. */
 public interface AgentRuntimeHandle {
 }

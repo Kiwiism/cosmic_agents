@@ -4,11 +4,7 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
-/**
- * Temporary Agent-owned bridge for inventory, trade, drop, and meso reply
- * delivery while the inventory automation logic still lives in the legacy bot
- * runtime.
- */
+/** Connects inventory capability replies and delayed actions to shared Agent services. */
 public final class AgentInventoryRuntime {
     private AgentInventoryRuntime() {
     }

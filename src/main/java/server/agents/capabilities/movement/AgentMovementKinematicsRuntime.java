@@ -4,10 +4,7 @@ import client.Character;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
 
-/**
- * Temporary integration adapter for read-only movement/physics metrics while
- * movement calculation still lives in the legacy bot runtime.
- */
+/** Builds read-only movement and physics snapshots from the live Cosmic character. */
 public final class AgentMovementKinematicsRuntime {
     private AgentMovementKinematicsRuntime() {
     }

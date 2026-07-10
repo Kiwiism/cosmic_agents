@@ -4,10 +4,7 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
-/**
- * Temporary Agent-owned bridge for Maker automation replies and delayed batch
- * steps while Maker execution still lives in the legacy bot runtime.
- */
+/** Connects Maker capability replies and delayed batch steps to shared Agent services. */
 public final class AgentMakerRuntime {
     private AgentMakerRuntime() {
     }

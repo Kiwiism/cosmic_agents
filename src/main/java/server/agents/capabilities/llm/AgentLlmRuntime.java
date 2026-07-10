@@ -3,10 +3,7 @@ package server.agents.capabilities.llm;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
-/**
- * Temporary Agent-owned bridge for LLM reply delivery while LLM orchestration
- * still lives in the legacy bot runtime.
- */
+/** Connects LLM capability output to the shared Agent reply service. */
 public final class AgentLlmRuntime {
     private AgentLlmRuntime() {
     }

@@ -4,10 +4,7 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
-/**
- * Temporary Agent-owned bridge for scroll reaction chat and timing while scroll
- * reaction decisions still live in the legacy bot runtime.
- */
+/** Connects scroll-reaction dialogue and timing to shared Agent services. */
 public final class AgentScrollReactionRuntime {
     private AgentScrollReactionRuntime() {
     }
