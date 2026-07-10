@@ -2,7 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentFollowTargetPositionService;
+import server.agents.capabilities.follow.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;

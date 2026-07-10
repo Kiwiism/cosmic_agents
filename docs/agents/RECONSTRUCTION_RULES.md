@@ -7029,6 +7029,10 @@ Current physics correction:
   `capabilities.follow`; `AgentFollowMapSyncRuntime` remains the concrete hook
   adapter. Follow gating, same-map/null-anchor skips, grounded spawn fallback,
   idle-before-change ordering, map change, and state reset are unchanged.
+- Capability ownership: `AgentFollowTargetPositionService` now lives under
+  `capabilities.follow`. Ground snap selection, climb/rope handling, swim Y
+  alignment, navigation-region edge clamping, foothold fallback, and distance
+  thresholds are unchanged; runtime/movement callers use the same resolver.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

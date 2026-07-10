@@ -1918,7 +1918,7 @@ Recent map updates:
   `server.agents.runtime.AgentFormationService`; BotManager still contains the
   temporary command parsing and snapshot wiring around that Agent-owned store.
 - BotManager follow-target position resolver moved to
-  `server.agents.runtime.AgentFollowTargetPositionService`; the Agent movement
+  `server.agents.capabilities.follow.AgentFollowTargetPositionService`; the Agent movement
   target gateway now captures snapshots without calling BotManager.
 - BotManager live entry map moved to
   `server.agents.runtime.AgentRuntimeRegistry`; BotManager keeps a compatibility
@@ -3000,3 +3000,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFollowMapSyncService` moved from generic runtime
   to `capabilities.follow`; the runtime hook adapter remains in place. Cross-map
   gating, spawn selection, map-change ordering, and reset behavior are unchanged.
+- Capability ownership: `AgentFollowTargetPositionService` moved from generic
+  runtime to `capabilities.follow`. Ground/rope/swim target selection, region
+  clamping, foothold fallback, and thresholds remain unchanged.
