@@ -7560,6 +7560,15 @@ Current physics correction:
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
   are explanatory only, not production Agent runtime dependencies.
+- Backing-account security: spawning an existing authorized Agent is unchanged.
+  Creating a missing backing character now requires GM level 6 by default, is
+  limited to three successful provisions per controller per ten minutes and 25
+  registered Agents per controller, and can be tuned with
+  `agents.provisioning.*` system properties. New accounts receive an unreported
+  random credential, existing same-name accounts are never commandeered, and
+  registered Agent accounts are denied normal interactive login. Existing
+  shared-password Agent accounts are protected by the login denial immediately;
+  credential rotation guidance is in `AGENT_BACKING_ACCOUNT_SECURITY.md`.
 
 Initial reconstruction order:
 

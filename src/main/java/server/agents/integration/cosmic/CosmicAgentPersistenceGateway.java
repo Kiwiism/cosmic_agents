@@ -7,6 +7,7 @@ import server.agents.registry.AgentResolvedCharacter;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -14,9 +15,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Base64;
 
 public final class CosmicAgentPersistenceGateway implements AgentPersistenceGateway {
     public static final CosmicAgentPersistenceGateway INSTANCE = new CosmicAgentPersistenceGateway();
+    private static final SecureRandom PASSWORD_RANDOM = new SecureRandom();
 
     private CosmicAgentPersistenceGateway() {
     }
@@ -84,15 +87,38 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
     }
 
     @Override
+    public int countRegisteredAgents(int ownerCharacterId) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT COUNT(*) AS rowcount FROM bot_owners WHERE owner_char_id = ?")) {
+            ps.setInt(1, ownerCharacterId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("rowcount") : 0;
+            }
+        }
+    }
+
+    @Override
+    public boolean isAgentAccount(int accountId) throws SQLException {
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT 1 FROM bot_owners owners "
+                             + "JOIN characters agent ON agent.id = owners.bot_char_id "
+                             + "WHERE agent.accountid = ? LIMIT 1")) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    @Override
     public AgentAccountResolution resolveOrCreateAgentAccount(String name) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection()) {
             Integer existingAccountId = findAccountId(con, name);
             if (existingAccountId != null) {
-                if (countCharactersOnAccount(con, existingAccountId) == 0) {
-                    return AgentAccountResolution.reused(existingAccountId);
-                }
                 return AgentAccountResolution.failure(
-                        "Account '" + name + "' already exists and still has characters, so it cannot be reused for bot creation.");
+                        "Account '" + name + "' already exists, so it cannot be used for Agent creation.");
             }
 
             int createdAccountId = createAgentAccount(con, name);
@@ -112,18 +138,8 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
         }
     }
 
-    private int countCharactersOnAccount(Connection con, int accountId) throws SQLException {
-        try (PreparedStatement ps = con.prepareStatement(
-                "SELECT COUNT(*) AS rowcount FROM characters WHERE accountid = ?")) {
-            ps.setInt(1, accountId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt("rowcount") : 0;
-            }
-        }
-    }
-
     private int createAgentAccount(Connection con, String name) throws SQLException {
-        String hashedPw = BCrypt.hashpw("botbot", BCrypt.gensalt(12));
+        String hashedPw = randomPasswordHash();
         try (PreparedStatement ps = con.prepareStatement(
                 "INSERT INTO accounts (name, password, birthday, tempban) VALUES (?, ?, ?, ?)",
                 Statement.RETURN_GENERATED_KEYS)) {
@@ -136,5 +152,12 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
                 return rs.next() ? rs.getInt(1) : -1;
             }
         }
+    }
+
+    private String randomPasswordHash() {
+        byte[] randomPassword = new byte[32];
+        PASSWORD_RANDOM.nextBytes(randomPassword);
+        String encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(randomPassword);
+        return BCrypt.hashpw(encoded, BCrypt.gensalt(12));
     }
 }

@@ -12,11 +12,13 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.auth.AgentOwnershipService;
+import server.agents.auth.AgentProvisioningPolicy;
 import java.sql.SQLException;
 
 /** Translates the retained spawn command into Agent account, lifecycle, and party operations. */
 public final class AgentSpawnCommandExecutor {
     private static final Logger log = LoggerFactory.getLogger(AgentSpawnCommandExecutor.class);
+    private static final AgentProvisioningPolicy PROVISIONING_POLICY = new AgentProvisioningPolicy();
 
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
@@ -34,6 +36,12 @@ public final class AgentSpawnCommandExecutor {
         if (bot == null) {
             if (!createRequested) {
                 player.yellowMessage("Bot '" + botName + "' does not exist. Run: @spawnbot " + botName + " confirm  to create it.");
+                return;
+            }
+
+            String denial = validateProvisioning(player);
+            if (denial != null) {
+                player.yellowMessage(denial);
                 return;
             }
 
@@ -55,9 +63,10 @@ public final class AgentSpawnCommandExecutor {
             }
 
             ownershipService.registerOwner(createdCharId, player.getId());
+            PROVISIONING_POLICY.recordProvisioned(player.getId());
             bot = ownershipService.resolveCharacterByName(botName);
             if (account.created()) {
-                player.yellowMessage("Bot '" + botName + "' created. Login with: user=" + botName + " pw=botbot");
+                player.yellowMessage("Bot '" + botName + "' created with an Agent-only backing account.");
             } else {
                 player.yellowMessage("Bot '" + botName + "' created on the existing empty account '" + botName + "'.");
             }
@@ -73,6 +82,17 @@ public final class AgentSpawnCommandExecutor {
             player.yellowMessage("Bot '" + result.agent().getName() + "' auto-registered to " + player.getName() + " because it is on the same account.");
         }
         player.yellowMessage("Bot '" + result.agent().getName() + "' spawned. Say 'follow me' or 'stop' to control it.");
+    }
+
+    private String validateProvisioning(Character player) {
+        try {
+            int registeredAgents = AgentPersistenceGatewayRuntime.persistence()
+                    .countRegisteredAgents(player.getId());
+            return PROVISIONING_POLICY.validate(player.getId(), player.gmLevel(), registeredAgents);
+        } catch (SQLException e) {
+            log.warn("Failed to verify Agent provisioning quota for character {}", player.getId(), e);
+            return "Failed to verify Agent backing-account creation policy.";
+        }
     }
 
     private AgentAccountResolution resolveAgentAccount(String name) {
