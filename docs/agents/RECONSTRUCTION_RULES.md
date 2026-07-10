@@ -7494,6 +7494,9 @@ Current physics correction:
 - Runtime scheduler ownership: repeating lifecycle ticks now register through
   `AgentSchedulerRuntime.register`, retaining the same `TimerManager.register`
   backend, period, callback, and cancellation handle.
+- Cosmic scheduler boundary: runtime scheduling policy now depends on
+  `SchedulerGateway`. `CosmicSchedulerGateway` preserves the exact
+  `TimerManager.schedule/register` backend and is exposed by the server adapter.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

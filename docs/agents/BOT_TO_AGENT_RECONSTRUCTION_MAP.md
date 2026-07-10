@@ -3418,3 +3418,6 @@ Recent capability extraction notes:
 - Runtime scheduler ownership: lifecycle registration now uses
   `AgentSchedulerRuntime.register` for repeating Agent ticks. `TimerManager` is
   no longer imported outside the single scheduler facade.
+- Cosmic scheduler boundary: `AgentSchedulerRuntime` now calls the generic
+  `SchedulerGateway`; `CosmicSchedulerGateway` is the only Agent class that
+  imports and invokes `TimerManager`.

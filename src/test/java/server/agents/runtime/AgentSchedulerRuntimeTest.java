@@ -2,7 +2,8 @@ package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.TimerManager;
+import server.agents.integration.AgentSchedulerGatewayRuntime;
+import server.agents.integration.SchedulerGateway;
 
 import java.util.concurrent.ScheduledFuture;
 
@@ -15,13 +16,13 @@ import static org.mockito.Mockito.mockStatic;
 class AgentSchedulerRuntimeTest {
     @Test
     void scheduleDelegatesToExistingTimerManagerAndReturnsCancellationHandle() {
-        TimerManager timer = mock(TimerManager.class);
+        SchedulerGateway scheduler = mock(SchedulerGateway.class);
         ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
         Runnable action = () -> { };
 
-        try (MockedStatic<TimerManager> timers = mockStatic(TimerManager.class)) {
-            timers.when(TimerManager::getInstance).thenReturn(timer);
-            doReturn(scheduled).when(timer).schedule(action, 250L);
+        try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
+            runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
+            doReturn(scheduled).when(scheduler).schedule(action, 250L);
 
             assertSame(scheduled, AgentSchedulerRuntime.schedule(action, 250L));
         }
@@ -29,13 +30,13 @@ class AgentSchedulerRuntimeTest {
 
     @Test
     void registerDelegatesRepeatingTicksToExistingTimerManager() {
-        TimerManager timer = mock(TimerManager.class);
+        SchedulerGateway scheduler = mock(SchedulerGateway.class);
         ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
         Runnable action = () -> { };
 
-        try (MockedStatic<TimerManager> timers = mockStatic(TimerManager.class)) {
-            timers.when(TimerManager::getInstance).thenReturn(timer);
-            doReturn(scheduled).when(timer).register(action, 100L);
+        try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
+            runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
+            doReturn(scheduled).when(scheduler).register(action, 100L);
 
             assertSame(scheduled, AgentSchedulerRuntime.register(action, 100L));
         }

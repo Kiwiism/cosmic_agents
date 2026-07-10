@@ -14,6 +14,7 @@ import server.agents.integration.PacketGateway;
 import server.agents.integration.PartyGateway;
 import server.agents.integration.SkillGateway;
 import server.agents.integration.ShopGateway;
+import server.agents.integration.SchedulerGateway;
 import server.agents.integration.TradeGateway;
 
 public final class CosmicAgentServerAdapter implements AgentServerAdapter {
@@ -90,5 +91,10 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public AgentPersistenceGateway persistence() {
         return CosmicAgentPersistenceGateway.INSTANCE;
+    }
+
+    @Override
+    public SchedulerGateway scheduler() {
+        return CosmicSchedulerGateway.INSTANCE;
     }
 }

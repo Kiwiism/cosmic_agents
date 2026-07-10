@@ -28,5 +28,7 @@ public interface AgentServerAdapter {
     AgentQuestSyncGateway questSync();
 
     AgentPersistenceGateway persistence();
+
+    SchedulerGateway scheduler();
 }
 
