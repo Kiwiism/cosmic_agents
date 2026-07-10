@@ -4890,10 +4890,11 @@ Current physics correction:
   temporarily hosts the Agent-owned state object, while current-map id,
   foothold-index snapshots, null-index handling, and read-only index exposure
   route through the Agent runtime state.
-- Leader activity storage now lives in `AgentLeaderActivityState`. `BotEntry`
-  temporarily hosts the Agent-owned state object, while AFK position/timing,
-  offline-or-dead recovery timing, returned-to-town safe mode, and last matched
-  leader command metadata route through the Agent runtime state.
+- Leader activity storage now lives in
+  `server.agents.capabilities.follow.AgentLeaderActivityState`. The live Agent
+  runtime entry hosts the capability-owned state object, while AFK
+  position/timing, offline-or-dead recovery timing, returned-to-town safe mode,
+  and last matched leader command metadata route through the follow capability.
 - Airshow session storage now lives in `AgentAirshowState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while active/inactive state
   and trail timestamp reads/writes route through the Agent social airshow
@@ -7277,6 +7278,10 @@ Current physics correction:
   `AgentPatrolStateRuntime` now live under `capabilities.movement` as the
   region/map/wander-target state consumed by movement, combat, and looting.
   Sentinel values, point copies, and clear behavior remain unchanged.
+- Follow state ownership: `AgentLeaderActivityState` and
+  `AgentActivityStateRuntime` now live under `capabilities.follow`. AFK timing,
+  inactivity/safe-mode flags, returned-to-town state, and last-command metadata
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

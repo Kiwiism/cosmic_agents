@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatReportRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;

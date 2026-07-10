@@ -109,10 +109,10 @@ Recent map updates:
   to `server.agents.runtime`. They only adapt `AgentRuntimeEntry` tick,
   cadence, heartbeat, and failure-window state; tick scheduling and failure
   side effects remain in runtime/integration callers unchanged.
-- `AgentActivityStateRuntime` has moved from `server.agents.integration` to
-  `server.agents.runtime`. It only adapts live leader activity/AFK/away command
-  fields on `AgentRuntimeEntry`; status replies and delayed return actions stay
-  in integration-facing adapters.
+- `AgentActivityStateRuntime` now lives in `server.agents.capabilities.follow`.
+  It only adapts live leader activity/AFK/away command fields on
+  `AgentRuntimeEntry`; status replies and delayed return actions remain in
+  their existing dialogue and integration-facing adapters.
 - Movement-mode state adapters `AgentModeStateRuntime`,
   `AgentFarmAnchorStateRuntime`, and `AgentPatrolStateRuntime` have moved from
   `server.agents.integration` to `server.agents.runtime`. They only adapt
@@ -3212,3 +3212,7 @@ Recent capability extraction notes:
   `AgentPatrolStateRuntime` moved from generic runtime to
   `capabilities.movement`; region/map sentinels, defensive wander-target
   copies, and map-change clearing remain unchanged.
+- Follow state ownership: `AgentLeaderActivityState` and
+  `AgentActivityStateRuntime` moved from generic runtime to
+  `capabilities.follow`; AFK, inactivity, away-safety, returned-to-town, and
+  last-command values and transitions remain unchanged.

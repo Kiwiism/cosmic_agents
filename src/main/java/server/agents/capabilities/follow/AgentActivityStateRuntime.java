@@ -1,4 +1,6 @@
-package server.agents.runtime;
+package server.agents.capabilities.follow;
+
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

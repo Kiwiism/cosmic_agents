@@ -5,7 +5,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.runtime.AgentActivityStateRuntime;
+import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;

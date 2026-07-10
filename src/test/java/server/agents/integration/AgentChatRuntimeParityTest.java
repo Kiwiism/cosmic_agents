@@ -26,7 +26,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.combat.AgentBuffService;
 import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
-import server.agents.runtime.AgentActivityStateRuntime;
+import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.runtime.AgentMessageQueueStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;

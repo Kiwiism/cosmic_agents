@@ -8,7 +8,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.runtime.AgentActivityStateRuntime;
+import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

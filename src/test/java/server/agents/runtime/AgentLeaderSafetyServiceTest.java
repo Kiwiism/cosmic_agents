@@ -6,7 +6,7 @@ import server.agents.plans.AgentScriptTaskStateRuntime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentActivityStateRuntime;
+import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
