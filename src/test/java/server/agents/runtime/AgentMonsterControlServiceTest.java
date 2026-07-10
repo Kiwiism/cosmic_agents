@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentMonsterControlService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.life.Monster;

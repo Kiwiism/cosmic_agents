@@ -1243,7 +1243,7 @@ Recent reconstruction notes:
   false return, registry removal, cancel-before-stop order, delayed farewell,
   and reply text pool are preserved.
 - Monster-control release now lives in
-  `server.agents.runtime.AgentMonsterControlService`. BotManager's common tick
+  `server.agents.capabilities.combat.AgentMonsterControlService`. BotManager's common tick
   calls the Agent service directly, preserving the same controlled-monster scan
   and `aggroRedirectController` handoff for every monster assigned to a headless
   Agent.
@@ -7067,6 +7067,10 @@ Current physics correction:
   `capabilities.supplies.AgentAutopotCleanupService`, with the entry point named
   `clearAgentAutopotState`. HP/MP alert reset, key 91/92 normalization guards,
   key action preservation, and runtime release ordering are unchanged.
+- Capability ownership: `AgentMonsterControlService` now lives under
+  `capabilities.combat`. Empty-controller short circuit, controlled-monster
+  iteration order, and `aggroRedirectController` calls are unchanged; common
+  tick still invokes the same method.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

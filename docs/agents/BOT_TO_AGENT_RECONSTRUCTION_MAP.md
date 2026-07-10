@@ -1703,7 +1703,7 @@ Recent map updates:
   `server.agents.runtime.AgentLifecycleService.dismissAgentByName`. BotManager
   remains the compatibility wrapper for stop-mode, scheduler, and reply hooks.
 - Monster-control release moved from BotManager to
-  `server.agents.runtime.AgentMonsterControlService`; common tick now delegates
+  `server.agents.capabilities.combat.AgentMonsterControlService`; common tick now delegates
   to the Agent-owned service.
 - Death respawn recovery moved from BotManager to
   `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
@@ -3029,3 +3029,6 @@ Recent capability extraction notes:
   `AgentAutopotRuntimeCleanupService` to
   `capabilities.supplies.AgentAutopotCleanupService`. Alert reset and keybinding
   normalization behavior remain unchanged.
+- Capability ownership: `AgentMonsterControlService` moved from generic runtime
+  to `capabilities.combat`. Controlled-monster release behavior and common-tick
+  invocation remain unchanged.
