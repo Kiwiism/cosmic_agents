@@ -44,7 +44,7 @@ import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentSpawnPlacementRuntime;
+import server.agents.runtime.AgentSpawnPlacementCoordinator;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
@@ -585,7 +585,7 @@ class BotManagerTest {
         AgentMovementPhysicsStateRuntime.setAirVelocityX(entry, 6);
         AgentNavigationDebugStateRuntime.setNavTargetPosition(entry, new Point(120, 100));
 
-        AgentSpawnPlacementRuntime.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
+        AgentSpawnPlacementCoordinator.placeSpawnedOnlineAgent(entry, bot, map, new Point(80, 100));
 
         assertEquals(new Point(80, 100), bot.getPosition());
         assertFalse(AgentMovementStateRuntime.inAir(entry));

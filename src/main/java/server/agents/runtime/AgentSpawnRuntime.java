@@ -48,7 +48,7 @@ public final class AgentSpawnRuntime {
                         AgentSpawnPositionService::resolveSpawnPosition,
                         registerSpawnedAgent,
                         AgentOfflineLoadRuntime::loadOfflineAgent,
-                        AgentSpawnPlacementRuntime::placeSpawnedOnlineAgent,
+                        AgentSpawnPlacementCoordinator::placeSpawnedOnlineAgent,
                         startFollowLeader,
                         AgentMapGatewayRuntime.map()::changeMapNear),
                 (failedAgentName, failedLeader, e) -> log.warn(

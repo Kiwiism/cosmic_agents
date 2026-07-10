@@ -298,7 +298,7 @@ Recent map updates:
   cleanup, and AI tick cadence behavior remain unchanged.
 - `AgentSpawnPlacementService` now uses generic `AgentRuntimeHandle` hooks for
   spawn placement and normalization. The BotEntry identity lookup remains only
-  in `AgentSpawnPlacementRuntime`, preserving the current spawn reset order.
+  in `AgentSpawnPlacementCoordinator`, preserving the current spawn reset order.
 - `AgentMovementPhaseDispatchService` now exposes `AgentRuntimeEntry` methods.
   Action-lock physics, idle physics, and grind no-target fallback use this
   Agent-owned movement boundary directly; the temporary BotEntry cast is
@@ -448,7 +448,7 @@ Recent map updates:
   handling now use `AgentRuntimeEntry` at the runtime seam.
 - `BotEntry` runtime storage is migrated to `AgentRuntimeEntry` through
   `AgentRuntimeRegistry`, `AgentLifecycleService`, `AgentRegistrationCoordinator`,
-  `AgentSpawnRuntime`, `AgentSpawnPlacementRuntime`, and
+  `AgentSpawnRuntime`, `AgentSpawnPlacementCoordinator`, and
   `AgentInteractionRuntime`. Agent registration now constructs the Agent
   runtime entry directly; the deprecated `server.bots.BotEntry` shell is no
   longer used by production Agent modules.
@@ -1506,7 +1506,7 @@ Recent map updates:
   compatibility `loadOfflineBot` delegate while Agent runtime owns the Cosmic
   bootstrap hook bundle for loading offline backing characters.
 - Spawn placement hook wiring moved from BotManager to
-  `server.agents.runtime.AgentSpawnPlacementRuntime`. BotManager now references
+  `server.agents.runtime.AgentSpawnPlacementCoordinator`. BotManager now references
   Agent runtime placement entry points from spawn/register hooks, while Agent
   runtime owns the legacy placement hook bundle until movement/physics are
   reconstructed. `BotMovementManager.buildFhIndex` is temporarily public only
@@ -3323,3 +3323,7 @@ Recent capability extraction notes:
   `runtime.AgentRegistrationCoordinator` and is intentionally retained as
   lifecycle/scheduler orchestration. Manual, spawned, recruit, transfer, relogin,
   and spawn callers now use the precisely named coordinator.
+- Runtime classification: `AgentSpawnPlacementRuntime` became
+  `runtime.AgentSpawnPlacementCoordinator` and remains cross-capability lifecycle
+  orchestration. Placement, state reset, graph warmup, broadcast, and party join
+  behavior are unchanged.

@@ -1,33 +1,33 @@
 package server.agents.runtime;
 
-import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.capabilities.combat.AgentDeathStateRuntime;
-import server.agents.capabilities.movement.AgentMapStateRuntime;
-import server.agents.capabilities.party.AgentPartyLifecycleService;
-
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
-import server.agents.capabilities.movement.AgentFootholdIndexService;
-import server.agents.capabilities.movement.AgentMovementPoseService;
-
 import client.Character;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.combat.AgentDeathStateRuntime;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentMapStateRuntime;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 
 /**
- * Temporary legacy hook bundle for spawn placement while movement/physics still
- * live under the reconstructed bot runtime.
+ * Runtime coordinator for spawn placement, movement-state initialization,
+ * navigation warmup, broadcast, and party synchronization.
  */
-public final class AgentSpawnPlacementRuntime {
-    private AgentSpawnPlacementRuntime() {
+public final class AgentSpawnPlacementCoordinator {
+    private AgentSpawnPlacementCoordinator() {
     }
 
-    public static void placeSpawnedOnlineAgent(AgentRuntimeEntry entry, Character agent, MapleMap spawnMap, Point spawnPosition) {
+    public static void placeSpawnedOnlineAgent(AgentRuntimeEntry entry,
+                                               Character agent,
+                                               MapleMap spawnMap,
+                                               Point spawnPosition) {
         AgentSpawnPlacementService.placeSpawnedOnlineAgent(entry, agent, spawnMap, spawnPosition, hooks());
     }
 

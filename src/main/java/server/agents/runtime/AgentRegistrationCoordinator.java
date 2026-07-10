@@ -43,7 +43,7 @@ public final class AgentRegistrationCoordinator {
                         tickCallback,
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         defaultFormationState(),
-                        AgentSpawnPlacementRuntime::normalizeSpawnedAgent,
+                        AgentSpawnPlacementCoordinator::normalizeSpawnedAgent,
                         () -> AgentRandom.randMs(30_000, 31_000)));
     }
 

@@ -245,7 +245,7 @@ Recent reconstruction notes:
 - Lifecycle spawn map-change hooks now also route through
   `AgentMapGatewayRuntime`. Offline-loaded Agents still resolve the same spawn
   map/position, register through the same runtime path, place online Agents
-  through `AgentSpawnPlacementRuntime`, and start follow behavior exactly as
+  through `AgentSpawnPlacementCoordinator`, and start follow behavior exactly as
   before.
 - Cross-map follow synchronization now routes its live `changeMap(map,
   position)` operation through `AgentMapGatewayRuntime`. The follow map-change
@@ -1057,7 +1057,7 @@ Recent reconstruction notes:
   position, rate initialization, channel/world/map registration, and map-add
   hook wiring.
 - Spawn placement hook wiring now lives in
-  `server.agents.runtime.AgentSpawnPlacementRuntime`. BotManager no longer owns
+  `server.agents.runtime.AgentSpawnPlacementCoordinator`. BotManager no longer owns
   the legacy BotPhysics/BotMovement placement hook list for online placement or
   spawn normalization; the same teleport, movement reset, death-state clear,
   map tracking, graph warmup, cadence reset, broadcast invalidation, movement
@@ -5975,7 +5975,7 @@ Current physics correction:
   unchanged while tick-core no longer casts for this resolver.
 - Spawn placement service now accepts generic `AgentRuntimeHandle` hooks. The
   BotEntry-specific agent/leader identity lookup is isolated in
-  `AgentSpawnPlacementRuntime`, while teleport, movement reset, death clear,
+  `AgentSpawnPlacementCoordinator`, while teleport, movement reset, death clear,
   map tracking, navigation warmup, cadence reset, broadcast invalidation, and
   party HP update order remain unchanged.
 - Tick preflight runtime now accepts `AgentRuntimeEntry`; null-entry short
@@ -7397,6 +7397,10 @@ Current physics correction:
   `AgentRegistrationCoordinator`. It intentionally remains in runtime because it
   binds lifecycle registration, timer scheduling, cancellation, formation
   defaults, spawn normalization, and tick callbacks; no gameplay policy moved.
+- Retained runtime orchestration: `AgentSpawnPlacementRuntime` was renamed
+  `AgentSpawnPlacementCoordinator`. It intentionally binds lifecycle placement
+  to movement reset, map tracking, navigation warmup, broadcast, HP display, and
+  party synchronization in the original order.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
