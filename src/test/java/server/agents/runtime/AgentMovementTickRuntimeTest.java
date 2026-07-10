@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.capabilities.movement.AgentMovementTickService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

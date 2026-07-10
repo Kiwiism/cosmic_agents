@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;

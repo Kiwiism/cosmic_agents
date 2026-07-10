@@ -4167,7 +4167,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
   longer owns the precise-target flag rule after navigation target resolution.
 - Movement-core tick orchestration now lives in
-  `server.agents.runtime.AgentMovementTickService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentMovementTickService`; BotManager still supplies
   temporary navigation, fidget, movement phase, committed-edge, stuck-detection,
   and move-target cleanup hooks. The navigation-consumed early return, fidget
   early return, committed-edge grounded AI gate, stuck detection, and reached
@@ -7110,6 +7110,10 @@ Current physics correction:
 - Capability ownership: `AgentMovementPhaseService` now lives under
   `capabilities.movement`. Climbing, swimming, airborne, and grounded dispatch
   ordering and callback arguments remain unchanged.
+- Capability ownership: `AgentMovementTickService` now lives under
+  `capabilities.movement`. Navigation resolution, precise-target marking,
+  fidget short-circuiting, movement-phase dispatch, committed-edge execution,
+  stuck detection, and reached-target cleanup ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

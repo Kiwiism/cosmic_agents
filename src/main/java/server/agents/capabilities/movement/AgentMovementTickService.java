@@ -1,6 +1,7 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import java.awt.Point;
 
