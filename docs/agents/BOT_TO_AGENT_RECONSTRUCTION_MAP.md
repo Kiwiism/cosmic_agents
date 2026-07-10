@@ -1656,7 +1656,7 @@ Recent map updates:
   `server.agents.runtime.AgentAnchoredFarmModeTickService`. BotManager now
   supplies only the temporary anchored-farm tick hook and performance timing.
 - Scripted move local-combat tick dispatch moved from BotManager to
-  `server.agents.runtime.AgentScriptedMoveCombatTickService`. BotManager now
+  `server.agents.capabilities.combat.AgentScriptedMoveCombatTickService`. BotManager now
   supplies temporary hooks for action-window cleanup, local-opportunity attack,
   movement-core stepping, and performance timing.
 - Follow-mode local opportunity attack dispatch moved from BotManager to
@@ -3099,3 +3099,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentStandaloneMoveTargetTickService` moved from
   generic runtime to `capabilities.movement`. Grounding, profile refresh,
   target lookup, and movement dispatch ordering remain unchanged.
+- Capability ownership: `AgentScriptedMoveCombatTickService` moved from generic
+  runtime to `capabilities.combat`. Script/AI gating, action-window cleanup,
+  attack short-circuit, movement fallback, and result semantics remain
+  unchanged.

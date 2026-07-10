@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentScriptedMoveCombatTickService;
 import server.agents.plans.AgentScriptTaskStateRuntime;
 
 import client.Character;

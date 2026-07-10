@@ -1,8 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import server.agents.plans.AgentScriptTaskStateRuntime;
 
 import client.Character;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

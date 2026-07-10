@@ -4329,7 +4329,7 @@ Recent reconstruction notes:
   anchor-distance, target-position update, and consumed-tick rules are
   preserved.
 - Scripted move local-combat tick dispatch now lives in
-  `server.agents.runtime.AgentScriptedMoveCombatTickService`. BotManager keeps
+  `server.agents.capabilities.combat.AgentScriptedMoveCombatTickService`. BotManager keeps
   a temporary compatibility adapter for action-window cleanup, local-opportunity
   attack execution, movement-core stepping, and performance timing. The same
   local-opportunity MOVE_TO predicate, consumed attack early return, movement
@@ -7150,6 +7150,10 @@ Current physics correction:
   `capabilities.movement`. Map-change grounding short-circuit, movement-profile
   refresh, target lookup, and movement-core invocation ordering remain
   unchanged.
+- Capability ownership: `AgentScriptedMoveCombatTickService` now lives under
+  `capabilities.combat`. AI and plan gating, settled action-window cleanup,
+  local attack short-circuit, movement fallback, and returned target semantics
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
