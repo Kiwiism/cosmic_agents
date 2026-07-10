@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowMapSyncService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentModeStateRuntime;

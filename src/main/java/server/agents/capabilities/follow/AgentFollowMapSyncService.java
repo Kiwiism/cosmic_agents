@@ -1,7 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.follow;
 
 import client.Character;
 import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;

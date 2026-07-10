@@ -4138,7 +4138,7 @@ Recent reconstruction notes:
   anchor recovery, shop/move-target/farm-anchor guards, and distance multiplier
   behavior are preserved.
 - Cross-map follow synchronization now lives in
-  `server.agents.runtime.AgentFollowMapSyncService`; BotManager still supplies
+  `server.agents.capabilities.follow.AgentFollowMapSyncService`; BotManager still supplies
   temporary Cosmic ground-point, idle-ground, change-map, and movement reset
   hooks. The same following/null/same-map guards and anchor-position grounding
   fallback are preserved.
@@ -7025,6 +7025,10 @@ Current physics correction:
   `capabilities.follow`. Runtime still wires replies, delay scheduling,
   auto-equip, potion sharing, and follow start; null/missing/self-target filters
   and delayed side-effect ordering are unchanged.
+- Capability ownership: `AgentFollowMapSyncService` now lives under
+  `capabilities.follow`; `AgentFollowMapSyncRuntime` remains the concrete hook
+  adapter. Follow gating, same-map/null-anchor skips, grounded spawn fallback,
+  idle-before-change ordering, map change, and state reset are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
