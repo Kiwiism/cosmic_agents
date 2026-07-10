@@ -3314,3 +3314,8 @@ Recent capability extraction notes:
   `capabilities.recovery.AgentRecoveryTeleportCoordinator`; both live and
   movement-only tick callers now enter the recovery capability directly with
   unchanged teleport and broadcast behavior.
+- Death/recovery ownership: `AgentDeathTickRuntime` became
+  `capabilities.combat.AgentDeathTickCoordinator`, and `AgentRespawnRuntime`
+  became `capabilities.recovery.AgentRespawnCoordinator`; the central tick now
+  enters combat death policy directly and delegates recovery through its owned
+  coordinator without observable behavior changes.

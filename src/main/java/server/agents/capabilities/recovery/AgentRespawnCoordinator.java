@@ -1,22 +1,23 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.combat.AgentDeathTickService;
-
-import server.agents.capabilities.movement.AgentMovementStateResetService;
-
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
-import server.agents.capabilities.movement.AgentMovementPoseService;
+package server.agents.capabilities.recovery;
 
 import client.Character;
+import server.agents.capabilities.combat.AgentDeathTickService;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentRespawnRuntime {
-    private AgentRespawnRuntime() {
+/**
+ * Assembles map, movement, and dialogue operations for Agent respawn recovery.
+ */
+public final class AgentRespawnCoordinator {
+    private AgentRespawnCoordinator() {
     }
 
     public static void respawnNearLeader(AgentRuntimeEntry entry, Character agent, Character leader) {
-        AgentDeathTickService.respawnNearLeader(
+        respawnNearLeader(
                 entry,
                 agent,
                 leader,
@@ -30,5 +31,16 @@ public final class AgentRespawnRuntime {
                         (respawnEntry, ignoredAgent) ->
                                 AgentMovementBroadcastService.broadcastMovement(respawnEntry),
                         AgentReplyRuntime::sayMapNow));
+    }
+
+    static void respawnNearLeader(AgentRuntimeEntry entry,
+                                  Character agent,
+                                  Character leader,
+                                  AgentDeathTickService.RespawnHooks hooks) {
+        AgentDeathTickService.respawnNearLeader(
+                entry,
+                agent,
+                leader,
+                hooks);
     }
 }

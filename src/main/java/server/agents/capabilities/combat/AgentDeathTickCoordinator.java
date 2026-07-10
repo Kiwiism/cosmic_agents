@@ -1,21 +1,18 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.combat.AgentDeathTickService;
-import server.agents.capabilities.combat.AgentDeathStateRuntime;
+package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatDeathRuntime;
+import server.agents.capabilities.recovery.AgentRespawnCoordinator;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 
 /**
- * Runtime wiring for handling an Agent that is in or entering dead state.
+ * Coordinates dead-state entry and respawn handling for one Agent tick.
  */
-public final class AgentDeathTickRuntime {
-    private AgentDeathTickRuntime() {
+public final class AgentDeathTickCoordinator {
+    private AgentDeathTickCoordinator() {
     }
 
     public static boolean handleDeadTick(AgentRuntimeEntry entry, Character agent, Character leader) {
@@ -25,7 +22,7 @@ public final class AgentDeathTickRuntime {
                 () -> AgentDeathStateRuntime.shouldEnterDeadState(entry, agent.getHp()),
                 (deadEntry, deadAgent) -> AgentCombatDeathRuntime.enterDeadState(
                         deadEntry, deadAgent, false, AgentCombatConfig.cfg),
-                () -> AgentRespawnRuntime.respawnNearLeader(entry, agent, leader),
+                () -> AgentRespawnCoordinator.respawnNearLeader(entry, agent, leader),
                 System::currentTimeMillis);
     }
 
