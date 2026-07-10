@@ -24,6 +24,10 @@ public final class AgentSchedulerRuntime {
         return TimerManager.getInstance().schedule(action, delayMs);
     }
 
+    public static ScheduledFuture<?> register(Runnable action, long periodMs) {
+        return TimerManager.getInstance().register(action, periodMs);
+    }
+
     public static long randomDelayMs(int minMs, int maxMs) {
         return minMs + ThreadLocalRandom.current().nextInt(maxMs - minMs);
     }

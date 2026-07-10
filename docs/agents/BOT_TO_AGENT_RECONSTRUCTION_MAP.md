@@ -3415,3 +3415,6 @@ Recent capability extraction notes:
 - Runtime scheduler ownership: airshow phase/trail timers and navigation-overlay
   cleanup now use `AgentSchedulerRuntime.schedule`; the facade delegates to the
   same `TimerManager.schedule` operation and preserves cancellation handles.
+- Runtime scheduler ownership: lifecycle registration now uses
+  `AgentSchedulerRuntime.register` for repeating Agent ticks. `TimerManager` is
+  no longer imported outside the single scheduler facade.

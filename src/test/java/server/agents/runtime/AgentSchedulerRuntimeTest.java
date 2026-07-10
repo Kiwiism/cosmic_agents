@@ -28,6 +28,20 @@ class AgentSchedulerRuntimeTest {
     }
 
     @Test
+    void registerDelegatesRepeatingTicksToExistingTimerManager() {
+        TimerManager timer = mock(TimerManager.class);
+        ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
+        Runnable action = () -> { };
+
+        try (MockedStatic<TimerManager> timers = mockStatic(TimerManager.class)) {
+            timers.when(TimerManager::getInstance).thenReturn(timer);
+            doReturn(scheduled).when(timer).register(action, 100L);
+
+            assertSame(scheduled, AgentSchedulerRuntime.register(action, 100L));
+        }
+    }
+
+    @Test
     void randomDelayUsesLegacyInclusiveExclusiveWindow() {
         for (int i = 0; i < 100; i++) {
             long delayMs = AgentSchedulerRuntime.randomDelayMs(500, 700);

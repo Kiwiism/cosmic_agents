@@ -7491,6 +7491,9 @@ Current physics correction:
 - Runtime scheduler ownership: capability-owned airshow and navigation-overlay
   callbacks now schedule through `AgentSchedulerRuntime`. Delay values, callback
   order, TimerManager backend, and overlay cancellation behavior are unchanged.
+- Runtime scheduler ownership: repeating lifecycle ticks now register through
+  `AgentSchedulerRuntime.register`, retaining the same `TimerManager.register`
+  backend, period, callback, and cancellation handle.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

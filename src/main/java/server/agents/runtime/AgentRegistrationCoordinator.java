@@ -1,7 +1,6 @@
 package server.agents.runtime;
 
 import client.Character;
-import server.TimerManager;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
@@ -39,7 +38,7 @@ public final class AgentRegistrationCoordinator {
                 normalizeSpawnState,
                 new AgentLifecycleService.RegisterHooks(
                         AgentMovementPhysicsConfig.configuredMovementTickMs(),
-                        TimerManager.getInstance()::register,
+                        AgentSchedulerRuntime::register,
                         tickCallback,
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         defaultFormationState(),
