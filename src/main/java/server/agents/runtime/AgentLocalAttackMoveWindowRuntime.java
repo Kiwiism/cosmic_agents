@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import java.awt.Point;

@@ -3113,3 +3113,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentAnchoredFarmModeTickService` moved from generic
   runtime to `capabilities.combat`. Anchor gating, callback arguments, and
   consumed/fall-through semantics remain unchanged.
+- Capability ownership: `AgentLocalAttackMoveWindowService` moved from generic
+  runtime to `capabilities.combat`. Move-window timing bands and settle/clear
+  policy remain unchanged; runtime still supplies movement-config values.

@@ -4185,7 +4185,7 @@ Recent reconstruction notes:
   at-anchor idle/clear behavior, precise anchor target assignment, and movement
   dispatch order are preserved.
 - Local-opportunity attack movement-window timing now lives in
-  `server.agents.runtime.AgentLocalAttackMoveWindowService`; BotManager still
+  `server.agents.capabilities.combat.AgentLocalAttackMoveWindowService`; BotManager still
   passes the legacy movement distance config. The null clear behavior, 1000ms
   far window, 200ms medium window, immediate settle window, follow-mode guard,
   stop-band, and vertical-cap clearing rule are preserved.
@@ -7164,6 +7164,10 @@ Current physics correction:
 - Capability ownership: `AgentAnchoredFarmModeTickService` now lives under
   `capabilities.combat`. Missing-anchor fall-through and anchored callback/
   consumed behavior remain unchanged.
+- Capability ownership: `AgentLocalAttackMoveWindowService` now lives under
+  `capabilities.combat`. Distance bands, move-window durations, follow-mode and
+  null guards, settle thresholds, vertical cap, and cooldown clearing behavior
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
