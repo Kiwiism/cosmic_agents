@@ -77,13 +77,13 @@ with the workspace WZ and generated catalog fixtures linked read-only.
 | `AgentCatalogServiceTest` with all four generated catalog roots | PASS, 10 tests |
 | `BotMovementSimulationLabTest` | PASS, 9 tests |
 | Maven package with tests skipped | PASS |
-| Broader repository suite, including the movement simulation class | 4,251 tests; 4,248 pass, 3 known failures |
+| Broader repository suite, including the movement simulation class | PASS, 4,251 tests, 0 failures, 0 errors, 0 skipped |
 
-Known broader failures, unchanged from the branch baseline:
-
-- `CombatFormulaProviderTest.shouldScalePhysicalSkillDamageFromBaseWeaponRange`
-- `CombatFormulaProviderTest.shouldUseLuckySevenWatkScaledFormula`
-- `CombatFormulaProviderTest.shouldUseDragonRoarFormulaBeforeApplyingSkillDamage`
+The three former `CombatFormulaProviderTest` failures were stale Mockito fixtures:
+production physical-skill scaling uses `StatEffect.getDamagePercent()`, while the
+tests still stubbed the superseded `getDamage()` accessor. Updating the fixtures
+restored their intended skill percentages without changing production combat
+behavior.
 
 ## Remaining Validation Gaps
 
@@ -95,5 +95,4 @@ existing manual parity checklist before a release claim.
 
 The package reconstruction and ownership migration are complete. Automated Agent
 verification is green. Release-level behavior parity remains pending live-client
-validation, while the three broader combat-formula baseline assertions remain a
-separate repository test issue.
+validation.
