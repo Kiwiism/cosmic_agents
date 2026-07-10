@@ -1,10 +1,11 @@
-package server.agents.runtime;
+package server.agents.capabilities.recovery;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.runtime.AgentActivityStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.capabilities.combat.AgentDegenerateAttackStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;

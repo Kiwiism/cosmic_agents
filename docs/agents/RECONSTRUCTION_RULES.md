@@ -1298,7 +1298,7 @@ Recent reconstruction notes:
   cancellation, live registry removal, formation cleanup, town-cluster cleanup,
   and bot-only autopot cleanup remain behavior-equivalent.
 - Inactive-leader town-cluster anchor storage now lives in
-  `server.agents.runtime.AgentLeaderSafetyService`. BotManager keeps a
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. BotManager keeps a
   compatibility reference to the Agent-owned map while existing leader-safety
   return cleanup, town scroll clustering, and lifecycle removal semantics remain
   unchanged.
@@ -1346,42 +1346,42 @@ Recent reconstruction notes:
   creation, same-party online refresh, different-party leave, join, and HP
   update behavior are unchanged.
 - BotManager inactive-leader town-warp eligibility now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The same null-map,
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The same null-map,
   alive-monster, and different-return-map requirements are preserved; BotManager
   still owns the temporary offline/dead leader side effects and town-cluster
   movement wiring.
 - BotManager inactive-leader idle preparation now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The reset order and state
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The reset order and state
   effects are unchanged: script tasks, shop visit, mode, move target, grind
   target, degenerate attack, buff consumables, and away-safe-mode state.
 - BotManager active-leader return cleanup now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The away-safe no-op,
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The away-safe no-op,
   inactive-state clear, move-target clear, and single welcome-back announcement
   rule are unchanged; BotManager still owns the temporary town-anchor map and
   visible announcement callback.
 - BotManager inactive-leader timer gating now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The first inactive tick,
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The first inactive tick,
   returned-to-town away-safe timer start, and configured delay comparison are
   unchanged; BotManager still owns the safe-mode side effects after the gate.
 - BotManager non-town inactive safe-mode idle now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The idle-on-ground,
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The idle-on-ground,
   movement-broadcast, and returned-to-town state order is unchanged; BotManager
   still supplies the temporary physics and packet callbacks.
 - BotManager inactive-town cluster target calculation now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The formation index,
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The formation index,
   platform-edge clamp, map-bounds clamp, ground lookup, and anchor fallback
   order are unchanged; BotManager still supplies temporary formation storage and
   ground-physics callbacks.
 - BotManager inactive-town return completion state sequencing now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. No-return-map handling and
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. No-return-map handling and
   cluster movement still mark returned-to-town at the same point; BotManager
   still supplies the temporary movement reset and precise move-start callbacks.
 - BotManager inactive safe-mode entry branching now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. Preparation still runs
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. Preparation still runs
   before the town-vs-idle branch, and the town branch still returns the scroll
   result while idle returns false.
 - BotManager inactive town-scroll orchestration now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The null-map, no-return-map,
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The null-map, no-return-map,
   idle-before-scroll, return-scroll fallback, map-change grounding, cluster
   anchor, target resolution, movement reset, precise move start, and returned
   state order are unchanged; BotManager still supplies Cosmic side-effect
@@ -1390,7 +1390,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentRuntimeRegistry`. BotManager still owns the
   temporary runtime map, but the first-entry predicate is Agent-owned.
 - BotManager leader away-safe-mode entry loop now delegates to
-  `server.agents.runtime.AgentLeaderSafetyService`. The no-map skip and
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. The no-map skip and
   `town && eligible` behavior are unchanged; BotManager still supplies
   temporary runtime snapshots and safe-mode callbacks.
 - BotManager script-task start dispatch now delegates to
@@ -4297,7 +4297,7 @@ Recent reconstruction notes:
   return, profile refresh ordering, stored move-target lookup, and run-AI flag
   propagation are preserved.
 - Inactive leader tick gating now lives in
-  `server.agents.runtime.AgentLeaderSafetyService.handleInactiveLeaderTick`.
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService.handleInactiveLeaderTick`.
   BotManager keeps a temporary compatibility adapter for active-leader return
   cleanup, town-warp eligibility, and inactive safe-mode entry side effects.
   The same active/inactive classification, inactive timer delay, town policy
@@ -7172,6 +7172,11 @@ Current physics correction:
   `capabilities.recovery`. Target and out-of-bounds distance checks, grind and
   shop/move/anchor/map constraints, multiplier math, grounding fallback, and
   teleport/reset/broadcast ordering remain unchanged.
+- Capability ownership: `AgentLeaderSafetyService` now lives under
+  `capabilities.recovery`. Inactive timing, town-return eligibility, safe-mode
+  state clearing, active-leader restoration, formation-aware cluster targets,
+  return-scroll fallback, and per-leader dispatch ordering remain unchanged;
+  runtime remains the hook adapter.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.recovery.AgentLeaderSafetyService;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.supplies.AgentReturnScrollService;
 

@@ -1678,7 +1678,7 @@ Recent map updates:
   temporary hooks for airshow skip, skip-delay consumption, removed-map cleanup,
   heartbeat, pending-offer expiry, and AI cadence preparation.
 - Inactive leader tick gating moved from BotManager to
-  `server.agents.runtime.AgentLeaderSafetyService.handleInactiveLeaderTick`.
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService.handleInactiveLeaderTick`.
   BotManager now supplies temporary hooks for active-leader return cleanup,
   town-warp eligibility, and inactive safe-mode entry side effects.
 - Standalone move-target tick sequencing moved from BotManager to
@@ -1734,7 +1734,7 @@ Recent map updates:
   disconnect paths and the delete-character command now call Agent runtime
   directly, while BotManager keeps temporary compatibility delegates.
 - BotManager inactive-leader town-cluster anchor storage moved to
-  `server.agents.runtime.AgentLeaderSafetyService`. BotManager now references
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`. BotManager now references
   the Agent-owned map while lifecycle cleanup and return clustering keep the
   same behavior.
 - Bot autopot/potion retry request routing moved from BotManager to
@@ -1773,36 +1773,36 @@ Recent map updates:
   command plus Messenger respawn paths now use the Agent runtime service
   directly.
 - BotManager inactive-leader town-warp eligibility moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager still owns the
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager still owns the
   temporary offline/dead leader side effects, return-scroll execution, and town
   cluster target wiring.
 - BotManager inactive-leader idle preparation sequence moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary callbacks for script-task clearing, shop cancellation, and mode
   clearing.
 - BotManager active-leader return cleanup and single-representative welcome-back
-  rule moved to `server.agents.runtime.AgentLeaderSafetyService`; BotManager
+  rule moved to `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager
   only supplies temporary callbacks for move-target clearing, town-cluster anchor
   removal, and party-visible return announcement.
 - BotManager inactive-leader timer gate moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager still performs
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager still performs
   the temporary safe-mode entry side effects once the Agent-owned gate says the
   delay has elapsed.
 - BotManager non-town inactive safe-mode idle sequence moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary physics and movement-broadcast callbacks.
 - BotManager inactive-town cluster target calculation moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary leader-entry snapshots, formation state, edge-inset config, and
   ground-point lookup.
 - BotManager inactive-town return completion state sequencing moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary movement reset and precise move-start callbacks.
 - BotManager inactive safe-mode entry branching moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary prepare, town-scroll, and in-place idle callbacks.
 - BotManager inactive town-scroll orchestration moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary Cosmic callbacks for current map, return-scroll use, map changing,
   map-change grounding, town-cluster anchor storage, target resolution, movement
   reset, and precise move start.
@@ -1810,7 +1810,7 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeRegistry`; BotManager only supplies the
   temporary runtime map.
 - BotManager leader away-safe-mode entry loop moved to
-  `server.agents.runtime.AgentLeaderSafetyService`; BotManager only supplies
+  `server.agents.capabilities.recovery.AgentLeaderSafetyService`; BotManager only supplies
   temporary entry snapshots, map-presence checks, town eligibility, and
   safe-mode entry callbacks.
 - BotManager script task completion rules moved to
@@ -3119,3 +3119,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentRecoveryTeleportService` moved from generic
   runtime to `capabilities.recovery`. Recovery gates, distance/multiplier math,
   grounding fallback, and teleport/reset/broadcast ordering remain unchanged.
+- Capability ownership: `AgentLeaderSafetyService` moved from generic runtime
+  to `capabilities.recovery`. Inactive-leader timing and safe-mode policy,
+  town-return and clustering behavior, active-leader restoration, and callback
+  ordering remain unchanged.

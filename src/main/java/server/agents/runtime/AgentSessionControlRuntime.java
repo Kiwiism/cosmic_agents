@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.recovery.AgentLeaderSafetyService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 
