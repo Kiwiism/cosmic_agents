@@ -87,6 +87,7 @@ import server.maps.MapItem;
 import server.maps.MapleMap;
 import server.maps.Rope;
 import testutil.Items;
+import java.util.concurrent.ScheduledFuture;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -183,9 +184,10 @@ class BotManagerTest {
         bots.put(owner.getId(), List.of(observerEntry));
 
         TimerManager inlineTimer = mock(TimerManager.class);
+        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         when(inlineTimer.schedule(any(Runnable.class), anyLong())).thenAnswer(inv -> {
             ((Runnable) inv.getArgument(0)).run();
-            return null;
+            return scheduledFuture;
         });
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class);
              MockedStatic<TimerManager> timer = mockStatic(TimerManager.class)) {

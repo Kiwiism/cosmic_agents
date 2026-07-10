@@ -97,7 +97,11 @@ class AgentChatTransferFlowTest {
         assertEquals("name:orange potion", found.category());
         assertTrue(found.reply().contains("2 orange potion"));
         assertEquals(AgentChatTransferFlow.TransferResultAction.REPLY, missing.action());
-        assertTrue(missing.reply().contains("orange potion"));
+        var possibleReplies = AgentDialogueCatalog.noItemsReplies().stream()
+                .map(template -> AgentInventoryDialogueReporter.noItemsReply(
+                        "name:orange potion", java.util.List.of(template)))
+                .toList();
+        assertTrue(possibleReplies.contains(missing.reply()));
     }
 
     @Test

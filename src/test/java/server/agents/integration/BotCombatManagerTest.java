@@ -96,6 +96,7 @@ import java.util.Map;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1826,10 +1827,14 @@ class BotCombatManagerTest {
     }
 
     private static void runWithStubbedBotAfter(Runnable action) {
+        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      Mockito.mockStatic(AgentSchedulerRuntime.class, Mockito.CALLS_REAL_METHODS)) {
             scheduler.when(() -> AgentSchedulerRuntime.afterDelay(anyLong(), any(Runnable.class)))
-                    .thenAnswer(invocation -> null);
+                    .thenAnswer(invocation -> scheduledFuture);
+            scheduler.when(() -> AgentSchedulerRuntime.afterDelay(
+                            any(AgentRuntimeEntry.class), anyLong(), any(Runnable.class)))
+                    .thenAnswer(invocation -> scheduledFuture);
             action.run();
         }
     }

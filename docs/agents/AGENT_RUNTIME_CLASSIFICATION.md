@@ -20,6 +20,8 @@ Classifications:
 
 | Runtime class | Classification | Responsibility and retention reason |
 | --- | --- | --- |
+| `AgentActionMailbox` | `RUNTIME_STATE` | Stores bounded FIFO external actions for one live Agent session. |
+| `AgentBoundedExecutorFactory` | `RUNTIME_SERVICE` | Creates bounded daemon executors for Agent-owned background work. |
 | `AgentChatOrchestratorContext` | `RUNTIME_ADAPTER` | Adapts one live runtime entry to the dialogue orchestrator callback contract. |
 | `AgentCommonTickRuntime` | `RUNTIME_ADAPTER` | Wires common-tick service hooks to capability and integration implementations. |
 | `AgentCommonTickService` | `RUNTIME_SERVICE` | Preserves ordered execution of systems shared by every live Agent tick. |
@@ -38,6 +40,8 @@ Classifications:
 | `AgentLiveTickContextService` | `RUNTIME_SERVICE` | Validates and assembles immutable inputs for one live tick. |
 | `AgentLiveTickGateRuntime` | `RUNTIME_ADAPTER` | Wires live tick gates to capability implementations and instrumentation. |
 | `AgentLiveTickGateService` | `RUNTIME_SERVICE` | Applies trade, idle, and map-change gates before active mode execution. |
+| `AgentMailboxAction` | `RUNTIME_STATE` | Immutable action contract consumed by a live session mailbox. |
+| `AgentMailboxRuntime` | `RUNTIME_ADAPTER` | Exposes mailbox submission, bounded draining, and lifecycle closure for live entries. |
 | `AgentMapTransitionRuntime` | `RUNTIME_ADAPTER` | Connects tracked map transitions to grounding and movement reset capabilities. |
 | `AgentModeService` | `RUNTIME_SERVICE` | Coordinates mutually exclusive follow, grind, move, farm, and patrol runtime modes. |
 | `AgentModeState` | `RUNTIME_STATE` | Stores cross-capability active mode and follow-target identity. |
@@ -53,7 +57,10 @@ Classifications:
 | `AgentRuntimeIdentityState` | `RUNTIME_STATE` | Stores the live Agent character and current leader reference. |
 | `AgentRuntimeRegistry` | `RUNTIME_STATE` | Owns active session registration and leader/Agent lookup indexes. |
 | `AgentScheduledTaskRuntime` | `RUNTIME_ADAPTER` | Exposes scheduled-task cancellation on a live runtime entry. |
+| `AgentScheduledTaskScope` | `RUNTIME_STATE` | Tracks and cancels delayed callbacks belonging to one live session generation. |
 | `AgentScheduledTaskState` | `RUNTIME_STATE` | Stores and cancels the scheduled tick handle for one session. |
+| `AgentSchedulerConfig` | `RUNTIME_STATE` | Reads central scheduler feature flags, cadence, caps, and slow-tick thresholds. |
+| `AgentSchedulerMode` | `RUNTIME_STATE` | Identifies legacy per-Agent and optional central scheduling modes. |
 | `AgentSchedulerRuntime` | `RUNTIME_SERVICE` | Shared delayed-callback facade preserving existing random delay behavior. |
 | `AgentSession` | `RUNTIME_STATE` | Stable public session identity contract for future entry-state replacement. |
 | `AgentSessionControlRuntime` | `RUNTIME_ADAPTER` | Adapts session registry and leader-safety services for session command coordination. |
@@ -73,7 +80,8 @@ Classifications:
 | `AgentTickPreflightRuntime` | `RUNTIME_ADAPTER` | Wires preflight checks to identity, lifecycle, and heartbeat integrations. |
 | `AgentTickPreflightService` | `RUNTIME_SERVICE` | Validates session/character readiness and determines AI cadence eligibility. |
 | `AgentTickRuntime` | `LEGITIMATE_RUNTIME_ORCHESTRATION` | Public callback target connecting scheduled sessions to the core tick runtime. |
-| `AgentTickScheduler` | `RUNTIME_SERVICE` | Scheduling contract used by lifecycle registration. |
+| `AgentTickScheduler` | `RUNTIME_SERVICE` | Optional central due-time dispatcher with stable ordering and isolated Agent updates. |
+| `AgentTickSchedulingService` | `RUNTIME_SERVICE` | Selects legacy or central tick registration without changing lifecycle callers. |
 | `AgentTickState` | `RUNTIME_STATE` | Stores tick timestamps, heartbeat, follow-idle, and cadence counters. |
 | `AgentTickStateRuntime` | `RUNTIME_ADAPTER` | Exposes tick state held by the live runtime entry. |
 | `AgentTrackedMapChangeTickService` | `RUNTIME_SERVICE` | Detects map changes and dispatches the runtime map-transition handler once. |
