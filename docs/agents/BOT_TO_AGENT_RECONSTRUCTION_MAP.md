@@ -100,8 +100,8 @@ Recent map updates:
   `server.agents.integration` only for the offline/AFK return actions that
   still schedule timers, emit replies, or change the live Agent character
   expression.
-- `AgentPendingActionStateRuntime` has moved from `server.agents.integration`
-  to `server.agents.runtime`. It only reads/writes pending action fields on
+- `AgentPendingActionStateRuntime` now lives in
+  `server.agents.capabilities.dialogue`. It only reads/writes pending action fields on
   `AgentRuntimeEntry`; pending-action decision handling and reply/transfer side
   effects remain in integration adapters for later slices.
 - `AgentTickStateRuntime`, `AgentTickCadenceStateRuntime`, and
@@ -894,7 +894,7 @@ Recent map updates:
   `server.agents.commands.AgentMessageQueueStateRuntime`. The queue
   remains owned by `server.agents.commands.AgentMessageQueueState`.
 - `BotEntry` pending chat action wrapper methods were removed after callers
-  moved to `server.agents.integration.AgentPendingActionStateRuntime`.
+  moved to `server.agents.capabilities.dialogue.AgentPendingActionStateRuntime`.
   `AgentPendingActionState` remains the Agent-owned mutable state object.
 - `BotEntry` live character identity ownership moved to
   `server.agents.runtime.AgentRuntimeIdentityState`. The temporary shell keeps
@@ -3223,3 +3223,6 @@ Recent capability extraction notes:
   `AgentReplyChannelStateRuntime` moved from generic runtime to `commands`;
   locking, queue order, sending flags, idle checks, and channel defaults remain
   unchanged.
+- Dialogue state adapter ownership: `AgentPendingActionStateRuntime` moved from
+  generic runtime to `capabilities.dialogue`; pending action/drop-category
+  reads, writes, and independent clears remain unchanged.

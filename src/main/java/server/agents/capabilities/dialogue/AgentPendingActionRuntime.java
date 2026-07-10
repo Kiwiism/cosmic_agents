@@ -7,7 +7,6 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionRuntime;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
-import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

@@ -27,11 +27,12 @@ Recent reconstruction notes:
   command routing, pending actions, supply/social/control/build/transfer/report
   callbacks, and job advancement behavior are unchanged.
 - `AgentStatusStateRuntime` now holds status/AFK/gear-suggestion state adapter
-  builders in `server.agents.runtime`. `AgentStatusRuntime` stays in
+  builders in `server.agents.capabilities.dialogue`. `AgentStatusRuntime` stays in
   `server.agents.integration` for live side effects only: delayed scheduling,
   party/reply emission, map-name reads, and face-expression changes.
-- `AgentPendingActionStateRuntime` moved to `server.agents.runtime` because it
-  is pure live-session state access. Pending-action callbacks, transfer
+- `AgentPendingActionStateRuntime` moved to
+  `server.agents.capabilities.dialogue` because it is pure dialogue state
+  access. Pending-action callbacks, transfer
   decisions, replies, and session side effects stay in integration until those
   behavior slices are split.
 - Tick state adapters moved to `server.agents.runtime`:
@@ -7289,6 +7290,9 @@ Current physics correction:
   `AgentReplyChannelStateRuntime` now live under `server.agents.commands`.
   Queue locking/order/sending semantics and reply-channel defaults remain
   unchanged.
+- Dialogue state adapter ownership: `AgentPendingActionStateRuntime` now lives
+  under `capabilities.dialogue`. Pending action and drop-category state
+  semantics remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

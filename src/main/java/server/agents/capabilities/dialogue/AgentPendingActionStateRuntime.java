@@ -1,4 +1,6 @@
-package server.agents.runtime;
+package server.agents.capabilities.dialogue;
+
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned pending-action state adapter.

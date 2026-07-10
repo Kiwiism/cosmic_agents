@@ -75,7 +75,7 @@ import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
-import server.agents.runtime.AgentPendingActionStateRuntime;
+import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.StatEffect;

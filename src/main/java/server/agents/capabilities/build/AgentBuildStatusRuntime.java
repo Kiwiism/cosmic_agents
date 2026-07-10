@@ -6,7 +6,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentPendingActionStateRuntime;
+import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.dialogue.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;

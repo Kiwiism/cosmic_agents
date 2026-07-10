@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import client.Character;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;

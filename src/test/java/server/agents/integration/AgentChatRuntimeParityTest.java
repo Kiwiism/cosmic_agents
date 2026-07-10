@@ -31,7 +31,7 @@ import server.agents.capabilities.combat.AgentBuffStateRuntime;
 import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
-import server.agents.runtime.AgentPendingActionStateRuntime;
+import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.capabilities.dialogue.AgentTradeDialogueClassifier;
 import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
 import server.agents.commands.AgentQueuedMessage;

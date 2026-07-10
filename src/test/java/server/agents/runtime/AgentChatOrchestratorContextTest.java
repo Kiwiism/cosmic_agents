@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
