@@ -40,7 +40,7 @@ import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
 import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.runtime.AgentFormationRuntime;
+import server.agents.capabilities.movement.AgentFormationRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.maps.MapleMap;
 import server.maps.Rope;

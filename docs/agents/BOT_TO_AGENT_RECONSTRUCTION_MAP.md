@@ -1395,7 +1395,7 @@ Recent map updates:
   runtime owns pending-offer, recruit, transfer, formation, dismiss, targeted,
   and untargeted chat routing hook construction.
 - Formation state helper wiring moved from BotManager to
-  `server.agents.runtime.AgentFormationRuntime`. BotManager now delegates
+  `server.agents.capabilities.movement.AgentFormationRuntime`. BotManager now delegates
   default formation creation, state lookup, and state update/offset application
   for compatibility harness callers.
 - The temporary BotManager grind-mode adapter method was removed; tick-core
@@ -3046,3 +3046,6 @@ Recent capability extraction notes:
   runtime to `capabilities.movement`. Command matching, legacy aliases,
   help/status text, snap handling, formation mutation, offset application, and
   reply routing remain unchanged.
+- Capability ownership: `AgentFormationRuntime` moved from generic runtime to
+  `capabilities.movement`. Default formation construction, state lookup/write,
+  null-leader behavior, and offset application remain unchanged.

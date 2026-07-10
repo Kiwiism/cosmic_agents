@@ -1,9 +1,8 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 

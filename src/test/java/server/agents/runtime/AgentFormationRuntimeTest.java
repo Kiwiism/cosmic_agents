@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentFormationRuntime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeEntry;

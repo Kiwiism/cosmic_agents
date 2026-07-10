@@ -4426,7 +4426,7 @@ Recent reconstruction notes:
   dispatch, owner-command recording, LLM fallback, group supply routing, and
   broadcast-to-all untargeted routing.
 - Formation default state, state lookup, and state update/apply helpers now
-  live in `server.agents.runtime.AgentFormationRuntime`. BotManager keeps only
+  live in `server.agents.capabilities.movement.AgentFormationRuntime`. BotManager keeps only
   package-visible compatibility methods for the movement simulation harness and
   delegates target-snapshot/default formation needs to Agent runtime.
 - The remaining BotManager grind-mode adapter method was removed. Tick-core
@@ -7088,6 +7088,10 @@ Current physics correction:
   snap parsing, state writes, offset application, and first-entry/leader reply
   selection are unchanged; `AgentFormationCommandRuntime` remains the wiring
   adapter.
+- Capability ownership: `AgentFormationRuntime` now lives under
+  `capabilities.movement`. Configured default construction, entry/leader state
+  lookup, null-leader handling, state publication, and offset application are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
