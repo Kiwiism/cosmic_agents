@@ -207,7 +207,7 @@ class AgentLifecycleServiceTest {
                         (leaderId, leader, agent) -> {
                             throw new AssertionError("should not register agent");
                         },
-                        (delayMs, action) -> {
+                        (entry, delayMs, action) -> {
                             throw new AssertionError("should not schedule announcement");
                         },
                         () -> 1000L,
@@ -260,7 +260,8 @@ class AgentLifecycleServiceTest {
                             registeredEntry.set(entry);
                             return entry;
                         },
-                        (delayMs, action) -> {
+                        (entry, delayMs, action) -> {
+                            assertSame(registeredEntry.get(), entry);
                             assertEquals(1000L, delayMs);
                             delayedAction.set(action);
                         },
@@ -296,7 +297,7 @@ class AgentLifecycleServiceTest {
                         (leaderId, leader, agent) -> {
                             throw new AssertionError("should not register after load failure");
                         },
-                        (delayMs, action) -> {
+                        (entry, delayMs, action) -> {
                             throw new AssertionError("should not schedule announcement");
                         },
                         () -> 1000L,

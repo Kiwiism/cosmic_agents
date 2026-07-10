@@ -44,9 +44,9 @@ class AgentMovementRuntimeTest {
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands =
                      mockStatic(AgentMovementCommandRuntime.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(1000), eq(1500), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(1000), eq(1500), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
@@ -85,14 +85,14 @@ class AgentMovementRuntimeTest {
              MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands =
                      mockStatic(AgentMovementCommandRuntime.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(1500), eq(2000), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(1500), eq(2000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(250), eq(750), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(250), eq(750), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
@@ -118,9 +118,9 @@ class AgentMovementRuntimeTest {
              MockedStatic<AgentFidgetService> fidgets = mockStatic(AgentFidgetService.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentMovementStatusRuntime> status = mockStatic(AgentMovementStatusRuntime.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 

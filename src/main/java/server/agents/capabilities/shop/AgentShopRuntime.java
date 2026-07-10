@@ -22,6 +22,11 @@ public final class AgentShopRuntime {
         AgentReplyRuntime.sayMapNow(bot, message);
     }
 
+    public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {
+        AgentSchedulerRuntime.afterDelay(entry, delayMs, action);
+    }
+
+    @Deprecated(forRemoval = true)
     public static void afterDelay(long delayMs, Runnable action) {
         AgentSchedulerRuntime.afterDelay(delayMs, action);
     }

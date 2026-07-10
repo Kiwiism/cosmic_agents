@@ -127,7 +127,7 @@ public final class AgentReplyRuntime {
 
             @Override
             public void scheduleNext(Runnable task, int delayMs) {
-                AgentSchedulerRuntime.afterDelay(delayMs, task);
+                AgentSchedulerRuntime.afterDelay(entry, delayMs, task);
             }
         };
     }

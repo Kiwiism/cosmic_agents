@@ -21,6 +21,7 @@ class AgentLifecycleStatusCoordinatorTest {
             AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(entry, agent, 1234L);
 
             scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(
+                    org.mockito.ArgumentMatchers.eq(entry),
                     org.mockito.ArgumentMatchers.eq(1234L),
                     callback.capture()));
             callback.getValue().run();

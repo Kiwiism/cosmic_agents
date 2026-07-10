@@ -45,7 +45,7 @@ class AgentPotionServiceTest {
                     AgentPotionService.offerPotShareToOwner(entry, true));
 
             scheduler.verify(() -> AgentPotionRuntime.randomDelayMs(900, 1400));
-            scheduler.verify(() -> AgentPotionRuntime.afterDelay(eq(77L), any(Runnable.class)));
+            scheduler.verify(() -> AgentPotionRuntime.afterDelay(eq(donorEntry), eq(77L), any(Runnable.class)));
         } finally {
             bots.remove(owner.getId());
         }

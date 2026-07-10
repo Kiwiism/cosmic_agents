@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeHandle;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.List;
 import java.util.Locale;
@@ -166,6 +168,10 @@ public final class AgentLlmReplyService {
 //            reply = fallback;
 //        }
         if (reply.isEmpty()) return;
+        if (request.entry() instanceof AgentRuntimeEntry runtimeEntry
+                && !AgentSchedulerRuntime.isCurrentSession(runtimeEntry)) {
+            return;
+        }
 
         List<String> parts = splitForChat(reply, AgentLlmConfig.maxReplyMessages,
                 AgentLlmConfig.maxReplyCharsPerMessage);
@@ -176,7 +182,7 @@ public final class AgentLlmReplyService {
 
         deliverReplyParts(request.entry(), parts,
                 replyEmitter,
-                (action, delayMs) -> EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS));
+                (action, delayMs) -> scheduleFollowUp(request.entry(), action, delayMs));
 
         if (!looksLowQuality(message, reply)) {
             AgentMemoryStore.Turn turn = new AgentMemoryStore.Turn(System.currentTimeMillis(),
@@ -222,6 +228,17 @@ public final class AgentLlmReplyService {
                 || now - turns.peekFirst().ts() > maxAge)) {
             turns.removeFirst();
         }
+    }
+
+    private static void scheduleFollowUp(AgentRuntimeHandle entry, Runnable action, long delayMs) {
+        if (entry instanceof AgentRuntimeEntry runtimeEntry) {
+            AgentSchedulerRuntime.scheduleScoped(
+                    runtimeEntry,
+                    action,
+                    scopedAction -> EXEC.schedule(scopedAction, delayMs, TimeUnit.MILLISECONDS));
+            return;
+        }
+        EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS);
     }
 
     @FunctionalInterface

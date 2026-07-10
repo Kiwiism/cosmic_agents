@@ -29,7 +29,7 @@ public final class AgentChatStatusOrchestrator {
 
     public static void announceOwnerReturnedFromOffline(AgentRuntimeEntry entry) {
         AgentChatStatusRuntime.announceOfflineReturn(
-                AgentStatusRuntime.offlineReturnActions(AgentRuntimeIdentityRuntime.bot(entry)));
+                AgentStatusRuntime.offlineReturnActions(entry));
     }
 
     public static void tickAfkCheck(AgentRuntimeEntry entry, Character owner) {

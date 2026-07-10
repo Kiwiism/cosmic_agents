@@ -59,12 +59,12 @@ public final class AgentTransferService {
 
     @FunctionalInterface
     public interface AgentRegistrar {
-        void register(int leaderCharId, Character leader, Character agent);
+        AgentRuntimeEntry register(int leaderCharId, Character leader, Character agent);
     }
 
     @FunctionalInterface
     public interface DelayedActionScheduler {
-        void schedule(long delayMs, Runnable action);
+        void schedule(AgentRuntimeEntry entry, long delayMs, Runnable action);
     }
 
     @FunctionalInterface
@@ -114,8 +114,9 @@ public final class AgentTransferService {
         hooks.scheduledTaskCanceler().cancel(found);
         hooks.agentStopper().stop(found);
 
-        hooks.agentRegistrar().register(target.getId(), target, agent);
+        AgentRuntimeEntry registeredEntry = hooks.agentRegistrar().register(target.getId(), target, agent);
         hooks.delayedActionScheduler().schedule(
+                registeredEntry,
                 hooks.transferGreetingDelayMs().getAsLong(),
                 () -> hooks.agentSpeaker().say(agent, hooks.transferGreetingSupplier().get()));
         return null;

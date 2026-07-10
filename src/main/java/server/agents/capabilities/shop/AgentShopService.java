@@ -664,7 +664,7 @@ public final class AgentShopService {
     }
 
     private static void scheduleShopStep(AgentRuntimeEntry entry, long delayMs, Runnable step) {
-        AgentShopRuntime.afterDelay(delayMs, () -> {
+        AgentShopRuntime.afterDelay(entry, delayMs, () -> {
             if (!AgentShopStateRuntime.shouldRunScheduledShopStep(entry)) {
                 return;
             }

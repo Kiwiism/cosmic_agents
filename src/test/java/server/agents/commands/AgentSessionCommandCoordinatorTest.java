@@ -29,9 +29,9 @@ class AgentSessionCommandCoordinatorTest {
         try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
@@ -53,9 +53,9 @@ class AgentSessionCommandCoordinatorTest {
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             sessionControl.when(() -> AgentSessionControlRuntime.isPrimarySession(entry)).thenReturn(true);
             sessionControl.when(() -> AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(true);
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(900), eq(1100), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(900), eq(1100), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
@@ -78,9 +78,9 @@ class AgentSessionCommandCoordinatorTest {
              MockedStatic<AgentSessionControlRuntime> sessionControl = mockStatic(AgentSessionControlRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
             sessionControl.when(() -> AgentSessionControlRuntime.shouldOfferTownForAwayCommand(entry)).thenReturn(false);
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(700), eq(900), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(700), eq(900), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 

@@ -39,8 +39,11 @@ class AgentTransferServiceTest {
                         },
                         tickEntry -> calls.add("cancel"),
                         tickEntry -> calls.add("stop"),
-                        (leaderId, tickLeader, tickAgent) -> calls.add("register:" + leaderId),
-                        (delayMs, action) -> {
+                        (leaderId, tickLeader, tickAgent) -> {
+                            calls.add("register:" + leaderId);
+                            return entry;
+                        },
+                        (registeredEntry, delayMs, action) -> {
                             calls.add("delay:" + delayMs);
                             action.run();
                         },
@@ -75,8 +78,8 @@ class AgentTransferServiceTest {
                         (tickTarget, resolvedAgent) -> AgentAuthorizationResult.allowed(false),
                         tickEntry -> { },
                         tickEntry -> { },
-                        (leaderId, tickLeader, tickAgent) -> { },
-                        (delayMs, action) -> { },
+                        (leaderId, tickLeader, tickAgent) -> null,
+                        (registeredEntry, delayMs, action) -> { },
                         () -> 800L,
                         (tickAgent, text) -> { },
                         () -> "ok!"));

@@ -114,7 +114,7 @@ public final class AgentScrollReactionService {
                 }
                 long botDelayMs = AgentScrollReactionRuntime.randomDelayMs(0, PER_BOT_REACTION_JITTER_MAX_MS + 1);
                 long reactionAtMs = now + botDelayMs;
-                AgentScrollReactionRuntime.afterDelay(botDelayMs,
+                AgentScrollReactionRuntime.afterDelay(entry, botDelayMs,
                         () -> maybeReact(entry, source.getId(), success, scrollSuccessRate, reactionAtMs));
             }
         }

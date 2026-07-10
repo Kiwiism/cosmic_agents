@@ -27,7 +27,7 @@ class AgentSocialRuntimeTest {
                      mockStatic(AgentSchedulerRuntime.class)) {
             AgentSocialRuntime.socialCallbacks(entry).fame("Alice");
 
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(900), any(Runnable.class)));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(900), any(Runnable.class)));
         }
     }
 

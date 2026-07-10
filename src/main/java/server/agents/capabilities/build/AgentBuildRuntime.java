@@ -59,7 +59,8 @@ public final class AgentBuildRuntime {
         return advJob -> {
             String reply = AgentChatJobAdvancementFlow.jobChangeReply(advJob);
             AgentReplyRuntime.replyNow(entry, reply);
-            AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> AgentStarterKitService.advanceJob(entry, advJob));
+            AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100,
+                    () -> AgentStarterKitService.advanceJob(entry, advJob));
         };
     }
 

@@ -38,7 +38,7 @@ public final class AgentFollowTargetCommandService {
 
     @FunctionalInterface
     public interface DelayedActionScheduler {
-        void schedule(long delayMs, Runnable action);
+        void schedule(AgentRuntimeEntry entry, long delayMs, Runnable action);
     }
 
     @FunctionalInterface
@@ -71,7 +71,7 @@ public final class AgentFollowTargetCommandService {
                 continue;
             }
             hooks.agentReplyQueue().queue(entry, hooks.replySelector().select(target));
-            hooks.delayedActionScheduler().schedule(hooks.followDelayMs().getAsLong(), () -> {
+            hooks.delayedActionScheduler().schedule(entry, hooks.followDelayMs().getAsLong(), () -> {
                 hooks.agentAutoEquip().autoEquip(entry);
                 hooks.potionShareCheck().check(entry);
                 hooks.followStarter().start(entry, target);

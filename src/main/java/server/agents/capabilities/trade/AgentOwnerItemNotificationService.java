@@ -30,11 +30,11 @@ public final class AgentOwnerItemNotificationService {
             return;
         }
 
-        AgentSchedulerRuntime.afterDelay(0L, () -> {
-            for (AgentRuntimeEntry entry : entries) {
-                AgentOfferService.notifyOwnerGainedEquip(entry, AgentRuntimeIdentityRuntime.bot(entry), item);
-            }
-        });
+        for (AgentRuntimeEntry entry : entries) {
+            AgentSchedulerRuntime.afterDelay(entry, 0L, () ->
+                    AgentOfferService.notifyOwnerGainedEquip(
+                            entry, AgentRuntimeIdentityRuntime.bot(entry), item));
+        }
     }
 
     public static void notifyOwnerGainedTradeItem(Character recipient, Item item, Character source) {

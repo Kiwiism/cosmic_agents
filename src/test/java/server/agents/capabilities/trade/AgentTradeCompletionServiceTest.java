@@ -28,10 +28,10 @@ class AgentTradeCompletionServiceTest {
 
         try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
              MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
-            inventory.when(() -> AgentInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(900L), org.mockito.ArgumentMatchers.any(Runnable.class)))
+            inventory.when(() -> AgentInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(entry), org.mockito.ArgumentMatchers.eq(900L), org.mockito.ArgumentMatchers.any(Runnable.class)))
                     .thenAnswer(invocation -> {
                         delayedReply.set(true);
-                        invocation.<Runnable>getArgument(1).run();
+                        invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
 
@@ -61,9 +61,9 @@ class AgentTradeCompletionServiceTest {
 
         try (MockedStatic<Trade> tradeStatic = mockStatic(Trade.class);
              MockedStatic<AgentInventoryRuntime> inventory = mockStatic(AgentInventoryRuntime.class)) {
-            inventory.when(() -> AgentInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(800L), org.mockito.ArgumentMatchers.any(Runnable.class)))
+            inventory.when(() -> AgentInventoryRuntime.afterDelay(org.mockito.ArgumentMatchers.eq(entry), org.mockito.ArgumentMatchers.eq(800L), org.mockito.ArgumentMatchers.any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(1).run();
+                        invocation.<Runnable>getArgument(2).run();
                         return null;
                     });
 

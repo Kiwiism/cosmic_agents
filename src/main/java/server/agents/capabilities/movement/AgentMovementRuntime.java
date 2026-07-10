@@ -34,7 +34,7 @@ public final class AgentMovementRuntime {
                 if (dest == null) {
                     return false;
                 }
-                AgentSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 1000, 1500, () -> {
                     AgentMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentMovementCommandRuntime.farmHere(entry, dest);
                     AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
@@ -49,7 +49,7 @@ public final class AgentMovementRuntime {
                 if (ownerPos == null) {
                     return false;
                 }
-                AgentSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 1000, 1500, () -> {
                     AgentMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentMovementCommandRuntime.patrol(entry, ownerPos);
                     AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
@@ -64,7 +64,7 @@ public final class AgentMovementRuntime {
                 if (dest == null) {
                     return false;
                 }
-                AgentSchedulerRuntime.afterRandomDelay(1000, 1500, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 1000, 1500, () -> {
                     AgentMovementCommandRuntime.moveTo(entry, dest, true);
                     AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.moveHereReply());
                 });
@@ -73,24 +73,24 @@ public final class AgentMovementRuntime {
 
             @Override
             public void follow() {
-                AgentSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 1500, 2000, () -> {
                     AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.followReply());
                     AgentPotionService.checkPotShareOnModeStart(
                             entry,
                             bot(entry),
                             AgentInventoryGatewayRuntime.inventory());
-                    AgentSchedulerRuntime.afterRandomDelay(250, 750,
+                    AgentSchedulerRuntime.afterRandomDelay(entry, 250, 750,
                             () -> AgentMovementCommandRuntime.followOwner(entry));
                 });
             }
 
             @Override
             public void grind() {
-                AgentSchedulerRuntime.afterRandomDelay(1500, 2000, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 1500, 2000, () -> {
                     AgentMovementStatusRuntime.prepareMovementActiveMode(entry);
                     AgentReplyRuntime.replyNow(entry, AgentPotionService.grindStartMessage(bot(entry)));
-                    AgentSchedulerRuntime.afterRandomDelay(250, 750, () -> {
+                    AgentSchedulerRuntime.afterRandomDelay(entry, 250, 750, () -> {
                         AgentMovementCommandRuntime.grind(entry);
                         AgentMovementStatusRuntime.checkMovementStatus(entry, bot(entry));
                     });
@@ -99,17 +99,17 @@ public final class AgentMovementRuntime {
 
             @Override
             public void stop() {
-                AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentMovementCommandRuntime.stop(entry);
                     AgentActiveModeRuntime.autoEquipAndSuggestGearToSiblings(entry);
-                    AgentSchedulerRuntime.afterRandomDelay(1400, 1600, () ->
+                    AgentSchedulerRuntime.afterRandomDelay(entry, 1400, 1600, () ->
                             AgentReplyRuntime.replyNow(entry, AgentChatMovementFlow.stopReply()));
                 });
             }
 
             @Override
             public void fidget() {
-                AgentSchedulerRuntime.afterRandomDelay(250, 500, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 250, 500, () -> {
                     bot(entry).changeFaceExpression(AgentMovementStatusRuntime.randomFidgetExpression());
                     AgentFidgetService.maybeStartSocialFidget(entry);
                 });
@@ -117,7 +117,7 @@ public final class AgentMovementRuntime {
 
             @Override
             public void greeting() {
-                AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     bot(entry).changeFaceExpression(AgentEmote.HAPPY.getValue());
                     AgentFidgetService.maybeStartGreetingFidget(entry, ThreadLocalRandom.current().nextInt(100));
                     AgentReplyRuntime.queueReply(entry, AgentChatMovementFlow.greetingReply());

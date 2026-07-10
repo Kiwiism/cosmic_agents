@@ -25,9 +25,9 @@ class AgentUtilityRuntimeTest {
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentShopService> shops = mockStatic(AgentShopService.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
@@ -47,7 +47,7 @@ class AgentUtilityRuntimeTest {
             AgentUtilityRuntime.utilityCallbacks(entry).makeCrystals();
             AgentUtilityRuntime.utilityCallbacks(entry).disassembleTrash();
 
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     org.mockito.Mockito.times(2));
         }
     }
@@ -75,16 +75,16 @@ class AgentUtilityRuntimeTest {
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentTradeInviteGateway> trade = mockStatic(AgentTradeInviteGateway.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(600), eq(1000), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(600), eq(1000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
             AgentUtilityRuntime.utilityCallbacks(entry).tradeInvite();
 
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), any(String.class)));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(800), eq(1200), any(Runnable.class)));
             trade.verifyNoInteractions();
         }
     }
@@ -99,14 +99,14 @@ class AgentUtilityRuntimeTest {
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentTradeInviteGateway> trade = mockStatic(AgentTradeInviteGateway.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(600), eq(1000), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(600), eq(1000), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(800), eq(1200), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(800), eq(1200), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 

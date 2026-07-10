@@ -26,7 +26,7 @@ public final class AgentControlRuntime {
         return new AgentChatToggleFlow.ToggleCallbacks() {
             @Override
             public void setSupport(boolean enabled) {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentCombatBuffStateRuntime.setSkillBuffsEnabled(entry, enabled);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.supportReply(enabled));
                 });
@@ -34,7 +34,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setHeals(boolean enabled) {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentCombatBuffStateRuntime.setSupportHealsEnabled(entry, enabled);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.healsReply(enabled));
                 });
@@ -42,7 +42,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setBuffConsumables(boolean enabled) {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentBuffStateRuntime.setEnabled(entry, enabled);
                     AgentBuffStateRuntime.resetScan(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesReply(
@@ -52,7 +52,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setBuffConsumablesCheapMode(boolean cheapMode) {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentBuffStateRuntime.setCheapMode(entry, cheapMode);
                     AgentBuffStateRuntime.resetScan(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.buffConsumablesModeReply(cheapMode));
@@ -61,7 +61,7 @@ public final class AgentControlRuntime {
 
             @Override
             public void setProactiveOffers(boolean enabled) {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     entry.upgradeOfferState().setProactiveUpgradeOffers(enabled);
                     AgentReplyRuntime.replyNow(entry, AgentChatToggleFlow.proactiveOffersReply(enabled));
                 });
@@ -73,7 +73,7 @@ public final class AgentControlRuntime {
         return new AgentChatBuffQueryFlow.BuffQueryCallbacks() {
             @Override
             public void reportBuffList() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     String summary = AgentBuffService.getChatSummary(
                             AgentBuffStateRuntime.enabled(entry),
                             AgentBuffStateRuntime.cheapMode(entry),
@@ -85,13 +85,13 @@ public final class AgentControlRuntime {
 
             @Override
             public void reportBuffDebug() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
                         AgentChatReportOperationsRuntime.reportBuffDebug(entry, bot(entry)));
             }
 
             @Override
             public void reportSkillBuffDebug() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
                         AgentChatReportOperationsRuntime.reportSkillBuffDebug(entry, bot(entry)));
             }
         };
@@ -101,13 +101,13 @@ public final class AgentControlRuntime {
         return new AgentChatRespecFlow.RespecCallbacks() {
             @Override
             public void respecAp() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
                         AgentReplyRuntime.replyNow(entry, AgentBuildService.respecAp(entry, bot(entry))));
             }
 
             @Override
             public void respecSp() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
                         AgentReplyRuntime.replyNow(entry, AgentBuildService.respecSp(entry, bot(entry))));
             }
         };

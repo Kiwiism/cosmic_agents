@@ -81,7 +81,7 @@ class AgentOfferServiceTest {
         try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             assertTrue(AgentOfferService.handlePendingOfferResponse(entry, owner, "yes"));
 
-            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), action.capture()));
             action.getValue().run();
             offers.verify(() -> AgentOfferRuntime.replyNow(entry, "ty! inv me?"));
         }
@@ -100,7 +100,7 @@ class AgentOfferServiceTest {
         try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             assertTrue(AgentOfferService.handlePendingOfferResponse(entry, owner, "no"));
 
-            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), action.capture()));
             action.getValue().run();
             offers.verify(() -> AgentOfferRuntime.replyNow(entry, "ok, keeping it for now"));
         }
@@ -121,7 +121,7 @@ class AgentOfferServiceTest {
         try (MockedStatic<AgentOfferRuntime> offers = mockStatic(AgentOfferRuntime.class)) {
             assertTrue(AgentOfferService.handlePendingOfferResponse(entry, speaker, "no"));
 
-            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(400), eq(600), action.capture()));
+            offers.verify(() -> AgentOfferRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), action.capture()));
             action.getValue().run();
             offers.verify(() -> AgentOfferRuntime.sayMapNow(bot, "ok, keeping it for now"));
         }

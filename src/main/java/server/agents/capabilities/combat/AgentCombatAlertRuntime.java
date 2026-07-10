@@ -24,7 +24,7 @@ public final class AgentCombatAlertRuntime {
         }
         AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, true);
         long delay = Math.max(50L, AgentCombatCooldownStateRuntime.alertedUntilMs(entry) - System.currentTimeMillis() + 100L);
-        AgentCombatRuntime.afterDelay(delay, () -> {
+        AgentCombatRuntime.afterDelay(entry, delay, () -> {
             long now = System.currentTimeMillis();
             if (now < AgentCombatCooldownStateRuntime.alertedUntilMs(entry)) {
                 AgentCombatCooldownStateRuntime.setAlertResetScheduled(entry, false);

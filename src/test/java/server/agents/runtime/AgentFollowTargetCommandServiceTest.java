@@ -91,7 +91,7 @@ class AgentFollowTargetCommandServiceTest {
                 followTarget -> "ok",
                 (entry, reply) -> calls.add("reply:" + entry.bot().getName() + ":" + reply),
                 () -> 500L,
-                (delayMs, action) -> {
+                (entry, delayMs, action) -> {
                     calls.add("delay:" + delayMs);
                     action.run();
                 },

@@ -175,7 +175,7 @@ public final class AgentOfferService {
 
         long scheduledAt = now + Math.max(0L, delayMs);
         AgentOfferStateRuntime.reserveGearPrompt(entry, scheduledAt);
-        AgentOfferRuntime.afterDelay(delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
+        AgentOfferRuntime.afterDelay(entry, delayMs, () -> promptLootOfferAfterLoot(entry, bot, item, recipient.getId(), scheduledAt));
     }
 
     public static boolean handlePendingOfferResponse(AgentRuntimeEntry entry, Character speaker, String message) {
@@ -189,13 +189,13 @@ public final class AgentOfferService {
         if (POSITIVE_CONFIRM_PATTERN.matcher(message).find()) {
             if (AgentOfferStateRuntime.pendingLootOfferBotRequesting(entry)) {
                 clearPendingOffer(entry);
-                AgentOfferRuntime.afterRandomDelay(400, 600, () ->
+                AgentOfferRuntime.afterRandomDelay(entry, 400, 600, () ->
                         AgentOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerOwnerRequestingTradeReply()));
             } else {
                 Item item = AgentOfferStateRuntime.pendingLootOfferItem(entry);
                 AgentPendingActionStateRuntime.clearPendingDropCategory(entry);
                 AgentOfferStateRuntime.clearPendingOfferForAcceptedTransfer(entry);
-                AgentOfferRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentOfferRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentOfferStateRuntime.clearPendingOfferItem(entry);
                     AgentInventoryTransferService.startTradeTransfer(
                             item, speaker, entry, AgentRuntimeIdentityRuntime.bot(entry));
@@ -205,7 +205,7 @@ public final class AgentOfferService {
         }
         if (NEGATIVE_CONFIRM_PATTERN.matcher(message).find()) {
             clearPendingOffer(entry);
-            AgentOfferRuntime.afterRandomDelay(400, 600, () -> {
+            AgentOfferRuntime.afterRandomDelay(entry, 400, 600, () -> {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && speaker.getId() == owner.getId()) {
                     AgentOfferRuntime.replyNow(entry, AgentDialogueCatalog.offerKeepItemReply());
@@ -299,7 +299,7 @@ public final class AgentOfferService {
             return;
         }
         long replyDelayMs = promptDelayMs + AgentOfferRuntime.randomDelayMs(1800, 2200);
-        AgentOfferRuntime.afterDelay(replyDelayMs, () -> autoAcceptLootOffer(entry, recipient));
+        AgentOfferRuntime.afterDelay(entry, replyDelayMs, () -> autoAcceptLootOffer(entry, recipient));
     }
 
     private static void autoAcceptLootOffer(AgentRuntimeEntry entry, Character recipientBot) {

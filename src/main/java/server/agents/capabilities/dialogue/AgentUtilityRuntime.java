@@ -29,9 +29,9 @@ public final class AgentUtilityRuntime {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 if (owner != null && bot.getTrade() == null && owner.getTrade() == null
                         && AgentPendingTradeStateRuntime.isIdle(entry)) {
-                    AgentSchedulerRuntime.afterRandomDelay(600, 1000, () -> {
+                    AgentSchedulerRuntime.afterRandomDelay(entry, 600, 1000, () -> {
                         AgentReplyRuntime.replyNow(entry, AgentChatUtilityFlow.tradeInviteReply());
-                        AgentSchedulerRuntime.afterRandomDelay(800, 1200, () -> {
+                        AgentSchedulerRuntime.afterRandomDelay(entry, 800, 1200, () -> {
                             AgentTradeInviteGateway.startAndInvite(bot, owner);
                         });
                     });
@@ -41,20 +41,20 @@ public final class AgentUtilityRuntime {
             @Override
             public void sellTrash() {
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-                AgentSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
                         () -> AgentShopService.requestSellTrashVisit(
                                 entry, bot, AgentInventoryGatewayRuntime.inventory()));
             }
 
             @Override
             public void makeCrystals() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
                         () -> AgentMakerService.handleMakeCrystals(entry, AgentInventoryGatewayRuntime.inventory()));
             }
 
             @Override
             public void disassembleTrash() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700,
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
                         () -> AgentMakerService.handleDisassembleTrash(entry, AgentInventoryGatewayRuntime.inventory()));
             }
         };

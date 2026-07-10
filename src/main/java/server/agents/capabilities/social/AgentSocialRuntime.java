@@ -20,7 +20,7 @@ public final class AgentSocialRuntime {
 
     public static AgentChatSocialFlow.SocialCallbacks socialCallbacks(AgentRuntimeEntry entry) {
         return targetName -> AgentSchedulerRuntime.afterRandomDelay(
-                500, 900, () -> handleFameCommand(entry, targetName));
+                entry, 500, 900, () -> handleFameCommand(entry, targetName));
     }
 
     public static void handleFameCommand(AgentRuntimeEntry entry, String targetName) {

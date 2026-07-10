@@ -39,13 +39,13 @@ public final class AgentTradeCompletionService {
         long replyDelay = replyDelayMs.getAsLong();
         if (receivedSomething) {
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
-            AgentInventoryRuntime.afterDelay(replyDelay, () ->
+            AgentInventoryRuntime.afterDelay(entry, replyDelay, () ->
                     AgentInventoryRuntime.visibleSayNow(entry, thanksReply.get()));
         } else if (freebieRoll.getAsInt() < 20) {
             agent.changeFaceExpression(glareExpression.getAsBoolean()
                     ? AgentEmote.GLARE.getValue()
                     : AgentEmote.ANNOYED.getValue());
-            AgentInventoryRuntime.afterDelay(replyDelay, () ->
+            AgentInventoryRuntime.afterDelay(entry, replyDelay, () ->
                     AgentInventoryRuntime.visibleSayNow(entry, freebieReply.get()));
         }
     }

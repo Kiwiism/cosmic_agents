@@ -36,7 +36,8 @@ public final class AgentChatReportOperationsRuntime {
 
     public static AgentChatReportFlow.ReportCallbacks reportCallbacks(AgentRuntimeEntry entry) {
         return AgentChatReportRuntime.reportCallbacks(
-                AgentSchedulerRuntime::afterRandomDelay,
+                (minMs, maxMs, action) ->
+                        AgentSchedulerRuntime.afterRandomDelay(entry, minMs, maxMs, action),
                 reportOperations(entry));
     }
 

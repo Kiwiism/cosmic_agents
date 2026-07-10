@@ -13,10 +13,20 @@ public final class AgentMakerRuntime {
         AgentReplyRuntime.replyNow(entry, message);
     }
 
+    public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {
+        AgentSchedulerRuntime.afterDelay(entry, delayMs, action);
+    }
+
+    public static void afterRandomDelay(AgentRuntimeEntry entry, int minMs, int maxMs, Runnable action) {
+        AgentSchedulerRuntime.afterRandomDelay(entry, minMs, maxMs, action);
+    }
+
+    @Deprecated(forRemoval = true)
     public static void afterDelay(long delayMs, Runnable action) {
         AgentSchedulerRuntime.afterDelay(delayMs, action);
     }
 
+    @Deprecated(forRemoval = true)
     public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
         AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
     }

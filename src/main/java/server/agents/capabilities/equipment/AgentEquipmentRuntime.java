@@ -32,14 +32,14 @@ public final class AgentEquipmentRuntime {
                 if (slots.length == 0) {
                     return false;
                 }
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () ->
                         AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipSlot(bot(entry), slots)));
                 return true;
             }
 
             @Override
             public void unequipAll() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700, () -> {
                     AgentMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentEquipmentService.unequipAll(bot(entry)));
                 });
@@ -47,7 +47,7 @@ public final class AgentEquipmentRuntime {
 
             @Override
             public void autoEquipDebug() {
-                AgentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, () -> {
                     List<String> lines = AgentEquipmentService.autoEquipDebug(bot(entry));
                     for (String line : lines) {
                         AgentReplyRuntime.replyNow(entry, line);
@@ -57,7 +57,7 @@ public final class AgentEquipmentRuntime {
 
             @Override
             public void autoEquip() {
-                AgentSchedulerRuntime.afterRandomDelay(400, 600, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, () -> {
                     AgentEquipmentService.autoEquip(
                             bot(entry),
                             AgentRuntimeIdentityRuntime.owner(entry),

@@ -26,7 +26,7 @@ class AgentControlRuntimeTest {
             callbacks.setBuffConsumablesCheapMode(false);
             callbacks.setProactiveOffers(false);
 
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     times(5));
         }
     }
@@ -42,7 +42,7 @@ class AgentControlRuntimeTest {
             callbacks.reportBuffDebug();
             callbacks.reportSkillBuffDebug();
 
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     times(3));
         }
     }
@@ -57,7 +57,7 @@ class AgentControlRuntimeTest {
             callbacks.respecAp();
             callbacks.respecSp();
 
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     times(2));
         }
     }

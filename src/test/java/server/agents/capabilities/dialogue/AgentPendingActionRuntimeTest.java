@@ -46,9 +46,9 @@ class AgentPendingActionRuntimeTest {
         try (MockedStatic<AgentSchedulerRuntime> scheduler =
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentInventoryTransferService> inventory = mockStatic(AgentInventoryTransferService.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 
@@ -66,9 +66,9 @@ class AgentPendingActionRuntimeTest {
                      mockStatic(AgentSchedulerRuntime.class);
              MockedStatic<AgentReplyRuntime> replies =
                      mockStatic(AgentReplyRuntime.class)) {
-            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)))
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), any(Runnable.class)))
                     .thenAnswer(invocation -> {
-                        invocation.<Runnable>getArgument(2).run();
+                        invocation.<Runnable>getArgument(3).run();
                         return null;
                     });
 

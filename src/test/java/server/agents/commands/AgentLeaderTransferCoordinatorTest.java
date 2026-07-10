@@ -23,8 +23,7 @@ class AgentLeaderTransferCoordinatorTest {
                 "PlayerB",
                 entry -> {
                 },
-                (leaderId, leader, agent) -> {
-                });
+                (leaderId, leader, agent) -> null);
 
         assertEquals("You have no bots.", result);
     }

@@ -53,14 +53,14 @@ public final class AgentPendingActionRuntime {
 
             @Override
             public void executeItemChoice(String category, boolean trade) {
-                AgentSchedulerRuntime.afterRandomDelay(400, 600,
+                AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600,
                         () -> AgentInventoryTransferService.executeChoice(
                                 category, trade, entry, AgentRuntimeIdentityRuntime.bot(entry)));
             }
 
             @Override
             public void cancelItemChoice() {
-                AgentSchedulerRuntime.afterRandomDelay(400, 600,
+                AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600,
                         () -> AgentReplyRuntime.replyNow(
                                 entry,
                                 AgentPendingChatActionFlow.keepDropChoiceReply()));
@@ -85,7 +85,7 @@ public final class AgentPendingActionRuntime {
             @Override
             public void cancelPendingAction(boolean dropAction) {
                 String cancelMsg = AgentPendingChatActionFlow.pendingActionCancelReply(dropAction);
-                AgentSchedulerRuntime.afterRandomDelay(700, 900,
+                AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900,
                         () -> AgentReplyRuntime.replyNow(entry, cancelMsg));
             }
         };

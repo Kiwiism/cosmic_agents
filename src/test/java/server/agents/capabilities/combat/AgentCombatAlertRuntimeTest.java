@@ -22,6 +22,7 @@ class AgentCombatAlertRuntimeTest {
 
             assertTrue(AgentCombatCooldownStateRuntime.alertResetScheduled(entry));
             scheduler.verify(() -> AgentCombatRuntime.afterDelay(
+                    org.mockito.ArgumentMatchers.eq(entry),
                     longThat(delay -> delay >= 50L && delay <= 5200L),
                     any(Runnable.class)));
         }

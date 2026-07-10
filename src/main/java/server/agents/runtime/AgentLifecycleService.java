@@ -94,7 +94,7 @@ public final class AgentLifecycleService {
                                BiFunction<MapleMap, Point, Point> resolveSpawnPosition,
                                OfflineAgentLoader loadOfflineAgent,
                                RegisterSpawnedAgent registerSpawnedAgent,
-                               DelayedActionScheduler delayedActionScheduler,
+                               SessionDelayedActionScheduler delayedActionScheduler,
                                LongSupplier returnAnnouncementDelayMs,
                                AgentMapSpeaker mapSpeaker) {
     }
@@ -107,6 +107,11 @@ public final class AgentLifecycleService {
     @FunctionalInterface
     public interface DelayedActionScheduler {
         void schedule(long delayMs, Runnable action);
+    }
+
+    @FunctionalInterface
+    public interface SessionDelayedActionScheduler {
+        void schedule(AgentRuntimeEntry entry, long delayMs, Runnable action);
     }
 
     @FunctionalInterface
@@ -265,8 +270,8 @@ public final class AgentLifecycleService {
         MapleMap map = leader.getMap();
         Point spawnPosition = hooks.resolveSpawnPosition().apply(map, leader.getPosition());
         Character agent = hooks.loadOfflineAgent().load(agentCharId, world, channel, map, spawnPosition);
-        hooks.registerSpawnedAgent().register(leaderCharId, leader, agent);
-        hooks.delayedActionScheduler().schedule(hooks.returnAnnouncementDelayMs().getAsLong(), () -> {
+        AgentRuntimeEntry entry = hooks.registerSpawnedAgent().register(leaderCharId, leader, agent);
+        hooks.delayedActionScheduler().schedule(entry, hooks.returnAnnouncementDelayMs().getAsLong(), () -> {
             hooks.mapSpeaker().say(agent, "back!!");
             agent.changeFaceExpression(AgentEmote.HAPPY.getValue());
         });

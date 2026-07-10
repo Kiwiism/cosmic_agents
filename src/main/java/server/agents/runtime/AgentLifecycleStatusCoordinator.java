@@ -15,6 +15,7 @@ public final class AgentLifecycleStatusCoordinator {
                                                 Character agent,
                                                 long delayMs) {
         AgentSchedulerRuntime.afterDelay(
+                entry,
                 delayMs,
                 () -> AgentChatStatusOrchestrator.checkBotStatus(entry, agent));
     }

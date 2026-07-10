@@ -36,8 +36,13 @@ Recent reconstruction notes:
 - Every runtime entry now has a unique session generation and a lifecycle-owned
   one-shot task scope. Scoped callbacks remove themselves after completion,
   cancel as a group during replacement/despawn, and verify the exact live
-  session before running. Existing unscoped scheduler overloads remain for
-  server-level tasks while Agent call sites migrate to the scoped overloads.
+  session before running. Production movement, combat, dialogue, reply queue,
+  build, equipment, inventory, trade, shop, supply, social, and airshow delays
+  use scoped overloads. Unscoped scheduling remains intentional for server-level
+  navigation overlays, player scroll-event forwarding, and the post-disconnect
+  relog timer that must outlive the old Agent session. Deprecated capability
+  overloads remain only for source-compatible tests and have no production
+  callers.
 
 - Runtime removal now centrally clears Agent-scoped equipment throttles,
   transfer request counters, transient LLM state, Maker activity, and manual

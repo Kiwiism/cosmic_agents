@@ -56,7 +56,7 @@ public final class AgentTransferRuntime {
         if (transferCommand.mode() == AgentChatTransferFlow.TransferMode.TRADE
                 && AgentInventoryTradePolicy.isMesoCategory(category)) {
             Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-            AgentSchedulerRuntime.afterRandomDelay(500, 700,
+            AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
                     () -> AgentInventoryTransferService.startTradeTransfer(category, entry, bot));
             return;
         }
@@ -80,7 +80,7 @@ public final class AgentTransferRuntime {
                 .thenAccept(result -> {
                     long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
                     long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                    AgentSchedulerRuntime.afterDelay(remainingDelay, () ->
+                    AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
                             applyTransferCommandResult(entry, transferCommand, category, bot, requestId, result));
                 });
     }
@@ -147,7 +147,7 @@ public final class AgentTransferRuntime {
                 .thenAccept(result -> {
                     long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
                     long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                    AgentSchedulerRuntime.afterDelay(remainingDelay, () ->
+                    AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
                             applyItemQueryResult(entry, category, bot, requestId, result));
                 });
     }

@@ -15,7 +15,8 @@ public final class AgentStatusRuntime {
     private AgentStatusRuntime() {
     }
 
-    public static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(Character bot) {
+    public static AgentChatStatusRuntime.OfflineReturnActions offlineReturnActions(AgentRuntimeEntry entry) {
+        Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         return new AgentChatStatusRuntime.OfflineReturnActions() {
             @Override
             public boolean hasAgent() {
@@ -29,7 +30,7 @@ public final class AgentStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+                AgentSchedulerRuntime.afterRandomDelay(entry, minMs, maxMs, action);
             }
 
             @Override
@@ -53,7 +54,7 @@ public final class AgentStatusRuntime {
 
             @Override
             public void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-                AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
+                AgentSchedulerRuntime.afterRandomDelay(entry, minMs, maxMs, action);
             }
 
             @Override

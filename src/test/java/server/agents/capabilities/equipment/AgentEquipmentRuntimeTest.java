@@ -36,9 +36,9 @@ class AgentEquipmentRuntimeTest {
             callbacks.autoEquipDebug();
             callbacks.autoEquip();
 
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     times(2));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(400), eq(600), any(Runnable.class)),
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(400), eq(600), any(Runnable.class)),
                     times(2));
         }
     }

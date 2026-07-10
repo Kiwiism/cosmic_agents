@@ -4,6 +4,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned bridge for combat-owned timing/replies while reply delivery stays
@@ -17,6 +18,11 @@ public final class AgentCombatRuntime {
         AgentReplyRuntime.sayMapNow(bot, message);
     }
 
+    public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {
+        AgentSchedulerRuntime.afterDelay(entry, delayMs, action);
+    }
+
+    @Deprecated(forRemoval = true)
     public static void afterDelay(long delayMs, Runnable action) {
         AgentSchedulerRuntime.afterDelay(delayMs, action);
     }

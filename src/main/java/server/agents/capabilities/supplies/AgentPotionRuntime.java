@@ -4,6 +4,7 @@ package server.agents.capabilities.supplies;
 import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 /**
  * Agent-owned bridge for potion-sharing timing/replies while reply delivery stays
@@ -17,10 +18,20 @@ public final class AgentPotionRuntime {
         AgentReplyRuntime.sayMapNow(bot, message);
     }
 
+    public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {
+        AgentSchedulerRuntime.afterDelay(entry, delayMs, action);
+    }
+
+    public static void afterRandomDelay(AgentRuntimeEntry entry, int minMs, int maxMs, Runnable action) {
+        AgentSchedulerRuntime.afterRandomDelay(entry, minMs, maxMs, action);
+    }
+
+    @Deprecated(forRemoval = true)
     public static void afterDelay(long delayMs, Runnable action) {
         AgentSchedulerRuntime.afterDelay(delayMs, action);
     }
 
+    @Deprecated(forRemoval = true)
     public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
         AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
     }

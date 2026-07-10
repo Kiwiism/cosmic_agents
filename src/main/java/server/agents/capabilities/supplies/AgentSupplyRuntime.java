@@ -27,17 +27,20 @@ public final class AgentSupplyRuntime {
         return new AgentChatSupplyRequestFlow.SupplyRequestCallbacks() {
             @Override
             public void requestPotion(boolean hpPotion) {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedPotionCommand(entry, hpPotion));
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
+                        () -> handleNeedPotionCommand(entry, hpPotion));
             }
 
             @Override
             public void requestAnyPotion() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAnyPotionCommand(entry));
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
+                        () -> handleNeedAnyPotionCommand(entry));
             }
 
             @Override
             public void requestAmmo() {
-                AgentSchedulerRuntime.afterRandomDelay(500, 700, () -> handleNeedAmmoCommand(entry));
+                AgentSchedulerRuntime.afterRandomDelay(entry, 500, 700,
+                        () -> handleNeedAmmoCommand(entry));
             }
         };
     }

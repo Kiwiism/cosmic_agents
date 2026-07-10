@@ -1,15 +1,20 @@
 package server.agents.runtime;
 
+import client.Character;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentSchedulerGatewayRuntime;
 import server.agents.integration.SchedulerGateway;
 
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
@@ -49,6 +54,59 @@ class AgentSchedulerRuntimeTest {
 
             assertTrue(delayMs >= 500);
             assertTrue(delayMs < 700);
+        }
+    }
+
+    @Test
+    void scopedScheduleRunsForCurrentSession() {
+        SchedulerGateway scheduler = mock(SchedulerGateway.class);
+        ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
+        ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
+        AtomicInteger calls = new AtomicInteger();
+        Character agent = mock(Character.class);
+        Character leader = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(1).add(entry);
+
+        try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
+            runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
+            doReturn(scheduled).when(scheduler).schedule(callback.capture(), eq(250L));
+
+            AgentSchedulerRuntime.schedule(entry, calls::incrementAndGet, 250L);
+            callback.getValue().run();
+
+            assertEquals(1, calls.get());
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+        }
+    }
+
+    @Test
+    void scopedScheduleSkipsReplacedSessionWithSameCharacter() {
+        SchedulerGateway scheduler = mock(SchedulerGateway.class);
+        ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
+        ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
+        AtomicInteger calls = new AtomicInteger();
+        Character agent = mock(Character.class);
+        Character leader = mock(Character.class);
+        AgentRuntimeEntry stale = new AgentRuntimeEntry(agent, leader, null);
+        AgentRuntimeEntry replacement = new AgentRuntimeEntry(agent, leader, null);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(1).add(stale);
+
+        try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
+            runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
+            doReturn(scheduled).when(scheduler).schedule(callback.capture(), eq(250L));
+
+            AgentSchedulerRuntime.schedule(stale, calls::incrementAndGet, 250L);
+            AgentRuntimeRegistry.mutableEntriesForLeader(1).clear();
+            AgentRuntimeRegistry.mutableEntriesForLeader(1).add(replacement);
+            callback.getValue().run();
+
+            assertEquals(0, calls.get());
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
     }
 }

@@ -28,7 +28,7 @@ public final class AgentSessionCommandCoordinator {
         return new AgentChatSessionRequestFlow.SessionRequestCallbacks() {
             @Override
             public void requestRelog() {
-                AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
                     AgentMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.relogConfirmPrompt());
@@ -37,7 +37,7 @@ public final class AgentSessionCommandCoordinator {
 
             @Override
             public void requestLogout() {
-                AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
                     AgentMovementCommandRuntime.stop(entry);
                     AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmPrompt());
@@ -49,13 +49,13 @@ public final class AgentSessionCommandCoordinator {
                 if (!AgentSessionControlRuntime.isPrimarySession(entry)) {
                     return;
                 }
-                AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> promptOwnerAway(entry));
+                AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> promptOwnerAway(entry));
             }
         };
     }
 
     public static void scheduleRelogConfirm(AgentRuntimeEntry entry) {
-        AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+        AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
             Character owner = owner(entry);
             if (owner == null) {
                 return;
@@ -66,7 +66,7 @@ public final class AgentSessionCommandCoordinator {
             int ownerCharId = owner.getId();
             int world = AgentClientGatewayRuntime.clients().world(bot);
             int channel = AgentClientGatewayRuntime.clients().channel(bot);
-            AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
+            AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
                 Character relogBot = bot(entry);
                 AgentCharacterGatewayRuntime.characters().save(relogBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(relogBot, false, false);
@@ -77,9 +77,9 @@ public final class AgentSessionCommandCoordinator {
     }
 
     public static void scheduleLogoutConfirm(AgentRuntimeEntry entry) {
-        AgentSchedulerRuntime.afterRandomDelay(900, 1100, () -> {
+        AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
             AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
-            AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
+            AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
                 Character logoutBot = bot(entry);
                 AgentCharacterGatewayRuntime.characters().save(logoutBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(logoutBot, false, false);
@@ -133,7 +133,7 @@ public final class AgentSessionCommandCoordinator {
 
             @Override
             public void logout() {
-                AgentSchedulerRuntime.afterRandomDelay(700, 900, () -> {
+                AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900, () -> {
                     AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.logoutConfirmReply());
                     logoutOwnerBots(entry);
                 });
@@ -145,7 +145,7 @@ public final class AgentSessionCommandCoordinator {
                 if (ownerId != 0) {
                     AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, townOffered);
                 }
-                AgentSchedulerRuntime.afterRandomDelay(700, 900, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900, () ->
                         AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.townOrStayConfirmReply(townOffered)));
             }
 
@@ -155,13 +155,13 @@ public final class AgentSessionCommandCoordinator {
                 if (ownerId != 0) {
                     AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(ownerId, false);
                 }
-                AgentSchedulerRuntime.afterRandomDelay(700, 900, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900, () ->
                         AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.stayConfirmReply()));
             }
 
             @Override
             public void cancel() {
-                AgentSchedulerRuntime.afterRandomDelay(700, 900, () ->
+                AgentSchedulerRuntime.afterRandomDelay(entry, 700, 900, () ->
                         AgentReplyRuntime.replyNow(entry, AgentChatAwayFlow.cancelReply()));
             }
         };
@@ -175,7 +175,7 @@ public final class AgentSessionCommandCoordinator {
 
         for (AgentRuntimeEntry owned : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
             AgentMovementCommandRuntime.stop(owned);
-            AgentSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
+            AgentSchedulerRuntime.afterRandomDelay(owned, 1200, 1800, () -> {
                 Character ownedBot = bot(owned);
                 AgentCharacterGatewayRuntime.characters().save(ownedBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(ownedBot, false, false);

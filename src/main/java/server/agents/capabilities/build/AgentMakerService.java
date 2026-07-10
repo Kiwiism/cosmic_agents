@@ -166,7 +166,7 @@ public final class AgentMakerService {
 
         ACTIVE.add(bot.getId());
         int epoch = AgentScriptTaskStateRuntime.activityEpoch(entry);
-        AgentMakerRuntime.afterRandomDelay(900, 1100, () -> runStep(entry, step, noun, epoch, 0));
+        AgentMakerRuntime.afterRandomDelay(entry, 900, 1100, () -> runStep(entry, step, noun, epoch, 0));
     }
 
     private static void runStep(AgentRuntimeEntry entry, BatchStep step, String noun, int epoch, int done) {
@@ -191,7 +191,7 @@ public final class AgentMakerService {
         if (!AgentClientGatewayRuntime.clients().tryAcquire(bot)) {
             // transient contention (a trade/packet in flight) — retry without consuming the step.
             // The bot keeps doing whatever it's doing; crafting just slots into the next free moment.
-            AgentMakerRuntime.afterRandomDelay(600, 900, () -> runStep(entry, step, noun, epoch, done));
+            AgentMakerRuntime.afterRandomDelay(entry, 600, 900, () -> runStep(entry, step, noun, epoch, done));
             return;
         }
         int status;
@@ -212,7 +212,7 @@ public final class AgentMakerService {
             return;
         }
 
-        AgentMakerRuntime.afterDelay(STEP_INTERVAL_MS, () -> runStep(entry, step, noun, epoch, done + 1));
+        AgentMakerRuntime.afterDelay(entry, STEP_INTERVAL_MS, () -> runStep(entry, step, noun, epoch, done + 1));
     }
 
     private static String abortReason(short status, String noun, int done) {

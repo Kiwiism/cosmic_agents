@@ -50,7 +50,7 @@ class AgentAmmoServiceTest {
                     AgentAmmoService.offerAmmoShareToOwner(entry, WeaponType.BOW, mock(InventoryGateway.class)));
 
             scheduler.verify(() -> AgentAmmoRuntime.randomDelayMs(900, 1400));
-            scheduler.verify(() -> AgentAmmoRuntime.afterDelay(eq(99L), any(Runnable.class)));
+            scheduler.verify(() -> AgentAmmoRuntime.afterDelay(eq(donorEntry), eq(99L), any(Runnable.class)));
         } finally {
             bots.remove(owner.getId());
         }

@@ -330,7 +330,7 @@ public final class AgentPotionService {
                 categoryBackoff.put(owner.getId(), now + 10 * 60_000L);
             }
             String ownerName = owner.getName();
-            AgentPotionRuntime.afterRandomDelay(4000, 6000, () ->
+            AgentPotionRuntime.afterRandomDelay(entry, 4000, 6000, () ->
                     AgentPotionRuntime.sayMapNow(
                             AgentRuntimeIdentityRuntime.bot(plan.entry()),
                             AgentDialogueCatalog.formatPotDonorLowReply(
@@ -388,7 +388,7 @@ public final class AgentPotionService {
         AgentRuntimeEntry donorEntry = plan.entry();
         Character donorBot = AgentRuntimeIdentityRuntime.bot(donorEntry);
         int maxQty = plan.donationQty();
-        AgentPotionRuntime.afterDelay(initialDelayMs, () -> {
+        AgentPotionRuntime.afterDelay(donorEntry, initialDelayMs, () -> {
             if (donorBot.getTrade() != null || AgentPendingTradeStateRuntime.hasActiveSequence(donorEntry) || recipient.getTrade() != null) {
                 return;
             }
@@ -398,7 +398,7 @@ public final class AgentPotionService {
             }
             AgentPotionRuntime.sayMapNow(donorBot, AgentDialogueSelector.randomReply(
                     forHp ? AgentDialogueCatalog.potOfferHpReplies() : AgentDialogueCatalog.potOfferMpReplies()));
-            AgentPotionRuntime.afterRandomDelay(900, 1100, () ->
+            AgentPotionRuntime.afterRandomDelay(donorEntry, 900, 1100, () ->
                     AgentSupplyShareTradeService.startPotShareTransfer(items, recipient, donorEntry, donorBot, maxQty));
         });
     }

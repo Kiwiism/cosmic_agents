@@ -48,7 +48,7 @@ class AgentScrollReactionServiceTest {
                     inventory);
 
             scheduler.verify(() -> AgentScrollReactionRuntime.randomDelayMs(0, 2001));
-            scheduler.verify(() -> AgentScrollReactionRuntime.afterDelay(eq(123L), any(Runnable.class)));
+            scheduler.verify(() -> AgentScrollReactionRuntime.afterDelay(eq(entry), eq(123L), any(Runnable.class)));
         }
     }
 

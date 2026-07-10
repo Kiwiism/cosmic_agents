@@ -118,7 +118,7 @@ class AgentSupplyRuntimeTest {
             callbacks.requestAmmo();
 
             scheduler.verify(
-                    () -> AgentSchedulerRuntime.afterRandomDelay(eq(500), eq(700), any(Runnable.class)),
+                    () -> AgentSchedulerRuntime.afterRandomDelay(eq(entry), eq(500), eq(700), any(Runnable.class)),
                     times(3));
         }
     }
