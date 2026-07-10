@@ -447,7 +447,7 @@ Recent map updates:
   live-context preparation, live gates, live mode dispatch, and failure
   handling now use `AgentRuntimeEntry` at the runtime seam.
 - `BotEntry` runtime storage is migrated to `AgentRuntimeEntry` through
-  `AgentRuntimeRegistry`, `AgentLifecycleService`, `AgentRegistrationRuntime`,
+  `AgentRuntimeRegistry`, `AgentLifecycleService`, `AgentRegistrationCoordinator`,
   `AgentSpawnRuntime`, `AgentSpawnPlacementRuntime`, and
   `AgentInteractionRuntime`. Agent registration now constructs the Agent
   runtime entry directly; the deprecated `server.bots.BotEntry` shell is no
@@ -1332,14 +1332,14 @@ Recent map updates:
   now returns `AgentLifecycleService.AgentSpawnResult`, and command/party/
   messenger callers consume the Agent lifecycle result directly.
 - BotManager's private registration branch moved to
-  `server.agents.runtime.AgentRegistrationRuntime.registerManualAgent` and
+  `server.agents.runtime.AgentRegistrationCoordinator.registerManualAgent` and
   `registerSpawnedAgent`. BotManager now keeps only legacy public method names
   for compatibility while Agent runtime owns the normalization-mode choice.
 - Spawn/relogin registration callback construction moved from BotManager to
   `server.agents.runtime.AgentSpawnRuntime` and
   `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its
   temporary tick callback while Agent runtime composes
-  `AgentRegistrationRuntime.registerAgent` for spawned and relogged Agents.
+  `AgentRegistrationCoordinator.registerAgent` for spawned and relogged Agents.
 - Lifecycle chat command wiring for recruit, transfer, and dismiss moved from
   BotManager to `server.agents.runtime.AgentLifecycleChatCommandRuntime`.
   BotManager now passes only temporary compatibility lifecycle actions while
@@ -1498,7 +1498,7 @@ Recent map updates:
   temporary stop-mode callback while Agent runtime owns cancellation, delayed
   farewell scheduling, reply delivery, and legacy farewell selection.
 - Agent registration hook wiring moved from BotManager to
-  `server.agents.runtime.AgentRegistrationRuntime`. BotManager now passes only
+  `server.agents.runtime.AgentRegistrationCoordinator`. BotManager now passes only
   its temporary tick callback while Agent runtime owns timer, cancellation,
   default formation, spawn normalization, and status-delay hook wiring.
 - Offline Agent load hook wiring moved from BotManager to
@@ -3319,3 +3319,7 @@ Recent capability extraction notes:
   became `capabilities.recovery.AgentRespawnCoordinator`; the central tick now
   enters combat death policy directly and delegates recovery through its owned
   coordinator without observable behavior changes.
+- Runtime classification: `AgentRegistrationRuntime` became
+  `runtime.AgentRegistrationCoordinator` and is intentionally retained as
+  lifecycle/scheduler orchestration. Manual, spawned, recruit, transfer, relogin,
+  and spawn callers now use the precisely named coordinator.

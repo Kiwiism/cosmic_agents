@@ -26,7 +26,7 @@ Target package groups:
   `AgentChatRouteRuntime`. Formation defaults and state helpers enter through
   `AgentFormationRuntime`. Spawn and relogin registration callback composition
   now enters through `AgentSpawnRuntime` and `AgentReloginRuntime`; manual and
-  spawned registration entry points enter through `AgentRegistrationRuntime`.
+  spawned registration entry points enter through `AgentRegistrationCoordinator`.
   Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
   Public server-facing chat/spawn/relogin and registration entry points now
   enter through `AgentInteractionRuntime`.

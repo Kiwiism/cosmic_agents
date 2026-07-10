@@ -6,11 +6,11 @@ import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 /**
- * Temporary legacy hook bundle for Agent registration scheduling while the live
- * tick callback is supplied by the Agent runtime facade.
+ * Runtime coordinator for Agent registration, scheduling, formation defaults,
+ * and optional spawn-state normalization.
  */
-public final class AgentRegistrationRuntime {
-    private AgentRegistrationRuntime() {
+public final class AgentRegistrationCoordinator {
+    private AgentRegistrationCoordinator() {
     }
 
     public static AgentRuntimeEntry registerManualAgent(int leaderCharId,

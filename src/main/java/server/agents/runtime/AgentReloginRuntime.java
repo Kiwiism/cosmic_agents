@@ -25,7 +25,7 @@ public final class AgentReloginRuntime {
                                     AgentLifecycleService.AgentTickCallback tickCallback,
                                     Logger log) {
         AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
-                (registeredLeaderCharId, leader, agent) -> AgentRegistrationRuntime.registerAgent(
+                (registeredLeaderCharId, leader, agent) -> AgentRegistrationCoordinator.registerAgent(
                         registeredLeaderCharId,
                         leader,
                         agent,

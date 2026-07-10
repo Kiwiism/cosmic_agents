@@ -27,8 +27,8 @@ class AgentSpawnRuntimeTest {
         when(leader.getId()).thenReturn(100);
 
         try (MockedStatic<AgentLifecycleService> lifecycle = mockStatic(AgentLifecycleService.class);
-             MockedStatic<AgentRegistrationRuntime> registration = mockStatic(AgentRegistrationRuntime.class)) {
-            registration.when(() -> AgentRegistrationRuntime.registerAgent(100, leader, agent, true, tickCallback))
+             MockedStatic<AgentRegistrationCoordinator> registration = mockStatic(AgentRegistrationCoordinator.class)) {
+            registration.when(() -> AgentRegistrationCoordinator.registerAgent(100, leader, agent, true, tickCallback))
                     .thenReturn(entry);
             lifecycle.when(() -> AgentLifecycleService.spawnAgentForLeaderQuietly(
                             eq(leader),
@@ -52,7 +52,7 @@ class AgentSpawnRuntimeTest {
 
             assertTrue(result.success());
             assertSame(agent, result.agent());
-            registration.verify(() -> AgentRegistrationRuntime.registerAgent(100, leader, agent, true, tickCallback));
+            registration.verify(() -> AgentRegistrationCoordinator.registerAgent(100, leader, agent, true, tickCallback));
         }
     }
 }

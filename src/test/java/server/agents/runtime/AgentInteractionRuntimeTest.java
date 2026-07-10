@@ -17,14 +17,14 @@ import static org.mockito.Mockito.mockStatic;
 
 class AgentInteractionRuntimeTest {
     @Test
-    void registerAgentDelegatesToAgentRegistrationRuntimeWithAgentTickCallback() {
+    void registerAgentDelegatesToAgentRegistrationCoordinatorWithAgentTickCallback() {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
 
-        try (MockedStatic<AgentRegistrationRuntime> registrationRuntime = mockStatic(AgentRegistrationRuntime.class)) {
+        try (MockedStatic<AgentRegistrationCoordinator> registrationRuntime = mockStatic(AgentRegistrationCoordinator.class)) {
             AgentInteractionRuntime.registerAgent(22, leader, agent);
 
-            registrationRuntime.verify(() -> AgentRegistrationRuntime.registerManualAgent(
+            registrationRuntime.verify(() -> AgentRegistrationCoordinator.registerManualAgent(
                     eq(22),
                     eq(leader),
                     eq(agent),
@@ -33,13 +33,13 @@ class AgentInteractionRuntimeTest {
     }
 
     @Test
-    void registerSpawnedAgentDelegatesToAgentRegistrationRuntimeWithAgentTickCallback() {
+    void registerSpawnedAgentDelegatesToAgentRegistrationCoordinatorWithAgentTickCallback() {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
 
-        try (MockedStatic<AgentRegistrationRuntime> registrationRuntime = mockStatic(AgentRegistrationRuntime.class)) {
-            registrationRuntime.when(() -> AgentRegistrationRuntime.registerSpawnedAgent(
+        try (MockedStatic<AgentRegistrationCoordinator> registrationRuntime = mockStatic(AgentRegistrationCoordinator.class)) {
+            registrationRuntime.when(() -> AgentRegistrationCoordinator.registerSpawnedAgent(
                             eq(22),
                             eq(leader),
                             eq(agent),

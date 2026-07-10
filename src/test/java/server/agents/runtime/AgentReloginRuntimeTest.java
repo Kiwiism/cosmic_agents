@@ -22,8 +22,8 @@ class AgentReloginRuntimeTest {
         };
 
         try (MockedStatic<AgentLifecycleService> lifecycle = mockStatic(AgentLifecycleService.class);
-             MockedStatic<AgentRegistrationRuntime> registration = mockStatic(AgentRegistrationRuntime.class)) {
-            registration.when(() -> AgentRegistrationRuntime.registerAgent(100, leader, agent, true, tickCallback))
+             MockedStatic<AgentRegistrationCoordinator> registration = mockStatic(AgentRegistrationCoordinator.class)) {
+            registration.when(() -> AgentRegistrationCoordinator.registerAgent(100, leader, agent, true, tickCallback))
                     .thenReturn(entry);
             lifecycle.when(() -> AgentLifecycleService.reloginAgentQuietly(
                             eq(200),
@@ -40,7 +40,7 @@ class AgentReloginRuntimeTest {
 
             AgentReloginRuntime.reloginAgent(200, 100, 1, 2, tickCallback, log);
 
-            registration.verify(() -> AgentRegistrationRuntime.registerAgent(100, leader, agent, true, tickCallback));
+            registration.verify(() -> AgentRegistrationCoordinator.registerAgent(100, leader, agent, true, tickCallback));
         }
     }
 }

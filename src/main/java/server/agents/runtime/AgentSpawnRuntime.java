@@ -21,7 +21,7 @@ public final class AgentSpawnRuntime {
                                                                             Consumer<AgentRuntimeEntry> startFollowLeader,
                                                                             Logger log) {
         AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
-                (leaderCharId, spawnLeader, agent) -> AgentRegistrationRuntime.registerAgent(
+                (leaderCharId, spawnLeader, agent) -> AgentRegistrationCoordinator.registerAgent(
                         leaderCharId,
                         spawnLeader,
                         agent,

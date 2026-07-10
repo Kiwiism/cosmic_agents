@@ -3,7 +3,6 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,7 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentRegistrationRuntimeTest {
+class AgentRegistrationCoordinatorTest {
     @Test
     void manualRegistrationPreservesNonSpawnNormalizationFlag() {
         Character leader = mock(Character.class);
@@ -29,7 +28,7 @@ class AgentRegistrationRuntimeTest {
                             any(AgentLifecycleService.RegisterHooks.class)))
                     .thenReturn(entry);
 
-            assertSame(entry, AgentRegistrationRuntime.registerManualAgent(100, leader, agent, tickCallback));
+            assertSame(entry, AgentRegistrationCoordinator.registerManualAgent(100, leader, agent, tickCallback));
         }
     }
 
@@ -50,7 +49,7 @@ class AgentRegistrationRuntimeTest {
                             any(AgentLifecycleService.RegisterHooks.class)))
                     .thenReturn(entry);
 
-            assertSame(entry, AgentRegistrationRuntime.registerSpawnedAgent(100, leader, agent, tickCallback));
+            assertSame(entry, AgentRegistrationCoordinator.registerSpawnedAgent(100, leader, agent, tickCallback));
         }
     }
 }

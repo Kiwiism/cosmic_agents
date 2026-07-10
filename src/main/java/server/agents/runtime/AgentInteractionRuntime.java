@@ -19,7 +19,7 @@ public final class AgentInteractionRuntime {
     }
 
     public static void registerAgent(int leaderCharId, Character leader, Character agent) {
-        AgentRegistrationRuntime.registerManualAgent(
+        AgentRegistrationCoordinator.registerManualAgent(
                 leaderCharId,
                 leader,
                 agent,
@@ -27,7 +27,7 @@ public final class AgentInteractionRuntime {
     }
 
     public static AgentRuntimeEntry registerSpawnedAgent(int leaderCharId, Character leader, Character agent) {
-        return AgentRegistrationRuntime.registerSpawnedAgent(
+        return AgentRegistrationCoordinator.registerSpawnedAgent(
                 leaderCharId,
                 leader,
                 agent,
@@ -77,7 +77,7 @@ public final class AgentInteractionRuntime {
                 leaderCharId,
                 leader,
                 agentName,
-                (leaderId, recruitLeader, agent) -> AgentRegistrationRuntime.registerManualAgent(
+                (leaderId, recruitLeader, agent) -> AgentRegistrationCoordinator.registerManualAgent(
                         leaderId,
                         recruitLeader,
                         agent,
@@ -91,7 +91,7 @@ public final class AgentInteractionRuntime {
                 agentName,
                 targetName,
                 AgentMovementCommandRuntime::stop,
-                (leaderId, transferLeader, agent) -> AgentRegistrationRuntime.registerManualAgent(
+                (leaderId, transferLeader, agent) -> AgentRegistrationCoordinator.registerManualAgent(
                         leaderId,
                         transferLeader,
                         agent,

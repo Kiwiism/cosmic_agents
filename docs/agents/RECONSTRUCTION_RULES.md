@@ -905,7 +905,7 @@ Recent reconstruction notes:
   duplicate `SpawnResult` wrapper; spawn command, party invite, and messenger
   invite callers consume the Agent lifecycle result directly.
 - Manual and spawned registration compatibility entry points now live in
-  `server.agents.runtime.AgentRegistrationRuntime` as `registerManualAgent`
+  `server.agents.runtime.AgentRegistrationCoordinator` as `registerManualAgent`
   and `registerSpawnedAgent`. BotManager no longer owns the private
   normalize-spawn-state branch; it only delegates legacy public registration
   methods to Agent runtime with the temporary tick callback.
@@ -914,7 +914,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentReloginRuntime`. BotManager supplies only the
   temporary tick callback, follow-start callback for spawn, and logger while
   Agent runtime owns the register-spawned hook composition over
-  `AgentRegistrationRuntime`.
+  `AgentRegistrationCoordinator`.
 - Anchored farm hook construction now lives in
   `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager keeps only
   legacy movement config values for this mode until config ownership moves.
@@ -1046,7 +1046,7 @@ Recent reconstruction notes:
   cancellation, delayed farewell scheduling, reply delivery, delay selection,
   and legacy farewell text selection.
 - Agent registration hook wiring now lives in
-  `server.agents.runtime.AgentRegistrationRuntime`. BotManager supplies only
+  `server.agents.runtime.AgentRegistrationCoordinator`. BotManager supplies only
   the temporary live tick callback while Agent runtime owns the legacy tick
   period, timer registration, replacement-task cancellation, default formation,
   spawn normalization, and spawn-status delay hook construction.
@@ -7393,6 +7393,10 @@ Current physics correction:
   assembly moved to `capabilities.recovery.AgentRespawnCoordinator`. Dead-state
   entry, timing, HP restoration, map placement, announcement, and emote ordering
   are unchanged.
+- Retained runtime orchestration: `AgentRegistrationRuntime` was renamed
+  `AgentRegistrationCoordinator`. It intentionally remains in runtime because it
+  binds lifecycle registration, timer scheduling, cancellation, formation
+  defaults, spawn normalization, and tick callbacks; no gameplay policy moved.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
