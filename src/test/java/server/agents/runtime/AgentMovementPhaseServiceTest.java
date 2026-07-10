@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementPhaseService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 
 import client.Character;

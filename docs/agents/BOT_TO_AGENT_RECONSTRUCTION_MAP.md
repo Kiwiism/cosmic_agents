@@ -2281,7 +2281,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#target-snapshot` | `server.agents.runtime.AgentTargetSnapshot` | `MIGRATED_TO_AGENT`; target snapshot steering helpers now accept `AgentRuntimeEntry` while preserving navigation waypoint override lookup and primary-target fallback behavior |
 | `src/main/java/server/bots/BotManager.java#final-movement-tail` | `server.agents.capabilities.movement.AgentFinalMovementTailService` | `MIGRATED_TO_AGENT`; final movement tail dispatch now accepts `AgentRuntimeEntry` while preserving movement-core target and AI-tick arguments |
 | `src/main/java/server/bots/BotManager.java#idle-mode-tick` | `server.agents.runtime.AgentIdleModeTickService` | `MIGRATED_TO_AGENT`; idle-mode tick dispatch now accepts `AgentRuntimeEntry` while preserving idle physics callback behavior |
-| `src/main/java/server/bots/BotManager.java#movement-phase` | `server.agents.runtime.AgentMovementPhaseService` | `MIGRATED_TO_AGENT`; movement phase dispatch now accepts `AgentRuntimeEntry` while preserving climb/swim/airborne/grounded branch ordering and callbacks |
+| `src/main/java/server/bots/BotManager.java#movement-phase` | `server.agents.capabilities.movement.AgentMovementPhaseService` | `MIGRATED_TO_AGENT`; movement phase dispatch now accepts `AgentRuntimeEntry` while preserving climb/swim/airborne/grounded branch ordering and callbacks |
 | `src/main/java/server/bots/BotManager.java#movement-core-tick` | `server.agents.runtime.AgentMovementTickService` | `MIGRATED_TO_AGENT`; movement core tick orchestration and precise navigation target marking now accept `AgentRuntimeEntry` while preserving navigation resolution, precise-target marking, fidget short-circuiting, phase dispatch, committed-edge execution, stuck detection, and move-target cleanup ordering |
 | `src/main/java/server/bots/BotManager.java#live-tick-gates` | `server.agents.runtime.AgentLiveTickGateService` | `MIGRATED_TO_AGENT`; live tick gate ordering now accepts `AgentRuntimeEntry` while preserving common/trade/idle/recovery/map-change order and short-circuit behavior. `AgentLiveTickGateRuntime` remains the temporary compatibility bridge to BotEntry-shaped downstream callbacks |
 | `src/main/java/server/bots/BotManager.java#live-tick-context` | `server.agents.runtime.AgentLiveTickContextService` | `MIGRATED_TO_AGENT`; live tick context preparation and observed leader motion updates now accept `AgentRuntimeEntry` while preserving movement profile refresh, follow-anchor resolution, target snapshot capture, map-change cleanup, and follow-action cleanup ordering |
@@ -3062,3 +3062,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentIdlePhysicsService` moved from generic runtime to
   `capabilities.movement`. Active-mode gates, movement-phase selection, stance
   correction, and broadcast conditions remain unchanged.
+- Capability ownership: `AgentMovementPhaseService` moved from generic runtime
+  to `capabilities.movement`. Climb/swim/air/ground branch ordering and callback
+  arguments remain unchanged.

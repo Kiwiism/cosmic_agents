@@ -4155,7 +4155,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
   longer owns the null/map guard around the BotEntry-backed patrol clear rule.
 - Movement phase dispatch now lives in
-  `server.agents.runtime.AgentMovementPhaseService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentMovementPhaseService`; BotManager still supplies
   temporary BotMovementManager hooks. The climb, swim-while-airborne, airborne,
   then grounded ordering is preserved.
 - Movement stuck detection and unstuck triggering now live in
@@ -7107,6 +7107,9 @@ Current physics correction:
   `capabilities.movement`. Active-mode exclusion, swim/air/ground dispatch,
   stance comparison, idle pose correction, and movement broadcast conditions
   remain unchanged; runtime continues to provide map and movement hooks.
+- Capability ownership: `AgentMovementPhaseService` now lives under
+  `capabilities.movement`. Climbing, swimming, airborne, and grounded dispatch
+  ordering and callback arguments remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
