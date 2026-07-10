@@ -1,7 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

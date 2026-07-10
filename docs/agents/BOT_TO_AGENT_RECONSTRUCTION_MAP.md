@@ -3204,3 +3204,7 @@ Recent capability extraction notes:
 - Combat state ownership: `AgentDeathState` and `AgentDeathStateRuntime` moved
   from generic runtime to `capabilities.combat`; death-window arithmetic, HP
   gating, respawn-due boundaries, and clear behavior remain unchanged.
+- Movement objective ownership: `AgentFarmAnchorState` and
+  `AgentFarmAnchorStateRuntime` moved from generic runtime to
+  `capabilities.movement`; defensive anchor copies, map association, presence
+  checks, and map-change clearing remain unchanged.

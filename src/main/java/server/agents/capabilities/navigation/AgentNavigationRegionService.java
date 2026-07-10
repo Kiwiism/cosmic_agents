@@ -4,7 +4,7 @@ import client.Character;
 import constants.game.CharacterStance;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;

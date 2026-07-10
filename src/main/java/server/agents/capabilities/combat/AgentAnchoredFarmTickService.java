@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import server.agents.capabilities.movement.AgentPositionService;
 import server.agents.capabilities.movement.AgentMovementTargetMaintenanceService;
 import client.Character;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;

@@ -24,6 +24,7 @@ import server.agents.capabilities.follow.AgentOwnerMotionState;
 import server.agents.capabilities.movement.AgentGroundTravelState;
 import server.agents.capabilities.movement.AgentFormationOffsetState;
 import server.agents.capabilities.movement.AgentMoveTargetState;
+import server.agents.capabilities.movement.AgentFarmAnchorState;
 import server.agents.capabilities.movement.AgentMovementBroadcastState;
 import server.agents.capabilities.movement.AgentMovementPhysicsCacheState;
 import server.agents.capabilities.movement.AgentMovementStuckState;

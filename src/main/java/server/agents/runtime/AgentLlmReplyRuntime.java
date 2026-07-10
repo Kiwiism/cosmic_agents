@@ -6,7 +6,7 @@ import server.agents.capabilities.dialogue.llm.AgentLlmReplyRequest;
 import server.agents.capabilities.dialogue.llm.AgentLlmReplyService;
 import server.agents.capabilities.dialogue.llm.AgentSenderRelation;
 import server.agents.runtime.AgentActivityStateRuntime;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.llm.AgentLlmRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentReplyChannelStateRuntime;

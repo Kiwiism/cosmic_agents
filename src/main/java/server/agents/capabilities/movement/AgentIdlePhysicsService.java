@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.shop.AgentShopStateRuntime;

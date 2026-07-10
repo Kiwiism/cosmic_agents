@@ -3,7 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.combat.AgentAnchoredFarmModeTickService;
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 
 import java.awt.Point;
 import java.util.concurrent.atomic.AtomicInteger;

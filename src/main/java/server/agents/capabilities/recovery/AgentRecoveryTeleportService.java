@@ -1,7 +1,7 @@
 package server.agents.capabilities.recovery;
 
 import client.Character;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;

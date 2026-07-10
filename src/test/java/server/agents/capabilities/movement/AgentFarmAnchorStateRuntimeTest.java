@@ -1,9 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 
 
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

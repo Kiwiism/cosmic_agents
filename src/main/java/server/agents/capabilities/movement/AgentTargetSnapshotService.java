@@ -3,7 +3,6 @@ package server.agents.capabilities.movement;
 import server.agents.capabilities.follow.AgentFollowAnchorService;
 
 import client.Character;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;

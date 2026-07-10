@@ -3,7 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.recovery.AgentRecoveryTeleportService;
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
