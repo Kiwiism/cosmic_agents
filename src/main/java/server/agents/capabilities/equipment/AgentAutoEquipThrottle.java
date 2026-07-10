@@ -31,6 +31,10 @@ public final class AgentAutoEquipThrottle {
         return true;
     }
 
+    public static void clearAgentRuntimeState(int agentId) {
+        LAST_AUTO_EQUIP_MS.remove(agentId);
+    }
+
     static void clearForTest() {
         LAST_AUTO_EQUIP_MS.clear();
     }

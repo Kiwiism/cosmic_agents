@@ -43,6 +43,11 @@ public final class AgentLlmReplyService {
 
     private AgentLlmReplyService() {}
 
+    public static void clearAgentRuntimeState(int agentId) {
+        inflightByBotId.remove(agentId);
+        recentMemoryByBotId.remove(agentId);
+    }
+
     private static Semaphore gate() {
         int cap = AgentLlmConfig.maxConcurrentGlobal;
         if (cap != gateCapacity) {

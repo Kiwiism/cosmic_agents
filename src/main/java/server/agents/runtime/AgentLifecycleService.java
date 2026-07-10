@@ -351,4 +351,27 @@ public final class AgentLifecycleService {
         }
         return removed;
     }
+
+    public static boolean removeAgentEntry(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,
+                                           Map<Integer, ?> leaderFormations,
+                                           Map<Integer, ?> townClusterAnchors,
+                                           AgentRuntimeEntry expectedEntry,
+                                           Consumer<AgentRuntimeEntry> beforeRemove) {
+        if (expectedEntry == null) {
+            return false;
+        }
+        for (Map.Entry<Integer, List<AgentRuntimeEntry>> leaderEntry : entriesByLeaderId.entrySet()) {
+            List<AgentRuntimeEntry> entries = leaderEntry.getValue();
+            if (!entries.remove(expectedEntry)) {
+                continue;
+            }
+            beforeRemove.accept(expectedEntry);
+            if (entries.isEmpty() && entriesByLeaderId.remove(leaderEntry.getKey(), entries)) {
+                leaderFormations.remove(leaderEntry.getKey());
+                townClusterAnchors.remove(leaderEntry.getKey());
+            }
+            return true;
+        }
+        return false;
+    }
 }

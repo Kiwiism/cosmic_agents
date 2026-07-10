@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.recovery.AgentLeaderSafetyService;
 import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.equipment.AgentAutoEquipThrottle;
 import client.Character;
 import client.keybind.KeyBinding;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -104,6 +106,47 @@ class AgentRuntimeCleanupServiceTest {
         verify(agent).setAutopotHpAlert(0f);
         verify(agent).setAutopotMpAlert(0f);
         assertTrue(keymap.get(91).getType() == 7 && keymap.get(92).getType() == 7);
+    }
+
+    @Test
+    void removalClearsAgentScopedThrottleState() {
+        Character leader = character(77);
+        Character agent = character(88);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+        AgentAutoEquipThrottle.clearAgentRuntimeState(agent.getId());
+
+        try {
+            assertTrue(AgentAutoEquipThrottle.shouldRun(agent, 1_000L, false));
+            assertFalse(AgentAutoEquipThrottle.shouldRun(agent, 1_000L, false));
+
+            assertTrue(AgentRuntimeCleanupService.removeAgentByCharacterId(agent.getId()));
+
+            assertTrue(AgentAutoEquipThrottle.shouldRun(agent, 1_000L, false));
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentAutoEquipThrottle.clearAgentRuntimeState(agent.getId());
+        }
+    }
+
+    @Test
+    void staleCharacterCleanupDoesNotRemoveReplacementSession() {
+        Character leader = character(77);
+        Character staleAgent = character(88);
+        Character replacementAgent = character(88);
+        when(staleAgent.getKeymap()).thenReturn(new LinkedHashMap<>());
+        AgentRuntimeEntry replacementEntry = new AgentRuntimeEntry(replacementAgent, leader, null);
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(replacementEntry);
+
+        try {
+            assertFalse(AgentRuntimeCleanupService.cleanupAgentRuntimeState(staleAgent));
+            assertSame(replacementEntry,
+                    AgentRuntimeRegistry.findByCharacterId(leader.getId(), replacementAgent.getId()));
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+        }
     }
 
     private static Character character(int id) {

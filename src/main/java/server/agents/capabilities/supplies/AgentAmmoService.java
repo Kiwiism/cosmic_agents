@@ -31,6 +31,12 @@ public final class AgentAmmoService {
 
     private AgentAmmoService() {}
 
+    public static void clearLeaderRuntimeState(int leaderId) {
+        ammoShareCooldownUntil.remove(leaderId);
+        String keyPrefix = leaderId + ":";
+        ammoShareBackoffUntil.keySet().removeIf(key -> key.startsWith(keyPrefix));
+    }
+
     public static void tickAmmoShareCheck(AgentRuntimeEntry entry, Character bot, InventoryGateway inventory) {
         requestLowAmmoShare(entry, bot, false, inventory);
     }

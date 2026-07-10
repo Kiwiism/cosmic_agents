@@ -38,6 +38,10 @@ public final class AgentTransferRuntime {
     private AgentTransferRuntime() {
     }
 
+    public static void clearAgentRuntimeState(int agentId) {
+        PENDING_TRANSFER_REQUESTS.remove(agentId);
+    }
+
     public static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(AgentRuntimeEntry entry) {
         return itemName -> handleItemQuery(entry, itemName);
     }

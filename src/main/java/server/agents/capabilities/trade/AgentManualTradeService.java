@@ -21,6 +21,10 @@ public final class AgentManualTradeService {
     private AgentManualTradeService() {
     }
 
+    public static void clearAgentRuntimeState(int agentId) {
+        GREETING_SENT.remove(agentId);
+    }
+
     public static boolean beginOrTickTimeout(AgentRuntimeEntry entry,
                                              Character agent,
                                              AgentTradeWindow trade,

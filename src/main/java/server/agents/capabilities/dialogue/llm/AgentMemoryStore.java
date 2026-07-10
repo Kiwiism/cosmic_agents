@@ -156,7 +156,7 @@ public final class AgentMemoryStore {
         } catch (IOException e) {
             log.warn("memory: compact failed for {}: {}", botName, e.toString());
         } finally {
-            lock.set(false);
+            COMPACTION_LOCKS.remove(botName, lock);
         }
     }
 

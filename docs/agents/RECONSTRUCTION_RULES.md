@@ -33,6 +33,13 @@ Rules:
 
 Recent reconstruction notes:
 
+- Runtime removal now centrally clears Agent-scoped equipment throttles,
+  transfer request counters, transient LLM state, Maker activity, and manual
+  trade greetings, plus leader-scoped supply and navigation-warmup throttles.
+  Cleanup runs after registry removal and skips IDs that already belong to a
+  replacement session; disconnect and tick-failure cleanup remove the exact
+  runtime entry rather than any session sharing its character ID.
+
 - Navigation graph cache files now enforce a size ceiling and a narrow Java
   deserialization allowlist with depth, reference, array, and stream limits.
   Corrupt, stale, oversized, or unexpected files are removed and rebuilt, and

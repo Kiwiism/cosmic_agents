@@ -52,6 +52,10 @@ public final class AgentMakerService {
     private AgentMakerService() {
     }
 
+    public static void clearAgentRuntimeState(int agentId) {
+        ACTIVE.remove(agentId);
+    }
+
     public static void handleMakeCrystals(AgentRuntimeEntry entry, InventoryGateway inventory) {
         handleMakeCrystals(entry, inventory, AgentMakerGatewayRuntime.maker());
     }

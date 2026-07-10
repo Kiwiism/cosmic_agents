@@ -48,6 +48,12 @@ public final class AgentPotionService {
     private AgentPotionService() {
     }
 
+    public static void clearLeaderRuntimeState(int leaderId) {
+        potShareCooldownUntil.remove(leaderId);
+        potShareHpBackoffUntil.remove(leaderId);
+        potShareMpBackoffUntil.remove(leaderId);
+    }
+
     /** Single source of truth: items the bot has that count as recovery pots. */
     public static List<Item> recoveryPotions(Character bot) {
         long startedAt = AgentPerformanceMonitor.start();

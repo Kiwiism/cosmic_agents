@@ -83,6 +83,17 @@ public final class AgentRuntimeRegistry {
         return activeLeaderByAgentCharacterId(entriesByLeaderId, agentCharId);
     }
 
+    public static boolean hasActiveAgentCharacterId(int agentCharId) {
+        for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
+            for (AgentRuntimeEntry entry : entries) {
+                if (AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static Character findUnclaimedOnlineAgentByName(String agentName, int world) {
         return findUnclaimedOnlineAgentByName(agentName, world,
                 (lookupWorld, lookupName) -> AgentCharacterGatewayRuntime.characters()

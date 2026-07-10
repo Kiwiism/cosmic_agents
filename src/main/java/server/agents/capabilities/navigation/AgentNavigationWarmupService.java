@@ -16,6 +16,10 @@ public final class AgentNavigationWarmupService {
     private AgentNavigationWarmupService() {
     }
 
+    public static void clearLeaderRuntimeState(int leaderId) {
+        WARMUP_NOTIFIED.remove(leaderId);
+    }
+
     public static void notifyWarmup(AgentRuntimeEntry entry, Character agent) {
         Character leader = AgentRuntimeIdentityRuntime.owner(entry);
         if (leader == null) {
