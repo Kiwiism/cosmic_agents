@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import server.agents.capabilities.trade.AgentTransferService;
 
@@ -6,6 +6,10 @@ import client.Character;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentScheduledTaskRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.List;
@@ -13,8 +17,8 @@ import java.util.List;
 /**
  * Runtime hook bundle for transferring live Agents between leaders.
  */
-public final class AgentTransferRuntime {
-    private AgentTransferRuntime() {
+public final class AgentLeaderTransferCoordinator {
+    private AgentLeaderTransferCoordinator() {
     }
 
     public static String transferAgent(int leaderCharId,
@@ -29,7 +33,7 @@ public final class AgentTransferRuntime {
                 agentName,
                 targetName,
                 new AgentTransferService.Hooks(
-                        AgentTransferRuntime::entriesByLeader,
+                        AgentLeaderTransferCoordinator::entriesByLeader,
                         AgentRuntimeRegistry::findByName,
                         (candidateLeader, target) -> candidateLeader.getMap().getCharacterByName(target),
                         (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),

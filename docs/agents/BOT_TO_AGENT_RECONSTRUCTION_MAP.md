@@ -3290,3 +3290,7 @@ Recent capability extraction notes:
   `commands.AgentFollowTargetCommandCoordinator`; follow-target command
   callback assembly is command-owned while follow policies remain in the
   follow capability unchanged.
+- Command ownership: runtime `AgentTransferRuntime` became
+  `commands.AgentLeaderTransferCoordinator`, removing its name collision with
+  item-transfer capability runtime while preserving leader-transfer command
+  behavior and lifecycle callbacks.

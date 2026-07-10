@@ -6,7 +6,6 @@ import server.agents.runtime.AgentDismissRuntime;
 import server.agents.runtime.AgentRecruitRuntime;
 import server.agents.runtime.AgentRecruitService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentTransferRuntime;
 
 import client.Character;
 
@@ -32,7 +31,8 @@ public final class AgentLifecycleCommandCoordinator {
                                        String targetName,
                                        AgentTransferService.AgentStopper stopper,
                                        AgentTransferService.AgentRegistrar registrar) {
-        return AgentTransferRuntime.transferAgent(leaderCharId, leader, agentName, targetName, stopper, registrar);
+        return AgentLeaderTransferCoordinator.transferAgent(
+                leaderCharId, leader, agentName, targetName, stopper, registrar);
     }
 
     public static boolean dismissAgent(int leaderCharId,
