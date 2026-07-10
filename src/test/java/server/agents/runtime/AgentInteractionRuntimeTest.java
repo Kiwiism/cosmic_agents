@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.dialogue.AgentChatRouteCoordinator;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -72,13 +73,13 @@ class AgentInteractionRuntimeTest {
     }
 
     @Test
-    void chatDelegatesToAgentChatRouteRuntimeWithLifecycleCallbacks() {
+    void chatDelegatesToAgentChatRouteCoordinatorWithLifecycleCallbacks() {
         Character leader = mock(Character.class);
 
-        try (MockedStatic<AgentChatRouteRuntime> chatRuntime = mockStatic(AgentChatRouteRuntime.class)) {
+        try (MockedStatic<AgentChatRouteCoordinator> chatRuntime = mockStatic(AgentChatRouteCoordinator.class)) {
             AgentInteractionRuntime.handleLeaderChat(leader, "follow me", AgentReplyChannel.MAP);
 
-            chatRuntime.verify(() -> AgentChatRouteRuntime.handleChat(
+            chatRuntime.verify(() -> AgentChatRouteCoordinator.handleChat(
                     eq(leader),
                     eq("follow me"),
                     eq(AgentReplyChannel.MAP),

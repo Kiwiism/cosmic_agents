@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentLifecycleCommandCoordinator;
+import server.agents.capabilities.dialogue.AgentChatRouteCoordinator;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 
 /**
@@ -43,7 +44,7 @@ public final class AgentInteractionRuntime {
     }
 
     public static void handleLeaderChat(Character leader, String message, AgentReplyChannel channel) {
-        AgentChatRouteRuntime.handleChat(
+        AgentChatRouteCoordinator.handleChat(
                 leader,
                 message,
                 channel,

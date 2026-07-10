@@ -3282,3 +3282,7 @@ Recent capability extraction notes:
   `commands.AgentFormationCommandCoordinator`; formation command callback
   assembly is command-owned while movement formation state/application remains
   unchanged.
+- Dialogue ownership: `AgentChatRouteRuntime` became
+  `capabilities.dialogue.AgentChatRouteCoordinator`; targeted/untargeted route
+  assembly, ordering, fall-through, replies, and LLM invocation remain
+  unchanged while lifecycle actions are injected from runtime.

@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.dialogue;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmReplyCoordinator;
 import server.agents.commands.AgentLifecycleCommandCoordinator;
@@ -12,12 +12,7 @@ import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatCommandClassifier;
-import server.agents.capabilities.dialogue.AgentChatIngressService;
-import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.commands.AgentTargetedCommandMatch;
-import server.agents.capabilities.dialogue.AgentTargetedChatRouteService;
-import server.agents.capabilities.dialogue.AgentUntargetedChatRouteService;
 import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 import server.agents.capabilities.supplies.AgentGroupSupplyResponderSelector;
 import server.agents.capabilities.trade.AgentPendingOfferChatRouteService;
@@ -28,12 +23,17 @@ import server.agents.commands.AgentCommandTargetResolver;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentChatOrchestratorContext;
+import server.agents.runtime.AgentFollowTargetRuntime;
+import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.List;
 import java.util.Map;
 
-public final class AgentChatRouteRuntime {
-    private AgentChatRouteRuntime() {
+public final class AgentChatRouteCoordinator {
+    private AgentChatRouteCoordinator() {
     }
 
     public static void handleChat(Character leader,
@@ -138,7 +138,7 @@ public final class AgentChatRouteRuntime {
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
                 AgentReplyRuntime::queueReply,
-                AgentChatRouteRuntime::handleAgentChat,
+                AgentChatRouteCoordinator::handleAgentChat,
                 AgentChatRuntime::wasLastChatHandled,
                 System::currentTimeMillis,
                 AgentRuntimeIdentityRuntime::owner,
@@ -158,7 +158,7 @@ public final class AgentChatRouteRuntime {
                         entries,
                         AgentRuntimeIdentityRuntime::botMapId),
                 AgentReplyChannelStateRuntime::setReplyChannel,
-                AgentChatRouteRuntime::handleAgentChat,
+                AgentChatRouteCoordinator::handleAgentChat,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
                 AgentReplyRuntime::queueReply);

@@ -7352,6 +7352,10 @@ Current physics correction:
   `AgentFormationCommandRuntime` to
   `commands.AgentFormationCommandCoordinator`; parsing, state lookup/update,
   offset application, replies, and defaults remain unchanged.
+- Dialogue ownership: top-level targeted/untargeted chat routing moved from
+  generic runtime `AgentChatRouteRuntime` to
+  `capabilities.dialogue.AgentChatRouteCoordinator`; route ordering, command
+  fall-through, typo suggestions, LLM dispatch, and callbacks remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

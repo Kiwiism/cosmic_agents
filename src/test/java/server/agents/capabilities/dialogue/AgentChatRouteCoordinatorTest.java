@@ -1,6 +1,7 @@
-package server.agents.runtime;
+package server.agents.capabilities.dialogue;
 
 import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -17,14 +18,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentChatRouteRuntimeTest {
+class AgentChatRouteCoordinatorTest {
     @Test
     void compactChatRouteUsesAgentRuntimeDefaults() {
         Character leader = mock(Character.class);
         AgentReplyChannel channel = AgentReplyChannel.MAP;
 
         try (MockedStatic<AgentChatIngressService> ingress = mockStatic(AgentChatIngressService.class)) {
-            AgentChatRouteRuntime.handleChat(
+            AgentChatRouteCoordinator.handleChat(
                     leader,
                     "follow me",
                     channel,
@@ -47,7 +48,7 @@ class AgentChatRouteRuntimeTest {
         Map<Integer, List<AgentRuntimeEntry>> entries = new ConcurrentHashMap<>();
 
         try (MockedStatic<AgentChatIngressService> ingress = mockStatic(AgentChatIngressService.class)) {
-            AgentChatRouteRuntime.handleChat(
+            AgentChatRouteCoordinator.handleChat(
                     leader,
                     "follow me",
                     channel,
