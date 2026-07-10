@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMapTransitionService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.maps.Foothold;

@@ -4102,7 +4102,7 @@ Recent reconstruction notes:
   temporary swim-map, movement, physics, and broadcast callbacks.
 - Map-change grounding, map tracking, post-teleport reset, navigation graph
   warmup, and movement broadcast ordering now live in
-  `server.agents.runtime.AgentMapTransitionService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentMapTransitionService`; BotManager still supplies
   temporary foothold, physics, navigation, and broadcast callbacks.
 - Attack-lock physics dispatch now lives in
   `server.agents.capabilities.movement.AgentActionLockPhysicsService`; BotManager still
@@ -4127,7 +4127,7 @@ Recent reconstruction notes:
   keeps the same call sites but no longer owns the delta calculation or precise
   move-target cleanup rule when a farm anchor is cleared after a map change.
 - Tracked map-change tick handling now lives in
-  `server.agents.runtime.AgentMapTransitionService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentMapTransitionService`; BotManager still supplies
   temporary Cosmic grounding, graph-warm, mode-command, shop, and status
   callbacks. The same grounding order, KPQ grind-vs-follow-vs-reset decision,
   shop map-change notification, manager-status check, and performance timer
@@ -7134,6 +7134,10 @@ Current physics correction:
   `capabilities.movement`. Tracking checks, foothold capture, grounding,
   teleport/reset/broadcast, shop notification, and status-check ordering remain
   unchanged.
+- Capability ownership: `AgentMapTransitionService` now lives under
+  `capabilities.movement`. Tracking, foothold capture, grounding teleport,
+  reset, graph warmup, broadcast, grind/follow/PQ dispatch, shop notification,
+  and status-check ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

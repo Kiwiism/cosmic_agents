@@ -1933,7 +1933,7 @@ Recent map updates:
   `server.agents.capabilities.movement.AgentActionLockPhysicsService`; BotManager only
   supplies temporary swim-map and movement physics callbacks.
 - BotManager map-change grounding moved to
-  `server.agents.runtime.AgentMapTransitionService`; BotManager only supplies
+  `server.agents.capabilities.movement.AgentMapTransitionService`; BotManager only supplies
   temporary foothold/physics/navigation callbacks.
 - BotManager idle/trade physics mode selection moved to
   `server.agents.capabilities.movement.AgentIdlePhysicsService`; BotManager only supplies
@@ -2293,7 +2293,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#leader-safety-runtime` | `server.agents.runtime.AgentLeaderSafetyRuntime` | `MIGRATED_TO_AGENT`; inactive-leader runtime now accepts `AgentRuntimeEntry` while preserving active-return cleanup, town eligibility, safe-mode entry, town-scroll fallback, formation target selection, map-change grounding, movement reset, and return announcements |
 | `src/main/java/server/bots/BotManager.java#recovery-tick` | `server.agents.capabilities.recovery.AgentRecoveryTickService` | `MIGRATED_TO_AGENT`; recovery tick handling now accepts `AgentRuntimeEntry` while preserving shop-visit follow-sync suppression, follow-map sync, party recovery, target recovery ordering, and short-circuit behavior |
 | `src/main/java/server/bots/BotManager.java#tracked-map-change-tick` | `server.agents.runtime.AgentTrackedMapChangeTickService` | `MIGRATED_TO_AGENT`; tracked map-change tick handling now accepts `AgentRuntimeEntry` while preserving handler dispatch and consumed/fall-through behavior |
-| `src/main/java/server/bots/BotManager.java#map-transition` | `server.agents.runtime.AgentMapTransitionService` | `MIGRATED_TO_AGENT`; map transition grounding and tracked-map-change handling now accept `AgentRuntimeEntry` while preserving tracking checks, foothold index capture, grounding teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch, shop map-change, and status-check ordering |
+| `src/main/java/server/bots/BotManager.java#map-transition` | `server.agents.capabilities.movement.AgentMapTransitionService` | `MIGRATED_TO_AGENT`; map transition grounding and tracked-map-change handling now accept `AgentRuntimeEntry` while preserving tracking checks, foothold index capture, grounding teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch, shop map-change, and status-check ordering |
 | `src/main/java/server/bots/BotManager.java#recovery-teleport` | `server.agents.runtime.AgentRecoveryTeleportService` | `MIGRATED_TO_AGENT`; recovery teleport distance handling now accepts `AgentRuntimeEntry` while preserving target distance checks, out-of-bounds checks, grind-party constraints, shop-visit suppression, multiplier math, grounding lookup, teleport/reset, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#follow-map-sync` | `server.agents.capabilities.follow.AgentFollowMapSyncService` | `MIGRATED_TO_AGENT`; cross-map follow synchronization now accepts `AgentRuntimeEntry` while preserving follow-mode gating, same-map/null-anchor skip behavior, grounded anchor spawn selection, idle-on-ground, map change, and movement reset side effects |
 | `src/main/java/server/bots/BotManager.java#follow-target-command` | `server.agents.capabilities.follow.AgentFollowTargetCommandService` | `MIGRATED_TO_AGENT`; follow-target command application now accepts `AgentRuntimeEntry` collections while preserving target resolution, null/missing/self-target filtering, reply queuing, delay scheduling, auto-equip, potion sharing, and follow-start ordering |
@@ -3085,3 +3085,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentMovementOnlyMapChangeService` moved from generic
   runtime to `capabilities.movement`. Map tracking, grounding, teleport/reset,
   broadcast, shop, and status callback ordering remain unchanged.
+- Capability ownership: `AgentMapTransitionService` moved from generic runtime
+  to `capabilities.movement`. Grounding and post-transition dispatch ordering,
+  state mutations, and callback arguments remain unchanged.
