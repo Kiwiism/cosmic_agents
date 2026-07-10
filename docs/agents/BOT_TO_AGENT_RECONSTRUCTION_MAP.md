@@ -3103,3 +3103,7 @@ Recent capability extraction notes:
   runtime to `capabilities.combat`. Script/AI gating, action-window cleanup,
   attack short-circuit, movement fallback, and result semantics remain
   unchanged.
+- Capability ownership: `AgentAnchoredFarmTickService` moved from generic
+  runtime to `capabilities.combat`. Anchor validation, attack/idle branches,
+  target-state updates, precise movement, and callback ordering remain
+  unchanged.

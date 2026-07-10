@@ -1,10 +1,12 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentPositionService;
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import java.awt.Point;
 

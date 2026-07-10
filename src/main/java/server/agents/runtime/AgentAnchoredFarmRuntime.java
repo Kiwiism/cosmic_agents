@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentAnchoredFarmTickService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;

@@ -4179,7 +4179,7 @@ Recent reconstruction notes:
   follow-idle, and movement-core hooks. The existing early-return order is
   preserved for movement simulations and movement-only tests.
 - Anchored farm/sentry tick orchestration now lives in
-  `server.agents.runtime.AgentAnchoredFarmTickService`; BotManager still
+  `server.agents.capabilities.combat.AgentAnchoredFarmTickService`; BotManager still
   supplies temporary local-opportunity attack, idle, ground-idle broadcast, and
   movement-core hooks. The farm-anchor map guard, attack-consumed early return,
   at-anchor idle/clear behavior, precise anchor target assignment, and movement
@@ -7154,6 +7154,10 @@ Current physics correction:
   `capabilities.combat`. AI and plan gating, settled action-window cleanup,
   local attack short-circuit, movement fallback, and returned target semantics
   remain unchanged.
+- Capability ownership: `AgentAnchoredFarmTickService` now lives under
+  `capabilities.combat`. Anchor/map validation, idle fallback, local attack
+  gating and short-circuit, near-anchor target clearing/ground idle, precise
+  targeting, and movement dispatch remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
