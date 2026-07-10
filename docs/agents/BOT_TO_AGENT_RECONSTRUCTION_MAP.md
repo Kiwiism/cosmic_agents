@@ -1887,7 +1887,7 @@ Recent map updates:
   now use `AgentMovementCommandRuntime` directly while preserving command
   setup behavior.
 - BotManager inactive-town return-scroll item use moved to
-  `server.agents.runtime.AgentReturnScrollService`; BotManager remains only the
+  `server.agents.capabilities.supplies.AgentReturnScrollService`; BotManager remains only the
   leader-safety callback site for this action.
 - BotManager swim-map helper moved to
   `server.agents.runtime.AgentMapEnvironmentService`; BotManager no longer owns
@@ -3018,3 +3018,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentTransferService` moved from generic runtime to
   `capabilities.trade`. Validation, authorization, registry handoff, lifecycle
   ordering, delayed greeting, and return behavior remain unchanged.
+- Capability ownership: `AgentReturnScrollService` moved from generic runtime
+  to `capabilities.supplies`. Item selection, effect application, failure cases,
+  and one-scroll consumption remain unchanged.

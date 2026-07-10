@@ -7054,6 +7054,10 @@ Current physics correction:
   scheduler, and dialogue hooks. Validation text, authorization, removal/
   cancel/stop/register order, greeting delay, and success return remain
   unchanged.
+- Capability ownership: `AgentReturnScrollService` and its focused test now live
+  under `capabilities.supplies`. Return-scroll ID matching, inventory traversal,
+  effect lookup/apply failure behavior, one-item removal, and leader-safety
+  invocation remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

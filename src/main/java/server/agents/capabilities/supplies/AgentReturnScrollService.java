@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.supplies;
 
 import client.Character;
 import client.inventory.InventoryType;
@@ -8,7 +8,7 @@ import server.agents.integration.AgentInventoryGatewayRuntime;
 import server.agents.integration.InventoryGateway;
 
 /**
- * Agent runtime helper for using a Return Scroll - Nearest Town.
+ * Agent supply helper for using a Return Scroll - Nearest Town.
  */
 public final class AgentReturnScrollService {
     private static final int RETURN_SCROLL_NEAREST_TOWN = 2030000;

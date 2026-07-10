@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.supplies;
 
 import client.Character;
 import client.inventory.Inventory;
