@@ -2,8 +2,9 @@ package server.agents.auth;
 
 import java.time.Clock;
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /** Restricts creation of new Agent backing accounts without affecting existing Agent spawn. */
 public final class AgentProvisioningPolicy {
@@ -17,7 +18,7 @@ public final class AgentProvisioningPolicy {
     private final int maxPerWindow;
     private final long windowMs;
     private final int maxPerController;
-    private final Map<Integer, ArrayDeque<Long>> attemptsByController = new ConcurrentHashMap<>();
+    private final Map<Integer, ArrayDeque<Long>> attemptsByController = new HashMap<>();
 
     public AgentProvisioningPolicy() {
         this(
@@ -41,7 +42,10 @@ public final class AgentProvisioningPolicy {
         this.maxPerController = Math.max(1, maxPerController);
     }
 
-    public String validate(int controllerCharacterId, int gmLevel, int registeredAgentCount) {
+    public synchronized String validateAndRecordAttempt(
+            int controllerCharacterId,
+            int gmLevel,
+            int registeredAgentCount) {
         if (gmLevel < minimumGmLevel) {
             return "Creating Agent backing accounts requires GM level " + minimumGmLevel + ".";
         }
@@ -50,24 +54,26 @@ public final class AgentProvisioningPolicy {
         }
 
         long now = clock.millis();
+        removeExpiredAttempts(now);
         ArrayDeque<Long> attempts = attemptsByController.computeIfAbsent(
                 controllerCharacterId, ignored -> new ArrayDeque<>());
-        synchronized (attempts) {
-            while (!attempts.isEmpty() && now - attempts.peekFirst() >= windowMs) {
-                attempts.removeFirst();
-            }
-            if (attempts.size() >= maxPerWindow) {
-                return "Agent backing-account creation is rate limited. Try again later.";
-            }
+        if (attempts.size() >= maxPerWindow) {
+            return "Agent backing-account creation is rate limited. Try again later.";
         }
+        attempts.addLast(now);
         return null;
     }
 
-    public void recordProvisioned(int controllerCharacterId) {
-        ArrayDeque<Long> attempts = attemptsByController.computeIfAbsent(
-                controllerCharacterId, ignored -> new ArrayDeque<>());
-        synchronized (attempts) {
-            attempts.addLast(clock.millis());
+    private void removeExpiredAttempts(long now) {
+        Iterator<ArrayDeque<Long>> iterator = attemptsByController.values().iterator();
+        while (iterator.hasNext()) {
+            ArrayDeque<Long> attempts = iterator.next();
+            while (!attempts.isEmpty() && now - attempts.peekFirst() >= windowMs) {
+                attempts.removeFirst();
+            }
+            if (attempts.isEmpty()) {
+                iterator.remove();
+            }
         }
     }
 

@@ -68,7 +68,6 @@ public final class AgentSpawnCommandExecutor {
             }
 
             ownershipService.registerOwner(createdCharId, player.getId());
-            PROVISIONING_POLICY.recordProvisioned(player.getId());
             bot = ownershipService.resolveCharacterByName(botName);
             if (account.created()) {
                 player.yellowMessage("Bot '" + botName + "' created with an Agent-only backing account.");
@@ -93,7 +92,8 @@ public final class AgentSpawnCommandExecutor {
         try {
             int registeredAgents = AgentPersistenceGatewayRuntime.persistence()
                     .countRegisteredAgents(player.getId());
-            return PROVISIONING_POLICY.validate(player.getId(), player.gmLevel(), registeredAgents);
+            return PROVISIONING_POLICY.validateAndRecordAttempt(
+                    player.getId(), player.gmLevel(), registeredAgents);
         } catch (SQLException e) {
             log.warn("Failed to verify Agent provisioning quota for character {}", player.getId(), e);
             return "Failed to verify Agent backing-account creation policy.";
