@@ -21,6 +21,7 @@ import server.agents.capabilities.combat.AgentMobTouchState;
 
 import server.agents.capabilities.movement.AgentGroundTravelState;
 import server.agents.capabilities.movement.AgentFormationOffsetState;
+import server.agents.capabilities.movement.AgentMoveTargetState;
 import server.agents.capabilities.movement.AgentAirborneSteeringState;
 import server.agents.capabilities.movement.AgentClimbState;
 import server.agents.capabilities.movement.AgentDownJumpState;

@@ -5018,7 +5018,8 @@ Current physics correction:
   `AgentGrindLootState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while loot targeting and retry gating route through the Agent
   looting capability.
-- Standalone move-target storage now lives in `AgentMoveTargetState`.
+- Standalone move-target storage now lives in
+  `server.agents.capabilities.movement.AgentMoveTargetState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while explicit
   move-here/script/fidget movement targets route through Agent runtime state.
 - Grind no-target wander direction storage now lives in
@@ -7243,6 +7244,9 @@ Current physics correction:
 - Capability state ownership: `AgentGrindTargetState` now lives under
   `capabilities.combat`. Target references, search timestamp defaults,
   setters, and independent clear operations remain unchanged.
+- Capability state ownership: `AgentMoveTargetState` now lives under
+  `capabilities.movement`. Defensive point copies, precision normalization,
+  equality, and clear behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
