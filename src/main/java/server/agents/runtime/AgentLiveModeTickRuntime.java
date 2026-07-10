@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.combat.AgentScriptedMoveCombatTickService;
 import server.agents.capabilities.combat.AgentGrindModeDispatchService;
+import server.agents.capabilities.combat.AgentAnchoredFarmModeTickService;
 import server.agents.capabilities.movement.AgentFinalMovementTailService;
 import server.agents.capabilities.follow.AgentFollowOpportunityTickService;
 import server.agents.capabilities.shop.AgentShopVisitTickService;

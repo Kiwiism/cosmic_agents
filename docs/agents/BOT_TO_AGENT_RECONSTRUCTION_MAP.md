@@ -1653,7 +1653,7 @@ Recent map updates:
   temporary hooks for follow map sync, grind-party recovery teleport, and
   target-distance recovery teleport.
 - Anchored-farm mode dispatch moved from BotManager to
-  `server.agents.runtime.AgentAnchoredFarmModeTickService`. BotManager now
+  `server.agents.capabilities.combat.AgentAnchoredFarmModeTickService`. BotManager now
   supplies only the temporary anchored-farm tick hook and performance timing.
 - Scripted move local-combat tick dispatch moved from BotManager to
   `server.agents.capabilities.combat.AgentScriptedMoveCombatTickService`. BotManager now
@@ -3110,3 +3110,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentGrindModeDispatchService` moved from generic
   runtime to `capabilities.combat`. Mode gating, fall-through target retention,
   and grind callback result propagation remain unchanged.
+- Capability ownership: `AgentAnchoredFarmModeTickService` moved from generic
+  runtime to `capabilities.combat`. Anchor gating, callback arguments, and
+  consumed/fall-through semantics remain unchanged.

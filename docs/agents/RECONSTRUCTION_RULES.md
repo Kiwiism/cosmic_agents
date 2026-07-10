@@ -4335,7 +4335,7 @@ Recent reconstruction notes:
   local-opportunity MOVE_TO predicate, consumed attack early return, movement
   target update, and movement-core tail are preserved.
 - Anchored-farm mode dispatch now lives in
-  `server.agents.runtime.AgentAnchoredFarmModeTickService`. BotManager keeps a
+  `server.agents.capabilities.combat.AgentAnchoredFarmModeTickService`. BotManager keeps a
   temporary compatibility adapter for the existing anchored-farm tick body and
   performance timing. The same farm-anchor presence check and consumed-tick
   result are preserved.
@@ -7161,6 +7161,9 @@ Current physics correction:
 - Capability ownership: `AgentGrindModeDispatchService` now lives under
   `capabilities.combat`. Non-grind fall-through and active-grind callback/result
   propagation remain unchanged.
+- Capability ownership: `AgentAnchoredFarmModeTickService` now lives under
+  `capabilities.combat`. Missing-anchor fall-through and anchored callback/
+  consumed behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
