@@ -33,6 +33,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Navigation graph cache files now enforce a size ceiling and a narrow Java
+  deserialization allowlist with depth, reference, array, and stream limits.
+  Corrupt, stale, oversized, or unexpected files are removed and rebuilt, and
+  valid graphs are written through a temporary file plus atomic replacement.
+  Graph construction and path selection are unchanged.
+
 - Agent registration now initializes and publishes a complete runtime entry
   before a zero-delay scheduler can invoke its first tick. Scheduled handles
   attach once, cancellation remains effective across an attachment race, and a

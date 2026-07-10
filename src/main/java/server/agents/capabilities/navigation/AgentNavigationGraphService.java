@@ -19,8 +19,6 @@ import server.maps.Rope;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -475,19 +473,13 @@ public final class AgentNavigationGraphService {
 
     private static AgentNavigationGraph loadGraph(GraphCacheKey key) {
         Path file = graphFile(key);
-        if (!Files.isRegularFile(file)) {
-            return null;
-        }
-
-        try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(file))) {
-            Object loaded = in.readObject();
-            if (!(loaded instanceof AgentNavigationGraph graph)) {
-                return null;
-            }
-            if (graph.version != GRAPH_VERSION
-                    || graph.mapId != key.mapId()
-                    || graph.movementProfile.totalSpeedStat() != key.totalSpeedStat()
-                    || graph.movementProfile.totalJumpStat() != key.totalJumpStat()) {
+        try {
+            AgentNavigationGraph graph = AgentNavigationGraphCacheFile.read(
+                    file,
+                    GRAPH_VERSION,
+                    key.mapId(),
+                    new AgentMovementProfile(key.totalSpeedStat(), key.totalJumpStat()));
+            if (graph == null) {
                 return null;
             }
             seedCachedFootholdCollisionIds(graph);
@@ -501,10 +493,8 @@ public final class AgentNavigationGraphService {
 
     private static void saveGraph(AgentNavigationGraph graph) {
         try {
-            Files.createDirectories(CACHE_DIR);
-            try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(graphFile(GraphCacheKey.from(graph.mapId, graph.movementProfile))))) {
-                out.writeObject(graph);
-            }
+            AgentNavigationGraphCacheFile.write(
+                    graphFile(GraphCacheKey.from(graph.mapId, graph.movementProfile)), graph);
         } catch (IOException e) {
             log.debug("Failed to save bot nav graph cache for map {}", graph.mapId, e);
         }
