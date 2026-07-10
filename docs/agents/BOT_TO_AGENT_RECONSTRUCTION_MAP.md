@@ -3278,3 +3278,7 @@ Recent capability extraction notes:
   `commands.AgentLifecycleCommandCoordinator`; command parsing/message wiring
   is command-owned while recruit/transfer/dismiss lifecycle execution remains
   delegated to runtime services unchanged.
+- Command ownership: `AgentFormationCommandRuntime` became
+  `commands.AgentFormationCommandCoordinator`; formation command callback
+  assembly is command-owned while movement formation state/application remains
+  unchanged.

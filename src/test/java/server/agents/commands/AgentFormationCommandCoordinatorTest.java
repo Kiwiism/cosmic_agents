@@ -1,10 +1,11 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import server.agents.capabilities.movement.AgentFormationService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 
@@ -19,12 +20,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyString;
 
-class AgentFormationCommandRuntimeTest {
+class AgentFormationCommandCoordinatorTest {
     @Test
     void returnsFalseForNonFormationMessages() {
         Character leader = leader(901);
 
-        boolean handled = AgentFormationCommandRuntime.handleFormationCommand(
+        boolean handled = AgentFormationCommandCoordinator.handleFormationCommand(
                 leader,
                 "follow me",
                 leaderCharId -> List.of(),
@@ -40,7 +41,7 @@ class AgentFormationCommandRuntimeTest {
     void sendsLegacyHelpToLeaderWhenNoAgentsAreActive() {
         Character leader = leader(902);
 
-        boolean handled = AgentFormationCommandRuntime.handleFormationCommand(
+        boolean handled = AgentFormationCommandCoordinator.handleFormationCommand(
                 leader,
                 "formation",
                 leaderCharId -> List.of(),
@@ -57,7 +58,7 @@ class AgentFormationCommandRuntimeTest {
     void updatesSharedFormationStateWithLegacyDefaults() {
         Character leader = leader(903);
 
-        boolean handled = AgentFormationCommandRuntime.handleFormationCommand(
+        boolean handled = AgentFormationCommandCoordinator.handleFormationCommand(
                 leader,
                 "formation spread 90",
                 leaderCharId -> List.of(),
@@ -78,7 +79,7 @@ class AgentFormationCommandRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), leader, null);
 
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
-            boolean handled = AgentFormationCommandRuntime.handleFormationCommand(
+            boolean handled = AgentFormationCommandCoordinator.handleFormationCommand(
                     leader,
                     "formation",
                     leaderCharId -> List.of(entry),

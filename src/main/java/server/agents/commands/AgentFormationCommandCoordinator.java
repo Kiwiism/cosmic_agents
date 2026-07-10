@@ -1,12 +1,12 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentFormationCommandService;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.integration.AgentReplyRuntime;
 
-public final class AgentFormationCommandRuntime {
-    private AgentFormationCommandRuntime() {
+public final class AgentFormationCommandCoordinator {
+    private AgentFormationCommandCoordinator() {
     }
 
     public static boolean handleFormationCommand(Character leader,

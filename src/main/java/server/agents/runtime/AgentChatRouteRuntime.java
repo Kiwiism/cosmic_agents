@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmReplyCoordinator;
 import server.agents.commands.AgentLifecycleCommandCoordinator;
+import server.agents.commands.AgentFormationCommandCoordinator;
 import server.agents.commands.AgentDismissCommandService;
 import server.agents.commands.AgentRecruitCommandService;
 import server.agents.capabilities.movement.AgentFormationService;
@@ -99,7 +100,7 @@ public final class AgentChatRouteRuntime {
                         commandLeader,
                         text,
                         transferAction),
-                (commandLeader, text) -> AgentFormationCommandRuntime.handleFormationCommand(
+                (commandLeader, text) -> AgentFormationCommandCoordinator.handleFormationCommand(
                         commandLeader,
                         text,
                         entriesByLeader::get,

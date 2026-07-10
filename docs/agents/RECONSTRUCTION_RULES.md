@@ -7348,6 +7348,10 @@ Current physics correction:
   `AgentLifecycleChatCommandRuntime` to
   `commands.AgentLifecycleCommandCoordinator`; runtime lifecycle actions and
   leader-message behavior remain unchanged.
+- Command ownership: formation command wiring moved from
+  `AgentFormationCommandRuntime` to
+  `commands.AgentFormationCommandCoordinator`; parsing, state lookup/update,
+  offset application, replies, and defaults remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
