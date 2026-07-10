@@ -1,7 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 

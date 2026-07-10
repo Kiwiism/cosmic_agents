@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.monitoring.AgentPerformanceMonitor;
+
 import client.Character;
 
 import java.util.function.BiConsumer;

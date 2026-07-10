@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.monitoring.AgentPerformanceMonitor;
+
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
 

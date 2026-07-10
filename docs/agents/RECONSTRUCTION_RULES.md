@@ -2824,8 +2824,10 @@ Recent reconstruction notes:
   Agent navigation capability. WZ-backed map bounds, portals, footholds, ropes,
   swim flags, field limits, return map, and foothold speed loading are unchanged.
 - Runtime performance monitoring moved to `AgentPerformanceMonitor` under the
-  Agent runtime package. Section timing, pathfind timing, slow-sample/report
-  thresholds, snapshots, and legacy perf command toggles are unchanged.
+  `server.agents.monitoring` package. The monitor remains a shared observer and
+  does not own tick scheduling or capability behavior. Section timing, pathfind
+  timing, slow-sample/report thresholds, snapshots, and legacy perf command
+  toggles are unchanged.
 - Chat/social face-expression enum ownership moved to `AgentEmote` under the
   Agent dialogue capability. Numeric expression ids are unchanged.
 - Airshow state now enters through `AgentAirshowStateRuntime`;
@@ -7452,6 +7454,9 @@ Current physics correction:
 - Command ownership: recruitment lookup, authorization, registration, and error
   handling moved from generic runtime to `commands.AgentRecruitService` with no
   behavior changes.
+- Monitoring ownership: timing aggregation and diagnostic reporting moved from
+  generic runtime to `monitoring.AgentPerformanceMonitor`. Existing call sites,
+  section names, thresholds, and enable/disable behavior are preserved.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

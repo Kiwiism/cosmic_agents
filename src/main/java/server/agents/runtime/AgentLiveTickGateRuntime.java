@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.monitoring.AgentPerformanceMonitor;
+
 import server.agents.capabilities.recovery.AgentRecoveryTeleportCoordinator;
 import server.agents.capabilities.follow.AgentFollowMapSyncCoordinator;
 

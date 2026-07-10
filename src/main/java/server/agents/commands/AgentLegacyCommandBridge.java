@@ -1,6 +1,6 @@
 package server.agents.commands;
 
-import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.monitoring.AgentPerformanceMonitor;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;

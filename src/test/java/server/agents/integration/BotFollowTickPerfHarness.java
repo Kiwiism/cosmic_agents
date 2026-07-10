@@ -18,7 +18,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentMovementOnlyTickCoordinator;
-import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.monitoring.AgentPerformanceMonitor;
 import server.agents.plans.AgentScriptTaskCoordinator;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;

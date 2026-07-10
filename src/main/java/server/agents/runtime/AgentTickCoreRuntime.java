@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.monitoring.AgentPerformanceMonitor;
+
 import server.agents.plans.AgentScriptTaskCoordinator;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentOwnerlessTickService;

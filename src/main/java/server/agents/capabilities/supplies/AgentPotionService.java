@@ -7,7 +7,7 @@ import server.agents.capabilities.movement.AgentMovementTimers;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.combat.AgentCombatConfig;
 
-import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.monitoring.AgentPerformanceMonitor;
 
 import client.Character;
 import client.inventory.InventoryType;

@@ -2318,7 +2318,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotOfferManager.java` | `server.agents.capabilities.trade.AgentOfferService`, `equipment`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATED_TO_AGENT`; owner/sibling gear offer orchestration, pending offer responses, loot-offer prompts, reservation checks, and best-upgrade request routing now live in Agent trade. Offer runtime reply, gear-prompt helper methods, pending-offer state cleanup, owner upgrade-request entry, and reservation classification now accept `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotOwnershipService.java` | `server.agents.auth.AgentOwnershipService` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPathLogger.java` | `server.agents.monitoring.AgentPathLogger` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.runtime.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
+| `src/main/java/server/bots/BotPerformanceMonitor.java` | `server.agents.monitoring.AgentPerformanceMonitor` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/BotPhysicsEngine.java` | `server.agents.capabilities.movement`, `server.agents.capabilities.navigation` | `MIGRATED_TO_AGENT`; movement config, kinematics, pose/snapshot, timers, ground lookup/collision/walk-region lookup, ground motion, queued down-jump, rope/climb motion, jump/rope/fall probes, airborne stepping, swim stepping, navigation walk-connectivity, and focused physics regression coverage now call Agent-owned services directly; production bot file deleted after compile and focused physics tests passed |
 | `src/main/java/server/bots/BotPotionManager.java` | `server.agents.capabilities.supplies.AgentPotionService`, `server.agents.capabilities.supplies.AgentAutopotPolicy`, `server.agents.capabilities.supplies.AgentPotionInventoryPolicy`, `server.agents.capabilities.supplies.AgentPassiveRecoveryPolicy`, `server.agents.capabilities.dialogue.AgentDialogueCatalog` | `MIGRATED_TO_AGENT`; potion tick orchestration, autopot setup/debug reporting, low-pot supply sharing, donor selection, passive recovery, and grind-start supply reporting now live in Agent supplies |
 | `src/main/java/server/bots/BotScript.java` | `server.agents.plans.AgentScript` | `MIGRATED_TO_AGENT` |
@@ -3382,3 +3382,6 @@ Recent capability extraction notes:
 - Command ownership: `AgentRecruitService` moved from generic runtime to
   `commands`; lookup, authorization, registration, and error results are
   unchanged.
+- Monitoring ownership: `AgentPerformanceMonitor` moved from generic runtime to
+  `monitoring`; instrumentation keys, thresholds, snapshots, and logging behavior
+  are unchanged.

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.monitoring.AgentPerformanceMonitor;
+
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
 import server.agents.capabilities.combat.AgentScriptedMoveCombatTickService;

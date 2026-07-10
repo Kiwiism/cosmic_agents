@@ -2,7 +2,7 @@ package server.agents.capabilities.navigation;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.monitoring.AgentPerformanceMonitor;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import org.slf4j.Logger;
