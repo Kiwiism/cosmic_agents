@@ -1402,11 +1402,11 @@ Recent reconstruction notes:
   activate-next behavior, start-on-activation, incomplete retention, and
   clear-and-continue loop are unchanged.
 - BotManager script-task queue helpers now delegate to
-  `server.agents.runtime.AgentScriptTaskQueueService`. Clear-and-bump,
+  `server.agents.plans.AgentScriptTaskQueueService`. Clear-and-bump,
   null-safe queueing, move queueing, move-then-drop, follow-then-drop, and
   queued-task checks are unchanged.
 - Agent script context and runner queue operations now call
-  `server.agents.runtime.AgentScriptTaskQueueService` directly instead of
+  `server.agents.plans.AgentScriptTaskQueueService` directly instead of
   routing through BotManager. The same queued task shapes and clear-and-bump
   behavior are preserved.
 - Agent script context now receives a narrow cheap-move callback instead of a
@@ -7188,6 +7188,9 @@ Current physics correction:
   `AgentDismissCommandService` now live under `commands`. Legacy aliases,
   regex matching, name extraction, lifecycle callback arguments, success/error
   replies, and handled/fall-through results remain unchanged.
+- Plan ownership: `AgentScriptTaskQueueService` now lives under `plans`. Null
+  guards, clear-and-epoch behavior, task construction and ordering, move combat
+  mode, follow/drop composition, and queued-state checks remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

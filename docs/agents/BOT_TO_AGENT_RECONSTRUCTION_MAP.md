@@ -1823,11 +1823,11 @@ Recent map updates:
   `server.agents.runtime.AgentScriptTaskTickService`; BotManager only supplies
   temporary callbacks for task start and completion checks.
 - BotManager script task queue helpers moved to
-  `server.agents.runtime.AgentScriptTaskQueueService`; BotManager remains a
+  `server.agents.plans.AgentScriptTaskQueueService`; BotManager remains a
   temporary compatibility facade for clear, queue, move, move-then-drop,
   follow-then-drop, and has-queued checks.
 - Agent script context and runner task queue operations now call
-  `server.agents.runtime.AgentScriptTaskQueueService` directly instead of
+  `server.agents.plans.AgentScriptTaskQueueService` directly instead of
   routing queue/clear checks through BotManager; BotManager remains only for the
   temporary cheap-move helper used by script context.
 - Agent script context no longer stores `BotManager`; it receives a narrow
@@ -2274,7 +2274,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#leader-session` | `server.agents.runtime.AgentLeaderSessionService` | `MIGRATED_TO_AGENT`; live leader refresh now accepts `AgentRuntimeEntry` while preserving cached/refresh behavior |
 | `src/main/java/server/bots/BotManager.java#mode-service` | `server.agents.runtime.AgentModeService` | `MIGRATED_TO_AGENT`; mode transitions now accept `AgentRuntimeEntry` while preserving follow/grind/stop/move/farm/patrol state changes |
 | `src/main/java/server/bots/BotManager.java#command-mode` | `server.agents.commands.AgentCommandModeService` | `MIGRATED_TO_AGENT`; command-mode preparation now accepts `AgentRuntimeEntry` while preserving guard and hook order |
-| `src/main/java/server/bots/BotManager.java#script-task-queue` | `server.agents.runtime.AgentScriptTaskQueueService` | `MIGRATED_TO_AGENT`; script task queue operations now accept `AgentRuntimeEntry` while preserving null guards, activity-epoch bumps, queue ordering, move/drop/follow task construction, and queued-task checks |
+| `src/main/java/server/bots/BotManager.java#script-task-queue` | `server.agents.plans.AgentScriptTaskQueueService` | `MIGRATED_TO_AGENT`; script task queue operations now accept `AgentRuntimeEntry` while preserving null guards, activity-epoch bumps, queue ordering, move/drop/follow task construction, and queued-task checks |
 | `src/main/java/server/bots/BotManager.java#heartbeat` | `server.agents.runtime.AgentHeartbeatService` | `MIGRATED_TO_AGENT`; heartbeat ticking now accepts `AgentRuntimeEntry` while preserving due checks, timestamp marking, client last-packet updates, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#scheduled-task` | `server.agents.runtime.AgentScheduledTaskRuntime` | `MIGRATED_TO_AGENT`; scheduled-task cancellation now accepts `AgentRuntimeEntry` while preserving null guards, scheduled-task presence checks, and `ScheduledFuture.cancel(false)` behavior |
 | `src/main/java/server/bots/BotManager.java#action-lock-physics` | `server.agents.capabilities.movement.AgentActionLockPhysicsService` | `MIGRATED_TO_AGENT`; action-lock physics dispatch now accepts `AgentRuntimeEntry` while preserving attack-cooldown gating, swim/airborne/grounded branch selection, and movement-phase callbacks |
@@ -3133,3 +3133,6 @@ Recent capability extraction notes:
   runtime into `commands`. Aliases, matching, lifecycle callback arguments,
   replies, and handled semantics remain unchanged; lifecycle execution remains
   in runtime.
+- Plan ownership: `AgentScriptTaskQueueService` moved from generic runtime to
+  `plans`. Queue state mutation, epoch behavior, task construction/order, and
+  query behavior remain unchanged.

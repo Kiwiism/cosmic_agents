@@ -9,7 +9,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.commands.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentScriptTaskQueueService;
+import server.agents.plans.AgentScriptTaskQueueService;
 import server.maps.MapleMap;
 
 import java.awt.Point;
