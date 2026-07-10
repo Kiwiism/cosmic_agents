@@ -7340,6 +7340,10 @@ Current physics correction:
   dialogue through `integration.cosmic.CosmicAgentWhisperCommandBridge` rather
   than a generic-runtime hook; lookup, reply-channel marking, and chat dispatch
   remain unchanged.
+- LLM capability ownership: live request composition moved from generic runtime
+  `AgentLlmReplyRuntime` to
+  `capabilities.dialogue.llm.AgentLlmReplyCoordinator`; relation, mode, anchor,
+  last-command, map, and reply-channel inputs remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

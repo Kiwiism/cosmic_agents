@@ -3270,3 +3270,7 @@ Recent capability extraction notes:
   `integration.cosmic.CosmicAgentWhisperCommandBridge`; the server whisper hook
   now has explicit Cosmic ownership while Agent lookup and chat routing remain
   unchanged.
+- LLM capability ownership: `AgentLlmReplyRuntime` became
+  `capabilities.dialogue.llm.AgentLlmReplyCoordinator`; live prompt/request
+  composition now belongs to the LLM capability with unchanged inputs and
+  reply delegation.

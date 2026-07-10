@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.dialogue.llm.AgentLlmReplyCoordinator;
 import server.agents.commands.AgentDismissCommandService;
 import server.agents.commands.AgentRecruitCommandService;
 import server.agents.capabilities.movement.AgentFormationService;
@@ -141,7 +142,7 @@ public final class AgentChatRouteRuntime {
                 AgentRuntimeIdentityRuntime::owner,
                 AgentActivityStateRuntime::recordLastOwnerCommand,
                 () -> AgentLlmConfig.enabled,
-                AgentLlmReplyRuntime::maybeRespond,
+                AgentLlmReplyCoordinator::maybeRespond,
                 Character::yellowMessage);
     }
 

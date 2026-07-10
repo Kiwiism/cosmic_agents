@@ -1,20 +1,17 @@
-package server.agents.runtime;
+package server.agents.capabilities.dialogue.llm;
 
 import client.Character;
-import server.agents.capabilities.dialogue.llm.AgentLlmPromptContext;
-import server.agents.capabilities.dialogue.llm.AgentLlmReplyRequest;
-import server.agents.capabilities.dialogue.llm.AgentLlmReplyService;
-import server.agents.capabilities.dialogue.llm.AgentSenderRelation;
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.llm.AgentLlmRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 
-public final class AgentLlmReplyRuntime {
-    private AgentLlmReplyRuntime() {
+public final class AgentLlmReplyCoordinator {
+    private AgentLlmReplyCoordinator() {
     }
 
     public static void maybeRespond(AgentRuntimeEntry entry, Character sender, String message) {
