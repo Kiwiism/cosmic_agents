@@ -23,6 +23,14 @@ public final class AgentIdlePhysicsService {
     private AgentIdlePhysicsService() {
     }
 
+    public static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent) {
+        return tickIdleEntry(entry, agent, defaultHooks());
+    }
+
+    public static void tickPhysicsOnly(AgentRuntimeEntry entry, Character agent) {
+        tickPhysicsOnly(entry, agent, defaultHooks());
+    }
+
     public static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent, PhysicsHooks hooks) {
         if (AgentModeStateRuntime.following(entry)
                 || AgentModeStateRuntime.grinding(entry)
@@ -50,5 +58,16 @@ public final class AgentIdlePhysicsService {
                 hooks.movementBroadcaster().accept(entry);
             }
         }
+    }
+
+    private static PhysicsHooks defaultHooks() {
+        return new PhysicsHooks(
+                AgentMapEnvironmentService::isSwimMap,
+                entry -> AgentMovementPhaseDispatchService.tickSwimming(entry, null),
+                entry -> AgentMovementPhaseDispatchService.tickAirborne(entry, null),
+                AgentMovementPoseService::resolveIdleGroundStance,
+                AgentMovementPoseService::resolveStance,
+                AgentMovementPoseService::idleOnGround,
+                AgentMovementBroadcastService::broadcastMovement);
     }
 }

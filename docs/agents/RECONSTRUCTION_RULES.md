@@ -7297,6 +7297,10 @@ Current physics correction:
   directly in `AgentActionLockPhysicsService`; the generic-runtime
   `AgentActionLockPhysicsRuntime` bridge is removed with branch ordering and
   tick dispatch unchanged.
+- Movement bridge removal: default idle physics hook assembly now lives in
+  `AgentIdlePhysicsService`; `AgentIdlePhysicsRuntime` is removed while idle
+  eligibility, stance correction, swim/air dispatch, and broadcast timing stay
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

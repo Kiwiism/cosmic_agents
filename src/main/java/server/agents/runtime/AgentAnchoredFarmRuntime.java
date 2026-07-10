@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.combat.AgentAnchoredFarmTickService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
@@ -58,7 +59,7 @@ public final class AgentAnchoredFarmRuntime {
                     return new AgentAnchoredFarmTickService.LocalOpportunityResult(
                             result.consumedTick(), result.targetPos());
                 },
-                AgentIdlePhysicsRuntime::tickIdleEntry,
+                AgentIdlePhysicsService::tickIdleEntry,
                 (entry, agent) -> {
                     AgentMovementPoseService.idleOnGround(entry, agent);
                     AgentMovementBroadcastService.broadcastMovement(entry);

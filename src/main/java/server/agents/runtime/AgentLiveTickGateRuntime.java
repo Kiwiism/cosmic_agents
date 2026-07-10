@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.trade.AgentTradeWindowTickService;
 import server.agents.capabilities.recovery.AgentRecoveryTickService;
 
@@ -78,12 +79,12 @@ public final class AgentLiveTickGateRuntime {
 
     private static void tickTradePhysics(AgentRuntimeEntry entry, Character agent, boolean perf) {
         if (!perf) {
-            AgentIdlePhysicsRuntime.tickPhysicsOnly(entry, agent);
+            AgentIdlePhysicsService.tickPhysicsOnly(entry, agent);
             return;
         }
         long startedAt = System.nanoTime();
         try {
-            AgentIdlePhysicsRuntime.tickPhysicsOnly(entry, agent);
+            AgentIdlePhysicsService.tickPhysicsOnly(entry, agent);
         } finally {
             AgentPerformanceMonitor.record("tick-trade-physics", System.nanoTime() - startedAt);
         }
@@ -91,10 +92,10 @@ public final class AgentLiveTickGateRuntime {
 
     private static boolean tickIdleEntry(AgentRuntimeEntry entry, Character agent, boolean perf) {
         if (!perf) {
-            return AgentIdlePhysicsRuntime.tickIdleEntry(entry, agent);
+            return AgentIdlePhysicsService.tickIdleEntry(entry, agent);
         }
         long startedAt = System.nanoTime();
-        boolean consumed = AgentIdlePhysicsRuntime.tickIdleEntry(entry, agent);
+        boolean consumed = AgentIdlePhysicsService.tickIdleEntry(entry, agent);
         AgentPerformanceMonitor.record("tick-idle", System.nanoTime() - startedAt);
         return consumed;
     }

@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentOwnerlessTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
@@ -169,7 +170,7 @@ public final class AgentTickCoreRuntime {
                         ownerlessRunAiTick,
                                 groundAfterMapChange,
                                 standaloneMoveTargetTick,
-                        () -> AgentIdlePhysicsRuntime.tickIdleEntry(ownerlessEntry, ownerlessAgent)),
+                        () -> AgentIdlePhysicsService.tickIdleEntry(ownerlessEntry, ownerlessAgent)),
                 deadTick,
                 (liveEntry, liveAgent, liveLeader) -> AgentLiveTickContextRuntime.prepareLiveTickContext(
                         liveEntry,

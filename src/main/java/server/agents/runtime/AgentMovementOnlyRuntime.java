@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentMovementOnlyTickService;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 
@@ -33,7 +34,7 @@ public final class AgentMovementOnlyRuntime {
             BiFunction<AgentRuntimeEntry, Character, Character> followAnchorResolver,
             MovementOnlyConfig config) {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
-                AgentIdlePhysicsRuntime::tickIdleEntry,
+                AgentIdlePhysicsService::tickIdleEntry,
                 (entry, agent) -> AgentShopStateRuntime.shopVisitPending(entry),
                 AgentFollowMapSyncRuntime::syncFollowMap,
                 followAnchorResolver::apply,

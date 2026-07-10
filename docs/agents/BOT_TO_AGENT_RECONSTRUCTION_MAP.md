@@ -3229,3 +3229,7 @@ Recent capability extraction notes:
 - Movement bridge removal: `AgentActionLockPhysicsRuntime` was deleted after
   its default hook assembly moved into `AgentActionLockPhysicsService`;
   cooldown gating and swim/air/ground branch ordering remain unchanged.
+- Movement bridge removal: `AgentIdlePhysicsRuntime` was deleted after its
+  default hook assembly moved into `AgentIdlePhysicsService`; idle gating,
+  phase dispatch, stance comparison, and movement broadcast behavior remain
+  unchanged.
