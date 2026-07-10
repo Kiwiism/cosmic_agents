@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 /**
  * Latch set after the one allowed close-range hit for ranged-grind spacing.

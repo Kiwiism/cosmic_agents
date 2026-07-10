@@ -5038,7 +5038,7 @@ Current physics correction:
   anchor, bounded-chase deadline, and arrival/expiry checks route through Agent
   runtime state.
 - Degenerate close-range attack latch storage now lives in
-  `AgentDegenerateAttackState`. `BotEntry` temporarily hosts the Agent-owned
+  `server.agents.capabilities.combat.AgentDegenerateAttackState`. `BotEntry` temporarily hosts the Agent-owned
   state object, while ranged-grind spacing and cleanup paths route through
   Agent runtime state.
 - Combat skill cache storage now lives in `AgentCombatSkillCacheState`.
@@ -7230,6 +7230,9 @@ Current physics correction:
 - Capability state ownership: `AgentBreakoutState` now lives under
   `capabilities.combat`. Direction commitment, inclusive deadline expiry, and
   clear defaults remain unchanged.
+- Capability state ownership: `AgentDegenerateAttackState` now lives under
+  `capabilities.combat`. Initial, mark-done, and clear latch behavior remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

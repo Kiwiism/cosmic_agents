@@ -10,6 +10,7 @@ import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.combat.AgentCombatBuffState;
 import server.agents.capabilities.combat.AgentAoeRepositionState;
 import server.agents.capabilities.combat.AgentBreakoutState;
+import server.agents.capabilities.combat.AgentDegenerateAttackState;
 import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatSkillCacheState;
