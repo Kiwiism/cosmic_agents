@@ -3193,3 +3193,7 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentMovementStuckState` moved from
   generic runtime to `capabilities.movement`; counters, sentinel position,
   record, and reset semantics remain unchanged.
+- Capability map ownership: `AgentMapTrackingState` and
+  `AgentMapStateRuntime` moved from generic runtime to
+  `capabilities.movement`; map identifiers, copied/read-only foothold indexes,
+  null handling, and map tracking predicates remain unchanged.

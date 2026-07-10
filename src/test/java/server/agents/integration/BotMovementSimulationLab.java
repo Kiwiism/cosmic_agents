@@ -32,7 +32,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.runtime.AgentMapStateRuntime;
+import server.agents.capabilities.movement.AgentMapStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;

@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMapStateRuntime;
 import server.agents.capabilities.movement.AgentMovementOnlyMapChangeService;
 import client.Character;
 import org.junit.jupiter.api.Test;

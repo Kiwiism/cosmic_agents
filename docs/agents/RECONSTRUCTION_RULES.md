@@ -7257,6 +7257,10 @@ Current physics correction:
 - Capability state ownership: `AgentMovementStuckState` now lives under
   `capabilities.movement`. Stuck/cooldown counters, sentinel position values,
   position recording, and partial position reset behavior remain unchanged.
+- Capability map ownership: `AgentMapTrackingState` and its
+  `AgentMapStateRuntime` access boundary now live under
+  `capabilities.movement`. Map-id tracking, defensive foothold-index copies,
+  read-only views, null handling, and map-change checks remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

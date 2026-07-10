@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.mockito.stubbing.Answer;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
-import server.agents.runtime.AgentMapStateRuntime;
+import server.agents.capabilities.movement.AgentMapStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
