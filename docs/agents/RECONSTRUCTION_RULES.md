@@ -7293,6 +7293,10 @@ Current physics correction:
 - Dialogue state adapter ownership: `AgentPendingActionStateRuntime` now lives
   under `capabilities.dialogue`. Pending action and drop-category state
   semantics remain unchanged.
+- Movement bridge removal: default action-lock physics hook assembly now lives
+  directly in `AgentActionLockPhysicsService`; the generic-runtime
+  `AgentActionLockPhysicsRuntime` bridge is removed with branch ordering and
+  tick dispatch unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

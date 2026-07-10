@@ -3226,3 +3226,6 @@ Recent capability extraction notes:
 - Dialogue state adapter ownership: `AgentPendingActionStateRuntime` moved from
   generic runtime to `capabilities.dialogue`; pending action/drop-category
   reads, writes, and independent clears remain unchanged.
+- Movement bridge removal: `AgentActionLockPhysicsRuntime` was deleted after
+  its default hook assembly moved into `AgentActionLockPhysicsService`;
+  cooldown gating and swim/air/ground branch ordering remain unchanged.

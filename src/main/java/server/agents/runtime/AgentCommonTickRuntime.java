@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.combat.AgentDeathStateRuntime;
+import server.agents.capabilities.movement.AgentActionLockPhysicsService;
 import server.agents.capabilities.combat.AgentMonsterControlService;
 
 import server.agents.capabilities.movement.AgentMovementTimers;
@@ -71,6 +72,6 @@ public final class AgentCommonTickRuntime {
                 (entry, agent) -> AgentCombatBuffRuntime.tickBuffs(
                         entry, agent, AgentCombatConfig.cfg),
                 (entry, agent) -> AgentBuffService.tick(entry, agent, AgentInventoryGatewayRuntime.inventory()),
-                AgentActionLockPhysicsRuntime::tickActionLocked);
+                AgentActionLockPhysicsService::tickActionLocked);
     }
 }

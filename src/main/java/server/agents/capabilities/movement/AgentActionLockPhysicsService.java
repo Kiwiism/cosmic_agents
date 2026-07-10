@@ -10,6 +10,15 @@ public final class AgentActionLockPhysicsService {
     private AgentActionLockPhysicsService() {
     }
 
+    public static boolean tickActionLocked(AgentRuntimeEntry entry) {
+        return tickActionLocked(
+                entry,
+                AgentMapEnvironmentService::isSwimMap,
+                ignored -> AgentMovementPhaseDispatchService.tickSwimming(entry, null),
+                ignored -> AgentMovementPhaseDispatchService.tickAirborne(entry, null),
+                ignored -> AgentMovementPhaseDispatchService.tickGrounded(entry, null));
+    }
+
     public static boolean tickActionLocked(AgentRuntimeEntry entry,
                                            Predicate<AgentRuntimeEntry> swimMap,
                                            Consumer<AgentRuntimeEntry> swimmingTick,
