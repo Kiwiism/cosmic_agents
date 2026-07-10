@@ -44,8 +44,10 @@ public final class AgentNavigationGraphService {
     private static final int JUMP_POST_LANDING_STABILITY_TICKS = 3;
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
     private static final int FAST_WARMUP_MAX_FOOTHOLDS = 200;
+    private static final long DEFAULT_GRAPH_CACHE_MAX_WEIGHT = 1_000_000L;
     private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
-    private static final Map<GraphCacheKey, AgentNavigationGraph> GRAPHS = new ConcurrentHashMap<>();
+    private static final AgentWeightedLruCache<GraphCacheKey, AgentNavigationGraph> GRAPHS =
+            new AgentWeightedLruCache<>(configuredGraphCacheMaxWeight(), AgentNavigationGraphService::graphWeight);
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
@@ -325,7 +327,7 @@ public final class AgentNavigationGraphService {
         if (map == null) {
             return null;
         }
-        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.entrySet()) {
+        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.snapshotEntries()) {
             if (entry.getKey().mapId() == map.getId()) {
                 return entry.getValue();
             }
@@ -350,7 +352,8 @@ public final class AgentNavigationGraphService {
         GraphCacheKey requested = GraphCacheKey.from(map.getId(), movementProfile);
         AgentNavigationGraph bestGraph = null;
         int bestDistance = Integer.MAX_VALUE;
-        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.entrySet()) {
+        GraphCacheKey bestKey = null;
+        for (Map.Entry<GraphCacheKey, AgentNavigationGraph> entry : GRAPHS.snapshotEntries()) {
             GraphCacheKey key = entry.getKey();
             if (key.mapId() != requested.mapId()) {
                 continue;
@@ -360,10 +363,11 @@ public final class AgentNavigationGraphService {
                     + Math.abs(key.totalJumpStat() - requested.totalJumpStat());
             if (bestGraph == null || distance < bestDistance) {
                 bestGraph = entry.getValue();
+                bestKey = key;
                 bestDistance = distance;
             }
         }
-        return bestGraph;
+        return bestKey == null ? null : GRAPHS.get(bestKey);
     }
 
     /**
@@ -396,7 +400,7 @@ public final class AgentNavigationGraphService {
     public static AgentNavigationGraph rebuildGraph(MapleMap map, AgentMovementProfile movementProfile) {
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
         AgentNavigationGraph rebuilt = buildGraph(map, movementProfile);
-        GRAPHS.put(key, rebuilt);
+        cacheGraph(key, rebuilt);
         CompletableFuture<AgentNavigationGraph> pending = PENDING_GRAPHS.remove(key);
         if (pending != null) {
             pending.complete(rebuilt);
@@ -428,7 +432,7 @@ public final class AgentNavigationGraphService {
         Runnable task = () -> {
             try {
                 AgentNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
-                GRAPHS.put(key, graph);
+                cacheGraph(key, graph);
                 future.complete(graph);
             } catch (Throwable t) {
                 future.completeExceptionally(t);
@@ -635,6 +639,39 @@ public final class AgentNavigationGraphService {
             AgentNavigationPhysicsService.clearBuildWalkRegionLookup();
             ACTIVE_BUILD_PROFILE.remove();
         }
+    }
+
+    private static void cacheGraph(GraphCacheKey key, AgentNavigationGraph graph) {
+        List<GraphCacheKey> evicted = GRAPHS.put(key, graph);
+        for (GraphCacheKey evictedKey : evicted) {
+            LAST_BUILD_REPORTS.remove(evictedKey);
+            if (!GRAPHS.anyKeyMatches(candidate -> candidate.mapId() == evictedKey.mapId())) {
+                COLLIDABLE_WALL_IDS_BY_MAP_ID.remove(evictedKey.mapId());
+                COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.remove(evictedKey.mapId());
+            }
+        }
+    }
+
+    private static long graphWeight(AgentNavigationGraph graph) {
+        long edgeCount = graph.outgoingByRegionId.values().stream().mapToLong(List::size).sum();
+        return Math.max(1L, graph.regions.size() + edgeCount);
+    }
+
+    private static long configuredGraphCacheMaxWeight() {
+        return Math.max(1L, Long.getLong(
+                "agents.navigation.cache.maxWeight", DEFAULT_GRAPH_CACHE_MAX_WEIGHT));
+    }
+
+    static int cachedGraphCount() {
+        return GRAPHS.size();
+    }
+
+    static long cachedGraphWeight() {
+        return GRAPHS.currentWeight();
+    }
+
+    static long graphCacheEvictionCount() {
+        return GRAPHS.evictionCount();
     }
 
     public static GraphBuildReport getLastBuildReport(int mapId) {

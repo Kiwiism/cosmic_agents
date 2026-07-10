@@ -33,6 +33,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- In-memory navigation graphs now use a synchronized weighted LRU bounded by
+  `agents.navigation.cache.maxWeight` (default `1000000` region-plus-edge
+  units). Eviction removes the matching build report and removes map collision
+  indexes only after the last profile for that map leaves memory. Evicted
+  graphs reload from the same validated disk cache, so path data is unchanged.
+
 - Every runtime entry now has a unique session generation and a lifecycle-owned
   one-shot task scope. Scoped callbacks remove themselves after completion,
   cancel as a group during replacement/despawn, and verify the exact live
