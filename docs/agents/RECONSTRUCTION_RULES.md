@@ -1131,12 +1131,12 @@ Recent reconstruction notes:
   leader yellow-message delivery. The same parser, no-op fall-through,
   success message, and lifecycle error messages are preserved.
 - Recruit chat command parsing now lives in
-  `server.agents.runtime.AgentRecruitCommandService`. BotManager keeps a
+  `server.agents.commands.AgentRecruitCommandService`. BotManager keeps a
   temporary compatibility hook bundle for ownerless-Agent recruitment and
   leader yellow-message delivery. The same `recruit`, `adopt`, `hire`, and
   `claim` aliases plus the legacy success/error reply behavior are preserved.
 - Dismiss chat command parsing now lives in
-  `server.agents.runtime.AgentDismissCommandService`. BotManager keeps a
+  `server.agents.commands.AgentDismissCommandService`. BotManager keeps a
   temporary compatibility hook bundle for dismiss lifecycle delegation and
   leader yellow-message delivery. The same `dismiss`, `disown`, and `release`
   aliases plus the legacy success/failure messages are preserved.
@@ -7184,6 +7184,10 @@ Current physics correction:
 - Command ownership: `AgentCommandModeService` now lives under `commands`.
   Null-entry and command-policy guards plus clear-script, cancel-shop, and
   start-mode callback ordering remain unchanged.
+- Command ownership: `AgentRecruitCommandService` and
+  `AgentDismissCommandService` now live under `commands`. Legacy aliases,
+  regex matching, name extraction, lifecycle callback arguments, success/error
+  replies, and handled/fall-through results remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.commands.AgentDismissCommandService;
+import server.agents.commands.AgentRecruitCommandService;
 import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.trade.AgentTransferService;
 

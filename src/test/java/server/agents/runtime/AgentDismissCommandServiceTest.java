@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.commands.AgentDismissCommandService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 

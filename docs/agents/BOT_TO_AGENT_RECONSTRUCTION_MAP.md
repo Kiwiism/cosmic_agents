@@ -1575,11 +1575,11 @@ Recent map updates:
   temporary hooks for transfer lifecycle delegation and leader yellow-message
   delivery while Agent runtime owns the command routing response behavior.
 - Recruit chat command parsing moved from BotManager to
-  `server.agents.runtime.AgentRecruitCommandService`. BotManager now supplies
+  `server.agents.commands.AgentRecruitCommandService`. BotManager now supplies
   temporary hooks for ownerless-Agent recruitment and leader yellow-message
   delivery while the Agent runtime owns the legacy aliases and response text.
 - Dismiss chat command parsing moved from BotManager to
-  `server.agents.runtime.AgentDismissCommandService`. BotManager now supplies
+  `server.agents.commands.AgentDismissCommandService`. BotManager now supplies
   temporary hooks for dismiss lifecycle delegation and leader yellow-message
   delivery while the Agent runtime owns the legacy aliases and response text.
 - Formation chat command parsing and formation-state mutation moved from
@@ -3129,3 +3129,7 @@ Recent capability extraction notes:
 - Command ownership: `AgentCommandModeService` moved from generic runtime to
   `commands`. Null/guard handling and preparation callback ordering remain
   unchanged.
+- Command ownership: recruit and dismiss command parsing moved from generic
+  runtime into `commands`. Aliases, matching, lifecycle callback arguments,
+  replies, and handled semantics remain unchanged; lifecycle execution remains
+  in runtime.
