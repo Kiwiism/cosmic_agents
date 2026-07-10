@@ -1,11 +1,10 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentMapEnvironmentService;
 import client.Character;
-import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
-import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;

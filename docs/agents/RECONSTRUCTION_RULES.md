@@ -4259,7 +4259,7 @@ Recent reconstruction notes:
   searched-target adoption, attack-plan invalidation, and next-search scheduling
   with the legacy retarget interval.
 - Grind-mode no-target fallback handling now lives in
-  `server.agents.runtime.AgentGrindNoTargetFallbackService`. BotManager supplies
+  `server.agents.capabilities.combat.AgentGrindNoTargetFallbackService`. BotManager supplies
   temporary swim, airborne, patrol/no-grind target resolution, and movement-step
   hooks. The same grind-target clear, swim/airborne early return, legacy
   wander-direction side effect, patrol-vs-free fallback target choice, and
@@ -7138,6 +7138,10 @@ Current physics correction:
   `capabilities.movement`. Tracking, foothold capture, grounding teleport,
   reset, graph warmup, broadcast, grind/follow/PQ dispatch, shop notification,
   and status-check ordering remain unchanged.
+- Capability ownership: `AgentGrindNoTargetFallbackService` now lives under
+  `capabilities.combat`. Grind-target clearing, swim/air short circuits, legacy
+  wander-direction initialization, patrol/no-target resolution, movement
+  dispatch, and consumed-tick results remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

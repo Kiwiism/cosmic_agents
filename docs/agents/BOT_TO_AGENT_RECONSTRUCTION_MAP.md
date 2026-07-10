@@ -3088,3 +3088,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentMapTransitionService` moved from generic runtime
   to `capabilities.movement`. Grounding and post-transition dispatch ordering,
   state mutations, and callback arguments remain unchanged.
+- Capability ownership: `AgentGrindNoTargetFallbackService` moved from generic
+  runtime to `capabilities.combat`. State clearing, air-movement branches,
+  wander/patrol target selection, movement dispatch, and result semantics
+  remain unchanged.
