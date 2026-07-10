@@ -3163,3 +3163,6 @@ Recent capability extraction notes:
   `capabilities.movement.AgentMovementTargetMaintenanceService`. Same-map,
   arrival-distance, precise-target, and patrol cleanup behavior remain
   unchanged; the mixed runtime service is removed.
+- Capability state ownership: the concrete `AgentAoeRepositionState` moved from
+  generic runtime to `capabilities.combat`; point-copy, deadline, clear, and
+  expired/arrived behavior remain unchanged.
