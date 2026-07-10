@@ -22,7 +22,7 @@ Target package groups:
   through `AgentGrindModeCoordinator`, and local opportunity attack result
   adaptation stays in `AgentLocalOpportunityAttackCoordinator`. Inactive leader
   safety and town-return composition now enter through
-  `AgentLeaderSafetyRuntime`, and chat route composition enters through
+  `AgentLeaderSafetyCoordinator`, and chat route composition enters through
   `AgentChatRouteRuntime`. Formation defaults and state helpers enter through
   `AgentFormationRuntime`. Spawn and relogin registration callback composition
   now enters through `AgentSpawnRuntime` and `AgentReloginRuntime`; manual and
@@ -47,7 +47,7 @@ Target package groups:
   `AgentStandaloneMoveTargetRuntime`.
   Tick-failure default hook wiring enters through `AgentTickFailureRuntime`.
   Inactive-leader town-return timeout ownership enters through
-  `AgentLeaderSafetyRuntime`.
+  `AgentLeaderSafetyCoordinator`.
   The production `server.bots.BotManager` compatibility shell has been
   deleted; runtime/lifecycle entry points are Agent-owned.
 - `server.agents.model`: identity, mode, profile, leader reference.

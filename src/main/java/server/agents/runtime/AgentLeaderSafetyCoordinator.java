@@ -20,10 +20,14 @@ import server.maps.MapleMap;
 import java.awt.Point;
 import java.util.List;
 
-public final class AgentLeaderSafetyRuntime {
+/**
+ * Coordinates inactive-leader recovery across plans, shop, mode, movement,
+ * formation, map transition, and runtime registry boundaries.
+ */
+public final class AgentLeaderSafetyCoordinator {
     private static final int PLATFORM_EDGE_INSET_PX = 12;
 
-    private AgentLeaderSafetyRuntime() {
+    private AgentLeaderSafetyCoordinator() {
     }
 
     public static boolean handleInactiveLeaderTick(AgentRuntimeEntry entry,
@@ -56,7 +60,7 @@ public final class AgentLeaderSafetyRuntime {
                                 () -> AgentMoveTargetStateRuntime.clearMoveTarget(activeEntry),
                                 () -> AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderCharId),
                                 () -> AgentManagerStatusRuntime.announceOwnerReturnedFromOffline(activeEntry)),
-                        AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
+                        AgentLeaderSafetyCoordinator::shouldTownWarpForInactiveEntry,
                         (inactiveEntry, town) -> enterInactiveSafeMode(inactiveEntry, agent, leaderCharId, town),
                         inactiveTownReturnMs));
     }
@@ -71,7 +75,7 @@ public final class AgentLeaderSafetyRuntime {
                 AgentRuntimeRegistry.agentEntriesForLeader(leaderCharId),
                 town,
                 AgentRuntimeIdentityRuntime::botHasMap,
-                AgentLeaderSafetyRuntime::shouldTownWarpForInactiveEntry,
+                AgentLeaderSafetyCoordinator::shouldTownWarpForInactiveEntry,
                 (entry, shouldTown) -> enterInactiveSafeMode(
                         entry,
                         AgentRuntimeIdentityRuntime.bot(entry),

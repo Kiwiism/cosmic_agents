@@ -16,7 +16,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentLeaderSafetyRuntimeTest {
+class AgentLeaderSafetyCoordinatorTest {
     @Test
     void defaultInactiveLeaderTickUsesAgentRuntimeConfigTimeout() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
@@ -35,7 +35,7 @@ class AgentLeaderSafetyRuntimeTest {
                         return true;
                     });
 
-            boolean handled = AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
+            boolean handled = AgentLeaderSafetyCoordinator.handleInactiveLeaderTick(
                     entry,
                     agent,
                     null,
@@ -65,7 +65,7 @@ class AgentLeaderSafetyRuntimeTest {
                         return true;
                     });
 
-            boolean handled = AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
+            boolean handled = AgentLeaderSafetyCoordinator.handleInactiveLeaderTick(
                     entry,
                     agent,
                     null,

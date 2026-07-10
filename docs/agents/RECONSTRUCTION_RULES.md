@@ -795,7 +795,7 @@ Recent reconstruction notes:
   call `AgentMovementCommandRuntime` directly for follow, stop, grind,
   farm-here, patrol, and fixed move commands.
 - BotManager leader-safety compatibility helpers were removed. Session
-  side-effect wiring now calls `AgentLeaderSafetyRuntime` directly for
+  side-effect wiring now calls `AgentLeaderSafetyCoordinator` directly for
   inactive-leader safe mode, and primary-session / town-offer checks live in
   Agent session control runtime.
 - BotManager formation, target snapshot, and movement-only test shims were
@@ -862,7 +862,7 @@ Recent reconstruction notes:
   detection still runs through `AgentStuckDetectionRuntime` from Agent movement
   runtime, preserving behavior without a BotManager helper.
 - Inactive-leader town-return timeout ownership now lives in
-  `server.agents.runtime.AgentLeaderSafetyRuntime.handleInactiveLeaderTick(entry, agent, leader, nowMs, leaderId)`.
+  `server.agents.runtime.AgentLeaderSafetyCoordinator.handleInactiveLeaderTick(entry, agent, leader, nowMs, leaderId)`.
   BotManager no longer passes `OWNER_INACTIVE_TOWN_RETURN_MS`; it only keeps a
   compatibility callback into the Agent runtime leader-safety entry.
 - Tick-failure default hook wiring now lives in
@@ -4416,7 +4416,7 @@ Recent reconstruction notes:
   longer keeps a local result record or adapter method for converting local
   attack capability results into live-mode tick results.
 - Inactive leader safety and town-return hook wiring now lives in
-  `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager keeps only
+  `server.agents.runtime.AgentLeaderSafetyCoordinator`. BotManager keeps only
   compatibility methods for away/town commands while Agent runtime owns active
   leader return cleanup, inactive safe-mode entry, town-scroll fallback,
   cluster target resolution, movement reset, and mode/script/shop cleanup
@@ -6015,7 +6015,7 @@ Current physics correction:
 - Leader safety service now accepts `AgentRuntimeEntry` for inactive-leader
   timers, active-leader return cleanup, town-return eligibility, idle-safe-mode
   state, town cluster target resolution, and batch safe-mode issuance. The
-  BotEntry dependency remains isolated in `AgentLeaderSafetyRuntime` while
+  BotEntry dependency remains isolated in `AgentLeaderSafetyCoordinator` while
   behavior stays unchanged.
 - Trade lifecycle service now accepts `AgentRuntimeEntry` for trade sequence
   cancellation, manual-trade clearing, reset, completion reactions, and
@@ -7428,6 +7428,9 @@ Current physics correction:
   `AgentFollowMapSyncRuntime` to
   `capabilities.follow.AgentFollowMapSyncCoordinator`; map synchronization
   behavior and both runtime call sites are unchanged.
+- Retained runtime orchestration: `AgentLeaderSafetyRuntime` was renamed
+  `AgentLeaderSafetyCoordinator`. It intentionally coordinates plan, shop, mode,
+  movement, map, formation, and registry behavior for inactive-leader recovery.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

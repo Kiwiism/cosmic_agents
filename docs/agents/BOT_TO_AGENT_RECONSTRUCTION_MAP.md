@@ -256,7 +256,7 @@ Recent map updates:
   BotEntry compatibility edge for current inventory/trade runtime callers.
 - `AgentLeaderSafetyService` now owns inactive-leader safe-mode logic over
   `AgentRuntimeEntry` instead of `BotEntry`. The outer
-  `AgentLeaderSafetyRuntime` remains the temporary BotEntry compatibility edge,
+  `AgentLeaderSafetyCoordinator` remains the temporary BotEntry compatibility edge,
   preserving inactive timer handling, town-return decisions, cluster formation
   targets, return-scroll fallback, and active-leader return announcements.
 - `AgentMovementOnlyTickCoordinator` now accepts `AgentRuntimeEntry` for
@@ -1297,7 +1297,7 @@ Recent map updates:
   only compatibility step methods while Agent runtime owns legacy tick,
   distance, teleport, and unstuck config handoff for movement-only stepping.
 - Inactive-leader town-return timeout ownership moved from BotManager to
-  `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager now delegates
+  `server.agents.runtime.AgentLeaderSafetyCoordinator`. BotManager now delegates
   inactive leader handling without reading the legacy runtime config itself.
 - Tick-failure default hook wiring moved from BotManager to
   `server.agents.runtime.AgentTickFailureRuntime`. BotManager now passes the
@@ -1384,7 +1384,7 @@ Recent map updates:
   `server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator`. BotManager now
   passes the Agent runtime method directly into tick-core wiring.
 - Inactive leader safety and town-return hook wiring moved from BotManager to
-  `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager now delegates
+  `server.agents.runtime.AgentLeaderSafetyCoordinator`. BotManager now delegates
   inactive-leader tick handling and explicit away safe-mode requests while
   Agent runtime owns active-return cleanup, town scroll fallback, cluster
   positioning, movement reset, mode cleanup, script cleanup, and shop cleanup
@@ -2290,7 +2290,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#trade-window-tick` | `server.agents.capabilities.trade.AgentTradeWindowTickService` | `MIGRATED_TO_AGENT`; trade-window tick gating now accepts `AgentRuntimeEntry` while preserving open-trade detection, physics-only tick dispatch, and consumed-tick behavior |
 | `src/main/java/server/bots/BotManager.java#ownerless-tick` | `server.agents.capabilities.movement.AgentOwnerlessTickService` | `MIGRATED_TO_AGENT`; ownerless tick handling now accepts `AgentRuntimeEntry` while preserving follow-mode clearing, map-change grounding short-circuit, standalone move-target ticking, and idle fallback behavior |
 | `src/main/java/server/bots/BotManager.java#death-tick` | `server.agents.capabilities.combat.AgentDeathTickService`, `server.agents.runtime.AgentRespawnRuntime` | `MIGRATED_TO_AGENT`; death tick and respawn-near-leader handling now accept `AgentRuntimeEntry` while preserving dead-state entry checks, respawn timing, HP restore, map-change, grounding, teleport, reset, movement broadcast, map speech, and glare emote behavior |
-| `src/main/java/server/bots/BotManager.java#leader-safety-runtime` | `server.agents.runtime.AgentLeaderSafetyRuntime` | `MIGRATED_TO_AGENT`; inactive-leader runtime now accepts `AgentRuntimeEntry` while preserving active-return cleanup, town eligibility, safe-mode entry, town-scroll fallback, formation target selection, map-change grounding, movement reset, and return announcements |
+| `src/main/java/server/bots/BotManager.java#leader-safety-runtime` | `server.agents.runtime.AgentLeaderSafetyCoordinator` | `MIGRATED_TO_AGENT`; inactive-leader runtime now accepts `AgentRuntimeEntry` while preserving active-return cleanup, town eligibility, safe-mode entry, town-scroll fallback, formation target selection, map-change grounding, movement reset, and return announcements |
 | `src/main/java/server/bots/BotManager.java#recovery-tick` | `server.agents.capabilities.recovery.AgentRecoveryTickService` | `MIGRATED_TO_AGENT`; recovery tick handling now accepts `AgentRuntimeEntry` while preserving shop-visit follow-sync suppression, follow-map sync, party recovery, target recovery ordering, and short-circuit behavior |
 | `src/main/java/server/bots/BotManager.java#tracked-map-change-tick` | `server.agents.runtime.AgentTrackedMapChangeTickService` | `MIGRATED_TO_AGENT`; tracked map-change tick handling now accepts `AgentRuntimeEntry` while preserving handler dispatch and consumed/fall-through behavior |
 | `src/main/java/server/bots/BotManager.java#map-transition` | `server.agents.capabilities.movement.AgentMapTransitionService` | `MIGRATED_TO_AGENT`; map transition grounding and tracked-map-change handling now accept `AgentRuntimeEntry` while preserving tracking checks, foothold index capture, grounding teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch, shop map-change, and status-check ordering |
@@ -3355,3 +3355,7 @@ Recent capability extraction notes:
   `capabilities.follow.AgentFollowMapSyncCoordinator`; both runtime tick paths
   enter the follow capability directly with unchanged map-change, grounding,
   idle-pose, and movement-reset behavior.
+- Runtime classification: `AgentLeaderSafetyRuntime` became
+  `runtime.AgentLeaderSafetyCoordinator`. It remains runtime-owned because it
+  coordinates plans, shop, mode, movement, map transitions, formations, and the
+  active registry during inactive-leader recovery.

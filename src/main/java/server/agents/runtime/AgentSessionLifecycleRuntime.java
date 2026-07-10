@@ -24,7 +24,7 @@ public final class AgentSessionLifecycleRuntime {
     }
 
     public static void issueOwnerAwaySafeModeForLeader(int ownerCharId, boolean town) {
-        AgentLeaderSafetyRuntime.issueInactiveSafeModeForLeader(ownerCharId, town);
+        AgentLeaderSafetyCoordinator.issueInactiveSafeModeForLeader(ownerCharId, town);
     }
 
     public static Character activeLeaderByAgentCharacterId(int agentCharId) {
