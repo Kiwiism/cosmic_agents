@@ -33,7 +33,6 @@ import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.Shop;
-import server.ShopFactory;
 import server.ShopItem;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
@@ -201,7 +200,7 @@ public final class AgentShopService {
             if (!npc.hasShop()) {
                 continue;
             }
-            Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
+            Shop shop = AgentShopGatewayRuntime.shop().findForNpc(npc.getId());
             if (shop == null) {
                 continue;
             }
@@ -291,7 +290,7 @@ public final class AgentShopService {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopKeeperGoneBuyReply());
             return;
         }
-        Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
+        Shop shop = AgentShopGatewayRuntime.shop().findForNpc(npc.getId());
         if (shop == null) {
             abortShop(sequence.entry(), sequence.bot(), AgentDialogueCatalog.shopClosedBuyReply());
             return;
@@ -394,7 +393,7 @@ public final class AgentShopService {
             abortShop(entry, bot, AgentDialogueCatalog.shopKeeperGoneSellReply());
             return;
         }
-        Shop shop = ShopFactory.getInstance().getShopForNPC(npc.getId());
+        Shop shop = AgentShopGatewayRuntime.shop().findForNpc(npc.getId());
         if (shop == null) {
             abortShop(entry, bot, AgentDialogueCatalog.shopClosedSellReply());
             return;

@@ -5,6 +5,8 @@ import client.inventory.InventoryType;
 import server.Shop;
 
 public interface ShopGateway {
+    Shop findForNpc(int npcId);
+
     void sell(Character agent, Shop shop, InventoryType type, short slot, short quantity);
 
     Shop.TransactionResult recharge(Character agent, Shop shop, short slot);

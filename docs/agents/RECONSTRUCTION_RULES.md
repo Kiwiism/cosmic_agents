@@ -7485,6 +7485,9 @@ Current physics correction:
   `InventoryGateway.consumeUseItem`. `CosmicInventoryGateway` invokes the same
   `UseItemHandler.consumeUseItem` method; item choice and one-item-per-tick
   behavior are unchanged.
+- Cosmic boundary ownership: NPC shop lookup now calls `ShopGateway.findForNpc`.
+  `CosmicShopGateway` retains the same `ShopFactory.getShopForNPC` operation;
+  approach, selection, purchase, recharge, and sell behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

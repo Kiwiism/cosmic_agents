@@ -3409,3 +3409,6 @@ Recent capability extraction notes:
 - Cosmic boundary ownership: consumable-buff application now enters through
   `InventoryGateway.consumeUseItem`; `UseItemHandler` is isolated in
   `CosmicInventoryGateway` while buff selection remains capability-owned.
+- Cosmic boundary ownership: NPC shop resolution now enters through
+  `ShopGateway.findForNpc`; `ShopFactory` lookup is isolated in
+  `CosmicShopGateway` while shop planning and transaction handling are unchanged.
