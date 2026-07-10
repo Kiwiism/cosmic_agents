@@ -1835,7 +1835,7 @@ Recent map updates:
   the script subsystem's direct BotManager dependency while preserving the same
   cheap-move and drop side-effect results.
 - BotManager local near-distance helper moved to
-  `server.agents.runtime.AgentPositionService`; BotManager movement/combat tick
+  `server.agents.capabilities.movement.AgentPositionService`; BotManager movement/combat tick
   paths now use the Agent-owned geometry helper.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation moved to
   `server.agents.runtime.AgentCommandModeService`; BotManager only supplies
@@ -3072,3 +3072,6 @@ Recent capability extraction notes:
   to `capabilities.movement`. Performance monitoring, cooldown and progress
   state updates, reset gates, thresholds, and unstuck dispatch remain
   unchanged.
+- Capability ownership: `AgentPositionService` moved from generic runtime to
+  `capabilities.movement`. Null handling and inclusive per-axis proximity checks
+  remain unchanged.

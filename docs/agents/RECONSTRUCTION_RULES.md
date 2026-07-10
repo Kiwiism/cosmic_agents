@@ -1415,7 +1415,7 @@ Recent reconstruction notes:
   temporarily, preserving the exact cheap-move and drop results while shrinking
   the context dependency.
 - BotManager local near-distance checks now delegate to
-  `server.agents.runtime.AgentPositionService`. The null handling and
+  `server.agents.capabilities.movement.AgentPositionService`. The null handling and
   inclusive per-axis distance behavior are unchanged.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation now delegates to
   `server.agents.runtime.AgentCommandModeService`. The null-entry skip and
@@ -7118,6 +7118,9 @@ Current physics correction:
   `capabilities.movement`. Performance timing, cooldown decrement, reset gates,
   movement threshold, stuck duration, and unstuck trigger behavior remain
   unchanged.
+- Capability ownership: `AgentPositionService` now lives under
+  `capabilities.movement`. Null handling and inclusive axis-distance checks are
+  unchanged for anchored-farm and grind positioning callers.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

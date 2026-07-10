@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentPositionService;
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;

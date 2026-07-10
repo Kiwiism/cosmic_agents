@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentPositionService;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Point;
