@@ -910,7 +910,7 @@ Recent reconstruction notes:
   normalize-spawn-state branch; it only delegates legacy public registration
   methods to Agent runtime with the temporary tick callback.
 - Spawn and relogin registration-callback construction now lives in
-  `server.agents.runtime.AgentSpawnRuntime` and
+  `server.agents.integration.cosmic.CosmicAgentSpawnCoordinator` and
   `server.agents.runtime.AgentReloginRuntime`. BotManager supplies only the
   temporary tick callback, follow-start callback for spawn, and logger while
   Agent runtime owns the register-spawned hook composition over
@@ -1019,7 +1019,7 @@ Recent reconstruction notes:
   temporary stop-mode callback and logger while Agent runtime owns movement
   reset, runtime removal, forced-idle reply delivery, missing-entry logging,
   warning/error log formatting, and failure escalation hook wiring.
-- Spawn hook wiring now lives in `server.agents.runtime.AgentSpawnRuntime`.
+- Spawn hook wiring now lives in `server.agents.integration.cosmic.CosmicAgentSpawnCoordinator`.
   BotManager supplies only the temporary tick callback, follow-start callback,
   and logger while Agent runtime owns spawned-registration callback
   construction, ownership resolution, spawn position resolution, offline load
@@ -7439,6 +7439,9 @@ Current physics correction:
   `AgentOfflineLoadRuntime` to `integration.cosmic.CosmicAgentOfflineLoader`.
   Persistence loading, rates, and channel/world/map registration retain their
   original order and behavior.
+- Cosmic boundary: spawn hook assembly moved from generic `AgentSpawnRuntime` to
+  `integration.cosmic.CosmicAgentSpawnCoordinator`; registration, placement,
+  offline loading, follow startup, and failure logging remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

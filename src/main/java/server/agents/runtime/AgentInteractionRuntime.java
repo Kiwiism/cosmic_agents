@@ -7,6 +7,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentLifecycleCommandCoordinator;
 import server.agents.capabilities.dialogue.AgentChatRouteCoordinator;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
+import server.agents.integration.cosmic.CosmicAgentSpawnCoordinator;
 
 /**
  * Agent-owned public runtime entry points for server integrations that still
@@ -35,7 +36,7 @@ public final class AgentInteractionRuntime {
     }
 
     public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader, String agentName) {
-        return AgentSpawnRuntime.spawnAgentForLeader(
+        return CosmicAgentSpawnCoordinator.spawnAgentForLeader(
                 leader,
                 agentName,
                 AgentInteractionRuntime::tick,

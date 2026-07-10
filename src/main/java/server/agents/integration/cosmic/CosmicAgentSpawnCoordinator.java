@@ -1,26 +1,31 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import org.slf4j.Logger;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.integration.AgentMapGatewayRuntime;
-import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
+import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentRegistrationCoordinator;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSpawnPlacementCoordinator;
+import server.agents.runtime.AgentSpawnPositionService;
 
 import java.util.function.Consumer;
 
 /**
- * Temporary Cosmic hook bundle for spawning an Agent while registration still
- * receives tick and follow-start callbacks from the Agent runtime facade.
+ * Cosmic adapter coordinating Agent spawn lifecycle hooks with map placement and
+ * offline backing-character loading.
  */
-public final class AgentSpawnRuntime {
-    private AgentSpawnRuntime() {
+public final class CosmicAgentSpawnCoordinator {
+    private CosmicAgentSpawnCoordinator() {
     }
 
-    public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader,
-                                                                            String agentName,
-                                                                            AgentLifecycleService.AgentTickCallback tickCallback,
-                                                                            Consumer<AgentRuntimeEntry> startFollowLeader,
-                                                                            Logger log) {
+    public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(
+            Character leader,
+            String agentName,
+            AgentLifecycleService.AgentTickCallback tickCallback,
+            Consumer<AgentRuntimeEntry> startFollowLeader,
+            Logger log) {
         AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent =
                 (leaderCharId, spawnLeader, agent) -> AgentRegistrationCoordinator.registerAgent(
                         leaderCharId,
@@ -36,11 +41,12 @@ public final class AgentSpawnRuntime {
                 log);
     }
 
-    public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader,
-                                                                            String agentName,
-                                                                            AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent,
-                                                                            Consumer<AgentRuntimeEntry> startFollowLeader,
-                                                                            Logger log) {
+    public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(
+            Character leader,
+            String agentName,
+            AgentLifecycleService.RegisterSpawnedAgent registerSpawnedAgent,
+            Consumer<AgentRuntimeEntry> startFollowLeader,
+            Logger log) {
         return AgentLifecycleService.spawnAgentForLeaderQuietly(
                 leader,
                 agentName,

@@ -1,10 +1,12 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
 import server.agents.auth.AgentOwnershipService;
+import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentRegistrationCoordinator;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -15,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentSpawnRuntimeTest {
+class CosmicAgentSpawnCoordinatorTest {
     @Test
     void tickCallbackOverloadBuildsAgentRegistrationHook() {
         Character leader = mock(Character.class);
@@ -42,7 +44,7 @@ class AgentSpawnRuntimeTest {
                         return AgentLifecycleService.AgentSpawnResult.ok(agent, false);
                     });
 
-            AgentLifecycleService.AgentSpawnResult result = AgentSpawnRuntime.spawnAgentForLeader(
+            AgentLifecycleService.AgentSpawnResult result = CosmicAgentSpawnCoordinator.spawnAgentForLeader(
                     leader,
                     "Alpha",
                     tickCallback,

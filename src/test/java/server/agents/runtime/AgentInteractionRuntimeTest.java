@@ -4,6 +4,7 @@ import server.agents.capabilities.dialogue.AgentChatRouteCoordinator;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.integration.cosmic.CosmicAgentSpawnCoordinator;
 import org.slf4j.Logger;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -52,13 +53,13 @@ class AgentInteractionRuntimeTest {
     }
 
     @Test
-    void spawnDelegatesToAgentSpawnRuntimeWithAgentCallbacks() {
+    void spawnDelegatesToCosmicAgentSpawnCoordinatorWithAgentCallbacks() {
         Character leader = mock(Character.class);
         Character agent = mock(Character.class);
         AgentLifecycleService.AgentSpawnResult expected = AgentLifecycleService.AgentSpawnResult.ok(agent, false);
 
-        try (MockedStatic<AgentSpawnRuntime> spawnRuntime = mockStatic(AgentSpawnRuntime.class)) {
-            spawnRuntime.when(() -> AgentSpawnRuntime.spawnAgentForLeader(
+        try (MockedStatic<CosmicAgentSpawnCoordinator> spawnRuntime = mockStatic(CosmicAgentSpawnCoordinator.class)) {
+            spawnRuntime.when(() -> CosmicAgentSpawnCoordinator.spawnAgentForLeader(
                             eq(leader),
                             eq("AgentA"),
                             any(AgentLifecycleService.AgentTickCallback.class),

@@ -448,7 +448,7 @@ Recent map updates:
   handling now use `AgentRuntimeEntry` at the runtime seam.
 - `BotEntry` runtime storage is migrated to `AgentRuntimeEntry` through
   `AgentRuntimeRegistry`, `AgentLifecycleService`, `AgentRegistrationCoordinator`,
-  `AgentSpawnRuntime`, `AgentSpawnPlacementCoordinator`, and
+  `CosmicAgentSpawnCoordinator`, `AgentSpawnPlacementCoordinator`, and
   `AgentInteractionRuntime`. Agent registration now constructs the Agent
   runtime entry directly; the deprecated `server.bots.BotEntry` shell is no
   longer used by production Agent modules.
@@ -1336,7 +1336,7 @@ Recent map updates:
   `registerSpawnedAgent`. BotManager now keeps only legacy public method names
   for compatibility while Agent runtime owns the normalization-mode choice.
 - Spawn/relogin registration callback construction moved from BotManager to
-  `server.agents.runtime.AgentSpawnRuntime` and
+  `server.agents.integration.cosmic.CosmicAgentSpawnCoordinator` and
   `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its
   temporary tick callback while Agent runtime composes
   `AgentRegistrationCoordinator.registerAgent` for spawned and relogged Agents.
@@ -1473,7 +1473,7 @@ Recent map updates:
   reset, runtime removal, forced-idle reply, missing-entry logging, warning/
   error log formatting, and failure escalation hook wiring.
 - Spawn hook wiring moved from BotManager to
-  `server.agents.runtime.AgentSpawnRuntime`. BotManager now passes only its
+  `server.agents.integration.cosmic.CosmicAgentSpawnCoordinator`. BotManager now passes only its
   temporary tick callback, follow-start callback, and logger while Agent
   runtime owns spawned-registration callback construction, ownership
   resolution, spawn position, offline load delegation, online placement,
@@ -2744,7 +2744,7 @@ Recent capability extraction notes:
   `AgentRespawnRuntime` uses this gateway for respawn-near-leader map changes
   and point-below lookup; respawn ordering, placement fallback, movement reset,
   broadcast, map reply, and face-expression behavior stay unchanged.
-- SPI/gateway extraction: `AgentSpawnRuntime` now passes lifecycle spawn
+- SPI/gateway extraction: `CosmicAgentSpawnCoordinator` now passes lifecycle spawn
   map-change hooks through `AgentMapGatewayRuntime` instead of a direct
   `forceChangeMap` lambda. Spawn lookup, registration, online placement,
   follow-start callback wiring, and failure logging stay unchanged.
@@ -3367,3 +3367,7 @@ Recent capability extraction notes:
   `integration.cosmic.CosmicAgentOfflineLoader`. Headless client creation,
   character persistence loading, rate initialization, and server storage
   registration are now explicitly owned by the Cosmic adapter layer.
+- Cosmic boundary: `AgentSpawnRuntime` became
+  `integration.cosmic.CosmicAgentSpawnCoordinator`; runtime registration remains
+  in `AgentRegistrationCoordinator`, while Cosmic map placement and offline-load
+  hook assembly are isolated in the adapter.
