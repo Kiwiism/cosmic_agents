@@ -1838,7 +1838,7 @@ Recent map updates:
   `server.agents.capabilities.movement.AgentPositionService`; BotManager movement/combat tick
   paths now use the Agent-owned geometry helper.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation moved to
-  `server.agents.runtime.AgentCommandModeService`; BotManager only supplies
+  `server.agents.commands.AgentCommandModeService`; BotManager only supplies
   temporary guards and callbacks for script-task clearing, shop cancellation,
   and mode start side effects.
 - Agent movement command facade now routes follow-owner, stop, move-to,
@@ -2273,7 +2273,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#map-environment` | `server.agents.capabilities.movement.AgentMapEnvironmentService`, `server.agents.integration.MapGateway` | `MIGRATED_TO_AGENT`; swim-map detection accepts `AgentRuntimeEntry` and routes the Cosmic map query through the map gateway while preserving null and map-flag behavior |
 | `src/main/java/server/bots/BotManager.java#leader-session` | `server.agents.runtime.AgentLeaderSessionService` | `MIGRATED_TO_AGENT`; live leader refresh now accepts `AgentRuntimeEntry` while preserving cached/refresh behavior |
 | `src/main/java/server/bots/BotManager.java#mode-service` | `server.agents.runtime.AgentModeService` | `MIGRATED_TO_AGENT`; mode transitions now accept `AgentRuntimeEntry` while preserving follow/grind/stop/move/farm/patrol state changes |
-| `src/main/java/server/bots/BotManager.java#command-mode` | `server.agents.runtime.AgentCommandModeService` | `MIGRATED_TO_AGENT`; command-mode preparation now accepts `AgentRuntimeEntry` while preserving guard and hook order |
+| `src/main/java/server/bots/BotManager.java#command-mode` | `server.agents.commands.AgentCommandModeService` | `MIGRATED_TO_AGENT`; command-mode preparation now accepts `AgentRuntimeEntry` while preserving guard and hook order |
 | `src/main/java/server/bots/BotManager.java#script-task-queue` | `server.agents.runtime.AgentScriptTaskQueueService` | `MIGRATED_TO_AGENT`; script task queue operations now accept `AgentRuntimeEntry` while preserving null guards, activity-epoch bumps, queue ordering, move/drop/follow task construction, and queued-task checks |
 | `src/main/java/server/bots/BotManager.java#heartbeat` | `server.agents.runtime.AgentHeartbeatService` | `MIGRATED_TO_AGENT`; heartbeat ticking now accepts `AgentRuntimeEntry` while preserving due checks, timestamp marking, client last-packet updates, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#scheduled-task` | `server.agents.runtime.AgentScheduledTaskRuntime` | `MIGRATED_TO_AGENT`; scheduled-task cancellation now accepts `AgentRuntimeEntry` while preserving null guards, scheduled-task presence checks, and `ScheduledFuture.cancel(false)` behavior |
@@ -3126,3 +3126,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentOwnerlessTickService` moved from generic runtime
   to `capabilities.movement`. Follow clearing, grounding, standalone movement,
   and idle branch order remain unchanged.
+- Command ownership: `AgentCommandModeService` moved from generic runtime to
+  `commands`. Null/guard handling and preparation callback ordering remain
+  unchanged.

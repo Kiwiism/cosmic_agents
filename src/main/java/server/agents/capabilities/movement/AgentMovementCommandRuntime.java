@@ -6,7 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentCommandModeService;
+import server.agents.commands.AgentCommandModeService;
 import server.agents.runtime.AgentModeService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentScriptTaskQueueService;

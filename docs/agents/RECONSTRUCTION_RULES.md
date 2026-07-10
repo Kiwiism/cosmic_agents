@@ -1418,7 +1418,7 @@ Recent reconstruction notes:
   `server.agents.capabilities.movement.AgentPositionService`. The null handling and
   inclusive per-axis distance behavior are unchanged.
 - BotManager move/farm/patrol/follow/grind/stop command-mode preparation now delegates to
-  `server.agents.runtime.AgentCommandModeService`. The null-entry skip and
+  `server.agents.commands.AgentCommandModeService`. The null-entry skip and
   guard-before-clear, clear-script-tasks, cancel-shop, start-mode order are
   unchanged.
 - Agent movement command facade now calls Agent runtime mode/queue services
@@ -7181,6 +7181,9 @@ Current physics correction:
   `capabilities.movement`. Follow clearing, map-change grounding short-circuit,
   standalone move-target selection, AI-tick forwarding, and idle fallback
   remain unchanged.
+- Command ownership: `AgentCommandModeService` now lives under `commands`.
+  Null-entry and command-policy guards plus clear-script, cancel-shop, and
+  start-mode callback ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

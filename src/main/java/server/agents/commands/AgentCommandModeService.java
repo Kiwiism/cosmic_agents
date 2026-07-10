@@ -1,4 +1,6 @@
-package server.agents.runtime;
+package server.agents.commands;
+
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BooleanSupplier;
 
