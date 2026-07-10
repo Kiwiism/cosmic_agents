@@ -7373,6 +7373,11 @@ Current physics correction:
   runtime `AgentScriptTaskRuntime` to `plans.AgentScriptTaskCoordinator`;
   configured arrival distance, activation loop, start ordering, and completion
   progression remain unchanged.
+- Movement ownership: movement-core tick hook assembly moved from generic
+  runtime `AgentMovementTickRuntime` to
+  `capabilities.movement.AgentMovementTickCoordinator`; navigation resolution,
+  fidget, movement phase, edge execution, stuck detection, and reached-target
+  cleanup retain their original order and configuration.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

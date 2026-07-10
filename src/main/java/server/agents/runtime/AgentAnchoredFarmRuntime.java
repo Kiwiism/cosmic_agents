@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.combat.AgentAnchoredFarmTickService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementPoseService;
@@ -64,7 +65,7 @@ public final class AgentAnchoredFarmRuntime {
                     AgentMovementPoseService.idleOnGround(entry, agent);
                     AgentMovementBroadcastService.broadcastMovement(entry);
                 },
-                (entry, targetPosition, runAiTick) -> AgentMovementTickRuntime.stepMovementCore(
+                (entry, targetPosition, runAiTick) -> AgentMovementTickCoordinator.stepMovementCore(
                         entry,
                         targetPosition,
                         runAiTick,

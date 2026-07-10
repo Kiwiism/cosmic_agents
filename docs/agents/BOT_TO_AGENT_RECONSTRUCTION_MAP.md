@@ -3302,3 +3302,7 @@ Recent capability extraction notes:
   `plans.AgentScriptTaskCoordinator`; script task activation, start delegation,
   completion checks, and configured arrival distance now belong to plans with
   unchanged behavior.
+- Movement ownership: `AgentMovementTickRuntime` became
+  `capabilities.movement.AgentMovementTickCoordinator`; all runtime callers now
+  enter the movement capability directly, preserving the existing movement tick
+  hook order and configuration.

@@ -1,18 +1,17 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.movement.AgentMovementPhaseService;
-import server.agents.capabilities.movement.AgentStuckDetectionService;
-import server.agents.capabilities.movement.AgentMovementTickService;
-import server.agents.capabilities.movement.AgentMovementTargetMaintenanceService;
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+package server.agents.capabilities.movement;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
 import server.agents.capabilities.navigation.AgentNavigationTargetService;
+import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
-public final class AgentMovementTickRuntime {
-    private AgentMovementTickRuntime() {
+/**
+ * Assembles the movement and navigation capability steps for one movement tick.
+ */
+public final class AgentMovementTickCoordinator {
+    private AgentMovementTickCoordinator() {
     }
 
     public static void stepMovementCore(AgentRuntimeEntry entry,
@@ -38,7 +37,9 @@ public final class AgentMovementTickRuntime {
                 hooks(entry, enableUnstuck, stopDistance));
     }
 
-    private static AgentMovementTickService.MovementTickHooks hooks(AgentRuntimeEntry entry, boolean enableUnstuck, int stopDistance) {
+    private static AgentMovementTickService.MovementTickHooks hooks(AgentRuntimeEntry entry,
+                                                                     boolean enableUnstuck,
+                                                                     int stopDistance) {
         return new AgentMovementTickService.MovementTickHooks(
                 (ignored, targetPosition, runAiTick) -> {
                     AgentNavigationTargetService.NavigationDirective directive =
@@ -51,5 +52,4 @@ public final class AgentMovementTickRuntime {
                 ignored -> AgentStuckDetectionService.tickStuckDetection(entry, enableUnstuck),
                 ignored -> AgentMovementTargetMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
     }
-
 }

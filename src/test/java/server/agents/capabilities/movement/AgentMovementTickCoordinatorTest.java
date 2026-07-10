@@ -1,9 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.movement.AgentMovementTickService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -13,7 +12,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentMovementTickRuntimeTest {
+class AgentMovementTickCoordinatorTest {
     @Test
     void configBoundOverloadDelegatesToMovementTickService() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
@@ -27,7 +26,7 @@ class AgentMovementTickRuntimeTest {
                             any(AgentMovementTickService.MovementTickHooks.class)))
                     .thenAnswer(invocation -> null);
 
-            AgentMovementTickRuntime.stepMovementCore(entry, target, true);
+            AgentMovementTickCoordinator.stepMovementCore(entry, target, true);
 
             service.verify(() -> AgentMovementTickService.stepMovementCore(
                     eq(entry),

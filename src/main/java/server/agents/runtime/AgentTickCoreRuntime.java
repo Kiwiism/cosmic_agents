@@ -4,6 +4,7 @@ import server.agents.plans.AgentScriptTaskCoordinator;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentOwnerlessTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import client.Character;
@@ -43,7 +44,7 @@ public final class AgentTickCoreRuntime {
                 issueGrind,
                 issueFollow,
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
-                AgentMovementTickRuntime::stepMovementCore,
+                AgentMovementTickCoordinator::stepMovementCore,
                 AgentAnchoredFarmRuntime::tickAnchoredFarm,
                 (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->
                         AgentGrindModeRuntime.tickGrindMode(
@@ -52,7 +53,7 @@ public final class AgentTickCoreRuntime {
                                 grindAgentPosition,
                                 grindTargetPosition,
                                 grindRunAiTick,
-                                AgentMovementTickRuntime::stepMovementCore));
+                                AgentMovementTickCoordinator::stepMovementCore));
     }
 
     public static void tickCore(AgentRuntimeEntry entry,

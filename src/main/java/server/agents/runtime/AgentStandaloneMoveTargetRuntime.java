@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.movement.AgentStandaloneMoveTargetTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
+import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 
 import client.Character;
 
@@ -33,7 +34,7 @@ public final class AgentStandaloneMoveTargetRuntime {
                 new AgentStandaloneMoveTargetTickService.Hooks(
                         AgentMapTransitionRuntime::groundAfterMapChange,
                         AgentMovementProfileService::refreshMovementProfile,
-                        (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
+                        (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickCoordinator.stepMovementCore(
                                 moveEntry,
                                 targetPosition,
                                 moveRunAiTick,

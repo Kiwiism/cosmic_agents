@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementOnlyMapChangeService;
 import server.agents.capabilities.movement.AgentMovementOnlyTickService;
+import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
@@ -69,7 +70,7 @@ public final class AgentMovementOnlyRuntime {
                         nowMs,
                         config.followDistance(),
                         config.stopDistance()),
-                (entry, target, coreRunAiTick) -> AgentMovementTickRuntime.stepMovementCore(
+                (entry, target, coreRunAiTick) -> AgentMovementTickCoordinator.stepMovementCore(
                         entry,
                         target,
                         coreRunAiTick,
