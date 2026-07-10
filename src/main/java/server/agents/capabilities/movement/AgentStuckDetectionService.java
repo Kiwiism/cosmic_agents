@@ -1,10 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentPerformanceMonitor;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.function.IntUnaryOperator;

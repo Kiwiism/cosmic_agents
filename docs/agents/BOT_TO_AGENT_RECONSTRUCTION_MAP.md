@@ -3068,3 +3068,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentMovementTickService` moved from generic runtime
   to `capabilities.movement`. The movement-core phase order and every callback
   argument remain unchanged.
+- Capability ownership: `AgentStuckDetectionService` moved from generic runtime
+  to `capabilities.movement`. Performance monitoring, cooldown and progress
+  state updates, reset gates, thresholds, and unstuck dispatch remain
+  unchanged.

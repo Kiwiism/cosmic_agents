@@ -4159,7 +4159,7 @@ Recent reconstruction notes:
   temporary BotMovementManager hooks. The climb, swim-while-airborne, airborne,
   then grounded ordering is preserved.
 - Movement stuck detection and unstuck triggering now live in
-  `server.agents.runtime.AgentStuckDetectionService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentStuckDetectionService`; BotManager still supplies
   temporary tick-down, movement tick duration, enable flag, and unstuck action
   hooks. The active-navigation guard, 8px movement threshold, 500ms stuck
   threshold, cooldown handling, and performance metric name are preserved.
@@ -7114,6 +7114,10 @@ Current physics correction:
   `capabilities.movement`. Navigation resolution, precise-target marking,
   fidget short-circuiting, movement-phase dispatch, committed-edge execution,
   stuck detection, and reached-target cleanup ordering remain unchanged.
+- Capability ownership: `AgentStuckDetectionService` now lives under
+  `capabilities.movement`. Performance timing, cooldown decrement, reset gates,
+  movement threshold, stuck duration, and unstuck trigger behavior remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
