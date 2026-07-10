@@ -9,7 +9,6 @@ import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.runtime.AgentStatusStateRuntime;
 
 import java.awt.Point;
 

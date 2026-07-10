@@ -7282,6 +7282,9 @@ Current physics correction:
   `AgentActivityStateRuntime` now live under `capabilities.follow`. AFK timing,
   inactivity/safe-mode flags, returned-to-town state, and last-command metadata
   remain unchanged.
+- Dialogue adapter ownership: `AgentStatusStateRuntime` now lives under
+  `capabilities.dialogue`, where it adapts live follow/trade state to status,
+  welcome-back, and gear-report interfaces without changing behavior.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

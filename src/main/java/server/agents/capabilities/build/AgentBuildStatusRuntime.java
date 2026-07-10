@@ -8,7 +8,7 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentStatusStateRuntime;
+import server.agents.capabilities.dialogue.AgentStatusStateRuntime;
 import server.agents.capabilities.equipment.AgentEquipmentService;
 import server.agents.capabilities.trade.AgentOfferService;
 

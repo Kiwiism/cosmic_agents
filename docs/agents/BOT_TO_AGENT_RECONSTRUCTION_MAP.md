@@ -96,7 +96,7 @@ Recent map updates:
   context, not a direct Cosmic boundary. Its callback wiring still points at
   existing integration runtime adapters until those slices are split safely.
 - `AgentStatusStateRuntime` now owns the status/AFK/gear-suggestion state
-  adapters under `server.agents.runtime`. `AgentStatusRuntime` remains in
+  adapters under `server.agents.capabilities.dialogue`. `AgentStatusRuntime` remains in
   `server.agents.integration` only for the offline/AFK return actions that
   still schedule timers, emit replies, or change the live Agent character
   expression.
@@ -3216,3 +3216,6 @@ Recent capability extraction notes:
   `AgentActivityStateRuntime` moved from generic runtime to
   `capabilities.follow`; AFK, inactivity, away-safety, returned-to-town, and
   last-command values and transitions remain unchanged.
+- Dialogue adapter ownership: `AgentStatusStateRuntime` moved from generic
+  runtime to `capabilities.dialogue`; status, welcome-back, gear-suggestion,
+  and recommended-gear interface adaptation remains unchanged.

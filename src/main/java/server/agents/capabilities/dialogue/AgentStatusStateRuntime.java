@@ -1,16 +1,13 @@
-package server.agents.runtime;
+package server.agents.capabilities.dialogue;
 
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
-import server.agents.capabilities.dialogue.AgentChatReportRuntime;
-import server.agents.capabilities.dialogue.AgentChatStatusRuntime;
-import server.agents.capabilities.dialogue.AgentChatWelcomeBackFlow;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
 /**
- * Runtime-owned adapter from live Agent session state to dialogue status state
- * interfaces.
+ * Adapter from live Agent session state to dialogue status state interfaces.
  */
 public final class AgentStatusStateRuntime {
     private AgentStatusStateRuntime() {

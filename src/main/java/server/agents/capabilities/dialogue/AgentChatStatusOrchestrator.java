@@ -5,7 +5,6 @@ import server.agents.capabilities.build.AgentBuildStatusRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.dialogue.AgentStatusRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentStatusStateRuntime;
 
 /**
  * Agent-owned chat status orchestration over runtime state adapters. Live
