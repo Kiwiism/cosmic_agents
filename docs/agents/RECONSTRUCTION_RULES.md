@@ -7301,6 +7301,9 @@ Current physics correction:
   `AgentIdlePhysicsService`; `AgentIdlePhysicsRuntime` is removed while idle
   eligibility, stance correction, swim/air dispatch, and broadcast timing stay
   unchanged.
+- Movement bridge removal: default climb/swim/air/ground phase dispatch now
+  lives in `AgentMovementPhaseService`; `AgentMovementPhaseRuntime` is removed
+  with phase priority and AI-tick forwarding unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

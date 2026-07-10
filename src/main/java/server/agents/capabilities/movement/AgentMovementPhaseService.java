@@ -31,6 +31,12 @@ public final class AgentMovementPhaseService {
 
     public static void tickMovementPhase(AgentRuntimeEntry entry,
                                          Point targetPosition,
+                                         boolean runAiTick) {
+        tickMovementPhase(entry, targetPosition, runAiTick, defaultHooks(entry));
+    }
+
+    public static void tickMovementPhase(AgentRuntimeEntry entry,
+                                         Point targetPosition,
                                          boolean runAiTick,
                                          MovementPhaseHooks hooks) {
         if (AgentMovementStateRuntime.climbing(entry)) {
@@ -42,5 +48,14 @@ public final class AgentMovementPhaseService {
         } else {
             hooks.groundedTick().tick(entry, targetPosition);
         }
+    }
+
+    private static MovementPhaseHooks defaultHooks(AgentRuntimeEntry entry) {
+        return new MovementPhaseHooks(
+                (candidate, target) -> AgentMapEnvironmentService.isSwimMap(candidate),
+                (ignored, target, runAiTick) -> AgentMovementPhaseDispatchService.tickClimbing(entry, target, runAiTick),
+                (ignored, target) -> AgentMovementPhaseDispatchService.tickSwimming(entry, target),
+                (ignored, target) -> AgentMovementPhaseDispatchService.tickAirborne(entry, target),
+                (ignored, target) -> AgentMovementPhaseDispatchService.tickGrounded(entry, target));
     }
 }

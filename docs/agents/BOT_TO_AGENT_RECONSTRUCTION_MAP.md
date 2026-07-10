@@ -3233,3 +3233,6 @@ Recent capability extraction notes:
   default hook assembly moved into `AgentIdlePhysicsService`; idle gating,
   phase dispatch, stance comparison, and movement broadcast behavior remain
   unchanged.
+- Movement bridge removal: `AgentMovementPhaseRuntime` was deleted after its
+  default dispatch hooks moved into `AgentMovementPhaseService`; climbing,
+  swimming, airborne, and grounded branch priority remains unchanged.
