@@ -1173,7 +1173,8 @@ Recent reconstruction notes:
   missing-agent, missing-target, self-target, authorization failure, remove,
   cancel, stop, register, and delayed greeting behavior is preserved.
 - Offline Agent loading now lives in
-  `server.agents.runtime.AgentOfflineLoadService`. BotManager keeps a temporary
+  `server.agents.integration.cosmic.CosmicAgentOfflineLoadService`. BotManager
+  keeps a temporary
   compatibility hook bundle for BotClient creation, character DB loading,
   disease restore, map resolution, spawn-position resolution, rate
   initialization, channel/world registration, and map registration. The same
@@ -6998,7 +6999,7 @@ Current physics correction:
 - SPI/gateway extraction: headless client creation, backing-character creation,
   and backing-character database loading now call `AgentClientGateway` through
   `AgentClientGatewayRuntime`. `AgentSpawnCommandExecutor`,
-  `CosmicAgentOfflineLoader`, and `AgentOfflineLoadService` no longer import
+  `CosmicAgentOfflineLoader`, and `CosmicAgentOfflineLoadService` no longer import
   `BotClient` or `BotCreator`; the exact concrete client/creator/load calls are
   isolated in `CosmicAgentClientGateway`. Account setup and offline-load order
   remain unchanged.
@@ -7461,6 +7462,10 @@ Current physics correction:
   `AgentRuntimeSnapshot` placeholder records. They carried no behavior and were
   not used by production or tests; `AgentRuntimeEntry` remains the live session
   container.
+- Cosmic boundary ownership: the operational offline-load sequence now lives in
+  `integration.cosmic.CosmicAgentOfflineLoadService`, beside its adapter. Exact
+  client, character, disease, map, rate, registration, and spawn side-effect
+  ordering is preserved.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

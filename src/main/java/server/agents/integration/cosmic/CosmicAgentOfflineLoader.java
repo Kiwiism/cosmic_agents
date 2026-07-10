@@ -5,7 +5,6 @@ import config.YamlConfig;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
-import server.agents.runtime.AgentOfflineLoadService;
 import server.agents.runtime.AgentSpawnPositionService;
 import server.maps.MapleMap;
 
@@ -39,8 +38,8 @@ public final class CosmicAgentOfflineLoader {
                                       int channel,
                                       MapleMap targetMap,
                                       Point desiredPosition,
-                                      AgentOfflineLoadService.Hooks hooks) throws SQLException {
-        return AgentOfflineLoadService.loadOfflineAgent(
+                                      CosmicAgentOfflineLoadService.Hooks hooks) throws SQLException {
+        return CosmicAgentOfflineLoadService.loadOfflineAgent(
                 characterId,
                 world,
                 channel,
@@ -49,8 +48,8 @@ public final class CosmicAgentOfflineLoader {
                 hooks);
     }
 
-    private static AgentOfflineLoadService.Hooks hooks() {
-        return new AgentOfflineLoadService.Hooks(
+    private static CosmicAgentOfflineLoadService.Hooks hooks() {
+        return new CosmicAgentOfflineLoadService.Hooks(
                 AgentClientGatewayRuntime.clients()::createHeadlessClient,
                 AgentClientGatewayRuntime.clients()::loadBackingCharacter,
                 AgentCharacterGatewayRuntime.characters()::loadStoredDiseases,

@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import client.Client;
@@ -11,8 +11,8 @@ import java.awt.Point;
 import java.sql.SQLException;
 import java.util.Map;
 
-public final class AgentOfflineLoadService {
-    private AgentOfflineLoadService() {
+public final class CosmicAgentOfflineLoadService {
+    private CosmicAgentOfflineLoadService() {
     }
 
     public record Hooks(AgentClientFactory clientFactory,

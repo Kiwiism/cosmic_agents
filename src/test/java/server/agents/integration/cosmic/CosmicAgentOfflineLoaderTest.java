@@ -3,7 +3,6 @@ package server.agents.integration.cosmic;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.runtime.AgentOfflineLoadService;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -19,17 +18,17 @@ class CosmicAgentOfflineLoaderTest {
         MapleMap map = mock(MapleMap.class);
         Point position = new Point(20, 30);
         Character loaded = mock(Character.class);
-        AgentOfflineLoadService.Hooks hooks = mock(AgentOfflineLoadService.Hooks.class);
+        CosmicAgentOfflineLoadService.Hooks hooks = mock(CosmicAgentOfflineLoadService.Hooks.class);
 
-        try (MockedStatic<AgentOfflineLoadService> service = mockStatic(AgentOfflineLoadService.class)) {
-            service.when(() -> AgentOfflineLoadService.loadOfflineAgent(
+        try (MockedStatic<CosmicAgentOfflineLoadService> service = mockStatic(CosmicAgentOfflineLoadService.class)) {
+            service.when(() -> CosmicAgentOfflineLoadService.loadOfflineAgent(
                             eq(100), eq(1), eq(2), eq(map), eq(position), eq(hooks)))
                     .thenReturn(loaded);
 
             assertSame(loaded, CosmicAgentOfflineLoader.loadOfflineAgent(
                     100, 1, 2, map, position, hooks));
 
-            service.verify(() -> AgentOfflineLoadService.loadOfflineAgent(
+            service.verify(() -> CosmicAgentOfflineLoadService.loadOfflineAgent(
                     eq(100), eq(1), eq(2), eq(map), eq(position), eq(hooks)));
         }
     }

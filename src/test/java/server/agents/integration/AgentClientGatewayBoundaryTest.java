@@ -17,7 +17,7 @@ class AgentClientGatewayBoundaryTest {
         String offlineRuntime = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/cosmic/CosmicAgentOfflineLoader.java"));
         String offlineService = Files.readString(Path.of(
-                "src/main/java/server/agents/runtime/AgentOfflineLoadService.java"));
+                "src/main/java/server/agents/integration/cosmic/CosmicAgentOfflineLoadService.java"));
         String maker = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/build/AgentMakerService.java"));
         String lifecycle = Files.readString(Path.of(

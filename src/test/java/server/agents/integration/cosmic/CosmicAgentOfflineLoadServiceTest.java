@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import client.Client;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AgentOfflineLoadServiceTest {
+class CosmicAgentOfflineLoadServiceTest {
     @Test
     void loadsOfflineAgentInLegacyOrder() throws Exception {
         Client client = mock(Client.class);
@@ -34,13 +34,13 @@ class AgentOfflineLoadServiceTest {
         when(spawnMap.getId()).thenReturn(2000);
         List<String> calls = new ArrayList<>();
 
-        Character loaded = AgentOfflineLoadService.loadOfflineAgent(
+        Character loaded = CosmicAgentOfflineLoadService.loadOfflineAgent(
                 55,
                 0,
                 1,
                 spawnMap,
                 desiredPosition,
-                new AgentOfflineLoadService.Hooks(
+                new CosmicAgentOfflineLoadService.Hooks(
                         (world, channel) -> {
                             calls.add("client");
                             return client;

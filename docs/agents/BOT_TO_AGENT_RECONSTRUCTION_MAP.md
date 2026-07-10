@@ -1604,7 +1604,8 @@ Recent map updates:
   authorization, scheduled-task cancel, stop-mode entry, re-registration,
   delayed greeting scheduling, and greeting delivery.
 - Offline Agent loading moved from BotManager to
-  `server.agents.runtime.AgentOfflineLoadService`. BotManager now supplies
+  `server.agents.integration.cosmic.CosmicAgentOfflineLoadService`. BotManager
+  now supplies
   temporary hooks for BotClient creation, character DB loading, disease restore,
   map resolution, spawn-position resolution, rate initialization, channel/world
   registration, and map registration.
@@ -3388,3 +3389,6 @@ Recent capability extraction notes:
 - Runtime cleanup: unused placeholder records `AgentRuntime` and
   `AgentRuntimeSnapshot` were deleted. The live mutable runtime remains
   `AgentRuntimeEntry`; the placeholders had no production or test callers.
+- Cosmic boundary ownership: the offline character loading sequence moved from
+  runtime to `integration.cosmic.CosmicAgentOfflineLoadService`. Client setup,
+  disease restoration, map registration, rates, and spawn ordering are unchanged.
