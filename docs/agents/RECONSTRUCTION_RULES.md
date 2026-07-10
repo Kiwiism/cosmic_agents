@@ -4133,7 +4133,7 @@ Recent reconstruction notes:
   shop map-change notification, manager-status check, and performance timer
   behavior are preserved.
 - Movement recovery teleport checks now live in
-  `server.agents.runtime.AgentRecoveryTeleportService`; BotManager still
+  `server.agents.capabilities.recovery.AgentRecoveryTeleportService`; BotManager still
   supplies temporary Cosmic ground-point, teleport, reset, and broadcast hooks.
   The regular target-distance recovery, out-of-bounds recovery, grind-party
   anchor recovery, shop/move-target/farm-anchor guards, and distance multiplier
@@ -7168,6 +7168,10 @@ Current physics correction:
   `capabilities.combat`. Distance bands, move-window durations, follow-mode and
   null guards, settle thresholds, vertical cap, and cooldown clearing behavior
   remain unchanged.
+- Capability ownership: `AgentRecoveryTeleportService` now lives under
+  `capabilities.recovery`. Target and out-of-bounds distance checks, grind and
+  shop/move/anchor/map constraints, multiplier math, grounding fallback, and
+  teleport/reset/broadcast ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

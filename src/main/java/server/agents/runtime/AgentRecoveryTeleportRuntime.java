@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.recovery.AgentRecoveryTeleportService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
