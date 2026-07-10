@@ -331,6 +331,7 @@ public final class AgentLifecycleService {
                 entry.scheduledTaskState().cancelScheduledTask();
             }
             entry.scheduledTaskScope().cancelAll();
+            AgentMailboxRuntime.close(entry);
         }
     }
 

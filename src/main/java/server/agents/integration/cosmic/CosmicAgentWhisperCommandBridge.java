@@ -1,11 +1,10 @@
 package server.agents.integration.cosmic;
 
 import client.Character;
-import server.agents.capabilities.dialogue.AgentChatRuntime;
+import server.agents.capabilities.dialogue.AgentChatMailboxDispatcher;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelStateRuntime;
-import server.agents.runtime.AgentChatOrchestratorContext;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
@@ -28,6 +27,6 @@ public final class CosmicAgentWhisperCommandBridge {
                         leader.getId(),
                         target.getId()),
                 entry -> AgentReplyChannelStateRuntime.setReplyChannel(entry, AgentReplyChannel.WHISPER),
-                (entry, message) -> AgentChatRuntime.handleChat(message, new AgentChatOrchestratorContext(entry)));
+                AgentChatMailboxDispatcher::handleChat);
     }
 }

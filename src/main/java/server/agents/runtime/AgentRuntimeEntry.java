@@ -76,6 +76,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentAirshowState airshowState = new AgentAirshowState();
     private final AgentScheduledTaskState scheduledTaskState;
     private final AgentScheduledTaskScope scheduledTaskScope = new AgentScheduledTaskScope();
+    private final AgentActionMailbox actionMailbox = new AgentActionMailbox(AgentMailboxRuntime.configuredCapacity());
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
 
     public AgentScheduledTaskState scheduledTaskState() {
@@ -88,6 +89,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public long sessionGeneration() {
         return sessionGeneration;
+    }
+
+    public AgentActionMailbox actionMailbox() {
+        return actionMailbox;
     }
 
     public AgentAirshowState airshowState() {

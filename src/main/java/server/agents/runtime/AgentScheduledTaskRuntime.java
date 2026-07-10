@@ -15,6 +15,7 @@ public final class AgentScheduledTaskRuntime {
         if (entry != null) {
             entry.scheduledTaskState().cancelScheduledTask();
             entry.scheduledTaskScope().cancelAll();
+            AgentMailboxRuntime.close(entry);
         }
     }
 }

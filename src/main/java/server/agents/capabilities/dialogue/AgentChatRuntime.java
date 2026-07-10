@@ -15,7 +15,13 @@ public final class AgentChatRuntime {
         return LAST_CHAT_HANDLED.get();
     }
 
-    public static void handleChat(String message, AgentChatOrchestrator.Context context) {
-        LAST_CHAT_HANDLED.set(AgentChatOrchestrator.handle(message, context));
+    public static boolean handleChat(String message, AgentChatOrchestrator.Context context) {
+        boolean handled = AgentChatOrchestrator.handle(message, context);
+        recordLastChatHandled(handled);
+        return handled;
+    }
+
+    public static void recordLastChatHandled(boolean handled) {
+        LAST_CHAT_HANDLED.set(handled);
     }
 }

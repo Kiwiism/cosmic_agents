@@ -7584,6 +7584,16 @@ Current physics correction:
   expose submitted, rejected, coalesced, current-depth, and maximum-depth values
   for dialogue, LLM, navigation, and trade workers through
   `AgentAsyncQueueMetrics`.
+- Per-Agent mailbox foundation: every live `AgentRuntimeEntry` owns a bounded
+  FIFO `AgentActionMailbox`. It rejects stale generations, closes and fails
+  pending actions on despawn, isolates action failures, and drains up to 32
+  actions before gameplay work in the owning guarded tick. Agent chat ingress
+  uses `AgentChatMailboxDispatcher`; `agents.mailbox.enabled=false` remains the
+  default compatibility path, while enabling it queues immutable
+  `AgentChatMailboxAction` records and waits for the handled result required by
+  existing typo/LLM routing. Capacity and drain budget are configurable through
+  `agents.mailbox.capacity` and `agents.mailbox.maxActionsPerTick`. Remaining
+  external mutations will move behind mailbox actions only after parity testing.
 
 Initial reconstruction order:
 

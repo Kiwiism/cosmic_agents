@@ -31,6 +31,7 @@ public final class AgentTickOrchestrator {
                                       TickFailureHandler failureHandler) {
         long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
         try {
+            AgentMailboxRuntime.drain(entry);
             tickCore.run(entry, leaderCharId, agentCharId);
             AgentTickFailurePolicy.resetFailures(entry);
         } catch (Throwable t) {

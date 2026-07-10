@@ -23,7 +23,6 @@ import server.agents.commands.AgentCommandTargetResolver;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentChatOrchestratorContext;
 import server.agents.commands.AgentFollowTargetCommandCoordinator;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -165,6 +164,6 @@ public final class AgentChatRouteCoordinator {
     }
 
     private static void handleAgentChat(AgentRuntimeEntry entry, String message) {
-        AgentChatRuntime.handleChat(message, new AgentChatOrchestratorContext(entry));
+        AgentChatMailboxDispatcher.handleChat(entry, message);
     }
 }
