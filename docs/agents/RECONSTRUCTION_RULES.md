@@ -1394,7 +1394,7 @@ Recent reconstruction notes:
   `town && eligible` behavior are unchanged; BotManager still supplies
   temporary runtime snapshots and safe-mode callbacks.
 - BotManager script-task start dispatch now delegates to
-  `server.agents.runtime.AgentScriptTaskStartService`. The same task-type to
+  `server.agents.plans.AgentScriptTaskStartService`. The same task-type to
   side-effect mapping is preserved; BotManager still supplies temporary move,
   follow, grind, stop, and drop callbacks.
 - BotManager script-task tick loop now delegates to
@@ -7191,6 +7191,9 @@ Current physics correction:
 - Plan ownership: `AgentScriptTaskQueueService` now lives under `plans`. Null
   guards, clear-and-epoch behavior, task construction and ordering, move combat
   mode, follow/drop composition, and queued-state checks remain unchanged.
+- Plan ownership: `AgentScriptTaskStartService` now lives under `plans`. The
+  task-type dispatch switch, owner/target resolution, movement precision,
+  grind/stop invocation, and item-drop callback arguments remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -1817,7 +1817,7 @@ Recent map updates:
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.
 - BotManager script task start dispatch moved to
-  `server.agents.runtime.AgentScriptTaskStartService`; BotManager only supplies
+  `server.agents.plans.AgentScriptTaskStartService`; BotManager only supplies
   temporary callbacks for move, follow, grind, stop, and drop side effects.
 - BotManager script task tick loop moved to
   `server.agents.runtime.AgentScriptTaskTickService`; BotManager only supplies
@@ -3136,3 +3136,5 @@ Recent capability extraction notes:
 - Plan ownership: `AgentScriptTaskQueueService` moved from generic runtime to
   `plans`. Queue state mutation, epoch behavior, task construction/order, and
   query behavior remain unchanged.
+- Plan ownership: `AgentScriptTaskStartService` moved from generic runtime to
+  `plans`. Every task-type dispatch and callback argument remains unchanged.
