@@ -77,7 +77,6 @@ Target package groups:
 - `server.agents.events`: event bus and listener interfaces.
 - `server.agents.policy`: replaceable decision rules.
 - `server.agents.profiles`: configurable behavior profiles.
-- `server.agents.legacy`: exact legacy bot behavior adapters while reconstructing.
 - `server.agents.integration`: server-agnostic gateways.
 - `server.agents.integration.cosmic`: Cosmic-specific gateway implementations.
 

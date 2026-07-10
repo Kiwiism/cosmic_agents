@@ -659,7 +659,6 @@ server.agents.capabilities.quest
 server.agents.capabilities.recovery
 server.agents.policy
 server.agents.profiles
-server.agents.legacy
 server.agents.integration
 server.agents.integration.cosmic
 ```

@@ -18,6 +18,7 @@ The behavior-preserving reconstruction implementation is structurally complete:
 - 67 integration files define or implement Cosmic boundaries;
 - all retained runtime classes are classified in
   `AGENT_RUNTIME_CLASSIFICATION.md` and checked automatically;
+- the empty, unused `server.agents.legacy` foundation package is removed;
 - operational Cosmic dependencies are inventoried in
   `AGENT_COSMIC_COUPLING.md` and checked automatically.
 

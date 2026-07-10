@@ -25,7 +25,6 @@ class AgentFoundationStructureTest {
                 "server.agents.events.AgentEventBus",
                 "server.agents.policy.AgentCombatPolicy",
                 "server.agents.profiles.AgentProfileRepository",
-                "server.agents.legacy.LegacyBotParityAdapter",
                 "server.agents.integration.AgentServerAdapter",
                 "server.agents.integration.cosmic.CosmicAgentServerAdapter");
 

@@ -21,6 +21,10 @@ The movement simulation harness now reuses an exact cached base-profile graph
 instead of rebuilding the same graph twice; all nine simulation tests pass and
 production navigation behavior is unchanged.
 
+The empty `server.agents.legacy` foundation interfaces and notes were deleted
+after real behavior ownership was established. They had no callers or runtime
+implementation.
+
 Recent map updates:
 
 - Integration runtime adapter audit has started. Current classification:
@@ -2371,7 +2375,7 @@ Recent map updates:
 | `src/main/java/server/bots/pq/BotKpqStage5.java` | `server.agents.capabilities.partyquest.kpq.AgentKpqStage5` | `MIGRATED_TO_AGENT`; KPQ stage-5 reward claim and announcement behavior moved unchanged, and the stage-5 tick/state bridge now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/pq/BotKpqState.java` | `server.agents.capabilities.partyquest.kpq.AgentKpqState` | `MIGRATED_TO_AGENT`; temporary BotEntry-backed KPQ state bag now uses Agent-owned type |
 | `src/main/java/server/bots/pq/BotPqHooks.java` | `server.agents.capabilities.partyquest.AgentPartyQuestHooks` | `MIGRATED_TO_AGENT`; PQ tick, NPC lock, grind/follow defaults, and coupon-loot gating moved unchanged. PQ state bridge methods and PQ gate checks now accept `AgentRuntimeEntry` |
-| `src/main/resources/db/tables/025-bot-ownership.sql` | `server.agents.legacy` documentation initially; later external registry or deletion | `LEGACY_PROFILE` |
+| `src/main/resources/db/tables/025-bot-ownership.sql` | `server.agents.integration.cosmic.CosmicAgentPersistenceGateway` | `MIGRATED_TO_AGENT`; compatibility ownership persistence remains a Cosmic database concern and no empty legacy package is retained |
 
 Recent capability extraction notes:
 
