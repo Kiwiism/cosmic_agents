@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentMovementOnlyTickService;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 
 import client.Character;

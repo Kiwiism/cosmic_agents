@@ -1,7 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

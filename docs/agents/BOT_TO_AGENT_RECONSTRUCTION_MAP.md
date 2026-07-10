@@ -3079,3 +3079,6 @@ Recent capability extraction notes:
   runtime to `capabilities.movement`; swim-map reads now pass through
   `MapGateway.isSwimMap` and `CosmicMapGateway`, preserving null handling and the
   exact Cosmic map flag.
+- Capability ownership: `AgentMovementOnlyTickService` moved from generic
+  runtime to `capabilities.movement`. Its complete idle/follow/recovery/map/
+  shop/movement short-circuit order and callback arguments remain unchanged.

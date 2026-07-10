@@ -4174,7 +4174,7 @@ Recent reconstruction notes:
   early return, committed-edge grounded AI gate, stuck detection, and reached
   move-target cleanup ordering are preserved.
 - Movement-only tick orchestration now lives in
-  `server.agents.runtime.AgentMovementOnlyTickService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentMovementOnlyTickService`; BotManager still supplies
   temporary idle, follow-map sync, follow-anchor, recovery, map-change, shop,
   follow-idle, and movement-core hooks. The existing early-return order is
   preserved for movement simulations and movement-only tests.
@@ -7126,6 +7126,10 @@ Current physics correction:
   `capabilities.movement` and resolves swim-map status through
   `MapGateway.isSwimMap`. `CosmicMapGateway` retains the same null checks and
   `MapleMap.isSwim()` result; runtime callers keep the same branching behavior.
+- Capability ownership: `AgentMovementOnlyTickService` now lives under
+  `capabilities.movement`. Agent/target gating, idle, follow-map, party/target
+  recovery, map transition, shop approach, follow-idle, and movement-core
+  short-circuit ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

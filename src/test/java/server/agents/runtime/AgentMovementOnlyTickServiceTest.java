@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.movement.AgentMovementOnlyTickService;
 
 import java.awt.Point;
 import java.util.ArrayList;
