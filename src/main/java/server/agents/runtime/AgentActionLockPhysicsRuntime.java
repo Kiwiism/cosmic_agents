@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentActionLockPhysicsService;
+import server.agents.capabilities.movement.AgentMapEnvironmentService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 
 public final class AgentActionLockPhysicsRuntime {

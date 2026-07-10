@@ -66,6 +66,11 @@ public enum CosmicMapGateway implements MapGateway {
     }
 
     @Override
+    public boolean isSwimMap(Character agent) {
+        return agent != null && agent.getMap() != null && agent.getMap().isSwim();
+    }
+
+    @Override
     public Point pointBelow(MapleMap map, Point position) {
         if (map == null || position == null) {
             return null;

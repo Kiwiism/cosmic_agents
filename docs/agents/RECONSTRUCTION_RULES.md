@@ -1469,7 +1469,8 @@ Recent reconstruction notes:
   `AgentReturnScrollService`; BotManager only calls the Agent runtime helper
   from the existing leader-safety callback, preserving 2030000 lookup, effect
   application, and one-scroll consumption behavior.
-- Swim-map classification now lives in `AgentMapEnvironmentService`; BotManager
+- Swim-map classification now lives in
+  `server.agents.capabilities.movement.AgentMapEnvironmentService`; BotManager
   movement, idle-physics, and action-lock paths call the Agent runtime helper
   while preserving the same null-map and `MapleMap.isSwim()` behavior.
 - Grind-loot retry suppression now uses
@@ -7121,6 +7122,10 @@ Current physics correction:
 - Capability ownership: `AgentPositionService` now lives under
   `capabilities.movement`. Null handling and inclusive axis-distance checks are
   unchanged for anchored-farm and grind positioning callers.
+- Capability ownership/SPI: `AgentMapEnvironmentService` now lives under
+  `capabilities.movement` and resolves swim-map status through
+  `MapGateway.isSwimMap`. `CosmicMapGateway` retains the same null checks and
+  `MapleMap.isSwim()` result; runtime callers keep the same branching behavior.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

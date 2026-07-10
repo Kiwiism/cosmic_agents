@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementPhaseService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
+import server.agents.capabilities.movement.AgentMapEnvironmentService;
 
 import java.awt.Point;
 

@@ -20,6 +20,8 @@ public interface MapGateway {
 
     boolean enterPortal(Character agent, int portalId);
 
+    boolean isSwimMap(Character agent);
+
     Point pointBelow(MapleMap map, Point position);
 }
 

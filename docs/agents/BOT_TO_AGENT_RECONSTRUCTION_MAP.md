@@ -1890,7 +1890,7 @@ Recent map updates:
   `server.agents.capabilities.supplies.AgentReturnScrollService`; BotManager remains only the
   leader-safety callback site for this action.
 - BotManager swim-map helper moved to
-  `server.agents.runtime.AgentMapEnvironmentService`; BotManager no longer owns
+  `server.agents.capabilities.movement.AgentMapEnvironmentService`; BotManager no longer owns
   that map-environment predicate for movement/tick physics routing.
 - BotManager grind-loot retry suppression predicate was removed; Agent loot
   targeting now consumes `AgentGrindLootStateRuntime::isRetrySuppressed`
@@ -2270,7 +2270,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotLootEligibility.java` | `server.agents.capabilities.looting.AgentLootEligibility` | `MIGRATED_TO_AGENT`; loot eligibility and loot target selection now accept `AgentRuntimeEntry` while preserving target age, quest-item, inventory-full, retry suppression, seek-range, and patrol-region behavior |
 | `src/main/java/server/bots/BotMakerManager.java` | `server.agents.capabilities.build.AgentMakerService` | `MIGRATED_TO_AGENT`; Maker crystal and trash-disassembly batch orchestration moved unchanged. Maker reply bridge now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotManager.java` | `server.agents.runtime`, `commands`, `events`, capability orchestrators | `MIGRATED_TO_AGENT`; runtime/lifecycle/tick/chat/command/config/test callers moved to Agent runtime, registry, lifecycle, notification, cleanup, movement, combat, supply, and dialogue services; production bot file deleted after compile and focused parity tests passed |
-| `src/main/java/server/bots/BotManager.java#map-environment` | `server.agents.runtime.AgentMapEnvironmentService` | `MIGRATED_TO_AGENT`; swim-map detection now accepts `AgentRuntimeEntry` while preserving runtime identity map lookup |
+| `src/main/java/server/bots/BotManager.java#map-environment` | `server.agents.capabilities.movement.AgentMapEnvironmentService`, `server.agents.integration.MapGateway` | `MIGRATED_TO_AGENT`; swim-map detection accepts `AgentRuntimeEntry` and routes the Cosmic map query through the map gateway while preserving null and map-flag behavior |
 | `src/main/java/server/bots/BotManager.java#leader-session` | `server.agents.runtime.AgentLeaderSessionService` | `MIGRATED_TO_AGENT`; live leader refresh now accepts `AgentRuntimeEntry` while preserving cached/refresh behavior |
 | `src/main/java/server/bots/BotManager.java#mode-service` | `server.agents.runtime.AgentModeService` | `MIGRATED_TO_AGENT`; mode transitions now accept `AgentRuntimeEntry` while preserving follow/grind/stop/move/farm/patrol state changes |
 | `src/main/java/server/bots/BotManager.java#command-mode` | `server.agents.runtime.AgentCommandModeService` | `MIGRATED_TO_AGENT`; command-mode preparation now accepts `AgentRuntimeEntry` while preserving guard and hook order |
@@ -3075,3 +3075,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentPositionService` moved from generic runtime to
   `capabilities.movement`. Null handling and inclusive per-axis proximity checks
   remain unchanged.
+- Capability ownership/SPI: `AgentMapEnvironmentService` moved from generic
+  runtime to `capabilities.movement`; swim-map reads now pass through
+  `MapGateway.isSwimMap` and `CosmicMapGateway`, preserving null handling and the
+  exact Cosmic map flag.
