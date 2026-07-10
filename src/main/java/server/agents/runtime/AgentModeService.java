@@ -11,7 +11,7 @@ import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.capabilities.combat.AgentRetreatHoldStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 

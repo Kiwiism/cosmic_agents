@@ -7273,6 +7273,10 @@ Current physics correction:
   `AgentFarmAnchorStateRuntime` now live under `capabilities.movement` as the
   map-bound spatial anchor consumed by farm, navigation, recovery, and status
   flows. Defensive point copies and map-change clearing remain unchanged.
+- Movement objective ownership: `AgentPatrolState` and
+  `AgentPatrolStateRuntime` now live under `capabilities.movement` as the
+  region/map/wander-target state consumed by movement, combat, and looting.
+  Sentinel values, point copies, and clear behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

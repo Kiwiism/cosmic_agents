@@ -2,7 +2,7 @@ package server.agents.capabilities.looting;
 
 import client.Character;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
-import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapItem;
 

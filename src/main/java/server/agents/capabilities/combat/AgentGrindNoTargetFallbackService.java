@@ -3,7 +3,7 @@ package server.agents.capabilities.combat;
 import server.agents.capabilities.movement.AgentMapEnvironmentService;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
-import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 

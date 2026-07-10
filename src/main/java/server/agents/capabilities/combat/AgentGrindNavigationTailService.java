@@ -1,7 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.inventory.WeaponType;
-import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

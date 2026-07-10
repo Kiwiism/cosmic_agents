@@ -78,7 +78,7 @@ import server.agents.capabilities.combat.AgentDeathStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.capabilities.combat.AgentMobTouchStateRuntime;
 import server.agents.capabilities.combat.AgentMobTouchRuntime;
-import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.capabilities.combat.AgentSkillBuffDebugStateRuntime;
 import server.agents.capabilities.combat.data.AgentAttackDataProvider;

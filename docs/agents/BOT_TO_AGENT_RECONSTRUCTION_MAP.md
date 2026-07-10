@@ -3208,3 +3208,7 @@ Recent capability extraction notes:
   `AgentFarmAnchorStateRuntime` moved from generic runtime to
   `capabilities.movement`; defensive anchor copies, map association, presence
   checks, and map-change clearing remain unchanged.
+- Movement objective ownership: `AgentPatrolState` and
+  `AgentPatrolStateRuntime` moved from generic runtime to
+  `capabilities.movement`; region/map sentinels, defensive wander-target
+  copies, and map-change clearing remain unchanged.

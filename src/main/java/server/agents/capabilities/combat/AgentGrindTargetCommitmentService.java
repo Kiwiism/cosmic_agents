@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import client.Character;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
-import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.capabilities.movement.AgentPatrolStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
