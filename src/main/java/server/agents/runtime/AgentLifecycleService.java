@@ -8,6 +8,7 @@ import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -178,8 +179,8 @@ public final class AgentLifecycleService {
 
         Character agent = hooks.loadOfflineAgent().load(
                 resolved.id(),
-                leader.getClient().getWorld(),
-                leader.getClient().getChannel(),
+                AgentClientGatewayRuntime.clients().world(leader),
+                AgentClientGatewayRuntime.clients().channel(leader),
                 map,
                 spawnPosition);
         AgentRuntimeEntry entry = hooks.registerSpawnedAgent().register(leader.getId(), leader, agent);

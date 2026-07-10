@@ -40,4 +40,14 @@ public enum CosmicAgentClientGateway implements AgentClientGateway {
     public void release(Character character) {
         character.getClient().releaseClient();
     }
+
+    @Override
+    public int world(Character character) {
+        return character.getClient().getWorld();
+    }
+
+    @Override
+    public int channel(Character character) {
+        return character.getClient().getChannel();
+    }
 }

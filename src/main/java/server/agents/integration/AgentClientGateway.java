@@ -17,4 +17,8 @@ public interface AgentClientGateway {
     boolean tryAcquire(Character character);
 
     void release(Character character);
+
+    int world(Character character);
+
+    int channel(Character character);
 }

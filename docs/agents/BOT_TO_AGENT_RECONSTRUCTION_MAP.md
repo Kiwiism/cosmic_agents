@@ -2978,3 +2978,7 @@ Recent capability extraction notes:
   Concrete client access remains in the Cosmic client/Maker gateways; no-client
   abort, contention retry, lock release, operation status, and timing remain
   unchanged.
+- SPI/gateway extraction: lifecycle/session world and channel lookup plus
+  support-move client presence now route through `AgentClientGateway`. Concrete
+  `Character.getClient()` access remains in `CosmicAgentClientGateway`; spawn,
+  relog, and combat-dispatch behavior remains unchanged.

@@ -6996,6 +6996,12 @@ Current physics correction:
   `CosmicMakerGateway`. No-client abort, lock-contention retry delay, lock
   release, step status handling, crystal/disassembly operations, and batch
   timing remain unchanged. `AgentMakerService` no longer imports `Client`.
+- SPI/gateway extraction: lifecycle spawn and session relog world/channel reads
+  now use `AgentClientGateway.world`/`channel`, and support special-move client
+  presence uses `AgentClientGateway.hasClient`. Offline-load arguments, relog
+  identity/timing, null/skill guards, packet construction, and synthetic combat
+  dispatch remain unchanged. Remaining live client reads are isolated in
+  `CosmicAgentClientGateway`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`; production `src/main/java/server/bots/**` contains
   only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`

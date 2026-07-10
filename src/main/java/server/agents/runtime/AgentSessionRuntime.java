@@ -7,6 +7,7 @@ import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.dialogue.AgentChatSessionRequestFlow;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
@@ -59,8 +60,8 @@ public final class AgentSessionRuntime {
             Character bot = bot(entry);
             int charId = bot.getId();
             int ownerCharId = owner.getId();
-            int world = bot.getClient().getWorld();
-            int channel = bot.getClient().getChannel();
+            int world = AgentClientGatewayRuntime.clients().world(bot);
+            int channel = AgentClientGatewayRuntime.clients().channel(bot);
             AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
                 Character relogBot = bot(entry);
                 relogBot.saveCharToDB(true);
