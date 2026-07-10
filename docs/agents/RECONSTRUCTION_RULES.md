@@ -4115,7 +4115,7 @@ Recent reconstruction notes:
   `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager still supplies
   the temporary same-leader sibling entry list for script task compatibility.
 - Script task completion rules now live in
-  `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager still
+  `server.agents.plans.AgentScriptTaskCompletionService`; BotManager still
   supplies temporary follow-target resolution and movement-distance configuration.
 - Ownerless/offline-leader tick branching now lives in
   `server.agents.capabilities.movement.AgentOwnerlessTickService`; BotManager still supplies
@@ -7194,6 +7194,9 @@ Current physics correction:
 - Plan ownership: `AgentScriptTaskStartService` now lives under `plans`. The
   task-type dispatch switch, owner/target resolution, movement precision,
   grind/stop invocation, and item-drop callback arguments remain unchanged.
+- Plan ownership: `AgentScriptTaskCompletionService` now lives under `plans`.
+  Move-target state, precise/normal distance checks, follow target and same-map
+  checks, and immediate-completion task types remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

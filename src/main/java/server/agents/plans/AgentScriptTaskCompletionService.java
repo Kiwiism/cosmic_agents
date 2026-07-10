@@ -1,9 +1,9 @@
-package server.agents.runtime;
+package server.agents.plans;
 
 import client.Character;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.plans.AgentTask;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 import java.util.function.IntFunction;

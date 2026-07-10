@@ -1814,7 +1814,7 @@ Recent map updates:
   temporary entry snapshots, map-presence checks, town eligibility, and
   safe-mode entry callbacks.
 - BotManager script task completion rules moved to
-  `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager only
+  `server.agents.plans.AgentScriptTaskCompletionService`; BotManager only
   supplies temporary follow-target resolution and movement distance config.
 - BotManager script task start dispatch moved to
   `server.agents.plans.AgentScriptTaskStartService`; BotManager only supplies
@@ -3138,3 +3138,6 @@ Recent capability extraction notes:
   query behavior remain unchanged.
 - Plan ownership: `AgentScriptTaskStartService` moved from generic runtime to
   `plans`. Every task-type dispatch and callback argument remains unchanged.
+- Plan ownership: `AgentScriptTaskCompletionService` moved from generic runtime
+  to `plans`. Completion predicates, map/distance checks, and immediate task
+  completion behavior remain unchanged.
