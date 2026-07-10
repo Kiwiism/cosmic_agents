@@ -2,12 +2,8 @@ package server.agents.auth;
 
 import client.Character;
 import server.agents.integration.AgentCharacterGatewayRuntime;
+import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.registry.AgentResolvedCharacter;
-import tools.DatabaseConnection;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public final class AgentOwnershipService {
@@ -34,21 +30,8 @@ public final class AgentOwnershipService {
                     online);
         }
 
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT id, name, accountid FROM characters WHERE LOWER(name) = LOWER(?)")) {
-            ps.setString(1, name);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-
-                return new AgentResolvedCharacter(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("accountid"),
-                        null);
-            }
+        try {
+            return AgentPersistenceGatewayRuntime.persistence().findCharacterByName(name);
         } catch (SQLException e) {
             return null;
         }
@@ -95,29 +78,16 @@ public final class AgentOwnershipService {
     }
 
     public Integer getRegisteredOwnerId(int botCharId) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT owner_char_id FROM bot_owners WHERE bot_char_id = ?")) {
-            ps.setInt(1, botCharId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("owner_char_id");
-                }
-            }
+        try {
+            return AgentPersistenceGatewayRuntime.persistence().getRegisteredOwnerId(botCharId);
         } catch (SQLException e) {
             return null;
         }
-        return null;
     }
 
     public void registerOwner(int botCharId, int ownerCharId) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "INSERT INTO bot_owners (bot_char_id, owner_char_id) VALUES (?, ?) "
-                             + "ON DUPLICATE KEY UPDATE owner_char_id = VALUES(owner_char_id)")) {
-            ps.setInt(1, botCharId);
-            ps.setInt(2, ownerCharId);
-            ps.executeUpdate();
+        try {
+            AgentPersistenceGatewayRuntime.persistence().registerOwner(botCharId, ownerCharId);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to register bot owner", e);
         }
@@ -128,19 +98,11 @@ public final class AgentOwnershipService {
         if (online != null) {
             return new AgentResolvedCharacter(charId, online.getName(), online.getAccountID(), online);
         }
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT name, accountid FROM characters WHERE id = ?")) {
-            ps.setInt(1, charId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new AgentResolvedCharacter(charId, rs.getString("name"), rs.getInt("accountid"), null);
-                }
-            }
+        try {
+            return AgentPersistenceGatewayRuntime.persistence().findCharacterById(charId);
         } catch (SQLException e) {
             return null;
         }
-        return null;
     }
 
     private Character findOnlineCharacter(String name) {

@@ -7445,6 +7445,10 @@ Current physics correction:
 - Cosmic boundary: relogin hook assembly moved from generic `AgentReloginRuntime`
   to `integration.cosmic.CosmicAgentReloginCoordinator`; lookup, offline loading,
   delayed callback, reply, and failure logging behavior remain unchanged.
+- Cosmic persistence boundary: spawn-account SQL, offline character resolution,
+  and ownership-table access moved into `CosmicAgentPersistenceGateway` behind
+  `AgentPersistenceGateway`. Queries, password hashing, defaults, authorization,
+  and command messages remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

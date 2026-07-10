@@ -26,5 +26,7 @@ public interface AgentServerAdapter {
     MakerGateway maker();
 
     AgentQuestSyncGateway questSync();
+
+    AgentPersistenceGateway persistence();
 }
 

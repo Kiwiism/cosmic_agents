@@ -3375,3 +3375,7 @@ Recent capability extraction notes:
   `integration.cosmic.CosmicAgentReloginCoordinator`; world lookup, offline load,
   delayed scheduling, and map reply hooks are isolated from generic lifecycle
   policy.
+- Cosmic persistence boundary: account creation, offline character lookup, and
+  `bot_owners` reads/writes moved from command/auth code to
+  `integration.cosmic.CosmicAgentPersistenceGateway`. Generic code now depends on
+  `AgentPersistenceGateway` through the server adapter.

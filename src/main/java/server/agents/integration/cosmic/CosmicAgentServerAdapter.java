@@ -3,6 +3,7 @@ package server.agents.integration.cosmic;
 import server.agents.integration.AgentServerAdapter;
 import server.agents.integration.AgentClientGateway;
 import server.agents.integration.AgentQuestSyncGateway;
+import server.agents.integration.AgentPersistenceGateway;
 import server.agents.integration.CharacterGateway;
 import server.agents.integration.CombatGateway;
 import server.agents.integration.InventoryGateway;
@@ -84,5 +85,10 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public AgentQuestSyncGateway questSync() {
         return CosmicQuestSyncGateway.INSTANCE;
+    }
+
+    @Override
+    public AgentPersistenceGateway persistence() {
+        return CosmicAgentPersistenceGateway.INSTANCE;
     }
 }
