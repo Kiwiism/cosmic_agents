@@ -9,7 +9,7 @@ import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.movement.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.llm.AgentLlmRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.runtime.AgentReplyChannelStateRuntime;
+import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
 

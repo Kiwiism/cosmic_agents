@@ -11,7 +11,7 @@ import client.inventory.WeaponType;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatSupplyRequestFlow;
-import server.agents.runtime.AgentMessageQueueStateRuntime;
+import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.InventoryGateway;
 import server.agents.runtime.AgentSchedulerRuntime;

@@ -28,7 +28,7 @@ import server.agents.capabilities.social.AgentScrollReactionService;
 import server.agents.capabilities.dialogue.AgentChatReportOperationsRuntime;
 import server.agents.capabilities.follow.AgentActivityStateRuntime;
 import server.agents.capabilities.combat.AgentBuffStateRuntime;
-import server.agents.runtime.AgentMessageQueueStateRuntime;
+import server.agents.commands.AgentMessageQueueStateRuntime;
 import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
 import server.agents.runtime.AgentPendingActionStateRuntime;

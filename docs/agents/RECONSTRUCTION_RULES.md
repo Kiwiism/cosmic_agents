@@ -7285,6 +7285,10 @@ Current physics correction:
 - Dialogue adapter ownership: `AgentStatusStateRuntime` now lives under
   `capabilities.dialogue`, where it adapts live follow/trade state to status,
   welcome-back, and gear-report interfaces without changing behavior.
+- Command state adapter ownership: `AgentMessageQueueStateRuntime` and
+  `AgentReplyChannelStateRuntime` now live under `server.agents.commands`.
+  Queue locking/order/sending semantics and reply-channel defaults remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

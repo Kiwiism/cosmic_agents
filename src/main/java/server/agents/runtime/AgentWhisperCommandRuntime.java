@@ -4,7 +4,7 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.runtime.AgentReplyChannelStateRuntime;
+import server.agents.commands.AgentReplyChannelStateRuntime;
 
 public final class AgentWhisperCommandRuntime {
     private AgentWhisperCommandRuntime() {
