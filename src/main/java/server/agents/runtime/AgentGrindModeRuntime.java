@@ -1,6 +1,8 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.combat.AgentGrindNoTargetFallbackService;
+import server.agents.capabilities.combat.AgentAoeRepositionService;
+import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -90,7 +92,7 @@ public final class AgentGrindModeRuntime {
     private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {
         return new AgentGrindTargetCommitmentService.Hooks(
                 (entry, agent, agentPosition, preferredTarget) ->
-                        AgentGrindCombatRuntime.selectPriorityRangedAttackTarget(
+                        AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
                                 entry, agent, agentPosition, preferredTarget),
                 AgentAttackExecutionProvider::findCloserThreatMob);
     }
@@ -105,7 +107,7 @@ public final class AgentGrindModeRuntime {
                                 entry, agentPosition, targetPosition),
                 AgentCombatRangePolicy::isTargetInAttackRange,
                 (entry, agent, target, attackPlan, agentPosition) ->
-                        AgentGrindCombatRuntime.resolveAoeReposition(
+                        AgentAoeRepositionService.resolveAoeReposition(
                                 entry, agent, target, attackPlan, agentPosition),
                 AgentCombatRangePolicy::canUseAttackPlanNow,
                 (entry, agent, attackPlan) ->

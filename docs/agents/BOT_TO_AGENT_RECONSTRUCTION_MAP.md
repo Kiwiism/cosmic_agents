@@ -3255,3 +3255,6 @@ Recent capability extraction notes:
 - Integration gateway use: `AgentReplyRuntime` now resolves whisper client
   presence and sender channel through `AgentClientGatewayRuntime`; packet
   delivery and channel offset remain unchanged.
+- Combat bridge removal: pure pass-through `AgentGrindCombatRuntime` was
+  deleted; its callers now enter the AoE reposition and ranged-priority combat
+  capabilities directly with unchanged inputs and results.

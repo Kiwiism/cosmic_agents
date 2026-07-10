@@ -7326,6 +7326,9 @@ Current physics correction:
 - Integration gateway use: whisper reply delivery now obtains client presence
   and channel through `AgentClientGatewayRuntime`; direct `getClient()` access
   is confined to Cosmic adapter implementations without changing packet fields.
+- Combat bridge removal: `AgentGrindCombatRuntime` was a pure pass-through and
+  is removed; grind orchestration now calls `AgentAoeRepositionService` and
+  `AgentRangedPriorityTargetSelector` directly with unchanged arguments.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

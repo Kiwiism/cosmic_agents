@@ -1,11 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.combat.AgentAttackPlan;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatAoeRepositionRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
@@ -16,10 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentGrindCombatRuntimeTest {
+class AgentGrindCombatCapabilityTest {
     @Test
     void returnsNullWhenRangedPriorityInputsAreMissing() {
-        assertNull(AgentGrindCombatRuntime.selectPriorityRangedAttackTarget(
+        assertNull(AgentRangedPriorityTargetSelector.selectPriorityRangedAttackTarget(
                 null,
                 mock(Character.class),
                 new Point(10, 20),
@@ -41,7 +38,7 @@ class AgentGrindCombatRuntimeTest {
                             entry, agent, target, attackPlan, AgentCombatConfig.cfg))
                     .thenReturn(anchor);
 
-            assertEquals(anchor, AgentGrindCombatRuntime.resolveAoeReposition(
+            assertEquals(anchor, AgentAoeRepositionService.resolveAoeReposition(
                     entry,
                     agent,
                     target,
