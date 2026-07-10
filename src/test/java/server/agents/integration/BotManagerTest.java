@@ -46,7 +46,7 @@ import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSpawnPlacementCoordinator;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
-import server.agents.runtime.AgentTargetSnapshotRuntime;
+import server.agents.runtime.AgentTargetSnapshotCoordinator;
 import server.agents.runtime.AgentTickFailureRuntime;
 import client.Character;
 import client.BuffStat;
@@ -1009,7 +1009,7 @@ class BotManagerTest {
             assertNotNull(targetRegion);
             assertFalse(targetRegion.isRopeRegion,
                     "botA follow botB should resolve navigation against botB, not owner's rope");
-            assertEquals("BotB", AgentTargetSnapshotRuntime.captureTargetSnapshot(followerEntry).followAnchorName());
+            assertEquals("BotB", AgentTargetSnapshotCoordinator.captureTargetSnapshot(followerEntry).followAnchorName());
         } finally {
             bots.remove(owner.getId());
         }
@@ -1024,7 +1024,7 @@ class BotManagerTest {
         AgentModeStateRuntime.setFollowing(entry, true);
         AgentShopStateRuntime.startShopVisit(entry, new Point(900, 100), new Point(850, 100), 0, 1_000L);
 
-        AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry);
 
         assertEquals(new Point(850, 100), snapshot.primaryTargetPos());
         assertEquals("shop-target", snapshot.primaryTargetSource());
@@ -1046,7 +1046,7 @@ class BotManagerTest {
         assertFalse(AgentModeStateRuntime.following(entry));
         assertTrue(AgentModeStateRuntime.grinding(entry));
 
-        AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry);
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
         assertEquals("move-target", snapshot.primaryTargetSource());
     }
@@ -1059,7 +1059,7 @@ class BotManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(300, 100), map.getId());
 
-        AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
+        AgentTargetSnapshot snapshot = AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry);
 
         assertEquals(new Point(300, 100), snapshot.primaryTargetPos());
         assertEquals("farm-anchor", snapshot.primaryTargetSource());

@@ -49,9 +49,9 @@ class AgentMovementOnlyStepRuntimeTest {
                 new Point(30, 40),
                 "test-target");
 
-        try (MockedStatic<AgentTargetSnapshotRuntime> snapshots = mockStatic(AgentTargetSnapshotRuntime.class);
+        try (MockedStatic<AgentTargetSnapshotCoordinator> snapshots = mockStatic(AgentTargetSnapshotCoordinator.class);
              MockedStatic<AgentMovementOnlyRuntime> movementOnly = mockStatic(AgentMovementOnlyRuntime.class)) {
-            snapshots.when(() -> AgentTargetSnapshotRuntime.captureTargetSnapshot(entry)).thenReturn(snapshot);
+            snapshots.when(() -> AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry)).thenReturn(snapshot);
             movementOnly.when(() -> AgentMovementOnlyRuntime.stepMovementOnly(
                             eq(entry),
                             eq(new Point(30, 40)),

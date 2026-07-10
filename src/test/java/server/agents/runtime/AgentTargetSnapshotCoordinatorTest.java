@@ -1,12 +1,10 @@
 package server.agents.runtime;
 
-import server.agents.capabilities.movement.AgentTargetSnapshot;
-import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.capabilities.movement.AgentFormationStateRuntime;
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentFormationStateRuntime;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -16,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentTargetSnapshotRuntimeTest {
+class AgentTargetSnapshotCoordinatorTest {
     @Test
     void resolvesFollowAnchorFromRuntimeRegistrySiblings() {
         Character leader = character(100, "Leader", new Point(10, 20));
@@ -29,7 +27,7 @@ class AgentTargetSnapshotRuntimeTest {
         AgentModeStateRuntime.startFollowing(entry, sibling.getId());
 
         try {
-            assertSame(sibling, AgentTargetSnapshotRuntime.resolveFollowAnchor(entry, leader));
+            assertSame(sibling, AgentTargetSnapshotCoordinator.resolveFollowAnchor(entry, leader));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
@@ -52,7 +50,7 @@ class AgentTargetSnapshotRuntimeTest {
         AgentFormationStateRuntime.setFollowOffsetX(entry, formation.offsetFor(0, 1));
 
         try {
-            AgentTargetSnapshot snapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
+            AgentTargetSnapshot snapshot = AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry);
 
             assertEquals("Sibling", snapshot.followAnchorName());
             assertEquals(new Point(90, 60), snapshot.followBasePos());

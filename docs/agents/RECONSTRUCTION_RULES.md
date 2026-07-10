@@ -800,7 +800,7 @@ Recent reconstruction notes:
   Agent session control runtime.
 - BotManager formation, target snapshot, and movement-only test shims were
   removed. Bot movement simulation and parity tests now call
-  `AgentFormationRuntime`, `AgentTargetSnapshotRuntime`, and
+  `AgentFormationRuntime`, `AgentTargetSnapshotCoordinator`, and
   `AgentMovementOnlyStepRuntime` directly, so BotManager no longer exposes
   these non-public runtime helper entry points.
 - BotManager test-only tick harness methods were removed. The perf harness now
@@ -896,7 +896,7 @@ Recent reconstruction notes:
   compatibility tick-owner method while Agent runtime owns the Cosmic server
   lookup callback over the existing cached-leader resolution rule.
 - Follow-anchor and target snapshot runtime wiring now lives in
-  `server.agents.runtime.AgentTargetSnapshotRuntime`. BotManager delegates the
+  `server.agents.runtime.AgentTargetSnapshotCoordinator`. BotManager delegates the
   compatibility methods while Agent runtime owns sibling lookup, formation
   lookup, default formation selection, and the legacy platform-edge inset used
   by follow target resolution.
@@ -7401,6 +7401,10 @@ Current physics correction:
   `AgentSpawnPlacementCoordinator`. It intentionally binds lifecycle placement
   to movement reset, map tracking, navigation warmup, broadcast, HP display, and
   party synchronization in the original order.
+- Retained runtime orchestration: `AgentTargetSnapshotRuntime` was renamed
+  `AgentTargetSnapshotCoordinator`; it coordinates registry-backed sibling lookup,
+  formation state, follow anchors, and movement snapshots while their rules stay
+  in the owning capabilities.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

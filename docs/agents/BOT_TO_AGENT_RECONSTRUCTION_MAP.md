@@ -1258,7 +1258,7 @@ Recent map updates:
   owns those checks and side effects without a BotManager compatibility hop.
 - BotManager's remaining formation, target snapshot, and movement-only test
   shims were removed. The simulation lab and BotManager parity tests now call
-  `AgentFormationRuntime`, `AgentTargetSnapshotRuntime`, and
+  `AgentFormationRuntime`, `AgentTargetSnapshotCoordinator`, and
   `AgentMovementOnlyStepRuntime` directly.
 - BotManager test-only tick harness helpers were removed. Test/perf harnesses
   now call the Agent tick/common/movement runtime classes directly.
@@ -1325,7 +1325,7 @@ Recent map updates:
   tick-owner resolution while Agent runtime owns the Cosmic world/player lookup
   callback over `AgentLeaderSessionService`.
 - Follow-anchor resolution and target snapshot hook wiring moved from
-  BotManager to `server.agents.runtime.AgentTargetSnapshotRuntime`. BotManager
+  BotManager to `server.agents.runtime.AgentTargetSnapshotCoordinator`. BotManager
   now keeps only compatibility delegates while Agent runtime owns live sibling
   lookup, formation lookup, and follow target resolver wiring.
 - BotManager's duplicate spawn result wrapper was removed. `spawnBotForOwner`
@@ -3327,3 +3327,7 @@ Recent capability extraction notes:
   `runtime.AgentSpawnPlacementCoordinator` and remains cross-capability lifecycle
   orchestration. Placement, state reset, graph warmup, broadcast, and party join
   behavior are unchanged.
+- Runtime classification: `AgentTargetSnapshotRuntime` became
+  `runtime.AgentTargetSnapshotCoordinator`. It intentionally combines active
+  runtime registry membership, formations, follow anchors, and movement target
+  snapshots without owning their capability policies.

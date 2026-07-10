@@ -31,10 +31,10 @@ Target package groups:
   Public server-facing chat/spawn/relogin and registration entry points now
   enter through `AgentInteractionRuntime`.
   Follow-anchor and target-snapshot runtime wiring enters through
-  `AgentTargetSnapshotRuntime`.
+  `AgentTargetSnapshotCoordinator`.
   Formation state, target snapshots, and movement-only stepping are now called
   directly by Agent tests/harnesses through `AgentFormationRuntime`,
-  `AgentTargetSnapshotRuntime`, and `AgentMovementOnlyStepRuntime` instead of
+  `AgentTargetSnapshotCoordinator`, and `AgentMovementOnlyStepRuntime` instead of
   temporary manager helper methods.
   Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.

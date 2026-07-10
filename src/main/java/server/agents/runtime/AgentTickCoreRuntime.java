@@ -40,8 +40,8 @@ public final class AgentTickCoreRuntime {
                 AgentStandaloneMoveTargetCoordinator::tickStandaloneMoveTarget,
                 (runtimeEntry, agent, leader) ->
                         AgentDeathTickCoordinator.handleDeadTick(runtimeEntry, agent, leader),
-                AgentTargetSnapshotRuntime::resolveFollowAnchor,
-                AgentTargetSnapshotRuntime::captureTargetSnapshot,
+                AgentTargetSnapshotCoordinator::resolveFollowAnchor,
+                AgentTargetSnapshotCoordinator::captureTargetSnapshot,
                 AgentScriptTaskCoordinator::tick,
                 issueGrind,
                 issueFollow,

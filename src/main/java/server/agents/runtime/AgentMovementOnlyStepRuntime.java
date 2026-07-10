@@ -31,7 +31,7 @@ public final class AgentMovementOnlyStepRuntime {
                 config.aiTickMs(),
                 tickAtMs);
 
-        AgentTargetSnapshot targetSnapshot = AgentTargetSnapshotRuntime.captureTargetSnapshot(entry);
+        AgentTargetSnapshot targetSnapshot = AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry);
         Point leaderPosition = targetSnapshot.rawOwnerPos();
         AgentFollowMotionObservationService.updateObservedLeaderMotion(entry, leaderPosition);
         AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, leaderPosition);
@@ -54,7 +54,7 @@ public final class AgentMovementOnlyStepRuntime {
                 targetPosition,
                 runAiTick,
                 AgentTickStateRuntime.lastTickAtMs(entry),
-                AgentTargetSnapshotRuntime::resolveFollowAnchor,
+                AgentTargetSnapshotCoordinator::resolveFollowAnchor,
                 config.movementOnlyConfig());
     }
 

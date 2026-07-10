@@ -1,25 +1,24 @@
 package server.agents.runtime;
 
-import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.capabilities.movement.AgentFormationRuntime;
-import server.agents.capabilities.movement.AgentTargetSnapshot;
-import server.agents.capabilities.movement.AgentTargetSnapshotService;
+import client.Character;
 import server.agents.capabilities.follow.AgentFollowAnchorService;
 import server.agents.capabilities.follow.AgentFollowTargetPositionService;
-
-import client.Character;
+import server.agents.capabilities.movement.AgentFormationRuntime;
+import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
+import server.agents.capabilities.movement.AgentTargetSnapshotService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 
 import java.util.List;
 
 /**
- * Runtime wiring for target snapshot and follow-anchor lookup over the current
- * AgentRuntimeEntry-backed registry.
+ * Coordinates target snapshots and follow-anchor lookup over the active runtime
+ * registry, formation state, and follow capability.
  */
-public final class AgentTargetSnapshotRuntime {
+public final class AgentTargetSnapshotCoordinator {
     private static final int PLATFORM_EDGE_INSET_PX = 12;
 
-    private AgentTargetSnapshotRuntime() {
+    private AgentTargetSnapshotCoordinator() {
     }
 
     public static Character resolveFollowAnchor(AgentRuntimeEntry entry, Character leader) {
