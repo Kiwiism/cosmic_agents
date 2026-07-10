@@ -33,6 +33,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Combat normal-attack WZ profiles now use an atomic, root-scoped concurrent
+  cache. Concurrent Agent ticks share one parsed profile per weapon, missing
+  profiles remain cached, and a WZ-root reset replaces the complete cache
+  rather than clearing a map while readers are using it. Attack selection,
+  profile contents, packet routing, and damage behavior are unchanged.
+
 - Agent command number parsing now rejects malformed, overflowing, negative,
   and out-of-range slot, formation-distance, snap-distance, and AP build target
   values without throwing or storing overflow-prone state. Existing valid slot,

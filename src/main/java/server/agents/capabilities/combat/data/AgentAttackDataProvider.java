@@ -21,7 +21,9 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static server.agents.capabilities.combat.data.AgentWzXml.findNamedChild;
 import static server.agents.capabilities.combat.data.AgentWzXml.getIntAttribute;
@@ -162,11 +164,17 @@ public final class AgentAttackDataProvider {
         }
     }
 
-    private final Map<Integer, NormalAttackProfile> normalAttackProfiles = new HashMap<>();
+    private volatile NormalAttackProfileCache normalAttackProfileCache =
+            new NormalAttackProfileCache(null, new ConcurrentHashMap<>());
     private volatile Map<String, BodyStanceTiming> bodyStanceTimings = null;
     private volatile Map<String, BodyActionTiming> bodyActionTimings = null;
     private volatile Map<String, Integer> bodyActionIds = null;
     private volatile Path cachedCharacterRoot = null;
+
+    private record NormalAttackProfileCache(
+            Path characterRoot,
+            ConcurrentHashMap<Integer, Optional<NormalAttackProfile>> profiles) {
+    }
 
     private AgentAttackDataProvider() {
     }
@@ -545,7 +553,8 @@ public final class AgentAttackDataProvider {
             if (cachedCharacterRoot != null && cachedCharacterRoot.equals(currentCharacterRoot)) {
                 return;
             }
-            normalAttackProfiles.clear();
+            normalAttackProfileCache = new NormalAttackProfileCache(
+                    currentCharacterRoot, new ConcurrentHashMap<>());
             bodyStanceTimings = null;
             bodyActionTimings = null;
             bodyActionIds = null;
@@ -669,17 +678,15 @@ public final class AgentAttackDataProvider {
 
     public NormalAttackProfile getNormalAttackProfile(int itemId) {
         ensureCurrentCharacterRoot();
-        if (normalAttackProfiles.containsKey(itemId)) {
-            return normalAttackProfiles.get(itemId);
-        }
-
-        NormalAttackProfile profile = loadNormalAttackProfile(itemId);
-        normalAttackProfiles.put(itemId, profile);
-        return profile;
+        NormalAttackProfileCache cache = normalAttackProfileCache;
+        return cache.profiles()
+                .computeIfAbsent(itemId, id -> Optional.ofNullable(
+                        loadNormalAttackProfile(cache.characterRoot(), id)))
+                .orElse(null);
     }
 
-    private NormalAttackProfile loadNormalAttackProfile(int itemId) {
-        Path weaponFile = WZFiles.CHARACTER.getFile()
+    private NormalAttackProfile loadNormalAttackProfile(Path characterRoot, int itemId) {
+        Path weaponFile = characterRoot
                 .resolve("Weapon")
                 .resolve(String.format("%08d.img.xml", itemId));
         if (!Files.isRegularFile(weaponFile)) {
@@ -702,7 +709,7 @@ public final class AgentAttackDataProvider {
         // bucket 0 has swingO1-swingOF/stabO1 but omits stabO2, stabOF, proneStab).
         List<String> weaponActions = loadWeaponActions(weaponRoot);
 
-        AttackBoundsData afterImageData = loadAfterimageBounds(afterImage, reqLevel);
+        AttackBoundsData afterImageData = loadAfterimageBounds(characterRoot, afterImage, reqLevel);
         if (afterImageData == null) {
             // Ranged weapons have no hitbox in afterimage (normal) — bounds stay null.
             return new NormalAttackProfile(attackSpeed, attack, afterImage, null, Map.of(), weaponActions, Map.of());
@@ -725,12 +732,12 @@ public final class AgentAttackDataProvider {
         return List.copyOf(actions);
     }
 
-    private AttackBoundsData loadAfterimageBounds(String afterImage, int reqLevel) {
+    private AttackBoundsData loadAfterimageBounds(Path characterRoot, String afterImage, int reqLevel) {
         if (afterImage == null || afterImage.isBlank()) {
             return null;
         }
 
-        Path afterimageFile = WZFiles.CHARACTER.getFile()
+        Path afterimageFile = characterRoot
                 .resolve("Afterimage")
                 .resolve(afterImage + ".img.xml");
         if (!Files.isRegularFile(afterimageFile)) {
@@ -776,6 +783,11 @@ public final class AgentAttackDataProvider {
         }
 
         return new AttackBoundsData(bounds, boundsByAction, new ArrayList<>(actionNames), firstFramesByAction);
+    }
+
+    synchronized void resetCachesForTest() {
+        cachedCharacterRoot = null;
+        ensureCurrentCharacterRoot();
     }
 
     private Element findBestLevelBucket(Element root, int requestedBucket) {
