@@ -37,12 +37,14 @@ class AgentClientGatewayBoundaryTest {
         assertFalse(maker.contains("bot.getClient()"));
         assertFalse(lifecycle.contains("leader.getClient()"));
         assertFalse(session.contains("bot.getClient()"));
+        assertFalse(session.contains("saveCharToDB"));
         assertFalse(support.contains("agent.getClient()"));
         assertTrue(spawn.contains("AgentClientGatewayRuntime.clients()"));
         assertTrue(offlineRuntime.contains("AgentClientGatewayRuntime.clients()"));
         assertTrue(maker.contains("AgentClientGatewayRuntime.clients().tryAcquire(bot)"));
         assertTrue(lifecycle.contains("AgentClientGatewayRuntime.clients().world(leader)"));
         assertTrue(session.contains("AgentClientGatewayRuntime.clients().channel(bot)"));
+        assertTrue(session.contains("AgentCharacterGatewayRuntime.characters().save"));
         assertTrue(support.contains("AgentClientGatewayRuntime.clients().hasClient(agent)"));
         assertTrue(cosmic.contains("new BotClient(world, channel)"));
         assertTrue(cosmic.contains("BotCreator.createCharacter(client, name)"));

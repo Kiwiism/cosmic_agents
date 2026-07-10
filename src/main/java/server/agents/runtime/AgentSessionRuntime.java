@@ -65,7 +65,7 @@ public final class AgentSessionRuntime {
             int channel = AgentClientGatewayRuntime.clients().channel(bot);
             AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
                 Character relogBot = bot(entry);
-                relogBot.saveCharToDB(true);
+                AgentCharacterGatewayRuntime.characters().save(relogBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(relogBot, false, false);
                 AgentSchedulerRuntime.afterRandomDelay(10000, 10100,
                         () -> AgentSessionLifecycleRuntime.reloginBot(charId, ownerCharId, world, channel));
@@ -78,7 +78,7 @@ public final class AgentSessionRuntime {
             AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             AgentSchedulerRuntime.afterRandomDelay(1800, 2200, () -> {
                 Character logoutBot = bot(entry);
-                logoutBot.saveCharToDB(true);
+                AgentCharacterGatewayRuntime.characters().save(logoutBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(logoutBot, false, false);
             });
         });
@@ -174,7 +174,7 @@ public final class AgentSessionRuntime {
             AgentMovementCommandRuntime.stop(owned);
             AgentSchedulerRuntime.afterRandomDelay(1200, 1800, () -> {
                 Character ownedBot = bot(owned);
-                ownedBot.saveCharToDB(true);
+                AgentCharacterGatewayRuntime.characters().save(ownedBot, true);
                 AgentCharacterGatewayRuntime.characters().disconnect(ownedBot, false, false);
             });
         }

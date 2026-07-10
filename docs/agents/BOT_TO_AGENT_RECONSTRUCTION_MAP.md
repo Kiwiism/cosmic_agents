@@ -3392,3 +3392,6 @@ Recent capability extraction notes:
 - Cosmic boundary ownership: the offline character loading sequence moved from
   runtime to `integration.cosmic.CosmicAgentOfflineLoadService`. Client setup,
   disease restoration, map registration, rates, and spawn ordering are unchanged.
+- Cosmic boundary ownership: relog, logout, and leader-away persistence now use
+  `CharacterGateway.save`; `CosmicCharacterGateway` retains the exact
+  `saveCharToDB` call and all save-before-disconnect ordering is unchanged.

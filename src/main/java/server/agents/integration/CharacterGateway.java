@@ -20,6 +20,8 @@ public interface CharacterGateway {
 
     void markClientHeartbeat(Character agent);
 
+    void save(Character agent, boolean positionOnly);
+
     void disconnect(Character agent, boolean shutdown, boolean cashShop);
 
     boolean isAgentCharacter(Character character);

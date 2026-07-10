@@ -48,6 +48,15 @@ class CosmicCharacterGatewayTest {
     }
 
     @Test
+    void saveDelegatesToCharacterPersistence() {
+        Character agent = mock(Character.class);
+
+        CosmicCharacterGateway.INSTANCE.save(agent, true);
+
+        verify(agent).saveCharToDB(true);
+    }
+
+    @Test
     void disconnectIgnoresMissingClient() {
         Character agent = mock(Character.class);
         when(agent.getClient()).thenReturn(null);

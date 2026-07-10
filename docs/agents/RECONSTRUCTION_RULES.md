@@ -7466,6 +7466,9 @@ Current physics correction:
   `integration.cosmic.CosmicAgentOfflineLoadService`, beside its adapter. Exact
   client, character, disease, map, rate, registration, and spawn side-effect
   ordering is preserved.
+- Cosmic boundary ownership: session relog/logout persistence now enters through
+  `CharacterGateway.save`. The Cosmic adapter performs the same
+  `saveCharToDB(true)` operation immediately before each existing disconnect.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
