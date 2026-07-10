@@ -7319,6 +7319,10 @@ Current physics correction:
   overloads on `AgentLocalAttackMoveWindowService`; the temporary
   `AgentLocalAttackMoveWindowRuntime` bridge is removed with window durations
   and settle thresholds unchanged.
+- Cosmic adapter ownership: the potion-check callback invoked by Character and
+  pet-autopot code now enters through
+  `integration.cosmic.CosmicAgentPotionCheckRequestBridge`; runtime lookup and
+  supply retry timing remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

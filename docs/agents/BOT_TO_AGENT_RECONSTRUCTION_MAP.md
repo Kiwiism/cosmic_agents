@@ -3248,3 +3248,7 @@ Recent capability extraction notes:
 - Combat bridge removal: `AgentLocalAttackMoveWindowRuntime` was deleted after
   configured-distance overloads moved into `AgentLocalAttackMoveWindowService`;
   move-window duration and settle behavior remain unchanged.
+- Cosmic adapter ownership: `AgentPotionCheckRequestRuntime` became
+  `integration.cosmic.CosmicAgentPotionCheckRequestBridge`, making the
+  Character/pet-autopot hook explicit while preserving registry resolution and
+  potion retry timing.

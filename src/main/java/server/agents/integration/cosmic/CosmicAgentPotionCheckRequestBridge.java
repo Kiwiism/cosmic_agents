@@ -1,12 +1,14 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 
-public final class AgentPotionCheckRequestRuntime {
-    private AgentPotionCheckRequestRuntime() {
+public final class CosmicAgentPotionCheckRequestBridge {
+    private CosmicAgentPotionCheckRequestBridge() {
     }
 
     public static void requestPotionCheckSoon(Character agent) {
@@ -15,7 +17,7 @@ public final class AgentPotionCheckRequestRuntime {
 
     private static AgentPotionCheckRequestService.Hooks<AgentRuntimeEntry> hooks() {
         return new AgentPotionCheckRequestService.Hooks<>(
-                AgentPotionCheckRequestRuntime::resolveAgentEntry,
+                CosmicAgentPotionCheckRequestBridge::resolveAgentEntry,
                 AgentPotionStateRuntime::requestPotionCheckSoon);
     }
 

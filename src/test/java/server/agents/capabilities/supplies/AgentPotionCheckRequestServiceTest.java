@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.runtime.AgentPotionCheckRequestRuntime;
+import server.agents.integration.cosmic.CosmicAgentPotionCheckRequestBridge;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ class AgentPotionCheckRequestServiceTest {
         when(player.getClient()).thenReturn(mock(Client.class));
         AgentRuntimeRegistry.entriesByLeaderId().clear();
 
-        AgentPotionCheckRequestRuntime.requestPotionCheckSoon(player);
+        CosmicAgentPotionCheckRequestBridge.requestPotionCheckSoon(player);
 
         assertEquals(0, AgentRuntimeRegistry.entriesByLeaderId().size());
     }
@@ -70,7 +70,7 @@ class AgentPotionCheckRequestServiceTest {
         AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = 123;
 
         try {
-            AgentPotionCheckRequestRuntime.requestPotionCheckSoon(agent);
+            CosmicAgentPotionCheckRequestBridge.requestPotionCheckSoon(agent);
 
             assertEquals(123, AgentPotionStateRuntime.potCheckTimerMs(entry));
         } finally {
