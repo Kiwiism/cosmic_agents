@@ -1,14 +1,14 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.movement.AgentStandaloneMoveTargetTickService;
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.capabilities.movement.AgentMovementProfileService;
-import server.agents.capabilities.movement.AgentMovementTickCoordinator;
+package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentStandaloneMoveTargetRuntime {
-    private AgentStandaloneMoveTargetRuntime() {
+/**
+ * Coordinates movement toward an explicit target outside follow or grind mode.
+ */
+public final class AgentStandaloneMoveTargetCoordinator {
+    private AgentStandaloneMoveTargetCoordinator() {
     }
 
     public static void tickStandaloneMoveTarget(AgentRuntimeEntry entry,
@@ -32,7 +32,7 @@ public final class AgentStandaloneMoveTargetRuntime {
                 agent,
                 runAiTick,
                 new AgentStandaloneMoveTargetTickService.Hooks(
-                        AgentMapTransitionRuntime::groundAfterMapChange,
+                        AgentMapGroundingCoordinator::groundAfterMapChange,
                         AgentMovementProfileService::refreshMovementProfile,
                         (moveEntry, targetPosition, moveRunAiTick) -> AgentMovementTickCoordinator.stepMovementCore(
                                 moveEntry,

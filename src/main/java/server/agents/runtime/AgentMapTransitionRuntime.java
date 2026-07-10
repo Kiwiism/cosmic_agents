@@ -1,15 +1,9 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMapTransitionService;
-import server.agents.capabilities.movement.AgentMovementStateResetService;
-
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
-import server.agents.capabilities.movement.AgentFootholdIndexService;
-import server.agents.capabilities.movement.AgentGroundingService;
-import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMapGroundingCoordinator;
 
 import client.Character;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
@@ -22,7 +16,7 @@ public final class AgentMapTransitionRuntime {
     }
 
     public static boolean groundAfterMapChange(AgentRuntimeEntry entry, Character agent) {
-        return AgentMapTransitionService.groundAfterMapChange(entry, agent, groundingHooks());
+        return AgentMapGroundingCoordinator.groundAfterMapChange(entry, agent);
     }
 
     public static boolean handleTrackedMapChange(AgentRuntimeEntry entry,
@@ -33,7 +27,7 @@ public final class AgentMapTransitionRuntime {
                 entry,
                 agent,
                 new AgentMapTransitionService.MapChangeHooks(
-                        groundingHooks(),
+                        AgentMapGroundingCoordinator.groundingHooks(),
                         AgentPartyQuestHooks::requiresGrind,
                         issueGrind,
                         AgentPartyQuestHooks::requiresFollow,
@@ -44,13 +38,4 @@ public final class AgentMapTransitionRuntime {
                         AgentManagerStatusRuntime::checkManagerStatus));
     }
 
-    private static AgentMapTransitionService.GroundingHooks groundingHooks() {
-        return new AgentMapTransitionService.GroundingHooks(
-                AgentFootholdIndexService::buildFhIndex,
-                AgentGroundingService::findGroundPoint,
-                AgentMovementPoseService::teleportTo,
-                AgentMovementStateResetService::resetEntryStateAfterTeleport,
-                AgentNavigationGraphService::warmGraphAsync,
-                AgentMovementBroadcastService::broadcastMovement);
-    }
 }

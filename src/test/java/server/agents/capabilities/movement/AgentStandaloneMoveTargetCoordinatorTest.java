@@ -1,16 +1,16 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentStandaloneMoveTargetTickService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentStandaloneMoveTargetRuntimeTest {
+class AgentStandaloneMoveTargetCoordinatorTest {
     @Test
     void configBoundOverloadDelegatesToStandaloneMoveTargetService() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
@@ -25,7 +25,7 @@ class AgentStandaloneMoveTargetRuntimeTest {
                             any(AgentStandaloneMoveTargetTickService.Hooks.class)))
                     .thenAnswer(invocation -> null);
 
-            AgentStandaloneMoveTargetRuntime.tickStandaloneMoveTarget(entry, agent, false);
+            AgentStandaloneMoveTargetCoordinator.tickStandaloneMoveTarget(entry, agent, false);
 
             service.verify(() -> AgentStandaloneMoveTargetTickService.tickStandaloneMoveTarget(
                     eq(entry),

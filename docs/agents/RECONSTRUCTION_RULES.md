@@ -7378,6 +7378,11 @@ Current physics correction:
   `capabilities.movement.AgentMovementTickCoordinator`; navigation resolution,
   fidget, movement phase, edge execution, stuck detection, and reached-target
   cleanup retain their original order and configuration.
+- Movement ownership: standalone move-target coordination and map-grounding hook
+  assembly moved from generic runtime into
+  `AgentStandaloneMoveTargetCoordinator` and `AgentMapGroundingCoordinator`.
+  Tracked map-change orchestration remains runtime-owned because it coordinates
+  movement with PQ, shop, and mode behavior.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
