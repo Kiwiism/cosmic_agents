@@ -4124,9 +4124,10 @@ Recent reconstruction notes:
   move-target pass-through, and idle fallback ordering.
 - Tick-time leader-motion observation now lives in
   `server.agents.capabilities.follow.AgentFollowMotionObservationService`, while
-  farm-anchor map-change cleanup remains temporarily in
-  `server.agents.runtime.AgentTickStateMaintenanceService`; the delta
-  calculation and farm-anchor precise-target cleanup behavior are unchanged.
+  farm-anchor map-change cleanup now lives in
+  `server.agents.capabilities.movement.AgentMovementTargetMaintenanceService`;
+  the delta calculation and farm-anchor precise-target cleanup behavior are
+  unchanged.
 - Tracked map-change tick handling now lives in
   `server.agents.capabilities.movement.AgentMapTransitionService`; BotManager still supplies
   temporary Cosmic grounding, graph-warm, mode-command, shop, and status
@@ -4150,11 +4151,11 @@ Recent reconstruction notes:
   one-second recheck window, `idle-fast` debug marker, stuck-progress reset,
   and movement/owner-motion/shop/navigation guards are preserved.
 - Reached move-target cleanup now lives in
-  `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager passes
+  `server.agents.capabilities.movement.AgentMovementTargetMaintenanceService`; BotManager passes
   the existing stop-distance config and no longer owns the normal-vs-precise
   arrival cleanup rule.
 - Patrol map-change cleanup now lives in
-  `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager no
+  `server.agents.capabilities.movement.AgentMovementTargetMaintenanceService`; BotManager no
   longer owns the null/map guard around the BotEntry-backed patrol clear rule.
 - Movement phase dispatch now lives in
   `server.agents.capabilities.movement.AgentMovementPhaseService`; BotManager still supplies
@@ -7216,6 +7217,11 @@ Current physics correction:
   the mixed runtime maintenance service into
   `capabilities.navigation.AgentNavigationPreciseTargetService`. Precise-mode
   and active-edge predicates plus the flag mutation remain unchanged.
+- Capability ownership: the remaining farm-anchor, move-target, and patrol
+  maintenance rules moved into
+  `capabilities.movement.AgentMovementTargetMaintenanceService`. The mixed
+  `AgentTickStateMaintenanceService` is removed; all guards, distances, state
+  mutations, and caller ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

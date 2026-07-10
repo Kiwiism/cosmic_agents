@@ -544,7 +544,7 @@ Recent map updates:
   precise move-target setting, and movement-core dispatch remain unchanged
   while `AgentAnchoredFarmRuntime` keeps the temporary `BotEntry` callback
   adapter.
-- `AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange` now accepts
+- `AgentMovementTargetMaintenanceService.clearFarmAnchorOnMapChange` now accepts
   `AgentRuntimeEntry`, preserving same-map retention, map-change anchor
   clearing, and precise move-target cleanup.
 - `AgentFollowIdleMovementService` now accepts `AgentRuntimeEntry`.
@@ -3158,3 +3158,8 @@ Recent capability extraction notes:
 - Capability ownership: precise navigation-target marker maintenance moved from
   generic runtime into `capabilities.navigation.AgentNavigationPreciseTargetService`;
   precise-move and active-edge predicates remain unchanged.
+- Capability ownership: remaining target/farm/patrol maintenance moved from the
+  mixed runtime service into
+  `capabilities.movement.AgentMovementTargetMaintenanceService`. Same-map,
+  arrival-distance, precise-target, and patrol cleanup behavior remain
+  unchanged; the mixed runtime service is removed.

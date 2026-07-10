@@ -1,18 +1,18 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
 /**
  * Agent-owned state maintenance rules that run from the tick shell.
  */
-public final class AgentTickStateMaintenanceService {
-    private AgentTickStateMaintenanceService() {
+public final class AgentMovementTargetMaintenanceService {
+    private AgentMovementTargetMaintenanceService() {
     }
 
     public static void clearFarmAnchorOnMapChange(AgentRuntimeEntry entry, Character agent) {

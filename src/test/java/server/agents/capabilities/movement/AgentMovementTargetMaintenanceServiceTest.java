@@ -1,10 +1,10 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentTickStateMaintenanceServiceTest {
+class AgentMovementTargetMaintenanceServiceTest {
     @Test
     void keepsFarmAnchorOnSameMap() {
         AgentRuntimeEntry entry = entry();
@@ -22,7 +22,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(50, 60), 100000000);
         AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(50, 60));
 
-        AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
+        AgentMovementTargetMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
 
         assertTrue(AgentFarmAnchorStateRuntime.hasFarmAnchor(entry));
         assertTrue(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
@@ -35,7 +35,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentFarmAnchorStateRuntime.setFarmAnchor(entry, new Point(50, 60), 100000000);
         AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(50, 60));
 
-        AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
+        AgentMovementTargetMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
 
         assertFalse(AgentFarmAnchorStateRuntime.hasFarmAnchor(entry));
         assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
@@ -47,7 +47,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentRuntimeEntry entry = entry(agent);
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
-        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
+        AgentMovementTargetMaintenanceService.clearReachedMoveTarget(entry, 10);
 
         assertFalse(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
     }
@@ -58,7 +58,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentRuntimeEntry entry = entry(agent);
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
-        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
+        AgentMovementTargetMaintenanceService.clearReachedMoveTarget(entry, 10);
 
         assertTrue(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
     }
@@ -69,7 +69,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentRuntimeEntry entry = entry(agent);
         AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 100));
 
-        AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, 10);
+        AgentMovementTargetMaintenanceService.clearReachedMoveTarget(entry, 10);
 
         assertTrue(AgentMoveTargetStateRuntime.hasMoveTarget(entry));
     }
@@ -80,7 +80,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentRuntimeEntry entry = entry(agent);
         AgentPatrolStateRuntime.startPatrol(entry, 7, 100000000);
 
-        AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
+        AgentMovementTargetMaintenanceService.clearPatrolOnMapChange(entry, agent);
 
         assertTrue(AgentPatrolStateRuntime.hasPatrolRegion(entry));
     }
@@ -91,7 +91,7 @@ class AgentTickStateMaintenanceServiceTest {
         AgentRuntimeEntry entry = entry(agent);
         AgentPatrolStateRuntime.startPatrol(entry, 7, 100000000);
 
-        AgentTickStateMaintenanceService.clearPatrolOnMapChange(entry, agent);
+        AgentMovementTargetMaintenanceService.clearPatrolOnMapChange(entry, agent);
 
         assertFalse(AgentPatrolStateRuntime.hasPatrolRegion(entry));
     }

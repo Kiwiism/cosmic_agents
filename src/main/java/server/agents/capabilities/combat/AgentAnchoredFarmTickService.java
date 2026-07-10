@@ -1,12 +1,12 @@
 package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentPositionService;
+import server.agents.capabilities.movement.AgentMovementTargetMaintenanceService;
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentTickStateMaintenanceService;
 
 import java.awt.Point;
 
@@ -58,7 +58,7 @@ public final class AgentAnchoredFarmTickService {
                                         boolean runAiTick,
                                         AnchoredFarmHooks hooks) {
         if (!AgentFarmAnchorStateRuntime.isFarmAnchorInMap(entry, agent.getMapId())) {
-            AgentTickStateMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
+            AgentMovementTargetMaintenanceService.clearFarmAnchorOnMapChange(entry, agent);
             hooks.idleTick().tick(entry, agent);
             return;
         }

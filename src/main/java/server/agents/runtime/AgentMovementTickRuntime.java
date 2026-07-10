@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementTickService;
+import server.agents.capabilities.movement.AgentMovementTargetMaintenanceService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetService;
@@ -46,7 +47,7 @@ public final class AgentMovementTickRuntime {
                 (ignored, targetPosition, runAiTick) -> AgentMovementPhaseRuntime.tickMovementPhase(entry, targetPosition, runAiTick),
                 (ignored, targetPosition) -> AgentNavigationTargetService.tryExecuteCommittedEdgeAfterGroundMovement(entry, targetPosition),
                 ignored -> AgentStuckDetectionRuntime.tickStuckDetection(entry, enableUnstuck),
-                ignored -> AgentTickStateMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
+                ignored -> AgentMovementTargetMaintenanceService.clearReachedMoveTarget(entry, stopDistance));
     }
 
 }
