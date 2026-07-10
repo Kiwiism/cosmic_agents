@@ -36,7 +36,7 @@ Target package groups:
   directly by Agent tests/harnesses through `AgentFormationRuntime`,
   `AgentTargetSnapshotCoordinator`, and `AgentMovementOnlyStepRuntime` instead of
   temporary manager helper methods.
-  Tick leader/session lookup enters through `AgentLeaderSessionRuntime`.
+  Tick leader/session lookup enters through `AgentLeaderSessionResolver`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
   Ownerless movement-only tick preparation enters through
   `AgentMovementOnlyStepRuntime`, including default movement-only config

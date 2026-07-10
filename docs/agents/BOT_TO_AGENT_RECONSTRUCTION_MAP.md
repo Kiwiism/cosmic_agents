@@ -337,7 +337,7 @@ Recent map updates:
 - `AgentDismissRuntime` and lifecycle chat dismiss wiring now use
   `AgentRuntimeEntry` stopper callbacks; the outer interaction runtime remains
   the compatibility edge for the current stop command.
-- `AgentLeaderSessionRuntime` now resolves tick leaders from
+- `AgentLeaderSessionResolver` now resolves tick leaders from
   `AgentRuntimeEntry`; tick-core invokes it without a BotEntry cast while other
   tick-core hooks remain staged for later reconstruction.
 - Targeted and untargeted chat route services now depend on the Agent-owned
@@ -1321,7 +1321,7 @@ Recent map updates:
   dead-tick handling while Agent runtime owns dead-state entry, respawn, and
   current-time hook construction over `AgentDeathTickService`.
 - Tick leader/session lookup wiring moved from BotManager to
-  `server.agents.runtime.AgentLeaderSessionRuntime`. BotManager now delegates
+  `server.agents.runtime.AgentLeaderSessionResolver`. BotManager now delegates
   tick-owner resolution while Agent runtime owns the Cosmic world/player lookup
   callback over `AgentLeaderSessionService`.
 - Follow-anchor resolution and target snapshot hook wiring moved from
@@ -2758,7 +2758,7 @@ Recent capability extraction notes:
   client binding, map visit, and disease task startup stay unchanged.
 - SPI/gateway extraction: `CharacterGateway`/`CosmicCharacterGateway` now expose
   live world-player lookup through `AgentCharacterGatewayRuntime`.
-  `AgentLeaderSessionRuntime` and `AgentReloginRuntime` use this boundary for
+  `AgentLeaderSessionResolver` and `AgentReloginRuntime` use this boundary for
   leader refresh/relogin resolution while preserving the same player-storage
   lookup behavior.
 - SPI/gateway extraction: `CombatGateway` now exposes the current server
@@ -3331,3 +3331,6 @@ Recent capability extraction notes:
   `runtime.AgentTargetSnapshotCoordinator`. It intentionally combines active
   runtime registry membership, formations, follow anchors, and movement target
   snapshots without owning their capability policies.
+- Runtime classification: `AgentLeaderSessionRuntime` became
+  `runtime.AgentLeaderSessionResolver`; it retains only live leader lookup and
+  session refresh coordination through the character gateway.

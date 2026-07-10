@@ -2,7 +2,6 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -11,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentLeaderSessionRuntimeTest {
+class AgentLeaderSessionResolverTest {
     @Test
     void delegatesLeaderResolutionToServiceWithRuntimeLookup() {
         Character offlineLeader = character(100, false);
@@ -19,7 +18,7 @@ class AgentLeaderSessionRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), offlineLeader, null);
         AtomicInteger requestedLeaderId = new AtomicInteger();
 
-        Character resolved = AgentLeaderSessionRuntime.resolveTickLeader(entry, refreshedLeader.getId(), id -> {
+        Character resolved = AgentLeaderSessionResolver.resolveTickLeader(entry, refreshedLeader.getId(), id -> {
             requestedLeaderId.set(id);
             return refreshedLeader;
         });

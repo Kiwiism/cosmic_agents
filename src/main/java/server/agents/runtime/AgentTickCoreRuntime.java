@@ -28,7 +28,7 @@ public final class AgentTickCoreRuntime {
                 leaderCharId,
                 agentCharId,
                 (runtimeEntry, runtimeLeaderCharId) ->
-                        AgentLeaderSessionRuntime.resolveTickLeader(runtimeEntry, runtimeLeaderCharId),
+                        AgentLeaderSessionResolver.resolveTickLeader(runtimeEntry, runtimeLeaderCharId),
                 (runtimeEntry, agent, leader, nowMs, runtimeLeaderCharId) ->
                         AgentLeaderSafetyRuntime.handleInactiveLeaderTick(
                                 runtimeEntry,

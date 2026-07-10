@@ -892,7 +892,7 @@ Recent reconstruction notes:
   owns the dead-state entry, respawn action, and current-time hook composition
   over `AgentDeathTickService`.
 - Tick leader/session lookup wiring now lives in
-  `server.agents.runtime.AgentLeaderSessionRuntime`. BotManager delegates the
+  `server.agents.runtime.AgentLeaderSessionResolver`. BotManager delegates the
   compatibility tick-owner method while Agent runtime owns the Cosmic server
   lookup callback over the existing cached-leader resolution rule.
 - Follow-anchor and target snapshot runtime wiring now lives in
@@ -7405,6 +7405,9 @@ Current physics correction:
   `AgentTargetSnapshotCoordinator`; it coordinates registry-backed sibling lookup,
   formation state, follow anchors, and movement snapshots while their rules stay
   in the owning capabilities.
+- Retained runtime orchestration: `AgentLeaderSessionRuntime` was renamed
+  `AgentLeaderSessionResolver`; it performs live leader lookup and refreshes the
+  runtime session through the character gateway without owning follow policy.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -7,10 +7,10 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import java.util.function.IntFunction;
 
 /**
- * Runtime wiring for resolving the live leader backing an Agent tick.
+ * Resolves and refreshes the live leader session used by an Agent tick.
  */
-public final class AgentLeaderSessionRuntime {
-    private AgentLeaderSessionRuntime() {
+public final class AgentLeaderSessionResolver {
+    private AgentLeaderSessionResolver() {
     }
 
     public static Character resolveTickLeader(AgentRuntimeEntry entry, int leaderCharId) {
