@@ -5028,7 +5028,8 @@ Current physics correction:
 - Ranged retreat hold storage now lives in `AgentRetreatHoldState`. `BotEntry`
   temporarily hosts the Agent-owned state object, while anti-oscillation retreat
   position and expiry reads/writes route through Agent runtime state.
-- Surround-breakout commitment storage now lives in `AgentBreakoutState`.
+- Surround-breakout commitment storage now lives in
+  `server.agents.capabilities.combat.AgentBreakoutState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while escape
   direction and hard timeout reads/writes route through Agent runtime state.
 - AoE reposition commitment storage now lives in
@@ -7226,6 +7227,9 @@ Current physics correction:
 - Capability state ownership: `AgentAoeRepositionState` now lives under
   `capabilities.combat`. Defensive point copies, deadline reset behavior, and
   expired/arrived predicates remain unchanged in the composed runtime entry.
+- Capability state ownership: `AgentBreakoutState` now lives under
+  `capabilities.combat`. Direction commitment, inclusive deadline expiry, and
+  clear defaults remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

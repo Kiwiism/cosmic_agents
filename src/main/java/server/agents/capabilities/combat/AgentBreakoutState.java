@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 /**
  * Surround-breakout commitment used to avoid reversing escape direction.

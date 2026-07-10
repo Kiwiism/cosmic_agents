@@ -3166,3 +3166,6 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentAoeRepositionState` moved from
   generic runtime to `capabilities.combat`; point-copy, deadline, clear, and
   expired/arrived behavior remain unchanged.
+- Capability state ownership: the concrete `AgentBreakoutState` moved from
+  generic runtime to `capabilities.combat`; direction, deadline, inclusive
+  expiry, and clear behavior remain unchanged.
