@@ -26,7 +26,7 @@ import client.Client;
 import net.AbstractPacketHandler;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
-import server.agents.runtime.AgentPartyLifecycleService;
+import server.agents.capabilities.party.AgentPartyLifecycleService;
 import net.packet.InPacket;
 import net.server.coordinator.world.InviteCoordinator;
 import net.server.coordinator.world.InviteCoordinator.InviteResult;

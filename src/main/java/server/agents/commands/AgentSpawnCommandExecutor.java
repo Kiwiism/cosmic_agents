@@ -9,7 +9,7 @@ import server.agents.registry.AgentResolvedCharacter;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
-import server.agents.runtime.AgentPartyLifecycleService;
+import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.auth.AgentOwnershipService;
 import tools.BCrypt;
 import tools.DatabaseConnection;

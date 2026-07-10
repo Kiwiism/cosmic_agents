@@ -1,8 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.party;
 
 import client.Character;
-import server.agents.integration.AgentPartySnapshot;
 import server.agents.integration.AgentPartyGatewayRuntime;
+import server.agents.integration.AgentPartySnapshot;
 
 /**
  * Agent-owned party lifecycle side effects for live Agent sessions.
@@ -37,3 +37,4 @@ public final class AgentPartyLifecycleService {
         }
     }
 }
+

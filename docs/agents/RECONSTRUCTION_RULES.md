@@ -1340,7 +1340,7 @@ Recent reconstruction notes:
   preserved; production still uses `BotPhysicsEngine.findGroundPoint` as a
   temporary physics seam.
 - BotManager post-spawn party join orchestration now lives in
-  `server.agents.runtime.AgentPartyLifecycleService`. `BotManager.joinBotToOwnerParty`
+  `server.agents.capabilities.party.AgentPartyLifecycleService`. `BotManager.joinBotToOwnerParty`
   remains only as a compatibility delegate, while Agent spawn command and
   Messenger respawn paths call the Agent runtime service directly. Party
   creation, same-party online refresh, different-party leave, join, and HP
@@ -7002,11 +7002,16 @@ Current physics correction:
   identity/timing, null/skill guards, packet construction, and synthetic combat
   dispatch remain unchanged. Remaining live client reads are isolated in
   `CosmicAgentClientGateway`.
+- Capability ownership: the gateway-backed `AgentPartyLifecycleService` now
+  lives under `capabilities.party` instead of generic runtime. Spawn command,
+  spawn placement, and messenger callers invoke the same static entry point;
+  party decision order and all gateway calls are unchanged. The foundation
+  structure test now also reflects the already-absent production `server.bots`
+  package.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
-  references `server.bots`; production `src/main/java/server/bots/**` contains
-  only the deprecated empty `BotEntry` compatibility shell. Remaining `BotEntry`
-  references are test-side compatibility fixtures or stale explanatory wording,
-  not production Agent runtime dependencies.
+  references `server.bots`, and `src/main/java/server/bots/**` is absent.
+  Remaining historical bot names in reconstruction notes or test harness labels
+  are explanatory only, not production Agent runtime dependencies.
 
 Initial reconstruction order:
 

@@ -2,13 +2,11 @@ package server.agents.reconstruction;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentFoundationStructureTest {
     @Test
@@ -17,7 +15,7 @@ class AgentFoundationStructureTest {
                 "server.agents.api.AgentService",
                 "server.agents.runtime.AgentSession",
                 "server.agents.runtime.AgentAutopotRuntimeCleanupService",
-                "server.agents.runtime.AgentPartyLifecycleService",
+                "server.agents.capabilities.party.AgentPartyLifecycleService",
                 "server.agents.runtime.AgentSpawnPositionService",
                 "server.agents.runtime.AgentTickScheduler",
                 "server.agents.commands.AgentCommandRouter",
@@ -37,21 +35,7 @@ class AgentFoundationStructureTest {
     }
 
     @Test
-    void currentBotProductionFilesAreMapped() throws IOException {
-        Path map = Path.of("docs", "agents", "BOT_TO_AGENT_RECONSTRUCTION_MAP.md");
-        String mapping = Files.readString(map).replace('\\', '/');
-        List<Path> botFiles;
-        try (var stream = Files.walk(Path.of("src", "main", "java", "server", "bots"))) {
-            botFiles = stream
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".java"))
-                    .toList();
-        }
-
-        assertFalse(botFiles.isEmpty(), "source baseline should still contain bot files during reconstruction");
-        for (Path file : botFiles) {
-            String normalized = file.toString().replace('\\', '/');
-            assertTrue(mapping.contains(normalized), "missing reconstruction map entry for " + normalized);
-        }
+    void productionBotPackageRemainsAbsent() {
+        assertFalse(Files.exists(Path.of("src", "main", "java", "server", "bots")));
     }
 }

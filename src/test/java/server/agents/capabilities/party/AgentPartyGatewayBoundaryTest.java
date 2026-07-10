@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.party;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ class AgentPartyGatewayBoundaryTest {
     @Test
     void partyLeaveClientMutationLivesInCosmicGateway() throws IOException {
         String lifecycle = Files.readString(Path.of(
-                "src/main/java/server/agents/runtime/AgentPartyLifecycleService.java"));
+                "src/main/java/server/agents/capabilities/party/AgentPartyLifecycleService.java"));
         String gateway = Files.readString(Path.of(
                 "src/main/java/server/agents/integration/cosmic/CosmicPartyGateway.java"));
         String replies = Files.readString(Path.of(

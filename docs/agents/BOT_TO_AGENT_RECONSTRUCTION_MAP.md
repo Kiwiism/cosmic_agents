@@ -1768,7 +1768,7 @@ Recent map updates:
   online placement, and spawn normalization continue to use the same
   BotPhysicsEngine ground lookup through the Agent runtime service.
 - BotManager post-spawn party lifecycle side effects moved to
-  `server.agents.runtime.AgentPartyLifecycleService`. BotManager keeps
+  `server.agents.capabilities.party.AgentPartyLifecycleService`. BotManager keeps
   `joinBotToOwnerParty` as a temporary compatibility delegate, and Agent spawn
   command plus Messenger respawn paths now use the Agent runtime service
   directly.
@@ -2982,3 +2982,6 @@ Recent capability extraction notes:
   support-move client presence now route through `AgentClientGateway`. Concrete
   `Character.getClient()` access remains in `CosmicAgentClientGateway`; spawn,
   relog, and combat-dispatch behavior remains unchanged.
+- Capability ownership: `AgentPartyLifecycleService` moved from generic runtime
+  to `capabilities.party`. Spawn, placement, and messenger callers retain the
+  same join entry point and party behavior; only package ownership changed.
