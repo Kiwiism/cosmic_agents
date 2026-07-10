@@ -1,13 +1,16 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatRuntime;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelStateRuntime;
+import server.agents.runtime.AgentChatOrchestratorContext;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 
-public final class AgentWhisperCommandRuntime {
-    private AgentWhisperCommandRuntime() {
+public final class CosmicAgentWhisperCommandBridge {
+    private CosmicAgentWhisperCommandBridge() {
     }
 
     public static void handleWhisperToAgent(Character leader, Character target, String message) {

@@ -7336,6 +7336,10 @@ Current physics correction:
   convenience ratio, stop distance, and region resolution now enter through
   overloads on `AgentGrindTargetPositionService`; `AgentGrindTargetRuntime` is
   removed with wander and loot-target behavior unchanged.
+- Cosmic adapter ownership: the server whisper handler now enters Agent
+  dialogue through `integration.cosmic.CosmicAgentWhisperCommandBridge` rather
+  than a generic-runtime hook; lookup, reply-channel marking, and chat dispatch
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

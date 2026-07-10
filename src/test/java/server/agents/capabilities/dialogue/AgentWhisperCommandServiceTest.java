@@ -9,7 +9,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.runtime.AgentWhisperCommandRuntime;
+import server.agents.integration.cosmic.CosmicAgentWhisperCommandBridge;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ class AgentWhisperCommandServiceTest {
         AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), List.of(entry));
 
         try (MockedStatic<AgentChatRuntime> chat = mockStatic(AgentChatRuntime.class)) {
-            AgentWhisperCommandRuntime.handleWhisperToAgent(leader, target, "follow me");
+            CosmicAgentWhisperCommandBridge.handleWhisperToAgent(leader, target, "follow me");
 
             assertEquals(AgentReplyChannel.WHISPER, AgentReplyChannelStateRuntime.replyChannel(entry));
             chat.verify(() -> AgentChatRuntime.handleChat(eq("follow me"), any()));

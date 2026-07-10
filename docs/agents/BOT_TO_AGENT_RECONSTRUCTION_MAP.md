@@ -3266,3 +3266,7 @@ Recent capability extraction notes:
   configured overloads moved into `AgentGrindTargetPositionService`; patrol
   wander, fallback, loot retry, travel-distance, and convenience behavior stay
   unchanged.
+- Cosmic adapter ownership: `AgentWhisperCommandRuntime` became
+  `integration.cosmic.CosmicAgentWhisperCommandBridge`; the server whisper hook
+  now has explicit Cosmic ownership while Agent lookup and chat routing remain
+  unchanged.
