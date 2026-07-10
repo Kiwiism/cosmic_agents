@@ -8,14 +8,14 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentBoundedExecutorFactory;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -28,11 +28,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class AgentLlmReplyService {
     private static final Logger log = LoggerFactory.getLogger(AgentLlmReplyService.class);
 
-    private static final ScheduledExecutorService EXEC = Executors.newScheduledThreadPool(2, r -> {
-        Thread t = new Thread(r, "bot-llm");
-        t.setDaemon(true);
-        return t;
-    });
+    private static final ExecutorService EXEC = AgentBoundedExecutorFactory.fixed(
+            "bot-llm",
+            2,
+            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.llm.queueCapacity", 64));
 
     private static volatile Semaphore globalGate = new Semaphore(AgentLlmConfig.maxConcurrentGlobal);
     private static volatile int gateCapacity = AgentLlmConfig.maxConcurrentGlobal;
@@ -93,16 +92,22 @@ public final class AgentLlmReplyService {
         }
 
         final String senderName = sender.getName();
-        EXEC.submit(() -> {
-            try {
-                runReply(request, senderName, message, replyEmitter);
-            } catch (Throwable t) {
-                log.warn("llm reply failed: {}", t.toString());
-            } finally {
-                g.release();
-                inflight.decrementAndGet();
-            }
-        });
+        try {
+            EXEC.execute(() -> {
+                try {
+                    runReply(request, senderName, message, replyEmitter);
+                } catch (Throwable t) {
+                    log.warn("llm reply failed: {}", t.toString());
+                } finally {
+                    g.release();
+                    inflight.decrementAndGet();
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            g.release();
+            inflight.decrementAndGet();
+            log.warn("Dropped LLM reply because the Agent LLM queue is full");
+        }
     }
 
     private static <E extends AgentRuntimeHandle> void runReply(
@@ -197,7 +202,11 @@ public final class AgentLlmReplyService {
         // Compact when uncompacted overflows the window. One LLM call per compactBatchSize turns.
         if (AgentLlmConfig.memoryEnabled && AgentMemoryStore.countUncompacted(botName)
                 > AgentLlmConfig.recentTurnsInPrompt + AgentLlmConfig.compactBatchSize) {
-            EXEC.submit(() -> AgentMemoryStore.compact(botName));
+            try {
+                EXEC.execute(() -> AgentMemoryStore.compact(botName));
+            } catch (RejectedExecutionException e) {
+                log.debug("Deferred Agent memory compaction because the LLM queue is full");
+            }
         }
     }
 
@@ -232,13 +241,18 @@ public final class AgentLlmReplyService {
 
     private static void scheduleFollowUp(AgentRuntimeHandle entry, Runnable action, long delayMs) {
         if (entry instanceof AgentRuntimeEntry runtimeEntry) {
-            AgentSchedulerRuntime.scheduleScoped(
-                    runtimeEntry,
-                    action,
-                    scopedAction -> EXEC.schedule(scopedAction, delayMs, TimeUnit.MILLISECONDS));
+            AgentSchedulerRuntime.afterDelay(runtimeEntry, delayMs, () -> executeFollowUp(action));
             return;
         }
-        EXEC.schedule(action, delayMs, TimeUnit.MILLISECONDS);
+        AgentSchedulerRuntime.afterDelay(delayMs, () -> executeFollowUp(action));
+    }
+
+    private static void executeFollowUp(Runnable action) {
+        try {
+            EXEC.execute(action);
+        } catch (RejectedExecutionException e) {
+            log.debug("Dropped LLM follow-up because the Agent LLM queue is full");
+        }
     }
 
     @FunctionalInterface

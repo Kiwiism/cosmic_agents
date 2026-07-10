@@ -11,12 +11,13 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentBoundedExecutorFactory;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -24,11 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * effects.
  */
 public final class AgentTransferRuntime {
-    private static final ExecutorService TRADE_COMMAND_EXECUTOR = Executors.newFixedThreadPool(2, r -> {
-        Thread thread = new Thread(r, "bot-trade-command");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final ExecutorService TRADE_COMMAND_EXECUTOR = AgentBoundedExecutorFactory.fixed(
+            "bot-trade-command",
+            2,
+            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.trade.queueCapacity", 128));
     private static final Map<Integer, AtomicInteger> PENDING_TRANSFER_REQUESTS = new ConcurrentHashMap<>();
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
 
@@ -75,14 +75,18 @@ public final class AgentTransferRuntime {
         int requestId = nextTransferRequestId(bot);
         long replyDelay = AgentSchedulerRuntime.randomDelayMs(500, 700);
         long requestedAt = System.nanoTime();
-        CompletableFuture
-                .supplyAsync(() -> evaluateTransferCommand(entry, transferCommand, category, bot), TRADE_COMMAND_EXECUTOR)
-                .thenAccept(result -> {
-                    long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
-                    long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                    AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
-                            applyTransferCommandResult(entry, transferCommand, category, bot, requestId, result));
-                });
+        try {
+            CompletableFuture
+                    .supplyAsync(() -> evaluateTransferCommand(entry, transferCommand, category, bot), TRADE_COMMAND_EXECUTOR)
+                    .thenAccept(result -> {
+                        long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
+                        long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
+                        AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
+                                applyTransferCommandResult(entry, transferCommand, category, bot, requestId, result));
+                    });
+        } catch (RejectedExecutionException ignored) {
+            // A later command remains able to retry once bounded background work drains.
+        }
     }
 
     private static TransferCommandResult evaluateTransferCommand(AgentRuntimeEntry entry,
@@ -141,15 +145,19 @@ public final class AgentTransferRuntime {
         int requestId = nextTransferRequestId(bot);
         long replyDelay = AgentSchedulerRuntime.randomDelayMs(500, 700);
         long requestedAt = System.nanoTime();
-        CompletableFuture
-                .supplyAsync(() -> new ItemQueryResult(
-                        AgentInventoryTransferService.countTransferableItems(category, entry, bot)), TRADE_COMMAND_EXECUTOR)
-                .thenAccept(result -> {
-                    long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
-                    long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                    AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
-                            applyItemQueryResult(entry, category, bot, requestId, result));
-                });
+        try {
+            CompletableFuture
+                    .supplyAsync(() -> new ItemQueryResult(
+                            AgentInventoryTransferService.countTransferableItems(category, entry, bot)), TRADE_COMMAND_EXECUTOR)
+                    .thenAccept(result -> {
+                        long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
+                        long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
+                        AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
+                                applyItemQueryResult(entry, category, bot, requestId, result));
+                    });
+        } catch (RejectedExecutionException ignored) {
+            // A later query remains able to retry once bounded background work drains.
+        }
     }
 
     private static void applyItemQueryResult(AgentRuntimeEntry entry,

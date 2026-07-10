@@ -7569,6 +7569,14 @@ Current physics correction:
   registered Agent accounts are denied normal interactive login. Existing
   shared-password Agent accounts are protected by the login denial immediately;
   credential rotation guidance is in `AGENT_BACKING_ACCOUNT_SECURITY.md`.
+- Async queue bounds: LLM inference/compaction, navigation graph warmup, and
+  trade/item-query background workers now use fixed-size FIFO queues with the
+  original worker counts. Queue capacities default to 64, 64+64, and 128 and
+  are configurable through `agents.async.*.queueCapacity` system properties.
+  Saturation rejects only newly submitted background work; LLM permits and
+  in-flight state are released, navigation pending futures are removed, and a
+  later navigation/trade request can retry. Normal-load ordering and behavior
+  are unchanged.
 
 Initial reconstruction order:
 

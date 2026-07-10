@@ -16,6 +16,7 @@ import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import server.maps.Rope;
+import server.agents.runtime.AgentBoundedExecutorFactory;
 
 import java.awt.*;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
@@ -53,16 +54,14 @@ public final class AgentNavigationGraphService {
     private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
-    private static final ExecutorService GRAPH_WARMUP_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
-        Thread thread = new Thread(r, "bot-nav-graph-warmup");
-        thread.setDaemon(true);
-        return thread;
-    });
-    private static final ExecutorService FAST_GRAPH_WARMUP_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
-        Thread thread = new Thread(r, "bot-nav-graph-warmup-fast");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final ExecutorService GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
+            "bot-nav-graph-warmup",
+            1,
+            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.queueCapacity", 64));
+    private static final ExecutorService FAST_GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
+            "bot-nav-graph-warmup-fast",
+            1,
+            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.fastQueueCapacity", 64));
 
     private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
         static GraphCacheKey from(int mapId, AgentMovementProfile profile) {
@@ -444,7 +443,13 @@ public final class AgentNavigationGraphService {
         };
 
         if (async) {
-            selectWarmupExecutor(map).execute(task);
+            try {
+                selectWarmupExecutor(map).execute(task);
+            } catch (RejectedExecutionException e) {
+                PENDING_GRAPHS.remove(key, future);
+                future.completeExceptionally(e);
+                log.warn("Skipped Agent navigation graph warmup for map {} because the queue is full", key.mapId());
+            }
         } else {
             task.run();
         }
