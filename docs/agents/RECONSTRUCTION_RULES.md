@@ -1165,7 +1165,7 @@ Recent reconstruction notes:
   ownerless-Agent message, authorization failure propagation, and registration
   behavior are preserved.
 - Agent transfer between leaders now lives in
-  `server.agents.runtime.AgentTransferService`. BotManager keeps a temporary
+  `server.agents.capabilities.trade.AgentTransferService`. BotManager keeps a temporary
   compatibility hook bundle for current-entry lookup, same-map target lookup,
   authorization, scheduled-task cancel, stop-mode entry, re-registration,
   delayed greeting scheduling, and greeting delivery. The same no-agent,
@@ -7049,6 +7049,11 @@ Current physics correction:
   `capabilities.trade`. Command matching, leader/Agent/target arguments,
   transfer callback invocation, error propagation, and success text remain
   unchanged; chat/lifecycle runtime still supplies concrete hooks.
+- Capability ownership: `AgentTransferService` now lives under
+  `capabilities.trade`; runtime supplies registry, authorization, lifecycle,
+  scheduler, and dialogue hooks. Validation text, authorization, removal/
+  cancel/stop/register order, greeting delay, and success return remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

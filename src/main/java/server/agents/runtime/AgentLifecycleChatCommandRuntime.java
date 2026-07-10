@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.trade.AgentTransferCommandService;
+import server.agents.capabilities.trade.AgentTransferService;
 
 import client.Character;
 

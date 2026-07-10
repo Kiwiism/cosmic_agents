@@ -1,9 +1,10 @@
-package server.agents.runtime;
+package server.agents.capabilities.trade;
 
 import client.Character;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
 import java.util.function.LongSupplier;

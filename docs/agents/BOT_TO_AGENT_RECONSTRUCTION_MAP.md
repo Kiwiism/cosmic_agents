@@ -1599,7 +1599,7 @@ Recent map updates:
   temporary hooks for unclaimed online Agent lookup, control authorization, and
   registration under the current leader.
 - Agent transfer between leaders moved from BotManager to
-  `server.agents.runtime.AgentTransferService`. BotManager now supplies
+  `server.agents.capabilities.trade.AgentTransferService`. BotManager now supplies
   temporary hooks for current-entry lookup, same-map target lookup,
   authorization, scheduled-task cancel, stop-mode entry, re-registration,
   delayed greeting scheduling, and greeting delivery.
@@ -3015,3 +3015,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentTransferCommandService` moved from generic runtime
   to `capabilities.trade`. Parsing, callback arguments, error handling, and
   leader-facing success text remain unchanged.
+- Capability ownership: `AgentTransferService` moved from generic runtime to
+  `capabilities.trade`. Validation, authorization, registry handoff, lifecycle
+  ordering, delayed greeting, and return behavior remain unchanged.

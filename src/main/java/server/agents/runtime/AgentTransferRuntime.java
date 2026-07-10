@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.trade.AgentTransferService;
+
 import client.Character;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
