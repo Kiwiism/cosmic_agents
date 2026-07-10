@@ -4291,7 +4291,7 @@ Recent reconstruction notes:
   hook bundles. The same ordering, seek-range, loot-radius, attack-plan reuse,
   consumed-tick propagation, and final movement target semantics are preserved.
 - Standalone move-target tick sequencing now lives in
-  `server.agents.runtime.AgentStandaloneMoveTargetTickService`. BotManager
+  `server.agents.capabilities.movement.AgentStandaloneMoveTargetTickService`. BotManager
   keeps a temporary compatibility adapter that supplies map-change grounding,
   movement-profile refresh, and movement-core hooks. The same post-warp early
   return, profile refresh ordering, stored move-target lookup, and run-AI flag
@@ -7146,6 +7146,10 @@ Current physics correction:
   `capabilities.combat`. Active loot validation/retry suppression, convenience
   scoring, navigation-region wander selection, patrol loot preference, random
   point bounds, and fallback direction behavior remain unchanged.
+- Capability ownership: `AgentStandaloneMoveTargetTickService` now lives under
+  `capabilities.movement`. Map-change grounding short-circuit, movement-profile
+  refresh, target lookup, and movement-core invocation ordering remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

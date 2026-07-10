@@ -1682,7 +1682,7 @@ Recent map updates:
   BotManager now supplies temporary hooks for active-leader return cleanup,
   town-warp eligibility, and inactive safe-mode entry side effects.
 - Standalone move-target tick sequencing moved from BotManager to
-  `server.agents.runtime.AgentStandaloneMoveTargetTickService`. BotManager now
+  `server.agents.capabilities.movement.AgentStandaloneMoveTargetTickService`. BotManager now
   supplies temporary hooks for map-change grounding, movement-profile refresh,
   and movement-core stepping.
 - Grind-mode tick pipeline orchestration moved from BotManager to
@@ -3096,3 +3096,6 @@ Recent capability extraction notes:
   runtime to `capabilities.combat`. Loot validation and convenience scoring,
   retry suppression, region/patrol wander selection, random bounds, and
   fallback target behavior remain unchanged.
+- Capability ownership: `AgentStandaloneMoveTargetTickService` moved from
+  generic runtime to `capabilities.movement`. Grounding, profile refresh,
+  target lookup, and movement dispatch ordering remain unchanged.
