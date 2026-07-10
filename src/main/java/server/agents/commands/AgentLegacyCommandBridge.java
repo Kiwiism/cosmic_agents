@@ -9,10 +9,7 @@ import server.agents.capabilities.dialogue.llm.AgentLlmConfig;
 
 import java.util.List;
 
-/**
- * Transitional command boundary for legacy bot command surfaces while runtime logic is reconstructed
- * into Agent modules.
- */
+/** Routes retained legacy command aliases into Agent-owned modules. */
 public final class AgentLegacyCommandBridge {
     private AgentLegacyCommandBridge() {
     }

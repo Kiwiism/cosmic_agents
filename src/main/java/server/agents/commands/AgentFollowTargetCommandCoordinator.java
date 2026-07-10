@@ -20,9 +20,7 @@ import server.agents.capabilities.equipment.AgentEquipmentService;
 
 import java.util.List;
 
-/**
- * Temporary Agent-owned runtime bridge for follow-target command wiring.
- */
+/** Coordinates follow-target command resolution and dispatch across Agent capabilities. */
 public final class AgentFollowTargetCommandCoordinator {
     private AgentFollowTargetCommandCoordinator() {
     }

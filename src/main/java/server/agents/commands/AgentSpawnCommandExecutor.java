@@ -14,10 +14,7 @@ import server.agents.capabilities.party.AgentPartyLifecycleService;
 import server.agents.auth.AgentOwnershipService;
 import java.sql.SQLException;
 
-/**
- * Transitional Agent-facing spawn command executor that preserves legacy bot creation/spawn behavior
- * until lifecycle and registry logic move into Agent runtime modules.
- */
+/** Translates the retained spawn command into Agent account, lifecycle, and party operations. */
 public final class AgentSpawnCommandExecutor {
     private static final Logger log = LoggerFactory.getLogger(AgentSpawnCommandExecutor.class);
 

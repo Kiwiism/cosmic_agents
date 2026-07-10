@@ -1,8 +1,8 @@
 package server.agents.capabilities.dialogue;
 
 /**
- * Owns per-chat handled state for the Agent dialogue orchestrator. Temporary
- * bot-side bridges can adapt their runtime context into {@link AgentChatOrchestrator.Context}
+ * Owns per-chat handled state for the Agent dialogue orchestrator. Integration
+ * bridges adapt their runtime context into {@link AgentChatOrchestrator.Context}
  * and delegate here without owning chat routing state themselves.
  */
 public final class AgentChatRuntime {

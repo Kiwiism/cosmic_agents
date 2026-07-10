@@ -8,10 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
-/**
- * Temporary Agent-owned boundary for navigation debug/path-log state still
- * backed by AgentRuntimeEntry during reconstruction.
- */
+/** Provides navigation capabilities with typed access to live navigation and path-log state. */
 public final class AgentNavigationDebugStateRuntime {
     private AgentNavigationDebugStateRuntime() {
     }
