@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentFormationStateRuntime;
 import server.agents.capabilities.movement.AgentFormationService.FormationState;
 import server.agents.capabilities.movement.AgentFormationService.FormationType;
 

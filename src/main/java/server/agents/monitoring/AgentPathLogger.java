@@ -16,7 +16,7 @@ import java.util.List;
 import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.runtime.AgentFormationStateRuntime;
+import server.agents.capabilities.movement.AgentFormationStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;

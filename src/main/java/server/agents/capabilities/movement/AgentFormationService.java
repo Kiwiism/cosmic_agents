@@ -2,7 +2,6 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentFormationStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;

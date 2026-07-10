@@ -174,7 +174,7 @@ Recent reconstruction notes:
   follow movement, fidget decisions, and tick-context timing remain in their
   existing runtime/capability callers.
 - Formation spacing state has moved from `server.agents.integration` to
-  `server.agents.runtime.AgentFormationStateRuntime`. It still only adapts
+  `server.agents.capabilities.movement.AgentFormationStateRuntime`. It still only adapts
   `AgentRuntimeEntry` formation offset fields; formation command handling,
   target snapshot resolution, follow movement, and path logging remain in their
   existing runtime/monitoring callers.
@@ -7092,6 +7092,10 @@ Current physics correction:
   `capabilities.movement`. Configured default construction, entry/leader state
   lookup, null-leader handling, state publication, and offset application are
   unchanged.
+- Capability state ownership: `AgentFormationOffsetState` and its
+  `AgentFormationStateRuntime` entry adapter now live under
+  `capabilities.movement`. Per-Agent offset initialization, reads, writes, and
+  target/path-observation behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
