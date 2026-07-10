@@ -96,7 +96,7 @@ public class EventScriptScheduler {
 
     public void registerEntry(final Runnable scheduledAction, final long duration) {
 
-        ThreadManager.getInstance().newTask(() -> {
+        ThreadManager.getInstance().newBlockingTask(() -> {
             schedulerLock.lock();
             try {
                 idleProcs = 0;
@@ -117,7 +117,7 @@ public class EventScriptScheduler {
 
     public void cancelEntry(final Runnable scheduledAction) {
 
-        ThreadManager.getInstance().newTask(() -> {
+        ThreadManager.getInstance().newBlockingTask(() -> {
             schedulerLock.lock();
             try {
                 registeredEntries.remove(scheduledAction);
@@ -129,7 +129,7 @@ public class EventScriptScheduler {
 
     public void dispose() {
 
-        ThreadManager.getInstance().newTask(() -> {
+        ThreadManager.getInstance().newBlockingTask(() -> {
             schedulerLock.lock();
             try {
                 if (schedulerTask != null) {

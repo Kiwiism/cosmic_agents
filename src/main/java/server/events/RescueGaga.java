@@ -28,6 +28,7 @@ public class RescueGaga extends Events {
 
     public void complete() {
         completed++;
+        markPersistenceDirty();
     }
 
     @Override

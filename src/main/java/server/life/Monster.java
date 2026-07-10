@@ -1421,6 +1421,23 @@ public class Monster extends AbstractLoadedLife {
         }
     }
 
+    public boolean hasActiveRuntimeState() {
+        monsterLock.lock();
+        try {
+            if (monsterItemDrop != null || removeAfterAction != null || !usedSkills.isEmpty() || !usedAttacks.isEmpty()) {
+                return true;
+            }
+        } finally {
+            monsterLock.unlock();
+        }
+        statiLock.lock();
+        try {
+            return !stati.isEmpty();
+        } finally {
+            statiLock.unlock();
+        }
+    }
+
     public void setFake(boolean fake) {
         monsterLock.lock();
         try {

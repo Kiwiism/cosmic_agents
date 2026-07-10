@@ -22,6 +22,7 @@ public final class CharacterSaveDiagnostics {
     private static final AtomicLong failedSaves = new AtomicLong();
     private static final AtomicLong autosaves = new AtomicLong();
     private static final AtomicLong manualSaves = new AtomicLong();
+    private static final AtomicLong skippedCleanAutosaves = new AtomicLong();
     private static final AtomicLong totalDurationMs = new AtomicLong();
     private static final AtomicLong maxDurationMs = new AtomicLong();
     private static final AtomicLong lastDurationMs = new AtomicLong();
@@ -57,6 +58,7 @@ public final class CharacterSaveDiagnostics {
                 + " failed=" + failedSaves.get()
                 + " manual=" + manualSaves.get()
                 + " autosave=" + autosaves.get()
+                + " skippedClean=" + skippedCleanAutosaves.get()
                 + " avgMs=" + avgMs
                 + " maxMs=" + maxDurationMs.get()
                 + " maxChr=" + slowestCharacterName
@@ -106,6 +108,13 @@ public final class CharacterSaveDiagnostics {
     public static void recordSection(String section, long startedNs) {
         long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNs);
         sections.computeIfAbsent(section, ignored -> new SectionStats()).record(elapsedMs);
+    }
+
+    public static void recordSkipped(int characterId, String characterName, SaveReason reason) {
+        skippedCleanAutosaves.incrementAndGet();
+        reasonCounts.computeIfAbsent(reason.name() + "_SKIPPED", ignored -> new AtomicLong()).incrementAndGet();
+        lastCharacterId.set(characterId);
+        lastCharacterName = characterName;
     }
 
     private static void record(int characterId, String characterName, boolean notAutosave, SaveReason reason, long startedNs, boolean failed) {

@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Matze
@@ -68,6 +69,15 @@ public class QuestStatus {
     private long completionTime, expirationTime;
     private int forfeited = 0, completed = 0;
     private String customData;
+    private Runnable persistenceDirtyMarker = () -> { };
+
+    void setPersistenceDirtyMarker(Runnable persistenceDirtyMarker) {
+        this.persistenceDirtyMarker = Objects.requireNonNull(persistenceDirtyMarker);
+    }
+
+    private void markPersistenceDirty() {
+        persistenceDirtyMarker.run();
+    }
 
     public QuestStatus(Quest quest, Status status) {
         this.questID = quest.getId();
@@ -100,12 +110,15 @@ public class QuestStatus {
         return questID;
     }
 
-    public Status getStatus() {
+    public synchronized Status getStatus() {
         return status;
     }
 
-    public final void setStatus(Status status) {
-        this.status = status;
+    public final synchronized void setStatus(Status status) {
+        if (this.status != status) {
+            this.status = status;
+            markPersistenceDirty();
+        }
     }
     
     /*
@@ -122,12 +135,15 @@ public class QuestStatus {
     }
     */
 
-    public int getNpc() {
+    public synchronized int getNpc() {
         return npc;
     }
 
-    public final void setNpc(int npc) {
-        this.npc = npc;
+    public final synchronized void setNpc(int npc) {
+        if (this.npc != npc) {
+            this.npc = npc;
+            markPersistenceDirty();
+        }
     }
 
     private void registerMobs() {
@@ -137,24 +153,25 @@ public class QuestStatus {
         //this.setUpdated();
     }
 
-    public boolean addMedalMap(int mapid) {
+    public synchronized boolean addMedalMap(int mapid) {
         if (medalProgress.contains(mapid)) {
             return false;
         }
         medalProgress.add(mapid);
+        markPersistenceDirty();
         //this.setUpdated();
         return true;
     }
 
-    public int getMedalProgress() {
+    public synchronized int getMedalProgress() {
         return medalProgress.size();
     }
 
-    public List<Integer> getMedalMaps() {
-        return medalProgress;
+    public synchronized List<Integer> getMedalMaps() {
+        return Collections.unmodifiableList(new LinkedList<>(medalProgress));
     }
 
-    public boolean progress(int id) {
+    public synchronized boolean progress(int id) {
         String currentStr = progress.get(id);
         if (currentStr == null) {
             return false;
@@ -167,20 +184,25 @@ public class QuestStatus {
 
         String str = StringUtil.getLeftPaddedStr(Integer.toString(++current), '0', 3);
         progress.put(id, str);
+        markPersistenceDirty();
         //this.setUpdated();
         return true;
     }
 
-    public void setProgress(int id, String pr) {
+    public synchronized void setProgress(int id, String pr) {
+        boolean changed = !progress.containsKey(id) || !Objects.equals(progress.get(id), pr);
         progress.put(id, pr);
+        if (changed) {
+            markPersistenceDirty();
+        }
         //this.setUpdated();
     }
 
-    public boolean madeProgress() {
+    public synchronized boolean madeProgress() {
         return progress.size() > 0;
     }
 
-    public String getProgress(int id) {
+    public synchronized String getProgress(int id) {
         String ret = progress.get(id);
         if (ret == null) {
             return "";
@@ -189,18 +211,25 @@ public class QuestStatus {
         }
     }
 
-    public void resetProgress(int id) {
+    public synchronized void resetProgress(int id) {
         setProgress(id, "000");
     }
 
-    public void resetAllProgress() {
+    public synchronized void resetAllProgress() {
+        boolean changed = false;
         for (Map.Entry<Integer, String> entry : progress.entrySet()) {
-            setProgress(entry.getKey(), "000");
+            if (!"000".equals(entry.getValue())) {
+                entry.setValue("000");
+                changed = true;
+            }
+        }
+        if (changed) {
+            markPersistenceDirty();
         }
     }
 
-    public Map<Integer, String> getProgress() {
-        return Collections.unmodifiableMap(progress);
+    public synchronized Map<Integer, String> getProgress() {
+        return Collections.unmodifiableMap(new LinkedHashMap<>(progress));
     }
 
     public short getInfoNumber() {
@@ -224,59 +253,101 @@ public class QuestStatus {
         return q.getInfoEx(s);
     }
 
-    public long getCompletionTime() {
+    public synchronized long getCompletionTime() {
         return completionTime;
     }
 
-    public void setCompletionTime(long completionTime) {
-        this.completionTime = completionTime;
+    public synchronized void setCompletionTime(long completionTime) {
+        if (this.completionTime != completionTime) {
+            this.completionTime = completionTime;
+            markPersistenceDirty();
+        }
     }
 
-    public long getExpirationTime() {
+    public synchronized long getExpirationTime() {
         return expirationTime;
     }
 
-    public void setExpirationTime(long expirationTime) {
-        this.expirationTime = expirationTime;
+    public synchronized void setExpirationTime(long expirationTime) {
+        if (this.expirationTime != expirationTime) {
+            this.expirationTime = expirationTime;
+            markPersistenceDirty();
+        }
     }
 
-    public int getForfeited() {
+    public synchronized int getForfeited() {
         return forfeited;
     }
 
-    public int getCompleted() {
+    public synchronized int getCompleted() {
         return completed;
     }
 
-    public void setForfeited(int forfeited) {
+    public synchronized void setForfeited(int forfeited) {
         if (forfeited >= this.forfeited) {
-            this.forfeited = forfeited;
+            if (this.forfeited != forfeited) {
+                this.forfeited = forfeited;
+                markPersistenceDirty();
+            }
         } else {
             throw new IllegalArgumentException("Can't set forfeits to something lower than before.");
         }
     }
 
-    public void setCompleted(int completed) {
+    public synchronized void setCompleted(int completed) {
         if (completed >= this.completed) {
-            this.completed = completed;
+            if (this.completed != completed) {
+                this.completed = completed;
+                markPersistenceDirty();
+            }
         } else {
             throw new IllegalArgumentException("Can't set completes to something lower than before.");
         }
     }
 
-    public final void setCustomData(final String customData) {
-        this.customData = customData;
+    public final synchronized void setCustomData(final String customData) {
+        if (!Objects.equals(this.customData, customData)) {
+            this.customData = customData;
+            markPersistenceDirty();
+        }
     }
 
-    public final String getCustomData() {
+    public final synchronized String getCustomData() {
         return customData;
     }
 
-    public String getProgressData() {
+    public synchronized String getProgressData() {
         StringBuilder str = new StringBuilder();
         for (String ps : progress.values()) {
             str.append(ps);
         }
         return str.toString();
+    }
+
+    public synchronized PersistenceSnapshot persistenceSnapshot() {
+        return new PersistenceSnapshot(questID, status.getId(), completionTime, expirationTime,
+                forfeited, completed, new LinkedHashMap<>(progress), new LinkedList<>(medalProgress));
+    }
+
+    static QuestStatus fromPersistenceSnapshot(Quest quest, PersistenceSnapshot snapshot) {
+        QuestStatus restored = new QuestStatus(quest, Status.getById(snapshot.status()));
+        restored.completionTime = snapshot.completionTime();
+        restored.expirationTime = snapshot.expirationTime();
+        restored.forfeited = snapshot.forfeited();
+        restored.completed = snapshot.completed();
+        restored.progress.clear();
+        restored.progress.putAll(snapshot.progress());
+        restored.medalProgress.clear();
+        restored.medalProgress.addAll(snapshot.medalMaps());
+        return restored;
+    }
+
+    public record PersistenceSnapshot(short questId, int status, long completionTime,
+                                      long expirationTime, int forfeited, int completed,
+                                      Map<Integer, String> progress, List<Integer> medalMaps) {
+        public PersistenceSnapshot {
+            progress = Collections.unmodifiableMap(new LinkedHashMap<>(progress));
+            medalMaps = Collections.unmodifiableList(new LinkedList<>(medalMaps));
+        }
     }
 }

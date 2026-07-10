@@ -95,7 +95,7 @@ public class WhatDropsFromCommand extends Command {
                                 (!mip.isBoss(mobId) ? player.getDropRate() : player.getBossDropRate()), 1);
                         output += "- #z" + drop.itemId + "# (1/" + (int) chance + ")\r\n";
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        monitoring.RuntimeFailureLogger.log(ex);
                     }
                 }
                 output += "\r\n";

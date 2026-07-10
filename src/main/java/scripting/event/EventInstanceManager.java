@@ -258,7 +258,7 @@ public class EventInstanceManager {
             try {
                 invokeScriptFunction("playerEntry", EventInstanceManager.this, chr);
             } catch (ScriptException | NoSuchMethodException ex) {
-                ex.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(ex);
             }
         }
     }
@@ -453,7 +453,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("moveMap", EventInstanceManager.this, chr);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -475,7 +475,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("changedLeader", EventInstanceManager.this, ldr);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
 
         leaderId = ldr.getId();
@@ -503,14 +503,14 @@ public class EventInstanceManager {
             try {
                 invokeScriptFunction("monsterKilled", mob, EventInstanceManager.this, hasKiller);
             } catch (ScriptException | NoSuchMethodException ex) {
-                ex.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(ex);
             }
 
             if (scriptResult > 1) {
                 try {
                     invokeScriptFunction("allMonstersDead", EventInstanceManager.this, hasKiller);
                 } catch (ScriptException | NoSuchMethodException ex) {
-                    ex.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(ex);
                 }
             }
         }
@@ -538,7 +538,7 @@ public class EventInstanceManager {
     }
 
     public void playerKilled(final Character chr) {
-        ThreadManager.getInstance().newTask(() -> {
+        ThreadManager.getInstance().newBlockingTask(() -> {
             try {
                 invokeScriptFunction("playerDead", EventInstanceManager.this, chr);
             } catch (ScriptException | NoSuchMethodException ex) {
@@ -569,7 +569,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("playerDisconnected", EventInstanceManager.this, chr);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
 
         EventRecallCoordinator.getInstance().storeEventInstance(chr.getId(), this);
@@ -592,7 +592,7 @@ public class EventInstanceManager {
                 }
             }
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -805,7 +805,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("leftParty", EventInstanceManager.this, chr);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -813,7 +813,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("disbandParty", EventInstanceManager.this);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -821,7 +821,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("clearPQ", EventInstanceManager.this);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -829,7 +829,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("playerExit", EventInstanceManager.this, chr);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -881,7 +881,7 @@ public class EventInstanceManager {
                 return true;
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
 
         return false;
@@ -1112,7 +1112,7 @@ public class EventInstanceManager {
         try {
             invokeScriptFunction("afterSetup", EventInstanceManager.this);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 

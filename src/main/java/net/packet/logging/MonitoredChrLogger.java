@@ -22,7 +22,6 @@ package net.packet.logging;
 
 import client.Character;
 import client.Client;
-import net.jcip.annotations.NotThreadSafe;
 import net.opcodes.RecvOpcode;
 import net.opcodes.SendOpcode;
 import org.slf4j.Logger;
@@ -31,18 +30,17 @@ import tools.HexTool;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Logs packets from monitored characters to a file.
  *
  * @author Alan (SharpAceX)
  */
-@NotThreadSafe
 public class MonitoredChrLogger {
     private static final Logger log = LoggerFactory.getLogger(MonitoredChrLogger.class);
-    private static final Set<Integer> monitoredChrIds = new HashSet<>();
+    private static final Set<Integer> monitoredChrIds = ConcurrentHashMap.newKeySet();
 
     /**
      * Toggle monitored status for a character id
@@ -50,17 +48,14 @@ public class MonitoredChrLogger {
      * @return new status. true if the chrId is now monitored, otherwise false.
      */
     public static boolean toggleMonitored(int chrId) {
-        if (monitoredChrIds.contains(chrId)) {
-            monitoredChrIds.remove(chrId);
+        if (monitoredChrIds.remove(chrId)) {
             return false;
-        } else {
-            monitoredChrIds.add(chrId);
-            return true;
         }
+        return monitoredChrIds.add(chrId);
     }
 
     public static Collection<Integer> getMonitoredChrIds() {
-        return monitoredChrIds;
+        return Set.copyOf(monitoredChrIds);
     }
 
     public static boolean hasMonitoredCharacters() {

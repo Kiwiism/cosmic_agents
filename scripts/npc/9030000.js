@@ -42,7 +42,10 @@ function action(mode, type, selection) {
             cm.showFredrick();
             cm.dispose();
         } else {
-            if (cm.hasMerchant()) {
+            if (cm.hasFredrickLoadFailed()) {
+                cm.sendOk("Fredrick could not load your stored items. Nothing was changed; please try again shortly.");
+                cm.dispose();
+            } else if (cm.hasMerchant()) {
                 cm.sendOk("You have a Merchant open.");
                 cm.dispose();
             } else {

@@ -154,6 +154,8 @@ import server.partyquest.AriantColiseum;
 import server.partyquest.MonsterCarnival;
 import server.partyquest.MonsterCarnivalParty;
 import server.partyquest.PartyQuest;
+import server.persistence.DirtySectionTracker;
+import server.persistence.DirtySectionTracker.SavePlan;
 import server.quest.Quest;
 import tools.DatabaseConnection;
 import tools.LongTool;
@@ -201,7 +203,21 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Character extends AbstractCharacterObject {
+    public enum PersistenceSection {
+        STATS,
+        INVENTORY,
+        SKILLS,
+        QUESTS,
+        SOCIAL,
+        KEYMAP,
+        LOCATIONS,
+        PETS,
+        RELATED
+    }
+
     private static final byte MAX_INVENTORY_SLOTS = 96;
+    private static final int DIRTY_FULL_CHECKPOINT_AUTOSAVES =
+            Math.max(1, Integer.getInteger("cosmic.persistence.fullCheckpointAutosaves", 6));
     private static final InventoryType[] STANDARD_INVENTORY_TYPES = {
             InventoryType.EQUIP,
             InventoryType.USE,
@@ -251,7 +267,7 @@ public class Character extends AbstractCharacterObject {
     private int linkedLevel = 0;
     private String linkedName = null;
     private boolean finishedDojoTutorial;
-    private boolean usedStorage = false;
+    private final AtomicBoolean usedStorage = new AtomicBoolean(false);
     private String name;
     private String chalktext;
     private String commandtext;
@@ -259,10 +275,13 @@ public class Character extends AbstractCharacterObject {
     private String search = null;
     private final AtomicBoolean mapTransitioning = new AtomicBoolean(true);  // player client is currently trying to change maps or log in the game map
     private final AtomicBoolean awayFromWorld = new AtomicBoolean(true);  // player is online, but on cash shop or mts
+    private final AtomicBoolean pendingHpDeath = new AtomicBoolean(false);
     private final AtomicInteger exp = new AtomicInteger();
     private final AtomicInteger gachaexp = new AtomicInteger();
     private final AtomicInteger meso = new AtomicInteger();
     private final AtomicInteger chair = new AtomicInteger(-1);
+    private final DirtySectionTracker<PersistenceSection> persistenceDirty =
+            new DirtySectionTracker<>(PersistenceSection.class, DIRTY_FULL_CHECKPOINT_AUTOSAVES);
     private long totalExpGained = 0;
     private int merchantmeso;
     private BuddyList buddylist;
@@ -304,7 +323,7 @@ public class Character extends AbstractCharacterObject {
     private final Map<Disease, Long> diseaseExpires = new LinkedHashMap<>();
     private final Map<Integer, Map<BuffStat, BuffStatValueHolder>> buffEffects = new LinkedHashMap<>(); // non-overriding buffs thanks to Ronan
     private final Map<Integer, Long> buffExpires = new LinkedHashMap<>();
-    private final Map<Integer, KeyBinding> keymap = new LinkedHashMap<>();
+    private final Map<Integer, KeyBinding> keymap = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<Integer, Summon> summons = new LinkedHashMap<>();
     private final Map<Integer, CooldownValueHolder> coolDowns = new LinkedHashMap<>();
     private final EnumMap<Disease, Pair<DiseaseValueHolder, MobSkill>> diseases = new EnumMap<>(Disease.class);
@@ -346,7 +365,7 @@ public class Character extends AbstractCharacterObject {
     private byte pendantExp = 0, lastmobcount = 0, doorSlot = -1;
     private final List<Integer> trockmaps = new ArrayList<>();
     private final List<Integer> viptrockmaps = new ArrayList<>();
-    private Map<String, Events> events = new LinkedHashMap<>();
+    private final Map<String, Events> events = Collections.synchronizedMap(new LinkedHashMap<>());
     private PartyQuest partyQuest = null;
     private final List<Pair<DelayedQuestUpdate, Object[]>> npcUpdateQuests = new LinkedList<>();
     private Dragon dragon = null;
@@ -375,11 +394,13 @@ public class Character extends AbstractCharacterObject {
         super.setListener(new AbstractCharacterListener() {
             @Override
             public void onHpChanged(int oldHp) {
+                markPersistenceDirty(PersistenceSection.STATS);
                 hpChangeAction(oldHp);
             }
 
             @Override
             public void onHpmpPoolUpdate() {
+                markPersistenceDirty(PersistenceSection.STATS);
                 List<Pair<Stat, Integer>> hpmpupdate = recalcLocalStats();
                 for (Pair<Stat, Integer> p : hpmpupdate) {
                     statUpdates.put(p.getLeft(), p.getRight());
@@ -398,6 +419,7 @@ public class Character extends AbstractCharacterObject {
 
             @Override
             public void onStatUpdate() {
+                markPersistenceDirty(PersistenceSection.STATS);
                 recalcLocalStats();
             }
 
@@ -487,6 +509,7 @@ public class Character extends AbstractCharacterObject {
         ret.level = 1;
         ret.accountid = c.getAccID();
         ret.buddylist = new BuddyList(20);
+        ret.attachPersistenceChildren();
         ret.maplemount = null;
         applyInitialInventorySlotLimits(ret);
 
@@ -609,6 +632,7 @@ public class Character extends AbstractCharacterObject {
 
     public boolean toggleRecvPartySearchInvite() {
         canRecvPartySearchInvite = !canRecvPartySearchInvite;
+        markPersistenceDirty(PersistenceSection.STATS);
 
         if (canRecvPartySearchInvite) {
             updatePartySearchAvailability(getParty() == null);
@@ -707,6 +731,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setMarriageItemId(int itemid) {
         marriageItemid = itemid;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public int getPartnerId() {
@@ -715,6 +740,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setPartnerId(int partnerid) {
         partnerId = partnerid;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public int getRelationshipId() {
@@ -747,12 +773,14 @@ public class Character extends AbstractCharacterObject {
                 pts++;
             }
             this.dojoPoints += pts;
+            markPersistenceDirty(PersistenceSection.STATS);
         }
         return pts;
     }
 
     public void addFame(int famechange) {
         this.fame += famechange;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void addFriendshipRing(Ring r) {
@@ -775,6 +803,7 @@ public class Character extends AbstractCharacterObject {
             for (int i = 0; i < 3; i++) {
                 if (pets[i] == null) {
                     pets[i] = pet;
+                    markPersistenceDirty(PersistenceSection.PETS);
                     return;
                 }
             }
@@ -803,7 +832,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, accountid);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -841,7 +870,7 @@ public class Character extends AbstractCharacterObject {
             }
             return ret;
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
         return false;
     }
@@ -1235,7 +1264,6 @@ public class Character extends AbstractCharacterObject {
         if (newJob == null) {
             return;//the fuck you doing idiot!
         }
-
         if (canRecvPartySearchInvite && getParty() == null) {
             this.updatePartySearchAvailability(false);
             this.job = newJob;
@@ -1243,6 +1271,7 @@ public class Character extends AbstractCharacterObject {
         } else {
             this.job = newJob;
         }
+        markPersistenceDirty(PersistenceSection.STATS);
 
         int spGain = 1;
         if (GameConstants.hasSPTable(newJob)) {
@@ -1393,15 +1422,19 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void changeKeybinding(int key, KeyBinding keybinding) {
-        if (keybinding.getType() != 0) {
-            keymap.put(Integer.valueOf(key), keybinding);
-        } else {
-            keymap.remove(Integer.valueOf(key));
+        synchronized (keymap) {
+            if (keybinding.getType() != 0) {
+                keymap.put(Integer.valueOf(key), keybinding);
+            } else {
+                keymap.remove(Integer.valueOf(key));
+            }
         }
+        markPersistenceDirty(PersistenceSection.KEYMAP);
     }
 
     public void changeQuickslotKeybinding(byte[] aQuickslotKeyMapped) {
         this.m_pQuickslotKeyMapped = new QuickslotBinding(aQuickslotKeyMapped);
+        markPersistenceDirty(PersistenceSection.KEYMAP);
     }
 
     public void broadcastStance(int newStance) {
@@ -1848,6 +1881,7 @@ public class Character extends AbstractCharacterObject {
         map.removePlayer(this);
         if (client.getChannelServer().getPlayerStorage().getCharacterById(getId()) != null) {
             map = to;
+            markPersistenceDirty(PersistenceSection.STATS);
             setPosition(pos);
             map.addPlayer(this);
             visitMap(map);
@@ -1906,13 +1940,22 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void changeSkillLevel(Skill skill, byte newLevel, int newMasterlevel, long expiration) {
+        chrLock.lock();
+        try {
+            if (newLevel > -1) {
+                skills.put(skill, new SkillEntry(newLevel, newMasterlevel, expiration));
+            } else {
+                skills.remove(skill);
+            }
+        } finally {
+            chrLock.unlock();
+        }
+        markPersistenceDirty(PersistenceSection.SKILLS);
         if (newLevel > -1) {
-            skills.put(skill, new SkillEntry(newLevel, newMasterlevel, expiration));
             if (!GameConstants.isHiddenSkills(skill.getId())) {
                 sendPacket(PacketCreator.updateSkill(skill.getId(), newLevel, newMasterlevel, expiration));
             }
         } else {
-            skills.remove(skill);
             sendPacket(PacketCreator.updateSkill(skill.getId(), newLevel, newMasterlevel, -1)); //Shouldn't use expiration anymore :)
             try (Connection con = DatabaseConnection.getConnection();
                  PreparedStatement ps = con.prepareStatement("DELETE FROM skills WHERE skillid = ? AND characterid = ?")) {
@@ -1920,7 +1963,7 @@ public class Character extends AbstractCharacterObject {
                 ps.setInt(2, id);
                 ps.executeUpdate();
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(ex);
             }
         }
     }
@@ -2270,7 +2313,7 @@ public class Character extends AbstractCharacterObject {
                 ps.executeUpdate();
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -2305,187 +2348,169 @@ public class Character extends AbstractCharacterObject {
             return false;
         }
 
-        final int accId = senderAccId;
-        int world = 0;
         try (Connection con = DatabaseConnection.getConnection()) {
-            try (PreparedStatement ps = con.prepareStatement("SELECT world FROM characters WHERE id = ?")) {
-                ps.setInt(1, cid);
+            CharacterDeletionContext context = runDeletionTransaction(con,
+                    () -> deleteCharacterRows(con, player, cid, senderAccId));
+            try {
+                completeCharacterDeletion(context, cid, senderAccId);
+            } catch (RuntimeException cleanupFailure) {
+                log.error("Character rows were deleted but post-commit cleanup failed for chrId={} accountId={}",
+                        cid, senderAccId, cleanupFailure);
+            }
+            return true;
+        } catch (SQLException e) {
+            log.error("Failed transactional deletion for chrId={} accountId={}", cid, senderAccId, e);
+            return false;
+        }
+    }
 
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        world = rs.getInt("world");
-                    }
+    @FunctionalInterface
+    interface SqlTransactionWork<T> {
+        T execute() throws SQLException;
+    }
+
+    static <T> T runDeletionTransaction(Connection con, SqlTransactionWork<T> work) throws SQLException {
+        con.setAutoCommit(false);
+        try {
+            T result = work.execute();
+            con.commit();
+            return result;
+        } catch (SQLException | RuntimeException failure) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackFailure) {
+                failure.addSuppressed(rollbackFailure);
+            }
+            throw failure;
+        }
+    }
+
+    private static CharacterDeletionContext deleteCharacterRows(Connection con, Character player, int cid, int accId) throws SQLException {
+        int world;
+        GuildCharacter guildCharacter = null;
+        List<Integer> buddyIds = new ArrayList<>();
+        List<Integer> cashIds = new ArrayList<>();
+
+        try (PreparedStatement ps = con.prepareStatement("SELECT world, guildid, guildrank, name, allianceRank FROM characters WHERE id = ? AND accountid = ?")) {
+            ps.setInt(1, cid);
+            ps.setInt(2, accId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new SQLException("Character disappeared before deletion");
+                }
+                world = rs.getInt("world");
+                if (rs.getInt("guildid") > 0) {
+                    guildCharacter = new GuildCharacter(player, cid, 0, rs.getString("name"), (byte) -1, (byte) -1,
+                            0, rs.getInt("guildrank"), rs.getInt("guildid"), false, rs.getInt("allianceRank"));
                 }
             }
+        }
 
-            try (PreparedStatement ps = con.prepareStatement("SELECT buddyid FROM buddies WHERE characterid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int buddyid = rs.getInt("buddyid");
-                        Character buddy = Server.getInstance().getWorld(world).getPlayerStorage().getCharacterById(buddyid);
-
-                        if (buddy != null) {
-                            buddy.deleteBuddy(cid);
-                        }
-                    }
+        try (PreparedStatement ps = con.prepareStatement("SELECT buddyid FROM buddies WHERE characterid = ?")) {
+            ps.setInt(1, cid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    buddyIds.add(rs.getInt("buddyid"));
                 }
             }
+        }
+        deleteWhereCharacterId(con, "DELETE FROM buddies WHERE characterid = ?", cid);
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM buddies WHERE characterid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT threadid FROM bbs_threads WHERE postercid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int threadId = rs.getInt("threadid");
-
-                        try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM bbs_replies WHERE threadid = ?")) {
-                            ps2.setInt(1, threadId);
-                            ps2.executeUpdate();
-                        }
-                    }
+        try (PreparedStatement ps = con.prepareStatement("SELECT threadid FROM bbs_threads WHERE postercid = ?")) {
+            ps.setInt(1, cid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    deleteWhereCharacterId(con, "DELETE FROM bbs_replies WHERE threadid = ?", rs.getInt("threadid"));
                 }
             }
+        }
+        deleteWhereCharacterId(con, "DELETE FROM bbs_threads WHERE postercid = ?", cid);
 
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM bbs_threads WHERE postercid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
+        String[] charIdTables = {"wishlists", "cooldowns", "playerdiseases", "area_info", "monsterbook"};
+        for (String table : charIdTables) {
+            deleteWhereCharacterId(con, "DELETE FROM `" + table + "` WHERE charid = ?", cid);
+        }
+        deleteWhereCharacterId(con, "DELETE FROM family_character WHERE cid = ?", cid);
+        deleteWhereCharacterId(con, "DELETE FROM famelog WHERE characterid_to = ?", cid);
 
-            try (PreparedStatement ps = con.prepareStatement("SELECT id, guildid, guildrank, name, allianceRank FROM characters WHERE id = ? AND accountid = ?")) {
-                ps.setInt(1, cid);
-                ps.setInt(2, accId);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && rs.getInt("guildid") > 0) {
-                        Server.getInstance().deleteGuildCharacter(new GuildCharacter(player, cid, 0, rs.getString("name"), (byte) -1, (byte) -1, 0, rs.getInt("guildrank"), rs.getInt("guildid"), false, rs.getInt("allianceRank")));
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM wishlists WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM cooldowns WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM playerdiseases WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM area_info WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM monsterbook WHERE charid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM characters WHERE id = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM family_character WHERE cid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM famelog WHERE characterid_to = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT inventoryitemid, petid FROM inventoryitems WHERE characterid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int inventoryitemid = rs.getInt("inventoryitemid");
-
-                        try (PreparedStatement ps2 = con.prepareStatement("SELECT ringid FROM inventoryequipment WHERE inventoryitemid = ?")) {
-                            ps2.setInt(1, inventoryitemid);
-
-                            try (ResultSet rs2 = ps2.executeQuery()) {
-                                while (rs2.next()) {
-                                    final int ringid = rs2.getInt("ringid");
-
-                                    if (ringid > -1) {
-                                        try (PreparedStatement ps3 = con.prepareStatement("DELETE FROM rings WHERE id = ?")) {
-                                            ps3.setInt(1, ringid);
-                                            ps3.executeUpdate();
-                                        }
-
-                                        CashIdGenerator.freeCashId(ringid);
-                                    }
+        try (PreparedStatement ps = con.prepareStatement("SELECT inventoryitemid, petid FROM inventoryitems WHERE characterid = ?")) {
+            ps.setInt(1, cid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int inventoryItemId = rs.getInt("inventoryitemid");
+                    try (PreparedStatement ringQuery = con.prepareStatement("SELECT ringid FROM inventoryequipment WHERE inventoryitemid = ?")) {
+                        ringQuery.setInt(1, inventoryItemId);
+                        try (ResultSet rings = ringQuery.executeQuery()) {
+                            while (rings.next()) {
+                                int ringId = rings.getInt("ringid");
+                                if (ringId > -1) {
+                                    deleteWhereCharacterId(con, "DELETE FROM rings WHERE id = ?", ringId);
+                                    cashIds.add(ringId);
                                 }
                             }
                         }
+                    }
+                    deleteWhereCharacterId(con, "DELETE FROM inventoryequipment WHERE inventoryitemid = ?", inventoryItemId);
 
-                        try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM inventoryequipment WHERE inventoryitemid = ?")) {
-                            ps2.setInt(1, inventoryitemid);
-                            ps2.executeUpdate();
-                        }
-
-                        final int petid = rs.getInt("petid");
-                        if (!rs.wasNull()) {
-                            try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM pets WHERE petid = ?")) {
-                                ps2.setInt(1, petid);
-                                ps2.executeUpdate();
-                            }
-                            CashIdGenerator.freeCashId(petid);
-                        }
+                    int petId = rs.getInt("petid");
+                    if (!rs.wasNull()) {
+                        Pet.deleteFromDb(con, petId);
+                        cashIds.add(petId);
                     }
                 }
             }
-
-            deleteQuestProgressWhereCharacterId(con, cid);
-            FredrickProcessor.removeFredrickLog(cid);   // thanks maple006 for pointing out the player's Fredrick items are not being deleted at character deletion
-
-            try (PreparedStatement ps = con.prepareStatement("SELECT id FROM mts_cart WHERE cid = ?")) {
-                ps.setInt(1, cid);
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        final int mtsid = rs.getInt("id");
-
-                        try (PreparedStatement ps2 = con.prepareStatement("DELETE FROM mts_items WHERE id = ?")) {
-                            ps2.setInt(1, mtsid);
-                            ps2.executeUpdate();
-                        }
-                    }
-                }
-            }
-
-            try (PreparedStatement ps = con.prepareStatement("DELETE FROM mts_cart WHERE cid = ?")) {
-                ps.setInt(1, cid);
-                ps.executeUpdate();
-            }
-
-            String[] toDel = {"famelog", "inventoryitems", "keymap", "queststatus", "savedlocations", "trocklocations", "skillmacros", "skills", "eventstats" };
-            for (String s : toDel) {
-                Character.deleteWhereCharacterId(con, "DELETE FROM `" + s + "` WHERE characterid = ?", cid);
-            }
-
-            Server.getInstance().deleteCharacterEntry(accId, cid);
-            return true;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
         }
+
+        deleteQuestProgressWhereCharacterId(con, cid);
+        FredrickProcessor.removeFredrickLog(con, cid);
+
+        try (PreparedStatement ps = con.prepareStatement("SELECT id FROM mts_cart WHERE cid = ?")) {
+            ps.setInt(1, cid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    deleteWhereCharacterId(con, "DELETE FROM mts_items WHERE id = ?", rs.getInt("id"));
+                }
+            }
+        }
+        deleteWhereCharacterId(con, "DELETE FROM mts_cart WHERE cid = ?", cid);
+
+        String[] characterIdTables = {"famelog", "inventoryitems", "keymap", "savedlocations", "trocklocations", "skillmacros", "skills", "eventstats"};
+        for (String table : characterIdTables) {
+            deleteWhereCharacterId(con, "DELETE FROM `" + table + "` WHERE characterid = ?", cid);
+        }
+
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM characters WHERE id = ? AND accountid = ?")) {
+            ps.setInt(1, cid);
+            ps.setInt(2, accId);
+            if (ps.executeUpdate() != 1) {
+                throw new SQLException("Character row was not deleted");
+            }
+        }
+        return new CharacterDeletionContext(world, buddyIds, cashIds, guildCharacter);
+    }
+
+    private static void completeCharacterDeletion(CharacterDeletionContext context, int cid, int accId) {
+        Server server = Server.getInstance();
+        World world = server.getWorld(context.world());
+        if (world != null) {
+            for (int buddyId : context.buddyIds()) {
+                Character buddy = world.getPlayerStorage().getCharacterById(buddyId);
+                if (buddy != null) {
+                    buddy.deleteBuddy(cid);
+                }
+            }
+        }
+        if (context.guildCharacter() != null) {
+            server.deleteGuildCharacter(context.guildCharacter());
+        }
+        for (int cashId : context.cashIds()) {
+            CashIdGenerator.freeCashId(cashId);
+        }
+        server.deleteCharacterEntry(accId, cid);
+    }
+
+    private record CharacterDeletionContext(int world, List<Integer> buddyIds, List<Integer> cashIds,
+                                            GuildCharacter guildCharacter) {
     }
 
     private static void deleteQuestProgressWhereCharacterId(Connection con, int cid) throws SQLException {
@@ -2685,7 +2710,7 @@ public class Character extends AbstractCharacterObject {
         try {
             Server.getInstance().disbandGuild(guildid);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -3332,6 +3357,7 @@ public class Character extends AbstractCharacterObject {
                 gainExpInternal(leftover, equip, party, false, inChat, white);
             } else {
                 lastExpGainTime = System.currentTimeMillis();
+                markPersistenceDirty(PersistenceSection.STATS);
 
                 if (YamlConfig.config.server.USE_EXP_GAIN_LOG) {
                     ExpLogRecord expLogRecord = new ExpLogger.ExpLogRecord(
@@ -3506,7 +3532,7 @@ public class Character extends AbstractCharacterObject {
                 }
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
 
         return character;
@@ -4999,26 +5025,36 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void resetExcluded(int petId) {
+        boolean changed;
         chrLock.lock();
         try {
             Set<Integer> petExclude = excluded.get(petId);
 
             if (petExclude != null) {
+                changed = !petExclude.isEmpty();
                 petExclude.clear();
             } else {
                 excluded.put(petId, new LinkedHashSet<Integer>());
+                changed = false;
             }
         } finally {
             chrLock.unlock();
         }
+        if (changed) {
+            markPersistenceDirty(PersistenceSection.PETS);
+        }
     }
 
     public void addExcluded(int petId, int x) {
+        boolean changed;
         chrLock.lock();
         try {
-            excluded.get(petId).add(x);
+            changed = excluded.get(petId).add(x);
         } finally {
             chrLock.unlock();
+        }
+        if (changed) {
+            markPersistenceDirty(PersistenceSection.PETS);
         }
     }
 
@@ -5072,7 +5108,11 @@ public class Character extends AbstractCharacterObject {
     public Map<Integer, Set<Integer>> getExcluded() {
         chrLock.lock();
         try {
-            return Collections.unmodifiableMap(excluded);
+            Map<Integer, Set<Integer>> snapshot = new LinkedHashMap<>();
+            for (Entry<Integer, Set<Integer>> entry : excluded.entrySet()) {
+                snapshot.put(entry.getKey(), Collections.unmodifiableSet(new LinkedHashSet<>(entry.getValue())));
+            }
+            return Collections.unmodifiableMap(snapshot);
         } finally {
             chrLock.unlock();
         }
@@ -5081,7 +5121,7 @@ public class Character extends AbstractCharacterObject {
     public Set<Integer> getExcludedItems() {
         chrLock.lock();
         try {
-            return Collections.unmodifiableSet(excludedItems);
+            return Collections.unmodifiableSet(new LinkedHashSet<>(excludedItems));
         } finally {
             chrLock.unlock();
         }
@@ -5251,7 +5291,8 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void setUsedStorage() {
-        usedStorage = true;
+        usedStorage.set(true);
+        markPersistenceDirty(PersistenceSection.RELATED);
     }
 
     public List<Ring> getFriendshipRings() {
@@ -5274,7 +5315,7 @@ public class Character extends AbstractCharacterObject {
         try {
             return Server.getInstance().getGuild(getGuildId(), getWorld(), this);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
             return null;
         }
     }
@@ -5284,7 +5325,7 @@ public class Character extends AbstractCharacterObject {
             try {
                 return Server.getInstance().getAlliance(getGuild().getAllianceId());
             } catch (Exception ex) {
-                ex.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(ex);
             }
         }
 
@@ -5324,7 +5365,7 @@ public class Character extends AbstractCharacterObject {
             }
             return id;
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return -1;
     }
@@ -5342,7 +5383,7 @@ public class Character extends AbstractCharacterObject {
             }
             return id;
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return -1;
     }
@@ -5360,7 +5401,7 @@ public class Character extends AbstractCharacterObject {
             }
             return name;
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return null;
     }
@@ -5586,7 +5627,7 @@ public class Character extends AbstractCharacterObject {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         if (elapsedDays > 100) {
@@ -5822,6 +5863,7 @@ public class Character extends AbstractCharacterObject {
         this.gmLevel = Math.max(level, 0);
 
         whiteChat = gmLevel >= 4;   // thanks ozanrijen for suggesting default white chat
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void closePartySearchInteractions() {
@@ -6011,6 +6053,7 @@ public class Character extends AbstractCharacterObject {
             QuestStatus qs = quests.get(questid);
             if (qs == null) {
                 qs = new QuestStatus(quest, QuestStatus.Status.NOT_STARTED);
+                attachQuestStatus(qs);
                 quests.put(questid, qs);
             }
             return qs;
@@ -6024,7 +6067,9 @@ public class Character extends AbstractCharacterObject {
             if (!quests.containsKey(quest.getId())) {
                 final QuestStatus stat = new QuestStatus(quest, QuestStatus.Status.getById(status));
                 stat.setCustomData(customData);
+                attachQuestStatus(stat);
                 quests.put(quest.getId(), stat);
+                markPersistenceDirty(PersistenceSection.QUESTS);
             }
         }
     }
@@ -6033,6 +6078,7 @@ public class Character extends AbstractCharacterObject {
         synchronized (quests) {
             if (!quests.containsKey(quest.getId())) {
                 final QuestStatus status = new QuestStatus(quest, QuestStatus.Status.NOT_STARTED);
+                attachQuestStatus(status);
                 quests.put(quest.getId(), status);
                 return status;
             }
@@ -6048,7 +6094,12 @@ public class Character extends AbstractCharacterObject {
 
     public final QuestStatus getQuestRemove(final Quest quest) {
         synchronized (quests) {
-            return quests.remove(quest.getId());
+            QuestStatus removed = quests.remove(quest.getId());
+            if (removed != null) {
+                removed.setPersistenceDirtyMarker(() -> {});
+                markPersistenceDirty(PersistenceSection.QUESTS);
+            }
+            return removed;
         }
     }
 
@@ -6086,15 +6137,27 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void clearSavedLocation(SavedLocationType type) {
-        savedLocations[type.ordinal()] = null;
+        boolean changed;
+        chrLock.lock();
+        try {
+            changed = savedLocations[type.ordinal()] != null;
+            savedLocations[type.ordinal()] = null;
+        } finally {
+            chrLock.unlock();
+        }
+        if (changed) {
+            markPersistenceDirty(PersistenceSection.LOCATIONS);
+        }
     }
 
     public int peekSavedLocation(String type) {
-        SavedLocation sl = savedLocations[SavedLocationType.fromString(type).ordinal()];
-        if (sl == null) {
-            return -1;
+        chrLock.lock();
+        try {
+            SavedLocation sl = savedLocations[SavedLocationType.fromString(type).ordinal()];
+            return sl == null ? -1 : sl.getMapId();
+        } finally {
+            chrLock.unlock();
         }
-        return sl.getMapId();
     }
 
     public int getSavedLocation(String type) {
@@ -6113,7 +6176,12 @@ public class Character extends AbstractCharacterObject {
     }
 
     public Map<Skill, SkillEntry> getSkills() {
-        return Collections.unmodifiableMap(skills);
+        chrLock.lock();
+        try {
+            return Collections.unmodifiableMap(new LinkedHashMap<>(skills));
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public int getSkillLevel(int skill) {
@@ -6258,7 +6326,7 @@ public class Character extends AbstractCharacterObject {
                 Server.getInstance().allianceMessage(allianceId, GuildPackets.updateAllianceJobLevel(this), getId(), -1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -6328,7 +6396,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, to.getId());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -6968,7 +7036,7 @@ public class Character extends AbstractCharacterObject {
     public Set<Integer> getActiveCoupons() {
         chrLock.lock();
         try {
-            return Collections.unmodifiableSet(activeCoupons.keySet());
+            return Collections.unmodifiableSet(new LinkedHashSet<>(activeCoupons.keySet()));
         } finally {
             chrLock.unlock();
         }
@@ -7030,7 +7098,7 @@ public class Character extends AbstractCharacterObject {
                 }
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
 
         return ret;
@@ -7572,6 +7640,7 @@ public class Character extends AbstractCharacterObject {
                     wserv.loadAccountStorage(ret.accountid);
                     ret.storage = wserv.getAccountStorage(ret.accountid);
                 }
+                ret.attachPersistenceChildren();
                 
                 int startHp = ret.hp, startMp = ret.mp;
                 ret.reapplyLocalStats();
@@ -7589,6 +7658,7 @@ public class Character extends AbstractCharacterObject {
             ret.maplemount.setLevel(mountlevel);
             ret.maplemount.setTiredness(mounttiredness);
             ret.maplemount.setActive(false);
+            ret.attachMount();
 
             // Quickslot key config
             try (final PreparedStatement pSelectQuickslotKeyMapped = con.prepareStatement("SELECT keymap FROM quickslotkeymapped WHERE accountid = ?;")) {
@@ -8158,6 +8228,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void removePet(Pet pet, boolean shift_left) {
+        boolean changed = false;
         petLock.lock();
         try {
             int slot = -1;
@@ -8166,6 +8237,7 @@ public class Character extends AbstractCharacterObject {
                     if (pets[i].getUniqueId() == pet.getUniqueId()) {
                         pets[i] = null;
                         slot = i;
+                        changed = true;
                         break;
                     }
                 }
@@ -8183,6 +8255,9 @@ public class Character extends AbstractCharacterObject {
             }
         } finally {
             petLock.unlock();
+        }
+        if (changed) {
+            markPersistenceDirty(PersistenceSection.PETS);
         }
     }
 
@@ -8281,7 +8356,7 @@ public class Character extends AbstractCharacterObject {
                     ps.executeBatch();
                 }
             } catch (SQLException se) {
-                se.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(se);
             }
         }
 
@@ -8306,7 +8381,7 @@ public class Character extends AbstractCharacterObject {
                     ps.executeBatch();
                 }
             } catch (SQLException se) {
-                se.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(se);
             }
         }
     }
@@ -8320,7 +8395,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(4, id);
             ps.executeUpdate();
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -8328,16 +8403,29 @@ public class Character extends AbstractCharacterObject {
         Portal closest = map.findClosestPortal(getPosition());
         int curMapid = getMapId();
 
-        for (int i = 0; i < savedLocations.length; i++) {
-            if (savedLocations[i] == null) {
-                savedLocations[i] = new SavedLocation(curMapid, closest != null ? closest.getId() : 0);
+        chrLock.lock();
+        try {
+            for (int i = 0; i < savedLocations.length; i++) {
+                if (savedLocations[i] == null) {
+                    savedLocations[i] = new SavedLocation(curMapid, closest != null ? closest.getId() : 0);
+                }
             }
+        } finally {
+            chrLock.unlock();
         }
+        markPersistenceDirty(PersistenceSection.LOCATIONS);
     }
 
     public void saveLocation(String type) {
         Portal closest = map.findClosestPortal(getPosition());
-        savedLocations[SavedLocationType.fromString(type).ordinal()] = new SavedLocation(getMapId(), closest != null ? closest.getId() : 0);
+        chrLock.lock();
+        try {
+            savedLocations[SavedLocationType.fromString(type).ordinal()] =
+                    new SavedLocation(getMapId(), closest != null ? closest.getId() : 0);
+        } finally {
+            chrLock.unlock();
+        }
+        markPersistenceDirty(PersistenceSection.LOCATIONS);
     }
 
     public final boolean insertNewChar(CharacterFactoryRecipe recipe) {
@@ -8366,7 +8454,10 @@ public class Character extends AbstractCharacterObject {
             this.getInventory(itEntry.getRight()).addItem(itEntry.getLeft());
         }
 
-        this.events.put("rescueGaga", new RescueGaga(0));
+        Events rescueGaga = new RescueGaga(0);
+        attachEvent(rescueGaga);
+        this.events.put("rescueGaga", rescueGaga);
+        markPersistenceDirty(PersistenceSection.RELATED);
 
 
         try (Connection con = DatabaseConnection.getConnection()) {
@@ -8532,11 +8623,166 @@ public class Character extends AbstractCharacterObject {
         saveCharToDB(notAutosave, notAutosave ? SaveReason.FULL_SAVE : SaveReason.AUTO_SAVE);
     }
 
+    public void markPersistenceDirty(PersistenceSection section) {
+        persistenceDirty.mark(section);
+    }
+
+    private void attachQuestStatus(QuestStatus status) {
+        status.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.QUESTS));
+    }
+
+    private void attachEvent(Events event) {
+        event.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.RELATED));
+    }
+
+    private void attachMount() {
+        if (maplemount != null) {
+            maplemount.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.STATS));
+        }
+    }
+
+    private void attachMacro(SkillMacro macro) {
+        if (macro != null) {
+            macro.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.KEYMAP));
+        }
+    }
+
+    private void attachPersistenceChildren() {
+        if (buddylist != null) {
+            buddylist.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.SOCIAL));
+        }
+        if (monsterbook != null) {
+            monsterbook.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.STATS));
+        }
+        if (storage != null) {
+            storage.attachPersistenceOwner(this);
+        }
+        if (cashshop != null) {
+            cashshop.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.RELATED));
+        }
+        attachMount();
+        for (SkillMacro macro : skillMacros) {
+            attachMacro(macro);
+        }
+        synchronized (events) {
+            for (Events event : events.values()) {
+                attachEvent(event);
+            }
+        }
+        synchronized (quests) {
+            for (QuestStatus status : quests.values()) {
+                attachQuestStatus(status);
+            }
+        }
+    }
+
+    record LocationPersistenceSnapshot(SavedLocation[] savedLocations,
+                                       List<Integer> regularTrockMaps,
+                                       List<Integer> vipTrockMaps) {
+        LocationPersistenceSnapshot {
+            savedLocations = Arrays.copyOf(savedLocations, savedLocations.length);
+            regularTrockMaps = List.copyOf(regularTrockMaps);
+            vipTrockMaps = List.copyOf(vipTrockMaps);
+        }
+
+        SavedLocation savedLocation(SavedLocationType type) {
+            return savedLocations[type.ordinal()];
+        }
+
+        @Override
+        public SavedLocation[] savedLocations() {
+            return Arrays.copyOf(savedLocations, savedLocations.length);
+        }
+    }
+
     //ItemFactory saveItems and monsterbook.saveCards are the most time consuming here.
     public synchronized void saveCharToDB(boolean notAutosave, SaveReason saveReason) {
         if (!loggedIn) {
             return;
         }
+
+        SavePlan<PersistenceSection> savePlan = persistenceDirty.plan(notAutosave);
+        if (savePlan.isEmpty()) {
+            persistenceDirty.complete(savePlan);
+            CharacterSaveDiagnostics.recordSkipped(id, name, saveReason);
+            return;
+        }
+
+        List<Pet.PersistenceSnapshot> petSnapshot = new ArrayList<>();
+        if (savePlan.includes(PersistenceSection.PETS)) {
+            petLock.lock();
+            try {
+                for (Pet pet : pets) {
+                    if (pet != null) {
+                        petSnapshot.add(pet.persistenceSnapshot());
+                    }
+                }
+            } finally {
+                petLock.unlock();
+            }
+        }
+        Map<Integer, Set<Integer>> excludedSnapshot = savePlan.includes(PersistenceSection.PETS)
+                ? getExcluded() : Map.of();
+        Map<Integer, KeyBinding> keymapSnapshot;
+        synchronized (keymap) {
+            keymapSnapshot = savePlan.includes(PersistenceSection.KEYMAP)
+                    ? new LinkedHashMap<>(keymap) : Map.of();
+        }
+        SkillMacro[] macroSnapshot = new SkillMacro[savePlan.includes(PersistenceSection.KEYMAP)
+                ? skillMacros.length : 0];
+        for (int i = 0; i < macroSnapshot.length; i++) {
+            SkillMacro macro = skillMacros[i];
+            if (macro != null) {
+                macroSnapshot[i] = new SkillMacro(macro.getSkill1(), macro.getSkill2(), macro.getSkill3(),
+                        macro.getName(), macro.getShout(), macro.getPosition());
+            }
+        }
+        List<Pair<Item, InventoryType>> inventorySnapshot = new ArrayList<>();
+        if (savePlan.includes(PersistenceSection.INVENTORY)) {
+            for (Inventory iv : inventory) {
+                for (Item item : iv.list()) {
+                    inventorySnapshot.add(new Pair<>(item.copy(), iv.getType()));
+                }
+            }
+        }
+        Map<Skill, SkillEntry> skillsSnapshot = new LinkedHashMap<>();
+        if (savePlan.includes(PersistenceSection.SKILLS)) {
+            getSkills().forEach((skill, entry) -> skillsSnapshot.put(skill, entry.persistenceCopy()));
+        }
+        LocationPersistenceSnapshot locationSnapshot;
+        chrLock.lock();
+        try {
+            locationSnapshot = savePlan.includes(PersistenceSection.LOCATIONS)
+                    ? new LocationPersistenceSnapshot(savedLocations, trockmaps, viptrockmaps)
+                    : new LocationPersistenceSnapshot(new SavedLocation[SavedLocationType.values().length],
+                            List.of(), List.of());
+        } finally {
+            chrLock.unlock();
+        }
+        BuddyList.PersistenceSnapshot buddySnapshot = savePlan.includes(PersistenceSection.SOCIAL)
+                ? buddylist.persistenceSnapshot() : new BuddyList.PersistenceSnapshot(0, List.of());
+        Map<Short, String> areaSnapshot;
+        chrLock.lock();
+        try {
+            areaSnapshot = savePlan.includes(PersistenceSection.RELATED)
+                    ? new LinkedHashMap<>(area_info) : Map.of();
+        } finally {
+            chrLock.unlock();
+        }
+        Map<String, Integer> eventSnapshot = new LinkedHashMap<>();
+        if (savePlan.includes(PersistenceSection.RELATED) && events != null) {
+            synchronized (events) {
+                events.forEach((name, event) -> eventSnapshot.put(name, event.getInfo()));
+            }
+        }
+        List<QuestStatus.PersistenceSnapshot> questSnapshot = savePlan.includes(PersistenceSection.QUESTS)
+                ? getQuests().stream().map(QuestStatus::persistenceSnapshot).toList() : List.of();
+        Mount.PersistenceSnapshot mountSnapshot = savePlan.includes(PersistenceSection.STATS) && maplemount != null
+                ? maplemount.persistenceSnapshot() : new Mount.PersistenceSnapshot(0, 1, 0);
+        boolean saveStorage = (savePlan.includes(PersistenceSection.SOCIAL)
+                || savePlan.includes(PersistenceSection.RELATED))
+                && storage != null && usedStorage.getAndSet(false);
+        Map<FamilyEntry, Long> savedFamilyEntries = new LinkedHashMap<>();
 
         long saveStartedNs = SlowOperationLogger.start();
         Calendar c = Calendar.getInstance();
@@ -8549,6 +8795,7 @@ public class Character extends AbstractCharacterObject {
             con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 
             try {
+                if (savePlan.includes(PersistenceSection.STATS)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, level);    // thanks CanIGetaPR for noticing an unnecessary "level" limitation when persisting DB data
@@ -8629,15 +8876,9 @@ public class Character extends AbstractCharacterObject {
                         ps.setInt(27, 0);
                         ps.setInt(28, 4);
                     }
-                    if (maplemount != null) {
-                        ps.setInt(29, maplemount.getLevel());
-                        ps.setInt(30, maplemount.getExp());
-                        ps.setInt(31, maplemount.getTiredness());
-                    } else {
-                        ps.setInt(29, 1);
-                        ps.setInt(30, 0);
-                        ps.setInt(31, 0);
-                    }
+                    ps.setInt(29, mountSnapshot.level());
+                    ps.setInt(30, mountSnapshot.exp());
+                    ps.setInt(31, mountSnapshot.tiredness());
                     for (int i = 1; i < 5; i++) {
                         ps.setInt(i + 31, getSlots(i));
                     }
@@ -8672,25 +8913,15 @@ public class Character extends AbstractCharacterObject {
                     }
                 }
                 CharacterSaveDiagnostics.recordSection("character-row", sectionStartedNs);
-
-                sectionStartedNs = SlowOperationLogger.start();
-                List<Pet> petList = new LinkedList<>();
-                petLock.lock();
-                try {
-                    for (int i = 0; i < 3; i++) {
-                        if (pets[i] != null) {
-                            petList.add(pets[i]);
-                        }
-                    }
-                } finally {
-                    petLock.unlock();
                 }
 
-                for (Pet pet : petList) {
-                    pet.saveToDb();
+                if (savePlan.includes(PersistenceSection.PETS)) {
+                long sectionStartedNs = SlowOperationLogger.start();
+                for (Pet.PersistenceSnapshot pet : petSnapshot) {
+                    pet.saveToDb(con);
                 }
 
-                for (Entry<Integer, Set<Integer>> es : getExcluded().entrySet()) {    // this set is already protected
+                for (Entry<Integer, Set<Integer>> es : excludedSnapshot.entrySet()) {
                     try (PreparedStatement psIgnore = con.prepareStatement("DELETE FROM petignores WHERE petid=?")) {
                         psIgnore.setInt(1, es.getKey());
                         psIgnore.executeUpdate();
@@ -8706,15 +8937,16 @@ public class Character extends AbstractCharacterObject {
                     }
                 }
                 CharacterSaveDiagnostics.recordSection("pets", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.KEYMAP)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 // Key config
                 deleteWhereCharacterId(con, "DELETE FROM keymap WHERE characterid = ?");
                 try (PreparedStatement psKey = con.prepareStatement("INSERT INTO keymap (characterid, `key`, `type`, `action`) VALUES (?, ?, ?, ?)")) {
                     psKey.setInt(1, id);
 
-                    Set<Entry<Integer, KeyBinding>> keybindingItems = Collections.unmodifiableSet(keymap.entrySet());
-                    for (Entry<Integer, KeyBinding> keybinding : keybindingItems) {
+                    for (Entry<Integer, KeyBinding> keybinding : keymapSnapshot.entrySet()) {
                         psKey.setInt(2, keybinding.getKey());
                         psKey.setInt(3, keybinding.getValue().getType());
                         psKey.setInt(4, keybinding.getValue().getAction());
@@ -8742,8 +8974,8 @@ public class Character extends AbstractCharacterObject {
                 deleteWhereCharacterId(con, "DELETE FROM skillmacros WHERE characterid = ?");
                 try (PreparedStatement psMacro = con.prepareStatement("INSERT INTO skillmacros (characterid, skill1, skill2, skill3, name, shout, position) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
                     psMacro.setInt(1, getId());
-                    for (int i = 0; i < 5; i++) {
-                        SkillMacro macro = skillMacros[i];
+                    for (int i = 0; i < macroSnapshot.length; i++) {
+                        SkillMacro macro = macroSnapshot[i];
                         if (macro != null) {
                             psMacro.setInt(2, macro.getSkill1());
                             psMacro.setInt(3, macro.getSkill2());
@@ -8757,24 +8989,22 @@ public class Character extends AbstractCharacterObject {
                     psMacro.executeBatch();
                 }
                 CharacterSaveDiagnostics.recordSection("skill-macros", sectionStartedNs);
-
-                sectionStartedNs = SlowOperationLogger.start();
-                List<Pair<Item, InventoryType>> itemsWithType = new ArrayList<>();
-                for (Inventory iv : inventory) {
-                    for (Item item : iv.list()) {
-                        itemsWithType.add(new Pair<>(item, iv.getType()));
-                    }
                 }
 
+                if (savePlan.includes(PersistenceSection.INVENTORY)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 // Items
-                ItemFactory.INVENTORY.saveItems(itemsWithType, id, con);
+                ItemFactory.INVENTORY.saveItems(inventorySnapshot, id, con);
                 CharacterSaveDiagnostics.recordSection("inventory", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.SKILLS)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 // Skills
-                try (PreparedStatement psSkill = con.prepareStatement("REPLACE INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) VALUES (?, ?, ?, ?, ?)")) {
+                deleteWhereCharacterId(con, "DELETE FROM skills WHERE characterid = ?");
+                try (PreparedStatement psSkill = con.prepareStatement("INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) VALUES (?, ?, ?, ?, ?)")) {
                     psSkill.setInt(1, id);
-                    for (Entry<Skill, SkillEntry> skill : skills.entrySet()) {
+                    for (Entry<Skill, SkillEntry> skill : skillsSnapshot.entrySet()) {
                         psSkill.setInt(2, skill.getKey().getId());
                         psSkill.setInt(3, skill.getValue().skillevel);
                         psSkill.setInt(4, skill.getValue().masterlevel);
@@ -8784,17 +9014,20 @@ public class Character extends AbstractCharacterObject {
                     psSkill.executeBatch();
                 }
                 CharacterSaveDiagnostics.recordSection("skills", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.LOCATIONS)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 // Saved locations
                 deleteWhereCharacterId(con, "DELETE FROM savedlocations WHERE characterid = ?");
                 try (PreparedStatement psLoc = con.prepareStatement("INSERT INTO savedlocations (characterid, `locationtype`, `map`, `portal`) VALUES (?, ?, ?, ?)")) {
                     psLoc.setInt(1, id);
                     for (SavedLocationType savedLocationType : SavedLocationType.values()) {
-                        if (savedLocations[savedLocationType.ordinal()] != null) {
+                        SavedLocation savedLocation = locationSnapshot.savedLocation(savedLocationType);
+                        if (savedLocation != null) {
                             psLoc.setString(2, savedLocationType.name());
-                            psLoc.setInt(3, savedLocations[savedLocationType.ordinal()].getMapId());
-                            psLoc.setInt(4, savedLocations[savedLocationType.ordinal()].getPortal());
+                            psLoc.setInt(3, savedLocation.getMapId());
+                            psLoc.setInt(4, savedLocation.getPortal());
                             psLoc.addBatch();
                         }
                     }
@@ -8803,55 +9036,65 @@ public class Character extends AbstractCharacterObject {
 
                 deleteWhereCharacterId(con, "DELETE FROM trocklocations WHERE characterid = ?");
 
-                // Vip teleport rocks
+                // Regular teleport rocks
                 try (PreparedStatement psVip = con.prepareStatement("INSERT INTO trocklocations(characterid, mapid, vip) VALUES (?, ?, 0)")) {
-                    for (int i = 0; i < getTrockSize(); i++) {
-                        if (trockmaps.get(i) != MapId.NONE) {
+                    for (int i = 0; i < locationSnapshot.regularTrockMaps().size(); i++) {
+                        if (locationSnapshot.regularTrockMaps().get(i) != MapId.NONE) {
                             psVip.setInt(1, getId());
-                            psVip.setInt(2, trockmaps.get(i));
+                            psVip.setInt(2, locationSnapshot.regularTrockMaps().get(i));
                             psVip.addBatch();
                         }
                     }
                     psVip.executeBatch();
                 }
 
-                // Regular teleport rocks
+                // Vip teleport rocks
                 try (PreparedStatement psReg = con.prepareStatement("INSERT INTO trocklocations(characterid, mapid, vip) VALUES (?, ?, 1)")) {
-                    for (int i = 0; i < getVipTrockSize(); i++) {
-                        if (viptrockmaps.get(i) != MapId.NONE) {
+                    for (int i = 0; i < locationSnapshot.vipTrockMaps().size(); i++) {
+                        if (locationSnapshot.vipTrockMaps().get(i) != MapId.NONE) {
                             psReg.setInt(1, getId());
-                            psReg.setInt(2, viptrockmaps.get(i));
+                            psReg.setInt(2, locationSnapshot.vipTrockMaps().get(i));
                             psReg.addBatch();
                         }
                     }
                     psReg.executeBatch();
                 }
                 CharacterSaveDiagnostics.recordSection("locations", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.SOCIAL)) {
+                long sectionStartedNs = SlowOperationLogger.start();
+                try (PreparedStatement psCapacity = con.prepareStatement(
+                        "UPDATE characters SET buddyCapacity = ? WHERE id = ?")) {
+                    psCapacity.setInt(1, buddySnapshot.capacity());
+                    psCapacity.setInt(2, id);
+                    psCapacity.executeUpdate();
+                }
                 // Buddy
                 deleteWhereCharacterId(con, "DELETE FROM buddies WHERE characterid = ? AND pending = 0");
                 try (PreparedStatement psBuddy = con.prepareStatement("INSERT INTO buddies (characterid, `buddyid`, `pending`, `group`) VALUES (?, ?, 0, ?)")) {
                     psBuddy.setInt(1, id);
 
-                    for (BuddylistEntry entry : buddylist.getBuddies()) {
-                        if (entry.isVisible()) {
-                            psBuddy.setInt(2, entry.getCharacterId());
-                            psBuddy.setString(3, entry.getGroup());
+                    for (BuddyList.PersistedEntry entry : buddySnapshot.entries()) {
+                        if (entry.visible()) {
+                            psBuddy.setInt(2, entry.characterId());
+                            psBuddy.setString(3, entry.group());
                             psBuddy.addBatch();
                         }
                     }
                     psBuddy.executeBatch();
                 }
                 CharacterSaveDiagnostics.recordSection("buddies", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.RELATED)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 // Area info
                 deleteWhereCharacterId(con, "DELETE FROM area_info WHERE charid = ?");
                 try (PreparedStatement psArea = con.prepareStatement("INSERT INTO area_info (id, charid, area, info) VALUES (DEFAULT, ?, ?, ?)")) {
                     psArea.setInt(1, id);
 
-                    for (Entry<Short, String> area : area_info.entrySet()) {
+                    for (Entry<Short, String> area : areaSnapshot.entrySet()) {
                         psArea.setInt(2, area.getKey());
                         psArea.setString(3, area.getValue());
                         psArea.addBatch();
@@ -8864,17 +9107,19 @@ public class Character extends AbstractCharacterObject {
                 try (PreparedStatement psEvent = con.prepareStatement("INSERT INTO eventstats (characterid, name, info) VALUES (?, ?, ?)")) {
                     psEvent.setInt(1, id);
 
-                    for (Map.Entry<String, Events> entry : events.entrySet()) {
+                    for (Map.Entry<String, Integer> entry : eventSnapshot.entrySet()) {
                         psEvent.setString(2, entry.getKey());
-                        psEvent.setInt(3, entry.getValue().getInfo());
+                        psEvent.setInt(3, entry.getValue());
                         psEvent.addBatch();
                     }
 
                     psEvent.executeBatch();
                 }
                 CharacterSaveDiagnostics.recordSection("area-event", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.QUESTS)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 deleteQuestProgressWhereCharacterId(con, id);
 
                 // Quests and medals
@@ -8883,30 +9128,30 @@ public class Character extends AbstractCharacterObject {
                      PreparedStatement psMedal = con.prepareStatement("INSERT INTO medalmaps VALUES (DEFAULT, ?, ?, ?)")) {
                     psStatus.setInt(1, id);
 
-                    for (QuestStatus qs : getQuests()) {
-                        psStatus.setInt(2, qs.getQuest().getId());
-                        psStatus.setInt(3, qs.getStatus().getId());
-                        psStatus.setInt(4, (int) (qs.getCompletionTime() / 1000));
-                        psStatus.setLong(5, qs.getExpirationTime());
-                        psStatus.setInt(6, qs.getForfeited());
-                        psStatus.setInt(7, qs.getCompleted());
+                    for (QuestStatus.PersistenceSnapshot qs : questSnapshot) {
+                        psStatus.setInt(2, qs.questId());
+                        psStatus.setInt(3, qs.status());
+                        psStatus.setInt(4, (int) (qs.completionTime() / 1000));
+                        psStatus.setLong(5, qs.expirationTime());
+                        psStatus.setInt(6, qs.forfeited());
+                        psStatus.setInt(7, qs.completed());
                         psStatus.executeUpdate();
 
                         try (ResultSet rs = psStatus.getGeneratedKeys()) {
                             rs.next();
-                            for (int mob : qs.getProgress().keySet()) {
+                            for (Entry<Integer, String> progress : qs.progress().entrySet()) {
                                 psProgress.setInt(1, id);
                                 psProgress.setInt(2, rs.getInt(1));
-                                psProgress.setInt(3, mob);
-                                psProgress.setString(4, qs.getProgress(mob));
+                                psProgress.setInt(3, progress.getKey());
+                                psProgress.setString(4, progress.getValue());
                                 psProgress.addBatch();
                             }
                             psProgress.executeBatch();
 
-                            for (int i = 0; i < qs.getMedalMaps().size(); i++) {
+                            for (Integer medalMap : qs.medalMaps()) {
                                 psMedal.setInt(1, id);
                                 psMedal.setInt(2, rs.getInt(1));
-                                psMedal.setInt(3, qs.getMedalMaps().get(i));
+                                psMedal.setInt(3, medalMap);
                                 psMedal.addBatch();
                             }
                             psMedal.executeBatch();
@@ -8914,23 +9159,34 @@ public class Character extends AbstractCharacterObject {
                     }
                 }
                 CharacterSaveDiagnostics.recordSection("quests", sectionStartedNs);
+                }
 
-                sectionStartedNs = SlowOperationLogger.start();
+                if (savePlan.includes(PersistenceSection.SOCIAL) || savePlan.includes(PersistenceSection.RELATED)) {
+                long sectionStartedNs = SlowOperationLogger.start();
                 FamilyEntry familyEntry = getFamilyEntry(); //save family rep
                 if (familyEntry != null) {
-                    if (familyEntry.saveReputation(con)) {
-                        familyEntry.savedSuccessfully();
+                    long familyVersion = familyEntry.getReputationVersion();
+                    if (!familyEntry.saveReputation(con)) {
+                        throw new SQLException("Failed to save family reputation for character "
+                                + familyEntry.getChrId());
                     }
+                    savedFamilyEntries.put(familyEntry, familyVersion);
                     FamilyEntry senior = familyEntry.getSenior();
                     if (senior != null && senior.getChr() == null) { //only save for offline family members
-                        if (senior.saveReputation(con)) {
-                            senior.savedSuccessfully();
+                        long seniorVersion = senior.getReputationVersion();
+                        if (!senior.saveReputation(con)) {
+                            throw new SQLException("Failed to save family reputation for character "
+                                    + senior.getChrId());
                         }
+                        savedFamilyEntries.put(senior, seniorVersion);
                         senior = senior.getSenior(); //save one level up as well
                         if (senior != null && senior.getChr() == null) {
-                            if (senior.saveReputation(con)) {
-                                senior.savedSuccessfully();
+                            seniorVersion = senior.getReputationVersion();
+                            if (!senior.saveReputation(con)) {
+                                throw new SQLException("Failed to save family reputation for character "
+                                        + senior.getChrId());
                             }
+                            savedFamilyEntries.put(senior, seniorVersion);
                         }
                     }
 
@@ -8940,13 +9196,15 @@ public class Character extends AbstractCharacterObject {
                     cashshop.save(con);
                 }
 
-                if (storage != null && usedStorage) {
+                if (saveStorage) {
                     storage.saveToDB(con);
-                    usedStorage = false;
                 }
                 CharacterSaveDiagnostics.recordSection("family-cash-storage", sectionStartedNs);
+                }
 
                 con.commit();
+                savedFamilyEntries.forEach(FamilyEntry::savedSuccessfully);
+                persistenceDirty.complete(savePlan);
                 CharacterSaveDiagnostics.recordSuccess(id, name, notAutosave, saveReason, saveStartedNs);
             } catch (Exception e) {
                 con.rollback();
@@ -8956,6 +9214,9 @@ public class Character extends AbstractCharacterObject {
                 con.setAutoCommit(true);
             }
         } catch (Exception e) {
+            if (saveStorage) {
+                usedStorage.set(true);
+            }
             CharacterSaveDiagnostics.recordFailure(id, name, notAutosave, saveReason, saveStartedNs);
             log.error("Error saving chr {}, level: {}, job: {}", name, level, job.getId(), e);
         } finally {
@@ -9014,7 +9275,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     public SkillMacro[] getMacros() {
-        return skillMacros;
+        return Arrays.copyOf(skillMacros, skillMacros.length);
     }
 
     public static void setAriantRoomLeader(int room, String charname) {
@@ -9059,10 +9320,12 @@ public class Character extends AbstractCharacterObject {
 
     public void setDojoPoints(int x) {
         this.dojoPoints = x;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setDojoStage(int x) {
         this.dojoStage = x;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setEnergyBar(int set) {
@@ -9080,18 +9343,22 @@ public class Character extends AbstractCharacterObject {
 
     public void setExp(int amount) {
         this.exp.set(amount);
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setGachaExp(int amount) {
         this.gachaexp.set(amount);
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setFace(int face) {
         this.face = face;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setFame(int fame) {
         this.fame = fame;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setFamilyId(int familyId) {
@@ -9100,14 +9367,17 @@ public class Character extends AbstractCharacterObject {
 
     public void setFinishedDojoTutorial() {
         this.finishedDojoTutorial = true;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setGender(int gender) {
         this.gender = gender;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setGM(int level) {
         this.gmLevel = level;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setGuildId(int _id) {
@@ -9124,6 +9394,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setHair(int hair) {
         this.hair = hair;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setHasMerchant(boolean set) {
@@ -9133,7 +9404,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         hasMerchant = set;
     }
@@ -9147,7 +9418,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return;
         }
         merchantmeso = newAmount;
@@ -9160,7 +9431,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return;
         }
         merchantmeso = set;
@@ -9207,21 +9478,32 @@ public class Character extends AbstractCharacterObject {
             }
         }
 
-        final boolean chrDied = playerDied;
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                updatePartyMemberHP();    // thanks BHB (BHB88) for detecting a deadlock case within player stats.
-
-                if (chrDied) {
-                    playerDead();
-                } else {
-                    checkBerserk(isHidden());
-                }
-            }
-        };
+        if (playerDied) {
+            pendingHpDeath.set(true);
+        }
         if (map != null) {
-            map.registerCharacterStatUpdate(r);
+            map.registerCharacterStatUpdate(id, this::runPendingHpChangeAction);
+        }
+    }
+
+    public void applyCommittedMerchantRetrieval(int settledMeso) {
+        petLock.lock();
+        try {
+            meso.set(settledMeso);
+            merchantmeso = 0;
+        } finally {
+            petLock.unlock();
+        }
+        updateSingleStat(Stat.MESO, settledMeso);
+        markPersistenceDirty(PersistenceSection.STATS);
+    }
+
+    private void runPendingHpChangeAction() {
+        updatePartyMemberHP();    // thanks BHB (BHB88) for detecting a deadlock case within player stats.
+        if (pendingHpDeath.getAndSet(false)) {
+            playerDead();
+        } else {
+            checkBerserk(isHidden());
         }
     }
 
@@ -9355,7 +9637,17 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void setInventory(InventoryType type, Inventory inv) {
+        Inventory previous = inventory[type.ordinal()];
+        if (previous == inv) {
+            return;
+        }
+        if (previous != null) {
+            previous.dispose();
+        }
+        inv.attachPersistenceOwner(this);
         inventory[type.ordinal()] = inv;
+        markPersistenceDirty(PersistenceSection.INVENTORY);
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setItemEffect(int itemEffect) {
@@ -9364,6 +9656,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setJob(Job job) {
         this.job = job;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setLastHealed(long time) {
@@ -9376,18 +9669,22 @@ public class Character extends AbstractCharacterObject {
 
     public void setLevel(int level) {
         this.level = level;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setMap(int PmapId) {
         this.mapid = PmapId;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setMessenger(Messenger messenger) {
         this.messenger = messenger;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setMessengerPosition(int position) {
         this.messengerposition = position;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setMiniGame(MiniGame miniGame) {
@@ -9418,10 +9715,13 @@ public class Character extends AbstractCharacterObject {
                 visitor.matchcardties++;
             }
         }
+        markPersistenceDirty(PersistenceSection.STATS);
+        visitor.markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setMonsterBookCover(int bookCover) {
         this.bookCover = bookCover;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setName(String name) {
@@ -9471,6 +9771,7 @@ public class Character extends AbstractCharacterObject {
         } finally {
             prtLock.unlock();
         }
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setPlayerShop(PlayerShop playerShop) {
@@ -9483,6 +9784,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setSkinColor(SkinColor skinColor) {
         this.skinColor = skinColor;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public byte getSlots(int type) {
@@ -9540,10 +9842,12 @@ public class Character extends AbstractCharacterObject {
 
     public void setVanquisherKills(int x) {
         this.vanquisherKills = x;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setVanquisherStage(int x) {
         this.vanquisherStage = x;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void setWorld(int world) {
@@ -9557,6 +9861,7 @@ public class Character extends AbstractCharacterObject {
                 pets[2] = pets[1];
                 pets[1] = pets[0];
                 pets[0] = null;
+                markPersistenceDirty(PersistenceSection.PETS);
             }
         } finally {
             petLock.unlock();
@@ -9630,14 +9935,18 @@ public class Character extends AbstractCharacterObject {
 
     public static class SkillEntry {
 
-        public int masterlevel;
-        public byte skillevel;
-        public long expiration;
+        public final int masterlevel;
+        public final byte skillevel;
+        public final long expiration;
 
         public SkillEntry(byte skillevel, int masterlevel, long expiration) {
             this.skillevel = skillevel;
             this.masterlevel = masterlevel;
             this.expiration = expiration;
+        }
+
+        public SkillEntry persistenceCopy() {
+            return new SkillEntry(skillevel, masterlevel, expiration);
         }
 
         @Override
@@ -9743,7 +10052,13 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void updateMacros(int position, SkillMacro updateMacro) {
+        SkillMacro previous = skillMacros[position];
+        if (previous != null && previous != updateMacro) {
+            previous.setPersistenceDirtyMarker(() -> {});
+        }
+        attachMacro(updateMacro);
         skillMacros[position] = updateMacro;
+        markPersistenceDirty(PersistenceSection.KEYMAP);
     }
 
     public void updatePartyMemberHP() {
@@ -9796,6 +10111,7 @@ public class Character extends AbstractCharacterObject {
             delta = quest_fame / YamlConfig.config.server.QUEST_POINT_REQUIREMENT;
             quest_fame %= YamlConfig.config.server.QUEST_POINT_REQUIREMENT;
         }
+        markPersistenceDirty(PersistenceSection.STATS);
 
         if (delta > 0) {
             gainFame(delta);
@@ -9855,9 +10171,14 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void updateQuestStatus(QuestStatus qs) {
+        attachQuestStatus(qs);
         synchronized (quests) {
-            quests.put(qs.getQuestID(), qs);
+            QuestStatus previous = quests.put(qs.getQuestID(), qs);
+            if (previous != null && previous != qs) {
+                previous.setPersistenceDirtyMarker(() -> {});
+            }
         }
+        markPersistenceDirty(PersistenceSection.QUESTS);
         if (qs.getStatus().equals(QuestStatus.Status.STARTED)) {
             announceUpdateQuest(DelayedQuestUpdate.UPDATE, qs, false);
             if (qs.getInfoNumber() > 0) {
@@ -9998,6 +10319,7 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void updateSingleStat(Stat stat, int newval, boolean itemReaction) {
+        markPersistenceDirty(PersistenceSection.STATS);
         sendPacket(PacketCreator.updatePlayerStats(Collections.singletonList(new Pair<>(stat, Integer.valueOf(newval))), itemReaction, this));
     }
 
@@ -10038,6 +10360,15 @@ public class Character extends AbstractCharacterObject {
 
     @Override
     public void setObjectId(int id) {}
+
+    @Override
+    public void setPosition(Point position) {
+        Point previous = getPosition();
+        super.setPosition(position);
+        if (!previous.equals(position)) {
+            markPersistenceDirty(PersistenceSection.STATS);
+        }
+    }
 
     @Override
     public String toString() {
@@ -10117,23 +10448,42 @@ public class Character extends AbstractCharacterObject {
 
     public boolean containsAreaInfo(int area, String info) {
         Short area_ = Short.valueOf((short) area);
-        if (area_info.containsKey(area_)) {
-            return area_info.get(area_).contains(info);
+        chrLock.lock();
+        try {
+            return area_info.containsKey(area_) && area_info.get(area_).contains(info);
+        } finally {
+            chrLock.unlock();
         }
-        return false;
+
     }
 
     public void updateAreaInfo(int area, String info) {
-        area_info.put(Short.valueOf((short) area), info);
+        chrLock.lock();
+        try {
+            area_info.put(Short.valueOf((short) area), info);
+        } finally {
+            chrLock.unlock();
+        }
+        markPersistenceDirty(PersistenceSection.RELATED);
         sendPacket(PacketCreator.updateAreaInfo(area, info));
     }
 
     public String getAreaInfo(int area) {
-        return area_info.get(Short.valueOf((short) area));
+        chrLock.lock();
+        try {
+            return area_info.get(Short.valueOf((short) area));
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public Map<Short, String> getAreaInfos() {
-        return area_info;
+        chrLock.lock();
+        try {
+            return Collections.unmodifiableMap(new LinkedHashMap<>(area_info));
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public void autoban(String reason) {
@@ -10166,7 +10516,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(4, accountid);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -10175,68 +10525,119 @@ public class Character extends AbstractCharacterObject {
     }
 
     public List<Integer> getTrockMaps() {
-        return trockmaps;
+        chrLock.lock();
+        try {
+            return Collections.unmodifiableList(new ArrayList<>(trockmaps));
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public List<Integer> getVipTrockMaps() {
-        return viptrockmaps;
+        chrLock.lock();
+        try {
+            return Collections.unmodifiableList(new ArrayList<>(viptrockmaps));
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public int getTrockSize() {
-        int ret = trockmaps.indexOf(MapId.NONE);
-        if (ret == -1) {
-            ret = 5;
+        chrLock.lock();
+        try {
+            int ret = trockmaps.indexOf(MapId.NONE);
+            return ret == -1 ? 5 : ret;
+        } finally {
+            chrLock.unlock();
         }
-
-        return ret;
     }
 
     public void deleteFromTrocks(int map) {
-        trockmaps.remove(Integer.valueOf(map));
-        while (trockmaps.size() < 10) {
-            trockmaps.add(MapId.NONE);
+        chrLock.lock();
+        try {
+            trockmaps.remove(Integer.valueOf(map));
+            while (trockmaps.size() < 10) {
+                trockmaps.add(MapId.NONE);
+            }
+        } finally {
+            chrLock.unlock();
         }
+        markPersistenceDirty(PersistenceSection.LOCATIONS);
     }
 
     public void addTrockMap() {
-        int index = trockmaps.indexOf(MapId.NONE);
-        if (index != -1) {
-            trockmaps.set(index, getMapId());
+        boolean changed = false;
+        chrLock.lock();
+        try {
+            int index = trockmaps.indexOf(MapId.NONE);
+            if (index != -1) {
+                trockmaps.set(index, getMapId());
+                changed = true;
+            }
+        } finally {
+            chrLock.unlock();
+        }
+        if (changed) {
+            markPersistenceDirty(PersistenceSection.LOCATIONS);
         }
     }
 
     public boolean isTrockMap(int id) {
-        int index = trockmaps.indexOf(id);
-        return index != -1;
+        chrLock.lock();
+        try {
+            return trockmaps.contains(id);
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public int getVipTrockSize() {
-        int ret = viptrockmaps.indexOf(MapId.NONE);
-
-        if (ret == -1) {
-            ret = 10;
+        chrLock.lock();
+        try {
+            int ret = viptrockmaps.indexOf(MapId.NONE);
+            return ret == -1 ? 10 : ret;
+        } finally {
+            chrLock.unlock();
         }
-
-        return ret;
     }
 
     public void deleteFromVipTrocks(int map) {
-        viptrockmaps.remove(Integer.valueOf(map));
-        while (viptrockmaps.size() < 10) {
-            viptrockmaps.add(MapId.NONE);
+        chrLock.lock();
+        try {
+            viptrockmaps.remove(Integer.valueOf(map));
+            while (viptrockmaps.size() < 10) {
+                viptrockmaps.add(MapId.NONE);
+            }
+        } finally {
+            chrLock.unlock();
         }
+        markPersistenceDirty(PersistenceSection.LOCATIONS);
     }
 
     public void addVipTrockMap() {
-        int index = viptrockmaps.indexOf(MapId.NONE);
-        if (index != -1) {
-            viptrockmaps.set(index, getMapId());
+        boolean changed = false;
+        chrLock.lock();
+        try {
+            int index = viptrockmaps.indexOf(MapId.NONE);
+            if (index != -1) {
+                viptrockmaps.set(index, getMapId());
+                changed = true;
+            }
+        } finally {
+            chrLock.unlock();
+        }
+        if (changed) {
+            markPersistenceDirty(PersistenceSection.LOCATIONS);
         }
     }
 
     public boolean isVipTrockMap(int id) {
-        int index = viptrockmaps.indexOf(id);
-        return index != -1;
+        chrLock.lock();
+        try {
+            return viptrockmaps.contains(id);
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     public AutobanManager getAutobanManager() {
@@ -10375,7 +10776,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public Map<String, Events> getEvents() {
-        return events;
+        synchronized (events) {
+            return Collections.unmodifiableMap(new LinkedHashMap<>(events));
+        }
     }
 
     public PartyQuest getPartyQuest() {
@@ -10429,11 +10832,6 @@ public class Character extends AbstractCharacterObject {
         cancelSkillCooldownTask();
         cancelExpirationTask();
 
-        if (questExpireTask != null) {
-            questExpireTask.cancel(true);
-        }
-        questExpireTask = null;
-
         if (recoveryTask != null) {
             recoveryTask.cancel(true);
         }
@@ -10460,10 +10858,8 @@ public class Character extends AbstractCharacterObject {
             if (questExpireTask != null) {
                 questExpireTask.cancel(false);
                 questExpireTask = null;
-
-                questExpirations.clear();
-                questExpirations = null;
             }
+            questExpirations.clear();
         } finally {
             evtLock.unlock();
         }
@@ -10474,7 +10870,7 @@ public class Character extends AbstractCharacterObject {
         }
         if (remove) {
             partyQuest = null;
-            events = null;
+            events.clear();
             mpc = null;
             mgc = null;
             party = null;
@@ -10510,7 +10906,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, getId());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -10532,6 +10928,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setMapId(int mapid) {
         this.mapid = mapid;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public boolean getWhiteChat() {
@@ -10554,12 +10951,14 @@ public class Character extends AbstractCharacterObject {
     public void removePartyQuestItem(String letter) {
         if (gotPartyQuestItem(letter)) {
             dataString = dataString.substring(0, dataString.indexOf(letter)) + dataString.substring(dataString.indexOf(letter) + letter.length());
+            markPersistenceDirty(PersistenceSection.STATS);
         }
     }
 
     public void setPartyQuestItemObtained(String partyquestchar) {
         if (!dataString.contains(partyquestchar)) {
             this.dataString += partyquestchar;
+            markPersistenceDirty(PersistenceSection.STATS);
         }
     }
 
@@ -10597,6 +10996,7 @@ public class Character extends AbstractCharacterObject {
 
     private void setFutureJailExpiration(long time) {
         jailExpiration = System.currentTimeMillis() + time;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public void addJailExpirationTime(long time) {
@@ -10611,6 +11011,7 @@ public class Character extends AbstractCharacterObject {
 
     public void removeJailExpirationTime() {
         jailExpiration = 0;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public boolean registerNameChange(String newName) {
@@ -10737,7 +11138,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10747,7 +11148,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10756,7 +11157,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10766,7 +11167,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10776,7 +11177,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10786,7 +11187,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10796,7 +11197,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10806,7 +11207,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10816,7 +11217,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10826,7 +11227,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }
@@ -10836,7 +11237,7 @@ public class Character extends AbstractCharacterObject {
             ps.setString(2, oldName);
             ps.executeUpdate();
         } catch(SQLException e) { 
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             FilePrinter.printError(FilePrinter.CHANGE_CHARACTER_NAME, e, "Character ID : " + characterId);
             return false;
         }*/
@@ -11041,7 +11442,7 @@ public class Character extends AbstractCharacterObject {
             }
             return point;
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return -1;
     }
@@ -11053,7 +11454,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, accountid);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -11211,6 +11612,7 @@ public class Character extends AbstractCharacterObject {
 
     public void gainAriantPoints(int points) {
         this.ariantPoints += points;
+        markPersistenceDirty(PersistenceSection.STATS);
     }
 
     public int getAriantPoints() {
@@ -11226,7 +11628,7 @@ public class Character extends AbstractCharacterObject {
             ps.setInt(2, getClient().getAccID());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

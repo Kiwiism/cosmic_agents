@@ -33,9 +33,11 @@ import server.partyquest.MonsterCarnival;
 import tools.PacketCreator;
 
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -162,11 +164,21 @@ public class Party {
 
     // used whenever entering PQs: will draw every party member that can attempt a target PQ while ingnoring those unfit.
     public Collection<PartyCharacter> getEligibleMembers() {
-        return Collections.unmodifiableList(pqMembers);
+        lock.lock();
+        try {
+            return pqMembers == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(pqMembers));
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void setEligibleMembers(List<PartyCharacter> eliParty) {
-        pqMembers = eliParty;
+        lock.lock();
+        try {
+            pqMembers = eliParty == null ? null : new ArrayList<>(eliParty);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public int getId() {
@@ -258,7 +270,7 @@ public class Party {
     public Map<Integer, Door> getDoors() {
         lock.lock();
         try {
-            return Collections.unmodifiableMap(doors);
+            return Collections.unmodifiableMap(new LinkedHashMap<>(doors));
         } finally {
             lock.unlock();
         }

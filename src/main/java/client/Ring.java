@@ -62,7 +62,7 @@ public class Ring implements Comparable<Ring> {
             }
             return ret;
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
             return null;
         }
     }
@@ -98,7 +98,7 @@ public class Ring implements Comparable<Ring> {
                 }
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -135,7 +135,7 @@ public class Ring implements Comparable<Ring> {
             }
             return new Pair<>(ringID[0], ringID[1]);
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
             return new Pair<>(-1, -1);
         }
     }

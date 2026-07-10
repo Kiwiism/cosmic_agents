@@ -4994,7 +4994,17 @@ public class PacketCreator {
         return p;
     }
 
-    public static Packet getFredrick(Character chr) {
+    public static Packet getFredrick(Character chr) throws SQLException {
+        List<Pair<Item, InventoryType>> items = ItemFactory.MERCHANT.loadItems(chr.getId(), false);
+        return getFredrick(chr, items);
+    }
+
+    public static Packet getFredrick(Character chr, List<Pair<Item, InventoryType>> items) {
+        return getFredrick(chr, items, (packet, item) -> addItemInfo(packet, item, true));
+    }
+
+    static Packet getFredrick(Character chr, List<Pair<Item, InventoryType>> items,
+                              FredrickItemPacketWriter itemWriter) {
         final OutPacket p = OutPacket.create(SendOpcode.FREDRICK);
         p.writeByte(0x23);
         p.writeInt(NpcId.FREDRICK);
@@ -5002,18 +5012,18 @@ public class PacketCreator {
         p.skip(5);
         p.writeInt(chr.getMerchantNetMeso());
         p.writeByte(0);
-        try {
-            List<Pair<Item, InventoryType>> items = ItemFactory.MERCHANT.loadItems(chr.getId(), false);
-            p.writeByte(items.size());
+        p.writeByte(items.size());
 
-            for (Pair<Item, InventoryType> item : items) {
-                addItemInfo(p, item.getLeft(), true);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        for (Pair<Item, InventoryType> item : items) {
+            itemWriter.write(p, item.getLeft());
         }
         p.skip(3);
         return p;
+    }
+
+    @FunctionalInterface
+    interface FredrickItemPacketWriter {
+        void write(OutPacket packet, Item item);
     }
 
     public static Packet addOmokBox(Character chr, int amount, int type) {

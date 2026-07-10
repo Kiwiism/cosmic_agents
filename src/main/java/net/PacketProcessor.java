@@ -232,11 +232,14 @@ public final class PacketProcessor {
     }
 
     public PacketHandler getHandler(short packetId) {
-        if (packetId > handlers.length) {
+        if (!isPacketIdInRange(packetId)) {
             return null;
         }
-        PacketHandler handler = handlers[packetId];
-        return handler;
+        return handlers[packetId];
+    }
+
+    public boolean isPacketIdInRange(short packetId) {
+        return packetId >= 0 && packetId < handlers.length;
     }
 
     public void registerHandler(RecvOpcode code, PacketHandler handler) {

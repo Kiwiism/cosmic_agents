@@ -90,7 +90,7 @@ public class PmobRemoveCommand extends Command {
             }
             ps.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             player.dropMessage(5, "Failed to remove pmob from the database.");
         }
 

@@ -95,7 +95,6 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 deleteBBSReply(c, replyid);
                 break;
             default:
-                //System.out.println("Unhandled BBS mode: " + slea.toString());
         }
     }
 
@@ -109,7 +108,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 c.sendPacket(GuildPackets.BBSThreadList(rs, start));
             }
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -147,7 +146,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
 
             displayThread(c, localthreadid);
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -171,7 +170,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
 
             displayThread(client, localthreadid);
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -205,7 +204,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
 
             displayThread(client, nextId);
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
 
     }
@@ -246,7 +245,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
                 ps.executeUpdate();
             }
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -287,7 +286,7 @@ public final class BBSOperationHandler extends AbstractPacketHandler {
 
             displayThread(client, threadid, false);
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 

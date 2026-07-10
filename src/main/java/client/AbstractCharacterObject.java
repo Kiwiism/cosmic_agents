@@ -402,6 +402,7 @@ public abstract class AbstractCharacterObject extends AbstractAnimatedMapObject 
 
                 setRemainingSp(sp, skillbook);
                 statUpdates.put(Stat.AVAILABLESP, remainingSp[skillbook]);
+                statUpdate = true;
             }
 
             if (!statUpdates.isEmpty()) {

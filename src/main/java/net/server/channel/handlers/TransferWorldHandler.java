@@ -75,7 +75,7 @@ public final class TransferWorldHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return;
         }
         c.sendPacket(PacketCreator.sendWorldTransferRules(0, c));

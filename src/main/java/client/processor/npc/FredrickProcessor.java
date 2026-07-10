@@ -29,6 +29,7 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.ItemFactory;
+import client.inventory.ModifyInventory;
 import client.inventory.manipulator.InventoryManipulator;
 import net.server.Server;
 import net.server.world.World;
@@ -48,6 +49,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ArrayList;
 
 import static java.util.concurrent.TimeUnit.DAYS;
 
@@ -56,6 +58,8 @@ import static java.util.concurrent.TimeUnit.DAYS;
  */
 public class FredrickProcessor {
     private static final Logger log = LoggerFactory.getLogger(FredrickProcessor.class);
+    public static final String LOAD_ERROR_MESSAGE =
+            "Fredrick could not load your stored items. Nothing was changed; please try again shortly.";
     private static final int[] dailyReminders = new int[]{2, 5, 10, 15, 30, 60, 90, Integer.MAX_VALUE};
 
     private final NoteService noteService;
@@ -64,7 +68,18 @@ public class FredrickProcessor {
         this.noteService = noteService;
     }
 
-    private static byte canRetrieveFromFredrick(Character chr, List<Pair<Item, InventoryType>> items) {
+    public static void logLoadFailure(Character chr, String operation, SQLException failure) {
+        log.error("Failed to {} Fredrick storage for chr {} (id {}, account {})",
+                operation, chr.getName(), chr.getId(), chr.getAccountID(), failure);
+    }
+
+    public static void notifyLoadFailure(Character chr, String operation, SQLException failure) {
+        logLoadFailure(chr, operation, failure);
+        chr.dropMessage(1, LOAD_ERROR_MESSAGE);
+    }
+
+    private static byte canRetrieveFromFredrick(Character chr, List<Pair<Item, InventoryType>> items,
+                                                 int merchantMeso) {
         if (!Inventory.checkSpotsAndOwnership(chr, items)) {
             List<Integer> itemids = new LinkedList<>();
             for (Pair<Item, InventoryType> it : items) {
@@ -78,7 +93,7 @@ public class FredrickProcessor {
             }
         }
 
-        int netMeso = chr.getMerchantNetMeso();
+        int netMeso = merchantMeso;
         if (netMeso > 0) {
             if (!chr.canHoldMeso(netMeso)) {
                 return 0x1F;
@@ -112,11 +127,11 @@ public class FredrickProcessor {
         try (Connection con = DatabaseConnection.getConnection()) {
             removeFredrickLog(con, cid);
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
     }
 
-    private static void removeFredrickLog(Connection con, int cid) throws SQLException {
+    public static void removeFredrickLog(Connection con, int cid) throws SQLException {
         try (PreparedStatement ps = con.prepareStatement("DELETE FROM `fredstorage` WHERE `cid` = ?")) {
             ps.setInt(1, cid);
             ps.executeUpdate();
@@ -125,15 +140,19 @@ public class FredrickProcessor {
 
     public static void insertFredrickLog(int cid) {
         try (Connection con = DatabaseConnection.getConnection()) {
-
-            removeFredrickLog(con, cid);
-            try (PreparedStatement ps = con.prepareStatement("INSERT INTO `fredstorage` (`cid`, `daynotes`, `timestamp`) VALUES (?, 0, ?)")) {
-                ps.setInt(1, cid);
-                ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-                ps.executeUpdate();
-            }
+            insertFredrickLog(con, cid);
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
+        }
+    }
+
+    public static void insertFredrickLog(Connection con, int cid) throws SQLException {
+        removeFredrickLog(con, cid);
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO `fredstorage` (`cid`, `daynotes`, `timestamp`) VALUES (?, 0, ?)")) {
+            ps.setInt(1, cid);
+            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+            ps.executeUpdate();
         }
     }
 
@@ -155,7 +174,7 @@ public class FredrickProcessor {
                 ps.executeBatch();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -254,63 +273,158 @@ public class FredrickProcessor {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
-    private static boolean deleteFredrickItems(int cid) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM `inventoryitems` WHERE `type` = ? AND `characterid` = ?")) {
-            ps.setInt(1, ItemFactory.MERCHANT.getValue());
-            ps.setInt(2, cid);
-            ps.executeUpdate();
-
-            return true;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+    private static List<Pair<Item, InventoryType>> snapshotInventory(Character chr) {
+        List<Pair<Item, InventoryType>> snapshot = new ArrayList<>();
+        for (InventoryType type : InventoryType.values()) {
+            if (type == InventoryType.UNDEFINED || type == InventoryType.CANHOLD) {
+                continue;
+            }
+            for (Item item : chr.getInventory(type).list()) {
+                snapshot.add(new Pair<>(item.copy(), type));
+            }
         }
+        return snapshot;
+    }
+
+    private static void restoreInventory(Character chr, List<Pair<Item, InventoryType>> snapshot) {
+        List<ModifyInventory> updates = new ArrayList<>();
+        for (InventoryType type : InventoryType.values()) {
+            if (type == InventoryType.UNDEFINED || type == InventoryType.CANHOLD) {
+                continue;
+            }
+            Inventory inventory = chr.getInventory(type);
+            for (Item item : inventory.list()) {
+                updates.add(new ModifyInventory(3, item));
+                inventory.removeSlot(item.getPosition());
+            }
+        }
+        for (Pair<Item, InventoryType> pair : snapshot) {
+            Item item = pair.getLeft().copy();
+            chr.getInventory(pair.getRight()).addItemFromDB(item);
+            updates.add(new ModifyInventory(0, item));
+        }
+        for (int from = 0; from < updates.size(); from += 200) {
+            int to = Math.min(from + 200, updates.size());
+            chr.sendPacket(PacketCreator.modifyInventory(true, updates.subList(from, to)));
+        }
+    }
+
+    static int netMerchantMeso(int merchantMeso, Timestamp storedAt, long now) {
+        int elapsedDays = storedAt == null ? 0 : timestampElapsedDays(storedAt, now);
+        elapsedDays = Math.clamp(elapsedDays, 0, 100);
+        return (int) (((long) merchantMeso * (100 - elapsedDays)) / 100);
+    }
+
+    private static MerchantBalance loadMerchantBalanceForUpdate(Connection con, int cid) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT c.MerchantMesos, f.timestamp FROM characters c " +
+                        "LEFT JOIN fredstorage f ON f.cid = c.id WHERE c.id = ? FOR UPDATE")) {
+            ps.setInt(1, cid);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new SQLException("Character no longer exists: " + cid);
+                }
+                int storedMeso = rs.getInt("MerchantMesos");
+                return new MerchantBalance(storedMeso,
+                        netMerchantMeso(storedMeso, rs.getTimestamp("timestamp"), System.currentTimeMillis()));
+            }
+        }
+    }
+
+    private record MerchantBalance(int storedMeso, int netMeso) {
+    }
+
+    static void persistRetrieval(Connection con, Character chr,
+                                 List<Pair<Item, InventoryType>> inventorySnapshot,
+                                 int expectedMerchantMeso, int settledMeso) throws SQLException {
+        ItemFactory.INVENTORY.saveItems(inventorySnapshot, chr.getId(), con);
+
+        try (PreparedStatement ps = con.prepareStatement(
+                "DELETE FROM inventorymerchant WHERE characterid = ?")) {
+            ps.setInt(1, chr.getId());
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = con.prepareStatement(
+                "DELETE inventoryitems, inventoryequipment FROM inventoryitems " +
+                        "LEFT JOIN inventoryequipment USING(inventoryitemid) " +
+                        "WHERE type = ? AND characterid = ?")) {
+            ps.setInt(1, ItemFactory.MERCHANT.getValue());
+            ps.setInt(2, chr.getId());
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = con.prepareStatement(
+                "UPDATE characters SET meso = ?, MerchantMesos = 0 WHERE id = ? AND MerchantMesos = ?")) {
+            ps.setInt(1, settledMeso);
+            ps.setInt(2, chr.getId());
+            ps.setInt(3, expectedMerchantMeso);
+            if (ps.executeUpdate() != 1) {
+                throw new SQLException("Merchant balance changed during Fredrick retrieval");
+            }
+        }
+        removeFredrickLog(con, chr.getId());
     }
 
     public void fredrickRetrieveItems(Client c) {     // thanks Gustav for pointing out the dupe on Fredrick handling
         if (c.tryacquireClient()) {
+            Character chr = c.getPlayer();
             try {
-                Character chr = c.getPlayer();
+                synchronized (chr) {
+                    List<Pair<Item, InventoryType>> originalInventory = null;
+                    List<Pair<Item, InventoryType>> items;
+                    int settledMeso;
+                    try (Connection con = DatabaseConnection.getConnection()) {
+                        con.setAutoCommit(false);
+                        try {
+                            MerchantBalance merchantBalance = loadMerchantBalanceForUpdate(con, chr.getId());
+                            items = ItemFactory.MERCHANT.loadMerchantItemsForUpdate(chr.getId(), con);
+                            byte response = canRetrieveFromFredrick(chr, items, merchantBalance.netMeso());
+                            if (response != 0) {
+                                con.rollback();
+                                chr.sendPacket(PacketCreator.fredrickMessage(response));
+                                return;
+                            }
 
-                List<Pair<Item, InventoryType>> items;
-                try {
-                    items = ItemFactory.MERCHANT.loadItems(chr.getId(), false);
+                            originalInventory = snapshotInventory(chr);
+                            for (Pair<Item, InventoryType> it : items) {
+                                if (!InventoryManipulator.addFromDrop(chr.getClient(), it.getLeft(), false)) {
+                                    throw new SQLException("Inventory changed during Fredrick retrieval");
+                                }
+                            }
 
-                    byte response = canRetrieveFromFredrick(chr, items);
-                    if (response != 0) {
-                        chr.sendPacket(PacketCreator.fredrickMessage(response));
-                        return;
+                            settledMeso = Math.addExact(chr.getMeso(), merchantBalance.netMeso());
+                            persistRetrieval(con, chr, snapshotInventory(chr), merchantBalance.storedMeso(),
+                                    settledMeso);
+                            con.commit();
+                        } catch (Exception failure) {
+                            con.rollback();
+                            if (originalInventory != null) {
+                                restoreInventory(chr, originalInventory);
+                            }
+                            throw failure;
+                        }
                     }
 
-                    chr.withdrawMerchantMesos();
-
-                    if (deleteFredrickItems(chr.getId())) {
-                        HiredMerchant merchant = chr.getHiredMerchant();
-
-                        if (merchant != null) {
-                            merchant.clearItems();
-                        }
-
-                        for (Pair<Item, InventoryType> it : items) {
-                            Item item = it.getLeft();
-                            InventoryManipulator.addFromDrop(chr.getClient(), item, false);
-                            String itemName = ItemInformationProvider.getInstance().getName(item.getItemId());
-                            log.debug("Chr {} gained {}x {} ({})", chr.getName(), item.getQuantity(), itemName, item.getItemId());
-                        }
-
-                        chr.sendPacket(PacketCreator.fredrickMessage((byte) 0x1E));
-                        removeFredrickLog(chr.getId());
-                    } else {
-                        chr.message("An unknown error has occured.");
+                    chr.applyCommittedMerchantRetrieval(settledMeso);
+                    HiredMerchant merchant = chr.getHiredMerchant();
+                    if (merchant != null) {
+                        merchant.clearItems();
                     }
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
+                    for (Pair<Item, InventoryType> it : items) {
+                        Item item = it.getLeft();
+                        String itemName = ItemInformationProvider.getInstance().getName(item.getItemId());
+                        log.debug("Chr {} gained {}x {} ({})", chr.getName(), item.getQuantity(), itemName,
+                                item.getItemId());
+                    }
+                    chr.sendPacket(PacketCreator.fredrickMessage((byte) 0x1E));
                 }
+            } catch (Exception ex) {
+                SQLException sqlFailure = ex instanceof SQLException sql ? sql
+                        : new SQLException("Fredrick retrieval failed", ex);
+                notifyLoadFailure(chr, "retrieve", sqlFailure);
             } finally {
                 c.releaseClient();
             }

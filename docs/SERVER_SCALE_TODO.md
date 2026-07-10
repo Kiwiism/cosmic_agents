@@ -403,7 +403,8 @@ Value:
 - [x] Added startup warnings for optional high-impact runtime features without changing config values.
 - [x] Added non-loading `MapManager.getLoadedMap(...)` and used it for script `getPlayerCount(mapid)`.
 - [x] Rechecked and corrected monster/global drop million-scale chance and inclusive min/max quantity rolls.
-- [x] Added character deletion duration diagnostics; transaction consolidation remains a later reviewed change.
+- [x] Added character deletion duration diagnostics; transaction consolidation
+  and post-commit cleanup separation are now implemented and tested.
 
 ## Completed Server-Only Batch 5 - 2026-07-03
 
@@ -437,7 +438,8 @@ Implemented now:
 6. Broadcast audit retained as diagnostics-first; no packet semantic change was made in this batch.
 7. Non-loading loaded-map helper for simple count queries.
 8. DB index review recorded as migration-review work, not applied blindly.
-9. Character deletion transaction cleanup kept as timing/audit only; consolidation is deferred.
+9. Character deletion transaction cleanup was initially deferred and is now
+   implemented with rollback and post-commit cleanup tests.
 
 The three useful candidates not included in the original best-order list were:
 
@@ -790,8 +792,9 @@ These are server-side hardening or low-risk optimization candidates found during
   - Category: server hardening.
   - Rationale: deletion has many sequential deletes/selects; not hot path, but safer and faster with a reviewed transaction plan.
   - Low-risk path: keep current behavior for now; add audit/logging around delete duration.
-  - 2026-07-02 result: added character deletion duration diagnostics. Transaction consolidation remains deferred.
-  - 2026-07-03 result: deferred implementation plan documented in `docs/SERVER_DEFERRED_SAFE_CHANGES.md`.
+  - 2026-07-02 result: added character deletion duration diagnostics.
+  - 2026-07-11 result: consolidated DB deletion under one transaction and
+    separated post-commit server-memory cleanup; focused rollback tests pass.
 
 ### Packet / Broadcast Low-Risk Optimizations
 

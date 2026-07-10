@@ -36,7 +36,6 @@ public final class BeholderHandler extends AbstractPacketHandler {//Summon Skill
 
     @Override
     public final void handlePacket(InPacket p, Client c) {
-        //System.out.println(slea.toString());
         Collection<Summon> summons = c.getPlayer().getSummonsValues();
         int oid = p.readInt();
         Summon summon = null;

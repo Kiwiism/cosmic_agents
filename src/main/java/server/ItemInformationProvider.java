@@ -1518,7 +1518,7 @@ public class ItemInformationProvider {
                 monsterBookID.put(rs.getInt(1), rs.getInt(2));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -1741,7 +1741,7 @@ public class ItemInformationProvider {
          }
          }
          } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
          }*/
         int tdex = chr.getDex(), tstr = chr.getStr(), tint = chr.getInt(), tluk = chr.getLuk(), fame = chr.getFame();
         if (chr.getJob() != Job.SUPERGM || chr.getJob() != Job.GM) {
@@ -1809,7 +1809,7 @@ public class ItemInformationProvider {
          }
          }
          } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
          }*/
 
         int reqLevel = getEquipLevelReq(equip.getItemId());
@@ -2026,7 +2026,7 @@ public class ItemInformationProvider {
             statUpgradeMakerCache.put(itemId, statUpgd);
             return statUpgd;
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return null;
         }
     }
@@ -2055,7 +2055,7 @@ public class ItemInformationProvider {
             mobCrystalMakerCache.put(leftoverId, itemid);
             return itemid;
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return -1;
@@ -2098,7 +2098,7 @@ public class ItemInformationProvider {
                 }
                 makerItemCache.put(toCreate, new MakerItemCreateEntry(makerEntry));
             } catch (SQLException sqle) {
-                sqle.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(sqle);
                 makerEntry = null;
             }
         }
@@ -2110,7 +2110,7 @@ public class ItemInformationProvider {
         try {
             return getCrystalForLevel(getEquipLevelReq(equipId));
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return -1;
@@ -2120,7 +2120,7 @@ public class ItemInformationProvider {
         try {
             return getCrystalForLevel(getEquipLevelReq(equipId));
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return -1;
@@ -2139,7 +2139,7 @@ public class ItemInformationProvider {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return items;
@@ -2159,7 +2159,7 @@ public class ItemInformationProvider {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return fee;
@@ -2200,7 +2200,7 @@ public class ItemInformationProvider {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return list;

@@ -135,7 +135,7 @@ public class ExpeditionBossLog {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -159,7 +159,7 @@ public class ExpeditionBossLog {
             }
             return ret_count;
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return -1;
         }
     }
@@ -171,7 +171,7 @@ public class ExpeditionBossLog {
             ps.setString(2, boss.name());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

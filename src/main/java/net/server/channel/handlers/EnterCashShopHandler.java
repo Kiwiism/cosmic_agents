@@ -90,7 +90,7 @@ public class EnterCashShopHandler extends AbstractPacketHandler {
             mc.getCashShop().open(true);
             mc.saveCharToDB(true, SaveReason.CASHSHOP);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 }

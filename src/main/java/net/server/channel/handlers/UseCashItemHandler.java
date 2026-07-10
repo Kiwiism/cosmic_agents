@@ -407,6 +407,7 @@ public final class UseCashItemHandler extends AbstractPacketHandler {
                 return;
             }
             String newName = p.readString();
+            player.markPersistenceDirty(Character.PersistenceSection.PETS);
             pet.setName(newName);
             pet.saveToDb();
 

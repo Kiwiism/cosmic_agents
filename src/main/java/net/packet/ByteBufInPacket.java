@@ -19,6 +19,14 @@ public class ByteBufInPacket implements InPacket {
     }
 
     @Override
+    public byte[] getBytes(int maximumLength) {
+        int length = Math.min(Math.max(0, maximumLength), byteBuf.writerIndex());
+        byte[] bytes = new byte[length];
+        byteBuf.getBytes(0, bytes);
+        return bytes;
+    }
+
+    @Override
     public byte readByte() {
         return byteBuf.readByte();
     }

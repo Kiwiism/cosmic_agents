@@ -48,6 +48,18 @@ Purpose: classify server-side caches for 30-day uptime and future agent load.
 | Login bypass entries | `LoginBypassCoordinator` | expires on read/update and scheduled login storage task |
 | New Year cards | `Server` / `NewYearCardRecord` | removed on card delete; repeating task stopped on removal |
 | In-login-state clients | `Server` | removed on login-state unregister and idle login cleanup |
+| Account character views | `World` | one entry per loaded account; cleared when the account view is released; count in `!serverhealth` |
+| Account storages | `World` | one entry per active/loaded account; removed on account storage unregister; count in `!serverhealth` |
+| Families | `World` | bounded by persisted families in that world; explicit family removal; count in `!serverhealth` |
+| Messengers | `World` | at most active non-empty messengers; removed when the final member leaves; count in `!serverhealth` |
+| Player shops | `World` | at most active shops; explicit unregister on close; count in `!serverhealth` |
+| Hired merchants | `World` / `Channel` | at most one identity-checked registration per owner; removed on close/timeout; count in `!serverhealth` |
+| Cash Shop/MTS buff handoff | `PlayerBuffStorage` | one entry per character in transition; consumed on world login; retained count in `!serverhealth` |
+| WZ/DB metadata | item, mob, quest, map, NPC, reactor providers | bounded by source game-data IDs; intentionally process-lifetime |
+
+The Cash Shop/MTS handoff does not yet have a TTL because expiring it changes
+buff restoration semantics. Watch its count during soak tests; add explicit
+failed-transition cleanup only with a reproduced retention path.
 
 ## Review Rules
 

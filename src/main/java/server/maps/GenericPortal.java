@@ -138,7 +138,7 @@ public class GenericPortal implements Portal {
                     scriptLock.unlock();
                 }
             } catch (NullPointerException npe) {
-                npe.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(npe);
             }
         } else if (getTargetMapId() != MapId.NONE) {
             Character chr = c.getPlayer();

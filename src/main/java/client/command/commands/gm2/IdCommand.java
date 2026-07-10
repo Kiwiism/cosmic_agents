@@ -125,7 +125,7 @@ public class IdCommand extends Command {
             }
         };
 
-        ThreadManager.getInstance().newTask(queryRunnable);
+        ThreadManager.getInstance().newBlockingTask(queryRunnable);
     }
 
     private void populateIdMap(String type) throws IdTypeNotSupportedException, IOException {

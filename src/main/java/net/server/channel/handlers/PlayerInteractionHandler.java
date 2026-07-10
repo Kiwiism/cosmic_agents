@@ -676,7 +676,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                     try {
                         merchant.saveItems(false);   // thanks Masterrulax for realizing yet another dupe with merchants/Fredrick
                     } catch (SQLException ex) {
-                        ex.printStackTrace();
+                        monitoring.RuntimeFailureLogger.log(ex);
                     }
                 } else {
                     c.sendPacket(PacketCreator.serverNotice(1, "You can't sell without owning a shop."));
@@ -896,7 +896,7 @@ public final class PlayerInteractionHandler extends AbstractPacketHandler {
                 return false;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return true;

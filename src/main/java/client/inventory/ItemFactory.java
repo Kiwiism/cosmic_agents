@@ -76,6 +76,13 @@ public enum ItemFactory {
         }
     }
 
+    public List<Pair<Item, InventoryType>> loadMerchantItemsForUpdate(int id, Connection con) throws SQLException {
+        if (this != MERCHANT) {
+            throw new IllegalStateException("Only merchant storage supports transactional loading");
+        }
+        return loadItemsMerchant(id, false, con, true);
+    }
+
     public void saveItems(List<Pair<Item, InventoryType>> items, int id, Connection con) throws SQLException {
         saveItems(items, null, id, con);
     }
@@ -272,53 +279,60 @@ public enum ItemFactory {
     }
 
     private List<Pair<Item, InventoryType>> loadItemsMerchant(int id, boolean login) throws SQLException {
-        List<Pair<Item, InventoryType>> items = new ArrayList<>();
-
         try (Connection con = DatabaseConnection.getConnection()) {
-            StringBuilder query = new StringBuilder();
-            query.append("SELECT * FROM `inventoryitems` LEFT JOIN `inventoryequipment` USING(`inventoryitemid`) WHERE `type` = ? AND `");
-            query.append(account ? "accountid" : "characterid").append("` = ?");
+            return loadItemsMerchant(id, login, con, false);
+        }
+    }
 
-            if (login) {
-                query.append(" AND `inventorytype` = ").append(InventoryType.EQUIPPED.getType());
-            }
+    private List<Pair<Item, InventoryType>> loadItemsMerchant(int id, boolean login, Connection con,
+                                                               boolean forUpdate) throws SQLException {
+        List<Pair<Item, InventoryType>> items = new ArrayList<>();
+        StringBuilder query = new StringBuilder();
+        query.append("SELECT inventoryitems.*, inventoryequipment.*, inventorymerchant.bundles ")
+                .append("FROM inventoryitems ")
+                .append("LEFT JOIN inventoryequipment USING(inventoryitemid) ")
+                .append("LEFT JOIN inventorymerchant USING(inventoryitemid) ")
+                .append("WHERE type = ? AND ")
+                .append(account ? "accountid" : "inventoryitems.characterid").append(" = ?");
+        if (login) {
+            query.append(" AND inventorytype = ").append(InventoryType.EQUIPPED.getType());
+        }
+        if (forUpdate) {
+            query.append(" FOR UPDATE");
+        }
 
-            try (PreparedStatement ps = con.prepareStatement(query.toString())) {
-                ps.setInt(1, value);
-                ps.setInt(2, id);
+        try (PreparedStatement ps = con.prepareStatement(query.toString())) {
+            ps.setInt(1, value);
+            ps.setInt(2, id);
 
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        short bundles = 0;
-                        try (PreparedStatement psBundle = con.prepareStatement("SELECT `bundles` FROM `inventorymerchant` WHERE `inventoryitemid` = ?")) {
-                            psBundle.setInt(1, rs.getInt("inventoryitemid"));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    short bundles = rs.getShort("bundles");
+                    InventoryType mit = InventoryType.getByType(rs.getByte("inventorytype"));
 
-                            try (ResultSet rs2 = psBundle.executeQuery()) {
-                                if (rs2.next()) {
-                                    bundles = rs2.getShort("bundles");
-                                }
-                            }
+                    if (mit.equals(InventoryType.EQUIP) || mit.equals(InventoryType.EQUIPPED)) {
+                        if (bundles != 1) {
+                            throw new SQLException("Invalid merchant equip bundle count " + bundles
+                                    + " for inventory item " + rs.getInt("inventoryitemid"));
+                        }
+                        items.add(new Pair<>(loadEquipFromResultSet(rs), mit));
+                    } else if (bundles > 0) {
+                        int petid = rs.getInt("petid");
+                        if (rs.wasNull()) {
+                            petid = -1;
                         }
 
-                        InventoryType mit = InventoryType.getByType(rs.getByte("inventorytype"));
-
-                        if (mit.equals(InventoryType.EQUIP) || mit.equals(InventoryType.EQUIPPED)) {
-                            items.add(new Pair<>(loadEquipFromResultSet(rs), mit));
-                        } else {
-                            if (bundles > 0) {
-                                int petid = rs.getInt("petid");
-                                if (rs.wasNull()) {
-                                    petid = -1;
-                                }
-
-                                Item item = new Item(rs.getInt("itemid"), (byte) rs.getInt("position"), (short) (bundles * rs.getInt("quantity")), petid);
-                                item.setOwner(rs.getString("owner"));
-                                item.setExpiration(rs.getLong("expiration"));
-                                item.setGiftFrom(rs.getString("giftFrom"));
-                                item.setFlag((short) rs.getInt("flag"));
-                                items.add(new Pair<>(item, mit));
-                            }
+                        long totalQuantity = (long) bundles * rs.getInt("quantity");
+                        if (totalQuantity > Short.MAX_VALUE) {
+                            throw new SQLException("Merchant item quantity exceeds protocol limit: " + totalQuantity);
                         }
+                        Item item = new Item(rs.getInt("itemid"), (byte) rs.getInt("position"),
+                                (short) totalQuantity, petid);
+                        item.setOwner(rs.getString("owner"));
+                        item.setExpiration(rs.getLong("expiration"));
+                        item.setGiftFrom(rs.getString("giftFrom"));
+                        item.setFlag((short) rs.getInt("flag"));
+                        items.add(new Pair<>(item, mit));
                     }
                 }
             }

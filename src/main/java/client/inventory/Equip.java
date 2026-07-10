@@ -81,17 +81,23 @@ public class Equip extends Item {
     }
 
     public Equip(int id, short position, int slots) {
+        this(id, position, slots, true);
+    }
+
+    Equip(int id, short position, int slots, boolean initializeMetadata) {
         super(id, position, (short) 1);
         this.upgradeSlots = (byte) slots;
         this.itemExp = 0;
         this.itemLevel = 1;
 
-        this.isElemental = (ItemInformationProvider.getInstance().getEquipLevel(id, false) > 1);
+        this.isElemental = initializeMetadata
+                && ItemInformationProvider.getInstance().getEquipLevel(id, false) > 1;
     }
 
     @Override
     public Item copy() {
-        Equip ret = new Equip(getItemId(), getPosition(), getUpgradeSlots());
+        Equip ret = new Equip(getItemId(), getPosition(), getUpgradeSlots(), false);
+        copyStateTo(ret);
         ret.str = str;
         ret.dex = dex;
         ret._int = _int;
@@ -113,11 +119,10 @@ public class Equip extends Item {
         ret.itemLevel = itemLevel;
         ret.itemExp = itemExp;
         ret.level = level;
-        ret.itemLog = new LinkedList<>(itemLog);
-        ret.setOwner(getOwner());
-        ret.setQuantity(getQuantity());
-        ret.setExpiration(getExpiration());
-        ret.setGiftFrom(getGiftFrom());
+        ret.ringid = ringid;
+        ret.wear = wear;
+        ret.isUpgradeable = isUpgradeable;
+        ret.isElemental = isElemental;
         return ret;
     }
 
@@ -201,75 +206,129 @@ public class Equip extends Item {
 
     @Override
     public void setFlag(short flag) {
-        this.flag = flag;
+        if (this.flag != flag) {
+            this.flag = flag;
+            markPersistenceDirty();
+        }
     }
 
     public void setStr(short str) {
-        this.str = str;
+        if (this.str != str) {
+            this.str = str;
+            markPersistenceDirty();
+        }
     }
 
     public void setDex(short dex) {
-        this.dex = dex;
+        if (this.dex != dex) {
+            this.dex = dex;
+            markPersistenceDirty();
+        }
     }
 
     public void setInt(short _int) {
-        this._int = _int;
+        if (this._int != _int) {
+            this._int = _int;
+            markPersistenceDirty();
+        }
     }
 
     public void setLuk(short luk) {
-        this.luk = luk;
+        if (this.luk != luk) {
+            this.luk = luk;
+            markPersistenceDirty();
+        }
     }
 
     public void setHp(short hp) {
-        this.hp = hp;
+        if (this.hp != hp) {
+            this.hp = hp;
+            markPersistenceDirty();
+        }
     }
 
     public void setMp(short mp) {
-        this.mp = mp;
+        if (this.mp != mp) {
+            this.mp = mp;
+            markPersistenceDirty();
+        }
     }
 
     public void setWatk(short watk) {
-        this.watk = watk;
+        if (this.watk != watk) {
+            this.watk = watk;
+            markPersistenceDirty();
+        }
     }
 
     public void setMatk(short matk) {
-        this.matk = matk;
+        if (this.matk != matk) {
+            this.matk = matk;
+            markPersistenceDirty();
+        }
     }
 
     public void setWdef(short wdef) {
-        this.wdef = wdef;
+        if (this.wdef != wdef) {
+            this.wdef = wdef;
+            markPersistenceDirty();
+        }
     }
 
     public void setMdef(short mdef) {
-        this.mdef = mdef;
+        if (this.mdef != mdef) {
+            this.mdef = mdef;
+            markPersistenceDirty();
+        }
     }
 
     public void setAcc(short acc) {
-        this.acc = acc;
+        if (this.acc != acc) {
+            this.acc = acc;
+            markPersistenceDirty();
+        }
     }
 
     public void setAvoid(short avoid) {
-        this.avoid = avoid;
+        if (this.avoid != avoid) {
+            this.avoid = avoid;
+            markPersistenceDirty();
+        }
     }
 
     public void setHands(short hands) {
-        this.hands = hands;
+        if (this.hands != hands) {
+            this.hands = hands;
+            markPersistenceDirty();
+        }
     }
 
     public void setSpeed(short speed) {
-        this.speed = speed;
+        if (this.speed != speed) {
+            this.speed = speed;
+            markPersistenceDirty();
+        }
     }
 
     public void setJump(short jump) {
-        this.jump = jump;
+        if (this.jump != jump) {
+            this.jump = jump;
+            markPersistenceDirty();
+        }
     }
 
     public void setVicious(short vicious) {
-        this.vicious = vicious;
+        if (this.vicious != vicious) {
+            this.vicious = vicious;
+            markPersistenceDirty();
+        }
     }
 
     public void setUpgradeSlots(byte upgradeSlots) {
-        this.upgradeSlots = upgradeSlots;
+        if (this.upgradeSlots != upgradeSlots) {
+            this.upgradeSlots = upgradeSlots;
+            markPersistenceDirty();
+        }
     }
 
     public byte getLevel() {
@@ -277,7 +336,10 @@ public class Equip extends Item {
     }
 
     public void setLevel(byte level) {
-        this.level = level;
+        if (this.level != level) {
+            this.level = level;
+            markPersistenceDirty();
+        }
     }
 
     private static int getStatModifier(boolean isAttribute) {
@@ -531,6 +593,10 @@ public class Equip extends Item {
             }
         }
 
+        if (!stats.isEmpty()) {
+            markPersistenceDirty();
+        }
+
         return new Pair<>(lvupStr, new Pair<>(gotSlot, gotVicious));
     }
 
@@ -578,7 +644,7 @@ public class Equip extends Item {
             }
         }
 
-        itemLevel++;
+        setItemLevel((byte) (itemLevel + 1));
 
         String lvupStr = "'" + ItemInformationProvider.getInstance().getName(this.getItemId()) + "' is now level " + itemLevel + "! ";
         String showStr = "#e'" + ItemInformationProvider.getInstance().getName(this.getItemId()) + "'#b is now #elevel #r" + itemLevel + "#k#b!";
@@ -647,6 +713,7 @@ public class Equip extends Item {
         float baseExpGain = gain * elementModifier * masteryModifier;
 
         itemExp += baseExpGain;
+        markPersistenceDirty();
         int expNeeded = ExpTable.getEquipExpNeededForLevel(itemLevel);
 
         if (YamlConfig.config.server.USE_DEBUG_SHOW_INFO_EQPEXP) {
@@ -699,11 +766,17 @@ public class Equip extends Item {
     }
 
     public void setItemExp(int exp) {
-        this.itemExp = exp;
+        if (this.itemExp != exp) {
+            this.itemExp = exp;
+            markPersistenceDirty();
+        }
     }
 
     public void setItemLevel(byte level) {
-        this.itemLevel = level;
+        if (this.itemLevel != level) {
+            this.itemLevel = level;
+            markPersistenceDirty();
+        }
     }
 
     @Override
@@ -715,11 +788,11 @@ public class Equip extends Item {
     }
 
     public void setUpgradeSlots(int i) {
-        this.upgradeSlots = (byte) i;
+        setUpgradeSlots((byte) i);
     }
 
     public void setVicious(int i) {
-        this.vicious = (short) i;
+        setVicious((short) i);
     }
 
     public int getRingId() {
@@ -727,7 +800,10 @@ public class Equip extends Item {
     }
 
     public void setRingId(int id) {
-        this.ringid = id;
+        if (this.ringid != id) {
+            this.ringid = id;
+            markPersistenceDirty();
+        }
     }
 
     public boolean isWearing() {

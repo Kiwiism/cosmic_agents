@@ -46,7 +46,7 @@ public class MaxSkillCommand extends Command {
                 Skill skill = SkillFactory.getSkill(Integer.parseInt(skill_.getName()));
                 player.changeSkillLevel(skill, (byte) skill.getMaxLevel(), skill.getMaxLevel(), -1);
             } catch (NumberFormatException nfe) {
-                nfe.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(nfe);
                 break;
             } catch (NullPointerException npe) {
             }

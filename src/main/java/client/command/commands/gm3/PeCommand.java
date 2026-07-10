@@ -57,7 +57,7 @@ public class PeCommand extends Command {
             packetProps.load(br);
             packet = packetProps.getProperty("pe");
         } catch (IOException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
             player.yellowMessage("Failed to load pe.txt");
             return;
 

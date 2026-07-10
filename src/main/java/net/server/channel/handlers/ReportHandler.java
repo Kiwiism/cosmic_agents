@@ -92,7 +92,7 @@ public final class ReportHandler extends AbstractPacketHandler {
             ps.setString(6, description);
             ps.executeUpdate();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 }

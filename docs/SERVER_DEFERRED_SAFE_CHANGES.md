@@ -4,29 +4,13 @@ These items are server-only and non-agent, but should remain deferred until soak
 
 ## Character Deletion Transaction Consolidation
 
-Current state:
+Status: completed in the current hardening worktree.
 
-- Character deletion has duration diagnostics.
-- The delete path still performs many sequential deletes/selects.
-
-Why deferred:
-
-- Deletion touches inventory, pets, rings, MTS, quests, buddies, guild/family state, and server character caches.
-- A blind transaction refactor could change lock duration or rollback behavior.
-
-Implementation plan:
-
-1. Trace all SQL executed by `CharacterDeletionService` and `Character.deleteCharFromDB(...)`.
-2. Split external server-memory cleanup from DB-only deletion.
-3. Group DB-only deletes under one connection transaction.
-4. Preserve current return values and user-facing failure messages.
-5. Add rollback logging with character id, account id, and failed stage.
-6. Validate deleting:
-   - fresh character
-   - character with inventory/equipment/pets
-   - character with quests/progress/medal maps
-   - character with buddy/guild/family/ring state
-   - character with MTS/merchant-related records
+- DB-only deletion is grouped under one transaction.
+- Server-memory cleanup runs after commit and cannot roll back committed SQL.
+- Transaction rollback and post-commit failure behavior have focused tests.
+- Real deletion of richly populated characters remains part of the manual
+  gameplay/relogin gate; it is no longer an implementation TODO.
 
 ## Broadcast Optimization Follow-Up
 
@@ -67,6 +51,15 @@ Remaining review targets:
 - Event instance character and map references.
 - Debug/monitoring sets.
 - New feature caches keyed by character/account/map/object id.
+
+Current evidence:
+
+- Empty messenger instances are removed from the world registry.
+- Messenger member views are immutable snapshots and mutation is synchronized.
+- World diagnostics expose account views, storages, families, messengers,
+  player shops, and hired merchants.
+- Transition buff/disease storage exposes retained-character counts.
+- Idle-map unload remains default-off while the canary matrix is incomplete.
 
 Implementation rule:
 

@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author XoticStory
@@ -67,10 +68,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 // In summary: NPCs 9901910-9906599 and 9977777 are custom additions to HeavenMS that should be removed.
 public class PlayerNPC extends AbstractMapObject {
     private static final Logger log = LoggerFactory.getLogger(PlayerNPC.class);
-    private static final Map<Byte, List<Integer>> availablePlayerNpcScriptIds = new HashMap<>();
+    private static final Map<Byte, List<Integer>> availablePlayerNpcScriptIds = new ConcurrentHashMap<>();
     private static final AtomicInteger runningOverallRank = new AtomicInteger();
     private static final List<AtomicInteger> runningWorldRank = new ArrayList<>();
-    private static final Map<Pair<Integer, Integer>, AtomicInteger> runningWorldJobRank = new HashMap<>();
+    private static final Map<Pair<Integer, Integer>, AtomicInteger> runningWorldJobRank = new ConcurrentHashMap<>();
 
     private Map<Short, Integer> equips = new HashMap<>();
     private int scriptId, face, hair, gender, job;
@@ -132,7 +133,7 @@ public class PlayerNPC extends AbstractMapObject {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -266,13 +267,8 @@ public class PlayerNPC extends AbstractMapObject {
     }
 
     private static int getAndIncrementRunningWorldJobRanks(int world, int job) {
-        AtomicInteger wjr = runningWorldJobRank.get(new Pair<>(world, job));
-        if (wjr == null) {
-            wjr = new AtomicInteger(1);
-            runningWorldJobRank.put(new Pair<>(world, job), wjr);
-        }
-
-        return wjr.getAndIncrement();
+        return runningWorldJobRank.computeIfAbsent(new Pair<>(world, job), ignored -> new AtomicInteger(1))
+                .getAndIncrement();
     }
 
     public static boolean canSpawnPlayerNpc(String name, int mapid) {
@@ -289,7 +285,7 @@ public class PlayerNPC extends AbstractMapObject {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         return ret;
@@ -312,7 +308,7 @@ public class PlayerNPC extends AbstractMapObject {
             ps.setInt(6, getObjectId());
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -356,27 +352,24 @@ public class PlayerNPC extends AbstractMapObject {
                 list.add(availables.get(i));
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
     }
 
     private static int getNextScriptId(byte branch) {
-        List<Integer> availablesBranch = availablePlayerNpcScriptIds.get(branch);
-
-        if (availablesBranch == null) {
-            availablesBranch = new ArrayList<>(20);
-            availablePlayerNpcScriptIds.put(branch, availablesBranch);
-        }
-
-        if (availablesBranch.isEmpty()) {
-            fetchAvailableScriptIdsFromDb(branch, availablesBranch);
-
+        List<Integer> availablesBranch = availablePlayerNpcScriptIds.computeIfAbsent(branch,
+                ignored -> new ArrayList<>(20));
+        synchronized (availablesBranch) {
             if (availablesBranch.isEmpty()) {
-                return -1;
-            }
-        }
+                fetchAvailableScriptIdsFromDb(branch, availablesBranch);
 
-        return availablesBranch.remove(availablesBranch.size() - 1);
+                if (availablesBranch.isEmpty()) {
+                    return -1;
+                }
+            }
+
+            return availablesBranch.remove(availablesBranch.size() - 1);
+        }
     }
 
     private static PlayerNPC createPlayerNPCInternal(MapleMap map, Point pos, Character chr) {
@@ -482,7 +475,7 @@ public class PlayerNPC extends AbstractMapObject {
 
             return ret;
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return null;
         }
     }
@@ -517,7 +510,7 @@ public class PlayerNPC extends AbstractMapObject {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         mapids.addAll(updateMapids);
@@ -649,7 +642,7 @@ public class PlayerNPC extends AbstractMapObject {
                 w.resetPlayerNpcMapData();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 }

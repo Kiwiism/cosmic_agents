@@ -158,6 +158,15 @@ public class Reactor extends AbstractMapObject {
         return alive && stats.getType(state) != -1;
     }
 
+    public boolean hasPendingRuntimeAction() {
+        reactorLock.lock();
+        try {
+            return state != 0 || !alive || timeoutTask != null || delayedRespawnRun != null;
+        } finally {
+            reactorLock.unlock();
+        }
+    }
+
     public void setAlive(boolean alive) {
         this.alive = alive;
     }
@@ -320,7 +329,7 @@ public class Reactor extends AbstractMapObject {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

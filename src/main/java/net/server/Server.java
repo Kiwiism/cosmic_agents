@@ -67,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import provider.DressingRoom;
 import server.CashShop.CashItemFactory;
+import server.ExpLogger;
 import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
@@ -108,8 +109,11 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -124,6 +128,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class Server {
     private static final Logger log = LoggerFactory.getLogger(Server.class);
     private static final String DATABASE_CONSOLE_BRIDGE_ENABLED_ENV = "COSMIC_DATABASE_CONSOLE_BRIDGE_ENABLED";
+    private static final long CHANNEL_SHUTDOWN_TIMEOUT_MS = SECONDS.toMillis(60);
     private static Server instance = null;
 
     public static Server getInstance() {
@@ -133,8 +138,8 @@ public class Server {
         return instance;
     }
 
-    private static final Set<Integer> activeFly = new HashSet<>();
-    private static final Map<Integer, Integer> couponRates = new HashMap<>(30);
+    private static final Set<Integer> activeFly = ConcurrentHashMap.newKeySet();
+    private static final Map<Integer, Integer> couponRates = new ConcurrentHashMap<>(30);
     private static final List<Integer> activeCoupons = new LinkedList<>();
     private static ChannelDependencies channelDependencies;
 
@@ -257,7 +262,7 @@ public class Server {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -469,12 +474,17 @@ public class Server {
 
         Map<Integer, String> channelInfo = new HashMap<>();
         long bootTime = getCurrentTime();
-        for (int j = 1; j <= YamlConfig.config.worlds.get(i).channels; j++) {
-            int channelid = j;
-            Channel channel = new Channel(i, channelid, bootTime);
+        try {
+            for (int j = 1; j <= YamlConfig.config.worlds.get(i).channels; j++) {
+                int channelid = j;
+                Channel channel = new Channel(i, channelid, bootTime);
 
-            world.addChannel(channel);
-            channelInfo.put(channelid, channel.getIP());
+                world.addChannel(channel);
+                channelInfo.put(channelid, channel.getIP());
+            }
+        } catch (RuntimeException startupFailure) {
+            world.shutdownWorldResources();
+            throw startupFailure;
         }
 
         boolean canDeploy;
@@ -602,7 +612,7 @@ public class Server {
     }
 
     public Map<Integer, Integer> getCouponRates() {
-        return couponRates;
+        return Collections.unmodifiableMap(new HashMap<>(couponRates));
     }
 
     public static void cleanNxcodeCoupons(Connection con) throws SQLException {
@@ -649,7 +659,7 @@ public class Server {
 
     public List<Integer> getActiveCoupons() {
         synchronized (activeCoupons) {
-            return activeCoupons;
+            return Collections.unmodifiableList(new ArrayList<>(activeCoupons));
         }
     }
 
@@ -875,7 +885,7 @@ public class Server {
                 }
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
 
         return rankSystem;
@@ -947,7 +957,7 @@ public class Server {
                 }
             }
         } catch (Exception e) {
-            log.error("[SEVERE] Syntax error in 'world.ini'.", e); //For those who get errors
+            log.error("Failed to initialize world/channel runtime", e);
             System.exit(0);
         }
 
@@ -1116,6 +1126,14 @@ public class Server {
         ServerMetricsSnapshot snapshot = buildMetricsSnapshot();
         SessionCoordinator sessionCoordinator = SessionCoordinator.getInstance();
         List<String> lines = new ArrayList<>();
+        long skippedDormantMapUpdates = 0;
+        long unloadedMaps = 0;
+        for (World world : getWorlds()) {
+            for (Channel channel : world.getChannels()) {
+                skippedDormantMapUpdates += channel.skippedDormantMapUpdateCount();
+                unloadedMaps += channel.unloadedMapCount();
+            }
+        }
 
         lines.add("Server health: " + snapshot.compact());
         lines.add("Runtime caches: expDebug=" + ExpDebugTracker.activeSessionCount()
@@ -1124,7 +1142,11 @@ public class Server {
                 + " npcConversations=" + NPCScriptManager.getInstance().activeConversationCount()
                 + " npcScripts=" + NPCScriptManager.getInstance().activeScriptCount()
                 + " questActions=" + QuestScriptManager.getInstance().activeQuestActionCount()
-                + " questScripts=" + QuestScriptManager.getInstance().activeScriptCount());
+                + " questScripts=" + QuestScriptManager.getInstance().activeScriptCount()
+                + " transitionBuffs={" + buffStorage.diagnostics() + "}");
+        for (World world : getWorlds()) {
+            lines.add("World caches: " + world.runtimeCacheDiagnostics());
+        }
         lines.add("Login runtime: attempts=" + sessionCoordinator.trackedLoginAttemptAccountCount()
                 + " bypass=" + sessionCoordinator.activeLoginBypassCount()
                 + " newYearCards=" + newYearCardRuntimeCount()
@@ -1132,13 +1154,17 @@ public class Server {
         lines.add("Map runtime: loaded=" + snapshot.loadedMaps()
                 + " active=" + snapshot.activeMaps()
                 + " idleCandidates=" + snapshot.idleMapCandidates()
-                + " highWatermark=" + loadedMapHighWatermark);
+                + " highWatermark=" + loadedMapHighWatermark
+                + " dormantTicksSkipped=" + skippedDormantMapUpdates
+                + " unloaded=" + unloadedMaps);
         lines.add("Save pressure: " + CharacterSaveDiagnostics.diagnostics());
         lines.add("Save reasons: " + CharacterSaveDiagnostics.reasonDiagnostics());
         lines.add("Save sections: " + CharacterSaveDiagnostics.sectionDiagnostics());
         lines.add("Broadcast pressure: " + MapBroadcastDiagnostics.diagnostics());
         lines.add("DB: " + DatabaseConnection.poolStats());
         lines.add("Threads: " + ThreadManager.getInstance().diagnostics());
+        lines.add("EXP logs: " + ExpLogger.diagnostics());
+        lines.add("Runtime failure keys: " + monitoring.RuntimeFailureLogger.trackedFailureKeyCount());
         lines.add("Timers: " + TimerManager.getInstance().diagnostics());
         lines.add("Slow operations: " + SlowOperationLogger.diagnostics());
         lines.add("Load level: " + ServerLoadMonitor.currentLevel());
@@ -1779,7 +1805,7 @@ public class Server {
 
             wchars.add(curWorld, chars);
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
 
         return new Pair<>(characterCount, wchars);
@@ -1797,7 +1823,7 @@ public class Server {
                 }
             }
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -2132,53 +2158,29 @@ public class Server {
         if (getWorlds() == null) {
             return;//already shutdown
         }
-        for (World w : getWorlds()) {
-            w.shutdown();
+        List<World> shuttingWorlds = new ArrayList<>(getWorlds());
+        List<Channel> allChannels = getAllChannels();
+        shutdownChannelsBounded(allChannels);
+        for (World world : shuttingWorlds) {
+            world.shutdownWorldResources();
         }
         if (databaseConsoleBridgeServer != null) {
             databaseConsoleBridgeServer.stop();
             databaseConsoleBridgeServer = null;
         }
 
-        /*for (World w : getWorlds()) {
-            while (w.getPlayerStorage().getAllCharacters().size() > 0) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    System.err.println("FUCK MY LIFE");
-                }
-            }
-        }
-        for (Channel ch : getAllChannels()) {
-            while (ch.getConnectedClients() > 0) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    System.err.println("FUCK MY LIFE");
-                }
-            }
-        }*/
-
-        List<Channel> allChannels = getAllChannels();
-
-        for (Channel ch : allChannels) {
-            while (!ch.finishedShutdown()) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ie) {
-                    log.error("Error during shutdown sleep", ie);
-                }
-            }
-        }
-
         resetServerWorlds();
 
+        ExpLogger.shutdown();
         ThreadManager.getInstance().stop();
         TimerManager.getInstance().purge();
         TimerManager.getInstance().stop();
 
         log.info("Worlds and channels are offline.");
-        loginServer.stop();
+        if (loginServer != null) {
+            loginServer.stop();
+            loginServer = null;
+        }
         if (!restart) {  // shutdown hook deadlocks if System.exit() method is used within its body chores, thanks MIKE for pointing that out
             // We disabled log4j's shutdown hook in the config file, so we have to manually shut it down here,
             // after our last log statement.
@@ -2190,5 +2192,55 @@ public class Server {
             instance = null;
             getInstance().init();//DID I DO EVERYTHING?! D:
         }
+    }
+
+    private void shutdownChannelsBounded(List<Channel> channels) {
+        if (channels.isEmpty()) {
+            return;
+        }
+        ExecutorService shutdownExecutor = Executors.newThreadPerTaskExecutor(
+                Thread.ofVirtual().name("cosmic-channel-shutdown-", 0).factory());
+        Map<Channel, Future<?>> shutdownTasks = new HashMap<>();
+        for (Channel channel : channels) {
+            shutdownTasks.put(channel, shutdownExecutor.submit(channel::shutdown));
+        }
+
+        long deadlineNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(CHANNEL_SHUTDOWN_TIMEOUT_MS);
+        boolean interrupted = false;
+        for (Map.Entry<Channel, Future<?>> entry : shutdownTasks.entrySet()) {
+            Channel channel = entry.getKey();
+            Future<?> task = entry.getValue();
+            long remainingNanos = deadlineNanos - System.nanoTime();
+            try {
+                if (remainingNanos <= 0) {
+                    throw new TimeoutException("channel shutdown deadline elapsed");
+                }
+                task.get(remainingNanos, TimeUnit.NANOSECONDS);
+            } catch (TimeoutException e) {
+                log.error("Timed out waiting for channel {} in world {} to finish shutdown",
+                        channel.getId(), channel.getWorld(), e);
+                task.cancel(true);
+                channel.forceShutdownTerminalState();
+            } catch (ExecutionException e) {
+                log.error("Channel {} in world {} failed during shutdown", channel.getId(), channel.getWorld(),
+                        e.getCause());
+                channel.forceShutdownTerminalState();
+            } catch (InterruptedException e) {
+                interrupted = true;
+                task.cancel(true);
+                channel.forceShutdownTerminalState();
+                break;
+            }
+        }
+        if (interrupted) {
+            shutdownTasks.forEach((channel, task) -> {
+                if (!task.isDone()) {
+                    task.cancel(true);
+                    channel.forceShutdownTerminalState();
+                }
+            });
+            Thread.currentThread().interrupt();
+        }
+        shutdownExecutor.shutdownNow();
     }
 }

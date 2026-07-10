@@ -42,7 +42,7 @@ public class QuickslotBinding {
     }
 
     public byte[] GetKeybindings() {
-        return m_aQuickslotKeyMapped;
+        return m_aQuickslotKeyMapped.clone();
     }
 
 }

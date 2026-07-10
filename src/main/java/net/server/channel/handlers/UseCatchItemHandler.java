@@ -217,7 +217,6 @@ public final class UseCatchItemHandler extends AbstractPacketHandler {
                 }
                 c.sendPacket(PacketCreator.enableActions());
 
-                // System.out.println("UseCatchItemHandler: \r\n" + slea.toString());
         }
     }
 

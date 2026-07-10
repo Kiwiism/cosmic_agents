@@ -32,6 +32,7 @@ import net.PacketHandler;
 import net.PacketProcessor;
 import net.netty.InvalidPacketHeaderException;
 import net.packet.InPacket;
+import net.packet.MalformedPacketTracker;
 import net.packet.Packet;
 import net.packet.logging.LoggingUtil;
 import net.packet.logging.MonitoredChrLogger;
@@ -68,6 +69,7 @@ import server.maps.MapleMap;
 import server.maps.MiniDungeonInfo;
 import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import server.monitoring.SlowOperationLogger;
+import server.monitoring.ThrottledLogger;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 import tools.HexTool;
@@ -105,6 +107,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class Client extends ChannelInboundHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(Client.class);
+    private static final int PACKET_PREVIEW_BYTES = 256;
 
     public static final int LOGIN_NOTLOGGEDIN = 0;
     public static final int LOGIN_SERVER_TRANSITION = 1;
@@ -151,6 +154,7 @@ public class Client extends ChannelInboundHandlerAdapter {
     private int visibleWorlds;
     private long lastNpcClick;
     private long lastPacket = System.currentTimeMillis();
+    private final MalformedPacketTracker malformedPacketTracker = new MalformedPacketTracker();
     private int lang = 0;
 
     public enum Type {
@@ -211,7 +215,16 @@ public class Client extends ChannelInboundHandlerAdapter {
             return;
         }
 
+        if (packet.available() < Short.BYTES) {
+            handleMalformedPacket("missing-opcode", (short) -1, packet, null);
+            return;
+        }
+
         short opcode = packet.readShort();
+        if (!packetProcessor.isPacketIdInRange(opcode)) {
+            handleMalformedPacket("invalid-opcode", opcode, packet, null);
+            return;
+        }
         final PacketHandler handler = packetProcessor.getHandler(opcode);
 
         if (YamlConfig.config.server.USE_DEBUG_SHOW_RCVD_PACKET && !LoggingUtil.isIgnoredRecvPacket(opcode)) {
@@ -224,9 +237,8 @@ public class Client extends ChannelInboundHandlerAdapter {
                 handler.handlePacket(packet, this);
             } catch (final Throwable t) {
                 final String chrInfo = player != null ? player.getName() + " on map " + player.getMapId() : "?";
-                log.warn("Error in packet handler {}. Chr {}, account {}. Packet: {}", handler.getClass().getSimpleName(),
-                        chrInfo, getAccountName(), packet, t);
-                //client.sendPacket(PacketCreator.enableActions());//bugs sometimes
+                handleMalformedPacket("handler:" + handler.getClass().getSimpleName(), opcode, packet, t,
+                        "Chr " + chrInfo + ", account " + getAccountName());
             }
         }
 
@@ -250,7 +262,31 @@ public class Client extends ChannelInboundHandlerAdapter {
             SessionCoordinator.getInstance().closeSession(this, true);
         } else if (cause instanceof IOException) {
             closeMapleSession();
+        } else {
+            ThrottledLogger.warn("client-pipeline:" + cause.getClass().getName(), log,
+                    "Closing session after unexpected pipeline exception", cause);
+            closeMapleSession();
         }
+    }
+
+    private void handleMalformedPacket(String reason, short opcode, InPacket packet, Throwable cause) {
+        handleMalformedPacket(reason, opcode, packet, cause, "account " + getAccountName());
+    }
+
+    private void handleMalformedPacket(String reason, short opcode, InPacket packet, Throwable cause, String context) {
+        int length = packet.getPosition() + packet.available();
+        String preview = HexTool.toHexString(packet.getBytes(PACKET_PREVIEW_BYTES));
+        ThrottledLogger.warn("packet:" + reason, log,
+                "Malformed packet reason={} opcode={} length={} preview={} context={}", cause,
+                reason, opcode, length, preview, context);
+        if (malformedPacketTracker.record(System.currentTimeMillis())) {
+            SessionCoordinator.getInstance().closeSession(this, true);
+        }
+    }
+
+    static String packetPreview(byte[] content) {
+        int previewLength = Math.min(content.length, PACKET_PREVIEW_BYTES);
+        return HexTool.toHexString(Arrays.copyOf(content, previewLength));
     }
 
     @Override
@@ -975,7 +1011,7 @@ public class Client extends ChannelInboundHandlerAdapter {
 
     public final void disconnect(final boolean shutdown, final boolean cashshop) {
         if (canDisconnect()) {
-            ThreadManager.getInstance().newTask(() -> disconnectInternal(shutdown, cashshop));
+            ThreadManager.getInstance().newDatabaseTask(() -> disconnectInternal(shutdown, cashshop));
         }
     }
 

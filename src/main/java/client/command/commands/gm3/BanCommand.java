@@ -64,7 +64,7 @@ public class BanCommand extends Command {
                     }
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(ex);
                 c.getPlayer().message("Error occured while banning IP address");
                 c.getPlayer().message(target.getName() + "'s IP was not banned: " + ip);
             }

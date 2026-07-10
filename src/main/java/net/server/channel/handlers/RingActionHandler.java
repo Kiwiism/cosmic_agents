@@ -152,7 +152,7 @@ public final class RingActionHandler extends AbstractPacketHandler {
         try (Connection con = DatabaseConnection.getConnection()) {
             eraseEngagementOffline(characterId, con);
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
     }
 
@@ -453,7 +453,7 @@ public final class RingActionHandler extends AbstractPacketHandler {
                     }
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(ex);
                     return;
                 }
 

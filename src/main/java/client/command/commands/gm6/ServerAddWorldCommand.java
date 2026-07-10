@@ -38,7 +38,7 @@ public class ServerAddWorldCommand extends Command {
     public void execute(Client c, String[] params) {
         final Character player = c.getPlayer();
 
-        ThreadManager.getInstance().newTask(() -> {
+        ThreadManager.getInstance().newBlockingTask(() -> {
             int wid = Server.getInstance().addWorld();
 
             if (player.isLoggedinWorld()) {

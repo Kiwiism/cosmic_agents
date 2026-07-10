@@ -181,7 +181,7 @@ public class SkillbookInformationProvider {
                 }
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
 
         return loadedSkillbooks;
@@ -202,7 +202,7 @@ public class SkillbookInformationProvider {
             }
         } catch (IOException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

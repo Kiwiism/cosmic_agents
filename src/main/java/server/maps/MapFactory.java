@@ -109,7 +109,7 @@ public class MapFactory {
                 }
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
     }
 
@@ -261,7 +261,7 @@ public class MapFactory {
                     }
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             }
         }
 
@@ -340,7 +340,7 @@ public class MapFactory {
                 backTypes.put(layerNum, btype);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             // swallow cause I'm cool
         }
 

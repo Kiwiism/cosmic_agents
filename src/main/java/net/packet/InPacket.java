@@ -1,6 +1,7 @@
 package net.packet;
 
 import java.awt.*;
+import java.util.Arrays;
 
 public interface InPacket extends Packet {
     byte readByte();
@@ -15,4 +16,9 @@ public interface InPacket extends Packet {
     int available();
     void seek(int byteOffset);
     int getPosition();
+
+    default byte[] getBytes(int maximumLength) {
+        byte[] bytes = getBytes();
+        return bytes.length <= maximumLength ? bytes : Arrays.copyOf(bytes, maximumLength);
+    }
 }

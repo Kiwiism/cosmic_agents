@@ -83,6 +83,9 @@ public class Inventory implements Iterable<Item> {
     public void setSlotLimit(int newLimit) {
         lock.lock();
         try {
+            if (slotLimit == (byte) newLimit) {
+                return;
+            }
             if (newLimit < slotLimit) {
                 List<Short> toRemove = new LinkedList<>();
                 for (Item it : list()) {
@@ -97,6 +100,8 @@ public class Inventory implements Iterable<Item> {
             }
 
             slotLimit = (byte) newLimit;
+            owner.markPersistenceDirty(Character.PersistenceSection.INVENTORY);
+            owner.markPersistenceDirty(Character.PersistenceSection.STATS);
         } finally {
             lock.unlock();
         }
@@ -263,6 +268,7 @@ public class Inventory implements Iterable<Item> {
                 } else {
                     target.setQuantity((short) (source.getQuantity() + target.getQuantity()));
                     inventory.remove(sSlot);
+                    source.setPersistenceDirtyMarker(() -> { });
                 }
             } else {
                 swap(target, source);
@@ -322,7 +328,9 @@ public class Inventory implements Iterable<Item> {
                 return -1;
             }
 
+            attachPersistenceOwner(item);
             inventory.put(slotId, item);
+            owner.markPersistenceDirty(Character.PersistenceSection.INVENTORY);
         } finally {
             lock.unlock();
         }
@@ -338,6 +346,7 @@ public class Inventory implements Iterable<Item> {
     protected void addSlotFromDB(short slot, Item item) {
         lock.lock();
         try {
+            attachPersistenceOwner(item);
             inventory.put(slot, item);
         } finally {
             lock.unlock();
@@ -353,6 +362,10 @@ public class Inventory implements Iterable<Item> {
         lock.lock();
         try {
             item = inventory.remove(slot);
+            if (item != null) {
+                item.setPersistenceDirtyMarker(() -> { });
+                owner.markPersistenceDirty(Character.PersistenceSection.INVENTORY);
+            }
         } finally {
             lock.unlock();
         }
@@ -374,7 +387,6 @@ public class Inventory implements Iterable<Item> {
     public boolean isFull(int margin) {
         lock.lock();
         try {
-            //System.out.print("(" + inventory.size() + " " + margin + " <> " + slotLimit + ")");
             return inventory.size() + margin >= slotLimit;
         } finally {
             lock.unlock();
@@ -384,7 +396,6 @@ public class Inventory implements Iterable<Item> {
     public boolean isFullAfterSomeItems(int margin, int used) {
         lock.lock();
         try {
-            //System.out.print("(" + inventory.size() + " " + margin + " <> " + slotLimit + " -" + used + ")");
             return inventory.size() + margin >= slotLimit - used;
         } finally {
             lock.unlock();
@@ -589,11 +600,8 @@ public class Inventory implements Iterable<Item> {
             for (Integer itValue : it.getValue()) {
                 int usedSlots = typesSlotsUsed.get(itemType);
 
-                //System.out.print("inserting " + itemId.intValue() + " with type " + itemType + " qty " + it.getValue() + " owner '" + rcvOwners.get(it.getKey()) + "' current usedSlots:");
-                //for(Integer i : typesSlotsUsed) System.out.print(" " + i);
                 int result = InventoryManipulator.checkSpaceProgressively(c, itemId, itValue, rcvOwners.get(it.getKey()), usedSlots, useProofInv);
                 boolean hasSpace = ((result % 2) != 0);
-                //System.out.print(" -> hasSpace: " + hasSpace + " RESULT : " + result + "\n");
 
                 if (!hasSpace) {
                     return false;
@@ -657,6 +665,35 @@ public class Inventory implements Iterable<Item> {
     }
 
     public void dispose() {
+        lock.lock();
+        try {
+            for (Item item : inventory.values()) {
+                item.setPersistenceDirtyMarker(() -> { });
+            }
+        } finally {
+            lock.unlock();
+        }
         owner = null;
+    }
+
+    public void attachPersistenceOwner(Character owner) {
+        lock.lock();
+        try {
+            this.owner = owner;
+            for (Item item : inventory.values()) {
+                attachPersistenceOwner(item);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void attachPersistenceOwner(Item item) {
+        item.setPersistenceDirtyMarker(() -> {
+            Character currentOwner = owner;
+            if (currentOwner != null) {
+                currentOwner.markPersistenceDirty(Character.PersistenceSection.INVENTORY);
+            }
+        });
     }
 }

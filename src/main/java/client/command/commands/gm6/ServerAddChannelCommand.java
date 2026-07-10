@@ -45,7 +45,7 @@ public class ServerAddChannelCommand extends Command {
 
         final int worldid = Integer.parseInt(params[0]);
 
-        ThreadManager.getInstance().newTask(() -> {
+        ThreadManager.getInstance().newBlockingTask(() -> {
             int chid = Server.getInstance().addChannel(worldid);
             if (player.isLoggedinWorld()) {
                 if (chid >= 0) {

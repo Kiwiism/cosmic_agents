@@ -288,7 +288,7 @@ public class MatchCheckerCoordinator {
                 semaphorePool.release();
             }
         } catch (InterruptedException ie) {
-            ie.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ie);
         }
 
         if (mmce != null) {
@@ -378,7 +378,7 @@ public class MatchCheckerCoordinator {
                 semaphorePool.release();
             }
         } catch (InterruptedException ie) {
-            ie.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ie);
         }
 
         if (mmce != null) {
@@ -416,7 +416,7 @@ public class MatchCheckerCoordinator {
                 semaphorePool.release();
             }
         } catch (InterruptedException ie) {
-            ie.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ie);
         }
 
         if (mmce != null) {

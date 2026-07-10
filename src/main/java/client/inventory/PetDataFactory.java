@@ -27,16 +27,16 @@ import provider.DataProviderFactory;
 import provider.DataTool;
 import provider.wz.WZFiles;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Danny (Leifde)
  */
 public class PetDataFactory {
     private static final DataProvider dataRoot = DataProviderFactory.getDataProvider(WZFiles.ITEM);
-    private static final Map<String, PetCommand> petCommands = new HashMap<>();
-    private static final Map<Integer, Integer> petHunger = new HashMap<>();
+    private static final Map<String, PetCommand> petCommands = new ConcurrentHashMap<>();
+    private static final Map<Integer, Integer> petHunger = new ConcurrentHashMap<>();
 
     public static PetCommand getPetCommand(int petId, int skillId) {
         PetCommand ret = petCommands.get(petId + "" + skillId);
@@ -69,6 +69,7 @@ public class PetDataFactory {
             ret = petHunger.get(petId);
             if (ret == null) {
                 ret = DataTool.getInt(dataRoot.getData("Pet/" + petId + ".img").getChildByPath("info/hungry"), 1);
+                petHunger.put(petId, ret);
             }
             return ret;
         }

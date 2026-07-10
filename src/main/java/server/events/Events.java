@@ -22,12 +22,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package server.events;
 
+import java.util.Objects;
+
 /**
  * @author kevintjuh93
  */
 public abstract class Events {
+    private Runnable persistenceDirtyMarker = () -> { };
+
     public Events() {
 
+    }
+
+    public final void setPersistenceDirtyMarker(Runnable persistenceDirtyMarker) {
+        this.persistenceDirtyMarker = Objects.requireNonNull(persistenceDirtyMarker);
+    }
+
+    protected final void markPersistenceDirty() {
+        persistenceDirtyMarker.run();
     }
 
     public abstract int getInfo();

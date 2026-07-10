@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -116,11 +119,42 @@ public class TimerManager implements TimerManagerMBean {
     }
 
     public void stop() {
-        shutdownNow(coreExecutor);
-        shutdownNow(saveExecutor);
-        shutdownNow(mapExecutor);
-        shutdownNow(eventExecutor);
-        shutdownNow(lowPriorityExecutor);
+        List<ScheduledThreadPoolExecutor> executors = new ArrayList<>(5);
+        addIfPresent(executors, coreExecutor);
+        addIfPresent(executors, saveExecutor);
+        addIfPresent(executors, mapExecutor);
+        addIfPresent(executors, eventExecutor);
+        addIfPresent(executors, lowPriorityExecutor);
+        executors.forEach(this::shutdownNow);
+
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        boolean interrupted = false;
+        for (ScheduledThreadPoolExecutor executor : executors) {
+            long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) {
+                log.warn("Timed out waiting for timer executors to terminate");
+                break;
+            }
+            try {
+                if (!executor.awaitTermination(remaining, TimeUnit.NANOSECONDS)) {
+                    log.warn("Timed out waiting for timer executors to terminate");
+                    break;
+                }
+            } catch (InterruptedException e) {
+                interrupted = true;
+                break;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private static void addIfPresent(List<ScheduledThreadPoolExecutor> executors,
+                                     ScheduledThreadPoolExecutor executor) {
+        if (executor != null) {
+            executors.add(executor);
+        }
     }
 
     private void shutdownNow(ScheduledThreadPoolExecutor executor) {

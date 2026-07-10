@@ -1,5 +1,20 @@
 # Server Hardening Diagnostics
 
+Implementation status through 2026-07-10 is recorded in
+`docs/SERVER_HARDENING_2026_07_IMPLEMENTATION.md`.
+
+## Bounded Work Executors
+
+- `ThreadManager` now owns separate bounded `general`, `blocking`, and
+  `database` executors. The former 20-to-1000-thread pool and caller-run
+  rejection fallback are gone.
+- Every lane reports active, queued, pool, completed, submitted, and rejected
+  counts. Thread names identify their lane.
+- Sizing can be changed without editing YAML through
+  `cosmic.threads.<lane>.core`, `.max`, and `.queue` system properties, or the
+  corresponding uppercase environment variables.
+- Blocking and database fallback work is never executed on a Netty caller.
+
 These items were implemented as diagnostics-first changes because enabling full behavior changes immediately could affect gameplay or the in-progress agent reconstruction.
 
 ## Scheduler Lanes
@@ -87,10 +102,23 @@ These items were implemented as diagnostics-first changes because enabling full 
   - area/event data.
   - quests.
   - family/cash storage.
-- Behavior unchanged:
-  - no save section is skipped.
-  - no dirty-save behavior is enabled.
-  - no Agent save queue or Agent persistence route is installed.
+- 2026-07-10 implementation:
+  - autosaves use versioned dirty sections for stats, inventory, skills,
+    quests, social state, keymaps/macros, locations, pets, and related state.
+  - mutable child collections use locked point-in-time snapshots before their
+    SQL work; Character scalar writes remain protected by versioned
+    post-mutation signals and their existing field locks.
+  - a mutation that races a save leaves its section dirty.
+  - every sixth successful autosave is a conservative full checkpoint; tune
+    with `cosmic.persistence.fullCheckpointAutosaves`.
+  - logout, manual, Cash Shop, MTS, server-transition, save-all, and other
+    `notAutosave` routes remain full transactional checkpoints.
+  - diagnostics include clean autosaves skipped and per-section write counts.
+  - 2026-07-11 ownership audit added Item/Equip, Pet, Mount, SkillMacro,
+    CashShop, FamilyEntry, Storage, BuddyList, QuestStatus, MonsterBook, and
+    Events callbacks, including detached-child cleanup and zero-row failures.
+  - verification: 36 focused persistence tests and 2,012 non-Agent tests pass
+    with zero failures, errors, or skips.
 - Revisit later:
   - split real-player and Agent save routing after Agent reconstruction.
   - use soak evidence to decide whether inventory, quest, pet, or storage saves
@@ -100,11 +128,31 @@ These items were implemented as diagnostics-first changes because enabling full 
 
 - Added `MapleMap.isActiveForMaintenance()` and idle-time diagnostics.
 - Added loaded/active/idle-candidate counts to `MapManager`.
-- `MapManager.updateMaps()` now logs idle map tick candidates but still performs normal respawn and MP recovery.
-- Revisit later:
-  - define pinned maps and event-map unload rules.
-  - add an opt-in config for idle map unload after diagnostics prove it is safe.
-  - add per-map high-watermark reports for object/drop/reactor leaks.
+- Empty, inactive maps skip respawn/MP-recovery work after the dormant
+  threshold. Mob MP and normal respawn state are restored when the first
+  character returns.
+- Idle unload is implemented but remains opt-in. It rejects occupied, event,
+  merchant/shop, owner, drop, active-reactor/status, scripted, transport,
+  timer, and scheduled-task maps.
+- Runtime controls:
+  - `cosmic.maps.dormantSkipMillis` (default `60000`)
+  - `cosmic.maps.idleUnloadEnabled` (default `false`)
+  - `cosmic.maps.idleUnloadMillis` (default `1800000`)
+- Map diagnostics include skipped dormant ticks and unload count.
+
+## EXP Logging And Runtime Failures
+
+- Optional EXP logging now has a bounded queue, configurable batch size and
+  interval, transactional batches, failed-batch requeue, drop/failure metrics,
+  interrupt-correct shutdown, and a synchronous final flush.
+- Runtime controls are `cosmic.expLogger.queue`, `.batch`, and
+  `.interval.seconds` (with uppercase environment equivalents).
+- Legacy runtime `printStackTrace` calls outside offline tooling, agents, and
+  Database Console were replaced by caller-aware structured logging.
+  Equivalent bursts are summarized over a five-second window rather than
+  flooding stdout. The runtime `tools.PacketCreator` Fredrick path now reports
+  contextual character/account information through its caller rather than
+  printing directly.
 
 ## Broadcast Path
 
@@ -140,10 +188,24 @@ These items were implemented as diagnostics-first changes because enabling full 
 - World/channel merchant registration now has `tryRegister` / `tryAdd` APIs.
 - Merchant creation rolls back world registration if channel registration fails.
 - Remote merchant access now requires Store Remote Controller item `5470000` when accessing from a different map or channel.
+- Fredrick storage is loaded before the response packet is constructed. A load
+  failure therefore sends no partial packet, is shown as an explicit retryable
+  error instead of empty storage, and cannot reach meso withdrawal or item
+  deletion. A successful NPC eligibility lookup is reused when opening the
+  Fredrick view, avoiding the previous duplicate DB load.
 - Revisit later:
   - add packet-level regression tests for duplicate merchant packets.
   - decide whether cross-channel remote access should consume or only require the controller item.
-  - audit Fredrick retrieval and force-close paths for matching state cleanup.
+  - run packet-level disconnect/retry/full-inventory tests with the v83 client.
+
+2026-07-11 merchant update:
+
+- Successful retrieval is one SQL transaction across resulting inventory,
+  merchant balance, merchant item/equipment rows, and reminder state.
+- Failed SQL restores the original live inventory.
+- Merchant snapshot and reminder writes share one transaction.
+- World/channel cleanup removes only the exact registered merchant instance.
+- Merchant item/bundle loading uses one joined query instead of `1 + N`.
 
 ## Static Runtime Cache Cleanup
 
@@ -156,3 +218,11 @@ These items were implemented as diagnostics-first changes because enabling full 
 - Revisit later:
   - keep reviewing all static maps keyed by character id/account id/object id.
   - add explicit cleanup hooks for any newly introduced runtime caches.
+
+2026-07-11 cache update:
+
+- Empty Messenger instances are released when their final member leaves.
+- Account view/storage cleanup is null-safe and lock-protected.
+- World cache and transition buff/disease counts are visible through
+  `!serverhealth`.
+- Metadata caches remain intentionally bounded by game-data IDs.

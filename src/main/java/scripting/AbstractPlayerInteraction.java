@@ -377,7 +377,7 @@ public class AbstractPlayerInteraction {
         try {
             return getQuestStat(id) == QuestStatus.Status.COMPLETED;
         } catch (NullPointerException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return false;
         }
     }
@@ -390,7 +390,7 @@ public class AbstractPlayerInteraction {
         try {
             return getQuestStat(id) == QuestStatus.Status.STARTED;
         } catch (NullPointerException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return false;
         }
     }
@@ -506,7 +506,7 @@ public class AbstractPlayerInteraction {
         try {
             return Quest.getInstance(id).forceStart(getPlayer(), npc);
         } catch (NullPointerException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
             return false;
         }
     }
@@ -515,7 +515,7 @@ public class AbstractPlayerInteraction {
         try {
             return Quest.getInstance(id).forceComplete(getPlayer(), npc);
         } catch (NullPointerException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
             return false;
         }
     }
@@ -730,7 +730,7 @@ public class AbstractPlayerInteraction {
         try {
             return Server.getInstance().getGuild(getPlayer().getGuildId(), getPlayer().getWorld(), null);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return null;
     }

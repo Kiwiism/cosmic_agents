@@ -141,7 +141,7 @@ public final class NewYearCardHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
 
         return -1;

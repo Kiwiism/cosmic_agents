@@ -164,7 +164,7 @@ public class MonsterInformationProvider {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return ret;
         }
 

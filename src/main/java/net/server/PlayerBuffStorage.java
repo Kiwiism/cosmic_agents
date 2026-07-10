@@ -77,6 +77,15 @@ public class PlayerBuffStorage {
         }
     }
 
+    public String diagnostics() {
+        lock.lock();
+        try {
+            return "buffCharacters=" + buffs.size() + " diseaseCharacters=" + diseases.size();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

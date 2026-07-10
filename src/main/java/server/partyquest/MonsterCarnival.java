@@ -105,7 +105,7 @@ public class MonsterCarnival {
 
             cs.initMonsterCarnival(cpq1, room);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -317,7 +317,7 @@ public class MonsterCarnival {
             }
             dispose();
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

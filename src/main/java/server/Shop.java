@@ -24,7 +24,6 @@ package server;
 import client.Client;
 import client.inventory.InventoryType;
 import client.inventory.Item;
-import client.inventory.Pet;
 import client.inventory.manipulator.InventoryManipulator;
 import constants.id.ItemId;
 import constants.inventory.ItemConstants;
@@ -54,8 +53,6 @@ public class Shop {
     private final int id;
     private final int npcId;
     private final List<ShopItem> items;
-    private final int tokenvalue = 1000000000;
-    private final int token = ItemId.GOLDEN_MAPLE_LEAF;
 
     static {
         for (int throwingStarId : ItemId.allThrowingStarIds()) {
@@ -70,13 +67,13 @@ public class Shop {
         }
     }
 
-    private Shop(int id, int npcId) {
+    Shop(int id, int npcId) {
         this.id = id;
         this.npcId = npcId;
         items = new ArrayList<>();
     }
 
-    private void addItem(ShopItem item) {
+    void addItem(ShopItem item) {
         items.add(item);
     }
 
@@ -95,7 +92,7 @@ public class Shop {
      *  For rechargeable items, {@code quantity} is ignored — one slotMax stack is purchased. */
     public TransactionResult buyDirect(client.Character player, short slot, int itemId, short quantity) {
         ShopItem item = findBySlot(slot);
-        if (item == null || item.getItemId() != itemId) {
+        if (item == null || item.getItemId() != itemId || quantity < 1) {
             return TransactionResult.INVALID;
         }
         if (item.getPrice() <= 0) {
@@ -104,7 +101,10 @@ public class Shop {
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         Client c = player.getClient();
         if (!ItemConstants.isRechargeable(itemId)) {
-            int amount = (int) Math.min((float) item.getPrice() * quantity, Integer.MAX_VALUE);
+            Integer amount = checkedCost(item.getPrice(), quantity);
+            if (amount == null) {
+                return TransactionResult.INVALID;
+            }
             if (player.getMeso() < amount) {
                 return TransactionResult.NOT_ENOUGH_MESO;
             }
@@ -153,17 +153,27 @@ public class Shop {
 
     public void buy(Client c, short slot, int itemId, short quantity) {
         ShopItem item = findBySlot(slot);
-        if (item != null) {
-            if (item.getItemId() != itemId) {
-                log.warn("Wrong slot number in shop {}", id);
-                return;
-            }
-        } else {
+        if (item == null || quantity < 1) {
+            c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+            return;
+        }
+        if (item.getItemId() != itemId) {
+            log.warn("Wrong item {} for slot {} in shop {}", itemId, slot, id);
+            c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+            return;
+        }
+        if (item.getPrice() <= 0 && item.getPitch() <= 0) {
+            // Zero-price rechargeable rows are included only so the client can recharge owned stacks.
+            c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
             return;
         }
         ItemInformationProvider ii = ItemInformationProvider.getInstance();
         if (item.getPrice() > 0) {
-            int amount = (int) Math.min((float) item.getPrice() * quantity, Integer.MAX_VALUE);
+            Integer amount = checkedCost(item.getPrice(), quantity);
+            if (amount == null) {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+                return;
+            }
             if (c.getPlayer().getMeso() >= amount) {
                 if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
                     if (!ItemConstants.isRechargeable(itemId)) { //Pets can't be bought from shops
@@ -186,7 +196,11 @@ public class Shop {
             }
 
         } else if (item.getPitch() > 0) {
-            int amount = (int) Math.min((float) item.getPitch() * quantity, Integer.MAX_VALUE);
+            Integer amount = checkedCost(item.getPitch(), quantity);
+            if (amount == null) {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x06));
+                return;
+            }
 
             if (c.getPlayer().getInventory(InventoryType.ETC).countById(ItemId.PERFECT_PITCH) >= amount) {
                 if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
@@ -206,30 +220,15 @@ public class Shop {
                 }
             }
 
-        } else if (c.getPlayer().getInventory(InventoryType.CASH).countById(token) != 0) {
-            int amount = c.getPlayer().getInventory(InventoryType.CASH).countById(token);
-            int value = amount * tokenvalue;
-            int cost = item.getPrice() * quantity;
-            if (c.getPlayer().getMeso() + value >= cost) {
-                int cardreduce = value - cost;
-                int diff = cardreduce + c.getPlayer().getMeso();
-                if (InventoryManipulator.checkSpace(c, itemId, quantity, "")) {
-                    if (ItemConstants.isPet(itemId)) {
-                        int petid = Pet.createPet(itemId);
-                        InventoryManipulator.addById(c, itemId, quantity, "", petid, -1);
-                    } else {
-                        InventoryManipulator.addById(c, itemId, quantity, "", -1, -1);
-                    }
-                    c.getPlayer().gainMeso(diff, false);
-                    notifyBotIfEquipBought(c, itemId);
-                } else {
-                    c.sendPacket(PacketCreator.shopTransaction((byte) 3));
-                }
-                c.sendPacket(PacketCreator.shopTransaction((byte) 0));
-            } else {
-                c.sendPacket(PacketCreator.shopTransaction((byte) 2));
-            }
         }
+    }
+
+    static Integer checkedCost(int unitPrice, short quantity) {
+        if (unitPrice <= 0 || quantity < 1) {
+            return null;
+        }
+        long cost = (long) unitPrice * quantity;
+        return cost <= Integer.MAX_VALUE ? (int) cost : null;
     }
 
     private static void notifyBotIfEquipBought(Client c, int itemId) {
@@ -317,6 +316,9 @@ public class Shop {
     }
 
     private ShopItem findBySlot(short slot) {
+        if (slot < 0 || slot >= items.size()) {
+            return null;
+        }
         return items.get(slot);
     }
 

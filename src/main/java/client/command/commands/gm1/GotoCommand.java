@@ -61,7 +61,7 @@ public class GotoCommand extends Command {
                 GOTO_AREAS_INFO += ("'" + e.getKey() + "' - #b" + (MapFactory.loadPlaceName(e.getValue())) + "#k\r\n");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
 
             GOTO_TOWNS_INFO = "(none)";
             GOTO_AREAS_INFO = "(none)";

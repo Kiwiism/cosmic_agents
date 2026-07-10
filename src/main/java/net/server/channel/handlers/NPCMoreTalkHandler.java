@@ -24,6 +24,9 @@ package net.server.channel.handlers;
 import client.Client;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scripting.npc.NPCConversationManager;
 import scripting.npc.NPCScriptManager;
 import scripting.quest.QuestScriptManager;
 
@@ -31,11 +34,21 @@ import scripting.quest.QuestScriptManager;
  * @author Matze
  */
 public final class NPCMoreTalkHandler extends AbstractPacketHandler {
+    private static final Logger log = LoggerFactory.getLogger(NPCMoreTalkHandler.class);
+
     @Override
     public final void handlePacket(InPacket p, Client c) {
         byte lastMsg = p.readByte(); // 00 (last msg type I think)
         byte action = p.readByte(); // 00 = end chat, 01 == follow
+        NPCConversationManager conversation = c.getQM() != null ? c.getQM() : c.getCM();
+        if (conversation == null) {
+            return;
+        }
         if (lastMsg == 2) {
+            if (!conversation.validateAndConsumePrompt(lastMsg, action, -1)) {
+                rejectResponse(c, conversation, lastMsg, action, -1);
+                return;
+            }
             if (action != 0) {
                 String returnText = p.readString();
                 if (c.getQM() != null) {
@@ -61,6 +74,10 @@ public final class NPCMoreTalkHandler extends AbstractPacketHandler {
             } else if (p.available() > 0) {
                 selection = p.readUnsignedByte();
             }
+            if (!conversation.validateAndConsumePrompt(lastMsg, action, selection)) {
+                rejectResponse(c, conversation, lastMsg, action, selection);
+                return;
+            }
             if (c.getQM() != null) {
                 if (c.getQM().isStart()) {
                     QuestScriptManager.getInstance().start(c, action, lastMsg, selection);
@@ -71,5 +88,11 @@ public final class NPCMoreTalkHandler extends AbstractPacketHandler {
                 NPCScriptManager.getInstance().action(c, action, lastMsg, selection);
             }
         }
+    }
+
+    private void rejectResponse(Client c, NPCConversationManager conversation, byte type, byte action, int selection) {
+        log.warn("Rejected invalid NPC response account={} type={} action={} selection={}",
+                c.getAccID(), type, action, selection);
+        conversation.dispose();
     }
 }

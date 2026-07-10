@@ -199,7 +199,7 @@ public class Guild {
                 }
             }
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -466,7 +466,7 @@ public class Guild {
 
             return guildId;
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return 0;
         }
     }
@@ -523,7 +523,7 @@ public class Guild {
                             Server.getInstance().getWorld(mgc.getWorld()).setOfflineGuildStatus((short) 0, (byte) 5, cid);
                         }
                     } catch (Exception re) {
-                        re.printStackTrace();
+                        monitoring.RuntimeFailureLogger.log(re);
                         return;
                     }
                     return;
@@ -559,7 +559,7 @@ public class Guild {
                 mgc.setOfflineGuildRank(newRank);
             }
         } catch (Exception re) {
-            re.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(re);
             return;
         }
 
@@ -780,7 +780,7 @@ public class Guild {
             ps.setInt(2, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -804,7 +804,7 @@ public class Guild {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

@@ -59,11 +59,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,21 +91,21 @@ public final class Channel {
     private EventScriptManager eventSM;
     private ServicesManager services;
     private final Map<Integer, HiredMerchant> hiredMerchants = new HashMap<>();
-    private final Map<Integer, Integer> storedVars = new HashMap<>();
-    private final Set<Integer> playersAway = new HashSet<>();
+    private final Map<Integer, Integer> storedVars = new ConcurrentHashMap<>();
+    private final Set<Integer> playersAway = ConcurrentHashMap.newKeySet();
     private final Map<ExpeditionType, Expedition> expeditions = new HashMap<>();
     private final Map<Integer, MiniDungeon> dungeons = new HashMap<>();
     private final List<ExpeditionType> expedType = new ArrayList<>();
     private final Set<MapleMap> ownedMaps = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private Event event;
-    private boolean finishedShutdown = false;
-    private final Set<Integer> usedMC = new HashSet<>();
+    private volatile boolean finishedShutdown = false;
+    private final Set<Integer> usedMC = ConcurrentHashMap.newKeySet();
 
     private int usedDojo = 0;
     private int[] dojoStage;
     private long[] dojoFinishTime;
     private ScheduledFuture<?>[] dojoTask;
-    private final Map<Integer, Integer> dojoParty = new HashMap<>();
+    private final Map<Integer, Integer> dojoParty = new ConcurrentHashMap<>();
 
     private final List<Integer> chapelReservationQueue = new LinkedList<>();
     private final List<Integer> cathedralReservationQueue = new LinkedList<>();
@@ -160,7 +162,35 @@ public final class Channel {
 
             log.info("Channel {}: Listening on port {}", getId(), port);
         } catch (Exception e) {
-            log.warn("Error during channel initialization", e);
+            disposeAfterFailedInitialization();
+            throw new IllegalStateException("Failed to initialize channel " + channel + " in world " + world, e);
+        }
+    }
+
+    private void disposeAfterFailedInitialization() {
+        if (eventSM != null) {
+            try {
+                eventSM.dispose();
+            } catch (RuntimeException cleanupError) {
+                log.warn("Failed to dispose event scripts after channel initialization failure", cleanupError);
+            }
+            eventSM = null;
+        }
+        if (services != null) {
+            try {
+                services.shutdown();
+            } catch (RuntimeException cleanupError) {
+                log.warn("Failed to stop services after channel initialization failure", cleanupError);
+            }
+            services = null;
+        }
+        if (channelServer != null) {
+            try {
+                channelServer.stop();
+            } catch (RuntimeException cleanupError) {
+                log.warn("Failed to stop socket server after channel initialization failure", cleanupError);
+            }
+            channelServer = null;
         }
     }
 
@@ -181,46 +211,63 @@ public final class Channel {
     }
 
     public synchronized void shutdown() {
+        if (finishedShutdown) {
+            return;
+        }
+
+        log.info("Shutting down channel {} in world {}", channel, world);
         try {
-            if (finishedShutdown) {
-                return;
-            }
-
-            log.info("Shutting down channel {} in world {}", channel, world);
-
-            closeAllMerchants();
-            disconnectAwayPlayers();
-            players.disconnectAll();
-
-            eventSM.dispose();
-            eventSM = null;
-
-            mapManager.dispose();
-            mapManager = null;
-
-            closeChannelSchedules();
-            players = null;
-
-            channelServer.stop();
-
+            ShutdownStageRunner.run(List.of(
+                new ShutdownStageRunner.Stage("merchant cleanup", this::closeAllMerchants),
+                new ShutdownStageRunner.Stage("away-player disconnect", this::disconnectAwayPlayers),
+                new ShutdownStageRunner.Stage("player disconnect", () -> {
+                if (players != null) {
+                    players.disconnectAll();
+                }
+                }),
+                new ShutdownStageRunner.Stage("event-script disposal", () -> {
+                if (eventSM != null) {
+                    eventSM.dispose();
+                    eventSM = null;
+                }
+                }),
+                new ShutdownStageRunner.Stage("map disposal", () -> {
+                if (mapManager != null) {
+                    mapManager.dispose();
+                    mapManager = null;
+                }
+                }),
+                new ShutdownStageRunner.Stage("schedule and service shutdown", this::closeChannelSchedules),
+                new ShutdownStageRunner.Stage("player storage release", () -> players = null),
+                new ShutdownStageRunner.Stage("socket shutdown", () -> {
+                if (channelServer != null) {
+                    channelServer.stop();
+                    channelServer = null;
+                }
+                })), (stage, error) ->
+                    log.error("Channel {} world {} failed during {}", channel, world, stage, error));
+        } finally {
             finishedShutdown = true;
             log.info("Successfully shut down channel {} in world {}", channel, world);
-        } catch (Exception e) {
-            log.error("Error while shutting down channel {} in world {}", channel, world, e);
         }
     }
 
     private void closeChannelServices() {
-        services.shutdown();
+        if (services != null) {
+            services.shutdown();
+            services = null;
+        }
     }
 
     private void closeChannelSchedules() {
         lock.lock();
         try {
-            for (int i = 0; i < dojoTask.length; i++) {
-                if (dojoTask[i] != null) {
-                    dojoTask[i].cancel(false);
-                    dojoTask[i] = null;
+            if (dojoTask != null) {
+                for (int i = 0; i < dojoTask.length; i++) {
+                    if (dojoTask[i] != null) {
+                        dojoTask[i].cancel(false);
+                        dojoTask[i] = null;
+                    }
                 }
             }
         } finally {
@@ -245,8 +292,8 @@ public final class Channel {
             for (HiredMerchant merch : merchs) {
                 merch.forceClose();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (RuntimeException e) {
+            log.error("Failed to close merchants in channel {} world {}", channel, world, e);
         }
     }
 
@@ -264,6 +311,14 @@ public final class Channel {
 
     public int idleMapCandidateCount() {
         return mapManager.idleMapCandidateCount();
+    }
+
+    public long skippedDormantMapUpdateCount() {
+        return mapManager.skippedDormantUpdateCount();
+    }
+
+    public long unloadedMapCount() {
+        return mapManager.unloadedMapCount();
     }
 
     public BaseService getServiceAccess(ChannelServices sv) {
@@ -372,7 +427,7 @@ public final class Channel {
     public Map<Integer, HiredMerchant> getHiredMerchants() {
         merchRlock.lock();
         try {
-            return Collections.unmodifiableMap(hiredMerchants);
+            return Collections.unmodifiableMap(new LinkedHashMap<>(hiredMerchants));
         } finally {
             merchRlock.unlock();
         }
@@ -469,6 +524,22 @@ public final class Channel {
         return finishedShutdown;
     }
 
+    public void removeHiredMerchant(int chrid, HiredMerchant expected) {
+        merchWlock.lock();
+        try {
+            if (hiredMerchants.get(chrid) == expected) {
+                hiredMerchants.remove(chrid);
+            }
+        } finally {
+            merchWlock.unlock();
+        }
+    }
+
+    public void forceShutdownTerminalState() {
+        finishedShutdown = true;
+        log.error("Channel {} in world {} was forced into terminal shutdown state", channel, world);
+    }
+
     public void setServerMessage(String message) {
         this.serverMessage = message;
         broadcastPacket(PacketCreator.serverMessage(message));
@@ -484,7 +555,7 @@ public final class Channel {
             }
         } catch (IOException e) {
             log.warn("Unable to load events !");
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return events.toArray(new String[0]);
     }

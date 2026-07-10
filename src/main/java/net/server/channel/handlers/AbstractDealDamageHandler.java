@@ -551,7 +551,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

@@ -67,6 +67,16 @@ Review notes:
 - Character inventory load/delete is partly covered by `inventoryitems(characterid)`.
 - Storage/account inventory paths may benefit from `inventoryitems(accountid)` if slow logs show storage/cash/shop pressure.
 - Merchant inventory cleanup may benefit from `inventorymerchant(characterid)` if merchant retrieval/cleanup is slow.
+- Fredrick merchant loading now joins `inventorymerchant` in the same query
+  instead of issuing one bundle lookup per stored row. This removes the
+  code-proven `1 + N` query pattern without requiring an index migration.
+- Successful Fredrick retrieval now saves the resulting player inventory,
+  settles character/merchant mesos, deletes merchant/equipment rows, and
+  removes `fredstorage` in one caller transaction. Real-MySQL commit and forced
+  rollback integration tests pass.
+- No merchant index was added: current local evidence proves transaction
+  correctness and query-count reduction, but contains no slow query or
+  `EXPLAIN` result proving an additional index is beneficial.
 
 ### `storages`
 

@@ -58,7 +58,7 @@ public class WarpWorldCommand extends Command {
                 player.saveCharToDB(true, SaveReason.WARP_WORLD);//To set the new world :O (true because else 2 player instances are created, one in both worlds)
                 c.sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
             } catch (UnknownHostException | NumberFormatException ex) {
-                ex.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(ex);
                 player.message("Unexpected error when changing worlds, are you sure the world you are trying to warp to has the same amount of channels?");
             }
 

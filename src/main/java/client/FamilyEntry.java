@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Ubaware
@@ -55,6 +56,7 @@ public class FamilyEntry {
     private volatile int generation;
 
     private volatile boolean repChanged; //used to ignore saving unchanged rep values
+    private final AtomicLong reputationVersion = new AtomicLong();
 
     // cached values for offline players
     private String charName;
@@ -142,7 +144,7 @@ public class FamilyEntry {
         oldFamily.removeEntryBranch(this);
         family.addEntryTree(this);
         this.repsToSenior = 0;
-        this.repChanged = true;
+        markReputationChanged();
         family.setMessage("", true);
         doFullCount(); //to make sure all counts are correct
         // update db
@@ -266,16 +268,16 @@ public class FamilyEntry {
 
     public void setReputation(int reputation) {
         if (reputation != this.reputation) {
-            this.repChanged = true;
+            this.reputation = reputation;
+            markReputationChanged();
         }
-        this.reputation = reputation;
     }
 
     public void setTodaysRep(int today) {
         if (today != todaysRep) {
-            this.repChanged = true;
+            this.todaysRep = today;
+            markReputationChanged();
         }
-        this.todaysRep = today;
     }
 
     public int getRepsToSenior() {
@@ -284,9 +286,9 @@ public class FamilyEntry {
 
     public void setRepsToSenior(int reputation) {
         if (reputation != this.repsToSenior) {
-            this.repChanged = true;
+            this.repsToSenior = reputation;
+            markReputationChanged();
         }
-        this.repsToSenior = reputation;
     }
 
     public void gainReputation(int gain, boolean countTowardsTotal) {
@@ -294,13 +296,13 @@ public class FamilyEntry {
     }
 
     private void gainReputation(int gain, boolean countTowardsTotal, FamilyEntry from) {
-        if (gain != 0) {
-            repChanged = true;
-        }
         this.reputation += gain;
         this.todaysRep += gain;
         if (gain > 0 && countTowardsTotal) {
             this.totalReputation += gain;
+        }
+        if (gain != 0) {
+            markReputationChanged();
         }
         Character chr = getChr();
         if (chr != null) {
@@ -318,7 +320,7 @@ public class FamilyEntry {
             senior.gainReputation(actualGain, true, this);
             if (actualGain > 0) {
                 this.repsToSenior += actualGain;
-                this.repChanged = true;
+                markReputationChanged();
             }
             if (includeSuperSenior) {
                 senior = senior.getSenior();
@@ -335,9 +337,18 @@ public class FamilyEntry {
 
     public void setTotalReputation(int totalReputation) {
         if (totalReputation != this.totalReputation) {
-            this.repChanged = true;
+            this.totalReputation = totalReputation;
+            markReputationChanged();
         }
-        this.totalReputation = totalReputation;
+    }
+
+    private synchronized void markReputationChanged() {
+        reputationVersion.incrementAndGet();
+        repChanged = true;
+        Character currentCharacter = character;
+        if (currentCharacter != null) {
+            currentCharacter.markPersistenceDirty(Character.PersistenceSection.RELATED);
+        }
     }
 
     public FamilyEntry getSenior() {
@@ -356,9 +367,9 @@ public class FamilyEntry {
                     updateDBChangeFamily(getChrId(), senior.getFamily().getID(), senior.getChrId());
                 }
                 if (this.repsToSenior != 0) {
-                    this.repChanged = true;
+                    this.repsToSenior = 0;
+                    markReputationChanged();
                 }
-                this.repsToSenior = 0;
                 this.addSeniorCount(1, null);
                 this.setTotalSeniors(senior.getTotalSeniors() + 1);
                 return true;
@@ -605,7 +616,9 @@ public class FamilyEntry {
             ps.setInt(3, getTotalReputation());
             ps.setInt(4, getRepsToSenior());
             ps.setInt(5, getChrId());
-            ps.executeUpdate();
+            if (ps.executeUpdate() != 1) {
+                throw new SQLException("Family reputation row not found for chrId " + getChrId());
+            }
         } catch (SQLException e) {
             log.error("Failed to autosave rep to 'family_character' for chrId {}", getChrId(), e);
             return false;
@@ -613,7 +626,17 @@ public class FamilyEntry {
         return true;
     }
 
-    public void savedSuccessfully() {
-        this.repChanged = false;
+    public long getReputationVersion() {
+        return reputationVersion.get();
+    }
+
+    boolean hasUnsavedReputation() {
+        return repChanged;
+    }
+
+    public synchronized void savedSuccessfully(long savedVersion) {
+        if (reputationVersion.get() == savedVersion) {
+            repChanged = false;
+        }
     }
 }

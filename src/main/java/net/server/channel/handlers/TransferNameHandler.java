@@ -80,7 +80,7 @@ public final class TransferNameHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return;
         }
         c.sendPacket(PacketCreator.sendNameTransferRules(0));

@@ -53,7 +53,7 @@ public class SeedCommand extends Command {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             }
         }
     }

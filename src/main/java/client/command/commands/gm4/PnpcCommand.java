@@ -99,7 +99,7 @@ public class PnpcCommand extends Command {
 
                 player.yellowMessage("Pnpc created.");
             } catch (SQLException e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
                 player.dropMessage(5, "Failed to store pNPC in the database.");
             }
         } else {

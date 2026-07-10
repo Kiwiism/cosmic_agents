@@ -28,14 +28,14 @@ import provider.DataTool;
 import provider.wz.WZFiles;
 import tools.StringUtil;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Danny (Leifde)
  */
 public class MobAttackInfoFactory {
-    private static final Map<String, MobAttackInfo> mobAttacks = new HashMap<>();
+    private static final Map<String, MobAttackInfo> mobAttacks = new ConcurrentHashMap<>();
     private static final DataProvider dataSource = DataProviderFactory.getDataProvider(WZFiles.MOB);
 
     public static MobAttackInfo getMobAttackInfo(Monster mob, int attack) {

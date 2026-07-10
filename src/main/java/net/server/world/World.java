@@ -134,7 +134,7 @@ public class World {
     private final List<Channel> channels = new ArrayList<>();
     private final Map<Integer, Byte> pnpcStep = new HashMap<>();
     private final Map<Integer, Short> pnpcPodium = new HashMap<>();
-    private final Map<Integer, Messenger> messengers = new HashMap<>();
+    private final Map<Integer, Messenger> messengers = new ConcurrentHashMap<>();
     private final AtomicInteger runningMessengerId = new AtomicInteger();
     private final Map<Integer, Family> families = new LinkedHashMap<>();
     private final Map<Integer, Integer> relationships = new HashMap<>();
@@ -516,7 +516,10 @@ public class World {
     public void unregisterAccountCharacterView(Integer accountId, Integer chrId) {
         accountCharsLock.lock();
         try {
-            accountChars.get(accountId).remove(chrId);
+            SortedMap<Integer, Character> characters = accountChars.get(accountId);
+            if (characters != null) {
+                characters.remove(chrId);
+            }
         } finally {
             accountCharsLock.unlock();
         }
@@ -560,7 +563,12 @@ public class World {
     }
 
     public Storage getAccountStorage(Integer accountId) {
-        return accountStorages.get(accountId);
+        accountCharsLock.lock();
+        try {
+            return accountStorages.get(accountId);
+        } finally {
+            accountCharsLock.unlock();
+        }
     }
 
     private static List<Entry<Integer, SortedMap<Integer, Character>>> getSortedAccountCharacterView(Map<Integer, SortedMap<Integer, Character>> map) {
@@ -678,7 +686,7 @@ public class World {
 
     public Collection<Family> getFamilies() {
         synchronized (families) {
-            return Collections.unmodifiableCollection(families.values());
+            return Collections.unmodifiableList(new ArrayList<>(families.values()));
         }
     }
 
@@ -734,7 +742,7 @@ public class World {
     public void reloadGuildSummary() {
         Guild g;
         Server server = Server.getInstance();
-        for (int i : gsStore.keySet()) {
+        for (int i : new ArrayList<>(gsStore.keySet())) {
             g = server.getGuild(i, getId(), null);
             if (g != null) {
                 gsStore.put(i, new GuildSummary(g));
@@ -760,7 +768,7 @@ public class World {
             ps.setInt(3, cid);
             ps.executeUpdate();
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -1172,6 +1180,9 @@ public class World {
         int position = messenger.getPositionByName(target.getName());
         messenger.removeMember(target);
         removeMessengerPlayer(messenger, position);
+        if (messenger.isEmpty()) {
+            messengers.remove(messengerid, messenger);
+        }
     }
 
     public void messengerInvite(String sender, int messengerid, String target, int fromchannel) {
@@ -1302,6 +1313,51 @@ public class World {
         Messenger messenger = new Messenger(messengerid, chrfor);
         messengers.put(messenger.getId(), messenger);
         return messenger;
+    }
+
+    public int getMessengerCount() {
+        return messengers.size();
+    }
+
+    public String runtimeCacheDiagnostics() {
+        int characterViews;
+        int storages;
+        accountCharsLock.lock();
+        try {
+            characterViews = accountChars.size();
+            storages = accountStorages.size();
+        } finally {
+            accountCharsLock.unlock();
+        }
+
+        int familyCount;
+        synchronized (families) {
+            familyCount = families.size();
+        }
+
+        int playerShopCount;
+        activePlayerShopsLock.lock();
+        try {
+            playerShopCount = activePlayerShops.size();
+        } finally {
+            activePlayerShopsLock.unlock();
+        }
+
+        int merchantCount;
+        activeMerchantsLock.lock();
+        try {
+            merchantCount = activeMerchants.size();
+        } finally {
+            activeMerchantsLock.unlock();
+        }
+
+        return "world=" + id
+                + " accountViews=" + characterViews
+                + " storages=" + storages
+                + " families=" + familyCount
+                + " messengers=" + messengers.size()
+                + " playerShops=" + playerShopCount
+                + " merchants=" + merchantCount;
     }
 
     public boolean isConnected(String charName) {
@@ -1721,7 +1777,10 @@ public class World {
     public void unregisterHiredMerchant(HiredMerchant hm) {
         activeMerchantsLock.lock();
         try {
-            activeMerchants.remove(hm.getOwnerId());
+            Pair<HiredMerchant, Integer> registered = activeMerchants.get(hm.getOwnerId());
+            if (registered != null && registered.getLeft() == hm) {
+                activeMerchants.remove(hm.getOwnerId());
+            }
         } finally {
             activeMerchantsLock.unlock();
         }
@@ -1742,7 +1801,7 @@ public class World {
                     activeMerchants.put(hm.getOwnerId(), new Pair<>(dm.getValue().getLeft(), timeOn + 1));
                 } else {
                     hm.forceClose();
-                    this.getChannel(hm.getChannel()).removeHiredMerchant(hm.getOwnerId());
+                    this.getChannel(hm.getChannel()).removeHiredMerchant(hm.getOwnerId(), hm);
 
                     activeMerchants.remove(dm.getKey());
                 }
@@ -1945,7 +2004,7 @@ public class World {
                     executePlayerNpcMapDataUpdate(con, true, pnpcPodium, podium, id, mapid);
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             }
         }
 
@@ -2011,7 +2070,9 @@ public class World {
 
         hmsAvailable.sort((p1, p2) -> p1.getLeft().getPrice() - p2.getLeft().getPrice());
 
-        hmsAvailable.subList(0, Math.min(hmsAvailable.size(), 200));    //truncates the list to have up to 200 elements
+        if (hmsAvailable.size() > 200) {
+            return new ArrayList<>(hmsAvailable.subList(0, 200));
+        }
         return hmsAvailable;
     }
 
@@ -2080,7 +2141,7 @@ public class World {
 
             return (mid == null) ? null : new Pair<>(mid, new Pair<>(hid, wid));
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
             return null;
         }
     }
@@ -2105,7 +2166,7 @@ public class World {
                 return ret;
             }
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
             return -1;
         }
     }
@@ -2125,7 +2186,7 @@ public class World {
             ps.setInt(1, playerId);
             ps.executeUpdate();
         } catch (SQLException se) {
-            se.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(se);
         }
     }
 
@@ -2203,6 +2264,10 @@ public class World {
             ch.shutdown();
         }
 
+        shutdownWorldResources();
+    }
+
+    public final void shutdownWorldResources() {
         if (petsSchedule != null) {
             petsSchedule.cancel(false);
             petsSchedule = null;
@@ -2263,8 +2328,10 @@ public class World {
             hpDecSchedule = null;
         }
 
-        players.disconnectAll();
-        players = null;
+        if (players != null) {
+            players.disconnectAll();
+            players = null;
+        }
 
         clearWorldData();
         log.info("Finished shutting down world {}", id);

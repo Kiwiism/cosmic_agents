@@ -189,7 +189,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                         InventoryManipulator.removeFromSlot(c, invType, slot, quantity, false);
 
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        monitoring.RuntimeFailureLogger.log(e);
                     }
                     c.getPlayer().gainMeso(-5000, false);
                     c.sendPacket(PacketCreator.MTSConfirmSell());
@@ -261,7 +261,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                         ps.executeUpdate();
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                 }
                 c.enableCSActions();
                 c.sendPacket(getMTS(c.getPlayer().getCurrentTab(), c.getPlayer().getCurrentType(),
@@ -363,7 +363,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                         }
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                 }
                 c.sendPacket(getMTS(c.getPlayer().getCurrentTab(), c.getPlayer().getCurrentType(), c.getPlayer().getCurrentPage()));
                 c.enableCSActions();
@@ -381,7 +381,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                         ps.executeUpdate();
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                 }
                 c.sendPacket(getCart(c.getPlayer().getId()));
                 c.enableCSActions();
@@ -447,7 +447,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                         }
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                     c.sendPacket(PacketCreator.MTSFailBuy());
                 }
                 break;
@@ -500,7 +500,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                         }
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                     c.sendPacket(PacketCreator.MTSFailBuy());
                 }
                 break;
@@ -557,7 +557,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return items;
     }
@@ -625,7 +625,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return PacketCreator.sendMTS(items, 4, 0, 0, pages);
     }
@@ -673,7 +673,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return items;
     }
@@ -749,7 +749,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return PacketCreator.sendMTS(items, tab, type, page, pages); // resniff
     }
@@ -845,7 +845,7 @@ public final class MTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return PacketCreator.sendMTS(items, tab, type, page, pages);
     }

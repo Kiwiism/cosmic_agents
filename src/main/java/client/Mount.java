@@ -21,6 +21,8 @@
 */
 package client;
 
+import java.util.Objects;
+
 /**
  * @author PurpleMadness < Patrick :O >
  */
@@ -32,6 +34,7 @@ public class Mount {
     private int level;
     private Character owner;
     private boolean active;
+    private Runnable persistenceDirtyMarker = () -> {};
 
     public Mount(Character owner, int id, int skillid) {
         this.itemid = id;
@@ -85,24 +88,49 @@ public class Mount {
         return level;
     }
 
+    void setPersistenceDirtyMarker(Runnable persistenceDirtyMarker) {
+        this.persistenceDirtyMarker = Objects.requireNonNull(persistenceDirtyMarker);
+    }
+
+    PersistenceSnapshot persistenceSnapshot() {
+        return new PersistenceSnapshot(exp, level, tiredness);
+    }
+
+    static Mount fromPersistenceSnapshot(Character owner, int itemId, int skillId,
+                                         PersistenceSnapshot snapshot) {
+        Mount mount = new Mount(owner, itemId, skillId);
+        mount.exp = snapshot.exp();
+        mount.level = snapshot.level();
+        mount.tiredness = snapshot.tiredness();
+        return mount;
+    }
+
     public void setTiredness(int newtiredness) {
-        this.tiredness = newtiredness;
-        if (tiredness < 0) {
-            tiredness = 0;
+        int clampedTiredness = Math.max(0, newtiredness);
+        if (tiredness != clampedTiredness) {
+            tiredness = clampedTiredness;
+            persistenceDirtyMarker.run();
         }
     }
 
     public int incrementAndGetTiredness() {
         this.tiredness++;
+        persistenceDirtyMarker.run();
         return this.tiredness;
     }
 
     public void setExp(int newexp) {
-        this.exp = newexp;
+        if (exp != newexp) {
+            exp = newexp;
+            persistenceDirtyMarker.run();
+        }
     }
 
     public void setLevel(int newlevel) {
-        this.level = newlevel;
+        if (level != newlevel) {
+            level = newlevel;
+            persistenceDirtyMarker.run();
+        }
     }
 
     public void setItemId(int newitemid) {
@@ -126,5 +154,8 @@ public class Mount {
             owner.getClient().getWorldServer().unregisterMountHunger(owner);
         }
         this.owner = null;
+        persistenceDirtyMarker = () -> {};
     }
+
+    record PersistenceSnapshot(int exp, int level, int tiredness) {}
 }

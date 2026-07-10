@@ -92,7 +92,7 @@ public class PmobCommand extends Command {
 
                 player.yellowMessage("Pmob created.");
             } catch (SQLException e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
                 player.dropMessage(5, "Failed to store pmob in the database.");
             }
         } else {

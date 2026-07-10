@@ -32,7 +32,7 @@ public class Service<T extends BaseService> {
             cls = s;
             service = cls.getConstructor().newInstance();
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 

@@ -228,7 +228,7 @@ public class InventoryManipulator {
                     quantity -= newQ;
                     Item nItem = new Item(itemid, (short) 0, newQ, petId);
                     nItem.setExpiration(item.getExpiration());
-                    nItem.setOwner(item.getOwner());
+                    copyTransferMetadata(item, nItem);
                     nItem.setFlag(item.getFlag());
                     short newSlot = inv.addItem(nItem);
                     if (newSlot == -1) {
@@ -247,6 +247,7 @@ public class InventoryManipulator {
             } else {
                 Item nItem = new Item(itemid, (short) 0, quantity, petId);
                 nItem.setExpiration(item.getExpiration());
+                copyTransferMetadata(item, nItem);
                 nItem.setFlag(item.getFlag());
 
                 short newSlot = inv.addItem(nItem);
@@ -285,6 +286,11 @@ public class InventoryManipulator {
             c.sendPacket(PacketCreator.getShowItemGain(itemid, item.getQuantity()));
         }
         return true;
+    }
+
+    static void copyTransferMetadata(Item source, Item target) {
+        target.setOwner(source.getOwner());
+        target.setGiftFrom(source.getGiftFrom());
     }
 
     private static boolean haveItemWithId(Inventory inv, int itemid) {
@@ -392,11 +398,9 @@ public class InventoryManipulator {
 
             returnValue = ((numSlotsNeeded + usedSlots) << 1);
             returnValue += (numSlotsNeeded == 0 || !inv.isFullAfterSomeItems(numSlotsNeeded - 1, usedSlots)) ? 1 : 0;
-            //System.out.print(" needed " + numSlotsNeeded + " used " + usedSlots + " rval " + returnValue);
         } else {
             returnValue = ((quantity + usedSlots) << 1);
             returnValue += (!inv.isFullAfterSomeItems(0, usedSlots)) ? 1 : 0;
-            //System.out.print(" eqpneeded " + 1 + " used " + usedSlots + " rval " + returnValue);
         }
 
         return returnValue;

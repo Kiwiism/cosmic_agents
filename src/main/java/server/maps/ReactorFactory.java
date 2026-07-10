@@ -31,13 +31,13 @@ import tools.Pair;
 import tools.StringUtil;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReactorFactory {
     private static final DataProvider data = DataProviderFactory.getDataProvider(WZFiles.REACTOR);
-    private static final Map<Integer, ReactorStats> reactorStats = new HashMap<>();
+    private static final Map<Integer, ReactorStats> reactorStats = new ConcurrentHashMap<>();
 
     public static final ReactorStats getReactorS(int rid) {
         ReactorStats stats = reactorStats.get(rid);

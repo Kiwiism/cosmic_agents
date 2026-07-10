@@ -76,7 +76,7 @@ public class SetEqStatCommand extends Command {
 
                 player.forceUpdateItem(eq);
             } catch (Exception e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             }
         }
     }

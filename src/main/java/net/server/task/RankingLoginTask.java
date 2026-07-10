@@ -112,7 +112,7 @@ public class RankingLoginTask implements Runnable {
                 con.setAutoCommit(true);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 }

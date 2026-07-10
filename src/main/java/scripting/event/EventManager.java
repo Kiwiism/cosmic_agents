@@ -105,7 +105,7 @@ public class EventManager {
         try {
             iv.invokeFunction("cancelSchedule", (Object) null);
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
 
         Collection<EventInstanceManager> eimList;
@@ -732,7 +732,7 @@ public class EventManager {
                 return eligibleParty;
             }
         } catch (ScriptException | NoSuchMethodException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
 
         return new ArrayList<>();
@@ -870,7 +870,7 @@ public class EventManager {
         try {
             Quest.getInstance(id).forceStart(chr, npcid);
         } catch (NullPointerException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -878,7 +878,7 @@ public class EventManager {
         try {
             Quest.getInstance(id).forceComplete(chr, npcid);
         } catch (NullPointerException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -887,7 +887,7 @@ public class EventManager {
     }
 
     private void fillEimQueue() {
-        ThreadManager.getInstance().newTask(new EventManagerTask());  //call new thread to fill up readied instances queue
+        ThreadManager.getInstance().newBlockingTask(new EventManagerTask());  //call new thread to fill up readied instances queue
     }
 
     private EventInstanceManager getReadyInstance() {

@@ -60,7 +60,7 @@ public final class ViewAllCharHandler extends AbstractPacketHandler {
                     c.sendPacket(PacketCreator.showAllCharacterInfo(worldId, chrs, usePic))
             );
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
     

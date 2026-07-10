@@ -21,6 +21,8 @@
 */
 package client;
 
+import java.util.Objects;
+
 public class SkillMacro {
     private int skill1;
     private int skill2;
@@ -28,6 +30,7 @@ public class SkillMacro {
     private final String name;
     private final int shout;
     private final int position;
+    private Runnable persistenceDirtyMarker = () -> {};
 
     public SkillMacro(int skill1, int skill2, int skill3, String name, int shout, int position) {
         this.skill1 = skill1;
@@ -51,15 +54,24 @@ public class SkillMacro {
     }
 
     public void setSkill1(int skill) {
-        skill1 = skill;
+        if (skill1 != skill) {
+            skill1 = skill;
+            persistenceDirtyMarker.run();
+        }
     }
 
     public void setSkill2(int skill) {
-        skill2 = skill;
+        if (skill2 != skill) {
+            skill2 = skill;
+            persistenceDirtyMarker.run();
+        }
     }
 
     public void setSkill3(int skill) {
-        skill3 = skill;
+        if (skill3 != skill) {
+            skill3 = skill;
+            persistenceDirtyMarker.run();
+        }
     }
 
     public String getName() {
@@ -72,5 +84,9 @@ public class SkillMacro {
 
     public int getPosition() {
         return position;
+    }
+
+    void setPersistenceDirtyMarker(Runnable persistenceDirtyMarker) {
+        this.persistenceDirtyMarker = Objects.requireNonNull(persistenceDirtyMarker);
     }
 }

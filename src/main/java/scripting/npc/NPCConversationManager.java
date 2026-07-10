@@ -23,9 +23,11 @@ package scripting.npc;
 
 import client.Character;
 import client.*;
+import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.ItemFactory;
 import client.inventory.Pet;
+import client.processor.npc.FredrickProcessor;
 import config.YamlConfig;
 import constants.game.GameConstants;
 import constants.id.MapId;
@@ -64,12 +66,14 @@ import server.partyquest.MonsterCarnival;
 import server.partyquest.Pyramid;
 import server.partyquest.Pyramid.PyramidMode;
 import tools.PacketCreator;
+import tools.Pair;
 import tools.packets.WeddingPackets;
 
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -85,6 +89,10 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     private String getText;
     private boolean itemScript;
     private List<PartyCharacter> otherParty;
+    private final AtomicReference<NpcPromptState> expectedPrompt = new AtomicReference<>();
+    private List<Pair<Item, InventoryType>> fredrickItems;
+    private boolean fredrickItemsLoaded;
+    private boolean fredrickLoadFailed;
 
     private final Map<Integer, String> npcDefaultTalks = new HashMap<>();
 
@@ -138,23 +146,28 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
 
     public void dispose() {
+        expectedPrompt.set(null);
         NPCScriptManager.getInstance().dispose(this);
         getClient().sendPacket(PacketCreator.enableActions());
     }
 
     public void sendNext(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "00 01", (byte) 0));
     }
 
     public void sendPrev(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "01 00", (byte) 0));
     }
 
     public void sendNextPrev(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "01 01", (byte) 0));
     }
 
     public void sendOk(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "00 00", (byte) 0));
     }
 
@@ -163,47 +176,58 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
 
     public void sendYesNo(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 1));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 1, text, "", (byte) 0));
     }
 
     public void sendAcceptDecline(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 0x0C));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0x0C, text, "", (byte) 0));
     }
 
     public void sendSimple(String text) {
+        expectPrompt(NpcPromptState.menu(text));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 4, text, "", (byte) 0));
     }
 
     public void sendNext(String text, byte speaker) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "00 01", speaker));
     }
 
     public void sendPrev(String text, byte speaker) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "01 00", speaker));
     }
 
     public void sendNextPrev(String text, byte speaker) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "01 01", speaker));
     }
 
     public void sendOk(String text, byte speaker) {
+        expectPrompt(NpcPromptState.plain((byte) 0));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0, text, "00 00", speaker));
     }
 
     public void sendYesNo(String text, byte speaker) {
+        expectPrompt(NpcPromptState.plain((byte) 1));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 1, text, "", speaker));
     }
 
     public void sendAcceptDecline(String text, byte speaker) {
+        expectPrompt(NpcPromptState.plain((byte) 0x0C));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 0x0C, text, "", speaker));
     }
 
     public void sendSimple(String text, byte speaker) {
+        expectPrompt(NpcPromptState.menu(text));
         getClient().sendPacket(PacketCreator.getNPCTalk(npc, (byte) 4, text, "", speaker));
     }
 
     public void sendStyle(String text, int[] styles) {
         if (styles.length > 0) {
+            expectPrompt(NpcPromptState.style(styles.length));
             getClient().sendPacket(PacketCreator.getNPCTalkStyle(npc, text, styles));
         } else {    // thanks Conrad for noticing empty styles crashing players
             sendOk("Sorry, there are no options of cosmetics available for you here at the moment.");
@@ -212,10 +236,12 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
 
     public void sendGetNumber(String text, int def, int min, int max) {
+        expectPrompt(NpcPromptState.number(min, max));
         getClient().sendPacket(PacketCreator.getNPCTalkNum(npc, text, def, min, max));
     }
 
     public void sendGetText(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 2));
         getClient().sendPacket(PacketCreator.getNPCTalkText(npc, text, ""));
     }
 
@@ -229,7 +255,17 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
      * 6 = Kerning Subway
      */
     public void sendDimensionalMirror(String text) {
+        expectPrompt(NpcPromptState.plain((byte) 0x0E));
         getClient().sendPacket(PacketCreator.getDimensionalMirror(text));
+    }
+
+    public boolean validateAndConsumePrompt(byte responseType, byte action, int selection) {
+        NpcPromptState prompt = expectedPrompt.getAndSet(null);
+        return prompt != null && prompt.accepts(responseType, action, selection);
+    }
+
+    private void expectPrompt(NpcPromptState prompt) {
+        expectedPrompt.set(prompt);
     }
 
     public void setGetText(String text) {
@@ -397,10 +433,10 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
                 Skill skill = SkillFactory.getSkill(Integer.parseInt(skill_.getName()));
                 getPlayer().changeSkillLevel(skill, (byte) 0, skill.getMaxLevel(), -1);
             } catch (NumberFormatException nfe) {
-                nfe.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(nfe);
                 break;
             } catch (NullPointerException npe) {
-                npe.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(npe);
                 continue;
             }
         }
@@ -456,19 +492,37 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     }
 
     public boolean hasMerchantItems() {
+        if (fredrickItemsLoaded) {
+            return !fredrickItems.isEmpty() || getPlayer().getMerchantMeso() != 0;
+        }
+
         try {
-            if (!ItemFactory.MERCHANT.loadItems(getPlayer().getId(), false).isEmpty()) {
-                return true;
-            }
+            fredrickItems = List.copyOf(ItemFactory.MERCHANT.loadItems(getPlayer().getId(), false));
+            fredrickItemsLoaded = true;
+            fredrickLoadFailed = false;
         } catch (SQLException e) {
-            e.printStackTrace();
+            fredrickLoadFailed = true;
+            FredrickProcessor.logLoadFailure(getPlayer(), "display", e);
             return false;
         }
-        return getPlayer().getMerchantMeso() != 0;
+        return !fredrickItems.isEmpty() || getPlayer().getMerchantMeso() != 0;
+    }
+
+    public boolean hasFredrickLoadFailed() {
+        return fredrickLoadFailed;
     }
 
     public void showFredrick() {
-        c.sendPacket(PacketCreator.getFredrick(getPlayer()));
+        try {
+            if (!fredrickItemsLoaded) {
+                fredrickItems = List.copyOf(ItemFactory.MERCHANT.loadItems(getPlayer().getId(), false));
+                fredrickItemsLoaded = true;
+            }
+            c.sendPacket(PacketCreator.getFredrick(getPlayer(), fredrickItems));
+        } catch (SQLException e) {
+            fredrickLoadFailed = true;
+            FredrickProcessor.notifyLoadFailure(getPlayer(), "display", e);
+        }
     }
 
     public int partyMembersInMap() {
@@ -686,7 +740,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
                 }
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 
@@ -808,7 +862,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
                 }
             }, 11000);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -860,7 +914,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
                 }
             }, 10000);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
     }
 
@@ -929,7 +983,7 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
                 }
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 

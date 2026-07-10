@@ -286,21 +286,25 @@ public class Family {
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
             boolean success = true;
+            List<Pair<FamilyEntry, Long>> savedEntries = new ArrayList<>();
             for (FamilyEntry entry : members.values()) {
+                long version = entry.getReputationVersion();
                 success = entry.saveReputation(con);
                 if (!success) {
                     break;
                 }
+                savedEntries.add(new Pair<>(entry, version));
             }
             if (!success) {
                 con.rollback();
                 log.error("Family rep autosave failed for family {}", getID());
+            } else {
+                con.commit();
+                for (Pair<FamilyEntry, Long> savedEntry : savedEntries) {
+                    savedEntry.getLeft().savedSuccessfully(savedEntry.getRight());
+                }
             }
             con.setAutoCommit(true);
-            //reset repChanged after successful save
-            for (FamilyEntry entry : members.values()) {
-                entry.savedSuccessfully();
-            }
         } catch (SQLException e) {
             log.error("Could not get connection to DB while saving all members rep", e);
         }

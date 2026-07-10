@@ -138,7 +138,7 @@ public class DataTool {
             try {
                 return Integer.parseInt(getString(d));
             } catch (NumberFormatException nfe) {
-                nfe.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(nfe);
                 return def;
             }
         } else {

@@ -121,7 +121,7 @@ public class Marriage extends EventInstanceManager {
             try (Connection con = DatabaseConnection.getConnection()) {
                 ItemFactory.MARRIAGE_GIFTS.saveItems(new LinkedList<>(), chr.getId(), con);
             } catch (SQLException sqle) {
-                sqle.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(sqle);
             }
 
             for (Item item : gifts) {
@@ -142,7 +142,7 @@ public class Marriage extends EventInstanceManager {
                 items.add(it.getLeft());
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
 
         return items;
@@ -161,7 +161,7 @@ public class Marriage extends EventInstanceManager {
         try (Connection con = DatabaseConnection.getConnection()) {
             ItemFactory.MARRIAGE_GIFTS.saveItems(items, cid, con);
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(sqle);
         }
     }
 }

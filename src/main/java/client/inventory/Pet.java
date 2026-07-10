@@ -24,6 +24,8 @@ package client.inventory;
 import client.Character;
 import client.inventory.manipulator.CashIdGenerator;
 import constants.game.ExpTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.ItemInformationProvider;
 import server.movement.AbsoluteLifeMovement;
 import server.movement.LifeMovement;
@@ -38,11 +40,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Matze
  */
 public class Pet extends Item {
+    private static final Logger log = LoggerFactory.getLogger(Pet.class);
     private String name;
     private int uniqueid;
     private int tameness = 0;
@@ -91,37 +95,90 @@ public class Pet extends Item {
             }
             return ret;
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return null;
         }
     }
 
     public static void deleteFromDb(Character owner, int petid) {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM pets WHERE `petid` = ?")) {
-            // thanks Vcoc for detecting petignores remaining after deletion
-            ps.setInt(1, petid);
-
+        try (Connection con = DatabaseConnection.getConnection()) {
+            deleteFromDbTransaction(con, petid);
             owner.resetExcluded(petid);
             CashIdGenerator.freeCashId(petid);
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            log.error("Failed to delete pet petId={}", petid, ex);
+        }
+    }
+
+    static void deleteFromDbTransaction(Connection con, int petid) throws SQLException {
+        con.setAutoCommit(false);
+        try {
+            deleteFromDb(con, petid);
+            con.commit();
+        } catch (SQLException | RuntimeException failure) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackFailure) {
+                failure.addSuppressed(rollbackFailure);
+            }
+            throw failure;
+        }
+    }
+
+    public static void deleteFromDb(Connection con, int petid) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM petignores WHERE petid = ?")) {
+            ps.setInt(1, petid);
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = con.prepareStatement("DELETE FROM pets WHERE petid = ?")) {
+            ps.setInt(1, petid);
+            ps.executeUpdate();
         }
     }
 
     public void saveToDb() {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("UPDATE pets SET name = ?, level = ?, closeness = ?, fullness = ?, summoned = ?, flag = ? WHERE petid = ?")) {
-            ps.setString(1, getName());
-            ps.setInt(2, getLevel());
-            ps.setInt(3, getTameness());
-            ps.setInt(4, getFullness());
-            ps.setInt(5, isSummoned() ? 1 : 0);
-            ps.setInt(6, getPetAttribute());
-            ps.setInt(7, getUniqueId());
-            ps.executeUpdate();
+        try (Connection con = DatabaseConnection.getConnection()) {
+            saveToDb(con);
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("Failed to save pet petId={}", getUniqueId(), e);
+        }
+    }
+
+    public void saveToDb(Connection con) throws SQLException {
+        persistenceSnapshot().saveToDb(con);
+    }
+
+    public PersistenceSnapshot persistenceSnapshot() {
+        return new PersistenceSnapshot(getName(), getLevel(), getTameness(), getFullness(), isSummoned(),
+                getPetAttribute(), getUniqueId());
+    }
+
+    public record PersistenceSnapshot(String name, int level, int tameness, int fullness, boolean summoned,
+                                      int petAttribute, int uniqueId) {
+        public Pet restore(int itemId, short position) {
+            Pet restored = new Pet(itemId, position, uniqueId);
+            restored.name = name;
+            restored.level = (byte) level;
+            restored.tameness = tameness;
+            restored.fullness = fullness;
+            restored.summoned = summoned;
+            restored.petAttribute = petAttribute;
+            return restored;
+        }
+
+        public void saveToDb(Connection con) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement("UPDATE pets SET name = ?, level = ?, closeness = ?, fullness = ?, summoned = ?, flag = ? WHERE petid = ?")) {
+            ps.setString(1, name);
+            ps.setInt(2, level);
+            ps.setInt(3, tameness);
+            ps.setInt(4, fullness);
+            ps.setInt(5, summoned ? 1 : 0);
+            ps.setInt(6, petAttribute);
+            ps.setInt(7, uniqueId);
+            if (ps.executeUpdate() != 1) {
+                throw new SQLException("Pet row not found for petId " + uniqueId);
+            }
+        }
         }
     }
 
@@ -134,7 +191,7 @@ public class Pet extends Item {
             ps.executeUpdate();
             return ret;
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return -1;
         }
     }
@@ -151,7 +208,7 @@ public class Pet extends Item {
             ps.executeUpdate();
             return ret;
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return -1;
         }
     }
@@ -161,15 +218,14 @@ public class Pet extends Item {
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (!Objects.equals(this.name, name)) {
+            this.name = name;
+            markPersistenceDirty();
+        }
     }
 
     public int getUniqueId() {
         return uniqueid;
-    }
-
-    public void setUniqueId(int id) {
-        this.uniqueid = id;
     }
 
     public int getTameness() {
@@ -177,7 +233,10 @@ public class Pet extends Item {
     }
 
     public void setTameness(int tameness) {
-        this.tameness = tameness;
+        if (this.tameness != tameness) {
+            this.tameness = tameness;
+            markPersistenceDirty();
+        }
     }
 
     public byte getLevel() {
@@ -190,6 +249,9 @@ public class Pet extends Item {
 
     public void gainTamenessFullness(Character owner, int incTameness, int incFullness, int type, boolean forceEnjoy) {
         byte slot = owner.getPetIndex(this);
+        int previousTameness = tameness;
+        int previousFullness = fullness;
+        byte previousLevel = level;
         boolean enjoyed;
 
         //will NOT increase pet's tameness if tried to feed pet with 100% fullness
@@ -230,6 +292,10 @@ public class Pet extends Item {
             enjoyed = false;
         }
 
+        if (tameness != previousTameness || fullness != previousFullness || level != previousLevel) {
+            owner.markPersistenceDirty(Character.PersistenceSection.PETS);
+        }
+
         owner.getMap().broadcastMessage(PacketCreator.petFoodResponse(owner.getId(), slot, enjoyed, false));
         saveToDb();
 
@@ -240,7 +306,10 @@ public class Pet extends Item {
     }
 
     public void setLevel(byte level) {
-        this.level = level;
+        if (this.level != level) {
+            this.level = level;
+            markPersistenceDirty();
+        }
     }
 
     public int getFullness() {
@@ -248,7 +317,10 @@ public class Pet extends Item {
     }
 
     public void setFullness(int fullness) {
-        this.fullness = fullness;
+        if (this.fullness != fullness) {
+            this.fullness = fullness;
+            markPersistenceDirty();
+        }
     }
 
     public int getFh() {
@@ -280,7 +352,10 @@ public class Pet extends Item {
     }
 
     public void setSummoned(boolean yes) {
-        this.summoned = yes;
+        if (this.summoned != yes) {
+            this.summoned = yes;
+            markPersistenceDirty();
+        }
     }
 
     public int getPetAttribute() {
@@ -288,11 +363,19 @@ public class Pet extends Item {
     }
 
     private void setPetAttribute(int flag) {
-        this.petAttribute = flag;
+        if (this.petAttribute != flag) {
+            this.petAttribute = flag;
+            markPersistenceDirty();
+        }
     }
 
     public void addPetAttribute(Character owner, PetAttribute flag) {
-        this.petAttribute |= flag.getValue();
+        int updated = this.petAttribute | flag.getValue();
+        if (updated == this.petAttribute) {
+            return;
+        }
+        this.petAttribute = updated;
+        owner.markPersistenceDirty(Character.PersistenceSection.PETS);
         saveToDb();
 
         Item petz = owner.getInventory(InventoryType.CASH).getItem(getPosition());
@@ -302,7 +385,12 @@ public class Pet extends Item {
     }
 
     public void removePetAttribute(Character owner, PetAttribute flag) {
-        this.petAttribute &= 0xFFFFFFFF ^ flag.getValue();
+        int updated = this.petAttribute & (0xFFFFFFFF ^ flag.getValue());
+        if (updated == this.petAttribute) {
+            return;
+        }
+        this.petAttribute = updated;
+        owner.markPersistenceDirty(Character.PersistenceSection.PETS);
         saveToDb();
 
         Item petz = owner.getInventory(InventoryType.CASH).getItem(getPosition());

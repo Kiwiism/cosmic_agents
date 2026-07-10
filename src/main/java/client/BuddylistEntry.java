@@ -21,12 +21,15 @@
 */
 package client;
 
+import java.util.Objects;
+
 public class BuddylistEntry {
     private final String name;
     private String group;
     private final int cid;
     private int channel;
     private boolean visible;
+    private Runnable persistenceDirtyMarker = () -> { };
 
     /**
      * @param name
@@ -70,7 +73,10 @@ public class BuddylistEntry {
     }
 
     public void setVisible(boolean visible) {
-        this.visible = visible;
+        if (this.visible != visible) {
+            this.visible = visible;
+            persistenceDirtyMarker.run();
+        }
     }
 
     public boolean isVisible() {
@@ -78,7 +84,14 @@ public class BuddylistEntry {
     }
 
     public void changeGroup(String group) {
-        this.group = group;
+        if (!Objects.equals(this.group, group)) {
+            this.group = group;
+            persistenceDirtyMarker.run();
+        }
+    }
+
+    void setPersistenceDirtyMarker(Runnable persistenceDirtyMarker) {
+        this.persistenceDirtyMarker = Objects.requireNonNull(persistenceDirtyMarker);
     }
 
     @Override

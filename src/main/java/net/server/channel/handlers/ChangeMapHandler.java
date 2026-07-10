@@ -170,7 +170,7 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
                 c.sendPacket(PacketCreator.enableActions());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
     }
@@ -193,7 +193,7 @@ public final class ChangeMapHandler extends AbstractPacketHandler {
         try {
             c.sendPacket(PacketCreator.getChannelChange(InetAddress.getByName(socket[0]), Integer.parseInt(socket[1])));
         } catch (UnknownHostException ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
     }
 }

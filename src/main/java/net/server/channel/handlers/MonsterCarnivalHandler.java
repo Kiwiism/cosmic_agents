@@ -170,7 +170,7 @@ public final class MonsterCarnivalHandler extends AbstractPacketHandler {
                     c.getPlayer().gainCP(-neededCP);
                     c.getPlayer().getMap().broadcastMessage(PacketCreator.playerSummoned(c.getPlayer().getName(), tab, num));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                 }
             } finally {
                 c.releaseClient();

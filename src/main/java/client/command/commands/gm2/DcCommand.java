@@ -50,7 +50,7 @@ public class DcCommand extends Command {
                         victim.getClient().disconnect(true, false);
                         player.getMap().removePlayer(victim);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        monitoring.RuntimeFailureLogger.log(e);
                     }
                 } else {
                     return;

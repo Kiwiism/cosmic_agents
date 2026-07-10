@@ -375,7 +375,7 @@ public class PlayerShop extends AbstractMapObject {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             }
         } finally {
             visitorLock.unlock();
@@ -479,7 +479,7 @@ public class PlayerShop extends AbstractMapObject {
 
     public List<PlayerShopItem> getItems() {
         synchronized (items) {
-            return Collections.unmodifiableList(items);
+            return Collections.unmodifiableList(new ArrayList<>(items));
         }
     }
 
@@ -574,7 +574,7 @@ public class PlayerShop extends AbstractMapObject {
 
     public List<SoldItem> getSold() {
         synchronized (sold) {
-            return Collections.unmodifiableList(sold);
+            return Collections.unmodifiableList(new ArrayList<>(sold));
         }
     }
 

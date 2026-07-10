@@ -109,7 +109,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         try {
             c.sendPacket(PacketCreator.openCashShop(c, true));
         } catch (Exception ex) {
-            ex.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(ex);
         }
         chr.getCashShop().open(true);// xD
         c.enableCSActions();
@@ -166,7 +166,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         c.sendPacket(PacketCreator.sendMTS(items, 1, 0, 0, pages));
         c.sendPacket(PacketCreator.transferInventory(getTransfer(chr.getId())));
@@ -218,7 +218,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return items;
     }
@@ -268,7 +268,7 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
         return items;
     }

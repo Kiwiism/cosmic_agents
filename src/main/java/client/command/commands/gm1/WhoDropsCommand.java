@@ -77,7 +77,7 @@ public class WhoDropsCommand extends Command {
                     appendWhoDropsResult(output, itemId);
                 } catch (Exception e) {
                     player.dropMessage(6, "There was a problem retrieving the required data. Please try again.");
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                     return;
                 }
             }
@@ -93,7 +93,7 @@ public class WhoDropsCommand extends Command {
         try {
             appendWhoDropsResult(output, itemId);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return "There was a problem retrieving the required data. Please try again.";
         }
 

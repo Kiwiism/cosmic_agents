@@ -115,6 +115,7 @@ public class PlayerStorage {
         wlock.lock();
         try {
             storage.clear();
+            nameStorage.clear();
         } finally {
             wlock.unlock();
         }

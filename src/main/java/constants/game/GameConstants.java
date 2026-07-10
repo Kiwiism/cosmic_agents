@@ -645,7 +645,7 @@ public class GameConstants {
         try {
             return nfParser.parse(value);
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             return 0.0f;
         }
     }

@@ -59,7 +59,7 @@ public class UnBanCommand extends Command {
                 p.executeUpdate();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
             player.message("Failed to unban " + params[0]);
             return;
         }

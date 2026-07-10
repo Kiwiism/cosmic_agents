@@ -67,7 +67,7 @@ public final class HiredMerchantRequest extends AbstractPacketHandler {
                 return;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            monitoring.RuntimeFailureLogger.log(e);
         }
 
         if (GameConstants.isFreeMarketRoom(chr.getMapId())) {
@@ -79,7 +79,7 @@ public final class HiredMerchantRequest extends AbstractPacketHandler {
                         chr.sendPacket(PacketCreator.retrieveFirstMessage());
                     }
                 } catch (SQLException ex) {
-                    ex.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(ex);
                 }
             } else {
                 chr.dropMessage(1, "You already have a store open.");

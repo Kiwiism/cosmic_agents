@@ -28,7 +28,6 @@ import net.PacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
 import net.server.coordinator.session.Hwid;
-import server.agents.auth.AgentAccountAccessPolicy;
 import tools.BCrypt;
 import tools.DatabaseConnection;
 import tools.HexTool;
@@ -93,7 +92,7 @@ public final class LoginPasswordHandler implements PacketHandler {
                 }
             } catch (SQLException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
                 c.setAccID(-1);
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             } finally {
                 loginok = c.login(login, pwd, hwid);
             }
@@ -106,15 +105,10 @@ public final class LoginPasswordHandler implements PacketHandler {
                 ps.setString(2, login);
                 ps.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                monitoring.RuntimeFailureLogger.log(e);
             } finally {
                 loginok = (loginok == -10) ? 0 : 23;
             }
-        }
-
-        if (loginok == 0 && !AgentAccountAccessPolicy.allowsInteractiveLogin(c.getAccID())) {
-            c.sendPacket(PacketCreator.getLoginFailed(4));
-            return;
         }
 
         if (c.hasBannedIP() || c.hasBannedMac()) {

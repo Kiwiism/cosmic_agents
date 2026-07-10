@@ -173,7 +173,7 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                         c.sendPacket(PacketCreator.serverNotice(1, "A character called \"" + addName + "\" does not exist"));
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                 }
             } else {
                 ble.changeGroup(group);
@@ -206,7 +206,7 @@ public class BuddylistModifyHandler extends AbstractPacketHandler {
                         notifyRemoteChannel(c, channel, otherCid, ADDED);
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    monitoring.RuntimeFailureLogger.log(e);
                 }
             }
             nextPendingRequest(c);
