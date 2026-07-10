@@ -1571,7 +1571,7 @@ Recent map updates:
   supplies temporary candidate-list assembly and follow-mode application while
   Agent runtime owns the exact/prefix/ambiguous/missing-target rules.
 - Transfer chat command routing moved from BotManager to
-  `server.agents.runtime.AgentTransferCommandService`. BotManager now supplies
+  `server.agents.capabilities.trade.AgentTransferCommandService`. BotManager now supplies
   temporary hooks for transfer lifecycle delegation and leader yellow-message
   delivery while Agent runtime owns the command routing response behavior.
 - Recruit chat command parsing moved from BotManager to
@@ -3012,3 +3012,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentShopVisitTickService` moved from generic runtime
   to `capabilities.shop`. Visit gating, delay consumption, target movement, and
   result behavior remain unchanged.
+- Capability ownership: `AgentTransferCommandService` moved from generic runtime
+  to `capabilities.trade`. Parsing, callback arguments, error handling, and
+  leader-facing success text remain unchanged.

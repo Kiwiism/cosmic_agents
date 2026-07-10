@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.trade.AgentTransferCommandService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 

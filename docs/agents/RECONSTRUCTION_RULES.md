@@ -1126,7 +1126,7 @@ Recent reconstruction notes:
   exact-name match, two-letter prefix rule, ambiguous-target message, and
   missing-target message are preserved.
 - Transfer chat command routing now lives in
-  `server.agents.runtime.AgentTransferCommandService`. BotManager keeps a
+  `server.agents.capabilities.trade.AgentTransferCommandService`. BotManager keeps a
   temporary compatibility hook bundle for transfer lifecycle delegation and
   leader yellow-message delivery. The same parser, no-op fall-through,
   success message, and lifecycle error messages are preserved.
@@ -7045,6 +7045,10 @@ Current physics correction:
   `capabilities.shop`. Pending-visit gating, shop tick execution, approach-delay
   consumption, active-target movement dispatch, and result propagation are
   unchanged; live-mode runtime remains the hook adapter.
+- Capability ownership: `AgentTransferCommandService` now lives under
+  `capabilities.trade`. Command matching, leader/Agent/target arguments,
+  transfer callback invocation, error propagation, and success text remain
+  unchanged; chat/lifecycle runtime still supplies concrete hooks.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

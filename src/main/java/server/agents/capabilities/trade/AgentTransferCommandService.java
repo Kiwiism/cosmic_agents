@@ -1,8 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.trade;
 
 import client.Character;
-import server.agents.commands.AgentTransferCommand;
 import server.agents.commands.AgentCommandTargetResolver;
+import server.agents.commands.AgentTransferCommand;
 
 public final class AgentTransferCommandService {
     private AgentTransferCommandService() {

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.trade.AgentTransferCommandService;
+
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;
