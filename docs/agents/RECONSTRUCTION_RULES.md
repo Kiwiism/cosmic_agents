@@ -4349,7 +4349,7 @@ Recent reconstruction notes:
   performance timing. The same consumed/fall-through result and record-only-
   when-changed performance behavior are preserved.
 - Final movement-tail dispatch now lives in
-  `server.agents.runtime.AgentFinalMovementTailService`. BotManager keeps a
+  `server.agents.capabilities.movement.AgentFinalMovementTailService`. BotManager keeps a
   temporary compatibility adapter for movement-core stepping and performance
   timing. The same default fall-through target and AI-tick flag are preserved.
 - Grind-mode dispatch now lives in
@@ -7096,6 +7096,9 @@ Current physics correction:
   `AgentFormationStateRuntime` entry adapter now live under
   `capabilities.movement`. Per-Agent offset initialization, reads, writes, and
   target/path-observation behavior are unchanged.
+- Capability ownership: `AgentFinalMovementTailService` now lives under
+  `capabilities.movement`. Final target and AI-tick arguments still pass
+  directly to the same movement-core callback with no ordering change.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
