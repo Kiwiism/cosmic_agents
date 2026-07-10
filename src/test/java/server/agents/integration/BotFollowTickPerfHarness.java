@@ -19,7 +19,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.runtime.AgentCommonTickRuntime;
 import server.agents.runtime.AgentMovementOnlyStepRuntime;
 import server.agents.runtime.AgentPerformanceMonitor;
-import server.agents.runtime.AgentScriptTaskRuntime;
+import server.agents.plans.AgentScriptTaskCoordinator;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
@@ -198,7 +198,7 @@ public class BotFollowTickPerfHarness {
                 boolean runAiTick = consumeAiTick(entry);
                 AgentTickStateRuntime.recordTick(entry, runAiTick, System.currentTimeMillis());
                 try {
-                    AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, AgentScriptTaskRuntime::tick);
+                    AgentCommonTickRuntime.runCommonTickSystems(entry, bot, owner, runAiTick, AgentScriptTaskCoordinator::tick);
                 } catch (Throwable t) {
                     // Swallow per-tick — some mocked methods may NPE on missing state.
                     // We still get useful timing for sections that DID execute.

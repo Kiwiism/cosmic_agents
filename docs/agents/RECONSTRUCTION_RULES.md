@@ -7369,6 +7369,10 @@ Current physics correction:
   lives in `AgentLifecycleCommandCoordinator`; temporary `AgentRecruitRuntime`
   and `AgentDismissRuntime` bridges are removed with authorization, cancellation,
   delay ranges, farewell selection, and replies unchanged.
+- Plan ownership: script-task start/completion coordination moved from generic
+  runtime `AgentScriptTaskRuntime` to `plans.AgentScriptTaskCoordinator`;
+  configured arrival distance, activation loop, start ordering, and completion
+  progression remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

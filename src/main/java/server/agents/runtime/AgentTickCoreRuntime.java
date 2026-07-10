@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.plans.AgentScriptTaskCoordinator;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentOwnerlessTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -38,7 +39,7 @@ public final class AgentTickCoreRuntime {
                         AgentDeathTickRuntime.handleDeadTick(runtimeEntry, agent, leader),
                 AgentTargetSnapshotRuntime::resolveFollowAnchor,
                 AgentTargetSnapshotRuntime::captureTargetSnapshot,
-                AgentScriptTaskRuntime::tick,
+                AgentScriptTaskCoordinator::tick,
                 issueGrind,
                 issueFollow,
                 AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,

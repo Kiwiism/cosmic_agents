@@ -1,11 +1,8 @@
-package server.agents.runtime;
+package server.agents.plans;
 
-import server.agents.plans.AgentScriptTaskExecutionService;
-import server.agents.plans.AgentScriptTaskTickService;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.plans.AgentTask;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
@@ -16,7 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentScriptTaskRuntimeTest {
+class AgentScriptTaskCoordinatorTest {
     @Test
     void defaultTickUsesMovementStopDistance() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
@@ -45,7 +42,7 @@ class AgentScriptTaskRuntimeTest {
                         return true;
                     });
 
-            AgentScriptTaskRuntime.tick(entry);
+            AgentScriptTaskCoordinator.tick(entry);
 
             org.junit.jupiter.api.Assertions.assertEquals(List.of("complete", "tick"), calls);
         }
@@ -84,7 +81,7 @@ class AgentScriptTaskRuntimeTest {
                         return true;
                     });
 
-            AgentScriptTaskRuntime.tick(entry, 88);
+            AgentScriptTaskCoordinator.tick(entry, 88);
 
             org.junit.jupiter.api.Assertions.assertEquals(List.of("start", "complete", "tick"), calls);
         }

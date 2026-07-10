@@ -1,11 +1,10 @@
-package server.agents.runtime;
+package server.agents.plans;
 
-import server.agents.plans.AgentScriptTaskExecutionService;
-import server.agents.plans.AgentScriptTaskTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 
-public final class AgentScriptTaskRuntime {
-    private AgentScriptTaskRuntime() {
+public final class AgentScriptTaskCoordinator {
+    private AgentScriptTaskCoordinator() {
     }
 
     public static void tick(AgentRuntimeEntry entry) {

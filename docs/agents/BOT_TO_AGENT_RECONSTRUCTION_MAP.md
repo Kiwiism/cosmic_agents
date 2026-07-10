@@ -3298,3 +3298,7 @@ Recent capability extraction notes:
   were deleted after their hook assembly moved into
   `AgentLifecycleCommandCoordinator`; lifecycle services remain runtime-owned
   and behavior is unchanged.
+- Plan ownership: `AgentScriptTaskRuntime` became
+  `plans.AgentScriptTaskCoordinator`; script task activation, start delegation,
+  completion checks, and configured arrival distance now belong to plans with
+  unchanged behavior.
