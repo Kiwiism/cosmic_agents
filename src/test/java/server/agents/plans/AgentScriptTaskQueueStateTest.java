@@ -7,6 +7,7 @@ import java.awt.Point;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentScriptTaskQueueStateTest {
@@ -34,5 +35,21 @@ class AgentScriptTaskQueueStateTest {
         state.setActiveTask(first);
         state.clearTasks();
         assertFalse(state.hasTasks());
+    }
+
+    @Test
+    void rejectsAuthoritativeTaskExplicitlyAtCapacityWithoutReordering() {
+        AgentScriptTaskQueueState state = new AgentScriptTaskQueueState(2);
+        AgentTask first = AgentTask.stop();
+        AgentTask second = AgentTask.grind();
+
+        state.addTask(first);
+        state.addTask(second);
+
+        assertEquals(2, state.queuedTaskCount());
+        assertThrows(java.util.concurrent.RejectedExecutionException.class,
+                () -> state.addTask(AgentTask.stop()));
+        assertSame(first, state.pollTask());
+        assertSame(second, state.pollTask());
     }
 }
