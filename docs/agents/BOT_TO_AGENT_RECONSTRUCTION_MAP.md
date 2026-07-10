@@ -3239,3 +3239,6 @@ Recent capability extraction notes:
 - Movement bridge removal: `AgentStuckDetectionRuntime` was deleted after its
   configured hooks moved into `AgentStuckDetectionService`; timing, distance,
   reset, cooldown, and unstuck trigger semantics remain unchanged.
+- Runtime bridge consolidation: `AgentMovementOnlyMapChangeRuntime` was deleted
+  after its sole hook assembly moved into `AgentMovementOnlyRuntime`; grounding,
+  reset, broadcast, shop, and status callback ordering remains unchanged.

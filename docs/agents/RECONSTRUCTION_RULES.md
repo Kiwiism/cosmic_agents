@@ -7307,6 +7307,10 @@ Current physics correction:
 - Movement bridge removal: configured stuck-detection hook assembly now lives
   in `AgentStuckDetectionService`; `AgentStuckDetectionRuntime` is removed with
   timer decrement, movement threshold, cooldown, and unstuck gating unchanged.
+- Runtime bridge consolidation: movement-only map-change hook assembly now
+  lives in the existing `AgentMovementOnlyRuntime` orchestrator;
+  `AgentMovementOnlyMapChangeRuntime` is removed without moving Cosmic-facing
+  shop/status coordination into the movement capability.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

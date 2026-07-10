@@ -1,7 +1,13 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
+import server.agents.capabilities.movement.AgentFootholdIndexService;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementOnlyMapChangeService;
 import server.agents.capabilities.movement.AgentMovementOnlyTickService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 
 import client.Character;
@@ -51,7 +57,7 @@ public final class AgentMovementOnlyRuntime {
                         target,
                         config.teleportDistance(),
                         config.outOfBoundsTeleportDistance()),
-                AgentMovementOnlyMapChangeRuntime::handleMapChange,
+                AgentMovementOnlyRuntime::handleMapChange,
                 (shopEntry, shopAgent) -> AgentShopService.tickShopVisit(
                         shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
                 AgentShopStateRuntime::activeShopTargetPosition,
@@ -69,6 +75,21 @@ public final class AgentMovementOnlyRuntime {
                         coreRunAiTick,
                         config.enableUnstuck(),
                         config.stopDistance()));
+    }
+
+    private static boolean handleMapChange(AgentRuntimeEntry entry, Character agent) {
+        return AgentMovementOnlyMapChangeService.handleMapChange(
+                entry,
+                agent,
+                new AgentMovementOnlyMapChangeService.Hooks(
+                        AgentFootholdIndexService::buildFhIndex,
+                        AgentGroundingService::findGroundPoint,
+                        AgentMovementPoseService::teleportTo,
+                        AgentMovementStateResetService::resetEntryStateAfterTeleport,
+                        AgentMovementBroadcastService::broadcastMovement,
+                        (shopEntry, shopAgent) -> AgentShopService.onMapChange(
+                                shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
+                        AgentManagerStatusRuntime::checkManagerStatus));
     }
 
     public record MovementOnlyConfig(int teleportDistance,
