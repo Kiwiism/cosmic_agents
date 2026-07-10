@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentRuntimeEntry;
 

@@ -18,6 +18,7 @@ import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatSkillCacheState;
 import server.agents.capabilities.combat.AgentMobTouchState;
+import server.agents.capabilities.combat.AgentDeathState;
 import server.agents.capabilities.follow.AgentOwnerMotionState;
 
 import server.agents.capabilities.movement.AgentGroundTravelState;

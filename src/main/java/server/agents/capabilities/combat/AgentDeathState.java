@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 /**
  * Mutable death/respawn window state for one live Agent.

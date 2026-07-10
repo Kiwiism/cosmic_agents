@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.capabilities.combat.AgentDeathStateRuntime;
 import server.agents.capabilities.movement.AgentMapStateRuntime;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
 

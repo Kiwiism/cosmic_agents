@@ -3201,3 +3201,6 @@ Recent capability extraction notes:
   `AgentOwnerMotionStateRuntime` moved from generic runtime to
   `capabilities.follow`; legacy owner-shaped names remain temporarily for
   parity while defensive copies, observed steps, and idle rules are unchanged.
+- Combat state ownership: `AgentDeathState` and `AgentDeathStateRuntime` moved
+  from generic runtime to `capabilities.combat`; death-window arithmetic, HP
+  gating, respawn-due boundaries, and clear behavior remain unchanged.

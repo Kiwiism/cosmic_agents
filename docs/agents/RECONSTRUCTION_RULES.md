@@ -7265,6 +7265,10 @@ Current physics correction:
   `AgentOwnerMotionStateRuntime` access boundary now live under
   `capabilities.follow`. Defensive position copies, observed deltas, movement
   thresholds, and idle classification remain unchanged.
+- Combat state ownership: `AgentDeathState` and `AgentDeathStateRuntime` now
+  live beside death/respawn policy under `capabilities.combat`. Dead-window
+  defaults, HP entry checks, inclusive respawn timing, and clearing remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

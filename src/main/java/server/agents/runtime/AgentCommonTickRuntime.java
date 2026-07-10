@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentDeathStateRuntime;
 import server.agents.capabilities.combat.AgentMonsterControlService;
 
 import server.agents.capabilities.movement.AgentMovementTimers;
