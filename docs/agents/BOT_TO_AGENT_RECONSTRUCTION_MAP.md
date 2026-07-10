@@ -3092,3 +3092,7 @@ Recent capability extraction notes:
   runtime to `capabilities.combat`. State clearing, air-movement branches,
   wander/patrol target selection, movement dispatch, and result semantics
   remain unchanged.
+- Capability ownership: `AgentGrindTargetPositionService` moved from generic
+  runtime to `capabilities.combat`. Loot validation and convenience scoring,
+  retry suppression, region/patrol wander selection, random bounds, and
+  fallback target behavior remain unchanged.

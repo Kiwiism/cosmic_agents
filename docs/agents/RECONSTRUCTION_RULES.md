@@ -4195,7 +4195,7 @@ Recent reconstruction notes:
   The retarget interval guard, null-target adoption, in-range commitment,
   AoE-single-target scan exception, and larger-cluster hysteresis are preserved.
 - Grind fallback target and opportunistic loot steering now live in
-  `server.agents.runtime.AgentGrindTargetPositionService`; BotManager keeps
+  `server.agents.capabilities.combat.AgentGrindTargetPositionService`; BotManager keeps
   compatibility delegates for existing tests and call sites. The no-graph
   wander fallback, region wander reuse, cached loot validation, passive pickup
   radius suppression, retry suppression window, loot travel-distance scoring,
@@ -7142,6 +7142,10 @@ Current physics correction:
   `capabilities.combat`. Grind-target clearing, swim/air short circuits, legacy
   wander-direction initialization, patrol/no-target resolution, movement
   dispatch, and consumed-tick results remain unchanged.
+- Capability ownership: `AgentGrindTargetPositionService` now lives under
+  `capabilities.combat`. Active loot validation/retry suppression, convenience
+  scoring, navigation-region wander selection, patrol loot preference, random
+  point bounds, and fallback direction behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

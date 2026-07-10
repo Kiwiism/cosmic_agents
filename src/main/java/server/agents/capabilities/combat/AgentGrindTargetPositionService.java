@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import server.agents.capabilities.movement.AgentPositionService;
 import client.Character;
@@ -7,9 +7,9 @@ import server.agents.capabilities.looting.AgentLootTargetService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
-import server.agents.capabilities.combat.AgentGrindWanderStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentPatrolStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapItem;
 import server.maps.MapleMap;

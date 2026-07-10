@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentGrindTargetPositionService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentNavigationRegionService;
 

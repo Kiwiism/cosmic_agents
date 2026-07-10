@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentGrindTargetPositionService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.looting.AgentLootEligibility;
