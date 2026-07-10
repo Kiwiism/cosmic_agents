@@ -2,6 +2,7 @@ package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import java.awt.Point;
@@ -11,6 +12,42 @@ import java.awt.Point;
  */
 public final class AgentLocalAttackMoveWindowService {
     private AgentLocalAttackMoveWindowService() {
+    }
+
+    public static void setLocalAttackMoveWindow(AgentRuntimeEntry entry,
+                                                Point agentPosition,
+                                                Point referencePosition) {
+        setLocalAttackMoveWindow(
+                entry,
+                agentPosition,
+                referencePosition,
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowYCap());
+    }
+
+    public static void clearFollowActionMoveWindowIfSettled(AgentRuntimeEntry entry,
+                                                            Point agentPosition,
+                                                            AgentTargetSnapshot targetSnapshot) {
+        clearFollowActionMoveWindowIfSettled(
+                entry,
+                agentPosition,
+                targetSnapshot,
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowYCap());
+    }
+
+    public static void clearActionMoveWindowIfSettled(AgentRuntimeEntry entry,
+                                                      Point agentPosition,
+                                                      Point targetPosition) {
+        clearActionMoveWindowIfSettled(
+                entry,
+                agentPosition,
+                targetPosition,
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentMovementPhysicsConfig.configuredFollowYCap());
     }
 
     public static void setLocalAttackMoveWindow(AgentRuntimeEntry entry,

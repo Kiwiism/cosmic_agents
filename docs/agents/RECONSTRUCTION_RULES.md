@@ -7315,6 +7315,10 @@ Current physics correction:
   overload on `AgentFollowIdleMovementService`; the temporary
   `AgentFollowIdleMovementRuntime` bridge is removed with idle-fast cadence and
   eligibility unchanged.
+- Combat bridge removal: configured movement-window distances now enter through
+  overloads on `AgentLocalAttackMoveWindowService`; the temporary
+  `AgentLocalAttackMoveWindowRuntime` bridge is removed with window durations
+  and settle thresholds unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

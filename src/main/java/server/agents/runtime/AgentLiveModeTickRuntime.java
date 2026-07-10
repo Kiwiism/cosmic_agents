@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
+import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
 import server.agents.capabilities.combat.AgentScriptedMoveCombatTickService;
 import server.agents.capabilities.combat.AgentGrindModeDispatchService;
 import server.agents.capabilities.combat.AgentAnchoredFarmModeTickService;
@@ -128,7 +129,7 @@ public final class AgentLiveModeTickRuntime {
                                     scriptRunAiTick,
                                     new AgentScriptedMoveCombatTickService.Hooks(
                                             (entry, agentPosition, targetPosition) ->
-                                                    AgentLocalAttackMoveWindowRuntime.clearActionMoveWindowIfSettled(
+                                                    AgentLocalAttackMoveWindowService.clearActionMoveWindowIfSettled(
                                                             entry, agentPosition, targetPosition),
                                             (attackEntry, attackAgent, attackAgentPos, attackTargetPos) -> {
                                                 LocalAttackResult result = timedScriptedOpportunityAttack(

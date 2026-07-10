@@ -3245,3 +3245,6 @@ Recent capability extraction notes:
 - Follow bridge removal: `AgentFollowIdleMovementRuntime` was deleted after its
   configured-distance overload moved into `AgentFollowIdleMovementService`;
   idle-fast eligibility and one-second recheck behavior remain unchanged.
+- Combat bridge removal: `AgentLocalAttackMoveWindowRuntime` was deleted after
+  configured-distance overloads moved into `AgentLocalAttackMoveWindowService`;
+  move-window duration and settle behavior remain unchanged.
