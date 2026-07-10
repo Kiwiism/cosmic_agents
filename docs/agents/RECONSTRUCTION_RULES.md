@@ -7356,6 +7356,11 @@ Current physics correction:
   generic runtime `AgentChatRouteRuntime` to
   `capabilities.dialogue.AgentChatRouteCoordinator`; route ordering, command
   fall-through, typo suggestions, LLM dispatch, and callbacks remain unchanged.
+- Command ownership: follow-target callback assembly moved from
+  `AgentFollowTargetRuntime` to
+  `commands.AgentFollowTargetCommandCoordinator`; candidate resolution,
+  replies, delay range, auto-equip, potion-share check, and follow start order
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

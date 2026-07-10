@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import server.agents.capabilities.follow.AgentFollowTargetCandidateService;
 import server.agents.capabilities.follow.AgentFollowTargetCommandService;
@@ -8,6 +8,9 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.trade.AgentOfferStateRuntime;
@@ -20,8 +23,8 @@ import java.util.List;
 /**
  * Temporary Agent-owned runtime bridge for follow-target command wiring.
  */
-public final class AgentFollowTargetRuntime {
-    private AgentFollowTargetRuntime() {
+public final class AgentFollowTargetCommandCoordinator {
+    private AgentFollowTargetCommandCoordinator() {
     }
 
     public static Character resolveFollowTarget(Character leader, String targetToken) {
@@ -29,7 +32,7 @@ public final class AgentFollowTargetRuntime {
                 leader,
                 targetToken,
                 new AgentFollowTargetResolutionService.Hooks(
-                        AgentFollowTargetRuntime::followTargetCandidates,
+                        AgentFollowTargetCommandCoordinator::followTargetCandidates,
                         Character::yellowMessage));
     }
 
@@ -47,13 +50,13 @@ public final class AgentFollowTargetRuntime {
                 entries,
                 targetToken,
                 new AgentFollowTargetCommandService.Hooks(
-                        AgentFollowTargetRuntime::resolveFollowTarget,
-                        AgentFollowTargetRuntime::followTargetReply,
+                        AgentFollowTargetCommandCoordinator::resolveFollowTarget,
+                        AgentFollowTargetCommandCoordinator::followTargetReply,
                         AgentReplyRuntime::queueReply,
                         () -> AgentRandom.randMs(250, 750),
                         AgentSchedulerRuntime::afterDelay,
-                        AgentFollowTargetRuntime::autoEquipForFollow,
-                        AgentFollowTargetRuntime::checkPotShareForFollow,
+                        AgentFollowTargetCommandCoordinator::autoEquipForFollow,
+                        AgentFollowTargetCommandCoordinator::checkPotShareForFollow,
                         AgentMovementCommandRuntime::follow));
     }
 

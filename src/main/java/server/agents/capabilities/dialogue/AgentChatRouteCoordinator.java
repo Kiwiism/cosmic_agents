@@ -24,7 +24,7 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentChatOrchestratorContext;
-import server.agents.runtime.AgentFollowTargetRuntime;
+import server.agents.commands.AgentFollowTargetCommandCoordinator;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -133,7 +133,7 @@ public final class AgentChatRouteCoordinator {
                     return new AgentTargetedCommandMatch<>(match.entry(), match.commandText(), match.feedbackMessage());
                 },
                 AgentChatCommandClassifier::matchFollowTarget,
-                AgentFollowTargetRuntime::applyFollowTargetCommand,
+                AgentFollowTargetCommandCoordinator::applyFollowTargetCommand,
                 AgentReplyChannelStateRuntime::setReplyChannel,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
@@ -151,7 +151,7 @@ public final class AgentChatRouteCoordinator {
     private static <E extends AgentRuntimeEntry> AgentUntargetedChatRouteService.Hooks<E> untargetedChatHooks() {
         return new AgentUntargetedChatRouteService.Hooks<>(
                 AgentChatCommandClassifier::matchFollowTarget,
-                AgentFollowTargetRuntime::applyFollowTargetCommand,
+                AgentFollowTargetCommandCoordinator::applyFollowTargetCommand,
                 AgentChatCommandClassifier::isGroupSupplyRequest,
                 (leader, entries) -> AgentGroupSupplyResponderSelector.select(
                         leader,

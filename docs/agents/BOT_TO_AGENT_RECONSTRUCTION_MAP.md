@@ -3286,3 +3286,7 @@ Recent capability extraction notes:
   `capabilities.dialogue.AgentChatRouteCoordinator`; targeted/untargeted route
   assembly, ordering, fall-through, replies, and LLM invocation remain
   unchanged while lifecycle actions are injected from runtime.
+- Command ownership: `AgentFollowTargetRuntime` became
+  `commands.AgentFollowTargetCommandCoordinator`; follow-target command
+  callback assembly is command-owned while follow policies remain in the
+  follow capability unchanged.

@@ -1,9 +1,10 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import client.Character;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.List;
 
@@ -12,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AgentFollowTargetRuntimeTest {
+class AgentFollowTargetCommandCoordinatorTest {
     @AfterEach
     void clearRegistry() {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
@@ -25,8 +26,8 @@ class AgentFollowTargetRuntimeTest {
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId())
                 .add(new AgentRuntimeEntry(sibling, leader, null));
 
-        assertEquals(List.of(leader, sibling), AgentFollowTargetRuntime.followTargetCandidates(leader));
-        assertSame(sibling, AgentFollowTargetRuntime.resolveFollowTarget(leader, "sib"));
+        assertEquals(List.of(leader, sibling), AgentFollowTargetCommandCoordinator.followTargetCandidates(leader));
+        assertSame(sibling, AgentFollowTargetCommandCoordinator.resolveFollowTarget(leader, "sib"));
     }
 
     private static Character character(int id, String name, boolean loggedInWorld) {
