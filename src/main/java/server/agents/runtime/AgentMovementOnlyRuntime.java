@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowIdleMovementService;
+
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;

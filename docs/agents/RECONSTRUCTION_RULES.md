@@ -4143,7 +4143,7 @@ Recent reconstruction notes:
   hooks. The same following/null/same-map guards and anchor-position grounding
   fallback are preserved.
 - Parked follow-mode idle movement fast-path eligibility and recheck timing now
-  live in `server.agents.runtime.AgentFollowIdleMovementService`; BotManager
+  live in `server.agents.capabilities.follow.AgentFollowIdleMovementService`; BotManager
   keeps a compatibility wrapper for existing tests and call sites. The same
   one-second recheck window, `idle-fast` debug marker, stuck-progress reset,
   and movement/owner-motion/shop/navigation guards are preserved.
@@ -7033,6 +7033,10 @@ Current physics correction:
   `capabilities.follow`. Ground snap selection, climb/rope handling, swim Y
   alignment, navigation-region edge clamping, foothold fallback, and distance
   thresholds are unchanged; runtime/movement callers use the same resolver.
+- Capability ownership: `AgentFollowIdleMovementService` now lives under
+  `capabilities.follow`; runtime wrappers still supply tick timing/config.
+  Eligibility gates, one-second recheck cadence, navigation debug marker,
+  stuck-progress reset, and distance comparisons are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowIdleMovementService;
+
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;

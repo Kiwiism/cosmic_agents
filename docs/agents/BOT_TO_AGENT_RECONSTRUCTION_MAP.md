@@ -3003,3 +3003,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFollowTargetPositionService` moved from generic
   runtime to `capabilities.follow`. Ground/rope/swim target selection, region
   clamping, foothold fallback, and thresholds remain unchanged.
+- Capability ownership: `AgentFollowIdleMovementService` moved from generic
+  runtime to `capabilities.follow`. Fast-path gates, recheck cadence, debug and
+  stuck-state updates, and distance behavior remain unchanged.
