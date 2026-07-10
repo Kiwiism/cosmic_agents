@@ -7577,6 +7577,13 @@ Current physics correction:
   in-flight state are released, navigation pending futures are removed, and a
   later navigation/trade request can retry. Normal-load ordering and behavior
   are unchanged.
+- Dialogue queue bounds: each Agent now retains at most 32 pending dialogue
+  messages by default (`agents.async.dialogue.queueCapacity`). At saturation,
+  exact duplicate pending messages coalesce and new cosmetic dialogue is rejected, while
+  a leader-directed reply replaces the oldest cosmetic message. Queue metrics
+  expose submitted, rejected, coalesced, current-depth, and maximum-depth values
+  for dialogue, LLM, navigation, and trade workers through
+  `AgentAsyncQueueMetrics`.
 
 Initial reconstruction order:
 

@@ -43,6 +43,33 @@ class AgentReplyQueueTest {
         assertEquals(1, dispatcher.scheduledCount);
     }
 
+    @Test
+    void shouldPreserveDuplicatesUntilSaturatedThenCoalesce() {
+        TestState state = new TestState();
+        state.setSending(true);
+        for (int i = 0; i < 31; i++) {
+            AgentReplyQueue.queueSay(state, "ambient-" + i, TestDispatcher.noop());
+        }
+        AgentReplyQueue.queueSay(state, "same", TestDispatcher.noop());
+        AgentReplyQueue.queueSay(state, "same", TestDispatcher.noop());
+
+        assertEquals(32, state.size());
+    }
+
+    @Test
+    void shouldBoundPendingDialogueAndPreferDirectedReplies() {
+        TestState state = new TestState();
+        state.setSending(true);
+        for (int i = 0; i < 40; i++) {
+            AgentReplyQueue.queueSay(state, "ambient-" + i, TestDispatcher.noop());
+        }
+
+        assertEquals(32, state.size());
+        AgentReplyQueue.queueReply(state, "command-result", TestDispatcher.noop());
+        assertEquals(32, state.size());
+        assertTrue(state.queue.contains(new AgentQueuedMessage("command-result", true)));
+    }
+
     private static final class TestState implements AgentReplyQueue.State {
         private final Deque<AgentQueuedMessage> queue = new ArrayDeque<>();
         private boolean sending;
@@ -60,6 +87,23 @@ class AgentReplyQueueTest {
         @Override
         public void enqueue(AgentQueuedMessage message) {
             queue.add(message);
+        }
+
+        @Override
+        public boolean contains(AgentQueuedMessage message) {
+            return queue.contains(message);
+        }
+
+        @Override
+        public boolean removeOldestUndirected() {
+            var iterator = queue.iterator();
+            while (iterator.hasNext()) {
+                if (!iterator.next().ownerDirected()) {
+                    iterator.remove();
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override

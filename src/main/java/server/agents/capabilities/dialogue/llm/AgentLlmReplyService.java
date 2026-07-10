@@ -29,6 +29,7 @@ public final class AgentLlmReplyService {
     private static final Logger log = LoggerFactory.getLogger(AgentLlmReplyService.class);
 
     private static final ExecutorService EXEC = AgentBoundedExecutorFactory.fixed(
+            "llm",
             "bot-llm",
             2,
             AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.llm.queueCapacity", 64));

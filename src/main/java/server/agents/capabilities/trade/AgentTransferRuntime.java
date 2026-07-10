@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class AgentTransferRuntime {
     private static final ExecutorService TRADE_COMMAND_EXECUTOR = AgentBoundedExecutorFactory.fixed(
+            "trade",
             "bot-trade-command",
             2,
             AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.trade.queueCapacity", 128));

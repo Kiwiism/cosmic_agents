@@ -1,5 +1,8 @@
 package server.agents.commands;
 
+import server.agents.monitoring.AgentAsyncQueueMetrics;
+import server.agents.runtime.AgentBoundedExecutorFactory;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -8,6 +11,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class AgentReplyQueue {
     private static final long QUEUED_MESSAGE_SPACING_ESTIMATE_MS = 5_200L;
+    private static final int MAX_PENDING_MESSAGES = AgentBoundedExecutorFactory.positiveIntegerProperty(
+            "agents.async.dialogue.queueCapacity", 32);
 
     private AgentReplyQueue() {
     }
@@ -18,6 +23,10 @@ public final class AgentReplyQueue {
         int size();
 
         void enqueue(AgentQueuedMessage message);
+
+        boolean contains(AgentQueuedMessage message);
+
+        boolean removeOldestUndirected();
 
         AgentQueuedMessage poll();
 
@@ -50,7 +59,19 @@ public final class AgentReplyQueue {
             estimatedDelayMs = state.isSending()
                     ? (long) (state.size() + 1) * QUEUED_MESSAGE_SPACING_ESTIMATE_MS
                     : 0L;
-            state.enqueue(new AgentQueuedMessage(message, ownerDirected));
+            AgentQueuedMessage queuedMessage = new AgentQueuedMessage(message, ownerDirected);
+            if (state.size() >= MAX_PENDING_MESSAGES) {
+                if (state.contains(queuedMessage)) {
+                    AgentAsyncQueueMetrics.recordCoalesced("dialogue", state.size());
+                    return estimatedDelayMs;
+                }
+                if (!ownerDirected || !state.removeOldestUndirected()) {
+                    AgentAsyncQueueMetrics.recordRejected("dialogue", state.size());
+                    return estimatedDelayMs;
+                }
+            }
+            state.enqueue(queuedMessage);
+            AgentAsyncQueueMetrics.recordSubmitted("dialogue", state.size());
             if (!state.isSending()) {
                 state.setSending(true);
                 drain(state, dispatcher);
@@ -63,6 +84,7 @@ public final class AgentReplyQueue {
         AgentQueuedMessage message;
         synchronized (state.lock()) {
             message = state.poll();
+            AgentAsyncQueueMetrics.recordDepth("dialogue", state.size());
             if (message == null) {
                 state.setSending(false);
                 return;

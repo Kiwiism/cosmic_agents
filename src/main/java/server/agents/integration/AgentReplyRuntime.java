@@ -98,6 +98,16 @@ public final class AgentReplyRuntime {
             }
 
             @Override
+            public boolean contains(AgentQueuedMessage message) {
+                return AgentMessageQueueStateRuntime.contains(entry, message);
+            }
+
+            @Override
+            public boolean removeOldestUndirected() {
+                return AgentMessageQueueStateRuntime.removeOldestUndirected(entry);
+            }
+
+            @Override
             public AgentQueuedMessage poll() {
                 return AgentMessageQueueStateRuntime.poll(entry);
             }

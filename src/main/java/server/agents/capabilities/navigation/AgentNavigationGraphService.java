@@ -55,10 +55,12 @@ public final class AgentNavigationGraphService {
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
     private static final ExecutorService GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
+            "navigation",
             "bot-nav-graph-warmup",
             1,
             AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.queueCapacity", 64));
     private static final ExecutorService FAST_GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
+            "navigation-fast",
             "bot-nav-graph-warmup-fast",
             1,
             AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.fastQueueCapacity", 64));

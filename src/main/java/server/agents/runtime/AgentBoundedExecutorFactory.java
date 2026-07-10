@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.monitoring.AgentAsyncQueueMetrics;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -10,6 +12,10 @@ public final class AgentBoundedExecutorFactory {
     }
 
     public static ThreadPoolExecutor fixed(String threadName, int threads, int queueCapacity) {
+        return fixed(threadName, threadName, threads, queueCapacity);
+    }
+
+    public static ThreadPoolExecutor fixed(String metricName, String threadName, int threads, int queueCapacity) {
         int workerCount = Math.max(1, threads);
         int capacity = Math.max(1, queueCapacity);
         return new ThreadPoolExecutor(
@@ -23,7 +29,29 @@ public final class AgentBoundedExecutorFactory {
                     thread.setDaemon(true);
                     return thread;
                 },
-                new ThreadPoolExecutor.AbortPolicy());
+                (task, executor) -> {
+                    AgentAsyncQueueMetrics.recordRejected(metricName, executor.getQueue().size());
+                    throw new java.util.concurrent.RejectedExecutionException(
+                            "Agent queue is full: " + metricName);
+                }) {
+            @Override
+            public void execute(Runnable command) {
+                super.execute(command);
+                AgentAsyncQueueMetrics.recordSubmitted(metricName, getQueue().size());
+            }
+
+            @Override
+            protected void beforeExecute(Thread thread, Runnable task) {
+                AgentAsyncQueueMetrics.recordDepth(metricName, getQueue().size());
+                super.beforeExecute(thread, task);
+            }
+
+            @Override
+            protected void afterExecute(Runnable task, Throwable failure) {
+                super.afterExecute(task, failure);
+                AgentAsyncQueueMetrics.recordDepth(metricName, getQueue().size());
+            }
+        };
     }
 
     public static int positiveIntegerProperty(String name, int defaultValue) {

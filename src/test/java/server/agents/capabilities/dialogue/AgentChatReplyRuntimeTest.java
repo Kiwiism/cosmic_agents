@@ -64,6 +64,23 @@ class AgentChatReplyRuntimeTest {
         }
 
         @Override
+        public boolean contains(AgentQueuedMessage message) {
+            return queue.contains(message);
+        }
+
+        @Override
+        public boolean removeOldestUndirected() {
+            var iterator = queue.iterator();
+            while (iterator.hasNext()) {
+                if (!iterator.next().ownerDirected()) {
+                    iterator.remove();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
         public AgentQueuedMessage poll() {
             return queue.poll();
         }

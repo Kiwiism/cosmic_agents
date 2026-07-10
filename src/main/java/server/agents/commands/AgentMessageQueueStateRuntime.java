@@ -23,6 +23,14 @@ public final class AgentMessageQueueStateRuntime {
         entry.messageQueueState().enqueue(message);
     }
 
+    public static boolean contains(AgentRuntimeEntry entry, AgentQueuedMessage message) {
+        return entry.messageQueueState().contains(message);
+    }
+
+    public static boolean removeOldestUndirected(AgentRuntimeEntry entry) {
+        return entry.messageQueueState().removeOldestUndirected();
+    }
+
     public static AgentQueuedMessage poll(AgentRuntimeEntry entry) {
         return entry.messageQueueState().poll();
     }

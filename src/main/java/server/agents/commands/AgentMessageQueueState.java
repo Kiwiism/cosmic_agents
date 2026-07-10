@@ -3,6 +3,7 @@ package server.agents.commands;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,6 +27,21 @@ public final class AgentMessageQueueState {
 
     public void enqueue(AgentQueuedMessage message) {
         queue.add(message);
+    }
+
+    public boolean contains(AgentQueuedMessage message) {
+        return queue.contains(message);
+    }
+
+    public boolean removeOldestUndirected() {
+        Iterator<AgentQueuedMessage> iterator = queue.iterator();
+        while (iterator.hasNext()) {
+            if (!iterator.next().ownerDirected()) {
+                iterator.remove();
+                return true;
+            }
+        }
+        return false;
     }
 
     public AgentQueuedMessage poll() {
