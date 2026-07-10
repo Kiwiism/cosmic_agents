@@ -1930,7 +1930,7 @@ Recent map updates:
   `server.agents.capabilities.combat.AgentDeathTickService`; BotManager only supplies
   temporary combat death-entry and respawn callbacks.
 - BotManager attack-lock physics dispatch moved to
-  `server.agents.runtime.AgentActionLockPhysicsService`; BotManager only
+  `server.agents.capabilities.movement.AgentActionLockPhysicsService`; BotManager only
   supplies temporary swim-map and movement physics callbacks.
 - BotManager map-change grounding moved to
   `server.agents.runtime.AgentMapTransitionService`; BotManager only supplies
@@ -2277,7 +2277,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#script-task-queue` | `server.agents.runtime.AgentScriptTaskQueueService` | `MIGRATED_TO_AGENT`; script task queue operations now accept `AgentRuntimeEntry` while preserving null guards, activity-epoch bumps, queue ordering, move/drop/follow task construction, and queued-task checks |
 | `src/main/java/server/bots/BotManager.java#heartbeat` | `server.agents.runtime.AgentHeartbeatService` | `MIGRATED_TO_AGENT`; heartbeat ticking now accepts `AgentRuntimeEntry` while preserving due checks, timestamp marking, client last-packet updates, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#scheduled-task` | `server.agents.runtime.AgentScheduledTaskRuntime` | `MIGRATED_TO_AGENT`; scheduled-task cancellation now accepts `AgentRuntimeEntry` while preserving null guards, scheduled-task presence checks, and `ScheduledFuture.cancel(false)` behavior |
-| `src/main/java/server/bots/BotManager.java#action-lock-physics` | `server.agents.runtime.AgentActionLockPhysicsService` | `MIGRATED_TO_AGENT`; action-lock physics dispatch now accepts `AgentRuntimeEntry` while preserving attack-cooldown gating, swim/airborne/grounded branch selection, and movement-phase callbacks |
+| `src/main/java/server/bots/BotManager.java#action-lock-physics` | `server.agents.capabilities.movement.AgentActionLockPhysicsService` | `MIGRATED_TO_AGENT`; action-lock physics dispatch now accepts `AgentRuntimeEntry` while preserving attack-cooldown gating, swim/airborne/grounded branch selection, and movement-phase callbacks |
 | `src/main/java/server/bots/BotManager.java#target-snapshot` | `server.agents.runtime.AgentTargetSnapshot` | `MIGRATED_TO_AGENT`; target snapshot steering helpers now accept `AgentRuntimeEntry` while preserving navigation waypoint override lookup and primary-target fallback behavior |
 | `src/main/java/server/bots/BotManager.java#final-movement-tail` | `server.agents.capabilities.movement.AgentFinalMovementTailService` | `MIGRATED_TO_AGENT`; final movement tail dispatch now accepts `AgentRuntimeEntry` while preserving movement-core target and AI-tick arguments |
 | `src/main/java/server/bots/BotManager.java#idle-mode-tick` | `server.agents.runtime.AgentIdleModeTickService` | `MIGRATED_TO_AGENT`; idle-mode tick dispatch now accepts `AgentRuntimeEntry` while preserving idle physics callback behavior |
@@ -3056,3 +3056,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFinalMovementTailService` moved from generic
   runtime to `capabilities.movement`. Final movement target and AI-tick
   forwarding remain unchanged.
+- Capability ownership: `AgentActionLockPhysicsService` moved from generic
+  runtime to `capabilities.movement`. Cooldown gating and movement-phase branch
+  selection remain unchanged.

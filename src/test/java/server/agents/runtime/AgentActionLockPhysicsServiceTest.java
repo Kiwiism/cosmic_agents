@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
+import server.agents.capabilities.movement.AgentActionLockPhysicsService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import java.util.concurrent.atomic.AtomicInteger;

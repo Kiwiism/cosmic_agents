@@ -4104,7 +4104,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentMapTransitionService`; BotManager still supplies
   temporary foothold, physics, navigation, and broadcast callbacks.
 - Attack-lock physics dispatch now lives in
-  `server.agents.runtime.AgentActionLockPhysicsService`; BotManager still
+  `server.agents.capabilities.movement.AgentActionLockPhysicsService`; BotManager still
   supplies temporary swim-map and movement physics callbacks, preserving the
   legacy climbing-airborne branch behavior.
 - Dead-state tick handling now lives in
@@ -7099,6 +7099,10 @@ Current physics correction:
 - Capability ownership: `AgentFinalMovementTailService` now lives under
   `capabilities.movement`. Final target and AI-tick arguments still pass
   directly to the same movement-core callback with no ordering change.
+- Capability ownership: `AgentActionLockPhysicsService` now lives under
+  `capabilities.movement`. Attack-cooldown gating and swim, airborne, grounded,
+  and climbing branch behavior remain unchanged; runtime still supplies the
+  movement-phase callbacks.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
