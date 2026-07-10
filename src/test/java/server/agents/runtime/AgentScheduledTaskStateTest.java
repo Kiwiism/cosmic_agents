@@ -4,31 +4,31 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ScheduledFuture;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 class AgentScheduledTaskStateTest {
     @Test
-    void emptyStateHasNoScheduledTaskAndCancelIsNoop() {
+    void attachesTaskOnce() {
         AgentScheduledTaskState state = new AgentScheduledTaskState(null);
+        ScheduledFuture<?> task = mock(ScheduledFuture.class);
 
-        assertFalse(state.hasScheduledTask());
+        state.attachScheduledTask(task);
 
-        state.cancelScheduledTask();
+        assertSame(task, state.task());
+        assertThrows(IllegalStateException.class,
+                () -> state.attachScheduledTask(mock(ScheduledFuture.class)));
     }
 
     @Test
-    void exposesAndCancelsScheduledTaskWithoutInterruptingRunningTick() {
+    void cancellationBeforeAttachmentCancelsAttachedTask() {
+        AgentScheduledTaskState state = new AgentScheduledTaskState(null);
         ScheduledFuture<?> task = mock(ScheduledFuture.class);
-        AgentScheduledTaskState state = new AgentScheduledTaskState(task);
-
-        assertTrue(state.hasScheduledTask());
-        assertSame(task, state.task());
 
         state.cancelScheduledTask();
+        state.attachScheduledTask(task);
 
         verify(task).cancel(false);
     }

@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import client.Character;
 import client.BotClient;
 import client.Client;
@@ -26,7 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -83,6 +86,68 @@ class AgentLifecycleServiceTest {
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
             AgentFormationService.formationsByLeaderId().clear();
+        }
+    }
+
+    @Test
+    void immediateTickSeesInitializedPublishedEntry() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha");
+        ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
+        AtomicReference<AgentRuntimeEntry> tickedEntry = new AtomicReference<>();
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
+            AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
+                    leader.getId(), leader, agent, false,
+                    new AgentLifecycleService.RegisterHooks(
+                            50L,
+                            (tick, periodMs) -> {
+                                tick.run();
+                                return scheduledTask;
+                            },
+                            (activeEntry, leaderCharId, agentCharId) -> {
+                                assertEquals(List.of(activeEntry),
+                                        AgentRuntimeRegistry.entriesForLeader(leaderCharId));
+                                assertNotNull(AgentMovementStateRuntime.movementProfile(activeEntry));
+                                tickedEntry.set(activeEntry);
+                            },
+                            ignored -> {},
+                            AgentFormationService.defaultStagger(60, 120),
+                            ignored -> {},
+                            () -> 123L));
+
+            assertSame(entry, tickedEntry.get());
+            assertSame(scheduledTask, entry.scheduledTaskState().task());
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
+        }
+    }
+
+    @Test
+    void schedulingFailureRollsBackRegistryPublication() {
+        Character leader = character(100, "Leader");
+        Character agent = character(200, "Alpha");
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+
+        try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
+            assertThrows(IllegalStateException.class, () -> AgentLifecycleService.registerAgent(
+                    leader.getId(), leader, agent, false,
+                    new AgentLifecycleService.RegisterHooks(
+                            50L,
+                            (tick, periodMs) -> {
+                                throw new IllegalStateException("scheduler unavailable");
+                            },
+                            (entry, leaderCharId, agentCharId) -> {},
+                            ignored -> {},
+                            AgentFormationService.defaultStagger(60, 120),
+                            ignored -> {},
+                            () -> 123L)));
+
+            assertTrue(AgentRuntimeRegistry.entriesForLeader(leader.getId()).isEmpty());
+            status.verifyNoInteractions();
+        } finally {
+            AgentRuntimeRegistry.entriesByLeaderId().clear();
         }
     }
 

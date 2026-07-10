@@ -16,6 +16,7 @@ import java.awt.Point;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
@@ -208,22 +209,16 @@ public final class AgentLifecycleService {
                                                   boolean normalizeSpawnState,
                                                   RegisterHooks hooks) {
         List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
-        entries.removeIf(entry -> {
-            if (AgentRuntimeIdentityRuntime.botIs(entry, agent.getId())) {
-                hooks.cancelExistingTask().accept(entry);
-                return true;
+        List<AgentRuntimeEntry> replacedEntries = new ArrayList<>();
+        for (AgentRuntimeEntry existingEntry : entries) {
+            if (AgentRuntimeIdentityRuntime.botIs(existingEntry, agent.getId())) {
+                replacedEntries.add(existingEntry);
             }
-            return false;
-        });
+        }
+        entries.removeAll(replacedEntries);
 
         int agentCharId = agent.getId();
-        AgentRuntimeEntry[] ref = new AgentRuntimeEntry[1];
-        ScheduledFuture<?> task = hooks.tickScheduler().schedule(
-                () -> hooks.tickCallback().tick(ref[0], leaderCharId, agentCharId),
-                hooks.tickMs());
-        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, task);
-        ref[0] = entry;
-
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentMovementStateRuntime.refreshMovementProfile(entry, agent);
         AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
         entries.add(entry);
@@ -235,6 +230,23 @@ public final class AgentLifecycleService {
         if (normalizeSpawnState) {
             hooks.normalizeSpawnedAgent().accept(entry);
         }
+
+        try {
+            ScheduledFuture<?> task = hooks.tickScheduler().schedule(
+                    () -> hooks.tickCallback().tick(entry, leaderCharId, agentCharId),
+                    hooks.tickMs());
+            entry.scheduledTaskState().attachScheduledTask(task);
+        } catch (RuntimeException | Error failure) {
+            entries.remove(entry);
+            entries.addAll(replacedEntries);
+            AgentFormationService.applyOffsets(entries, formation);
+            if (entries.isEmpty()) {
+                AgentRuntimeRegistry.entriesByLeaderId().remove(leaderCharId, entries);
+            }
+            throw failure;
+        }
+
+        replacedEntries.forEach(hooks.cancelExistingTask());
         AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(
                 entry, agent, hooks.spawnStatusDelayMs().getAsLong());
         return entry;

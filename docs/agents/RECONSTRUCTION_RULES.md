@@ -33,6 +33,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Agent registration now initializes and publishes a complete runtime entry
+  before a zero-delay scheduler can invoke its first tick. Scheduled handles
+  attach once, cancellation remains effective across an attachment race, and a
+  scheduling failure rolls registry publication back before it escapes. Spawn,
+  normalization, formation, and tick behavior are otherwise unchanged.
+
 - Combat normal-attack WZ profiles now use an atomic, root-scoped concurrent
   cache. Concurrent Agent ticks share one parsed profile per weapon, missing
   profiles remain cached, and a WZ-root reset replaces the complete cache
