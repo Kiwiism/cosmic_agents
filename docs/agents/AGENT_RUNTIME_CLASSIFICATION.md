@@ -85,6 +85,8 @@ Classifications:
 - Performance aggregation: `server.agents.monitoring.AgentPerformanceMonitor`.
 - Offline character loading: `server.agents.integration.cosmic.CosmicAgentOfflineLoadService`.
 - Persistence, spawn, and relogin operations: Cosmic integration gateways/coordinators.
+- One-shot and repeating scheduling: runtime policy over
+  `integration.SchedulerGateway`, implemented by `CosmicSchedulerGateway`.
 - Script objectives: `server.agents.plans.AgentScriptTaskCoordinator`.
 - Movement, combat, recovery, follow, loot, supplies, dialogue, and other reusable
   gameplay behavior: their corresponding capability packages.
@@ -92,3 +94,7 @@ Classifications:
 `AgentRuntime` and `AgentRuntimeSnapshot` were unused placeholders and have been
 deleted. This inventory is checked by `AgentRuntimeClassificationTest`; adding or
 removing a runtime class requires updating this document.
+
+Remaining intentional Cosmic domain-model dependencies are inventoried in
+`AGENT_COSMIC_COUPLING.md` and operational boundaries are enforced by
+`AgentCosmicBoundaryAuditTest`.

@@ -4,6 +4,10 @@ Every retained class in `server.agents.runtime` is classified in
 `AGENT_RUNTIME_CLASSIFICATION.md`. `AgentRuntimeClassificationTest` requires the
 inventory to match the package exactly.
 
+Remaining intentional Cosmic domain-model dependencies are recorded in
+`AGENT_COSMIC_COUPLING.md`; operational boundary rules are enforced by
+`AgentCosmicBoundaryAuditTest`.
+
 The reconstruction model is: move behavior from one large bot bin into specialized Agent bins without changing observable behavior.
 
 Rules:
