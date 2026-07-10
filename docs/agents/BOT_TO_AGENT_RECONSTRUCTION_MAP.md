@@ -1660,7 +1660,7 @@ Recent map updates:
   supplies temporary hooks for action-window cleanup, local-opportunity attack,
   movement-core stepping, and performance timing.
 - Follow-mode local opportunity attack dispatch moved from BotManager to
-  `server.agents.runtime.AgentFollowOpportunityTickService`. BotManager now
+  `server.agents.capabilities.follow.AgentFollowOpportunityTickService`. BotManager now
   supplies the temporary local-opportunity attack hook and performance timing.
 - Idle-mode consumed-tick dispatch moved from BotManager to
   `server.agents.runtime.AgentIdleModeTickService`. BotManager now supplies the
@@ -3006,3 +3006,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFollowIdleMovementService` moved from generic
   runtime to `capabilities.follow`. Fast-path gates, recheck cadence, debug and
   stuck-state updates, and distance behavior remain unchanged.
+- Capability ownership: `AgentFollowOpportunityTickService` moved from generic
+  runtime to `capabilities.follow`. Mode, AI, climb, map, and range gates plus
+  target fallback and combat callback behavior remain unchanged.

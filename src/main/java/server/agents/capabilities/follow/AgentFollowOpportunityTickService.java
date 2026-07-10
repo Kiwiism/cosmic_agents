@@ -1,8 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.follow;
 
 import client.Character;
-import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.runtime.AgentModeStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

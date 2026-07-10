@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowOpportunityTickService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;

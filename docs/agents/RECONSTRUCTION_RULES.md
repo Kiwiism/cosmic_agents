@@ -4322,7 +4322,7 @@ Recent reconstruction notes:
   temporary compatibility adapter for the existing idle physics/mode body and
   performance timing. The same consumed/fall-through result is preserved.
 - Follow-mode local opportunity attack dispatch now lives in
-  `server.agents.runtime.AgentFollowOpportunityTickService`. BotManager keeps a
+  `server.agents.capabilities.follow.AgentFollowOpportunityTickService`. BotManager keeps a
   temporary compatibility adapter for the existing local opportunity attack body
   and performance timing. The same following, AI-cadence, climbing, same-map,
   anchor-distance, target-position update, and consumed-tick rules are
@@ -7037,6 +7037,10 @@ Current physics correction:
   `capabilities.follow`; runtime wrappers still supply tick timing/config.
   Eligibility gates, one-second recheck cadence, navigation debug marker,
   stuck-progress reset, and distance comparisons are unchanged.
+- Capability ownership: `AgentFollowOpportunityTickService` now lives under
+  `capabilities.follow`. Follow/AI/climb/map/range gates, current-target fallback,
+  and local-opportunity callback dispatch are unchanged; live-mode runtime still
+  supplies the combat callback and configured follow distance.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
