@@ -10,6 +10,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -52,11 +53,12 @@ class AgentOwnerItemNotificationServiceTest {
         AgentRuntimeEntry observerEntry = new AgentRuntimeEntry(observerAgent, owner, null);
         Item tradedEquip = new Item(1002000, (short) 1, (short) 1);
         TimerManager inlineTimer = mock(TimerManager.class);
+        ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
 
         when(owner.getId()).thenReturn(78);
         when(inlineTimer.schedule(any(Runnable.class), anyLong())).thenAnswer(invocation -> {
             ((Runnable) invocation.getArgument(0)).run();
-            return null;
+            return scheduledFuture;
         });
 
         AgentRuntimeRegistry.entriesByLeaderId().clear();

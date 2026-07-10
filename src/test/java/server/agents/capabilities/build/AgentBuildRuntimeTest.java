@@ -71,6 +71,7 @@ class AgentBuildRuntimeTest {
             replies.verify(() -> AgentReplyRuntime.replyNow(eq(entry), argThat(message ->
                     message != null && message.contains("hunter"))));
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(
+                    org.mockito.ArgumentMatchers.eq(entry),
                     org.mockito.ArgumentMatchers.eq(900),
                     org.mockito.ArgumentMatchers.eq(1100),
                     org.mockito.ArgumentMatchers.any(Runnable.class)));
