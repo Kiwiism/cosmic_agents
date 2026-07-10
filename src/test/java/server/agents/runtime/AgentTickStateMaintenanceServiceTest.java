@@ -17,28 +17,6 @@ import static org.mockito.Mockito.when;
 
 class AgentTickStateMaintenanceServiceTest {
     @Test
-    void updatesObservedLeaderMotionFromPreviousLeaderPosition() {
-        AgentRuntimeEntry entry = entry();
-        AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, new Point(10, 20));
-
-        AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, new Point(13, 18));
-
-        assertEquals(3, AgentOwnerMotionStateRuntime.observedOwnerStepX(entry));
-        assertEquals(-2, AgentOwnerMotionStateRuntime.observedOwnerStepY(entry));
-    }
-
-    @Test
-    void ignoresMissingLeaderMotionInputs() {
-        AgentRuntimeEntry entry = entry();
-
-        AgentTickStateMaintenanceService.updateObservedLeaderMotion(null, new Point(13, 18));
-        AgentTickStateMaintenanceService.updateObservedLeaderMotion(entry, null);
-
-        assertEquals(0, AgentOwnerMotionStateRuntime.observedOwnerStepX(entry));
-        assertEquals(0, AgentOwnerMotionStateRuntime.observedOwnerStepY(entry));
-    }
-
-    @Test
     void keepsFarmAnchorOnSameMap() {
         AgentRuntimeEntry entry = entry();
         Character agent = agentOnMap(100000000);

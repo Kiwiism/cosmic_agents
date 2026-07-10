@@ -3151,3 +3151,7 @@ Recent capability extraction notes:
   moved from generic runtime to `capabilities.movement`. All target sources,
   point-copy behavior, precedence, labels, and fallback semantics remain
   unchanged.
+- Capability ownership: tick-time leader-motion observation moved from the
+  mixed runtime maintenance service to
+  `capabilities.follow.AgentFollowMotionObservationService`; null guards and
+  owner-step delta state updates remain unchanged.

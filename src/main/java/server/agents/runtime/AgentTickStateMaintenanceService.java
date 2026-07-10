@@ -16,13 +16,6 @@ public final class AgentTickStateMaintenanceService {
     private AgentTickStateMaintenanceService() {
     }
 
-    public static void updateObservedLeaderMotion(AgentRuntimeEntry entry, Point leaderPosition) {
-        if (entry == null || leaderPosition == null) {
-            return;
-        }
-        AgentOwnerMotionStateRuntime.updateObservedOwnerStep(entry, leaderPosition);
-    }
-
     public static void clearFarmAnchorOnMapChange(AgentRuntimeEntry entry, Character agent) {
         if (entry == null || agent == null || !AgentFarmAnchorStateRuntime.hasFarmAnchor(entry)) {
             return;

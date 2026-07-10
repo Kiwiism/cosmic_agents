@@ -4122,10 +4122,11 @@ Recent reconstruction notes:
   temporary grounding, standalone move-target, and idle callbacks. This preserves
   the same following-clear, map-change grounding early return, explicit
   move-target pass-through, and idle fallback ordering.
-- Tick-time leader-motion observation and farm-anchor map-change cleanup now
-  live in `server.agents.runtime.AgentTickStateMaintenanceService`; BotManager
-  keeps the same call sites but no longer owns the delta calculation or precise
-  move-target cleanup rule when a farm anchor is cleared after a map change.
+- Tick-time leader-motion observation now lives in
+  `server.agents.capabilities.follow.AgentFollowMotionObservationService`, while
+  farm-anchor map-change cleanup remains temporarily in
+  `server.agents.runtime.AgentTickStateMaintenanceService`; the delta
+  calculation and farm-anchor precise-target cleanup behavior are unchanged.
 - Tracked map-change tick handling now lives in
   `server.agents.capabilities.movement.AgentMapTransitionService`; BotManager still supplies
   temporary Cosmic grounding, graph-warm, mode-command, shop, and status
@@ -7208,6 +7209,9 @@ Current physics correction:
   anchor and formation resolution, copied point values, shop/move/farm/grind
   target capture, primary-target precedence, labels, and fallbacks remain
   unchanged; runtime retains only registry/config hook wiring.
+- Capability ownership: leader-motion observation moved from the mixed runtime
+  maintenance service into `capabilities.follow.AgentFollowMotionObservationService`.
+  Missing-entry/position guards and observed step calculations remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

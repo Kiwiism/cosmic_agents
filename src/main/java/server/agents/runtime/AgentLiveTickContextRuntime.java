@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
+import server.agents.capabilities.follow.AgentFollowMotionObservationService;
 import client.Character;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementProfileService;
@@ -23,7 +24,7 @@ public final class AgentLiveTickContextRuntime {
                         AgentMovementProfileService::refreshMovementProfile,
                         followAnchorResolver,
                         targetSnapshotCapture,
-                        AgentTickStateMaintenanceService::updateObservedLeaderMotion,
+                        AgentFollowMotionObservationService::updateObservedLeaderMotion,
                         AgentOwnerMotionStateRuntime::rememberOwnerPosition,
                         AgentTickStateMaintenanceService::clearFarmAnchorOnMapChange,
                         AgentTickStateMaintenanceService::clearPatrolOnMapChange,
