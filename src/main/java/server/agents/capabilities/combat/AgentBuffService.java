@@ -7,7 +7,6 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import net.server.PlayerBuffValueHolder;
-import net.server.channel.handlers.UseItemHandler;
 import server.agents.capabilities.dialogue.AgentBuffDialogueReporter;
 import server.agents.capabilities.inventory.AgentUseItemClassificationPolicy;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
@@ -76,7 +75,7 @@ public final class AgentBuffService {
             short beforeQty = item.getQuantity();
             String itemName = itemName(item.getItemId(), inventory);
 
-            if (!UseItemHandler.consumeUseItem(bot, item.getPosition(), item.getItemId())) {
+            if (!inventory.consumeUseItem(bot, item.getPosition(), item.getItemId())) {
                 noteDecision(entry, "tried " + itemName + " but apply failed");
                 continue;
             }

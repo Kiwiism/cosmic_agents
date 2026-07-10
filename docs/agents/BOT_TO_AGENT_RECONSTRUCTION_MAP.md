@@ -3406,3 +3406,6 @@ Recent capability extraction notes:
 - Cosmic boundary ownership: support-skill SPECIAL_MOVE opcode/layout construction
   moved to `integration.cosmic.CosmicSupportSpecialMovePacketBuilder`; combat
   capability code now requests semantic dispatch through `CombatGateway`.
+- Cosmic boundary ownership: consumable-buff application now enters through
+  `InventoryGateway.consumeUseItem`; `UseItemHandler` is isolated in
+  `CosmicInventoryGateway` while buff selection remains capability-owned.

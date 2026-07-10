@@ -49,5 +49,7 @@ public interface InventoryGateway {
     void moveItem(Character agent, InventoryType type, short sourceSlot, short destinationSlot, short quantity);
 
     boolean addItem(Character agent, int itemId, short quantity);
+
+    boolean consumeUseItem(Character agent, short slot, int itemId);
 }
 
