@@ -417,7 +417,7 @@ Recent map updates:
   buff debug lines, and skill-buff debug lines are unchanged. Grind-mode target
   search now uses these Agent-entry selectors without redundant casts.
 - `BotManager.java#anchored-farm-runtime` is migrated to
-  `server.agents.runtime.AgentAnchoredFarmRuntime`. Anchored farm runtime hooks
+  `server.agents.capabilities.combat.AgentAnchoredFarmCoordinator`. Anchored farm hooks
   now use `AgentRuntimeEntry` for local opportunity attacks, idle movement and
   broadcast, and movement-core stepping while preserving anchored-farm behavior.
 - `BotManager.java#movement-command-callbacks` now routes script-task,
@@ -542,7 +542,7 @@ Recent map updates:
 - `AgentAnchoredFarmTickService` now accepts `AgentRuntimeEntry`. Anchor
   map-mismatch cleanup, local opportunity attack delegation, near-anchor idle,
   precise move-target setting, and movement-core dispatch remain unchanged
-  while `AgentAnchoredFarmRuntime` keeps the temporary `BotEntry` callback
+  while `AgentAnchoredFarmCoordinator` keeps the temporary `BotEntry` callback
   adapter.
 - `AgentMovementTargetMaintenanceService.clearFarmAnchorOnMapChange` now accepts
   `AgentRuntimeEntry`, preserving same-map retention, map-change anchor
@@ -1307,7 +1307,7 @@ Recent map updates:
   delegates ownerless move-target dispatch without assembling
   unstuck/stop-distance config.
 - Anchored-farm config-bound tick entry moved from BotManager to
-  `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now delegates
+  `server.agents.capabilities.combat.AgentAnchoredFarmCoordinator`. BotManager now delegates
   anchored-farm dispatch without assembling unstuck/stop-distance config.
 - Movement-core config-bound entry moved from BotManager to
   `server.agents.runtime.AgentMovementTickRuntime`. BotManager now delegates
@@ -1401,7 +1401,7 @@ Recent map updates:
 - The temporary BotManager grind-mode adapter method was removed; tick-core
   wiring now passes `AgentGrindModeRuntime.tickGrindMode` directly.
 - Anchored farm hook wiring moved from BotManager to
-  `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager now passes only
+  `server.agents.capabilities.combat.AgentAnchoredFarmCoordinator`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,
   idle, ground-idle, broadcast, and movement-core hook construction.
 - Local-opportunity attack hook wiring moved from BotManager to
@@ -3343,3 +3343,7 @@ Recent capability extraction notes:
   `capabilities.combat.AgentLocalOpportunityAttackCoordinator`. The live-mode
   result adapter remains in runtime, while combat target, jump, and move-window
   behavior now has no dependency on runtime result types.
+- Combat ownership: `AgentAnchoredFarmRuntime` became
+  `capabilities.combat.AgentAnchoredFarmCoordinator`; opportunity attacks, idle
+  fallback, movement broadcast, and configured movement dispatch retain their
+  original order.

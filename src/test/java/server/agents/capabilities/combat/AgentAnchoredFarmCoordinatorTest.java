@@ -1,9 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
-import server.agents.capabilities.combat.AgentAnchoredFarmTickService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
@@ -12,7 +12,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentAnchoredFarmRuntimeTest {
+class AgentAnchoredFarmCoordinatorTest {
     @Test
     void configBoundOverloadDelegatesToAnchoredFarmService() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(mock(Character.class), mock(Character.class), null);
@@ -28,7 +28,7 @@ class AgentAnchoredFarmRuntimeTest {
                             any(AgentAnchoredFarmTickService.AnchoredFarmHooks.class)))
                     .thenAnswer(invocation -> null);
 
-            AgentAnchoredFarmRuntime.tickAnchoredFarm(entry, agent, position, true);
+            AgentAnchoredFarmCoordinator.tickAnchoredFarm(entry, agent, position, true);
 
             service.verify(() -> AgentAnchoredFarmTickService.tickAnchoredFarm(
                     eq(entry),

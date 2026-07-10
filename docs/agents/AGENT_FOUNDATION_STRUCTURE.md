@@ -42,7 +42,7 @@ Target package groups:
   `AgentMovementOnlyTickCoordinator`, including default movement-only config
   assembly for Agent runtime entry points.
   Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
-  Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.
+  Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmCoordinator`.
   Standalone move-target config-bound dispatch enters through
   `AgentStandaloneMoveTargetRuntime`.
   Tick-failure default hook wiring enters through `AgentTickFailureRuntime`.

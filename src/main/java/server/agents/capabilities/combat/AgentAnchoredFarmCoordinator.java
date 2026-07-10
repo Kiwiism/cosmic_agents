@@ -1,21 +1,21 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.movement.AgentIdlePhysicsService;
-import server.agents.capabilities.combat.AgentAnchoredFarmTickService;
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
-import server.agents.capabilities.movement.AgentMovementTickCoordinator;
-
-import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
-import server.agents.capabilities.movement.AgentMovementPoseService;
+package server.agents.capabilities.combat;
 
 import client.Character;
-import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
-import server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator;
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementTickCoordinator;
+import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
-public final class AgentAnchoredFarmRuntime {
-    private AgentAnchoredFarmRuntime() {
+/**
+ * Coordinates combat and movement capability operations for anchored farming.
+ */
+public final class AgentAnchoredFarmCoordinator {
+    private AgentAnchoredFarmCoordinator() {
     }
 
     public static void tickAnchoredFarm(AgentRuntimeEntry entry,
@@ -45,7 +45,8 @@ public final class AgentAnchoredFarmRuntime {
                 hooks(enableUnstuck, stopDistance));
     }
 
-    private static AgentAnchoredFarmTickService.AnchoredFarmHooks hooks(boolean enableUnstuck, int stopDistance) {
+    private static AgentAnchoredFarmTickService.AnchoredFarmHooks hooks(boolean enableUnstuck,
+                                                                        int stopDistance) {
         return new AgentAnchoredFarmTickService.AnchoredFarmHooks(
                 (entry, agent, agentPosition, movementTargetPosition, moveWindowReferencePosition,
                  allowCombatMovement, allowJumpTowardTarget) -> {

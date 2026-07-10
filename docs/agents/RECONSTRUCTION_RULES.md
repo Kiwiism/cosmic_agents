@@ -874,7 +874,7 @@ Recent reconstruction notes:
   BotManager no longer passes unstuck/stop-distance config directly for the
   ownerless move-target path.
 - Anchored-farm config-bound tick entry now lives in
-  `server.agents.runtime.AgentAnchoredFarmRuntime.tickAnchoredFarm(entry, agent, pos, runAiTick)`.
+  `server.agents.capabilities.combat.AgentAnchoredFarmCoordinator.tickAnchoredFarm(entry, agent, pos, runAiTick)`.
   BotManager no longer passes unstuck/stop-distance config directly for
   anchored-farm mode dispatch.
 - Movement-core config-bound entry now lives in
@@ -916,7 +916,7 @@ Recent reconstruction notes:
   Agent runtime owns the register-spawned hook composition over
   `AgentRegistrationCoordinator`.
 - Anchored farm hook construction now lives in
-  `server.agents.runtime.AgentAnchoredFarmRuntime`. BotManager keeps only
+  `server.agents.capabilities.combat.AgentAnchoredFarmCoordinator`. BotManager keeps only
   legacy movement config values for this mode until config ownership moves.
 - Grind navigation hook construction now lives in
   `server.agents.runtime.AgentGrindNavigationRuntime`. BotManager keeps
@@ -7416,6 +7416,10 @@ Current physics correction:
   `AgentLocalOpportunityAttackRuntime` to
   `capabilities.combat.AgentLocalOpportunityAttackCoordinator`. Runtime now owns
   only conversion to the live-mode result contract; attack behavior is unchanged.
+- Combat ownership: anchored-farm hook assembly moved from generic
+  `AgentAnchoredFarmRuntime` to
+  `capabilities.combat.AgentAnchoredFarmCoordinator`; combat, idle, broadcast,
+  and movement behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
