@@ -1,26 +1,25 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowMotionObservationService;
 import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
-import server.agents.capabilities.follow.AgentFollowMotionObservationService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentTickStateRuntime;
 
 import java.awt.Point;
 
 /**
- * Runtime wiring for ownerless movement-only ticks.
+ * Prepares and executes one ownerless movement-only runtime tick.
  */
-public final class AgentMovementOnlyStepRuntime {
-    private AgentMovementOnlyStepRuntime() {
+public final class AgentMovementOnlyTickCoordinator {
+    private AgentMovementOnlyTickCoordinator() {
     }
 
     public static boolean stepMovementOnly(AgentRuntimeEntry entry, long tickAtMs) {
         return stepMovementOnly(entry, tickAtMs, defaultConfig());
     }
 
-    public static boolean stepMovementOnly(AgentRuntimeEntry entry, long tickAtMs, MovementOnlyStepConfig config) {
+    public static boolean stepMovementOnly(AgentRuntimeEntry entry, long tickAtMs, TickConfig config) {
         if (!AgentRuntimeIdentityRuntime.hasBot(entry)) {
             return false;
         }
@@ -48,18 +47,18 @@ public final class AgentMovementOnlyStepRuntime {
     public static void stepMovementOnly(AgentRuntimeEntry entry,
                                         Point targetPosition,
                                         boolean runAiTick,
-                                        MovementOnlyStepConfig config) {
-        AgentMovementOnlyRuntime.stepMovementOnly(
+                                        TickConfig config) {
+        AgentMovementOnlyModeCoordinator.stepMovementOnly(
                 entry,
                 targetPosition,
                 runAiTick,
                 AgentTickStateRuntime.lastTickAtMs(entry),
                 AgentTargetSnapshotCoordinator::resolveFollowAnchor,
-                config.movementOnlyConfig());
+                config.modeConfig());
     }
 
-    private static MovementOnlyStepConfig defaultConfig() {
-        return new MovementOnlyStepConfig(
+    private static TickConfig defaultConfig() {
+        return new TickConfig(
                 AgentMovementPhysicsConfig.configuredMovementTickMs(),
                 AgentRuntimeConfig.cfg.AI_TICK_MS,
                 AgentMovementPhysicsConfig.configuredTeleportDist(),
@@ -70,16 +69,16 @@ public final class AgentMovementOnlyStepRuntime {
                 AgentRuntimeConfig.cfg.ENABLE_UNSTUCK);
     }
 
-    public record MovementOnlyStepConfig(int tickMs,
-                                         int aiTickMs,
-                                         int teleportDistance,
-                                         int outOfBoundsTeleportDistance,
-                                         int grindPartyTeleportDistanceMultiplier,
-                                         int followDistance,
-                                         int stopDistance,
-                                         boolean enableUnstuck) {
-        private AgentMovementOnlyRuntime.MovementOnlyConfig movementOnlyConfig() {
-            return new AgentMovementOnlyRuntime.MovementOnlyConfig(
+    public record TickConfig(int tickMs,
+                             int aiTickMs,
+                             int teleportDistance,
+                             int outOfBoundsTeleportDistance,
+                             int grindPartyTeleportDistanceMultiplier,
+                             int followDistance,
+                             int stopDistance,
+                             boolean enableUnstuck) {
+        private AgentMovementOnlyModeCoordinator.ModeConfig modeConfig() {
+            return new AgentMovementOnlyModeCoordinator.ModeConfig(
                     teleportDistance,
                     outOfBoundsTeleportDistance,
                     grindPartyTeleportDistanceMultiplier,

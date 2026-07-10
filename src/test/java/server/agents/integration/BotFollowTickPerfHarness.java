@@ -17,7 +17,7 @@ import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 
 import server.agents.runtime.AgentCommonTickRuntime;
-import server.agents.runtime.AgentMovementOnlyStepRuntime;
+import server.agents.runtime.AgentMovementOnlyTickCoordinator;
 import server.agents.runtime.AgentPerformanceMonitor;
 import server.agents.plans.AgentScriptTaskCoordinator;
 
@@ -67,7 +67,7 @@ import static org.mockito.Mockito.when;
 /**
  * Pure-code perf harness for the bot tick. Mirrors the {@link BotMovementSimulationLab}
  * mocking approach so it runs without a live server. Drives N follow-mode bots through
- * {@link AgentCommonTickRuntime#runCommonTickSystems} + {@link AgentMovementOnlyStepRuntime#stepMovementOnly}
+ * {@link AgentCommonTickRuntime#runCommonTickSystems} + {@link AgentMovementOnlyTickCoordinator#stepMovementOnly}
  * for many ticks and prints a per-section timing report drawn from
  * {@link AgentPerformanceMonitor#snapshot()}.
  *
@@ -207,7 +207,7 @@ public class BotFollowTickPerfHarness {
                     AgentMovementTargetSnapshot snap = AgentMovementTargetRuntime.captureTargetSnapshot(entry);
                     Point ownerPos = snap.rawOwnerPosition();
                     AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
-                    AgentMovementOnlyStepRuntime.stepMovementOnly(entry, snap.primaryTargetPosition(), runAiTick);
+                    AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, snap.primaryTargetPosition(), runAiTick);
                 } catch (Throwable t) {
                     // ignore
                 }

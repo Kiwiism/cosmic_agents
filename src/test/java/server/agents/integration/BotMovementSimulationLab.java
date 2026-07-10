@@ -41,7 +41,7 @@ import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentFormationRuntime;
-import server.agents.runtime.AgentMovementOnlyStepRuntime;
+import server.agents.runtime.AgentMovementOnlyTickCoordinator;
 import server.maps.MapleMap;
 import server.maps.Rope;
 
@@ -185,7 +185,7 @@ final class BotMovementSimulationLab {
             }
 
             for (PendingStep pendingStep : pending) {
-                AgentMovementOnlyStepRuntime.stepMovementOnly(
+                AgentMovementOnlyTickCoordinator.stepMovementOnly(
                         pendingStep.entry(),
                         pendingStep.targetSnapshot().primaryTargetPosition(),
                         pendingStep.runAiTick());
@@ -207,7 +207,7 @@ final class BotMovementSimulationLab {
         AgentMovementTargetSnapshot targetSnapshot = AgentMovementTargetRuntime.captureTargetSnapshot(entry);
         Point ownerPos = targetSnapshot.rawOwnerPosition();
         AgentOwnerMotionStateRuntime.rememberOwnerPosition(entry, ownerPos);
-        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, new Point(targetPos), runAiTick);
+        AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, new Point(targetPos), runAiTick);
         trace.add(TraceFrame.capture(trace.size(), elapsedMs, botName, entry,
                 AgentMovementTargetRuntime.captureTargetSnapshot(entry)));
     }

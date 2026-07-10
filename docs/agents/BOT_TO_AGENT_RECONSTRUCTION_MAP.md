@@ -259,10 +259,10 @@ Recent map updates:
   `AgentLeaderSafetyRuntime` remains the temporary BotEntry compatibility edge,
   preserving inactive timer handling, town-return decisions, cluster formation
   targets, return-scroll fallback, and active-leader return announcements.
-- `AgentMovementOnlyStepRuntime` now accepts `AgentRuntimeEntry` for
+- `AgentMovementOnlyTickCoordinator` now accepts `AgentRuntimeEntry` for
   ownerless movement-only tick preparation, removing another BotEntry runtime
   wrapper while preserving AI cadence preparation and target snapshot capture.
-- `AgentMovementOnlyRuntime` now uses Agent entry overloads for follow-anchor
+- `AgentMovementOnlyModeCoordinator` now uses Agent entry overloads for follow-anchor
   resolution, shop visit ticks, and movement-core dispatch, removing its direct
   BotEntry dependency while preserving movement-only tick ordering.
 - `AgentMapTransitionRuntime` now stays on `AgentRuntimeEntry` for grounding
@@ -1259,7 +1259,7 @@ Recent map updates:
 - BotManager's remaining formation, target snapshot, and movement-only test
   shims were removed. The simulation lab and BotManager parity tests now call
   `AgentFormationRuntime`, `AgentTargetSnapshotCoordinator`, and
-  `AgentMovementOnlyStepRuntime` directly.
+  `AgentMovementOnlyTickCoordinator` directly.
 - BotManager test-only tick harness helpers were removed. Test/perf harnesses
   now call the Agent tick/common/movement runtime classes directly.
 - Chat-route default registry and formation config handoff moved from
@@ -1293,7 +1293,7 @@ Recent map updates:
   movement core, and anchored farm dispatch. The former private forwarding
   wrappers were removed.
 - Movement-only default config assembly moved from BotManager to
-  `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager now keeps
+  `server.agents.runtime.AgentMovementOnlyTickCoordinator`. BotManager now keeps
   only compatibility step methods while Agent runtime owns legacy tick,
   distance, teleport, and unstuck config handoff for movement-only stepping.
 - Inactive-leader town-return timeout ownership moved from BotManager to
@@ -1313,7 +1313,7 @@ Recent map updates:
   `server.agents.runtime.AgentMovementTickRuntime`. BotManager now delegates
   movement-core stepping without assembling unstuck/stop-distance config.
 - Ownerless movement-only tick preparation moved from BotManager to
-  `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager now passes
+  `server.agents.runtime.AgentMovementOnlyTickCoordinator`. BotManager now passes
   only legacy movement config values while Agent runtime owns cadence,
   snapshot, leader-motion, and movement-only hook handoff.
 - Dead-state tick hook wiring moved from BotManager to
@@ -1418,7 +1418,7 @@ Recent map updates:
   delegates ownerless move-target ticking while Agent runtime owns map-change,
   profile refresh, and movement-core hook construction.
 - Movement-only tick hook wiring moved from BotManager to
-  `server.agents.runtime.AgentMovementOnlyRuntime`. BotManager now passes only
+  `server.agents.runtime.AgentMovementOnlyModeCoordinator`. BotManager now passes only
   follow-anchor resolution and legacy movement distance/config values while
   Agent runtime owns idle, shop, follow-sync, recovery, map-change, follow-idle,
   and movement-core hook construction.
@@ -3240,7 +3240,7 @@ Recent capability extraction notes:
   configured hooks moved into `AgentStuckDetectionService`; timing, distance,
   reset, cooldown, and unstuck trigger semantics remain unchanged.
 - Runtime bridge consolidation: `AgentMovementOnlyMapChangeRuntime` was deleted
-  after its sole hook assembly moved into `AgentMovementOnlyRuntime`; grounding,
+  after its sole hook assembly moved into `AgentMovementOnlyModeCoordinator`; grounding,
   reset, broadcast, shop, and status callback ordering remains unchanged.
 - Follow bridge removal: `AgentFollowIdleMovementRuntime` was deleted after its
   configured-distance overload moved into `AgentFollowIdleMovementService`;
@@ -3334,3 +3334,8 @@ Recent capability extraction notes:
 - Runtime classification: `AgentLeaderSessionRuntime` became
   `runtime.AgentLeaderSessionResolver`; it retains only live leader lookup and
   session refresh coordination through the character gateway.
+- Runtime classification: `AgentMovementOnlyRuntime` and
+  `AgentMovementOnlyStepRuntime` became `AgentMovementOnlyModeCoordinator` and
+  `AgentMovementOnlyTickCoordinator`. The mode coordinator composes movement,
+  follow, recovery, and shop capabilities; the tick coordinator owns cadence and
+  snapshot preparation.

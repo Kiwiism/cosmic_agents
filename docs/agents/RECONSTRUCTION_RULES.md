@@ -801,11 +801,11 @@ Recent reconstruction notes:
 - BotManager formation, target snapshot, and movement-only test shims were
   removed. Bot movement simulation and parity tests now call
   `AgentFormationRuntime`, `AgentTargetSnapshotCoordinator`, and
-  `AgentMovementOnlyStepRuntime` directly, so BotManager no longer exposes
+  `AgentMovementOnlyTickCoordinator` directly, so BotManager no longer exposes
   these non-public runtime helper entry points.
 - BotManager test-only tick harness methods were removed. The perf harness now
   calls `AgentCommonTickRuntime`, `AgentScriptTaskRuntime`, and
-  `AgentMovementOnlyStepRuntime` directly, so BotManager no longer owns
+  `AgentMovementOnlyTickCoordinator` directly, so BotManager no longer owns
   test-only common tick or full tick execution hooks.
 - Chat-route default registry and formation config ownership now lives in
   `AgentChatRouteRuntime.handleChat(...)`. BotManager no longer stores the
@@ -853,7 +853,7 @@ Recent reconstruction notes:
   BotManager no longer keeps private forwarding wrappers for those runtime
   seams, and an unused private character-id registry lookup was removed.
 - Movement-only default config ownership now lives in
-  `AgentMovementOnlyStepRuntime.stepMovementOnly(entry, tickAtMs)` and
+  `AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, tickAtMs)` and
   `stepMovementOnly(entry, target, runAiTick)`. BotManager no longer builds
   `MovementOnlyStepConfig`; explicit config overloads remain for focused
   parity tests and future profile/config migration.
@@ -882,7 +882,7 @@ Recent reconstruction notes:
   BotManager no longer passes unstuck/stop-distance config directly for its
   movement-core compatibility wrapper.
 - Ownerless movement-only tick preparation now lives in
-  `server.agents.runtime.AgentMovementOnlyStepRuntime`. BotManager delegates
+  `server.agents.runtime.AgentMovementOnlyTickCoordinator`. BotManager delegates
   the compatibility step methods while Agent runtime owns the bot-present
   guard, cadence preparation, target snapshot capture, observed-leader motion
   update, remembered leader position update, follow-anchor resolver wiring, and
@@ -947,7 +947,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentStandaloneMoveTargetRuntime`. BotManager passes
   only legacy movement config values for this ownerless movement path.
 - Movement-only tick hook construction now lives in
-  `server.agents.runtime.AgentMovementOnlyRuntime`. BotManager keeps only the
+  `server.agents.runtime.AgentMovementOnlyModeCoordinator`. BotManager keeps only the
   temporary follow-anchor callback and legacy movement config values for this
   path.
 - Movement-core hook construction now lives in
@@ -7308,7 +7308,7 @@ Current physics correction:
   in `AgentStuckDetectionService`; `AgentStuckDetectionRuntime` is removed with
   timer decrement, movement threshold, cooldown, and unstuck gating unchanged.
 - Runtime bridge consolidation: movement-only map-change hook assembly now
-  lives in the existing `AgentMovementOnlyRuntime` orchestrator;
+  lives in the existing `AgentMovementOnlyModeCoordinator` orchestrator;
   `AgentMovementOnlyMapChangeRuntime` is removed without moving Cosmic-facing
   shop/status coordination into the movement capability.
 - Follow bridge removal: configured follow/stop distances now enter through an
@@ -7408,6 +7408,10 @@ Current physics correction:
 - Retained runtime orchestration: `AgentLeaderSessionRuntime` was renamed
   `AgentLeaderSessionResolver`; it performs live leader lookup and refreshes the
   runtime session through the character gateway without owning follow policy.
+- Retained runtime orchestration: `AgentMovementOnlyRuntime` and
+  `AgentMovementOnlyStepRuntime` were renamed `AgentMovementOnlyModeCoordinator`
+  and `AgentMovementOnlyTickCoordinator`. Their original mode composition,
+  cadence, target snapshot, and movement dispatch ordering remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

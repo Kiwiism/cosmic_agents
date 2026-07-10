@@ -34,12 +34,12 @@ Target package groups:
   `AgentTargetSnapshotCoordinator`.
   Formation state, target snapshots, and movement-only stepping are now called
   directly by Agent tests/harnesses through `AgentFormationRuntime`,
-  `AgentTargetSnapshotCoordinator`, and `AgentMovementOnlyStepRuntime` instead of
+  `AgentTargetSnapshotCoordinator`, and `AgentMovementOnlyTickCoordinator` instead of
   temporary manager helper methods.
   Tick leader/session lookup enters through `AgentLeaderSessionResolver`.
   Dead-state tick hook wiring enters through `AgentDeathTickRuntime`.
   Ownerless movement-only tick preparation enters through
-  `AgentMovementOnlyStepRuntime`, including default movement-only config
+  `AgentMovementOnlyTickCoordinator`, including default movement-only config
   assembly for Agent runtime entry points.
   Movement-core config-bound stepping enters through `AgentMovementTickRuntime`.
   Anchored-farm config-bound dispatch enters through `AgentAnchoredFarmRuntime`.

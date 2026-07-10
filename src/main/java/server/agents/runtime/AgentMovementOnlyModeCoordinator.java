@@ -1,18 +1,17 @@
 package server.agents.runtime;
 
-import server.agents.capabilities.movement.AgentIdlePhysicsService;
+import client.Character;
+import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementOnlyMapChangeService;
 import server.agents.capabilities.movement.AgentMovementOnlyTickService;
-import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
-import server.agents.capabilities.follow.AgentFollowIdleMovementService;
+import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.recovery.AgentRecoveryTeleportCoordinator;
-
-import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
@@ -20,8 +19,12 @@ import server.agents.integration.AgentInventoryGatewayRuntime;
 import java.awt.Point;
 import java.util.function.BiFunction;
 
-public final class AgentMovementOnlyRuntime {
-    private AgentMovementOnlyRuntime() {
+/**
+ * Coordinates the cross-capability movement-only mode without owning movement,
+ * follow, recovery, or shop policy.
+ */
+public final class AgentMovementOnlyModeCoordinator {
+    private AgentMovementOnlyModeCoordinator() {
     }
 
     public static void stepMovementOnly(AgentRuntimeEntry entry,
@@ -29,7 +32,7 @@ public final class AgentMovementOnlyRuntime {
                                         boolean runAiTick,
                                         long nowMs,
                                         BiFunction<AgentRuntimeEntry, Character, Character> followAnchorResolver,
-                                        MovementOnlyConfig config) {
+                                        ModeConfig config) {
         AgentMovementOnlyTickService.stepMovementOnly(
                 entry,
                 targetPosition,
@@ -40,7 +43,7 @@ public final class AgentMovementOnlyRuntime {
 
     private static AgentMovementOnlyTickService.MovementOnlyHooks hooks(
             BiFunction<AgentRuntimeEntry, Character, Character> followAnchorResolver,
-            MovementOnlyConfig config) {
+            ModeConfig config) {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
                 AgentIdlePhysicsService::tickIdleEntry,
                 (entry, agent) -> AgentShopStateRuntime.shopVisitPending(entry),
@@ -59,7 +62,7 @@ public final class AgentMovementOnlyRuntime {
                         target,
                         config.teleportDistance(),
                         config.outOfBoundsTeleportDistance()),
-                AgentMovementOnlyRuntime::handleMapChange,
+                AgentMovementOnlyModeCoordinator::handleMapChange,
                 (shopEntry, shopAgent) -> AgentShopService.tickShopVisit(
                         shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
                 AgentShopStateRuntime::activeShopTargetPosition,
@@ -94,11 +97,11 @@ public final class AgentMovementOnlyRuntime {
                         AgentManagerStatusRuntime::checkManagerStatus));
     }
 
-    public record MovementOnlyConfig(int teleportDistance,
-                                     int outOfBoundsTeleportDistance,
-                                     int grindPartyTeleportDistanceMultiplier,
-                                     int followDistance,
-                                     int stopDistance,
-                                     boolean enableUnstuck) {
+    public record ModeConfig(int teleportDistance,
+                             int outOfBoundsTeleportDistance,
+                             int grindPartyTeleportDistanceMultiplier,
+                             int followDistance,
+                             int stopDistance,
+                             boolean enableUnstuck) {
     }
 }

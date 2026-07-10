@@ -39,7 +39,7 @@ import server.agents.capabilities.combat.AgentCombatSkillCacheStateRuntime;
 import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 import server.agents.capabilities.combat.AgentGrindTargetPositionService;
-import server.agents.runtime.AgentMovementOnlyStepRuntime;
+import server.agents.runtime.AgentMovementOnlyTickCoordinator;
 import server.agents.runtime.AgentRuntimeCleanupService;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeConfig;
@@ -365,7 +365,7 @@ class BotManagerTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, null);
         AgentModeStateRuntime.setGrinding(entry, true);
 
-        AgentMovementOnlyStepRuntime.stepMovementOnly(entry, bot.getPosition(), true);
+        AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, bot.getPosition(), true);
 
         assertEquals(new Point(100, 100), bot.getPosition());
         assertFalse(AgentMovementStateRuntime.inAir(entry));
@@ -482,7 +482,7 @@ class BotManagerTest {
             attacksRuntime.when(() -> AgentCombatAttackRuntime.attackMonster(entry, bot, rangedPlan))
                     .thenAnswer(invocation -> null);
 
-            AgentMovementOnlyStepRuntime.stepMovementOnly(entry, target.getPosition(), false);
+            AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, target.getPosition(), false);
         }
 
         assertTrue(bot.getPosition().x < 100);

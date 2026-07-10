@@ -1,13 +1,11 @@
 package server.agents.runtime;
 
-import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
-import server.agents.capabilities.movement.AgentTargetSnapshot;
-import server.agents.capabilities.movement.AgentFormationService;
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.runtime.AgentTickStateRuntime;
-import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
+import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -20,10 +18,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentMovementOnlyStepRuntimeTest {
+class AgentMovementOnlyTickCoordinatorTest {
     @Test
     void returnsFalseWithoutAgent() {
-        boolean runAiTick = AgentMovementOnlyStepRuntime.stepMovementOnly(
+        boolean runAiTick = AgentMovementOnlyTickCoordinator.stepMovementOnly(
                 new AgentRuntimeEntry(null, mock(Character.class), null),
                 1_000L,
                 config());
@@ -50,29 +48,29 @@ class AgentMovementOnlyStepRuntimeTest {
                 "test-target");
 
         try (MockedStatic<AgentTargetSnapshotCoordinator> snapshots = mockStatic(AgentTargetSnapshotCoordinator.class);
-             MockedStatic<AgentMovementOnlyRuntime> movementOnly = mockStatic(AgentMovementOnlyRuntime.class)) {
+             MockedStatic<AgentMovementOnlyModeCoordinator> movementOnly = mockStatic(AgentMovementOnlyModeCoordinator.class)) {
             snapshots.when(() -> AgentTargetSnapshotCoordinator.captureTargetSnapshot(entry)).thenReturn(snapshot);
-            movementOnly.when(() -> AgentMovementOnlyRuntime.stepMovementOnly(
+            movementOnly.when(() -> AgentMovementOnlyModeCoordinator.stepMovementOnly(
                             eq(entry),
                             eq(new Point(30, 40)),
                             eq(false),
                             any(Long.class),
                             any(),
-                            any(AgentMovementOnlyRuntime.MovementOnlyConfig.class)))
+                            any(AgentMovementOnlyModeCoordinator.ModeConfig.class)))
                     .thenAnswer(invocation -> null);
 
-            boolean runAiTick = AgentMovementOnlyStepRuntime.stepMovementOnly(entry, 1_000L, config());
+            boolean runAiTick = AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, 1_000L, config());
 
             assertFalse(runAiTick);
             assertTrue(AgentTickStateRuntime.lastTickAtMs(entry) > 0);
             assertTrue(AgentOwnerMotionStateRuntime.lastOwnerPosition(entry).equals(new Point(10, 20)));
-            movementOnly.verify(() -> AgentMovementOnlyRuntime.stepMovementOnly(
+            movementOnly.verify(() -> AgentMovementOnlyModeCoordinator.stepMovementOnly(
                     eq(entry),
                     eq(new Point(30, 40)),
                     eq(false),
                     any(Long.class),
                     any(),
-                    any(AgentMovementOnlyRuntime.MovementOnlyConfig.class)));
+                    any(AgentMovementOnlyModeCoordinator.ModeConfig.class)));
         }
     }
 
@@ -83,30 +81,30 @@ class AgentMovementOnlyStepRuntimeTest {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         Point target = new Point(30, 40);
 
-        try (MockedStatic<AgentMovementOnlyRuntime> movementOnly = mockStatic(AgentMovementOnlyRuntime.class)) {
-            movementOnly.when(() -> AgentMovementOnlyRuntime.stepMovementOnly(
+        try (MockedStatic<AgentMovementOnlyModeCoordinator> movementOnly = mockStatic(AgentMovementOnlyModeCoordinator.class)) {
+            movementOnly.when(() -> AgentMovementOnlyModeCoordinator.stepMovementOnly(
                             eq(entry),
                             eq(target),
                             eq(true),
                             any(Long.class),
                             any(),
-                            any(AgentMovementOnlyRuntime.MovementOnlyConfig.class)))
+                            any(AgentMovementOnlyModeCoordinator.ModeConfig.class)))
                     .thenAnswer(invocation -> null);
 
-            AgentMovementOnlyStepRuntime.stepMovementOnly(entry, target, true);
+            AgentMovementOnlyTickCoordinator.stepMovementOnly(entry, target, true);
 
-            movementOnly.verify(() -> AgentMovementOnlyRuntime.stepMovementOnly(
+            movementOnly.verify(() -> AgentMovementOnlyModeCoordinator.stepMovementOnly(
                     eq(entry),
                     eq(target),
                     eq(true),
                     any(Long.class),
                     any(),
-                    any(AgentMovementOnlyRuntime.MovementOnlyConfig.class)));
+                    any(AgentMovementOnlyModeCoordinator.ModeConfig.class)));
         }
     }
 
-    private static AgentMovementOnlyStepRuntime.MovementOnlyStepConfig config() {
-        return new AgentMovementOnlyStepRuntime.MovementOnlyStepConfig(50, 100, 800, 1200, 2, 150, 35, true);
+    private static AgentMovementOnlyTickCoordinator.TickConfig config() {
+        return new AgentMovementOnlyTickCoordinator.TickConfig(50, 100, 800, 1200, 2, 150, 35, true);
     }
 
     private static Character character(int id, String name, Point position) {
