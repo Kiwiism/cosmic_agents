@@ -1892,7 +1892,7 @@ Recent reconstruction notes:
   Agent-owned facade in `AgentSupplyRuntime`; `BotChatSupplyRuntime` remains
   only as a temporary compatibility shim for legacy bot package callers.
 - Session/relog/logout/away callback orchestration now has an Agent-owned
-  facade in `AgentSessionRuntime`; `BotChatSessionRuntime` remains only as a
+  facade in `AgentSessionCommandCoordinator`; `BotChatSessionRuntime` remains only as a
   temporary compatibility shim for legacy bot package callers.
 - Movement/follow/grind/stop/fidget/greeting callback orchestration now has an
   Agent-owned facade in `AgentMovementRuntime`; `BotChatMovementRuntime`
@@ -6284,7 +6284,7 @@ Current physics correction:
   `server.agents.capabilities.dialogue.AgentPendingActionRuntime`. It still
   delegates live Agent lookup to `AgentRuntimeIdentityRuntime`, visible replies
   to `AgentReplyRuntime`, delayed callbacks to `AgentSchedulerRuntime`, session
-  confirmations to `AgentSessionRuntime`, and inventory choice execution to
+  confirmations to `AgentSessionCommandCoordinator`, and inventory choice execution to
   `AgentInventoryTransferService`; pending-action behavior is unchanged.
 - Chat status orchestration now lives in
   `server.agents.capabilities.dialogue.AgentChatStatusOrchestrator`, separate
@@ -6397,7 +6397,7 @@ Current physics correction:
   broadcast behavior. The direct HP mutation and packet broadcast calls are
   intentionally documented as the next gateway split.
 - Session request, relog/logout confirmation, and away-choice orchestration now
-  lives in `server.agents.runtime.AgentSessionRuntime`. It preserves pending
+  lives in `server.agents.commands.AgentSessionCommandCoordinator`. It preserves pending
   action state, stop-command dispatch, confirmation replies, owner-away town/
   stay/logout handling, save/disconnect timing, and relog scheduling. Direct
   save/disconnect/relogin side effects and reply delivery remain explicit
@@ -6915,7 +6915,7 @@ Current physics correction:
 - SPI/gateway extraction: session relog/logout/owner-away disconnects now call
   `AgentCharacterGatewayRuntime`/`CharacterGateway.disconnect` instead of
   directly invoking `agent.getClient().disconnect(...)` in
-  `AgentSessionRuntime`. Save-before-disconnect ordering, relog world/channel
+  `AgentSessionCommandCoordinator`. Save-before-disconnect ordering, relog world/channel
   capture, delayed relog scheduling, logout confirmation, and owner-away batch
   logout behavior are unchanged. Live client disconnect mutation is isolated in
   `CosmicCharacterGateway`.
@@ -7469,6 +7469,10 @@ Current physics correction:
 - Cosmic boundary ownership: session relog/logout persistence now enters through
   `CharacterGateway.save`. The Cosmic adapter performs the same
   `saveCharToDB(true)` operation immediately before each existing disconnect.
+- Command ownership: relog, logout, and away chat requests now coordinate through
+  `commands.AgentSessionCommandCoordinator`, not generic runtime. Existing delay
+  ranges, prompts, pending-action transitions, stop calls, and lifecycle order are
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

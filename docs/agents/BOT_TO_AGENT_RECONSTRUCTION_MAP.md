@@ -16,7 +16,8 @@ Recent map updates:
 
   | Classification | Files | Notes |
   | --- | --- | --- |
-  | `MOVE_TO_RUNTIME` | `AgentChatOrchestratorContext`, `AgentRuntimeIdentityRuntime`, `AgentSchedulerRuntime`, `AgentLifecycleStatusCoordinator`, `AgentSessionControlRuntime`, `AgentSessionRuntime` | Runtime/session/tick/chat-flow orchestration rather than a Cosmic boundary. `AgentChatOrchestratorContext`, the delayed callback scheduler facade, session-control facade, and lifecycle status scheduling have moved first; other files need one-slice moves with focused tests. |
+  | `MOVE_TO_RUNTIME` | `AgentChatOrchestratorContext`, `AgentRuntimeIdentityRuntime`, `AgentSchedulerRuntime`, `AgentLifecycleStatusCoordinator`, `AgentSessionControlRuntime` | Runtime/session/tick orchestration rather than a Cosmic boundary. `AgentChatOrchestratorContext`, the delayed callback scheduler facade, session-control facade, and lifecycle status scheduling have moved first; other files need one-slice moves with focused tests. |
+  | `MOVE_TO_COMMANDS` | `AgentSessionCommandCoordinator` | Relog, logout, and away requests are external command coordination. Pending actions, delays, replies, lifecycle dispatch, and save/disconnect ordering are preserved. |
   | `MOVE_TO_RUNTIME` | `AgentLeaderStateRuntime`, `AgentModeStateRuntime`, `AgentTickCadenceStateRuntime`, `AgentTickFailureStateRuntime`, `AgentTickStateRuntime` | Mutable runtime/session state adapters. Cross-capability runtime state remains here while capability-owned state adapters move into their capability packages one slice at a time. |
   | `MOVE_TO_CAPABILITY_dialogue` | `AgentAirshowStateRuntime`, `AgentChatReportRuntime`, `AgentChatStatusRuntime`, `AgentControlRuntime`, `AgentPendingActionRuntime`, `AgentPendingActionStateRuntime`, `AgentReplyRuntime`, `AgentSocialRuntime`, `AgentLlmRuntime`, `AgentScrollReactionRuntime`, `AgentScrollReactionStateRuntime` | Dialogue/report/status/social behavior should move toward dialogue/social/LLM capability modules. Pure scroll-reaction state, scroll-reaction reply/timing bridge access, airshow capability state, utility/control chat callback orchestration, pending-action chat orchestration, chat-status orchestration, active-mode preparation orchestration, and the LLM reply bridge have moved; leave queueing, scheduling, live identity lookup, expression changes, and packet side effects behind integration boundaries until gateways exist. |
   | `MOVE_TO_CAPABILITY_combat` | `AgentAmmoStateRuntime`, `AgentAoeRepositionStateRuntime`, `AgentBreakoutStateRuntime`, `AgentBuffStateRuntime`, `AgentCombatActionLockRuntime`, `AgentCombatActionStateRuntime`, `AgentCombatAlertRuntime`, `AgentCombatAmmoCheckRuntime`, `AgentCombatAoeRepositionRuntime`, `AgentCombatAttackRuntime`, `AgentCombatBuffRuntime`, `AgentCombatBuffStateRuntime`, `AgentCombatCooldownStateRuntime`, `AgentCombatDamageRuntime`, `AgentCombatDeathRuntime`, `AgentCombatFacingRuntime`, `AgentCombatGroundRuntime`, `AgentCombatHealRuntime`, `AgentCombatPlanRuntime`, `AgentCombatReportRuntime`, `AgentCombatRuntime`, `AgentCombatSkillCacheRuntime`, `AgentCombatSkillCacheStateRuntime`, `AgentCombatTargetRuntime`, `AgentDegenerateAttackStateRuntime`, `AgentGrindSearchStateRuntime`, `AgentGrindTargetStateRuntime`, `AgentGrindWanderStateRuntime`, `AgentMobTouchRuntime`, `AgentMobTouchStateRuntime`, `AgentRetreatHoldStateRuntime`, `AgentSkillBuffDebugStateRuntime` | Combat planning/state belongs in combat capability. The pure positioning, ground foothold lookup, combat reply/timing facade, cooldown, combat-alert timing/state orchestration, action-lock ticking, action-state clearing, attack-facing update facade, AoE reposition planning, attack-plan orchestration, consumable-buff, support-buff, combat report orchestration, skill-buff debug, degenerate ranged-hit latch, grind-target state access, grind-wander, grind-search cadence, mob-touch checkpoint, skill-cache rebuild logic, and skill-cache state adapters have moved; attack packets, damage mutation, live target map checks/search, stance broadcast packets, and mob-touch server writes stay integration until gateway seams are introduced. |
@@ -122,7 +123,7 @@ Recent map updates:
   action state, pending action callbacks, and skill-tree choice handling.
   Item-choice execution/cancel paths, owner-away routing, relog/logout
   confirmations, skill-report decisions, and queued replies remain unchanged.
-- `AgentSessionRuntime` now accepts `AgentRuntimeEntry` for session request
+- `AgentSessionCommandCoordinator` accepts `AgentRuntimeEntry` for session request
   callbacks, relog/logout confirmation, and owner-away choices. Relog/logout
   prompts, owner-away stay/town/logout decisions, delayed replies,
   save/disconnect scheduling, and lifecycle lookup behavior remain unchanged.
@@ -2422,7 +2423,7 @@ Recent capability extraction notes:
   HP/autopot mutation, packet-visible damage broadcast, death entry, knockback,
   cooldown, alert, and movement broadcast behavior; direct HP mutation and
   packet broadcast calls remain the next explicit gateway split.
-- `AgentSessionRuntime` now lives in `server.agents.runtime`. It preserves
+- `AgentSessionCommandCoordinator` now lives in `server.agents.commands`. It preserves
   session request callbacks, relog/logout confirmation timing, owner-away
   handling, stop-command dispatch, save/disconnect/relogin scheduling, and
   replies while leaving save/disconnect/relogin and reply delivery as
@@ -2907,7 +2908,7 @@ Recent capability extraction notes:
   `agent.getClient().updateLastPacket()` mutation is isolated in
   `CosmicCharacterGateway`. Heartbeat cadence and preflight behavior remain
   unchanged.
-- SPI/gateway extraction: `AgentSessionRuntime` now uses
+- SPI/gateway extraction: `AgentSessionCommandCoordinator` uses
   `AgentCharacterGatewayRuntime`/`CharacterGateway.disconnect`; live
   `agent.getClient().disconnect(...)` mutation is isolated in
   `CosmicCharacterGateway`. Relog/logout save ordering, delays, and owner-away
@@ -3395,3 +3396,6 @@ Recent capability extraction notes:
 - Cosmic boundary ownership: relog, logout, and leader-away persistence now use
   `CharacterGateway.save`; `CosmicCharacterGateway` retains the exact
   `saveCharToDB` call and all save-before-disconnect ordering is unchanged.
+- Command ownership: session relog, logout, and away request coordination moved
+  from runtime to `commands.AgentSessionCommandCoordinator`. Prompt timing,
+  pending actions, movement stops, replies, and lifecycle dispatch are unchanged.

@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import client.Character;
@@ -8,6 +8,9 @@ import server.agents.capabilities.dialogue.AgentChatAwayFlow;
 import server.agents.capabilities.dialogue.AgentChatPendingAction;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSessionControlRuntime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -18,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-class AgentSessionRuntimeTest {
+class AgentSessionCommandCoordinatorTest {
     @Test
     void relogRequestSchedulesStopPromptAndPendingAction() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -32,7 +35,7 @@ class AgentSessionRuntimeTest {
                         return null;
                     });
 
-            AgentSessionRuntime.sessionRequestCallbacks(entry).requestRelog();
+            AgentSessionCommandCoordinator.sessionRequestCallbacks(entry).requestRelog();
 
             assertEquals(AgentChatPendingAction.RELOG, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
@@ -56,7 +59,7 @@ class AgentSessionRuntimeTest {
                         return null;
                     });
 
-            AgentSessionRuntime.sessionRequestCallbacks(entry).requestAway();
+            AgentSessionCommandCoordinator.sessionRequestCallbacks(entry).requestAway();
 
             assertEquals(AgentChatPendingAction.OWNER_AWAY, AgentPendingActionStateRuntime.pendingAction(entry));
             movementCommands.verify(() -> AgentMovementCommandRuntime.stop((AgentRuntimeEntry) entry));
@@ -81,7 +84,7 @@ class AgentSessionRuntimeTest {
                         return null;
                     });
 
-            AgentSessionRuntime.handleOwnerAwayChoice(entry, "stay");
+            AgentSessionCommandCoordinator.handleOwnerAwayChoice(entry, "stay");
 
             assertNull(AgentPendingActionStateRuntime.pendingAction(entry));
             sessionControl.verify(() -> AgentSessionControlRuntime.issueOwnerAwaySafeModeForLeader(123, false));

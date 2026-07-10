@@ -26,7 +26,7 @@ import server.agents.capabilities.equipment.AgentEquipmentRuntime;
 import server.agents.capabilities.movement.AgentMovementRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentSessionRuntime;
+import server.agents.commands.AgentSessionCommandCoordinator;
 import server.agents.capabilities.social.AgentSocialRuntime;
 import server.agents.capabilities.supplies.AgentSupplyRuntime;
 import server.agents.capabilities.trade.AgentTransferRuntime;
@@ -65,7 +65,7 @@ public final class AgentChatOrchestratorContext implements AgentChatOrchestrator
 
     @Override
     public AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks() {
-        return AgentSessionRuntime.sessionRequestCallbacks(entry);
+        return AgentSessionCommandCoordinator.sessionRequestCallbacks(entry);
     }
 
     @Override

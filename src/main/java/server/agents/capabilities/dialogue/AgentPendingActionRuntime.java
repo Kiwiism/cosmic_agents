@@ -5,7 +5,7 @@ import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
-import server.agents.runtime.AgentSessionRuntime;
+import server.agents.commands.AgentSessionCommandCoordinator;
 import server.agents.capabilities.trade.AgentInventoryTransferService;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -48,7 +48,7 @@ public final class AgentPendingActionRuntime {
         return new AgentPendingChatActionFlow.PendingActionCallbacks() {
             @Override
             public void handleOwnerAwayChoice(String message) {
-                AgentSessionRuntime.handleOwnerAwayChoice(entry, message);
+                AgentSessionCommandCoordinator.handleOwnerAwayChoice(entry, message);
             }
 
             @Override
@@ -74,12 +74,12 @@ public final class AgentPendingActionRuntime {
 
             @Override
             public void confirmRelog() {
-                AgentSessionRuntime.scheduleRelogConfirm(entry);
+                AgentSessionCommandCoordinator.scheduleRelogConfirm(entry);
             }
 
             @Override
             public void confirmLogout() {
-                AgentSessionRuntime.scheduleLogoutConfirm(entry);
+                AgentSessionCommandCoordinator.scheduleLogoutConfirm(entry);
             }
 
             @Override

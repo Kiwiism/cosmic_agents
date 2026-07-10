@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 
@@ -11,14 +11,17 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentSessionControlRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 
 /**
- * Agent-owned session facade. Save/disconnect/relogin side effects and reply
- * delivery remain explicit integration seams.
+ * Coordinates external session commands with runtime, dialogue, and integration
+ * services while preserving the legacy delayed-action order.
  */
-public final class AgentSessionRuntime {
-    private AgentSessionRuntime() {
+public final class AgentSessionCommandCoordinator {
+    private AgentSessionCommandCoordinator() {
     }
 
     public static AgentChatSessionRequestFlow.SessionRequestCallbacks sessionRequestCallbacks(AgentRuntimeEntry entry) {

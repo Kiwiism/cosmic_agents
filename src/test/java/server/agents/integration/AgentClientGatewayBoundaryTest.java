@@ -23,7 +23,7 @@ class AgentClientGatewayBoundaryTest {
         String lifecycle = Files.readString(Path.of(
                 "src/main/java/server/agents/runtime/AgentLifecycleService.java"));
         String session = Files.readString(Path.of(
-                "src/main/java/server/agents/runtime/AgentSessionRuntime.java"));
+                "src/main/java/server/agents/commands/AgentSessionCommandCoordinator.java"));
         String support = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/combat/AgentSupportSpecialMoveExecutor.java"));
         String cosmic = Files.readString(Path.of(
