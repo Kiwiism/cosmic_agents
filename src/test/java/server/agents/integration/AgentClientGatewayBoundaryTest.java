@@ -15,7 +15,7 @@ class AgentClientGatewayBoundaryTest {
         String spawn = Files.readString(Path.of(
                 "src/main/java/server/agents/commands/AgentSpawnCommandExecutor.java"));
         String offlineRuntime = Files.readString(Path.of(
-                "src/main/java/server/agents/runtime/AgentOfflineLoadRuntime.java"));
+                "src/main/java/server/agents/integration/cosmic/CosmicAgentOfflineLoader.java"));
         String offlineService = Files.readString(Path.of(
                 "src/main/java/server/agents/runtime/AgentOfflineLoadService.java"));
         String maker = Files.readString(Path.of(

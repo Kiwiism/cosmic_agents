@@ -1502,7 +1502,7 @@ Recent map updates:
   its temporary tick callback while Agent runtime owns timer, cancellation,
   default formation, spawn normalization, and status-delay hook wiring.
 - Offline Agent load hook wiring moved from BotManager to
-  `server.agents.runtime.AgentOfflineLoadRuntime`. BotManager now keeps only a
+  `server.agents.integration.cosmic.CosmicAgentOfflineLoader`. BotManager now keeps only a
   compatibility `loadOfflineBot` delegate while Agent runtime owns the Cosmic
   bootstrap hook bundle for loading offline backing characters.
 - Spawn placement hook wiring moved from BotManager to
@@ -2752,7 +2752,7 @@ Recent capability extraction notes:
   cross-map follow `changeMap(map, position)` call through
   `AgentMapGatewayRuntime`. Follow eligibility checks, spawn-position fallback,
   idle-on-ground, and reset ordering stay unchanged.
-- SPI/gateway extraction: `AgentOfflineLoadRuntime` now routes map resolution
+- SPI/gateway extraction: `CosmicAgentOfflineLoader` now routes map resolution
   and channel/world/map player registration through `AgentMapGatewayRuntime`.
   Offline character loading, disease restore, spawn positioning, rate setup,
   client binding, map visit, and disease task startup stay unchanged.
@@ -2766,7 +2766,7 @@ Recent capability extraction notes:
   no longer calls `Server.getInstance()` directly; packet bytes and synthetic
   dispatch behavior stay unchanged.
 - SPI/gateway extraction: `CharacterGateway` now exposes stored disease
-  restoration for offline Agent loading. `AgentOfflineLoadRuntime` no longer
+  restoration for offline Agent loading. `CosmicAgentOfflineLoader` no longer
   reaches directly into server player buff storage; disease restore behavior
   and offline-load ordering stay unchanged.
 - SPI/gateway extraction: `CharacterGateway` now exposes live world-character
@@ -3363,3 +3363,7 @@ Recent capability extraction notes:
   and AFK callbacks now enter `AgentChatStatusOrchestrator`, airshow state is read
   directly from its capability, and delayed spawn checks remain as the focused
   `runtime.AgentLifecycleStatusCoordinator`.
+- Cosmic boundary: `AgentOfflineLoadRuntime` became
+  `integration.cosmic.CosmicAgentOfflineLoader`. Headless client creation,
+  character persistence loading, rate initialization, and server storage
+  registration are now explicitly owned by the Cosmic adapter layer.

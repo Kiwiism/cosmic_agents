@@ -1,21 +1,23 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import config.YamlConfig;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.runtime.AgentOfflineLoadService;
+import server.agents.runtime.AgentSpawnPositionService;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.sql.SQLException;
 
 /**
- * Temporary Cosmic hook bundle for loading offline backing characters into the
- * Agent runtime while persistence/bootstrap wiring is reconstructed.
+ * Cosmic adapter for loading an offline backing character into an Agent runtime
+ * session and registering it with channel, world, and map storage.
  */
-public final class AgentOfflineLoadRuntime {
-    private AgentOfflineLoadRuntime() {
+public final class CosmicAgentOfflineLoader {
+    private CosmicAgentOfflineLoader() {
     }
 
     public static Character loadOfflineAgent(int characterId,
@@ -23,13 +25,28 @@ public final class AgentOfflineLoadRuntime {
                                              int channel,
                                              MapleMap targetMap,
                                              Point desiredPosition) throws SQLException {
-        return AgentOfflineLoadService.loadOfflineAgent(
+        return loadOfflineAgent(
                 characterId,
                 world,
                 channel,
                 targetMap,
                 desiredPosition,
                 hooks());
+    }
+
+    static Character loadOfflineAgent(int characterId,
+                                      int world,
+                                      int channel,
+                                      MapleMap targetMap,
+                                      Point desiredPosition,
+                                      AgentOfflineLoadService.Hooks hooks) throws SQLException {
+        return AgentOfflineLoadService.loadOfflineAgent(
+                characterId,
+                world,
+                channel,
+                targetMap,
+                desiredPosition,
+                hooks);
     }
 
     private static AgentOfflineLoadService.Hooks hooks() {

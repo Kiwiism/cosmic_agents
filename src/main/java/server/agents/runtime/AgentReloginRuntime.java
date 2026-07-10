@@ -4,6 +4,7 @@ import client.Character;
 import org.slf4j.Logger;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
+import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
 
@@ -68,6 +69,6 @@ public final class AgentReloginRuntime {
                                               int channel,
                                               MapleMap targetMap,
                                               Point desiredPosition) throws SQLException {
-        return AgentOfflineLoadRuntime.loadOfflineAgent(agentCharId, world, channel, targetMap, desiredPosition);
+        return CosmicAgentOfflineLoader.loadOfflineAgent(agentCharId, world, channel, targetMap, desiredPosition);
     }
 }

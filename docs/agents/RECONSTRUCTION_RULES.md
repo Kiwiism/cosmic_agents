@@ -1051,7 +1051,7 @@ Recent reconstruction notes:
   period, timer registration, replacement-task cancellation, default formation,
   spawn normalization, and spawn-status delay hook construction.
 - Offline Agent load hook wiring now lives in
-  `server.agents.runtime.AgentOfflineLoadRuntime`. BotManager keeps only the
+  `server.agents.integration.cosmic.CosmicAgentOfflineLoader`. BotManager keeps only the
   `loadOfflineBot` compatibility delegate while Agent runtime owns the
   BotClient creation, DB character load, disease restore, map lookup, spawn
   position, rate initialization, channel/world/map registration, and map-add
@@ -6996,7 +6996,7 @@ Current physics correction:
 - SPI/gateway extraction: headless client creation, backing-character creation,
   and backing-character database loading now call `AgentClientGateway` through
   `AgentClientGatewayRuntime`. `AgentSpawnCommandExecutor`,
-  `AgentOfflineLoadRuntime`, and `AgentOfflineLoadService` no longer import
+  `CosmicAgentOfflineLoader`, and `AgentOfflineLoadService` no longer import
   `BotClient` or `BotCreator`; the exact concrete client/creator/load calls are
   isolated in `CosmicAgentClientGateway`. Account setup and offline-load order
   remain unchanged.
@@ -7435,6 +7435,10 @@ Current physics correction:
   callbacks now call `AgentChatStatusOrchestrator`, airshow state uses its own
   capability directly, and only delayed spawn-status scheduling remains in
   `AgentLifecycleStatusCoordinator`.
+- Cosmic boundary: offline backing-character hook assembly moved from generic
+  `AgentOfflineLoadRuntime` to `integration.cosmic.CosmicAgentOfflineLoader`.
+  Persistence loading, rates, and channel/world/map registration retain their
+  original order and behavior.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

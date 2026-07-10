@@ -4,6 +4,7 @@ import client.Character;
 import org.slf4j.Logger;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.integration.AgentMapGatewayRuntime;
+import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
 
 import java.util.function.Consumer;
 
@@ -47,7 +48,7 @@ public final class AgentSpawnRuntime {
                 new AgentLifecycleService.SpawnHooks(
                         AgentSpawnPositionService::resolveSpawnPosition,
                         registerSpawnedAgent,
-                        AgentOfflineLoadRuntime::loadOfflineAgent,
+                        CosmicAgentOfflineLoader::loadOfflineAgent,
                         AgentSpawnPlacementCoordinator::placeSpawnedOnlineAgent,
                         startFollowLeader,
                         AgentMapGatewayRuntime.map()::changeMapNear),
