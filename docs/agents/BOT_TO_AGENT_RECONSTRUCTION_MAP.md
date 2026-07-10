@@ -3412,3 +3412,6 @@ Recent capability extraction notes:
 - Cosmic boundary ownership: NPC shop resolution now enters through
   `ShopGateway.findForNpc`; `ShopFactory` lookup is isolated in
   `CosmicShopGateway` while shop planning and transaction handling are unchanged.
+- Runtime scheduler ownership: airshow phase/trail timers and navigation-overlay
+  cleanup now use `AgentSchedulerRuntime.schedule`; the facade delegates to the
+  same `TimerManager.schedule` operation and preserves cancellation handles.

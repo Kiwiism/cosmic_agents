@@ -16,7 +16,7 @@ import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.StatEffect;
-import server.TimerManager;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
 import server.maps.Mist;
 
@@ -228,7 +228,7 @@ public final class AgentNavigationDebugOverlay {
         OverlayState previous = overlaysByViewerId.remove(viewer.getId());
         clearOverlay(viewer, previous);
 
-        ScheduledFuture<?> clearTask = TimerManager.getInstance().schedule(() -> clear(viewer), AUTO_CLEAR_MS);
+        ScheduledFuture<?> clearTask = AgentSchedulerRuntime.schedule(() -> clear(viewer), AUTO_CLEAR_MS);
         overlaysByViewerId.put(viewer.getId(), new OverlayState(objectIds, clearTask));
     }
 

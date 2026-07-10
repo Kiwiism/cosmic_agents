@@ -7,9 +7,9 @@ import client.Character;
 import constants.game.CharacterStance;
 import constants.id.MobId;
 import server.life.Monster;
-import server.TimerManager;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.integration.AgentLifeGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -73,10 +73,10 @@ public final class AgentAirshowService {
 
         flyHorizontal(entry, map, new Point(left, showY), right, HORIZONTAL_SPEED_PX_PER_SEC,
                 CharacterStance.PRONE_RIGHT_STANCE,
-                () -> TimerManager.getInstance().schedule(
+                () -> AgentSchedulerRuntime.schedule(
                         () -> flyHorizontal(entry, map, new Point(right, showY), left, -HORIZONTAL_SPEED_PX_PER_SEC,
                                 CharacterStance.PRONE_LEFT_STANCE,
-                                () -> TimerManager.getInstance().schedule(
+                                () -> AgentSchedulerRuntime.schedule(
                                         () -> flyVertical(entry, map, new Point(showX, bottom), top,
                                                 -VERTICAL_SPEED_PX_PER_SEC, CharacterStance.ROPE_RIGHT_STANCE,
                                                 () -> restore(entry, previousPosition, previousStance)),
@@ -103,7 +103,7 @@ public final class AgentAirshowService {
                                                 int velocityX,
                                                 int stance,
                                                 Runnable done) {
-        TimerManager.getInstance().schedule(() -> {
+        AgentSchedulerRuntime.schedule(() -> {
             Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             if (!AgentAirshowStateRuntime.active(entry) || bot == null || bot.getMap() != map) {
                 if (bot != null) {
@@ -143,7 +143,7 @@ public final class AgentAirshowService {
                                               int velocityY,
                                               int stance,
                                               Runnable done) {
-        TimerManager.getInstance().schedule(() -> {
+        AgentSchedulerRuntime.schedule(() -> {
             Character bot = AgentRuntimeIdentityRuntime.bot(entry);
             if (!AgentAirshowStateRuntime.active(entry) || bot == null || bot.getMap() != map) {
                 if (bot != null) {
@@ -219,7 +219,7 @@ public final class AgentAirshowService {
         trail.setFh(AgentMovementPhysicsStateRuntime.lastGroundFhId(entry));
         trail.setStance(CharacterStance.STAND_RIGHT_STANCE);
         AgentPacketGatewayRuntime.packets().broadcastSpawnMonster(map, trail, true);
-        TimerManager.getInstance().schedule(
+        AgentSchedulerRuntime.schedule(
                 () -> AgentPacketGatewayRuntime.packets().broadcastKillMonster(
                         map, trail.getObjectId(), 1, trail.getPosition()),
                 TRAIL_DEATH_DELAY_MS);

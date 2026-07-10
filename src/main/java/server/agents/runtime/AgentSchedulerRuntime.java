@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.TimerManager;
 
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -16,7 +17,11 @@ public final class AgentSchedulerRuntime {
     }
 
     public static void afterDelay(long delayMs, Runnable action) {
-        TimerManager.getInstance().schedule(action, delayMs);
+        schedule(action, delayMs);
+    }
+
+    public static ScheduledFuture<?> schedule(Runnable action, long delayMs) {
+        return TimerManager.getInstance().schedule(action, delayMs);
     }
 
     public static long randomDelayMs(int minMs, int maxMs) {
