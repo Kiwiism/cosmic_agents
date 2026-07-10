@@ -8,7 +8,6 @@ import server.agents.capabilities.movement.fidget.AgentFidgetRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTickStateRuntime;
 

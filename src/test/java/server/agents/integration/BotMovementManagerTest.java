@@ -38,7 +38,7 @@ import server.agents.capabilities.movement.fidget.AgentFidgetMode;
 import server.agents.capabilities.movement.fidget.AgentFidgetTrigger;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.runtime.AgentOwnerMotionStateRuntime;
+import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.life.Monster;
 import server.maps.Foothold;
 import server.maps.MapleMap;

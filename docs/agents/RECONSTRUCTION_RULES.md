@@ -7261,6 +7261,10 @@ Current physics correction:
   `AgentMapStateRuntime` access boundary now live under
   `capabilities.movement`. Map-id tracking, defensive foothold-index copies,
   read-only views, null handling, and map-change checks remain unchanged.
+- Follow state ownership: `AgentOwnerMotionState` and its compatibility-named
+  `AgentOwnerMotionStateRuntime` access boundary now live under
+  `capabilities.follow`. Defensive position copies, observed deltas, movement
+  thresholds, and idle classification remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

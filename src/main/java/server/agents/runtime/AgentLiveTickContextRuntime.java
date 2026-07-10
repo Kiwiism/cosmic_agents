@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
 import server.agents.capabilities.follow.AgentFollowMotionObservationService;
 import server.agents.capabilities.movement.AgentMovementTargetMaintenanceService;

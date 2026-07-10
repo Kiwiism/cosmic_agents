@@ -2,7 +2,6 @@ package server.agents.capabilities.follow;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;

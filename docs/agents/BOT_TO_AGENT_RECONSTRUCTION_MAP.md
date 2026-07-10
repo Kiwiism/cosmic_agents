@@ -3197,3 +3197,7 @@ Recent capability extraction notes:
   `AgentMapStateRuntime` moved from generic runtime to
   `capabilities.movement`; map identifiers, copied/read-only foothold indexes,
   null handling, and map tracking predicates remain unchanged.
+- Follow state ownership: `AgentOwnerMotionState` and
+  `AgentOwnerMotionStateRuntime` moved from generic runtime to
+  `capabilities.follow`; legacy owner-shaped names remain temporarily for
+  parity while defensive copies, observed steps, and idle rules are unchanged.

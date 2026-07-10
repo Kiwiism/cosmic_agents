@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.agents.capabilities.follow.AgentFollowMotionObservationService;

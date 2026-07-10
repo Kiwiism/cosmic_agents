@@ -36,7 +36,7 @@ import server.agents.capabilities.movement.AgentMapStateRuntime;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
-import server.agents.runtime.AgentOwnerMotionStateRuntime;
+import server.agents.capabilities.follow.AgentOwnerMotionStateRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
 import server.agents.capabilities.movement.AgentFormationService;
