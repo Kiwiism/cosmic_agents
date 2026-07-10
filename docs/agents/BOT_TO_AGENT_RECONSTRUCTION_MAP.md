@@ -1567,7 +1567,7 @@ Recent map updates:
   scheduling, auto-equip, potion-share checks, and follow-mode entry while
   Agent runtime owns the per-entry command application order.
 - Follow-target name resolution moved from BotManager to
-  `server.agents.runtime.AgentFollowTargetResolutionService`. BotManager now
+  `server.agents.capabilities.follow.AgentFollowTargetResolutionService`. BotManager now
   supplies temporary candidate-list assembly and follow-mode application while
   Agent runtime owns the exact/prefix/ambiguous/missing-target rules.
 - Transfer chat command routing moved from BotManager to
@@ -2991,3 +2991,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFollowTargetCandidateService` moved from generic
   runtime to `capabilities.follow`. Candidate ordering, party/sibling filters,
   and duplicate suppression remain unchanged.
+- Capability ownership: `AgentFollowTargetResolutionService` moved from generic
+  runtime to `capabilities.follow`. Exact/prefix matching, ambiguity behavior,
+  and all leader-facing messages remain unchanged.

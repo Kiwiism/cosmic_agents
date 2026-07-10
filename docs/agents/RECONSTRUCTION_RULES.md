@@ -1121,7 +1121,7 @@ Recent reconstruction notes:
   auto-equip, potion-share checks, and follow-mode entry. The same skip rules,
   reply variants, random delay window, and side-effect order are preserved.
 - Follow-target name resolution now lives in
-  `server.agents.runtime.AgentFollowTargetResolutionService`. BotManager keeps
+  `server.agents.capabilities.follow.AgentFollowTargetResolutionService`. BotManager keeps
   temporary candidate-list assembly and follow-mode application hooks. The same
   exact-name match, two-letter prefix rule, ambiguous-target message, and
   missing-target message are preserved.
@@ -7017,6 +7017,10 @@ Current physics correction:
   `capabilities.follow`. The runtime adapter still supplies sibling entries;
   leader inclusion, online party-member order, sibling filtering, and duplicate
   suppression are unchanged.
+- Capability ownership: `AgentFollowTargetResolutionService` now lives under
+  `capabilities.follow`. Exact-name precedence, two-character prefix minimum,
+  ambiguity ordering/text, candidate fallback, and failure messages are
+  unchanged; runtime still supplies candidates and leader messaging.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
