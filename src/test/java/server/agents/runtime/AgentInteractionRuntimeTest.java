@@ -5,6 +5,7 @@ import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.integration.cosmic.CosmicAgentSpawnCoordinator;
+import server.agents.integration.cosmic.CosmicAgentReloginCoordinator;
 import org.slf4j.Logger;
 import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeEntry;
@@ -91,11 +92,11 @@ class AgentInteractionRuntimeTest {
     }
 
     @Test
-    void reloginDelegatesToAgentReloginRuntimeWithAgentTickCallback() {
-        try (MockedStatic<AgentReloginRuntime> reloginRuntime = mockStatic(AgentReloginRuntime.class)) {
+    void reloginDelegatesToCosmicAgentReloginCoordinatorWithAgentTickCallback() {
+        try (MockedStatic<CosmicAgentReloginCoordinator> reloginRuntime = mockStatic(CosmicAgentReloginCoordinator.class)) {
             AgentInteractionRuntime.reloginAgent(11, 22, 0, 1);
 
-            reloginRuntime.verify(() -> AgentReloginRuntime.reloginAgent(
+            reloginRuntime.verify(() -> CosmicAgentReloginCoordinator.reloginAgent(
                     eq(11),
                     eq(22),
                     eq(0),

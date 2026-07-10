@@ -911,7 +911,7 @@ Recent reconstruction notes:
   methods to Agent runtime with the temporary tick callback.
 - Spawn and relogin registration-callback construction now lives in
   `server.agents.integration.cosmic.CosmicAgentSpawnCoordinator` and
-  `server.agents.runtime.AgentReloginRuntime`. BotManager supplies only the
+  `server.agents.integration.cosmic.CosmicAgentReloginCoordinator`. BotManager supplies only the
   temporary tick callback, follow-start callback for spawn, and logger while
   Agent runtime owns the register-spawned hook composition over
   `AgentRegistrationCoordinator`.
@@ -1025,7 +1025,7 @@ Recent reconstruction notes:
   construction, ownership resolution, spawn position resolution, offline load
   delegation, online placement, cross-map force-change handling, and
   SQL-failure warning wiring.
-- Relogin hook wiring now lives in `server.agents.runtime.AgentReloginRuntime`.
+- Relogin hook wiring now lives in `server.agents.integration.cosmic.CosmicAgentReloginCoordinator`.
   BotManager supplies only the temporary tick callback and logger while Agent
   runtime owns spawned-registration callback construction, leader lookup, spawn
   position resolution, offline load delegation, delayed scheduling, return
@@ -7442,6 +7442,9 @@ Current physics correction:
 - Cosmic boundary: spawn hook assembly moved from generic `AgentSpawnRuntime` to
   `integration.cosmic.CosmicAgentSpawnCoordinator`; registration, placement,
   offline loading, follow startup, and failure logging remain unchanged.
+- Cosmic boundary: relogin hook assembly moved from generic `AgentReloginRuntime`
+  to `integration.cosmic.CosmicAgentReloginCoordinator`; lookup, offline loading,
+  delayed callback, reply, and failure logging behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

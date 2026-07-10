@@ -1,9 +1,11 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
+import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentRegistrationCoordinator;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -11,7 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentReloginRuntimeTest {
+class CosmicAgentReloginCoordinatorTest {
     @Test
     void tickCallbackOverloadBuildsAgentRegistrationHook() {
         Character leader = mock(Character.class);
@@ -38,7 +40,7 @@ class AgentReloginRuntimeTest {
                         return true;
                     });
 
-            AgentReloginRuntime.reloginAgent(200, 100, 1, 2, tickCallback, log);
+            CosmicAgentReloginCoordinator.reloginAgent(200, 100, 1, 2, tickCallback, log);
 
             registration.verify(() -> AgentRegistrationCoordinator.registerAgent(100, leader, agent, true, tickCallback));
         }

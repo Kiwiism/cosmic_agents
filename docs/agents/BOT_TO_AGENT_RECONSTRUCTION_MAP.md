@@ -1337,7 +1337,7 @@ Recent map updates:
   for compatibility while Agent runtime owns the normalization-mode choice.
 - Spawn/relogin registration callback construction moved from BotManager to
   `server.agents.integration.cosmic.CosmicAgentSpawnCoordinator` and
-  `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its
+  `server.agents.integration.cosmic.CosmicAgentReloginCoordinator`. BotManager now passes only its
   temporary tick callback while Agent runtime composes
   `AgentRegistrationCoordinator.registerAgent` for spawned and relogged Agents.
 - Lifecycle chat command wiring for recruit, transfer, and dismiss moved from
@@ -1479,7 +1479,7 @@ Recent map updates:
   resolution, spawn position, offline load delegation, online placement,
   cross-map force-change, and failure warning wiring.
 - Relogin hook wiring moved from BotManager to
-  `server.agents.runtime.AgentReloginRuntime`. BotManager now passes only its
+  `server.agents.integration.cosmic.CosmicAgentReloginCoordinator`. BotManager now passes only its
   temporary tick callback and logger while Agent runtime owns
   spawned-registration callback construction, leader lookup, spawn position,
   offline load delegation, delayed scheduling, map announcement, and failure
@@ -2758,7 +2758,7 @@ Recent capability extraction notes:
   client binding, map visit, and disease task startup stay unchanged.
 - SPI/gateway extraction: `CharacterGateway`/`CosmicCharacterGateway` now expose
   live world-player lookup through `AgentCharacterGatewayRuntime`.
-  `AgentLeaderSessionResolver` and `AgentReloginRuntime` use this boundary for
+  `AgentLeaderSessionResolver` and `CosmicAgentReloginCoordinator` use this boundary for
   leader refresh/relogin resolution while preserving the same player-storage
   lookup behavior.
 - SPI/gateway extraction: `CombatGateway` now exposes the current server
@@ -3371,3 +3371,7 @@ Recent capability extraction notes:
   `integration.cosmic.CosmicAgentSpawnCoordinator`; runtime registration remains
   in `AgentRegistrationCoordinator`, while Cosmic map placement and offline-load
   hook assembly are isolated in the adapter.
+- Cosmic boundary: `AgentReloginRuntime` became
+  `integration.cosmic.CosmicAgentReloginCoordinator`; world lookup, offline load,
+  delayed scheduling, and map reply hooks are isolated from generic lifecycle
+  policy.

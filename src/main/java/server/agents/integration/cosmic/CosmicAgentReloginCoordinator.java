@@ -1,10 +1,12 @@
-package server.agents.runtime;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import org.slf4j.Logger;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
-import server.agents.integration.cosmic.CosmicAgentOfflineLoader;
+import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentRandom;
+import server.agents.runtime.AgentRegistrationCoordinator;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.maps.MapleMap;
 
@@ -12,11 +14,11 @@ import java.awt.Point;
 import java.sql.SQLException;
 
 /**
- * Temporary Cosmic hook bundle for reloading an offline Agent while the Agent
- * interaction runtime supplies the tick callback.
+ * Cosmic adapter coordinating Agent relogin with world lookup, offline loading,
+ * delayed scheduling, and map reply delivery.
  */
-public final class AgentReloginRuntime {
-    private AgentReloginRuntime() {
+public final class CosmicAgentReloginCoordinator {
+    private CosmicAgentReloginCoordinator() {
     }
 
     public static void reloginAgent(int agentCharId,
@@ -55,8 +57,8 @@ public final class AgentReloginRuntime {
                 new AgentLifecycleService.ReloginHooks(
                         (targetWorld, targetLeaderCharId) -> AgentCharacterGatewayRuntime.characters()
                                 .findWorldCharacterById(targetWorld, targetLeaderCharId),
-                        AgentSpawnPositionService::resolveSpawnPosition,
-                        AgentReloginRuntime::loadOfflineAgent,
+                        server.agents.runtime.AgentSpawnPositionService::resolveSpawnPosition,
+                        CosmicAgentReloginCoordinator::loadOfflineAgent,
                         registerSpawnedAgent,
                         AgentSchedulerRuntime::afterDelay,
                         () -> AgentRandom.randMs(900, 1100),

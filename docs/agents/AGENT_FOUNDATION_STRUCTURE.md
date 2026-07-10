@@ -25,7 +25,7 @@ Target package groups:
   `AgentLeaderSafetyCoordinator`, and chat route composition enters through
   `AgentChatRouteRuntime`. Formation defaults and state helpers enter through
   `AgentFormationRuntime`. Spawn and relogin registration callback composition
-  now enters through `CosmicAgentSpawnCoordinator` and `AgentReloginRuntime`; manual and
+  now enters through `CosmicAgentSpawnCoordinator` and `CosmicAgentReloginCoordinator`; manual and
   spawned registration entry points enter through `AgentRegistrationCoordinator`.
   Spawn result ownership is `AgentLifecycleService.AgentSpawnResult`.
   Public server-facing chat/spawn/relogin and registration entry points now

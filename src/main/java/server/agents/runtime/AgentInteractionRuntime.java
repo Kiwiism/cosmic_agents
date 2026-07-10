@@ -8,6 +8,7 @@ import server.agents.commands.AgentLifecycleCommandCoordinator;
 import server.agents.capabilities.dialogue.AgentChatRouteCoordinator;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.integration.cosmic.CosmicAgentSpawnCoordinator;
+import server.agents.integration.cosmic.CosmicAgentReloginCoordinator;
 
 /**
  * Agent-owned public runtime entry points for server integrations that still
@@ -55,7 +56,7 @@ public final class AgentInteractionRuntime {
     }
 
     public static void reloginAgent(int agentCharId, int leaderCharId, int world, int channel) {
-        AgentReloginRuntime.reloginAgent(
+        CosmicAgentReloginCoordinator.reloginAgent(
                 agentCharId,
                 leaderCharId,
                 world,
