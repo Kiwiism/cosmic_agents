@@ -3190,3 +3190,6 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentMovementPhysicsCacheState`
   moved from generic runtime to `capabilities.movement`; its zero default and
   foothold cache access remain unchanged.
+- Capability state ownership: the concrete `AgentMovementStuckState` moved from
+  generic runtime to `capabilities.movement`; counters, sentinel position,
+  record, and reset semantics remain unchanged.

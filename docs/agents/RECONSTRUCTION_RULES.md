@@ -4985,7 +4985,8 @@ Current physics correction:
 - Tick failure window metadata now lives in `AgentTickFailureState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while failure
   count and failure-window start time route through Agent runtime state.
-- Stuck/unstuck movement metadata now lives in `AgentMovementStuckState`.
+- Stuck/unstuck movement metadata now lives in
+  `server.agents.capabilities.movement.AgentMovementStuckState`.
   `BotEntry` temporarily hosts the Agent-owned state object, while stuck
   duration, unstuck cooldown, and stuck-check coordinates route through Agent
   runtime state.
@@ -7253,6 +7254,9 @@ Current physics correction:
 - Capability state ownership: `AgentMovementPhysicsCacheState` now lives under
   `capabilities.movement`. The zero default and last-ground foothold read/write
   behavior remain unchanged.
+- Capability state ownership: `AgentMovementStuckState` now lives under
+  `capabilities.movement`. Stuck/cooldown counters, sentinel position values,
+  position recording, and partial position reset behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

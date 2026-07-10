@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
 
