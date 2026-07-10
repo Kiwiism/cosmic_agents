@@ -3274,3 +3274,7 @@ Recent capability extraction notes:
   `capabilities.dialogue.llm.AgentLlmReplyCoordinator`; live prompt/request
   composition now belongs to the LLM capability with unchanged inputs and
   reply delegation.
+- Command ownership: `AgentLifecycleChatCommandRuntime` became
+  `commands.AgentLifecycleCommandCoordinator`; command parsing/message wiring
+  is command-owned while recruit/transfer/dismiss lifecycle execution remains
+  delegated to runtime services unchanged.

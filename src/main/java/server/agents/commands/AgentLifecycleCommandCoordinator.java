@@ -1,9 +1,12 @@
-package server.agents.runtime;
+package server.agents.commands;
 
-import server.agents.commands.AgentDismissCommandService;
-import server.agents.commands.AgentRecruitCommandService;
 import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.trade.AgentTransferService;
+import server.agents.runtime.AgentDismissRuntime;
+import server.agents.runtime.AgentRecruitRuntime;
+import server.agents.runtime.AgentRecruitService;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentTransferRuntime;
 
 import client.Character;
 
@@ -12,8 +15,8 @@ import java.util.function.Consumer;
 /**
  * Agent-owned lifecycle chat command wiring for recruit, transfer, and dismiss.
  */
-public final class AgentLifecycleChatCommandRuntime {
-    private AgentLifecycleChatCommandRuntime() {
+public final class AgentLifecycleCommandCoordinator {
+    private AgentLifecycleCommandCoordinator() {
     }
 
     public static String recruitAgent(int leaderCharId,

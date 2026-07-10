@@ -7344,6 +7344,10 @@ Current physics correction:
   `AgentLlmReplyRuntime` to
   `capabilities.dialogue.llm.AgentLlmReplyCoordinator`; relation, mode, anchor,
   last-command, map, and reply-channel inputs remain unchanged.
+- Command ownership: recruit/transfer/dismiss chat wiring moved from
+  `AgentLifecycleChatCommandRuntime` to
+  `commands.AgentLifecycleCommandCoordinator`; runtime lifecycle actions and
+  leader-message behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

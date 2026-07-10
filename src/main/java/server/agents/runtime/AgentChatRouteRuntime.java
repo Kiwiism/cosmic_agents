@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.dialogue.llm.AgentLlmReplyCoordinator;
+import server.agents.commands.AgentLifecycleCommandCoordinator;
 import server.agents.commands.AgentDismissCommandService;
 import server.agents.commands.AgentRecruitCommandService;
 import server.agents.capabilities.movement.AgentFormationService;
@@ -90,11 +91,11 @@ public final class AgentChatRouteRuntime {
                         entriesByLeader.values(),
                         speaker,
                         text),
-                (commandLeader, text) -> AgentLifecycleChatCommandRuntime.handleRecruitCommand(
+                (commandLeader, text) -> AgentLifecycleCommandCoordinator.handleRecruitCommand(
                         commandLeader,
                         text,
                         recruitAction),
-                (commandLeader, text) -> AgentLifecycleChatCommandRuntime.handleTransferCommand(
+                (commandLeader, text) -> AgentLifecycleCommandCoordinator.handleTransferCommand(
                         commandLeader,
                         text,
                         transferAction),
@@ -106,7 +107,7 @@ public final class AgentChatRouteRuntime {
                         defaultFollowStaggerPx,
                         defaultSnapRangePx),
                 entriesByLeader::get,
-                (commandLeader, text) -> AgentLifecycleChatCommandRuntime.handleDismissCommand(
+                (commandLeader, text) -> AgentLifecycleCommandCoordinator.handleDismissCommand(
                         commandLeader,
                         text,
                         dismissAction),

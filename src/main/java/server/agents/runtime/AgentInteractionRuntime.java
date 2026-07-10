@@ -4,6 +4,7 @@ import client.Character;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.commands.AgentReplyChannel;
+import server.agents.commands.AgentLifecycleCommandCoordinator;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 
 /**
@@ -71,7 +72,7 @@ public final class AgentInteractionRuntime {
     }
 
     private static String recruitAgent(int leaderCharId, Character leader, String agentName) {
-        return AgentLifecycleChatCommandRuntime.recruitAgent(
+        return AgentLifecycleCommandCoordinator.recruitAgent(
                 leaderCharId,
                 leader,
                 agentName,
@@ -83,7 +84,7 @@ public final class AgentInteractionRuntime {
     }
 
     private static String transferAgent(int leaderCharId, Character leader, String agentName, String targetName) {
-        return AgentLifecycleChatCommandRuntime.transferAgent(
+        return AgentLifecycleCommandCoordinator.transferAgent(
                 leaderCharId,
                 leader,
                 agentName,
@@ -97,7 +98,7 @@ public final class AgentInteractionRuntime {
     }
 
     private static boolean dismissAgent(int leaderCharId, String agentName) {
-        return AgentLifecycleChatCommandRuntime.dismissAgent(
+        return AgentLifecycleCommandCoordinator.dismissAgent(
                 leaderCharId,
                 agentName,
                 AgentMovementCommandRuntime::stop);

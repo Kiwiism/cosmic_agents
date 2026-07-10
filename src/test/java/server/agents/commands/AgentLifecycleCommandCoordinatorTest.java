@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
@@ -15,13 +15,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyString;
 
-class AgentLifecycleChatCommandRuntimeTest {
+class AgentLifecycleCommandCoordinatorTest {
     @Test
     void handlesRecruitCommandWithLegacyReply() {
         Character leader = leader(7);
         List<String> calls = new ArrayList<>();
 
-        boolean handled = AgentLifecycleChatCommandRuntime.handleRecruitCommand(
+        boolean handled = AgentLifecycleCommandCoordinator.handleRecruitCommand(
                 leader,
                 "recruit agent123",
                 (leaderId, commandLeader, agentName) -> {
@@ -39,7 +39,7 @@ class AgentLifecycleChatCommandRuntimeTest {
         Character leader = leader(8);
         List<String> calls = new ArrayList<>();
 
-        boolean handled = AgentLifecycleChatCommandRuntime.handleTransferCommand(
+        boolean handled = AgentLifecycleCommandCoordinator.handleTransferCommand(
                 leader,
                 "transfer agent123 Bob",
                 (leaderId, commandLeader, agentName, targetName) -> {
@@ -57,7 +57,7 @@ class AgentLifecycleChatCommandRuntimeTest {
         Character leader = leader(9);
         List<String> calls = new ArrayList<>();
 
-        boolean handled = AgentLifecycleChatCommandRuntime.handleDismissCommand(
+        boolean handled = AgentLifecycleCommandCoordinator.handleDismissCommand(
                 leader,
                 "dismiss agent123",
                 (leaderId, agentName) -> {
@@ -74,7 +74,7 @@ class AgentLifecycleChatCommandRuntimeTest {
     void returnsFalseForUnmatchedLifecycleCommand() {
         Character leader = leader(10);
 
-        boolean handled = AgentLifecycleChatCommandRuntime.handleDismissCommand(
+        boolean handled = AgentLifecycleCommandCoordinator.handleDismissCommand(
                 leader,
                 "follow me",
                 (leaderId, agentName) -> true);
