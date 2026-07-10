@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowAnchorService;
+
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;

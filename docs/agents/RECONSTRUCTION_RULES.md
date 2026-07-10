@@ -4071,7 +4071,7 @@ Recent reconstruction notes:
   coupon-loot suppression, pass exchange, and stage-5 reward claim behavior
   through Agent capability calls.
 - Follow-anchor resolution now lives in
-  `server.agents.runtime.AgentFollowAnchorService`; BotManager still supplies
+  `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager still supplies
   the temporary same-leader sibling entry list while preserving the owner,
   party-member, sibling-agent, and fallback resolution order exactly.
 - Tick leader/session refresh now lives in
@@ -4111,7 +4111,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentDeathTickService`; BotManager still supplies the
   temporary combat death-state entry and respawn side-effect callbacks.
 - Scripted follow-target character resolution now lives in
-  `server.agents.runtime.AgentFollowAnchorService`; BotManager still supplies
+  `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager still supplies
   the temporary same-leader sibling entry list for script task compatibility.
 - Script task completion rules now live in
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager still
@@ -4225,7 +4225,7 @@ Recent reconstruction notes:
   shop-visit cancellation, null guards, mode-state transitions,
   and navigation-state clear hooks are preserved.
 - Script-task follow-target lookup now uses
-  `server.agents.runtime.AgentFollowAnchorService.resolveTargetFromRuntimeRegistry`;
+  `server.agents.capabilities.follow.AgentFollowAnchorService.resolveTargetFromRuntimeRegistry`;
   BotManager keeps only the temporary script hook wrapper. The same leader
   fallback, party-member priority, sibling-Agent fallback, and offline-target
   rejection behavior are preserved.
@@ -7008,6 +7008,11 @@ Current physics correction:
   party decision order and all gateway calls are unchanged. The foundation
   structure test now also reflects the already-absent production `server.bots`
   package.
+- Capability ownership: `AgentFollowAnchorService` now lives under the new
+  `capabilities.follow` module instead of generic runtime. Combat heal,
+  navigation region, target snapshot, and plan-execution callers use the same
+  resolver methods; leader fallback, party/sibling lookup order, login checks,
+  and target-id behavior are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

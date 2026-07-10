@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowAnchorService;
+
 import client.Character;
 import client.inventory.InventoryType;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;

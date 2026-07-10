@@ -11,7 +11,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
-import server.agents.runtime.AgentFollowAnchorService;
+import server.agents.capabilities.follow.AgentFollowAnchorService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 import server.maps.Rope;

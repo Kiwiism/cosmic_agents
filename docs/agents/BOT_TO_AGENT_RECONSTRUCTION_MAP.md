@@ -1880,7 +1880,7 @@ Recent map updates:
   `AgentNavigationDebugOverlay`.
 - BotNavigationManager follow-anchor region resolution now reads sibling Agent
   entries through `AgentSessionLifecycleSideEffects` and resolves anchors
-  through `server.agents.runtime.AgentFollowAnchorService`, removing its direct
+  through `server.agents.capabilities.follow.AgentFollowAnchorService`, removing its direct
   `BotManager.resolveFollowAnchor` call while preserving follow target
   behavior.
 - BotManager follow-owner, grind, and stop entry points were removed. Callers
@@ -1924,7 +1924,7 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeRegistry`; BotManager keeps a compatibility
   alias while Agent session lookup bridges read the Agent-owned registry.
 - BotManager scripted follow-target resolution moved to
-  `server.agents.runtime.AgentFollowAnchorService`; BotManager only supplies
+  `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
 - BotManager dead-state tick handling moved to
   `server.agents.runtime.AgentDeathTickService`; BotManager only supplies
@@ -1955,7 +1955,7 @@ Recent map updates:
   `server.agents.runtime.AgentLeaderSessionService`; BotManager remains a
   compatibility wrapper that supplies the current Cosmic player-storage lookup.
 - BotManager follow-anchor resolution moved to
-  `server.agents.runtime.AgentFollowAnchorService`; BotManager remains a
+  `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager remains a
   compatibility wrapper that supplies the temporary sibling list until runtime
   registry ownership is fully moved.
 - BotManager target snapshot assembly moved to
@@ -2985,3 +2985,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentPartyLifecycleService` moved from generic runtime
   to `capabilities.party`. Spawn, placement, and messenger callers retain the
   same join entry point and party behavior; only package ownership changed.
+- Capability ownership: `AgentFollowAnchorService` moved from generic runtime
+  to `capabilities.follow`. Combat, navigation, target snapshot, and plan
+  execution callers retain the same resolver methods and fallback behavior.

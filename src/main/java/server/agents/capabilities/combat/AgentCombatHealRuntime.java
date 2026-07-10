@@ -12,7 +12,7 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.integration.SkillGateway;
 import server.agents.runtime.AgentSessionLifecycleRuntime;
-import server.agents.runtime.AgentFollowAnchorService;
+import server.agents.capabilities.follow.AgentFollowAnchorService;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.combat.CombatFormulaProvider;

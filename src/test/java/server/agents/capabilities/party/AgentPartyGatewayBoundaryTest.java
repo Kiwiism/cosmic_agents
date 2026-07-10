@@ -25,7 +25,7 @@ class AgentPartyGatewayBoundaryTest {
         String followCandidates = Files.readString(Path.of(
                 "src/main/java/server/agents/runtime/AgentFollowTargetCandidateService.java"));
         String followAnchor = Files.readString(Path.of(
-                "src/main/java/server/agents/runtime/AgentFollowAnchorService.java"));
+                "src/main/java/server/agents/capabilities/follow/AgentFollowAnchorService.java"));
         String tradeRecipient = Files.readString(Path.of(
                 "src/main/java/server/agents/capabilities/trade/AgentTradeRecipientService.java"));
         String questSync = Files.readString(Path.of(
