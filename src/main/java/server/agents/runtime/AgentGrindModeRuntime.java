@@ -19,6 +19,7 @@ import server.agents.capabilities.combat.AgentGrindModeTickService;
 import server.agents.capabilities.combat.AgentGrindNavigationTailService;
 import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
 import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
+import server.agents.capabilities.combat.AgentGrindTargetPositionService;
 import server.agents.capabilities.combat.AgentGrindTargetSearchService;
 import server.agents.capabilities.combat.AgentCombatAttackRuntime;
 import server.agents.capabilities.combat.AgentCombatTargetRuntime;
@@ -83,9 +84,9 @@ public final class AgentGrindModeRuntime {
         return new AgentGrindNoTargetFallbackService.Hooks(
                 AgentMovementPhaseDispatchService::tickSwimming,
                 AgentMovementPhaseDispatchService::tickAirborne,
-                (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolvePatrolWanderTarget(
+                (entry, agentPosition, map) -> AgentGrindTargetPositionService.resolvePatrolWanderTarget(
                         entry, agentPosition, map),
-                (entry, agentPosition, map) -> AgentGrindTargetRuntime.resolveNoGrindTargetPosition(
+                (entry, agentPosition, map) -> AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
                         entry, agentPosition, map),
                 (entry, targetPos, runAiTick) -> movementCoreStep.step(entry, targetPos, runAiTick));
     }
@@ -128,6 +129,6 @@ public final class AgentGrindModeRuntime {
                                 entry, agentPosition, combatTargetPosition, retreatChecked),
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, mobPosition) ->
-                        AgentGrindTargetRuntime.convenientLootTarget(entry, agentPosition, mobPosition));
+                        AgentGrindTargetPositionService.convenientLootTarget(entry, agentPosition, mobPosition));
     }
 }

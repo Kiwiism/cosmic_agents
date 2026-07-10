@@ -7332,6 +7332,10 @@ Current physics correction:
 - Combat/navigation bridge removal: configured region/path hooks now enter
   through overloads on `AgentGrindNavigationTargetSelector`;
   `AgentGrindNavigationRuntime` is removed with retreat selection unchanged.
+- Combat/loot bridge removal: configured loot radius, retry suppression,
+  convenience ratio, stop distance, and region resolution now enter through
+  overloads on `AgentGrindTargetPositionService`; `AgentGrindTargetRuntime` is
+  removed with wander and loot-target behavior unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

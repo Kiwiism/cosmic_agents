@@ -3262,3 +3262,7 @@ Recent capability extraction notes:
   after configured region/path overloads moved into
   `AgentGrindNavigationTargetSelector`; retreat selection inputs and branch
   behavior remain unchanged.
+- Combat/loot bridge removal: `AgentGrindTargetRuntime` was deleted after its
+  configured overloads moved into `AgentGrindTargetPositionService`; patrol
+  wander, fallback, loot retry, travel-distance, and convenience behavior stay
+  unchanged.

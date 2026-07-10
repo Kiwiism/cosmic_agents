@@ -8,7 +8,10 @@ import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.looting.AgentGrindLootStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentPatrolStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapItem;
@@ -27,6 +30,70 @@ public final class AgentGrindTargetPositionService {
     }
 
     private AgentGrindTargetPositionService() {
+    }
+
+    public static Point resolveNoGrindTargetPosition(AgentRuntimeEntry entry,
+                                                     Point agentPosition,
+                                                     MapleMap map) {
+        return resolveNoGrindTargetPosition(
+                entry,
+                agentPosition,
+                map,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS,
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
+                AgentNavigationRegionService::resolveCurrentRegionId);
+    }
+
+    public static Point resolveNoGrindTargetPosition(AgentRuntimeEntry entry, Point agentPosition) {
+        return resolveNoGrindTargetPosition(
+                entry,
+                agentPosition,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS,
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
+                AgentNavigationRegionService::resolveCurrentRegionId);
+    }
+
+    public static Point activeGrindLootPosition(AgentRuntimeEntry entry, Point agentPosition) {
+        return activeGrindLootPosition(
+                entry,
+                agentPosition,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS,
+                AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+    }
+
+    public static void suppressGrindLootRetry(AgentRuntimeEntry entry, MapItem loot) {
+        suppressGrindLootRetry(entry, loot, AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+    }
+
+    public static double activeLootTravelDistSq(Point agentPosition, Point lootPosition) {
+        return activeLootTravelDistSq(agentPosition, lootPosition, AgentRuntimeConfig.cfg.LOOT_RADIUS);
+    }
+
+    public static Point convenientLootTarget(AgentRuntimeEntry entry,
+                                             Point agentPosition,
+                                             Point mobPosition) {
+        return convenientLootTarget(
+                entry,
+                agentPosition,
+                mobPosition,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS,
+                AgentRuntimeConfig.cfg.GRIND_LOOT_CONVENIENCE_RATIO,
+                AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS);
+    }
+
+    public static Point resolvePatrolWanderTarget(AgentRuntimeEntry entry,
+                                                  Point agentPosition,
+                                                  MapleMap map) {
+        return resolvePatrolWanderTarget(
+                entry,
+                agentPosition,
+                map,
+                AgentRuntimeConfig.cfg.LOOT_RADIUS,
+                AgentMovementPhysicsConfig.configuredStopDist(),
+                AgentRuntimeConfig.cfg.GRIND_LOOT_RETRY_SUPPRESS_MS,
+                AgentNavigationRegionService::resolveCurrentRegionId);
     }
 
     public static Point resolveNoGrindTargetPosition(AgentRuntimeEntry entry,
