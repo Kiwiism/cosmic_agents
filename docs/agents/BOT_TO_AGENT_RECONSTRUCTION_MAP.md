@@ -3258,3 +3258,7 @@ Recent capability extraction notes:
 - Combat bridge removal: pure pass-through `AgentGrindCombatRuntime` was
   deleted; its callers now enter the AoE reposition and ranged-priority combat
   capabilities directly with unchanged inputs and results.
+- Combat/navigation bridge removal: `AgentGrindNavigationRuntime` was deleted
+  after configured region/path overloads moved into
+  `AgentGrindNavigationTargetSelector`; retreat selection inputs and branch
+  behavior remain unchanged.

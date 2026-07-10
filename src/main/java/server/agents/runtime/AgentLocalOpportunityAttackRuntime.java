@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
+import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import client.Character;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.movement.AgentJumpActionService;
@@ -51,7 +52,7 @@ public final class AgentLocalOpportunityAttackRuntime {
 
     private static AgentLocalOpportunityAttackService.Hooks hooks() {
         return new AgentLocalOpportunityAttackService.Hooks(
-                AgentGrindNavigationRuntime::selectGrindNavigationTarget,
+                AgentGrindNavigationTargetSelector::selectGrindNavigationTarget,
                 AgentMovementKinematicsService::calculateMaxJumpHeight,
                 AgentJumpActionService::initiateJump,
                 AgentLocalOpportunityAttackRuntime::setLocalAttackMoveWindow);

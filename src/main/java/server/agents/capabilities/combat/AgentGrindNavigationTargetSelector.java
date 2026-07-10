@@ -4,7 +4,10 @@ import client.Character;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentNavigationPathService;
+import server.agents.capabilities.navigation.AgentNavigationRegionService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
@@ -42,6 +45,43 @@ public final class AgentGrindNavigationTargetSelector {
     private static final int RETREAT_ARRIVAL_TOLERANCE_X = 25;
 
     private AgentGrindNavigationTargetSelector() {
+    }
+
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
+                                                    Point agentPosition,
+                                                    Point combatTargetPosition) {
+        return selectGrindNavigationTarget(entry, agentPosition, combatTargetPosition, defaultHooks());
+    }
+
+    public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,
+                                                    Point agentPosition,
+                                                    Point combatTargetPosition,
+                                                    boolean crossRegionRetreatChecked) {
+        return selectGrindNavigationTarget(
+                entry, agentPosition, combatTargetPosition, crossRegionRetreatChecked, defaultHooks());
+    }
+
+    public static Point selectCrossRegionRetreatTarget(AgentRuntimeEntry entry,
+                                                       Point agentPosition,
+                                                       Point combatTargetPosition) {
+        return selectCrossRegionRetreatTarget(entry, agentPosition, combatTargetPosition, defaultHooks());
+    }
+
+    public static boolean shouldUseLocalCombatRetreatTarget(AgentRuntimeEntry entry,
+                                                            Point agentPosition,
+                                                            Point combatTargetPosition,
+                                                            Point retreatPosition) {
+        return shouldUseLocalCombatRetreatTarget(
+                entry, agentPosition, combatTargetPosition, retreatPosition, defaultHooks());
+    }
+
+    private static NavigationHooks defaultHooks() {
+        return new NavigationHooks(
+                AgentNavigationRegionService::resolveCurrentRegionId,
+                AgentNavigationRegionService::resolveTargetRegionId,
+                AgentNavigationPathService::findPath,
+                AgentMovementPhysicsConfig.configuredGrindEdgeMargin(),
+                AgentMovementPhysicsConfig.configuredJumpYThreshold());
     }
 
     public static Point selectGrindNavigationTarget(AgentRuntimeEntry entry,

@@ -3,6 +3,7 @@ package server.agents.runtime;
 import server.agents.capabilities.combat.AgentGrindNoTargetFallbackService;
 import server.agents.capabilities.combat.AgentAoeRepositionService;
 import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
+import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentJumpActionService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
@@ -103,7 +104,7 @@ public final class AgentGrindModeRuntime {
                 AgentAttackExecutionProvider::shouldDegenerateRangedAttack,
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, targetPosition) ->
-                        AgentGrindNavigationRuntime.selectCrossRegionRetreatTarget(
+                        AgentGrindNavigationTargetSelector.selectCrossRegionRetreatTarget(
                                 entry, agentPosition, targetPosition),
                 AgentCombatRangePolicy::isTargetInAttackRange,
                 (entry, agent, target, attackPlan, agentPosition) ->
@@ -123,7 +124,7 @@ public final class AgentGrindModeRuntime {
     private static AgentGrindNavigationTailService.Hooks grindNavigationTailHooks() {
         return new AgentGrindNavigationTailService.Hooks(
                 (entry, agentPosition, combatTargetPosition, retreatChecked) ->
-                        AgentGrindNavigationRuntime.selectGrindNavigationTarget(
+                        AgentGrindNavigationTargetSelector.selectGrindNavigationTarget(
                                 entry, agentPosition, combatTargetPosition, retreatChecked),
                 AgentAttackExecutionProvider::shouldRetreatFromNearbyTarget,
                 (entry, agentPosition, mobPosition) ->

@@ -7329,6 +7329,9 @@ Current physics correction:
 - Combat bridge removal: `AgentGrindCombatRuntime` was a pure pass-through and
   is removed; grind orchestration now calls `AgentAoeRepositionService` and
   `AgentRangedPriorityTargetSelector` directly with unchanged arguments.
+- Combat/navigation bridge removal: configured region/path hooks now enter
+  through overloads on `AgentGrindNavigationTargetSelector`;
+  `AgentGrindNavigationRuntime` is removed with retreat selection unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
