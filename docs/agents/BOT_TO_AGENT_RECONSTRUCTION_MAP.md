@@ -3385,3 +3385,6 @@ Recent capability extraction notes:
 - Monitoring ownership: `AgentPerformanceMonitor` moved from generic runtime to
   `monitoring`; instrumentation keys, thresholds, snapshots, and logging behavior
   are unchanged.
+- Runtime cleanup: unused placeholder records `AgentRuntime` and
+  `AgentRuntimeSnapshot` were deleted. The live mutable runtime remains
+  `AgentRuntimeEntry`; the placeholders had no production or test callers.

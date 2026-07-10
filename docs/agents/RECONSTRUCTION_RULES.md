@@ -7457,6 +7457,10 @@ Current physics correction:
 - Monitoring ownership: timing aggregation and diagnostic reporting moved from
   generic runtime to `monitoring.AgentPerformanceMonitor`. Existing call sites,
   section names, thresholds, and enable/disable behavior are preserved.
+- Runtime cleanup: removed the unreferenced `AgentRuntime` and
+  `AgentRuntimeSnapshot` placeholder records. They carried no behavior and were
+  not used by production or tests; `AgentRuntimeEntry` remains the live session
+  container.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
