@@ -7594,6 +7594,14 @@ Current physics correction:
   existing typo/LLM routing. Capacity and drain budget are configurable through
   `agents.mailbox.capacity` and `agents.mailbox.maxActionsPerTick`. Remaining
   external mutations will move behind mailbox actions only after parity testing.
+- Central scheduler foundation: `AgentTickScheduler` is now a real lazy central
+  dispatcher selected by `AgentTickSchedulingService`. It preserves the same
+  tick callback and per-session cadence, stable ordering, lifecycle cancellation,
+  and guarded failure isolation while recording cycle, lag, skip, slow, and
+  failure metrics. `agents.scheduler.central.enabled=false` remains the default;
+  the existing per-Agent `TimerManager.register` path is the rollback path.
+  Central base cadence defaults to the current 50 ms movement cadence. See
+  `AGENT_CENTRAL_SCHEDULER.md` for validation and tuning details.
 
 Initial reconstruction order:
 

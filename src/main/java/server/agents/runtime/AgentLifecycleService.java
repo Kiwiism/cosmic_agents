@@ -237,9 +237,11 @@ public final class AgentLifecycleService {
         }
 
         try {
-            ScheduledFuture<?> task = hooks.tickScheduler().schedule(
+            ScheduledFuture<?> task = AgentTickSchedulingService.register(
+                    entry,
                     () -> hooks.tickCallback().tick(entry, leaderCharId, agentCharId),
-                    hooks.tickMs());
+                    hooks.tickMs(),
+                    hooks.tickScheduler());
             entry.scheduledTaskState().attachScheduledTask(task);
         } catch (RuntimeException | Error failure) {
             entries.remove(entry);
