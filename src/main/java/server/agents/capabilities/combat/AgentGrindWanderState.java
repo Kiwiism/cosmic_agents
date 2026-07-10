@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 /**
  * Direction latch used when grind mode has no concrete target yet.

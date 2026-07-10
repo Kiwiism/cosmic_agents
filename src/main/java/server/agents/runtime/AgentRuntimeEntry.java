@@ -12,6 +12,7 @@ import server.agents.capabilities.combat.AgentAoeRepositionState;
 import server.agents.capabilities.combat.AgentBreakoutState;
 import server.agents.capabilities.combat.AgentDegenerateAttackState;
 import server.agents.capabilities.combat.AgentRetreatHoldState;
+import server.agents.capabilities.combat.AgentGrindWanderState;
 import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatSkillCacheState;

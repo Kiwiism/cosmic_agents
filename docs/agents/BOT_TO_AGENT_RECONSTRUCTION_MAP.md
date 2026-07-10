@@ -3175,3 +3175,6 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentRetreatHoldState` moved from
   generic runtime to `capabilities.combat`; point copies, active deadline,
   null-reset, and clear behavior remain unchanged.
+- Capability state ownership: the concrete `AgentGrindWanderState` moved from
+  generic runtime to `capabilities.combat`; zero state, sign normalization, and
+  clear behavior remain unchanged.

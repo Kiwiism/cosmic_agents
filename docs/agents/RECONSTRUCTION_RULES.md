@@ -5022,7 +5022,7 @@ Current physics correction:
   `BotEntry` temporarily hosts the Agent-owned state object, while explicit
   move-here/script/fidget movement targets route through Agent runtime state.
 - Grind no-target wander direction storage now lives in
-  `AgentGrindWanderState`. `BotEntry` temporarily hosts the Agent-owned state
+  `server.agents.capabilities.combat.AgentGrindWanderState`. `BotEntry` temporarily hosts the Agent-owned state
   object, while free-grind fallback direction reads/writes route through Agent
   runtime state.
 - Ranged retreat hold storage now lives in
@@ -7237,6 +7237,9 @@ Current physics correction:
 - Capability state ownership: `AgentRetreatHoldState` now lives under
   `capabilities.combat`. Defensive point copies, exclusive active deadline,
   null reset, and clear behavior remain unchanged.
+- Capability state ownership: `AgentGrindWanderState` now lives under
+  `capabilities.combat`. Zero/unset state, sign normalization, and clear
+  behavior remain unchanged; random direction selection remains in its adapter.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
