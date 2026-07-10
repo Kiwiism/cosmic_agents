@@ -1,7 +1,7 @@
 package server.agents.capabilities.movement;
 
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentTickStateMaintenanceService;
+import server.agents.capabilities.navigation.AgentNavigationPreciseTargetService;
 
 import java.awt.Point;
 
@@ -58,7 +58,7 @@ public final class AgentMovementTickService {
         }
 
         Point steeringTarget = navigation.targetPosition();
-        AgentTickStateMaintenanceService.markPreciseNavigationTargetIfNeeded(entry);
+        AgentNavigationPreciseTargetService.markPreciseNavigationTargetIfNeeded(entry);
         if (hooks.fidgetTick().tryHandle(entry, steeringTarget, runAiTick)) {
             return;
         }

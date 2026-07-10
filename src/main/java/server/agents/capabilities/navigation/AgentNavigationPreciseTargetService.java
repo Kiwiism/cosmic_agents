@@ -1,6 +1,7 @@
 package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -12,6 +13,13 @@ import java.awt.Point;
  */
 public final class AgentNavigationPreciseTargetService {
     private AgentNavigationPreciseTargetService() {
+    }
+
+    public static void markPreciseNavigationTargetIfNeeded(AgentRuntimeEntry entry) {
+        if (AgentMoveTargetStateRuntime.isPrecise(entry)
+                && !AgentNavigationDebugStateRuntime.hasActiveNavigationEdge(entry)) {
+            AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, true);
+        }
     }
 
     public static boolean shouldUsePreciseTarget(AgentNavigationGraph graph,

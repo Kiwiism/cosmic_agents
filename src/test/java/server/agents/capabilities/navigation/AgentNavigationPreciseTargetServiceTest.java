@@ -2,6 +2,7 @@ package server.agents.capabilities.navigation;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentClimbStateRuntime;
+import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
@@ -11,6 +12,26 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentNavigationPreciseTargetServiceTest {
+    @Test
+    void marksPreciseNavigationTargetForPreciseMoveTarget() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentMoveTargetStateRuntime.setPreciseMoveTarget(entry, new Point(100, 100));
+
+        AgentNavigationPreciseTargetService.markPreciseNavigationTargetIfNeeded(entry);
+
+        assertTrue(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
+    }
+
+    @Test
+    void doesNotMarkPreciseNavigationTargetForNormalMoveTarget() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
+
+        AgentNavigationPreciseTargetService.markPreciseNavigationTargetIfNeeded(entry);
+
+        assertFalse(AgentNavigationDebugStateRuntime.navPreciseTarget(entry));
+    }
+
     @Test
     void airborneNeverUsesPreciseTarget() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);

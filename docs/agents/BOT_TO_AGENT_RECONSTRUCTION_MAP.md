@@ -3155,3 +3155,6 @@ Recent capability extraction notes:
   mixed runtime maintenance service to
   `capabilities.follow.AgentFollowMotionObservationService`; null guards and
   owner-step delta state updates remain unchanged.
+- Capability ownership: precise navigation-target marker maintenance moved from
+  generic runtime into `capabilities.navigation.AgentNavigationPreciseTargetService`;
+  precise-move and active-edge predicates remain unchanged.
