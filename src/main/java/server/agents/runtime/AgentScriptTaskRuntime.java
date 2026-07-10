@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.plans.AgentScriptTaskExecutionService;
+import server.agents.plans.AgentScriptTaskTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 public final class AgentScriptTaskRuntime {

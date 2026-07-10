@@ -1820,7 +1820,7 @@ Recent map updates:
   `server.agents.plans.AgentScriptTaskStartService`; BotManager only supplies
   temporary callbacks for move, follow, grind, stop, and drop side effects.
 - BotManager script task tick loop moved to
-  `server.agents.runtime.AgentScriptTaskTickService`; BotManager only supplies
+  `server.agents.plans.AgentScriptTaskTickService`; BotManager only supplies
   temporary callbacks for task start and completion checks.
 - BotManager script task queue helpers moved to
   `server.agents.plans.AgentScriptTaskQueueService`; BotManager remains a
@@ -3144,3 +3144,6 @@ Recent capability extraction notes:
 - Plan ownership: `AgentScriptTaskExecutionService` moved from generic runtime
   to `plans`. Task start/completion composition, target resolution, capability
   routing, and item-drop delegation remain unchanged.
+- Plan ownership: `AgentScriptTaskTickService` moved from generic runtime to
+  `plans`. Activation/start/completion/clear loop ordering and early returns
+  remain unchanged.

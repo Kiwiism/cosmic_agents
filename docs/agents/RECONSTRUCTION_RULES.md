@@ -1398,7 +1398,7 @@ Recent reconstruction notes:
   side-effect mapping is preserved; BotManager still supplies temporary move,
   follow, grind, stop, and drop callbacks.
 - BotManager script-task tick loop now delegates to
-  `server.agents.runtime.AgentScriptTaskTickService`. The no-agent skip,
+  `server.agents.plans.AgentScriptTaskTickService`. The no-agent skip,
   activate-next behavior, start-on-activation, incomplete retention, and
   clear-and-continue loop are unchanged.
 - BotManager script-task queue helpers now delegate to
@@ -7200,6 +7200,9 @@ Current physics correction:
 - Plan ownership: `AgentScriptTaskExecutionService` now lives under `plans`.
   Start/completion composition, registry target resolution, movement/follow/
   grind/stop routing, and item-drop delegation remain unchanged.
+- Plan ownership: `AgentScriptTaskTickService` now lives under `plans`. The
+  no-agent skip, next-task activation, start-before-completion check, incomplete
+  return, active-task clearing, and same-tick loop progression remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
