@@ -835,7 +835,7 @@ Recent reconstruction notes:
   Agent integration wrapper no longer pass `LOOT_RADIUS` into script move
   target checks.
 - Grind-mode default loot-radius ownership now lives in
-  `AgentGrindModeRuntime.tickGrindMode(...)`. BotManager no longer passes
+  `AgentGrindModeCoordinator.tickGrindMode(...)`. BotManager no longer passes
   `LOOT_RADIUS` into live grind-mode tick dispatch.
 - Script-task tick default stop-distance ownership now lives in
   `AgentScriptTaskRuntime.tick(entry)`. BotManager no longer passes
@@ -4406,7 +4406,7 @@ Recent reconstruction notes:
   config while Agent runtime owns script task start/completion callback
   composition.
 - Grind-mode hook construction now lives in
-  `server.agents.runtime.AgentGrindModeRuntime`. BotManager keeps only the
+  `server.agents.capabilities.combat.AgentGrindModeCoordinator`. BotManager keeps only the
   temporary movement-core callback and legacy loot-radius config while Agent
   runtime owns grind target search, no-target fallback, target commitment,
   ranged engagement, navigation tail, and combat/navigation side-effect hook
@@ -4434,7 +4434,7 @@ Recent reconstruction notes:
   package-visible compatibility methods for the movement simulation harness and
   delegates target-snapshot/default formation needs to Agent runtime.
 - The remaining BotManager grind-mode adapter method was removed. Tick-core
-  wiring now passes `AgentGrindModeRuntime.tickGrindMode` directly with the
+  wiring now passes `AgentGrindModeCoordinator.tickGrindMode` directly with the
   temporary movement-core callback and legacy loot-radius value.
 - Equipment reserve service routing now enters `AgentEquipmentReservePolicy`
   directly through `AgentEquipmentService`; owned-item and incoming-item
@@ -7420,6 +7420,10 @@ Current physics correction:
   `AgentAnchoredFarmRuntime` to
   `capabilities.combat.AgentAnchoredFarmCoordinator`; combat, idle, broadcast,
   and movement behavior remain unchanged.
+- Combat ownership: grind-mode hook assembly moved from generic
+  `AgentGrindModeRuntime` to `capabilities.combat.AgentGrindModeCoordinator`.
+  Runtime retains only live-mode result adaptation; search, fallback, engagement,
+  and navigation behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -432,7 +432,7 @@ Recent map updates:
   planning, ledge fallback, and mob-avoidance decisions now use
   `AgentRuntimeEntry` directly with unchanged movement behavior.
 - `BotManager.java#live-mode-tick-callbacks` is migrated through
-  `AgentLiveModeTickRuntime` and `AgentGrindModeRuntime`. Local opportunity,
+  `AgentLiveModeTickRuntime` and `AgentGrindModeCoordinator`. Local opportunity,
   movement-core, anchored-farm, and grind-mode callbacks now use
   `AgentRuntimeEntry`; shop visits, scripted movement/combat, follow-idle,
   anchored farm, grind, and final movement-tail behavior remain unchanged.
@@ -620,27 +620,27 @@ Recent map updates:
 - `AgentGrindNoTargetFallbackService` now accepts `AgentRuntimeEntry`.
   Target clearing, swim/airborne fall-through, wander-direction side effects,
   patrol/no-grind target resolution, and movement-step dispatch remain
-  unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  unchanged while `AgentGrindModeCoordinator` keeps the temporary `BotEntry`
   callback adapter.
 - `AgentGrindTargetSearchService` and `AgentGrindTargetSearchPolicy` now accept
   `AgentRuntimeEntry`. AI-tick gating, retarget cooldown checks, patrol/grind
   target selection, AoE cluster switch hysteresis, and next-search scheduling
-  remain unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  remain unchanged while `AgentGrindModeCoordinator` keeps the temporary `BotEntry`
   target-finder adapter.
 - `AgentGrindNavigationTailService` now accepts `AgentRuntimeEntry`.
   Cross-region retreat precedence, AoE reposition navigation, degenerate-attack
   latch clearing, patrol gating, and convenient-loot override behavior remain
-  unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  unchanged while `AgentGrindModeCoordinator` keeps the temporary `BotEntry`
   selector adapter.
 - `AgentGrindTargetCommitmentService` now accepts `AgentRuntimeEntry`.
   Target commit, wander/patrol cleanup, ranged-priority replacement, closer
   threat replacement, target-position propagation, and attack-plan invalidation
-  remain unchanged while `AgentGrindModeRuntime` keeps the temporary `BotEntry`
+  remain unchanged while `AgentGrindModeCoordinator` keeps the temporary `BotEntry`
   ranged-priority adapter.
 - `AgentGrindRangedEngagementService` now accepts `AgentRuntimeEntry`.
   Degenerate-attack gating, ranged retreat selection, AoE reposition checks,
   attack execution, cooldown comparison, jump initiation, idle-on-ground, and
-  movement broadcast behavior remain unchanged while `AgentGrindModeRuntime`
+  movement broadcast behavior remain unchanged while `AgentGrindModeCoordinator`
   keeps the temporary `BotEntry` callback adapter.
 - Combat reply and scheduler pass-through bridges were removed. Combat
   warning/status delivery now calls the existing Agent reply and scheduler
@@ -1281,7 +1281,7 @@ Recent map updates:
   and `AgentScriptMoveTargetRuntime` to
   `server.agents.plans.AgentScriptMoveTargetService`.
 - Grind-mode default loot-radius handoff moved from BotManager to
-  `server.agents.runtime.AgentGrindModeRuntime`. Tick-core wiring now calls
+  `server.agents.capabilities.combat.AgentGrindModeCoordinator`. Tick-core wiring now calls
   grind mode without BotManager reading `LOOT_RADIUS`.
 - Script-task tick default stop-distance handoff moved from BotManager to
   `server.agents.runtime.AgentScriptTaskRuntime`. BotManager now passes
@@ -1376,7 +1376,7 @@ Recent map updates:
   the legacy stop-distance value while Agent runtime owns start/completion
   callback composition over the existing script task services.
 - Grind-mode hook wiring moved from BotManager to
-  `server.agents.runtime.AgentGrindModeRuntime`. BotManager now passes only
+  `server.agents.capabilities.combat.AgentGrindModeCoordinator`. BotManager now passes only
   the movement-core callback and legacy loot-radius value while Agent runtime
   owns target search, no-target fallback, target commitment, ranged engagement,
   navigation tail, and combat/navigation side-effect hook composition.
@@ -1399,7 +1399,7 @@ Recent map updates:
   default formation creation, state lookup, and state update/offset application
   for compatibility harness callers.
 - The temporary BotManager grind-mode adapter method was removed; tick-core
-  wiring now passes `AgentGrindModeRuntime.tickGrindMode` directly.
+  wiring now passes `AgentGrindModeCoordinator.tickGrindMode` directly.
 - Anchored farm hook wiring moved from BotManager to
   `server.agents.capabilities.combat.AgentAnchoredFarmCoordinator`. BotManager now passes only
   legacy movement config values while Agent runtime owns local-opportunity,
@@ -2304,7 +2304,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#formation-command` | `server.agents.capabilities.movement.AgentFormationCommandService` | `MIGRATED_TO_AGENT`; formation command handling now accepts Agent runtime entries while preserving command matching, help/status replies, snap range updates, formation writes, offset application, and first-entry/leader reply routing |
 | `src/main/java/server/bots/BotManager.java#common-tick-systems` | `server.agents.runtime.AgentCommonTickService` | `MIGRATED_TO_AGENT`; common per-tick system ordering now accepts `AgentRuntimeEntry` while preserving mob damage, death short-circuiting, monster release, passive loot/trade gating, potion and recovery ticks, build level-up checks, AFK/status checks, trade/manual-trade, PQ/script/NPC-lock gates, action-lock handling, AI-gated combat systems, and final action-lock return behavior. Mob-touch sweep runtime now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotManager.java#live-mode-tick` | `server.agents.runtime.AgentLiveModeTickService` | `MIGRATED_TO_AGENT`; live-mode tick phase ordering now accepts `AgentRuntimeEntry` while preserving shop-visit, follow-opportunity, follow-idle, scripted-move combat, anchored farm, grind dispatch, target propagation, consumed-tick short-circuits, and final movement tail behavior |
-| `src/main/java/server/bots/BotManager.java#grind-mode-tick` | `server.agents.runtime.AgentGrindModeRuntime`, `server.agents.capabilities.combat.AgentGrindModeTickService` | `MIGRATED_TO_AGENT`; grind-mode tick entry points now accept `AgentRuntimeEntry` while preserving target seek, loot validation/refresh, no-target fallback, commitment, ranged engagement, navigation-tail resolution, seek range, and loot radius behavior. Some downstream grind callbacks still adapt to the temporary BotEntry shell |
+| `src/main/java/server/bots/BotManager.java#grind-mode-tick` | `server.agents.capabilities.combat.AgentGrindModeCoordinator`, `server.agents.capabilities.combat.AgentGrindModeTickService` | `MIGRATED_TO_AGENT`; grind-mode tick entry points now accept `AgentRuntimeEntry` while preserving target seek, loot validation/refresh, no-target fallback, commitment, ranged engagement, navigation-tail resolution, seek range, and loot radius behavior. Some downstream grind callbacks still adapt to the temporary BotEntry shell |
 | `src/main/java/server/bots/BotManager.java#shop-visit-tick` | `server.agents.capabilities.shop.AgentShopVisitTickService` | `MIGRATED_TO_AGENT`; shop-visit tick gating now accepts `AgentRuntimeEntry` while preserving pending-shop checks, shop tick execution, active target lookup, approach-delay consumption, target movement stepping, and result propagation |
 | `src/main/java/server/bots/BotMovementManager.java` | `server.agents.capabilities.movement` | `MIGRATED_TO_AGENT`; cooldown/delay countdown math, packet-visible movement broadcast, movement reset/transient cleanup, foothold-index construction, walk-step kinematics, movement profile refresh, stuck recovery, swim/airborne/climb/grounded phase runtime, ground grind target adjustment, mob avoidance, ground action planning/execution, jump/rope probe seams, fallback jump/rope routing, jump action initiation, queued movement actions, rope/climb launch routing, grounded physics entry-point routing, movement phase dispatch, ground-step resolution/update state, climb idle/snap/rope identity policy, ground horizontal step policy, precise-stop/drop-edge policy, and movement command distance/config reads are Agent-owned; production bot file deleted after compile and focused movement tests passed. Movement snapshot/broadcast, motion-timer services, rope movement actions, jump action initiation, queued movement actions, climb movement runtime, swim movement runtime, swim physics, grounded physics, grounded runtime dispatch, and fallback movement now accept `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotMovementTargetSideEffects.java` | `server.agents.integration.AgentMovementTargetSideEffects` | `MIGRATED_TO_AGENT`; movement target snapshot facade and side-effect bridge now accept `AgentRuntimeEntry` while preserving target capture and steering target behavior |
@@ -3347,3 +3347,7 @@ Recent capability extraction notes:
   `capabilities.combat.AgentAnchoredFarmCoordinator`; opportunity attacks, idle
   fallback, movement broadcast, and configured movement dispatch retain their
   original order.
+- Combat ownership: `AgentGrindModeRuntime` became
+  `capabilities.combat.AgentGrindModeCoordinator`. Search, no-target fallback,
+  commitment, ranged engagement, and navigation-tail hooks now return the combat
+  service result directly; runtime only adapts that result for live-mode dispatch.

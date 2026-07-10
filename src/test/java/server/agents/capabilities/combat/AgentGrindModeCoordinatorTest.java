@@ -1,9 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.combat.AgentGrindModeTickService;
+import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -18,7 +18,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentGrindModeRuntimeTest {
+class AgentGrindModeCoordinatorTest {
     @Test
     void defaultGrindModeUsesRuntimeLootRadius() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
@@ -42,7 +42,7 @@ class AgentGrindModeRuntimeTest {
                         return new AgentGrindModeTickService.Result(true, updatedTarget);
                     });
 
-            AgentLiveModeTickRuntime.LocalAttackResult result = AgentGrindModeRuntime.tickGrindMode(
+            AgentGrindModeTickService.Result result = AgentGrindModeCoordinator.tickGrindMode(
                     entry,
                     agent,
                     agentPosition,
@@ -57,7 +57,7 @@ class AgentGrindModeRuntimeTest {
     }
 
     @Test
-    void delegatesGrindModeThroughAgentRuntimeHookBundle() {
+    void delegatesGrindModeThroughCombatHookBundle() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Point agentPosition = new Point(10, 20);
@@ -79,7 +79,7 @@ class AgentGrindModeRuntimeTest {
                         return new AgentGrindModeTickService.Result(true, updatedTarget);
                     });
 
-            AgentLiveModeTickRuntime.LocalAttackResult result = AgentGrindModeRuntime.tickGrindMode(
+            AgentGrindModeTickService.Result result = AgentGrindModeCoordinator.tickGrindMode(
                     entry,
                     agent,
                     agentPosition,
@@ -90,12 +90,7 @@ class AgentGrindModeRuntimeTest {
 
             assertTrue(result.consumedTick());
             assertEquals(updatedTarget, result.targetPos());
-            assertEquals(List.of("seek:" + AgentCombatConfigValue.GRIND_SEEK_RANGE + ":loot:333"), calls);
+            assertEquals(List.of("seek:" + AgentCombatConfig.cfg.GRIND_SEEK_RANGE + ":loot:333"), calls);
         }
-    }
-
-    private static final class AgentCombatConfigValue {
-        private static final int GRIND_SEEK_RANGE =
-                server.agents.capabilities.combat.AgentCombatConfig.cfg.GRIND_SEEK_RANGE;
     }
 }

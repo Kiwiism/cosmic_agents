@@ -10,6 +10,8 @@ import server.agents.capabilities.combat.AgentDeathTickCoordinator;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator;
 import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.combat.AgentAnchoredFarmCoordinator;
+import server.agents.capabilities.combat.AgentGrindModeCoordinator;
+import server.agents.capabilities.combat.AgentGrindModeTickService;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import client.Character;
@@ -63,14 +65,16 @@ public final class AgentTickCoreRuntime {
                 },
                 AgentMovementTickCoordinator::stepMovementCore,
                 AgentAnchoredFarmCoordinator::tickAnchoredFarm,
-                (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->
-                        AgentGrindModeRuntime.tickGrindMode(
-                                grindEntry,
-                                grindAgent,
-                                grindAgentPosition,
-                                grindTargetPosition,
-                                grindRunAiTick,
-                                AgentMovementTickCoordinator::stepMovementCore));
+                (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) -> {
+                    AgentGrindModeTickService.Result result = AgentGrindModeCoordinator.tickGrindMode(
+                            grindEntry,
+                            grindAgent,
+                            grindAgentPosition,
+                            grindTargetPosition,
+                            grindRunAiTick,
+                            AgentMovementTickCoordinator::stepMovementCore);
+                    return new AgentLiveModeTickRuntime.LocalAttackResult(result.consumedTick(), result.targetPos());
+                });
     }
 
     public static void tickCore(AgentRuntimeEntry entry,

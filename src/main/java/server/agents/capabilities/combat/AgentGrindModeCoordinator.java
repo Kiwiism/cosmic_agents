@@ -1,41 +1,35 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
-import server.agents.capabilities.combat.AgentGrindNoTargetFallbackService;
-import server.agents.capabilities.combat.AgentAoeRepositionService;
-import server.agents.capabilities.combat.AgentRangedPriorityTargetSelector;
-import server.agents.capabilities.combat.AgentGrindNavigationTargetSelector;
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import client.Character;
 import server.agents.capabilities.movement.AgentJumpActionService;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementPoseService;
-
-import client.Character;
-import server.agents.capabilities.combat.AgentAttackExecutionProvider;
-import server.agents.capabilities.combat.AgentCombatAmmoCounter;
-import server.agents.capabilities.combat.AgentCombatConfig;
-import server.agents.capabilities.combat.AgentCombatRangePolicy;
-import server.agents.capabilities.combat.AgentGrindModeTickService;
-import server.agents.capabilities.combat.AgentGrindNavigationTailService;
-import server.agents.capabilities.combat.AgentGrindRangedEngagementService;
-import server.agents.capabilities.combat.AgentGrindTargetCommitmentService;
-import server.agents.capabilities.combat.AgentGrindTargetPositionService;
-import server.agents.capabilities.combat.AgentGrindTargetSearchService;
-import server.agents.capabilities.combat.AgentCombatAttackRuntime;
-import server.agents.capabilities.combat.AgentCombatTargetRuntime;
+import server.agents.runtime.AgentRuntimeConfig;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
-public final class AgentGrindModeRuntime {
-    private AgentGrindModeRuntime() {
+/**
+ * Coordinates combat-owned grind target, engagement, fallback, and navigation
+ * services for one grind-mode tick.
+ */
+public final class AgentGrindModeCoordinator {
+    @FunctionalInterface
+    public interface MovementCoreStep {
+        void step(AgentRuntimeEntry entry, Point targetPosition, boolean runAiTick);
     }
 
-    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(AgentRuntimeEntry entry,
-                                                                           Character agent,
-                                                                           Point agentPosition,
-                                                                           Point targetPosition,
-                                                                           boolean runAiTick,
-                                                                           AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep) {
+    private AgentGrindModeCoordinator() {
+    }
+
+    public static AgentGrindModeTickService.Result tickGrindMode(AgentRuntimeEntry entry,
+                                                                 Character agent,
+                                                                 Point agentPosition,
+                                                                 Point targetPosition,
+                                                                 boolean runAiTick,
+                                                                 MovementCoreStep movementCoreStep) {
         return tickGrindMode(
                 entry,
                 agent,
@@ -46,14 +40,14 @@ public final class AgentGrindModeRuntime {
                 AgentRuntimeConfig.cfg.LOOT_RADIUS);
     }
 
-    public static AgentLiveModeTickRuntime.LocalAttackResult tickGrindMode(AgentRuntimeEntry entry,
-                                                                           Character agent,
-                                                                           Point agentPosition,
-                                                                           Point targetPosition,
-                                                                           boolean runAiTick,
-                                                                           AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep,
-                                                                           int lootRadius) {
-        AgentGrindModeTickService.Result result = AgentGrindModeTickService.tickGrindMode(
+    public static AgentGrindModeTickService.Result tickGrindMode(AgentRuntimeEntry entry,
+                                                                 Character agent,
+                                                                 Point agentPosition,
+                                                                 Point targetPosition,
+                                                                 boolean runAiTick,
+                                                                 MovementCoreStep movementCoreStep,
+                                                                 int lootRadius) {
+        return AgentGrindModeTickService.tickGrindMode(
                 entry,
                 agent,
                 agentPosition,
@@ -67,7 +61,6 @@ public final class AgentGrindModeRuntime {
                         grindNavigationTailHooks(),
                         AgentCombatConfig.cfg.GRIND_SEEK_RANGE,
                         lootRadius));
-        return new AgentLiveModeTickRuntime.LocalAttackResult(result.consumedTick(), result.targetPos());
     }
 
     private static AgentGrindTargetSearchService.SearchHooks grindTargetSearchHooks() {
@@ -80,7 +73,7 @@ public final class AgentGrindModeRuntime {
     }
 
     private static AgentGrindNoTargetFallbackService.Hooks grindNoTargetFallbackHooks(
-            AgentLiveModeTickRuntime.MovementCoreStep movementCoreStep) {
+            MovementCoreStep movementCoreStep) {
         return new AgentGrindNoTargetFallbackService.Hooks(
                 AgentMovementPhaseDispatchService::tickSwimming,
                 AgentMovementPhaseDispatchService::tickAirborne,
@@ -88,7 +81,7 @@ public final class AgentGrindModeRuntime {
                         entry, agentPosition, map),
                 (entry, agentPosition, map) -> AgentGrindTargetPositionService.resolveNoGrindTargetPosition(
                         entry, agentPosition, map),
-                (entry, targetPos, runAiTick) -> movementCoreStep.step(entry, targetPos, runAiTick));
+                movementCoreStep::step);
     }
 
     private static AgentGrindTargetCommitmentService.Hooks grindTargetCommitmentHooks() {

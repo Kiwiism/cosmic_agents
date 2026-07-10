@@ -19,7 +19,7 @@ Target package groups:
   `AgentLiveTickGateRuntime` / `AgentLiveModeTickRuntime`, with tick-core
   composition through `AgentTickCoreRuntime` and script task composition
   through `AgentScriptTaskRuntime`. Grind-mode hook composition now enters
-  through `AgentGrindModeRuntime`, and local opportunity attack result
+  through `AgentGrindModeCoordinator`, and local opportunity attack result
   adaptation stays in `AgentLocalOpportunityAttackCoordinator`. Inactive leader
   safety and town-return composition now enter through
   `AgentLeaderSafetyRuntime`, and chat route composition enters through
