@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.plans;
 
 import server.agents.plans.AgentScriptTaskStartService;
 import server.agents.plans.AgentScriptTaskCompletionService;
@@ -7,8 +7,7 @@ import server.agents.capabilities.follow.AgentFollowAnchorService;
 import client.Character;
 import client.inventory.InventoryType;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
-import server.agents.plans.AgentScriptItemActionService;
-import server.agents.plans.AgentTask;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.IntFunction;
 

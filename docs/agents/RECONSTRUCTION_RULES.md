@@ -4239,7 +4239,7 @@ Recent reconstruction notes:
   cooldown/move-window gate, degenerate ranged marker, and consumed-tick result
   semantics are preserved.
 - Script-task start/completion hook wiring now lives in
-  `server.agents.runtime.AgentScriptTaskExecutionService`; BotManager keeps
+  `server.agents.plans.AgentScriptTaskExecutionService`; BotManager keeps
   temporary wrappers for tick integration only. The same move/follow/grind/stop
   command routing, drop-item action, runtime-registry follow-target resolution,
   and normal/precise arrival distance behavior are preserved.
@@ -7197,6 +7197,9 @@ Current physics correction:
 - Plan ownership: `AgentScriptTaskCompletionService` now lives under `plans`.
   Move-target state, precise/normal distance checks, follow target and same-map
   checks, and immediate-completion task types remain unchanged.
+- Plan ownership: `AgentScriptTaskExecutionService` now lives under `plans`.
+  Start/completion composition, registry target resolution, movement/follow/
+  grind/stop routing, and item-drop delegation remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

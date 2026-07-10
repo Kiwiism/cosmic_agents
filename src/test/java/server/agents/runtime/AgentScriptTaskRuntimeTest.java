@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.plans.AgentScriptTaskExecutionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;

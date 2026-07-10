@@ -3141,3 +3141,6 @@ Recent capability extraction notes:
 - Plan ownership: `AgentScriptTaskCompletionService` moved from generic runtime
   to `plans`. Completion predicates, map/distance checks, and immediate task
   completion behavior remain unchanged.
+- Plan ownership: `AgentScriptTaskExecutionService` moved from generic runtime
+  to `plans`. Task start/completion composition, target resolution, capability
+  routing, and item-drop delegation remain unchanged.
