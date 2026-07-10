@@ -33,6 +33,11 @@ Rules:
 
 Recent reconstruction notes:
 
+- Agent command number parsing now rejects malformed, overflowing, negative,
+  and out-of-range slot, formation-distance, snap-distance, and AP build target
+  values without throwing or storing overflow-prone state. Existing valid slot,
+  formation, snap, and AP build inputs retain their prior behavior.
+
 - Integration runtime extraction has started. `server.agents.integration` should
   keep Cosmic/server boundary work: Character/MapleMap access, packets, timers,
   inventory mutation, shop/trade/NPC/database/server internals, and gateway

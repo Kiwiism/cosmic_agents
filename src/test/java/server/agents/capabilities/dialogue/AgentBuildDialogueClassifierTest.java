@@ -120,6 +120,8 @@ class AgentBuildDialogueClassifierTest {
         assertNull(AgentBuildDialogueClassifier.matchFixedDexTarget("dexless"));
         assertNull(AgentBuildDialogueClassifier.matchFixedLukTarget("lukless"));
         assertNull(AgentBuildDialogueClassifier.matchFixedStrTarget("strless"));
+        assertNull(AgentBuildDialogueClassifier.matchFixedDexTarget("1000 dex"));
+        assertNull(AgentBuildDialogueClassifier.matchFixedLukTarget("999999999999999999 luk"));
     }
 
     @Test

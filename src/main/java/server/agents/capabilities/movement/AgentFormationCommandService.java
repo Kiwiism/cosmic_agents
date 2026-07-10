@@ -1,6 +1,7 @@
 package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.commands.AgentCommandNumberParser;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class AgentFormationCommandService {
+    private static final int MAX_FORMATION_DISTANCE_PX = 10_000;
     private static final Pattern FORMATION_PATTERN = Pattern.compile(
             "\\b(?:formation|form)\\b(?:\\s+(stagger|split|random|stack|spread|tight|loose|left|right|snap)(?:\\s+(\\d+|tight|loose|on|off))?)?",
             Pattern.CASE_INSENSITIVE);
@@ -79,7 +81,11 @@ public final class AgentFormationCommandService {
         }
 
         String pxToken = matcher.group(2);
-        int defaultPx = defaultPx(pxToken, hooks.defaultFollowStaggerPx());
+        Integer defaultPx = defaultPx(pxToken, hooks.defaultFollowStaggerPx());
+        if (defaultPx == null) {
+            replyFirstOrLeader(leader, entries, invalidDistanceMessage(), hooks);
+            return true;
+        }
         AgentFormationService.FormationType type = formationType(typeToken);
         int px = switch (typeToken.toLowerCase()) {
             case "tight" -> 30;
@@ -118,7 +124,13 @@ public final class AgentFormationCommandService {
         } else if (qualifier.equalsIgnoreCase("on")) {
             newSnapRange = current.snapRange() > 0 ? current.snapRange() : hooks.defaultSnapRangePx();
         } else {
-            newSnapRange = Integer.parseInt(qualifier);
+            Integer parsedRange = AgentCommandNumberParser.parseIntInRange(
+                    qualifier, 0, MAX_FORMATION_DISTANCE_PX);
+            if (parsedRange == null) {
+                replyFirstOrLeader(leader, entries, invalidDistanceMessage(), hooks);
+                return;
+            }
+            newSnapRange = parsedRange;
         }
 
         AgentFormationService.FormationState formation =
@@ -130,7 +142,7 @@ public final class AgentFormationCommandService {
         }
     }
 
-    private static int defaultPx(String pxToken, int configuredDefault) {
+    private static Integer defaultPx(String pxToken, int configuredDefault) {
         if (pxToken == null) {
             return configuredDefault;
         }
@@ -143,7 +155,11 @@ public final class AgentFormationCommandService {
         if (pxToken.equalsIgnoreCase("on") || pxToken.equalsIgnoreCase("off")) {
             return configuredDefault;
         }
-        return Integer.parseInt(pxToken);
+        return AgentCommandNumberParser.parseIntInRange(pxToken, 0, MAX_FORMATION_DISTANCE_PX);
+    }
+
+    private static String invalidDistanceMessage() {
+        return "formation distance must be between 0 and " + MAX_FORMATION_DISTANCE_PX + "px";
     }
 
     private static AgentFormationService.FormationType formationType(String typeToken) {

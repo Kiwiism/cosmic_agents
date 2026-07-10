@@ -55,8 +55,8 @@ public final class AgentCommandParser {
         }
 
         if (isNumericTarget(targetToken)) {
-            int slot = Integer.parseInt(targetToken);
-            if (slot < 1 || slot > MAX_NUMERIC_TARGET_SLOT) {
+            Integer slot = AgentCommandNumberParser.parseIntInRange(targetToken, 1, MAX_NUMERIC_TARGET_SLOT);
+            if (slot == null) {
                 return new TargetedAgentMatch<>(null, null, null);
             }
             if (slot > targets.size()) {
@@ -134,4 +134,3 @@ public final class AgentCommandParser {
         return message.toString();
     }
 }
-

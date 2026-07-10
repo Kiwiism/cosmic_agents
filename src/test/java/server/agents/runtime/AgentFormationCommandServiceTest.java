@@ -94,6 +94,42 @@ class AgentFormationCommandServiceTest {
         assertEquals(List.of("apply:SPREAD:90", "entry:formation: spread 90px"), calls);
     }
 
+    @Test
+    void rejectsOverflowingFormationDistanceWithoutChangingState() {
+        Character leader = leader(1);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), leader, null);
+        List<String> calls = new ArrayList<>();
+        AgentFormationService.FormationState initial = defaultFormation();
+        AtomicReference<AgentFormationService.FormationState> state = new AtomicReference<>(initial);
+
+        boolean handled = AgentFormationCommandService.handleFormationCommand(
+                leader,
+                "formation spread 999999999999999999999999",
+                hooks(List.of(first), calls, state));
+
+        assertTrue(handled);
+        assertEquals(initial, state.get());
+        assertEquals(List.of("entry:formation distance must be between 0 and 10000px"), calls);
+    }
+
+    @Test
+    void rejectsOutOfRangeSnapDistanceWithoutChangingState() {
+        Character leader = leader(1);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), leader, null);
+        List<String> calls = new ArrayList<>();
+        AgentFormationService.FormationState initial = defaultFormation();
+        AtomicReference<AgentFormationService.FormationState> state = new AtomicReference<>(initial);
+
+        boolean handled = AgentFormationCommandService.handleFormationCommand(
+                leader,
+                "formation snap 10001",
+                hooks(List.of(first), calls, state));
+
+        assertTrue(handled);
+        assertEquals(initial, state.get());
+        assertEquals(List.of("entry:formation distance must be between 0 and 10000px"), calls);
+    }
+
     private static AgentFormationCommandService.Hooks hooks(List<? extends AgentRuntimeEntry> entries,
                                                             List<String> calls,
                                                             AtomicReference<AgentFormationService.FormationState> state) {

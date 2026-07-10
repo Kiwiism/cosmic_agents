@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 import client.Job;
+import server.agents.commands.AgentCommandNumberParser;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.regex.Pattern;
 public final class AgentBuildDialogueClassifier {
     public static final String ONE_HANDED_SP_VARIANT = "1h";
     public static final String TWO_HANDED_SP_VARIANT = "2h";
+    private static final int MAX_AP_BUILD_TARGET = 999;
 
     private static final Pattern JOB_SELECT_PATTERN = Pattern.compile(
             "\\b(warrior|fighter|page|spearman|sader|crusader|hero|dk|drk|dark knight|paladin|"
@@ -171,7 +173,9 @@ public final class AgentBuildDialogueClassifier {
 
     private static Integer matchInt(Pattern pattern, String message) {
         Matcher matcher = pattern.matcher(message);
-        return matcher.find() ? Integer.parseInt(matcher.group(1)) : null;
+        return matcher.find()
+                ? AgentCommandNumberParser.parseIntInRange(matcher.group(1), 0, MAX_AP_BUILD_TARGET)
+                : null;
     }
 
     private static boolean matchesSkillTreeChoice(String normalizedMessage, int treeId) {

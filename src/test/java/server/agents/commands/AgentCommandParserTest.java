@@ -57,6 +57,18 @@ class AgentCommandParserTest {
     }
 
     @Test
+    void shouldIgnoreOverflowingNumericSlot() {
+        AgentCommandParser.TargetedAgentMatch<TestTarget> match =
+                AgentCommandParser.resolveTargetedAgent(
+                        List.of(new TestTarget("Jason")),
+                        "999999999999999999999999 follow Alice");
+
+        assertNull(match.target());
+        assertNull(match.commandText());
+        assertNull(match.feedbackMessage());
+    }
+
+    @Test
     void shouldReturnLegacyFeedbackForAmbiguousPrefix() {
         AgentCommandParser.TargetedAgentMatch<TestTarget> match =
                 AgentCommandParser.resolveTargetedAgent(List.of(new TestTarget("Jane"), new TestTarget("Jason")), "Ja yes");
