@@ -33,6 +33,12 @@ Rules:
 
 Recent reconstruction notes:
 
+- Every runtime entry now has a unique session generation and a lifecycle-owned
+  one-shot task scope. Scoped callbacks remove themselves after completion,
+  cancel as a group during replacement/despawn, and verify the exact live
+  session before running. Existing unscoped scheduler overloads remain for
+  server-level tasks while Agent call sites migrate to the scoped overloads.
+
 - Runtime removal now centrally clears Agent-scoped equipment throttles,
   transfer request counters, transient LLM state, Maker activity, and manual
   trade greetings, plus leader-scoped supply and navigation-warmup throttles.

@@ -14,6 +14,7 @@ public final class AgentScheduledTaskRuntime {
     public static void cancelScheduledTask(AgentRuntimeEntry entry) {
         if (entry != null) {
             entry.scheduledTaskState().cancelScheduledTask();
+            entry.scheduledTaskScope().cancelAll();
         }
     }
 }

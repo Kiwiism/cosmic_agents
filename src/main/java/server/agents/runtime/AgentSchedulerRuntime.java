@@ -16,12 +16,34 @@ public final class AgentSchedulerRuntime {
         afterDelay(randomDelayMs(minMs, maxMs), action);
     }
 
+    public static void afterRandomDelay(AgentRuntimeEntry entry, int minMs, int maxMs, Runnable action) {
+        afterDelay(entry, randomDelayMs(minMs, maxMs), action);
+    }
+
     public static void afterDelay(long delayMs, Runnable action) {
         schedule(action, delayMs);
     }
 
+    public static void afterDelay(AgentRuntimeEntry entry, long delayMs, Runnable action) {
+        schedule(entry, action, delayMs);
+    }
+
     public static ScheduledFuture<?> schedule(Runnable action, long delayMs) {
         return AgentSchedulerGatewayRuntime.scheduler().schedule(action, delayMs);
+    }
+
+    public static ScheduledFuture<?> schedule(AgentRuntimeEntry entry, Runnable action, long delayMs) {
+        if (entry == null) {
+            return schedule(action, delayMs);
+        }
+        long generation = entry.sessionGeneration();
+        return entry.scheduledTaskScope().schedule(
+                scopedAction -> AgentSchedulerGatewayRuntime.scheduler().schedule(scopedAction, delayMs),
+                () -> {
+                    if (AgentRuntimeRegistry.isActiveSession(entry, generation)) {
+                        action.run();
+                    }
+                });
     }
 
     public static ScheduledFuture<?> register(Runnable action, long periodMs) {

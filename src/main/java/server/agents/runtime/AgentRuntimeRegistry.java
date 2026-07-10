@@ -94,6 +94,20 @@ public final class AgentRuntimeRegistry {
         return false;
     }
 
+    public static boolean isActiveSession(AgentRuntimeEntry expectedEntry, long expectedGeneration) {
+        if (expectedEntry == null || expectedEntry.sessionGeneration() != expectedGeneration) {
+            return false;
+        }
+        for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
+            for (AgentRuntimeEntry entry : entries) {
+                if (entry == expectedEntry && entry.sessionGeneration() == expectedGeneration) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static Character findUnclaimedOnlineAgentByName(String agentName, int world) {
         return findUnclaimedOnlineAgentByName(agentName, world,
                 (lookupWorld, lookupName) -> AgentCharacterGatewayRuntime.characters()

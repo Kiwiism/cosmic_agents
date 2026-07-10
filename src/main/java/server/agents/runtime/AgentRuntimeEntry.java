@@ -65,16 +65,29 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class AgentRuntimeEntry implements AgentRuntimeHandle {
+    private static final AtomicLong NEXT_SESSION_GENERATION = new AtomicLong();
+
+    private final long sessionGeneration = NEXT_SESSION_GENERATION.incrementAndGet();
     private final AgentRuntimeIdentityState identityState;
     private final AgentModeState modeState = new AgentModeState();
     private final AgentAirshowState airshowState = new AgentAirshowState();
     private final AgentScheduledTaskState scheduledTaskState;
+    private final AgentScheduledTaskScope scheduledTaskScope = new AgentScheduledTaskScope();
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
 
     public AgentScheduledTaskState scheduledTaskState() {
         return scheduledTaskState;
+    }
+
+    public AgentScheduledTaskScope scheduledTaskScope() {
+        return scheduledTaskScope;
+    }
+
+    public long sessionGeneration() {
+        return sessionGeneration;
     }
 
     public AgentAirshowState airshowState() {
