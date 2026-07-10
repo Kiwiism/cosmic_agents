@@ -10,6 +10,7 @@ import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.movement.AgentMovementPoseService;
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
+import server.agents.capabilities.recovery.AgentRecoveryTeleportCoordinator;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
@@ -45,14 +46,14 @@ public final class AgentMovementOnlyRuntime {
                 (entry, agent) -> AgentShopStateRuntime.shopVisitPending(entry),
                 AgentFollowMapSyncRuntime::syncFollowMap,
                 followAnchorResolver::apply,
-                (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
+                (entry, agent, anchor) -> AgentRecoveryTeleportCoordinator.recoverGrindPartyTeleportDistance(
                         entry,
                         agent,
                         anchor,
                         config.teleportDistance(),
                         config.outOfBoundsTeleportDistance(),
                         config.grindPartyTeleportDistanceMultiplier()),
-                (entry, agent, target) -> AgentRecoveryTeleportRuntime.recoverTeleportDistance(
+                (entry, agent, target) -> AgentRecoveryTeleportCoordinator.recoverTeleportDistance(
                         entry,
                         agent,
                         target,

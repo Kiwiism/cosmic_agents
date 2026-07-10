@@ -3310,3 +3310,7 @@ Recent capability extraction notes:
   `capabilities.movement.AgentStandaloneMoveTargetCoordinator`, and reusable
   post-map-change grounding hook assembly moved to `AgentMapGroundingCoordinator`.
   Cross-capability tracked map-change handling intentionally remains in runtime.
+- Recovery ownership: `AgentRecoveryTeleportRuntime` became
+  `capabilities.recovery.AgentRecoveryTeleportCoordinator`; both live and
+  movement-only tick callers now enter the recovery capability directly with
+  unchanged teleport and broadcast behavior.

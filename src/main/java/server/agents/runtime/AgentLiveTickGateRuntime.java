@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.recovery.AgentRecoveryTeleportCoordinator;
+
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.trade.AgentTradeWindowTickService;
 import server.agents.capabilities.recovery.AgentRecoveryTickService;
@@ -57,14 +59,14 @@ public final class AgentLiveTickGateRuntime {
                         recoveryTargetPos,
                         new AgentRecoveryTickService.Hooks(
                                 AgentFollowMapSyncRuntime::syncFollowMap,
-                                (entry, agent, anchor) -> AgentRecoveryTeleportRuntime.recoverGrindPartyTeleportDistance(
+                                (entry, agent, anchor) -> AgentRecoveryTeleportCoordinator.recoverGrindPartyTeleportDistance(
                                         entry,
                                         agent,
                                         anchor,
                                         teleportDistance,
                                         outOfBoundsTeleportDistance,
                                         grindPartyTeleportDistanceMultiplier),
-                                (entry, agent, targetPos) -> AgentRecoveryTeleportRuntime.recoverTeleportDistance(
+                                (entry, agent, targetPos) -> AgentRecoveryTeleportCoordinator.recoverTeleportDistance(
                                         entry,
                                         agent,
                                         targetPos,

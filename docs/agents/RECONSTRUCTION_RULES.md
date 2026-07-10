@@ -7383,6 +7383,11 @@ Current physics correction:
   `AgentStandaloneMoveTargetCoordinator` and `AgentMapGroundingCoordinator`.
   Tracked map-change orchestration remains runtime-owned because it coordinates
   movement with PQ, shop, and mode behavior.
+- Recovery ownership: distance-based recovery teleport hook assembly moved from
+  generic `AgentRecoveryTeleportRuntime` to
+  `capabilities.recovery.AgentRecoveryTeleportCoordinator`; live and
+  movement-only paths retain the same thresholds, grounding, state reset, and
+  movement broadcast behavior.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

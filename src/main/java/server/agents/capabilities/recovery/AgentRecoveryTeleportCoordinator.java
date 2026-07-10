@@ -1,18 +1,19 @@
-package server.agents.runtime;
-
-import server.agents.capabilities.recovery.AgentRecoveryTeleportService;
-import server.agents.capabilities.movement.AgentMovementStateResetService;
-
-import server.agents.capabilities.movement.AgentMovementBroadcastService;
-import server.agents.capabilities.movement.AgentGroundingService;
-import server.agents.capabilities.movement.AgentMovementPoseService;
+package server.agents.capabilities.recovery;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentGroundingService;
+import server.agents.capabilities.movement.AgentMovementBroadcastService;
+import server.agents.capabilities.movement.AgentMovementPoseService;
+import server.agents.capabilities.movement.AgentMovementStateResetService;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
-public final class AgentRecoveryTeleportRuntime {
-    private AgentRecoveryTeleportRuntime() {
+/**
+ * Assembles movement operations used by distance-based Agent recovery.
+ */
+public final class AgentRecoveryTeleportCoordinator {
+    private AgentRecoveryTeleportCoordinator() {
     }
 
     public static boolean recoverTeleportDistance(AgentRuntimeEntry entry,
