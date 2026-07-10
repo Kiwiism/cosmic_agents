@@ -2,7 +2,8 @@
 
 Branch: `reconstruction/source-master-agent-base`
 
-Audited commit: `4a951661eb` (`Document and enforce Agent Cosmic boundaries`)
+Audit basis: committed reconstruction code on this branch through this document's
+revision.
 
 ## Architecture Result
 
@@ -71,8 +72,9 @@ with the workspace WZ and generated catalog fixtures linked read-only.
 | Verification | Result |
 | --- | --- |
 | Per-slice compile and focused tests | PASS |
-| Agent test suite excluding `BotMovementSimulationLabTest` | 2,312 unique tests accounted for; all pass after generated catalog fixtures were attached |
+| Agent test suite | 2,321 unique tests accounted for; all pass after generated catalog fixtures were attached and the simulation harness stopped rebuilding an already-cached graph |
 | `AgentCatalogServiceTest` with all four generated catalog roots | PASS, 10 tests |
+| `BotMovementSimulationLabTest` | PASS, 9 tests |
 | Maven package with tests skipped | PASS |
 | Broader repository suite excluding the hanging movement simulation class | 4,242 tests; 4,239 pass, 3 known failures |
 
@@ -84,20 +86,13 @@ Known broader failures, unchanged from the branch baseline:
 
 ## Remaining Validation Gaps
 
-`BotMovementSimulationLabTest` contains nine tests. During the full Agent run,
-`shouldResolveSlashRopeOscillationDumpByRefreshingPendingExitEdge` consumed a CPU
-core indefinitely while rebuilding navigation jump edges. A thread dump placed
-the loop in `AgentJumpProbeService.effectiveRightBoundaryX`. This reconstruction
-did not modify that movement implementation, so the class was excluded from the
-remaining suite rather than changing baseline behavior during architectural work.
-
 Live-client validation was not run. Spawn/despawn, visible movement, map travel,
 combat packets, loot, shop/trade, dialogue, and relog/logout still require the
 existing manual parity checklist before a release claim.
 
 ## Completion Statement
 
-The package reconstruction and ownership migration are complete. Release-level
-behavior parity remains pending the movement-simulation investigation and live
-client validation. Those are validation/follow-up milestones, not remaining
-unclassified or misplaced Agent production ownership.
+The package reconstruction and ownership migration are complete. Automated Agent
+verification is green. Release-level behavior parity remains pending live-client
+validation, while the three broader combat-formula baseline assertions remain a
+separate repository test issue.

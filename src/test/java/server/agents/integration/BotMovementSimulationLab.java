@@ -78,7 +78,9 @@ final class BotMovementSimulationLab {
     }
 
     static BotMovementSimulationLab fromMap(MapleMap map) {
-        AgentNavigationGraphService.rebuildGraph(map);
+        if (AgentNavigationGraphService.peekGraph(map, AgentMovementProfile.base()) == null) {
+            AgentNavigationGraphService.rebuildGraph(map);
+        }
         return new BotMovementSimulationLab();
     }
 

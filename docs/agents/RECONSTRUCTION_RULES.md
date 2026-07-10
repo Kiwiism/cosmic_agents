@@ -12,6 +12,10 @@ The final ownership inventory, automated test evidence, known baseline failures,
 and live-validation requirements are recorded in
 `RECONSTRUCTION_COMPLETION_AUDIT.md`.
 
+Test harnesses may reuse an exact graph already built for the same map/profile.
+They must not trigger duplicate full graph reconstruction merely to initialize a
+simulation; this changes test cost only, not production navigation behavior.
+
 The reconstruction model is: move behavior from one large bot bin into specialized Agent bins without changing observable behavior.
 
 Rules:

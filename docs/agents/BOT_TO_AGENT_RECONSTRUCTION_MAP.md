@@ -14,8 +14,12 @@ The authoritative classification of every retained runtime class is maintained
 in `AGENT_RUNTIME_CLASSIFICATION.md` and enforced by
 `AgentRuntimeClassificationTest`.
 
-Final automated evidence and remaining live/movement validation gaps are recorded
+Final automated evidence and remaining live-validation gaps are recorded
 in `RECONSTRUCTION_COMPLETION_AUDIT.md`.
+
+The movement simulation harness now reuses an exact cached base-profile graph
+instead of rebuilding the same graph twice; all nine simulation tests pass and
+production navigation behavior is unchanged.
 
 Recent map updates:
 
