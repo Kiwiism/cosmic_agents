@@ -216,8 +216,6 @@ public class ServerConfig {
     public boolean USE_ULTRA_NIMBLE_FEET;
     public boolean USE_ULTRA_RECOVERY;
     public boolean USE_ULTRA_THREE_SNAILS;
-    public boolean DOUBLE_AGENT_ENABLED = false;
-    public long DOUBLE_AGENT_COOLDOWN_MS = 1000;
 
     //Other Skills Configuration
     public boolean USE_FULL_ARAN_SKILLSET;

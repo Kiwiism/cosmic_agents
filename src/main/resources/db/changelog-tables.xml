@@ -110,13 +110,12 @@
         <sqlFile path="db/tables/025-bot-ownership.sql"/>
     </changeSet>
 
-    <changeSet id="26" author="Codex">
+    <!-- Retire the removed experimental Double Agent POC table on existing installs. -->
+    <changeSet id="27-remove-character-tag-sessions" author="Codex">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="character_tag_sessions"/>
-            </not>
+            <tableExists tableName="character_tag_sessions"/>
         </preConditions>
-        <sqlFile path="db/tables/026-tag-overlay.sql"/>
+        <dropTable tableName="character_tag_sessions" cascadeConstraints="true"/>
     </changeSet>
 
 </databaseChangeLog>

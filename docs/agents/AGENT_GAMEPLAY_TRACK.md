@@ -108,6 +108,33 @@ path. Behaviors should be classified as:
 
 ## Gameplay Backlog
 
+### Double Agent Profile Switching
+
+Primary doc:
+
+- `docs/agents/DOUBLE_AGENT_POST_RECONSTRUCTION_SPECIFICATION.md`
+
+This is a post-reconstruction review item, separate from the Amherst and Maple
+Island capability proofs. The intended production design keeps the player and
+Agent actors in place while atomically exchanging owner-aware gameplay profile
+bindings, then refreshing client and Agent runtime state. Do not expand the
+removed field-copy POC before the reconstruction gates in the specification are
+met. Historical findings are retained in
+`docs/agents/DOUBLE_AGENT_POC_RETROSPECTIVE.md`.
+
+### Account Quest Inheritance
+
+Primary doc:
+
+- `docs/agents/ACCOUNT_QUEST_INHERITANCE_SPECIFICATION.md`
+
+This post-refactor candidate allows an eligible quest completed by one account
+character to be inherited by another profile. The recommended MVP is
+status-only, explicitly classified, non-repeatable quest completion with no
+duplicated rewards or quest points. Agent integration follows the generalized
+quest capability and must retain a fresh-account bypass for capability and
+Maple Island testing.
+
 ### Maple Island MVP
 
 Primary docs:

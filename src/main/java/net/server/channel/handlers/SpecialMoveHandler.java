@@ -42,7 +42,6 @@ import net.packet.InPacket;
 import net.server.Server;
 import server.StatEffect;
 import server.life.Monster;
-import server.doubleagent.DoubleAgentService;
 import tools.PacketCreator;
 
 import java.awt.*;
@@ -80,11 +79,7 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
             c.sendPacket(PacketCreator.getEnergy("energy", chr.getDojoEnergy()));
             c.sendPacket(PacketCreator.serverNotice(5, "As you used the secret skill, your energy bar has been reset."));
         }
-        if (DoubleAgentService.handleTagSkill(chr, skillid)) {
-            return;
-        }
-
-        if (skillLevel == 0 || (skillLevel != __skillLevel && !DoubleAgentService.isOverlayActive(chr))) {
+        if (skillLevel == 0 || skillLevel != __skillLevel) {
             return;
         }
 

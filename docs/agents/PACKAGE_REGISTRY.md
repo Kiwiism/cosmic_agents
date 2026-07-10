@@ -1113,7 +1113,47 @@ Implementation focus:
 
 ## Partially Defined Packages
 
-No dedicated packages currently remain in this bucket.
+### Double Agent Profile Switching
+
+Status: post-reconstruction review candidate.
+
+Purpose:
+
+- Let a player and their paired Agent exchange complete gameplay profiles while
+  each actor keeps its current controller, map identity, and position.
+- Make the switch appear immediate to the player without reconnecting or
+  transferring the client between server-side character actors.
+
+Primary doc:
+
+- `docs/agents/CHARACTER_PROFILE_RUNTIME_REFACTOR_ROADMAP.md`
+- `docs/agents/DOUBLE_AGENT_POST_RECONSTRUCTION_SPECIFICATION.md`
+- `docs/agents/DOUBLE_AGENT_CHARACTER_STATE_EXTRACTION_PLAN.md`
+
+This package remains partially defined until reconstruction supplies stable
+ownership, persistence, packet-refresh, skill-eligibility, cancellation, and
+Agent-quiescence boundaries. The experimental POC has been removed and is not
+the production architecture; its findings remain in
+`docs/agents/DOUBLE_AGENT_POC_RETROSPECTIVE.md`.
+
+### Account Quest Inheritance
+
+Status: post-refactor gameplay candidate.
+
+Purpose:
+
+- Let a character inherit eligible quest completion already achieved by
+  another character on the same account.
+- Reduce repeated story/tutorial work without duplicating rewards or bypassing
+  unsafe class, event, scripted, or repeatable quest behavior.
+
+Primary doc:
+
+- `docs/agents/ACCOUNT_QUEST_INHERITANCE_SPECIFICATION.md`
+
+The recommended MVP uses a durable account completion ledger and conservative
+status-only inheritance with no repeated rewards or quest points. It depends on
+stable profile quest ownership but is independent of Double Agent switching.
 
 ## Backlog Packages To Promote
 

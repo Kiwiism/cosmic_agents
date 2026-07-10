@@ -36,6 +36,20 @@ The best delivery should be three layers:
 This avoids one giant document becoming stale. The top-level spec stays stable;
 package specs evolve independently.
 
+## Post-Reconstruction Feature Reviews
+
+The following feature is documented for review only after the reconstruction
+gates in its specification are satisfied:
+
+- Double Agent hot profile switching:
+  `docs/agents/DOUBLE_AGENT_POST_RECONSTRUCTION_SPECIFICATION.md`.
+
+Double Agent is not part of reconstruction closeout or the Amherst capability
+proof. Its experimental field-copy POC has been removed; production work should
+use the owner-aware profile-binding design in the dedicated specification. The
+historical POC is recorded in
+`docs/agents/DOUBLE_AGENT_POC_RETROSPECTIVE.md`.
+
 ## Source And Transformation
 
 Source system:
@@ -835,6 +849,10 @@ Top-level:
 - `docs/agents/PACKAGE_REGISTRY.md`
 - `docs/agents/AGENT_ENGINE_SCALING_TRACK.md`
 - `docs/agents/AGENT_GAMEPLAY_TRACK.md`
+- `docs/agents/CHARACTER_PROFILE_RUNTIME_REFACTOR_ROADMAP.md`
+- `docs/agents/DOUBLE_AGENT_POST_RECONSTRUCTION_SPECIFICATION.md`
+- `docs/agents/DOUBLE_AGENT_POC_RETROSPECTIVE.md`
+- `docs/agents/ACCOUNT_QUEST_INHERITANCE_SPECIFICATION.md`
 
 Reconstruction:
 
