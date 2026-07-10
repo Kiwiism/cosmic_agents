@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
 import server.agents.capabilities.movement.AgentMovementPhaseDispatchService;
 import server.agents.capabilities.movement.AgentMovementPoseService;

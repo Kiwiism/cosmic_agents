@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 

@@ -1936,7 +1936,7 @@ Recent map updates:
   `server.agents.runtime.AgentMapTransitionService`; BotManager only supplies
   temporary foothold/physics/navigation callbacks.
 - BotManager idle/trade physics mode selection moved to
-  `server.agents.runtime.AgentIdlePhysicsService`; BotManager only supplies
+  `server.agents.capabilities.movement.AgentIdlePhysicsService`; BotManager only supplies
   temporary movement/physics callbacks.
 - BotManager tick heartbeat ownership moved to
   `server.agents.runtime.AgentHeartbeatService`; BotManager only supplies
@@ -3059,3 +3059,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentActionLockPhysicsService` moved from generic
   runtime to `capabilities.movement`. Cooldown gating and movement-phase branch
   selection remain unchanged.
+- Capability ownership: `AgentIdlePhysicsService` moved from generic runtime to
+  `capabilities.movement`. Active-mode gates, movement-phase selection, stance
+  correction, and broadcast conditions remain unchanged.

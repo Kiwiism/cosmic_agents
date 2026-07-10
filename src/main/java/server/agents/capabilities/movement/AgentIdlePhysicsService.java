@@ -1,10 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.capabilities.movement.AgentMovementStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 
 import java.util.function.BiConsumer;

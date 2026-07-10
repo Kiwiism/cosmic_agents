@@ -4097,7 +4097,7 @@ Recent reconstruction notes:
   now live in `server.agents.runtime.AgentHeartbeatService`; BotManager still
   supplies temporary packet freshness and movement broadcast callbacks.
 - Idle and trade-window physics mode selection now lives in
-  `server.agents.runtime.AgentIdlePhysicsService`; BotManager still supplies the
+  `server.agents.capabilities.movement.AgentIdlePhysicsService`; BotManager still supplies the
   temporary swim-map, movement, physics, and broadcast callbacks.
 - Map-change grounding, map tracking, post-teleport reset, navigation graph
   warmup, and movement broadcast ordering now live in
@@ -7103,6 +7103,10 @@ Current physics correction:
   `capabilities.movement`. Attack-cooldown gating and swim, airborne, grounded,
   and climbing branch behavior remain unchanged; runtime still supplies the
   movement-phase callbacks.
+- Capability ownership: `AgentIdlePhysicsService` now lives under
+  `capabilities.movement`. Active-mode exclusion, swim/air/ground dispatch,
+  stance comparison, idle pose correction, and movement broadcast conditions
+  remain unchanged; runtime continues to provide map and movement hooks.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
