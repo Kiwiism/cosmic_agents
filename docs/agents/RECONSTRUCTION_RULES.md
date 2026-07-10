@@ -1248,7 +1248,7 @@ Recent reconstruction notes:
   and `aggroRedirectController` handoff for every monster assigned to a headless
   Agent.
 - Death respawn recovery now lives in
-  `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
+  `server.agents.capabilities.combat.AgentDeathTickService.respawnNearLeader`. BotManager
   keeps only temporary hooks for map-change portal selection, ground lookup,
   physics teleport, movement reset, movement broadcast, and map chat. The same
   death-state clear, HP restore, cross-map leader warp, ground fallback,
@@ -4108,7 +4108,7 @@ Recent reconstruction notes:
   supplies temporary swim-map and movement physics callbacks, preserving the
   legacy climbing-airborne branch behavior.
 - Dead-state tick handling now lives in
-  `server.agents.runtime.AgentDeathTickService`; BotManager still supplies the
+  `server.agents.capabilities.combat.AgentDeathTickService`; BotManager still supplies the
   temporary combat death-state entry and respawn side-effect callbacks.
 - Scripted follow-target character resolution now lives in
   `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager still supplies
@@ -7071,6 +7071,10 @@ Current physics correction:
   `capabilities.combat`. Empty-controller short circuit, controlled-monster
   iteration order, and `aggroRedirectController` calls are unchanged; common
   tick still invokes the same method.
+- Capability ownership: `AgentDeathTickService` now lives under
+  `capabilities.combat`. Dead-state entry/due checks, HP restore, cross-map
+  return, ground fallback, teleport/reset/broadcast order, `back!` speech, and
+  glare emote are unchanged; death/respawn runtime classes remain hook adapters.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

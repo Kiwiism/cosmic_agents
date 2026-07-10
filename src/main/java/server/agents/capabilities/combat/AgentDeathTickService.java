@@ -1,7 +1,9 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import server.agents.capabilities.dialogue.AgentEmote;
+import server.agents.runtime.AgentDeathStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.MapleMap;
 
 import java.awt.Point;

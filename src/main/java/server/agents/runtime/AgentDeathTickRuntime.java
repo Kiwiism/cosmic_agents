@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentDeathTickService;
+
 import client.Character;
 import server.agents.capabilities.combat.AgentCombatConfig;
 import server.agents.capabilities.combat.AgentCombatDeathRuntime;

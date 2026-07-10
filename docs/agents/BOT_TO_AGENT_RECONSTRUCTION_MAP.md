@@ -1706,7 +1706,7 @@ Recent map updates:
   `server.agents.capabilities.combat.AgentMonsterControlService`; common tick now delegates
   to the Agent-owned service.
 - Death respawn recovery moved from BotManager to
-  `server.agents.runtime.AgentDeathTickService.respawnNearLeader`. BotManager
+  `server.agents.capabilities.combat.AgentDeathTickService.respawnNearLeader`. BotManager
   remains the temporary hook provider for portal selection, physics, broadcast,
   and map chat side effects.
 - Offline Agent relogin moved from BotManager to
@@ -1927,7 +1927,7 @@ Recent map updates:
   `server.agents.capabilities.follow.AgentFollowAnchorService`; BotManager only supplies
   the temporary sibling entry list.
 - BotManager dead-state tick handling moved to
-  `server.agents.runtime.AgentDeathTickService`; BotManager only supplies
+  `server.agents.capabilities.combat.AgentDeathTickService`; BotManager only supplies
   temporary combat death-entry and respawn callbacks.
 - BotManager attack-lock physics dispatch moved to
   `server.agents.runtime.AgentActionLockPhysicsService`; BotManager only
@@ -2289,7 +2289,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#tick-preflight` | `server.agents.runtime.AgentTickPreflightService` | `MIGRATED_TO_AGENT`; tick preflight now accepts `AgentRuntimeEntry` while preserving null handling, airshow skip, movement-delay skip, missing-map cleanup, heartbeat, offer expiry, and AI tick preparation ordering |
 | `src/main/java/server/bots/BotManager.java#trade-window-tick` | `server.agents.capabilities.trade.AgentTradeWindowTickService` | `MIGRATED_TO_AGENT`; trade-window tick gating now accepts `AgentRuntimeEntry` while preserving open-trade detection, physics-only tick dispatch, and consumed-tick behavior |
 | `src/main/java/server/bots/BotManager.java#ownerless-tick` | `server.agents.runtime.AgentOwnerlessTickService` | `MIGRATED_TO_AGENT`; ownerless tick handling now accepts `AgentRuntimeEntry` while preserving follow-mode clearing, map-change grounding short-circuit, standalone move-target ticking, and idle fallback behavior |
-| `src/main/java/server/bots/BotManager.java#death-tick` | `server.agents.runtime.AgentDeathTickService`, `server.agents.runtime.AgentRespawnRuntime` | `MIGRATED_TO_AGENT`; death tick and respawn-near-leader handling now accept `AgentRuntimeEntry` while preserving dead-state entry checks, respawn timing, HP restore, map-change, grounding, teleport, reset, movement broadcast, map speech, and glare emote behavior |
+| `src/main/java/server/bots/BotManager.java#death-tick` | `server.agents.capabilities.combat.AgentDeathTickService`, `server.agents.runtime.AgentRespawnRuntime` | `MIGRATED_TO_AGENT`; death tick and respawn-near-leader handling now accept `AgentRuntimeEntry` while preserving dead-state entry checks, respawn timing, HP restore, map-change, grounding, teleport, reset, movement broadcast, map speech, and glare emote behavior |
 | `src/main/java/server/bots/BotManager.java#leader-safety-runtime` | `server.agents.runtime.AgentLeaderSafetyRuntime` | `MIGRATED_TO_AGENT`; inactive-leader runtime now accepts `AgentRuntimeEntry` while preserving active-return cleanup, town eligibility, safe-mode entry, town-scroll fallback, formation target selection, map-change grounding, movement reset, and return announcements |
 | `src/main/java/server/bots/BotManager.java#recovery-tick` | `server.agents.runtime.AgentRecoveryTickService` | `MIGRATED_TO_AGENT`; recovery tick handling now accepts `AgentRuntimeEntry` while preserving shop-visit follow-sync suppression, follow-map sync, party recovery, target recovery ordering, and short-circuit behavior |
 | `src/main/java/server/bots/BotManager.java#tracked-map-change-tick` | `server.agents.runtime.AgentTrackedMapChangeTickService` | `MIGRATED_TO_AGENT`; tracked map-change tick handling now accepts `AgentRuntimeEntry` while preserving handler dispatch and consumed/fall-through behavior |
@@ -3032,3 +3032,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentMonsterControlService` moved from generic runtime
   to `capabilities.combat`. Controlled-monster release behavior and common-tick
   invocation remain unchanged.
+- Capability ownership: `AgentDeathTickService` moved from generic runtime to
+  `capabilities.combat`. Dead-state timing and respawn map/HP/position/reset/
+  broadcast/dialogue/emote ordering remain unchanged.

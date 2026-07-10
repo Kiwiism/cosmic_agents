@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.combat.AgentDeathTickService;
+
 import server.agents.capabilities.movement.AgentMovementStateResetService;
 
 import server.agents.capabilities.movement.AgentMovementBroadcastService;
