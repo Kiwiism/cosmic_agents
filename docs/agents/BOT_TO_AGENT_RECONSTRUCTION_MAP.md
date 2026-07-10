@@ -3184,3 +3184,6 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentMoveTargetState` moved from
   generic runtime to `capabilities.movement`; defensive target copies,
   precision normalization, equality, and clear behavior remain unchanged.
+- Capability state ownership: the concrete `AgentMovementBroadcastState` moved
+  from generic runtime to `capabilities.movement`; validity and exact movement
+  snapshot matching/recording remain unchanged.

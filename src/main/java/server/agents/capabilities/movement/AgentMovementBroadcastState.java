@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 public final class AgentMovementBroadcastState {
     private boolean valid = false;

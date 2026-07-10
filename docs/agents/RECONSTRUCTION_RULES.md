@@ -4990,7 +4990,7 @@ Current physics correction:
   duration, unstuck cooldown, and stuck-check coordinates route through Agent
   runtime state.
 - Movement broadcast suppression cache state now lives in
-  `AgentMovementBroadcastState`. `BotEntry` temporarily hosts the Agent-owned
+  `server.agents.capabilities.movement.AgentMovementBroadcastState`. `BotEntry` temporarily hosts the Agent-owned
   state object, while last broadcast position, velocity, stance, and foothold
   route through Agent runtime state.
 - Last-ground foothold cache state now lives in
@@ -7247,6 +7247,9 @@ Current physics correction:
 - Capability state ownership: `AgentMoveTargetState` now lives under
   `capabilities.movement`. Defensive point copies, precision normalization,
   equality, and clear behavior remain unchanged.
+- Capability state ownership: `AgentMovementBroadcastState` now lives under
+  `capabilities.movement`. Validity, exact pose/velocity/stance/foothold
+  matching, record order, and individual field access remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
