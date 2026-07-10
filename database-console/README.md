@@ -48,10 +48,9 @@ To disable the bridge for a local server run, set:
 $env:COSMIC_DATABASE_CONSOLE_BRIDGE_ENABLED = "false"
 ```
 
-Current live-write scope is intentionally narrow: online appearance changes
-and equipped/cash-equipped slot add or modify operations are routed through the
-bridge. Normal bag inventory, storage, deletes, and IGN rename remain
-offline-only until their live memory paths are implemented.
+Online appearance, equipped/cash-equipped items, bag inventory, and account
+storage edits are routed through the bridge so loaded server memory and the
+database stay in sync. IGN rename remains offline-only.
 
 On first startup, the JDBC connection creates `cosmic_database_console` when it does not exist,
 then Liquibase creates every required table and applies all migrations. The configured MySQL

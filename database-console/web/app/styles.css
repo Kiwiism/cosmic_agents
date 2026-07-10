@@ -163,6 +163,10 @@ aside nav{overflow:auto;min-height:0}
 .skill-tier-actions .text-button{min-width:max-content}
 .skill-tier-actions .text-button:first-child{justify-self:start}
 .skill-tier-actions .text-button:last-child{justify-self:end}
+.skill-add-job-select{width:100%;height:34px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-weight:800;font-size:11px;padding:0 9px;outline:0}
+.skill-job-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.skill-job-actions .text-button{font-size:10px}
+.danger-text{color:#d85c68!important}
 .stat-detail{display:block;color:#7f879a;font-size:10px;text-transform:none}
 .stat-field-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .stat-field-actions>span{display:flex;align-items:center}
@@ -469,6 +473,7 @@ body[data-theme="dark"] .drag-handle,
 body[data-theme="dark"] .inline-number button,
 body[data-theme="dark"] .inline-number input,
 body[data-theme="dark"] .skill-edit-row input,
+body[data-theme="dark"] .skill-add-job-select,
 body[data-theme="dark"] .unused-sp-editor,
 body[data-theme="dark"] .unused-sp-editor input,
 body[data-theme="dark"] .modal-close{background:#111827;border-color:var(--line);color:var(--ink)}

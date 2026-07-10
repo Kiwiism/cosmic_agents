@@ -50,6 +50,14 @@ public class BridgeClient {
         return postForMap("/internal/admin/characters/" + characterId + "/equipped-items", body);
     }
 
+    public Map<String, Object> mutateInventory(int characterId, Map<String, Object> body) {
+        return postForMap("/internal/admin/characters/" + characterId + "/inventory-items", body);
+    }
+
+    public Map<String, Object> mutateStorage(int accountId, Map<String, Object> body) {
+        return postForMap("/internal/admin/accounts/" + accountId + "/storage", body);
+    }
+
     private boolean post(String path) {
         try {
             client.post().uri(path).retrieve().toBodilessEntity();

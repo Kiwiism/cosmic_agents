@@ -15,6 +15,7 @@ import net.server.Server;
 import net.server.world.World;
 import server.ItemInformationProvider;
 import server.ShopFactory;
+import server.Storage;
 import server.life.MonsterInformationProvider;
 import server.monitoring.CharacterSaveDiagnostics.SaveReason;
 import server.monitoring.ServerMetricsSnapshot;
@@ -92,7 +93,17 @@ public class DatabaseConsoleBridgeServer {
             }
             if ("POST".equals(method) && path.matches("/internal/admin/characters/\\d+/equipped-items")) {
                 int characterId = characterId(path, "/equipped-items");
-                upsertEquippedItem(exchange, characterId);
+                mutateInventory(exchange, characterId, "UPSERT");
+                return;
+            }
+            if ("POST".equals(method) && path.matches("/internal/admin/characters/\\d+/inventory-items")) {
+                int characterId = characterId(path, "/inventory-items");
+                mutateInventory(exchange, characterId, null);
+                return;
+            }
+            if ("POST".equals(method) && path.matches("/internal/admin/accounts/\\d+/storage")) {
+                int accountId = characterId(path, "/storage");
+                mutateStorage(exchange, accountId);
                 return;
             }
             send(exchange, 404, Map.of("status", "NOT_FOUND"));
@@ -121,33 +132,213 @@ public class DatabaseConsoleBridgeServer {
         send(exchange, 200, Map.of("status", "OK", "characterId", characterId));
     }
 
-    private void upsertEquippedItem(HttpExchange exchange, int characterId) throws IOException {
+    private void mutateInventory(HttpExchange exchange, int characterId, String defaultOperation) throws IOException {
         JsonNode body = readBody(exchange);
         Character chr = onlineCharacter(characterId);
+        String operation = body.path("operation").asText(defaultOperation == null ? "" : defaultOperation);
+        switch (operation) {
+            case "UPSERT" -> upsertInventoryItem(chr, body);
+            case "DELETE" -> deleteInventoryItem(chr, body);
+            case "SWAP" -> swapInventoryItems(chr, body);
+            default -> throw new IllegalArgumentException("Unknown inventory operation");
+        }
+        chr.saveCharToDB(true, SaveReason.FULL_SAVE);
+        send(exchange, 200, Map.of("status", "OK", "characterId", characterId));
+    }
+
+    private void upsertInventoryItem(Character chr, JsonNode body) {
         int itemId = requiredInt(body, "itemId");
         short position = (short) requiredInt(body, "position");
-        if (itemId / 1_000_000 != 1 || position >= 0 || position == 0) {
-            throw new IllegalArgumentException("Only equipped equipment slots are supported while online");
+        InventoryType targetType = inventoryType(itemId, position);
+        if (position == 0 || targetType != InventoryType.EQUIPPED && position < 1) {
+            throw new IllegalArgumentException("Invalid inventory position");
         }
 
-        Inventory equipped = chr.getInventory(InventoryType.EQUIPPED);
         Short sourcePosition = body.hasNonNull("sourcePosition") ? (short) body.path("sourcePosition").asInt() : null;
-        Item source = sourcePosition == null ? null : equipped.getItem(sourcePosition);
-        Item target = equipped.getItem(position);
-        if (target != null && (source == null || target != source)) {
-            throw new IllegalStateException("Target equipped slot is occupied");
-        }
-        if (source != null) {
-            equipped.removeSlot(source.getPosition());
+        InventoryType sourceType = sourcePosition == null ? null
+                : InventoryType.getByType((byte) requiredInt(body, "sourceInventoryType"));
+        if (sourcePosition != null && sourceType == null) {
+            throw new IllegalArgumentException("Unknown source inventory type");
         }
 
-        Equip equip = createEquip(body, itemId, position);
-        equipped.addItemFromDB(equip);
-        chr.sendPacket(PacketCreator.modifyInventory(true, List.of(new ModifyInventory(0, equip))));
-        chr.equipChanged();
+        Inventory sourceInventory = sourceType == null ? null : chr.getInventory(sourceType);
+        Inventory targetInventory = chr.getInventory(targetType);
+        if (sourceInventory != null) {
+            sourceInventory.lockInventory();
+        }
+        if (targetInventory != sourceInventory) {
+            targetInventory.lockInventory();
+        }
+        try {
+            Item source = sourcePosition == null ? null : sourceInventory.getItem(sourcePosition);
+            if (sourcePosition != null && (source == null
+                    || source.getItemId() != requiredInt(body, "expectedItemId"))) {
+                throw new IllegalStateException("Inventory item changed before the edit was applied");
+            }
+            Item target = targetInventory.getItem(position);
+            if (target != null && target != source) {
+                throw new IllegalStateException("Target inventory slot is occupied");
+            }
+            if (targetType != InventoryType.EQUIPPED && position > targetInventory.getSlotLimit()) {
+                throw new IllegalStateException("Target inventory slot is outside the available range");
+            }
+
+            List<ModifyInventory> changes = new ArrayList<>();
+            if (source != null) {
+                changes.add(new ModifyInventory(3, source));
+                sourceInventory.removeSlot(sourcePosition);
+            }
+            Item replacement = createItem(body, itemId, position);
+            preserveLinkedItem(source, replacement);
+            targetInventory.addItemFromDB(replacement);
+            changes.add(new ModifyInventory(0, replacement));
+            chr.sendPacket(PacketCreator.modifyInventory(true, changes));
+        } finally {
+            if (targetInventory != sourceInventory) {
+                targetInventory.unlockInventory();
+            }
+            if (sourceInventory != null) {
+                sourceInventory.unlockInventory();
+            }
+        }
+        if (sourceType == InventoryType.EQUIPPED || targetType == InventoryType.EQUIPPED) {
+            chr.equipChanged();
+        }
+    }
+
+    private void deleteInventoryItem(Character chr, JsonNode body) {
+        InventoryType type = InventoryType.getByType((byte) requiredInt(body, "inventoryType"));
+        short position = (short) requiredInt(body, "position");
+        int expectedItemId = requiredInt(body, "expectedItemId");
+        if (type == null) {
+            throw new IllegalArgumentException("Unknown inventory type");
+        }
+        Inventory inventory = chr.getInventory(type);
+        inventory.lockInventory();
+        try {
+            Item item = inventory.getItem(position);
+            if (item == null || item.getItemId() != expectedItemId) {
+                throw new IllegalStateException("Inventory item changed before the delete was applied");
+            }
+            inventory.removeSlot(position);
+            chr.sendPacket(PacketCreator.modifyInventory(true, List.of(new ModifyInventory(3, item))));
+        } finally {
+            inventory.unlockInventory();
+        }
+        if (type == InventoryType.EQUIPPED) {
+            chr.equipChanged();
+        }
+    }
+
+    private void swapInventoryItems(Character chr, JsonNode body) {
+        InventoryType type = InventoryType.getByType((byte) requiredInt(body, "inventoryType"));
+        if (type == null) {
+            throw new IllegalArgumentException("Unknown inventory type");
+        }
+        short firstPosition = (short) requiredInt(body, "firstPosition");
+        short secondPosition = (short) requiredInt(body, "secondPosition");
+        Inventory inventory = chr.getInventory(type);
+        inventory.lockInventory();
+        try {
+            Item first = inventory.getItem(firstPosition);
+            Item second = inventory.getItem(secondPosition);
+            if (first == null || first.getItemId() != requiredInt(body, "firstItemId")
+                    || second == null || second.getItemId() != requiredInt(body, "secondItemId")) {
+                throw new IllegalStateException("Inventory items changed before the swap was applied");
+            }
+            List<ModifyInventory> changes = new ArrayList<>();
+            changes.add(new ModifyInventory(3, first));
+            changes.add(new ModifyInventory(3, second));
+            inventory.removeSlot(firstPosition);
+            inventory.removeSlot(secondPosition);
+            first.setPosition(secondPosition);
+            second.setPosition(firstPosition);
+            inventory.addItemFromDB(first);
+            inventory.addItemFromDB(second);
+            changes.add(new ModifyInventory(0, first));
+            changes.add(new ModifyInventory(0, second));
+            chr.sendPacket(PacketCreator.modifyInventory(true, changes));
+        } finally {
+            inventory.unlockInventory();
+        }
+        if (type == InventoryType.EQUIPPED) {
+            chr.equipChanged();
+        }
+    }
+
+    private void mutateStorage(HttpExchange exchange, int accountId) throws IOException {
+        JsonNode body = readBody(exchange);
+        Character chr = onlineAccountCharacter(accountId, requiredInt(body, "world"));
+        Storage storage = chr.getStorage();
+        if (storage == null) {
+            throw new IllegalStateException("Online account storage is not loaded");
+        }
+        switch (body.path("operation").asText()) {
+            case "UPSERT" -> storage.upsertFromDatabaseConsole(
+                    body.hasNonNull("sourcePosition") ? (short) body.path("sourcePosition").asInt() : null,
+                    body.hasNonNull("expectedItemId") ? body.path("expectedItemId").asInt() : null,
+                    createItem(body, requiredInt(body, "itemId"), (short) requiredInt(body, "position")));
+            case "DELETE" -> storage.deleteFromDatabaseConsole(
+                    (short) requiredInt(body, "position"), requiredInt(body, "expectedItemId"));
+            case "SWAP" -> storage.swapFromDatabaseConsole(
+                    (short) requiredInt(body, "firstPosition"), requiredInt(body, "firstItemId"),
+                    (short) requiredInt(body, "secondPosition"), requiredInt(body, "secondItemId"));
+            case "UPDATE" -> storage.updateFromDatabaseConsole(
+                    requiredInt(body, "slots"), requiredInt(body, "meso"));
+            default -> throw new IllegalArgumentException("Unknown storage operation");
+        }
+        chr.setUsedStorage();
         chr.saveCharToDB(true, SaveReason.FULL_SAVE);
-        send(exchange, 200, Map.of("status", "OK", "characterId", characterId,
-                "itemId", itemId, "position", (int) position));
+        storage.refreshDatabaseConsoleView(chr.getClient());
+        send(exchange, 200, Map.of("status", "OK", "accountId", accountId));
+    }
+
+    private Item createItem(JsonNode body, int itemId, short position) {
+        int category = itemId / 1_000_000;
+        if (category < 1 || category > 5) {
+            throw new IllegalArgumentException("Item ID does not map to a valid inventory");
+        }
+        int quantity = body.path("quantity").asInt(1);
+        if (quantity < 1 || quantity > Short.MAX_VALUE) {
+            throw new IllegalArgumentException("Invalid item quantity");
+        }
+        Item item = category == 1
+                ? createEquip(body, itemId, position)
+                : new Item(itemId, position, (short) quantity);
+        item.setPosition(position);
+        item.setQuantity((short) quantity);
+        item.setOwner(body.path("owner").asText(""));
+        item.setFlag((short) body.path("flag").asInt(0));
+        item.setExpiration(body.path("expiration").asLong(-1));
+        item.setGiftFrom(body.path("giftFrom").asText(""));
+        return item;
+    }
+
+    private void preserveLinkedItem(Item source, Item replacement) {
+        if (source == null) {
+            return;
+        }
+        if (source.getPetId() > -1) {
+            throw new IllegalStateException("Linked pet items cannot be edited while online");
+        }
+        if (source instanceof Equip sourceEquip && sourceEquip.getRingId() > -1) {
+            if (!(replacement instanceof Equip replacementEquip)
+                    || replacement.getItemId() != source.getItemId()) {
+                throw new IllegalStateException("Linked ring equipment cannot be replaced while online");
+            }
+            replacementEquip.setRingId(sourceEquip.getRingId());
+        }
+    }
+
+    private InventoryType inventoryType(int itemId, short position) {
+        int category = itemId / 1_000_000;
+        InventoryType type = category == 1 && position < 0
+                ? InventoryType.EQUIPPED
+                : InventoryType.getByType((byte) category);
+        if (type == null || type == InventoryType.UNDEFINED) {
+            throw new IllegalArgumentException("Item ID does not map to a valid inventory");
+        }
+        return type;
     }
 
     private Equip createEquip(JsonNode body, int itemId, short position) {
@@ -194,6 +385,18 @@ public class DatabaseConsoleBridgeServer {
             }
         }
         throw new IllegalStateException("Character is not online in the live server");
+    }
+
+    private Character onlineAccountCharacter(int accountId, int worldId) {
+        World world = Server.getInstance().getWorld(worldId);
+        if (world != null) {
+            for (Character chr : world.getPlayerStorage().getAllCharacters()) {
+                if (chr.getAccountID() == accountId) {
+                    return chr;
+                }
+            }
+        }
+        throw new IllegalStateException("Account is not online in the requested world");
     }
 
     private boolean authorized(HttpExchange exchange) {

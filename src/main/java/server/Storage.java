@@ -19,6 +19,7 @@
 package server;
 
 import client.Client;
+import client.inventory.Equip;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.ItemFactory;
@@ -191,6 +192,121 @@ public class Storage {
         }
     }
 
+    public void upsertFromDatabaseConsole(Short sourcePosition, Integer expectedItemId, Item replacement) {
+        lock.lock();
+        try {
+            short targetPosition = replacement.getPosition();
+            if (targetPosition < 1 || targetPosition > slots) {
+                throw new IllegalArgumentException("Storage slot is outside the available range");
+            }
+
+            Item source = sourcePosition == null ? null : findByPosition(sourcePosition);
+            if (sourcePosition != null && (source == null || expectedItemId != null && source.getItemId() != expectedItemId)) {
+                throw new IllegalStateException("Storage item changed before the edit was applied");
+            }
+            Item target = findByPosition(targetPosition);
+            if (target != null && target != source) {
+                throw new IllegalStateException("Target storage slot is occupied");
+            }
+            if (source == null && items.size() >= slots) {
+                throw new IllegalStateException("Storage is full");
+            }
+            if (source != null && source.getPetId() > -1) {
+                throw new IllegalStateException("Linked pet items cannot be edited while online");
+            }
+            if (source instanceof Equip sourceEquip && sourceEquip.getRingId() > -1) {
+                if (!(replacement instanceof Equip replacementEquip)
+                        || replacement.getItemId() != source.getItemId()) {
+                    throw new IllegalStateException("Linked ring equipment cannot be replaced while online");
+                }
+                replacementEquip.setRingId(sourceEquip.getRingId());
+            }
+
+            if (source != null) {
+                items.remove(source);
+            }
+            items.add(replacement);
+            rebuildTypeItems();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public Item deleteFromDatabaseConsole(short position, int expectedItemId) {
+        lock.lock();
+        try {
+            Item item = findByPosition(position);
+            if (item == null || item.getItemId() != expectedItemId) {
+                throw new IllegalStateException("Storage item changed before the delete was applied");
+            }
+            items.remove(item);
+            rebuildTypeItems();
+            return item;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void swapFromDatabaseConsole(short firstPosition, int firstItemId,
+                                        short secondPosition, int secondItemId) {
+        lock.lock();
+        try {
+            Item first = findByPosition(firstPosition);
+            Item second = findByPosition(secondPosition);
+            if (first == null || first.getItemId() != firstItemId
+                    || second == null || second.getItemId() != secondItemId) {
+                throw new IllegalStateException("Storage items changed before the swap was applied");
+            }
+            first.setPosition(secondPosition);
+            second.setPosition(firstPosition);
+            rebuildTypeItems();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void updateFromDatabaseConsole(int newSlots, int newMeso) {
+        lock.lock();
+        try {
+            if (newSlots < 4 || newSlots > 48 || newMeso < 0) {
+                throw new IllegalArgumentException("Invalid storage slots or meso value");
+            }
+            if (items.size() > newSlots || items.stream().anyMatch(item -> item.getPosition() > newSlots)) {
+                throw new IllegalStateException("Storage contains items outside the requested slot limit");
+            }
+            slots = (byte) newSlots;
+            meso = newMeso;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void refreshDatabaseConsoleView(Client c) {
+        lock.lock();
+        try {
+            if (currentNpcid > 0) {
+                c.sendPacket(PacketCreator.getStorage(currentNpcid, slots, getItems(), meso));
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private Item findByPosition(short position) {
+        for (Item item : items) {
+            if (item.getPosition() == position) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private void rebuildTypeItems() {
+        for (InventoryType type : InventoryType.values()) {
+            typeItems.put(type, new ArrayList<>(filterItems(type)));
+        }
+    }
+
     public List<Item> getItems() {
         lock.lock();
         try {
@@ -358,6 +474,7 @@ public class Storage {
         lock.lock();
         try {
             typeItems.clear();
+            currentNpcid = 0;
         } finally {
             lock.unlock();
         }

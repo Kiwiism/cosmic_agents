@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -692,7 +693,7 @@ public class PlayerController {
     }
 
     @PatchMapping("/characters/{characterId}/inventory/{inventoryItemId}")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> updateInventoryItem(@PathVariable int characterId, @PathVariable long inventoryItemId,
                                             @Valid @RequestBody InventoryItemPatch body, Principal principal,
                                             HttpServletRequest request) {
@@ -709,13 +710,11 @@ public class PlayerController {
         }
         if (isOnline(ownerCharacter)) {
             int currentInventoryType = ((Number) before.get("inventorytype")).intValue();
-            if (itemInventoryType != 1 || currentInventoryType != -1 || body.position() >= 0) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Online edits only support equipped equipment slots in this MVP");
-            }
-            bridge.upsertEquippedItem(characterId, equippedItemBridgeBody(body,
-                    ((Number) before.get("position")).intValue()));
-            Map<String, Object> after = equippedInventoryItem(characterId, body.position());
+            bridge.mutateInventory(characterId, inventoryUpsertBridgeBody(body,
+                    ((Number) before.get("position")).intValue(), currentInventoryType,
+                    ((Number) before.get("itemid")).intValue()));
+            Map<String, Object> after = inventoryItemAt(characterId,
+                    storedInventoryTypeForPosition(itemInventoryType, body.position()), body.position());
             audit.record(principal, "INVENTORY_ITEM_UPDATE", "INVENTORY_ITEM", inventoryItemId, body.reason(),
                     before, after, "SAVED_LIVE", request);
             return after;
@@ -761,13 +760,11 @@ public class PlayerController {
     }
 
     @PostMapping("/characters/{characterId}/inventory/{inventoryItemId}/duplicate")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> duplicateInventoryItem(@PathVariable int characterId, @PathVariable long inventoryItemId,
                                                @RequestBody ReasonRequest body, Principal principal,
                                                HttpServletRequest request) {
-        lockCharacter(characterId);
         Map<String, Object> ownerCharacter = character(characterId);
-        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         Map<String, Object> before = inventoryItem(inventoryItemId, characterId);
         int inventoryType = ((Number) before.get("inventorytype")).intValue();
         Integer nextSlot = game.queryForObject("""
@@ -782,6 +779,15 @@ public class PlayerController {
                 ) ORDER BY candidate LIMIT 1
                 """, Map.of("characterId", characterId, "inventoryType", inventoryType), Integer.class);
         if (nextSlot == null) throw new ResponseStatusException(HttpStatus.CONFLICT, "No empty inventory slot");
+        if (isOnline(ownerCharacter)) {
+            bridge.mutateInventory(characterId, inventoryRowUpsertBridgeBody(before, nextSlot));
+            Map<String, Object> after = inventoryItemAt(characterId, inventoryType, nextSlot);
+            audit.record(principal, "INVENTORY_ITEM_DUPLICATE", "INVENTORY_ITEM", after.get("inventoryitemid"),
+                    body.reason(), before, after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockCharacter(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         KeyHolder key = new GeneratedKeyHolder();
         game.update("""
                 INSERT INTO inventoryitems(type, characterid, accountid, itemid, inventorytype, position,
@@ -808,13 +814,11 @@ public class PlayerController {
     }
 
     @PostMapping("/characters/{characterId}/inventory/swap")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> swapInventoryItems(@PathVariable int characterId,
                                             @Valid @RequestBody ItemSwap body,
                                             Principal principal, HttpServletRequest request) {
-        lockCharacter(characterId);
         Map<String, Object> ownerCharacter = character(characterId);
-        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         Map<String, Object> first = inventoryItem(body.firstItemId(), characterId);
         Map<String, Object> second = inventoryItem(body.secondItemId(), characterId);
         int firstType = ((Number) first.get("inventorytype")).intValue();
@@ -825,6 +829,17 @@ public class PlayerController {
         }
         int firstPosition = ((Number) first.get("position")).intValue();
         int secondPosition = ((Number) second.get("position")).intValue();
+        if (isOnline(ownerCharacter)) {
+            bridge.mutateInventory(characterId, inventorySwapBridgeBody(first, second));
+            Map<String, Object> after = Map.of(
+                    "first", inventoryItemAt(characterId, firstType, secondPosition),
+                    "second", inventoryItemAt(characterId, secondType, firstPosition));
+            audit.record(principal, "INVENTORY_ITEMS_SWAP", "CHARACTER", characterId, body.reason(),
+                    Map.of("first", first, "second", second), after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockCharacter(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         game.update("""
                 UPDATE inventoryitems SET position = CASE inventoryitemid
                     WHEN :firstId THEN :secondPosition
@@ -859,19 +874,26 @@ public class PlayerController {
     }
 
     @PatchMapping("/accounts/{accountId}/storage")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> updateStorage(@PathVariable int accountId, @Valid @RequestBody StoragePatch body,
                                       Principal principal, HttpServletRequest request) {
-        lockAccount(accountId);
-        requireOffline(accountId);
         List<Map<String, Object>> rows = game.queryForList("""
                 SELECT storageid, accountid, world, slots, meso FROM storages
-                WHERE accountid=:accountId AND world=:world FOR UPDATE
+                WHERE accountid=:accountId AND world=:world
                 """, Map.of("accountId", accountId, "world", body.world()));
         if (rows.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage not found");
         }
         Map<String, Object> before = rows.getFirst();
+        if (accountOnline(accountId)) {
+            bridge.mutateStorage(accountId, storageUpdateBridgeBody(body));
+            Map<String, Object> after = storageDetails(accountId, body.world());
+            audit.record(principal, "STORAGE_UPDATE", "STORAGE", before.get("storageid"), body.reason(),
+                    before, after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockAccount(accountId);
+        requireOffline(accountId);
         game.update("UPDATE storages SET slots=:slots, meso=:meso WHERE storageid=:storageId",
                 Map.of("slots", body.slots(), "meso", body.meso(), "storageId", before.get("storageid")));
         Map<String, Object> after = game.queryForMap("""
@@ -883,14 +905,24 @@ public class PlayerController {
     }
 
     @PostMapping("/accounts/{accountId}/storage")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> addStorageItem(@PathVariable int accountId, @Valid @RequestBody StorageItemCreate body,
                                        Principal principal, HttpServletRequest request) {
+        List<Map<String, Object>> storages = game.queryForList("""
+                SELECT * FROM storages WHERE accountid=:accountId AND world=:world
+                """, Map.of("accountId", accountId, "world", body.world()));
+        if (accountOnline(accountId)) {
+            if (storages.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Online account storage is not loaded");
+            }
+            bridge.mutateStorage(accountId, storageUpsertBridgeBody(body, null, null));
+            Map<String, Object> after = storageItemAt(accountId, body.world(), body.position());
+            audit.record(principal, "STORAGE_ITEM_CREATE", "STORAGE_ITEM", after.get("inventoryitemid"),
+                    body.reason(), null, after, "SAVED_LIVE", request);
+            return after;
+        }
         lockAccount(accountId);
         requireOffline(accountId);
-        List<Map<String, Object>> storages = game.queryForList("""
-                SELECT * FROM storages WHERE accountid=:accountId AND world=:world FOR UPDATE
-                """, Map.of("accountId", accountId, "world", body.world()));
         if (storages.isEmpty()) {
             game.update("INSERT INTO storages(accountid, world, slots, meso) VALUES (:accountId, :world, 48, 0)",
                     Map.of("accountId", accountId, "world", body.world()));
@@ -904,7 +936,7 @@ public class PlayerController {
         Integer occupied = game.queryForObject("""
                 SELECT COUNT(*) FROM inventoryitems WHERE type=2 AND accountid=:storageId AND position=:position
                 """, Map.of("storageId", storageId, "position", body.position()), Integer.class);
-        if (body.position() < 0 || body.position() >= slots || occupied != null && occupied > 0) {
+        if (body.position() < 1 || body.position() > slots || occupied != null && occupied > 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Storage slot is invalid or occupied");
         }
         int inventoryType = body.itemId() / 1_000_000;
@@ -928,17 +960,24 @@ public class PlayerController {
     }
 
     @PatchMapping("/accounts/{accountId}/storage/{inventoryItemId}")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> updateStorageItem(@PathVariable int accountId, @PathVariable long inventoryItemId,
                                           @Valid @RequestBody StorageItemPatch body, Principal principal,
                                           HttpServletRequest request) {
-        lockAccount(accountId);
-        requireOffline(accountId);
         Integer storageId = game.queryForObject("""
                 SELECT storageid FROM storages WHERE accountid=:accountId AND world=:world
                 """, Map.of("accountId", accountId, "world", body.world()), Integer.class);
         if (storageId == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage not found");
         Map<String, Object> before = storageItem(inventoryItemId, storageId);
+        if (accountOnline(accountId)) {
+            bridge.mutateStorage(accountId, storageRowUpsertBridgeBody(before, body));
+            Map<String, Object> after = storageItemAt(accountId, body.world(), body.position());
+            audit.record(principal, "STORAGE_ITEM_UPDATE", "STORAGE_ITEM", inventoryItemId, body.reason(),
+                    before, after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockAccount(accountId);
+        requireOffline(accountId);
         Integer conflict = game.queryForObject("""
                 SELECT COUNT(*) FROM inventoryitems WHERE type=2 AND accountid=:storageId
                   AND position=:position AND inventoryitemid<>:itemId
@@ -969,16 +1008,23 @@ public class PlayerController {
     }
 
     @DeleteMapping("/accounts/{accountId}/storage/{inventoryItemId}")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> deleteStorageItem(@PathVariable int accountId, @PathVariable long inventoryItemId,
                                           @RequestParam int world, @RequestParam @NotBlank String reason,
                                           Principal principal, HttpServletRequest request) {
-        lockAccount(accountId);
-        requireOffline(accountId);
         Integer storageId = game.queryForObject("""
                 SELECT storageid FROM storages WHERE accountid=:accountId AND world=:world
                 """, Map.of("accountId", accountId, "world", world), Integer.class);
+        if (storageId == null) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage not found");
         Map<String, Object> before = storageItem(inventoryItemId, storageId);
+        if (accountOnline(accountId)) {
+            bridge.mutateStorage(accountId, storageDeleteBridgeBody(before, world));
+            audit.record(principal, "STORAGE_ITEM_DELETE", "STORAGE_ITEM", inventoryItemId, reason,
+                    before, null, "SAVED_LIVE", request);
+            return Map.of("deleted", true);
+        }
+        lockAccount(accountId);
+        requireOffline(accountId);
         game.update("DELETE FROM inventoryequipment WHERE inventoryitemid=:id", Map.of("id", inventoryItemId));
         game.update("DELETE FROM inventoryitems WHERE inventoryitemid=:id AND type=2 AND accountid=:storageId",
                 Map.of("id", inventoryItemId, "storageId", storageId));
@@ -988,12 +1034,10 @@ public class PlayerController {
     }
 
     @PostMapping("/accounts/{accountId}/storage/swap")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> swapStorageItems(@PathVariable int accountId,
                                          @Valid @RequestBody StorageItemSwap body,
                                          Principal principal, HttpServletRequest request) {
-        lockAccount(accountId);
-        requireOffline(accountId);
         Integer storageId = game.queryForObject("""
                 SELECT storageid FROM storages WHERE accountid=:accountId AND world=:world
                 """, Map.of("accountId", accountId, "world", body.world()), Integer.class);
@@ -1002,6 +1046,17 @@ public class PlayerController {
         Map<String, Object> second = storageItem(body.secondItemId(), storageId);
         int firstPosition = ((Number) first.get("position")).intValue();
         int secondPosition = ((Number) second.get("position")).intValue();
+        if (accountOnline(accountId)) {
+            bridge.mutateStorage(accountId, storageSwapBridgeBody(first, second, body.world()));
+            Map<String, Object> after = Map.of(
+                    "first", storageItemAt(accountId, body.world(), secondPosition),
+                    "second", storageItemAt(accountId, body.world(), firstPosition));
+            audit.record(principal, "STORAGE_ITEMS_SWAP", "ACCOUNT", accountId, body.reason(),
+                    Map.of("first", first, "second", second), after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockAccount(accountId);
+        requireOffline(accountId);
         game.update("""
                 UPDATE inventoryitems SET position = CASE inventoryitemid
                     WHEN :firstId THEN :secondPosition
@@ -1019,13 +1074,11 @@ public class PlayerController {
     }
 
     @DeleteMapping("/characters/{characterId}/inventory/{inventoryItemId}")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> deleteInventoryItem(@PathVariable int characterId, @PathVariable long inventoryItemId,
                                             @RequestParam @NotBlank String reason, Principal principal,
                                             HttpServletRequest request) {
-        lockCharacter(characterId);
-        Map<String, Object> character = character(characterId);
-        requireOffline(((Number) character.get("accountid")).intValue());
+        Map<String, Object> ownerCharacter = character(characterId);
         List<Map<String, Object>> rows = game.queryForList("""
                 SELECT * FROM inventoryitems i LEFT JOIN inventoryequipment e
                     ON e.inventoryitemid = i.inventoryitemid
@@ -1034,17 +1087,26 @@ public class PlayerController {
         if (rows.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found");
         }
+        Map<String, Object> before = rows.getFirst();
+        if (isOnline(ownerCharacter)) {
+            bridge.mutateInventory(characterId, inventoryDeleteBridgeBody(before));
+            audit.record(principal, "INVENTORY_ITEM_DELETE", "INVENTORY_ITEM", inventoryItemId, reason,
+                    before, null, "SAVED_LIVE", request);
+            return Map.of("deleted", true);
+        }
+        lockCharacter(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         game.update("DELETE FROM inventoryequipment WHERE inventoryitemid = :itemId",
                 Map.of("itemId", inventoryItemId));
         game.update("DELETE FROM inventoryitems WHERE inventoryitemid = :itemId AND characterid = :characterId",
                 Map.of("itemId", inventoryItemId, "characterId", characterId));
         audit.record(principal, "INVENTORY_ITEM_DELETE", "INVENTORY_ITEM", inventoryItemId, reason,
-                rows.getFirst(), null, "SAVED_OFFLINE", request);
+                before, null, "SAVED_OFFLINE", request);
         return Map.of("deleted", true);
     }
 
     @PostMapping("/characters/{characterId}/inventory")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> addInventoryItem(@PathVariable int characterId, @Valid @RequestBody InventoryItemCreate body,
                                          Principal principal, HttpServletRequest request) {
         Map<String, Object> ownerCharacter = character(characterId);
@@ -1066,12 +1128,8 @@ public class PlayerController {
                     "Unknown item ID. Import the WZ catalog before granting items");
         }
         if (isOnline(ownerCharacter)) {
-            if (inventoryType != 1 || body.position() >= 0) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Online edits only support equipped equipment slots in this MVP");
-            }
-            bridge.upsertEquippedItem(characterId, equippedItemBridgeBody(body, null));
-            Map<String, Object> after = equippedInventoryItem(characterId, body.position());
+            bridge.mutateInventory(characterId, inventoryUpsertBridgeBody(body, null, null, null));
+            Map<String, Object> after = inventoryItemAt(characterId, storedInventoryType, body.position());
             audit.record(principal, "INVENTORY_ITEM_CREATE", "INVENTORY_ITEM", after.get("inventoryitemid"),
                     body.reason(), null, after, "SAVED_LIVE", request);
             return after;
@@ -1117,14 +1175,26 @@ public class PlayerController {
     }
 
     @PatchMapping("/characters/{characterId}/inventory/{inventoryItemId}/equipment")
-    @Transactional("gameTransactionManager")
+    @Transactional(transactionManager = "gameTransactionManager", isolation = Isolation.READ_COMMITTED)
     Map<String, Object> updateEquipment(@PathVariable int characterId, @PathVariable long inventoryItemId,
                                         @Valid @RequestBody EquipmentPatch body, Principal principal,
                                         HttpServletRequest request) {
-        lockCharacter(characterId);
         Map<String, Object> ownerCharacter = character(characterId);
-        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         Map<String, Object> before = inventoryItem(inventoryItemId, characterId);
+        if (((Number) before.get("itemid")).intValue() / 1_000_000 != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Inventory item is not equipment");
+        }
+        if (isOnline(ownerCharacter)) {
+            int inventoryType = ((Number) before.get("inventorytype")).intValue();
+            int position = ((Number) before.get("position")).intValue();
+            bridge.mutateInventory(characterId, inventoryRowUpsertBridgeBody(before, position, body.stats()));
+            Map<String, Object> after = inventoryItemAt(characterId, inventoryType, position);
+            audit.record(principal, "EQUIPMENT_UPDATE", "INVENTORY_ITEM", inventoryItemId, body.reason(),
+                    before, after, "SAVED_LIVE", request);
+            return after;
+        }
+        lockCharacter(characterId);
+        requireOffline(((Number) ownerCharacter.get("accountid")).intValue());
         int updated = game.update("""
                 UPDATE inventoryequipment SET upgradeslots = :upgradeSlots, level = :level,
                     str = :str, dex = :dex, `int` = :int, luk = :luk, hp = :hp, mp = :mp,
@@ -1167,21 +1237,32 @@ public class PlayerController {
                 "reason", body.reason());
     }
 
-    private Map<String, Object> equippedItemBridgeBody(InventoryItemCreate body, Integer sourcePosition) {
-        return equippedItemBridgeBody(body.itemId(), body.position(), body.quantity(), body.owner(), body.flag(),
-                body.expiration(), body.giftFrom(), body.equipment(), body.reason(), sourcePosition);
+    private boolean accountOnline(int accountId) {
+        Integer loggedIn = game.queryForObject("SELECT loggedin FROM accounts WHERE id=:id",
+                Map.of("id", accountId), Integer.class);
+        return loggedIn != null && loggedIn != 0;
     }
 
-    private Map<String, Object> equippedItemBridgeBody(InventoryItemPatch body, Integer sourcePosition) {
-        return equippedItemBridgeBody(body.itemId(), body.position(), body.quantity(), body.owner(), body.flag(),
-                body.expiration(), body.giftFrom(), body.equipment(), body.reason(), sourcePosition);
+    private Map<String, Object> inventoryUpsertBridgeBody(InventoryItemCreate body, Integer sourcePosition,
+                                                           Integer sourceInventoryType, Integer expectedItemId) {
+        return inventoryUpsertBridgeBody(body.itemId(), body.position(), body.quantity(), body.owner(), body.flag(),
+                body.expiration(), body.giftFrom(), body.equipment(), sourcePosition, sourceInventoryType,
+                expectedItemId);
     }
 
-    private Map<String, Object> equippedItemBridgeBody(int itemId, int position, int quantity, String owner,
-                                                       int flag, long expiration, String giftFrom,
-                                                       EquipmentStats equipment, String reason,
-                                                       Integer sourcePosition) {
+    private Map<String, Object> inventoryUpsertBridgeBody(InventoryItemPatch body, Integer sourcePosition,
+                                                           Integer sourceInventoryType, Integer expectedItemId) {
+        return inventoryUpsertBridgeBody(body.itemId(), body.position(), body.quantity(), body.owner(), body.flag(),
+                body.expiration(), body.giftFrom(), body.equipment(), sourcePosition, sourceInventoryType,
+                expectedItemId);
+    }
+
+    private Map<String, Object> inventoryUpsertBridgeBody(int itemId, int position, int quantity, String owner,
+                                                           int flag, long expiration, String giftFrom,
+                                                           EquipmentStats equipment, Integer sourcePosition,
+                                                           Integer sourceInventoryType, Integer expectedItemId) {
         Map<String, Object> values = new LinkedHashMap<>();
+        values.put("operation", "UPSERT");
         values.put("itemId", itemId);
         values.put("position", position);
         values.put("quantity", quantity);
@@ -1190,11 +1271,105 @@ public class PlayerController {
         values.put("expiration", expiration);
         values.put("giftFrom", giftFrom);
         values.put("equipment", equipment);
-        values.put("reason", reason);
         if (sourcePosition != null) {
             values.put("sourcePosition", sourcePosition);
+            values.put("sourceInventoryType", sourceInventoryType);
+            values.put("expectedItemId", expectedItemId);
         }
         return values;
+    }
+
+    private Map<String, Object> inventoryRowUpsertBridgeBody(Map<String, Object> row, int position) {
+        return inventoryUpsertBridgeBody(number(row, "itemid"), position, number(row, "quantity"),
+                string(row, "owner"), number(row, "flag"), longNumber(row, "expiration"),
+                string(row, "giftFrom"), equipmentStats(row), null, null, null);
+    }
+
+    private Map<String, Object> inventoryRowUpsertBridgeBody(Map<String, Object> row, int position,
+                                                              EquipmentStats equipment) {
+        int inventoryType = number(row, "inventorytype");
+        return inventoryUpsertBridgeBody(number(row, "itemid"), position, number(row, "quantity"),
+                string(row, "owner"), number(row, "flag"), longNumber(row, "expiration"),
+                string(row, "giftFrom"), equipment, number(row, "position"), inventoryType,
+                number(row, "itemid"));
+    }
+
+    private Map<String, Object> inventoryDeleteBridgeBody(Map<String, Object> row) {
+        return Map.of("operation", "DELETE", "inventoryType", number(row, "inventorytype"),
+                "position", number(row, "position"), "expectedItemId", number(row, "itemid"));
+    }
+
+    private Map<String, Object> inventorySwapBridgeBody(Map<String, Object> first,
+                                                         Map<String, Object> second) {
+        return Map.of("operation", "SWAP", "inventoryType", number(first, "inventorytype"),
+                "firstPosition", number(first, "position"), "firstItemId", number(first, "itemid"),
+                "secondPosition", number(second, "position"), "secondItemId", number(second, "itemid"));
+    }
+
+    private Map<String, Object> storageUpdateBridgeBody(StoragePatch body) {
+        return Map.of("operation", "UPDATE", "world", body.world(), "slots", body.slots(), "meso", body.meso());
+    }
+
+    private Map<String, Object> storageUpsertBridgeBody(StorageItemCreate body, Integer sourcePosition,
+                                                         Integer expectedItemId) {
+        Map<String, Object> values = inventoryUpsertBridgeBody(body.itemId(), body.position(), body.quantity(),
+                "", 0, -1, "", body.equipment(), null, null, null);
+        values.put("world", body.world());
+        if (sourcePosition != null) {
+            values.put("sourcePosition", sourcePosition);
+            values.put("expectedItemId", expectedItemId);
+        }
+        return values;
+    }
+
+    private Map<String, Object> storageRowUpsertBridgeBody(Map<String, Object> row, StorageItemPatch body) {
+        Map<String, Object> values = inventoryUpsertBridgeBody(number(row, "itemid"), body.position(),
+                body.quantity(), string(row, "owner"), number(row, "flag"), longNumber(row, "expiration"),
+                string(row, "giftFrom"), body.equipment() == null ? equipmentStats(row) : body.equipment(),
+                null, null, null);
+        values.put("world", body.world());
+        values.put("sourcePosition", number(row, "position"));
+        values.put("expectedItemId", number(row, "itemid"));
+        return values;
+    }
+
+    private Map<String, Object> storageDeleteBridgeBody(Map<String, Object> row, int world) {
+        return Map.of("operation", "DELETE", "world", world, "position", number(row, "position"),
+                "expectedItemId", number(row, "itemid"));
+    }
+
+    private Map<String, Object> storageSwapBridgeBody(Map<String, Object> first, Map<String, Object> second,
+                                                       int world) {
+        return Map.of("operation", "SWAP", "world", world,
+                "firstPosition", number(first, "position"), "firstItemId", number(first, "itemid"),
+                "secondPosition", number(second, "position"), "secondItemId", number(second, "itemid"));
+    }
+
+    private EquipmentStats equipmentStats(Map<String, Object> row) {
+        if (number(row, "itemid") / 1_000_000 != 1) {
+            return null;
+        }
+        return new EquipmentStats(number(row, "upgradeslots"), number(row, "level"), number(row, "str"),
+                number(row, "dex"), number(row, "int"), number(row, "luk"), number(row, "hp"),
+                number(row, "mp"), number(row, "watk"), number(row, "matk"), number(row, "wdef"),
+                number(row, "mdef"), number(row, "acc"), number(row, "avoid"), number(row, "hands"),
+                number(row, "speed"), number(row, "jump"), number(row, "locked"), number(row, "vicious"),
+                number(row, "itemlevel"), number(row, "itemexp"));
+    }
+
+    private int number(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        return value instanceof Number number ? number.intValue() : 0;
+    }
+
+    private long longNumber(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        return value instanceof Number number ? number.longValue() : -1;
+    }
+
+    private String string(Map<String, Object> row, String key) {
+        Object value = row.get(key);
+        return value == null ? "" : value.toString();
     }
 
     private int storedInventoryTypeForPosition(int inventoryType, int position) {
@@ -1327,18 +1502,46 @@ public class PlayerController {
         return rows.getFirst();
     }
 
-    private Map<String, Object> equippedInventoryItem(int characterId, int position) {
+    private Map<String, Object> inventoryItemAt(int characterId, int inventoryType, int position) {
         List<Map<String, Object>> rows = game.queryForList("""
                 SELECT i.*, e.*, c.name AS item_name, c.description, c.properties_json
                 FROM inventoryitems i
                 LEFT JOIN inventoryequipment e ON e.inventoryitemid = i.inventoryitemid
                 LEFT JOIN cosmic_database_console.catalog_entities c
                   ON c.entity_type = 'ITEM' AND c.entity_id = i.itemid
-                WHERE i.characterid = :characterId AND i.inventorytype = -1 AND i.position = :position
-                ORDER BY i.inventoryitemid DESC LIMIT 1 FOR UPDATE
-                """, Map.of("characterId", characterId, "position", position));
+                WHERE i.characterid = :characterId AND i.inventorytype = :inventoryType AND i.position = :position
+                ORDER BY i.inventoryitemid DESC LIMIT 1
+                """, Map.of("characterId", characterId, "inventoryType", inventoryType, "position", position));
         if (rows.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Equipped item was not saved by the live bridge");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item was not saved by the live bridge");
+        }
+        return rows.getFirst();
+    }
+
+    private Map<String, Object> storageDetails(int accountId, int world) {
+        List<Map<String, Object>> rows = game.queryForList("""
+                SELECT storageid, accountid, world, slots, meso FROM storages
+                WHERE accountid=:accountId AND world=:world
+                """, Map.of("accountId", accountId, "world", world));
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage not found");
+        }
+        return rows.getFirst();
+    }
+
+    private Map<String, Object> storageItemAt(int accountId, int world, int position) {
+        List<Map<String, Object>> rows = game.queryForList("""
+                SELECT i.*, e.*, c.name AS item_name, c.description, c.properties_json
+                FROM storages s
+                JOIN inventoryitems i ON i.type=2 AND i.accountid=s.storageid
+                LEFT JOIN inventoryequipment e ON e.inventoryitemid=i.inventoryitemid
+                LEFT JOIN cosmic_database_console.catalog_entities c
+                  ON c.entity_type='ITEM' AND c.entity_id=i.itemid
+                WHERE s.accountid=:accountId AND s.world=:world AND i.position=:position
+                ORDER BY i.inventoryitemid DESC LIMIT 1
+                """, Map.of("accountId", accountId, "world", world, "position", position));
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Storage item was not saved by the live bridge");
         }
         return rows.getFirst();
     }

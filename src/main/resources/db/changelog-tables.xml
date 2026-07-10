@@ -118,4 +118,54 @@
         <dropTable tableName="character_tag_sessions" cascadeConstraints="true"/>
     </changeSet>
 
+    <!-- Retire legacy server-CMS tables superseded by the separate Database Console schema. -->
+    <changeSet id="28a-remove-command-overrides" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="command_overrides"/>
+        </preConditions>
+        <dropTable tableName="command_overrides" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="28b-remove-configuration-profiles" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="configuration_profiles"/>
+        </preConditions>
+        <dropTable tableName="configuration_profiles" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="28c-remove-scheduled-operations" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="scheduled_operations"/>
+        </preConditions>
+        <dropTable tableName="scheduled_operations" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="28d-remove-server-cms-audit" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="server_cms_audit"/>
+        </preConditions>
+        <dropTable tableName="server_cms_audit" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="28e-remove-setting-overrides" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="setting_overrides"/>
+        </preConditions>
+        <dropTable tableName="setting_overrides" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="28f-remove-setting-catalog" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="setting_catalog"/>
+        </preConditions>
+        <dropTable tableName="setting_catalog" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="28g-remove-server-cms-users" author="Codex">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="server_cms_users"/>
+        </preConditions>
+        <dropTable tableName="server_cms_users" cascadeConstraints="true"/>
+    </changeSet>
+
 </databaseChangeLog>
