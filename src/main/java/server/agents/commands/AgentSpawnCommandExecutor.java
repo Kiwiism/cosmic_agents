@@ -8,6 +8,7 @@ import server.agents.registry.AgentResolvedCharacter;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentAccountResolution;
 import server.agents.integration.AgentPersistenceGatewayRuntime;
+import server.agents.integration.AgentBackingAccountSecurityRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.capabilities.party.AgentPartyLifecycleService;
@@ -48,6 +49,10 @@ public final class AgentSpawnCommandExecutor {
             AgentAccountResolution account = resolveAgentAccount(botName);
             if (!account.isSuccess()) {
                 player.yellowMessage(account.failureMessage());
+                return;
+            }
+            if (!lockAgentBackingAccount(account.accountId())) {
+                player.yellowMessage("Failed to secure the Agent-only backing account for '" + botName + "'.");
                 return;
             }
 
@@ -102,5 +107,14 @@ public final class AgentSpawnCommandExecutor {
             log.warn("Failed to create or reuse bot account '{}'", name, e);
         }
         return AgentAccountResolution.failure("Failed to create or reuse the bot account for '" + name + "'.");
+    }
+
+    private boolean lockAgentBackingAccount(int accountId) {
+        try {
+            return AgentBackingAccountSecurityRuntime.lockInteractiveLogin(accountId);
+        } catch (SQLException e) {
+            log.warn("Failed to lock interactive login for Agent backing account {}", accountId, e);
+            return false;
+        }
     }
 }
