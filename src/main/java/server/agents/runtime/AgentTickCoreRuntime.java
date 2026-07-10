@@ -7,6 +7,8 @@ import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.AgentMovementTickCoordinator;
 import server.agents.capabilities.movement.AgentStandaloneMoveTargetCoordinator;
 import server.agents.capabilities.combat.AgentDeathTickCoordinator;
+import server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator;
+import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import client.Character;
@@ -45,7 +47,19 @@ public final class AgentTickCoreRuntime {
                 AgentScriptTaskCoordinator::tick,
                 issueGrind,
                 issueFollow,
-                AgentLocalOpportunityAttackRuntime::tryLocalOpportunityAttackForLiveMode,
+                (attackEntry, attackAgent, attackAgentPosition, movementTargetPosition,
+                 moveWindowReferencePosition, allowCombatMovement, allowJumpTowardTarget) -> {
+                    AgentLocalOpportunityAttackService.Result result =
+                            AgentLocalOpportunityAttackCoordinator.tryLocalOpportunityAttack(
+                                    attackEntry,
+                                    attackAgent,
+                                    attackAgentPosition,
+                                    movementTargetPosition,
+                                    moveWindowReferencePosition,
+                                    allowCombatMovement,
+                                    allowJumpTowardTarget);
+                    return new AgentLiveModeTickRuntime.LocalAttackResult(result.consumedTick(), result.targetPos());
+                },
                 AgentMovementTickCoordinator::stepMovementCore,
                 AgentAnchoredFarmRuntime::tickAnchoredFarm,
                 (grindEntry, grindAgent, grindAgentPosition, grindTargetPosition, grindRunAiTick) ->

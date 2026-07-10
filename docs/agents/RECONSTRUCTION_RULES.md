@@ -933,7 +933,7 @@ Recent reconstruction notes:
   compatibility wrappers for legacy tests/callers, but production grind
   commitment/engagement hooks now call Agent runtime helpers directly.
 - Local-opportunity attack hook construction now lives in
-  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. Its temporary
+  `server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator`. Its temporary
   grind navigation dependency now points at `AgentGrindNavigationRuntime`.
 - Local attack move-window config-bound operations now live in
   `server.agents.runtime.AgentLocalAttackMoveWindowRuntime`. BotManager no
@@ -4412,7 +4412,7 @@ Recent reconstruction notes:
   ranged engagement, navigation tail, and combat/navigation side-effect hook
   wiring.
 - Local opportunity attack live-mode adaptation now lives in
-  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager no
+  `server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator`. BotManager no
   longer keeps a local result record or adapter method for converting local
   attack capability results into live-mode tick results.
 - Inactive leader safety and town-return hook wiring now lives in
@@ -7412,6 +7412,10 @@ Current physics correction:
   `AgentMovementOnlyStepRuntime` were renamed `AgentMovementOnlyModeCoordinator`
   and `AgentMovementOnlyTickCoordinator`. Their original mode composition,
   cadence, target snapshot, and movement dispatch ordering remain unchanged.
+- Combat ownership: local opportunity attack hook assembly moved from generic
+  `AgentLocalOpportunityAttackRuntime` to
+  `capabilities.combat.AgentLocalOpportunityAttackCoordinator`. Runtime now owns
+  only conversion to the live-mode result contract; attack behavior is unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

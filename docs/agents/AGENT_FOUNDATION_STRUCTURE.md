@@ -20,7 +20,7 @@ Target package groups:
   composition through `AgentTickCoreRuntime` and script task composition
   through `AgentScriptTaskRuntime`. Grind-mode hook composition now enters
   through `AgentGrindModeRuntime`, and local opportunity attack result
-  adaptation stays in `AgentLocalOpportunityAttackRuntime`. Inactive leader
+  adaptation stays in `AgentLocalOpportunityAttackCoordinator`. Inactive leader
   safety and town-return composition now enter through
   `AgentLeaderSafetyRuntime`, and chat route composition enters through
   `AgentChatRouteRuntime`. Formation defaults and state helpers enter through

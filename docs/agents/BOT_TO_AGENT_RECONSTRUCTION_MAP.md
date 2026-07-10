@@ -1381,7 +1381,7 @@ Recent map updates:
   owns target search, no-target fallback, target commitment, ranged engagement,
   navigation tail, and combat/navigation side-effect hook composition.
 - Local opportunity attack result adaptation moved from BotManager to
-  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager now
+  `server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator`. BotManager now
   passes the Agent runtime method directly into tick-core wiring.
 - Inactive leader safety and town-return hook wiring moved from BotManager to
   `server.agents.runtime.AgentLeaderSafetyRuntime`. BotManager now delegates
@@ -1405,7 +1405,7 @@ Recent map updates:
   legacy movement config values while Agent runtime owns local-opportunity,
   idle, ground-idle, broadcast, and movement-core hook construction.
 - Local-opportunity attack hook wiring moved from BotManager to
-  `server.agents.runtime.AgentLocalOpportunityAttackRuntime`. BotManager keeps
+  `server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator`. BotManager keeps
   only a temporary result adapter while Agent runtime owns grind-navigation,
   jump-height, jump-initiation, and local move-window hook construction.
 - Common tick hook wiring moved from BotManager to
@@ -2344,7 +2344,7 @@ Recent map updates:
 | `src/main/java/server/bots/combat/BotDefenseDataProvider.java` | `server.agents.capabilities.combat.data.AgentDefenseDataProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotMobHitboxProvider.java` | `server.agents.capabilities.combat.data.AgentMobHitboxProvider` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/combat/BotWzXml.java` | `server.agents.capabilities.combat.data.AgentWzXml` | `MIGRATED_TO_AGENT` |
-| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.runtime.AgentLocalOpportunityAttackRuntime`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.capabilities.combat.AgentCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
+| `src/main/java/server/bots/BotManager.java#local-opportunity-attack` | `server.agents.capabilities.combat.AgentLocalOpportunityAttackCoordinator`, `server.agents.capabilities.combat.AgentLocalOpportunityAttackService`, `server.agents.capabilities.combat.AgentCombatAttackRuntime` | `MIGRATED_TO_AGENT`; follow-opportunity local attack and attack execution now accept `AgentRuntimeEntry` while preserving target selection, retreat, jump, attack readiness, damage packet construction, cooldown, facing, alert, and move-window behavior |
 | `src/main/java/server/bots/BotManager.java#grind-combat-helpers` | `server.agents.runtime.AgentGrindCombatRuntime` | `MIGRATED_TO_AGENT`; AoE reposition and priority ranged target callbacks now accept `AgentRuntimeEntry` while preserving AoE anchor and ranged-threat selection behavior |
 | `src/main/java/server/bots/llm/BotLlmConfig.java` | `server.agents.capabilities.dialogue.llm.AgentLlmConfig` | `MIGRATED_TO_AGENT` |
 | `src/main/java/server/bots/llm/BotLlmReplyManager.java` | `server.agents.capabilities.dialogue.llm.AgentLlmReplyService` | `MIGRATED_TO_AGENT`; LLM reply bridge now accepts `AgentRuntimeEntry` |
@@ -3339,3 +3339,7 @@ Recent capability extraction notes:
   `AgentMovementOnlyTickCoordinator`. The mode coordinator composes movement,
   follow, recovery, and shop capabilities; the tick coordinator owns cadence and
   snapshot preparation.
+- Combat ownership: `AgentLocalOpportunityAttackRuntime` became
+  `capabilities.combat.AgentLocalOpportunityAttackCoordinator`. The live-mode
+  result adapter remains in runtime, while combat target, jump, and move-window
+  behavior now has no dependency on runtime result types.

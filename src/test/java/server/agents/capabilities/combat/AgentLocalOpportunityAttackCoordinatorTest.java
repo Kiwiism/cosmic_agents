@@ -1,9 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.combat;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import server.agents.capabilities.combat.AgentLocalOpportunityAttackService;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
@@ -16,9 +15,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
-class AgentLocalOpportunityAttackRuntimeTest {
+class AgentLocalOpportunityAttackCoordinatorTest {
     @Test
-    void convertsCapabilityResultForLiveModeRuntime() {
+    void delegatesThroughCombatHooksAndReturnsCapabilityResult() {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         Character agent = mock(Character.class);
         Point agentPosition = new Point(10, 20);
@@ -38,8 +37,8 @@ class AgentLocalOpportunityAttackRuntimeTest {
                             any(AgentLocalOpportunityAttackService.Hooks.class)))
                     .thenReturn(new AgentLocalOpportunityAttackService.Result(true, updatedTarget));
 
-            AgentLiveModeTickRuntime.LocalAttackResult result =
-                    AgentLocalOpportunityAttackRuntime.tryLocalOpportunityAttackForLiveMode(
+            AgentLocalOpportunityAttackService.Result result =
+                    AgentLocalOpportunityAttackCoordinator.tryLocalOpportunityAttack(
                             entry,
                             agent,
                             agentPosition,
