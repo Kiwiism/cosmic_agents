@@ -3242,3 +3242,6 @@ Recent capability extraction notes:
 - Runtime bridge consolidation: `AgentMovementOnlyMapChangeRuntime` was deleted
   after its sole hook assembly moved into `AgentMovementOnlyRuntime`; grounding,
   reset, broadcast, shop, and status callback ordering remains unchanged.
+- Follow bridge removal: `AgentFollowIdleMovementRuntime` was deleted after its
+  configured-distance overload moved into `AgentFollowIdleMovementService`;
+  idle-fast eligibility and one-second recheck behavior remain unchanged.

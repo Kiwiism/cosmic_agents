@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 import server.agents.capabilities.combat.AgentScriptedMoveCombatTickService;
 import server.agents.capabilities.combat.AgentGrindModeDispatchService;
 import server.agents.capabilities.combat.AgentAnchoredFarmModeTickService;
@@ -115,7 +116,7 @@ public final class AgentLiveModeTickRuntime {
                             followOpportunity.targetPos());
                 },
                 (idleEntry, idleAgent, idleTargetPos, idleNowMs) ->
-                        AgentFollowIdleMovementRuntime.tryFollowIdleMovementFastPath(
+                        AgentFollowIdleMovementService.tryFollowIdleMovementFastPath(
                                 idleEntry, idleAgent, idleTargetPos, idleNowMs),
                 (scriptEntry, scriptAgent, scriptAgentPos, scriptTargetPos, scriptRunAiTick) -> {
                     AgentScriptedMoveCombatTickService.Result scriptedMoveCombat =

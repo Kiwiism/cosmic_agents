@@ -4,6 +4,7 @@ import client.Character;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.capabilities.movement.AgentMovementStuckStateRuntime;
+import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.movement.fidget.AgentFidgetRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
@@ -20,6 +21,19 @@ public final class AgentFollowIdleMovementService {
     private static final long FOLLOW_IDLE_RECHECK_MS = 1000L;
 
     private AgentFollowIdleMovementService() {
+    }
+
+    public static boolean tryFollowIdleMovementFastPath(AgentRuntimeEntry entry,
+                                                        Character agent,
+                                                        Point targetPosition,
+                                                        long nowMs) {
+        return tryFollowIdleMovementFastPath(
+                entry,
+                agent,
+                targetPosition,
+                nowMs,
+                AgentMovementPhysicsConfig.configuredFollowDist(),
+                AgentMovementPhysicsConfig.configuredStopDist());
     }
 
     public static boolean tryFollowIdleMovementFastPath(AgentRuntimeEntry entry,

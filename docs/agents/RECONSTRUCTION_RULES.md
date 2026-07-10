@@ -7311,6 +7311,10 @@ Current physics correction:
   lives in the existing `AgentMovementOnlyRuntime` orchestrator;
   `AgentMovementOnlyMapChangeRuntime` is removed without moving Cosmic-facing
   shop/status coordination into the movement capability.
+- Follow bridge removal: configured follow/stop distances now enter through an
+  overload on `AgentFollowIdleMovementService`; the temporary
+  `AgentFollowIdleMovementRuntime` bridge is removed with idle-fast cadence and
+  eligibility unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
