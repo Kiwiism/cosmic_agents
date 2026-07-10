@@ -8,6 +8,7 @@ import server.agents.capabilities.partyquest.AgentPartyQuestHooks;
 import server.agents.capabilities.shop.AgentShopService;
 import server.agents.capabilities.partyquest.AgentPqRuntime;
 import server.agents.integration.AgentInventoryGatewayRuntime;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 
 import java.util.function.Consumer;
 
@@ -35,7 +36,7 @@ public final class AgentMapTransitionRuntime {
                         AgentPqRuntime::resetKpqStage5Claimed,
                         (shopEntry, shopAgent) -> AgentShopService.onMapChange(
                                 shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
-                        AgentManagerStatusRuntime::checkManagerStatus));
+                        AgentChatStatusOrchestrator::checkBotStatus));
     }
 
 }

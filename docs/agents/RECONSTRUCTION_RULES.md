@@ -2093,11 +2093,11 @@ Recent reconstruction notes:
   chat-status facade for those movement callbacks.
 - BotManager-triggered spawn status checks, map-change status checks,
   shop-transition status checks, offline-return announcements, and AFK ticks
-  now enter through `AgentManagerStatusRuntime`; `BotManager` no longer
+  now enter through `AgentLifecycleStatusCoordinator`; `BotManager` no longer
   reaches directly into the broad chat-status facade for those lifecycle/tick
   callbacks.
 - Bot performance-monitor diagnostics now label the common AFK check as
-  `AgentManagerStatusRuntime.tickAfkCheck`, matching the Agent-owned
+  `AgentChatStatusOrchestrator.tickAfkCheck`, matching the Agent-owned
   BotManager status boundary used by the tick shell.
 - BotManager-triggered queue/reply/map/party delivery now calls
   `AgentReplyRuntime` directly; the pure manager reply pass-through adapter
@@ -2607,7 +2607,7 @@ Recent reconstruction notes:
   BotManager map-change handling keeps BotEntry as the temporary backing store
   but no longer writes `kpq.stage5Claimed` directly in production.
 - Airshow-active tick gate state now enters through
-  `AgentManagerStatusRuntime`; BotManager tick orchestration keeps BotEntry
+  `AgentChatStatusOrchestrator`; BotManager tick orchestration keeps BotEntry
   as the temporary backing store but no longer reads `airshowActive` directly in
   production.
 - Scheduled tick task cancellation now enters through
@@ -6298,7 +6298,7 @@ Current physics correction:
   `AgentPotionService`, and gear suggestions to `AgentOfferService`; follow/
   stop active-mode preparation behavior is unchanged.
 - Manager status callback orchestration now lives in
-  `server.agents.runtime.AgentManagerStatusRuntime`. It still delegates delayed
+  `server.agents.runtime.AgentLifecycleStatusCoordinator`. It still delegates delayed
   spawn checks to `AgentSchedulerRuntime`, status behavior to
   `AgentChatStatusOrchestrator`, and airshow state reads to
   `AgentAirshowStateRuntime`; spawn status checks, offline-return notices, AFK
@@ -7431,6 +7431,10 @@ Current physics correction:
 - Retained runtime orchestration: `AgentLeaderSafetyRuntime` was renamed
   `AgentLeaderSafetyCoordinator`. It intentionally coordinates plan, shop, mode,
   movement, map, formation, and registry behavior for inactive-leader recovery.
+- Runtime cleanup: `AgentManagerStatusRuntime` was removed. Dialogue and AFK
+  callbacks now call `AgentChatStatusOrchestrator`, airshow state uses its own
+  capability directly, and only delayed spawn-status scheduling remains in
+  `AgentLifecycleStatusCoordinator`.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

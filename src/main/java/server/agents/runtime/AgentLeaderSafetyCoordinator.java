@@ -13,6 +13,7 @@ import server.agents.capabilities.movement.AgentMovementPoseService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.maps.MapleMap;
@@ -59,7 +60,7 @@ public final class AgentLeaderSafetyCoordinator {
                                 activeEntry,
                                 () -> AgentMoveTargetStateRuntime.clearMoveTarget(activeEntry),
                                 () -> AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderCharId),
-                                () -> AgentManagerStatusRuntime.announceOwnerReturnedFromOffline(activeEntry)),
+                                () -> AgentChatStatusOrchestrator.announceOwnerReturnedFromOffline(activeEntry)),
                         AgentLeaderSafetyCoordinator::shouldTownWarpForInactiveEntry,
                         (inactiveEntry, town) -> enterInactiveSafeMode(inactiveEntry, agent, leaderCharId, town),
                         inactiveTownReturnMs));

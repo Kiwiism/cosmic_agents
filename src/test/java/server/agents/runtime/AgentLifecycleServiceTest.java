@@ -46,7 +46,7 @@ class AgentLifecycleServiceTest {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentFormationService.formationsByLeaderId().clear();
 
-        try (MockedStatic<AgentManagerStatusRuntime> status = mockStatic(AgentManagerStatusRuntime.class)) {
+        try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
             AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
                     leader.getId(),
                     leader,
@@ -79,7 +79,7 @@ class AgentLifecycleServiceTest {
             assertTrue(normalized.get());
             scheduledTick.get().run();
             assertSame(entry, tickedEntry.get());
-            status.verify(() -> AgentManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, 123L));
+            status.verify(() -> AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(entry, agent, 123L));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
             AgentFormationService.formationsByLeaderId().clear();
@@ -96,7 +96,7 @@ class AgentLifecycleServiceTest {
         AgentRuntimeRegistry.entriesByLeaderId().clear();
         AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(oldEntry);
 
-        try (MockedStatic<AgentManagerStatusRuntime> status = mockStatic(AgentManagerStatusRuntime.class)) {
+        try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
             AgentRuntimeEntry newEntry = AgentLifecycleService.registerAgent(
                     leader.getId(),
                     leader,
@@ -118,7 +118,7 @@ class AgentLifecycleServiceTest {
 
             assertEquals(1, cancelled.get());
             assertEquals(List.of(newEntry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
-            status.verify(() -> AgentManagerStatusRuntime.scheduleSpawnStatusCheck(newEntry, agent, 456L));
+            status.verify(() -> AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(newEntry, agent, 456L));
         } finally {
             AgentRuntimeRegistry.entriesByLeaderId().clear();
         }

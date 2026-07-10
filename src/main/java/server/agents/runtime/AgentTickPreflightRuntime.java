@@ -4,6 +4,7 @@ import server.agents.capabilities.movement.AgentMovementBroadcastService;
 
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 import server.agents.capabilities.trade.AgentOfferService;
+import server.agents.capabilities.social.airshow.AgentAirshowStateRuntime;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 
@@ -25,7 +26,7 @@ public final class AgentTickPreflightRuntime {
 
     private static AgentTickPreflightService.Hooks hooks() {
         return new AgentTickPreflightService.Hooks(
-                AgentManagerStatusRuntime::airshowActive,
+                AgentAirshowStateRuntime::active,
                 AgentTickCadenceStateRuntime::consumeSkipDelay,
                 AgentRuntimeCleanupService::removeAgentByCharacterId,
                 (entry, agent, nowMs, heartbeatIntervalMs) -> AgentHeartbeatService.tickHeartbeat(

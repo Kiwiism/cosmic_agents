@@ -235,7 +235,8 @@ public final class AgentLifecycleService {
         if (normalizeSpawnState) {
             hooks.normalizeSpawnedAgent().accept(entry);
         }
-        AgentManagerStatusRuntime.scheduleSpawnStatusCheck(entry, agent, hooks.spawnStatusDelayMs().getAsLong());
+        AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(
+                entry, agent, hooks.spawnStatusDelayMs().getAsLong());
         return entry;
     }
 

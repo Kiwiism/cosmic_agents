@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
 import server.agents.capabilities.follow.AgentFollowMapSyncCoordinator;
+import server.agents.capabilities.dialogue.AgentChatStatusOrchestrator;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
@@ -95,7 +96,7 @@ public final class AgentMovementOnlyModeCoordinator {
                         AgentMovementBroadcastService::broadcastMovement,
                         (shopEntry, shopAgent) -> AgentShopService.onMapChange(
                                 shopEntry, shopAgent, AgentInventoryGatewayRuntime.inventory()),
-                        AgentManagerStatusRuntime::checkManagerStatus));
+                        AgentChatStatusOrchestrator::checkBotStatus));
     }
 
     public record ModeConfig(int teleportDistance,
