@@ -1331,7 +1331,7 @@ Recent reconstruction notes:
   `spawnedBotCount` and `getOwnedBotCharacters` as compatibility delegates, and
   the same active-entry count plus null-agent filtering behavior is preserved.
 - BotManager bot-only autopot cleanup now lives in
-  `server.agents.runtime.AgentAutopotRuntimeCleanupService`. Runtime release
+  `server.agents.capabilities.supplies.AgentAutopotCleanupService`. Runtime release
   still removes the live entry first, then clears HP/MP autopot alerts and
   normalizes pet autopot keys 91/92 to type 7 with the same action values.
 - BotManager spawn-position grounding now lives in
@@ -7063,6 +7063,10 @@ Current physics correction:
   `TradeGateway.currentWindow` instead of `Character.getTrade`. Open/closed
   gating, physics-only callback dispatch, and consumed-tick behavior are
   unchanged.
+- Capability ownership/naming: `AgentAutopotRuntimeCleanupService` is now
+  `capabilities.supplies.AgentAutopotCleanupService`, with the entry point named
+  `clearAgentAutopotState`. HP/MP alert reset, key 91/92 normalization guards,
+  key action preservation, and runtime release ordering are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

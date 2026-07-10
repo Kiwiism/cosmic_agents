@@ -14,7 +14,7 @@ class AgentFoundationStructureTest {
         List<String> classes = List.of(
                 "server.agents.api.AgentService",
                 "server.agents.runtime.AgentSession",
-                "server.agents.runtime.AgentAutopotRuntimeCleanupService",
+                "server.agents.capabilities.supplies.AgentAutopotCleanupService",
                 "server.agents.capabilities.party.AgentPartyLifecycleService",
                 "server.agents.runtime.AgentSpawnPositionService",
                 "server.agents.runtime.AgentTickScheduler",

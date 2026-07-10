@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.supplies.AgentAutopotCleanupService;
+
 import client.Character;
 import client.keybind.KeyBinding;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,7 @@ class AgentAutopotRuntimeCleanupServiceTest {
             return null;
         }).when(agent).changeKeybinding(anyInt(), any(KeyBinding.class));
 
-        AgentAutopotRuntimeCleanupService.clearBotOnlyAutopotState(agent);
+        AgentAutopotCleanupService.clearAgentAutopotState(agent);
 
         verify(agent).setAutopotHpAlert(0f);
         verify(agent).setAutopotMpAlert(0f);

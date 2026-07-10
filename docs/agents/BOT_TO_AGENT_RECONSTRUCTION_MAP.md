@@ -1759,7 +1759,7 @@ Recent map updates:
   imports BotManager for those lookups, while BotManager keeps compatibility
   accessors for older callers.
 - BotManager bot-only autopot cleanup moved to
-  `server.agents.runtime.AgentAutopotRuntimeCleanupService`. BotManager
+  `server.agents.capabilities.supplies.AgentAutopotCleanupService`. BotManager
   `cleanupBotRuntimeState` remains the temporary lifecycle wrapper that removes
   the entry and then calls the Agent-owned cleanup helper.
 - BotManager spawn-position resolution moved to
@@ -3025,3 +3025,7 @@ Recent capability extraction notes:
   runtime to `capabilities.trade` and reads the abstract window through
   `TradeGateway.currentWindow`. Trade gating and physics-only tick behavior
   remain unchanged.
+- Capability ownership/naming: autopot cleanup moved from
+  `AgentAutopotRuntimeCleanupService` to
+  `capabilities.supplies.AgentAutopotCleanupService`. Alert reset and keybinding
+  normalization behavior remain unchanged.

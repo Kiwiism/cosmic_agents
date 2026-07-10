@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.supplies.AgentAutopotCleanupService;
+
 import client.Character;
 
 public final class AgentRuntimeCleanupService {
@@ -30,7 +32,7 @@ public final class AgentRuntimeCleanupService {
         }
 
         boolean removed = removeAgentByCharacterId(agent.getId());
-        AgentAutopotRuntimeCleanupService.clearBotOnlyAutopotState(agent);
+        AgentAutopotCleanupService.clearAgentAutopotState(agent);
         return removed;
     }
 }

@@ -1,13 +1,13 @@
-package server.agents.runtime;
+package server.agents.capabilities.supplies;
 
 import client.Character;
 import client.keybind.KeyBinding;
 
-public final class AgentAutopotRuntimeCleanupService {
-    private AgentAutopotRuntimeCleanupService() {
+public final class AgentAutopotCleanupService {
+    private AgentAutopotCleanupService() {
     }
 
-    public static void clearBotOnlyAutopotState(Character agent) {
+    public static void clearAgentAutopotState(Character agent) {
         agent.setAutopotHpAlert(0f);
         agent.setAutopotMpAlert(0f);
         normalizeAutopotKey(agent, 91);
