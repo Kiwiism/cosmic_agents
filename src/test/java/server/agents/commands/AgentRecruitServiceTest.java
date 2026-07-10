@@ -1,4 +1,4 @@
-package server.agents.runtime;
+package server.agents.commands;
 
 import client.Character;
 import org.junit.jupiter.api.Test;

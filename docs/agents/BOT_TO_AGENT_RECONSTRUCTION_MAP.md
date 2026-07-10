@@ -1595,7 +1595,7 @@ Recent map updates:
   BotManager now supplies temporary hooks for offer expiry, target validation,
   targeted-command resolution, offer-response handling, and speaker feedback.
 - Ownerless Agent recruit lifecycle moved from BotManager to
-  `server.agents.runtime.AgentRecruitService`. BotManager now supplies
+  `server.agents.commands.AgentRecruitService`. BotManager now supplies
   temporary hooks for unclaimed online Agent lookup, control authorization, and
   registration under the current leader.
 - Agent transfer between leaders moved from BotManager to
@@ -3379,3 +3379,6 @@ Recent capability extraction notes:
   `bot_owners` reads/writes moved from command/auth code to
   `integration.cosmic.CosmicAgentPersistenceGateway`. Generic code now depends on
   `AgentPersistenceGateway` through the server adapter.
+- Command ownership: `AgentRecruitService` moved from generic runtime to
+  `commands`; lookup, authorization, registration, and error results are
+  unchanged.

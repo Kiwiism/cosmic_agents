@@ -7,7 +7,6 @@ import server.agents.capabilities.dialogue.AgentDialogueSelector;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRandom;
-import server.agents.runtime.AgentRecruitService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentScheduledTaskRuntime;

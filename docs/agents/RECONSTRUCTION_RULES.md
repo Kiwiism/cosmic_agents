@@ -1160,7 +1160,7 @@ Recent reconstruction notes:
   targeted response handling, feedback delivery, single-match default response,
   ambiguous confirmation message, and no-match fall-through are preserved.
 - Ownerless Agent recruit lifecycle now lives in
-  `server.agents.runtime.AgentRecruitService`. BotManager keeps a temporary
+  `server.agents.commands.AgentRecruitService`. BotManager keeps a temporary
   compatibility hook bundle for unclaimed online Agent lookup, control
   authorization, and registration under the current leader. The same missing
   ownerless-Agent message, authorization failure propagation, and registration
@@ -7449,6 +7449,9 @@ Current physics correction:
   and ownership-table access moved into `CosmicAgentPersistenceGateway` behind
   `AgentPersistenceGateway`. Queries, password hashing, defaults, authorization,
   and command messages remain unchanged.
+- Command ownership: recruitment lookup, authorization, registration, and error
+  handling moved from generic runtime to `commands.AgentRecruitService` with no
+  behavior changes.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
