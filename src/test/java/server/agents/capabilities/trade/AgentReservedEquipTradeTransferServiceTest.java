@@ -2,6 +2,8 @@ package server.agents.capabilities.trade;
 
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,10 @@ class AgentReservedEquipTradeTransferServiceTest {
                 replies::add);
 
         assertEquals(1, replies.size());
-        assertTrue(replies.get(0).contains("reserved equips"));
+        List<String> expectedReplies = AgentDialogueCatalog.noItemsReplies().stream()
+                .map(template -> AgentInventoryDialogueReporter.noItemsReply(
+                        "equips:reserved:2", List.of(template)))
+                .toList();
+        assertTrue(expectedReplies.contains(replies.get(0)));
     }
 }
