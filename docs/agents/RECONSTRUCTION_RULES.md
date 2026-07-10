@@ -4312,7 +4312,7 @@ Recent reconstruction notes:
   temporary compatibility adapter for the physics-only tick body and performance
   timing. The same `getTrade() != null` consumed-tick behavior is preserved.
 - Shop-visit tick dispatch now lives in
-  `server.agents.runtime.AgentShopVisitTickService`. BotManager keeps a
+  `server.agents.capabilities.shop.AgentShopVisitTickService`. BotManager keeps a
   temporary compatibility adapter for the existing shop visit tick body,
   performance timing, and movement-core stepping. The same pending check,
   active target lookup, approach-delay early return, movement-step dispatch, and
@@ -7041,6 +7041,10 @@ Current physics correction:
   `capabilities.follow`. Follow/AI/climb/map/range gates, current-target fallback,
   and local-opportunity callback dispatch are unchanged; live-mode runtime still
   supplies the combat callback and configured follow distance.
+- Capability ownership: `AgentShopVisitTickService` now lives under
+  `capabilities.shop`. Pending-visit gating, shop tick execution, approach-delay
+  consumption, active-target movement dispatch, and result propagation are
+  unchanged; live-mode runtime remains the hook adapter.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.follow.AgentFollowOpportunityTickService;
+import server.agents.capabilities.shop.AgentShopVisitTickService;
 
 import client.Character;
 import server.agents.capabilities.shop.AgentShopService;

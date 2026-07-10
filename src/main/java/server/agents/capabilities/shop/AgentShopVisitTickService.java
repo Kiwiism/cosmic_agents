@@ -1,7 +1,7 @@
-package server.agents.runtime;
+package server.agents.capabilities.shop;
 
 import client.Character;
-import server.agents.capabilities.shop.AgentShopStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 
