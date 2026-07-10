@@ -3187,3 +3187,6 @@ Recent capability extraction notes:
 - Capability state ownership: the concrete `AgentMovementBroadcastState` moved
   from generic runtime to `capabilities.movement`; validity and exact movement
   snapshot matching/recording remain unchanged.
+- Capability state ownership: the concrete `AgentMovementPhysicsCacheState`
+  moved from generic runtime to `capabilities.movement`; its zero default and
+  foothold cache access remain unchanged.

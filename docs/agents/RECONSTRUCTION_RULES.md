@@ -4994,7 +4994,7 @@ Current physics correction:
   state object, while last broadcast position, velocity, stance, and foothold
   route through Agent runtime state.
 - Last-ground foothold cache state now lives in
-  `AgentMovementPhysicsCacheState`. `BotEntry` temporarily hosts the
+  `server.agents.capabilities.movement.AgentMovementPhysicsCacheState`. `BotEntry` temporarily hosts the
   Agent-owned state object, while grounded movement and airshow trail readers
   route through Agent runtime state.
 - Pending trade sequence state now lives in `AgentPendingTradeSequenceState`.
@@ -7250,6 +7250,9 @@ Current physics correction:
 - Capability state ownership: `AgentMovementBroadcastState` now lives under
   `capabilities.movement`. Validity, exact pose/velocity/stance/foothold
   matching, record order, and individual field access remain unchanged.
+- Capability state ownership: `AgentMovementPhysicsCacheState` now lives under
+  `capabilities.movement`. The zero default and last-ground foothold read/write
+  behavior remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels
