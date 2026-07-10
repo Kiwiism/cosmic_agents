@@ -1946,7 +1946,7 @@ Recent map updates:
   command/script side-effect wrapper for follow, grind, stop, move-to,
   farm-here, and patrol entry points.
 - BotManager target snapshot composition moved further into
-  `server.agents.runtime.AgentTargetSnapshotService`; BotManager now only wires
+  `server.agents.capabilities.movement.AgentTargetSnapshotService`; BotManager now only wires
   temporary sibling/formation storage and the follow-target resolver callback.
 - BotManager formation state lookup moved to
   `server.agents.capabilities.movement.AgentFormationService`; BotManager still stores the
@@ -1959,10 +1959,10 @@ Recent map updates:
   compatibility wrapper that supplies the temporary sibling list until runtime
   registry ownership is fully moved.
 - BotManager target snapshot assembly moved to
-  `server.agents.runtime.AgentTargetSnapshotService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentTargetSnapshotService`; BotManager still supplies
   temporary follow-anchor and follow-target-position callbacks for this slice.
 - BotManager target snapshot record moved to
-  `server.agents.runtime.AgentTargetSnapshot`; movement/navigation callers and
+  `server.agents.capabilities.movement.AgentTargetSnapshot`; movement/navigation callers and
   tests consume the Agent-owned record.
 - BotManager formation type/state and offset calculation moved to
   `server.agents.capabilities.movement.AgentFormationService`; command parsing and the
@@ -2278,7 +2278,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#heartbeat` | `server.agents.runtime.AgentHeartbeatService` | `MIGRATED_TO_AGENT`; heartbeat ticking now accepts `AgentRuntimeEntry` while preserving due checks, timestamp marking, client last-packet updates, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#scheduled-task` | `server.agents.runtime.AgentScheduledTaskRuntime` | `MIGRATED_TO_AGENT`; scheduled-task cancellation now accepts `AgentRuntimeEntry` while preserving null guards, scheduled-task presence checks, and `ScheduledFuture.cancel(false)` behavior |
 | `src/main/java/server/bots/BotManager.java#action-lock-physics` | `server.agents.capabilities.movement.AgentActionLockPhysicsService` | `MIGRATED_TO_AGENT`; action-lock physics dispatch now accepts `AgentRuntimeEntry` while preserving attack-cooldown gating, swim/airborne/grounded branch selection, and movement-phase callbacks |
-| `src/main/java/server/bots/BotManager.java#target-snapshot` | `server.agents.runtime.AgentTargetSnapshot` | `MIGRATED_TO_AGENT`; target snapshot steering helpers now accept `AgentRuntimeEntry` while preserving navigation waypoint override lookup and primary-target fallback behavior |
+| `src/main/java/server/bots/BotManager.java#target-snapshot` | `server.agents.capabilities.movement.AgentTargetSnapshot` | `MIGRATED_TO_AGENT`; target snapshot steering helpers now accept `AgentRuntimeEntry` while preserving navigation waypoint override lookup and primary-target fallback behavior |
 | `src/main/java/server/bots/BotManager.java#final-movement-tail` | `server.agents.capabilities.movement.AgentFinalMovementTailService` | `MIGRATED_TO_AGENT`; final movement tail dispatch now accepts `AgentRuntimeEntry` while preserving movement-core target and AI-tick arguments |
 | `src/main/java/server/bots/BotManager.java#idle-mode-tick` | `server.agents.runtime.AgentIdleModeTickService` | `MIGRATED_TO_AGENT`; idle-mode tick dispatch now accepts `AgentRuntimeEntry` while preserving idle physics callback behavior |
 | `src/main/java/server/bots/BotManager.java#movement-phase` | `server.agents.capabilities.movement.AgentMovementPhaseService` | `MIGRATED_TO_AGENT`; movement phase dispatch now accepts `AgentRuntimeEntry` while preserving climb/swim/airborne/grounded branch ordering and callbacks |
@@ -3147,3 +3147,7 @@ Recent capability extraction notes:
 - Plan ownership: `AgentScriptTaskTickService` moved from generic runtime to
   `plans`. Activation/start/completion/clear loop ordering and early returns
   remain unchanged.
+- Capability read-model ownership: `AgentTargetSnapshot` and its capture service
+  moved from generic runtime to `capabilities.movement`. All target sources,
+  point-copy behavior, precedence, labels, and fallback semantics remain
+  unchanged.

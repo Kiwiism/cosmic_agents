@@ -2,7 +2,7 @@ package server.agents.capabilities.combat;
 
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import java.awt.Point;
 

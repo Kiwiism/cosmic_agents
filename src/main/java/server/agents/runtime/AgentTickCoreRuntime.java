@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentOwnerlessTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import client.Character;
 

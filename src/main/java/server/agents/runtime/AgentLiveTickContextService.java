@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import java.awt.Point;
 

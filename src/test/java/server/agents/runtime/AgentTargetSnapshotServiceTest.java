@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentTargetSnapshot;
+import server.agents.capabilities.movement.AgentTargetSnapshotService;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentFormationStateRuntime;
 import client.Character;

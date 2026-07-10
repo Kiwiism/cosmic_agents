@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.agents.capabilities.combat.AgentLocalAttackMoveWindowService;
 import client.Character;
 import org.junit.jupiter.api.Test;

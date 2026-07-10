@@ -45,7 +45,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSpawnPlacementRuntime;
-import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 import server.agents.runtime.AgentTargetSnapshotRuntime;
 import server.agents.runtime.AgentTickFailureRuntime;
 import client.Character;

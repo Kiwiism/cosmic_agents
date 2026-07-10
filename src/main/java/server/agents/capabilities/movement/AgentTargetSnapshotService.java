@@ -1,14 +1,12 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.capabilities.movement.AgentFormationStateRuntime;
 import server.agents.capabilities.follow.AgentFollowAnchorService;
 
 import client.Character;
 import server.agents.runtime.AgentFarmAnchorStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.capabilities.combat.AgentGrindTargetStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
 import server.life.Monster;

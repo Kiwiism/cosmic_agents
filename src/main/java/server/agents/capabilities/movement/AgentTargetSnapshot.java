@@ -1,7 +1,7 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
-import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.awt.Point;
 

@@ -6,8 +6,6 @@ import server.agents.capabilities.follow.AgentFollowTargetPositionService;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
-import server.agents.runtime.AgentTargetSnapshot;
-import server.agents.runtime.AgentTargetSnapshotService;
 
 import java.awt.Point;
 import java.util.List;

@@ -1509,10 +1509,10 @@ Recent reconstruction notes:
   `bots` field remains a compatibility alias, and Agent session lookup bridges
   read entries directly from the Agent-owned registry.
 - BotManager target snapshot assembly moved to
-  `server.agents.runtime.AgentTargetSnapshotService`. BotManager still supplies
+  `server.agents.capabilities.movement.AgentTargetSnapshotService`. BotManager still supplies
   temporary follow-anchor, formation, and follow-target-position callbacks, but
   primary target precedence and snapshot construction are Agent-owned.
-- BotManager target snapshot data lives in `server.agents.runtime.AgentTargetSnapshot`;
+- BotManager target snapshot data lives in `server.agents.capabilities.movement.AgentTargetSnapshot`;
   movement/navigation callers and tests consume the Agent-owned record.
 - BotManager formation type/state and follow-offset application moved to
   `server.agents.capabilities.movement.AgentFormationService`. BotManager still owns the
@@ -4085,7 +4085,7 @@ Recent reconstruction notes:
   temporary per-leader formation map but no longer owns the default-vs-custom
   resolution rule.
 - Target snapshot composition now lives in
-  `server.agents.runtime.AgentTargetSnapshotService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentTargetSnapshotService`; BotManager still supplies
   the temporary sibling entry list, per-leader formation map, and follow-target
   resolver callback, but no longer composes follow-anchor plus formation before
   snapshot capture.
@@ -7203,6 +7203,11 @@ Current physics correction:
 - Plan ownership: `AgentScriptTaskTickService` now lives under `plans`. The
   no-agent skip, next-task activation, start-before-completion check, incomplete
   return, active-task clearing, and same-tick loop progression remain unchanged.
+- Capability read-model ownership: `AgentTargetSnapshot` and
+  `AgentTargetSnapshotService` now live under `capabilities.movement`. Follow
+  anchor and formation resolution, copied point values, shop/move/farm/grind
+  target capture, primary-target precedence, labels, and fallbacks remain
+  unchanged; runtime retains only registry/config hook wiring.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

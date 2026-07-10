@@ -2,6 +2,8 @@ package server.agents.runtime;
 
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentFormationRuntime;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
+import server.agents.capabilities.movement.AgentTargetSnapshotService;
 import server.agents.capabilities.follow.AgentFollowAnchorService;
 import server.agents.capabilities.follow.AgentFollowTargetPositionService;
 

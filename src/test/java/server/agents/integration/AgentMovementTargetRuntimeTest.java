@@ -7,7 +7,7 @@ import server.agents.capabilities.movement.AgentMovementTargetSnapshot;
 import server.agents.capabilities.movement.AgentMovementTargetRuntime;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
 import server.agents.capabilities.movement.AgentFormationService;
-import server.agents.runtime.AgentTargetSnapshot;
+import server.agents.capabilities.movement.AgentTargetSnapshot;
 
 import java.awt.Point;
 
