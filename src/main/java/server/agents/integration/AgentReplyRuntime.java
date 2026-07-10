@@ -42,11 +42,11 @@ public final class AgentReplyRuntime {
             case WHISPER -> {
                 Character owner = AgentRuntimeIdentityRuntime.owner(entry);
                 Character bot = AgentRuntimeIdentityRuntime.bot(entry);
-                if (owner != null && owner.getClient() != null) {
+                if (owner != null && AgentClientGatewayRuntime.clients().hasClient(owner)) {
                     AgentPacketGatewayRuntime.packets().sendWhisperReceive(
                             owner,
                             bot.getName(),
-                            bot.getClient().getChannel() - 1,
+                            AgentClientGatewayRuntime.clients().channel(bot) - 1,
                             false,
                             AgentChatTextSanitizer.sanitize(message));
                 }

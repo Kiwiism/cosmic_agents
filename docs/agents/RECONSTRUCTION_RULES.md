@@ -7323,6 +7323,9 @@ Current physics correction:
   pet-autopot code now enters through
   `integration.cosmic.CosmicAgentPotionCheckRequestBridge`; runtime lookup and
   supply retry timing remain unchanged.
+- Integration gateway use: whisper reply delivery now obtains client presence
+  and channel through `AgentClientGatewayRuntime`; direct `getClient()` access
+  is confined to Cosmic adapter implementations without changing packet fields.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

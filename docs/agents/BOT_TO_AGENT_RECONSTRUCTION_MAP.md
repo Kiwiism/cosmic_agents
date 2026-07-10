@@ -3252,3 +3252,6 @@ Recent capability extraction notes:
   `integration.cosmic.CosmicAgentPotionCheckRequestBridge`, making the
   Character/pet-autopot hook explicit while preserving registry resolution and
   potion retry timing.
+- Integration gateway use: `AgentReplyRuntime` now resolves whisper client
+  presence and sender channel through `AgentClientGatewayRuntime`; packet
+  delivery and channel offset remain unchanged.
