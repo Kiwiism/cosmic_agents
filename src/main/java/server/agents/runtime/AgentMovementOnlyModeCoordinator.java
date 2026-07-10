@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.agents.capabilities.follow.AgentFollowIdleMovementService;
+import server.agents.capabilities.follow.AgentFollowMapSyncCoordinator;
 import server.agents.capabilities.movement.AgentFootholdIndexService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
@@ -47,7 +48,7 @@ public final class AgentMovementOnlyModeCoordinator {
         return new AgentMovementOnlyTickService.MovementOnlyHooks(
                 AgentIdlePhysicsService::tickIdleEntry,
                 (entry, agent) -> AgentShopStateRuntime.shopVisitPending(entry),
-                AgentFollowMapSyncRuntime::syncFollowMap,
+                AgentFollowMapSyncCoordinator::syncFollowMap,
                 followAnchorResolver::apply,
                 (entry, agent, anchor) -> AgentRecoveryTeleportCoordinator.recoverGrindPartyTeleportDistance(
                         entry,

@@ -969,7 +969,7 @@ Recent reconstruction notes:
   only legacy distance thresholds until movement recovery configuration is
   moved into Agent-owned runtime config.
 - Follow map-sync hook construction now lives in
-  `server.agents.runtime.AgentFollowMapSyncRuntime`. The temporary public
+  `server.agents.capabilities.follow.AgentFollowMapSyncCoordinator`. The temporary public
   `BotMovementManager.resetEntryState` bridge exists only until movement state
   reset behavior moves fully into Agent movement modules.
 - Follow idle movement fast-path config-bound wiring now lives in
@@ -7036,7 +7036,7 @@ Current physics correction:
   auto-equip, potion sharing, and follow start; null/missing/self-target filters
   and delayed side-effect ordering are unchanged.
 - Capability ownership: `AgentFollowMapSyncService` now lives under
-  `capabilities.follow`; `AgentFollowMapSyncRuntime` remains the concrete hook
+  `capabilities.follow`; `AgentFollowMapSyncCoordinator` remains the concrete hook
   adapter. Follow gating, same-map/null-anchor skips, grounded spawn fallback,
   idle-before-change ordering, map change, and state reset are unchanged.
 - Capability ownership: `AgentFollowTargetPositionService` now lives under
@@ -7424,6 +7424,10 @@ Current physics correction:
   `AgentGrindModeRuntime` to `capabilities.combat.AgentGrindModeCoordinator`.
   Runtime retains only live-mode result adaptation; search, fallback, engagement,
   and navigation behavior remain unchanged.
+- Follow ownership: follow-map hook assembly moved from generic
+  `AgentFollowMapSyncRuntime` to
+  `capabilities.follow.AgentFollowMapSyncCoordinator`; map synchronization
+  behavior and both runtime call sites are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

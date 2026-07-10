@@ -308,7 +308,7 @@ Recent map updates:
   movement phase service. Phase selection and hook wiring no longer import the
   legacy bot entry type; lower movement implementation slices remain to be
   reconstructed.
-- `AgentFollowMapSyncRuntime` now accepts `AgentRuntimeEntry`; movement-only
+- `AgentFollowMapSyncCoordinator` now accepts `AgentRuntimeEntry`; movement-only
   and recovery live-gate paths call the Agent follow-map sync boundary without
   BotEntry casts, preserving the existing cross-map follow synchronization
   behavior.
@@ -1439,7 +1439,7 @@ Recent map updates:
   only the legacy distance thresholds while Agent runtime owns ground lookup,
   physics teleport, post-teleport reset, and movement broadcast hooks.
 - Follow map-sync hook wiring moved from BotManager to
-  `server.agents.runtime.AgentFollowMapSyncRuntime`. BotManager now delegates
+  `server.agents.capabilities.follow.AgentFollowMapSyncCoordinator`. BotManager now delegates
   cross-map follow synchronization while Agent runtime owns the temporary
   ground, map-change, idle, and movement-reset hook construction.
 - Idle/trade physics hook wiring moved from BotManager to
@@ -2748,7 +2748,7 @@ Recent capability extraction notes:
   map-change hooks through `AgentMapGatewayRuntime` instead of a direct
   `forceChangeMap` lambda. Spawn lookup, registration, online placement,
   follow-start callback wiring, and failure logging stay unchanged.
-- SPI/gateway extraction: `AgentFollowMapSyncRuntime` now routes its
+- SPI/gateway extraction: `AgentFollowMapSyncCoordinator` now routes its
   cross-map follow `changeMap(map, position)` call through
   `AgentMapGatewayRuntime`. Follow eligibility checks, spawn-position fallback,
   idle-on-ground, and reset ordering stay unchanged.
@@ -3351,3 +3351,7 @@ Recent capability extraction notes:
   `capabilities.combat.AgentGrindModeCoordinator`. Search, no-target fallback,
   commitment, ranged engagement, and navigation-tail hooks now return the combat
   service result directly; runtime only adapts that result for live-mode dispatch.
+- Follow ownership: `AgentFollowMapSyncRuntime` became
+  `capabilities.follow.AgentFollowMapSyncCoordinator`; both runtime tick paths
+  enter the follow capability directly with unchanged map-change, grounding,
+  idle-pose, and movement-reset behavior.
