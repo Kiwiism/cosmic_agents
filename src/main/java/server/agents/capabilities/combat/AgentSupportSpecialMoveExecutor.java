@@ -14,11 +14,8 @@ public final class AgentSupportSpecialMoveExecutor {
             return false;
         }
 
-        byte[] packetBytes = AgentSupportSpecialMovePacketBuilder.build(
-                agent,
-                skill.getId(),
-                skillLevel,
-                AgentCombatGatewayRuntime.combat().currentTimestamp());
-        return AgentCombatGatewayRuntime.combat().dispatchSyntheticPacket(agent, packetBytes);
+        int packetTimestamp = AgentCombatGatewayRuntime.combat().currentTimestamp();
+        return AgentCombatGatewayRuntime.combat().dispatchSupportSpecialMove(
+                agent, skill.getId(), skillLevel, packetTimestamp);
     }
 }

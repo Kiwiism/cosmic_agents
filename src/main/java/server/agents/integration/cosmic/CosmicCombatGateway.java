@@ -49,6 +49,12 @@ public enum CosmicCombatGateway implements CombatGateway {
     }
 
     @Override
+    public boolean dispatchSupportSpecialMove(Character agent, int skillId, int skillLevel, int packetTimestamp) {
+        return dispatchSyntheticPacket(agent,
+                CosmicSupportSpecialMovePacketBuilder.build(agent, skillId, skillLevel, packetTimestamp));
+    }
+
+    @Override
     public void applyAttackEffects(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character agent) {
         switch (route) {
             case RANGED -> RangedAttackHandler.applyRangedAttackEffects(attack, agent, agent.getClient());

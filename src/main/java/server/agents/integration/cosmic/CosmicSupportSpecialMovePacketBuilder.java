@@ -1,12 +1,13 @@
-package server.agents.capabilities.combat;
+package server.agents.integration.cosmic;
 
 import client.Character;
 import java.awt.Point;
 import net.opcodes.RecvOpcode;
 import net.packet.ByteBufOutPacket;
+import server.agents.capabilities.combat.AgentCombatSkillClassifier;
 
-public final class AgentSupportSpecialMovePacketBuilder {
-    private AgentSupportSpecialMovePacketBuilder() {
+public final class CosmicSupportSpecialMovePacketBuilder {
+    private CosmicSupportSpecialMovePacketBuilder() {
     }
 
     public static byte[] build(Character agent, int skillId, int skillLevel, int packetTimestamp) {

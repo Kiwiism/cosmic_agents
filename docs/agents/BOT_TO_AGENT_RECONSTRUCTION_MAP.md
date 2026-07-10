@@ -3403,3 +3403,6 @@ Recent capability extraction notes:
 - Command ownership: session relog, logout, and away request coordination moved
   from runtime to `commands.AgentSessionCommandCoordinator`. Prompt timing,
   pending actions, movement stops, replies, and lifecycle dispatch are unchanged.
+- Cosmic boundary ownership: support-skill SPECIAL_MOVE opcode/layout construction
+  moved to `integration.cosmic.CosmicSupportSpecialMovePacketBuilder`; combat
+  capability code now requests semantic dispatch through `CombatGateway`.

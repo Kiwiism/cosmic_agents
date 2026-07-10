@@ -26,7 +26,7 @@ import server.agents.capabilities.combat.AgentCombatRangePolicy;
 import server.agents.capabilities.combat.AgentCombatScoringPolicy;
 import server.agents.capabilities.combat.AgentCombatTargetSelector;
 import server.agents.capabilities.combat.AgentSkillAttackPlanRuntime;
-import server.agents.capabilities.combat.AgentSupportSpecialMovePacketBuilder;
+import server.agents.integration.cosmic.CosmicSupportSpecialMovePacketBuilder;
 import server.agents.integration.SkillGateway;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
@@ -166,7 +166,7 @@ class BotCombatManagerTest {
     void shouldMatchRealMagicGuardSpecialMovePacketLayout() {
         Character bot = mockBot(new Point(100, 200), mock(MapleMap.class), 20_000, null);
 
-        byte[] packet = AgentSupportSpecialMovePacketBuilder.build(bot, Magician.MAGIC_GUARD, 20, 0x009195A5);
+        byte[] packet = CosmicSupportSpecialMovePacketBuilder.build(bot, Magician.MAGIC_GUARD, 20, 0x009195A5);
 
         assertArrayEquals(HexTool.toBytes("5B 00 A5 95 91 00 6A 88 1E 00 14 00 00"), packet);
     }
@@ -176,7 +176,7 @@ class BotCombatManagerTest {
         Character bot = mockBot(new Point(0x155D, 0x01C6), mock(MapleMap.class), 20_000, null);
         when(bot.isFacingLeft()).thenReturn(true);
 
-        byte[] packet = AgentSupportSpecialMovePacketBuilder.build(bot, Cleric.BLESS, 9, 0x00919AAF);
+        byte[] packet = CosmicSupportSpecialMovePacketBuilder.build(bot, Cleric.BLESS, 9, 0x00919AAF);
 
         assertArrayEquals(HexTool.toBytes("5B 00 AF 9A 91 00 4C 1C 23 00 09 5D 15 C6 01 80 00 00"), packet);
     }
