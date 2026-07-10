@@ -4359,7 +4359,7 @@ Recent reconstruction notes:
   performance timing. The same grind-mode gate, consumed-tick result, and target
   update semantics are preserved.
 - Movement-only map-change handling now lives in
-  `server.agents.runtime.AgentMovementOnlyMapChangeService`. BotManager keeps
+  `server.agents.capabilities.movement.AgentMovementOnlyMapChangeService`. BotManager keeps
   temporary compatibility hooks for foothold indexing, ground lookup, teleport,
   physics reset, movement broadcast, shop map-change, and manager status checks.
   The same map-tracking guard, ground fallback, and side-effect sequence are
@@ -7130,6 +7130,10 @@ Current physics correction:
   `capabilities.movement`. Agent/target gating, idle, follow-map, party/target
   recovery, map transition, shop approach, follow-idle, and movement-core
   short-circuit ordering remain unchanged.
+- Capability ownership: `AgentMovementOnlyMapChangeService` now lives under
+  `capabilities.movement`. Tracking checks, foothold capture, grounding,
+  teleport/reset/broadcast, shop notification, and status-check ordering remain
+  unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

@@ -1635,7 +1635,7 @@ Recent map updates:
   target snapshot capture, leader motion tracking, map-change cleanup, and
   follow action-window cleanup while Agent runtime owns the setup order.
 - Movement-only map-change handling moved from BotManager to
-  `server.agents.runtime.AgentMovementOnlyMapChangeService`. BotManager now
+  `server.agents.capabilities.movement.AgentMovementOnlyMapChangeService`. BotManager now
   supplies temporary foothold, grounding, teleport, reset, broadcast, shop, and
   status hooks.
 - Grind-mode dispatch moved from BotManager to
@@ -3082,3 +3082,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentMovementOnlyTickService` moved from generic
   runtime to `capabilities.movement`. Its complete idle/follow/recovery/map/
   shop/movement short-circuit order and callback arguments remain unchanged.
+- Capability ownership: `AgentMovementOnlyMapChangeService` moved from generic
+  runtime to `capabilities.movement`. Map tracking, grounding, teleport/reset,
+  broadcast, shop, and status callback ordering remain unchanged.

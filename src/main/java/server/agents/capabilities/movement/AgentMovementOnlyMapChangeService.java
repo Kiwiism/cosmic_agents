@@ -1,6 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
+import server.agents.runtime.AgentMapStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
