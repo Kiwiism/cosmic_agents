@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.follow.AgentFollowTargetCandidateService;
+import server.agents.capabilities.follow.AgentFollowTargetCommandService;
 import server.agents.capabilities.follow.AgentFollowTargetResolutionService;
 
 import client.Character;

@@ -1116,7 +1116,7 @@ Recent reconstruction notes:
   only a temporary sibling-entry lookup hook. The same leader, party-member,
   online sibling-Agent ordering and duplicate filtering are preserved.
 - Follow-target command application now lives in
-  `server.agents.runtime.AgentFollowTargetCommandService`. BotManager keeps
+  `server.agents.capabilities.follow.AgentFollowTargetCommandService`. BotManager keeps
   temporary hooks for target resolution, reply queueing, delay scheduling,
   auto-equip, potion-share checks, and follow-mode entry. The same skip rules,
   reply variants, random delay window, and side-effect order are preserved.
@@ -7021,6 +7021,10 @@ Current physics correction:
   `capabilities.follow`. Exact-name precedence, two-character prefix minimum,
   ambiguity ordering/text, candidate fallback, and failure messages are
   unchanged; runtime still supplies candidates and leader messaging.
+- Capability ownership: `AgentFollowTargetCommandService` now lives under
+  `capabilities.follow`. Runtime still wires replies, delay scheduling,
+  auto-equip, potion sharing, and follow start; null/missing/self-target filters
+  and delayed side-effect ordering are unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

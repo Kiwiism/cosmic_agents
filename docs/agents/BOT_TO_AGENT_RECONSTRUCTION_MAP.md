@@ -1562,7 +1562,7 @@ Recent map updates:
   supplies only a temporary sibling-entry lookup hook while Agent runtime owns
   the leader/party/sibling ordering and duplicate filtering.
 - Follow-target command application moved from BotManager to
-  `server.agents.runtime.AgentFollowTargetCommandService`. BotManager now
+  `server.agents.capabilities.follow.AgentFollowTargetCommandService`. BotManager now
   supplies temporary hooks for target resolution, reply queueing, delay
   scheduling, auto-equip, potion-share checks, and follow-mode entry while
   Agent runtime owns the per-entry command application order.
@@ -2296,7 +2296,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#map-transition` | `server.agents.runtime.AgentMapTransitionService` | `MIGRATED_TO_AGENT`; map transition grounding and tracked-map-change handling now accept `AgentRuntimeEntry` while preserving tracking checks, foothold index capture, grounding teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch, shop map-change, and status-check ordering |
 | `src/main/java/server/bots/BotManager.java#recovery-teleport` | `server.agents.runtime.AgentRecoveryTeleportService` | `MIGRATED_TO_AGENT`; recovery teleport distance handling now accepts `AgentRuntimeEntry` while preserving target distance checks, out-of-bounds checks, grind-party constraints, shop-visit suppression, multiplier math, grounding lookup, teleport/reset, and movement broadcast side effects |
 | `src/main/java/server/bots/BotManager.java#follow-map-sync` | `server.agents.runtime.AgentFollowMapSyncService` | `MIGRATED_TO_AGENT`; cross-map follow synchronization now accepts `AgentRuntimeEntry` while preserving follow-mode gating, same-map/null-anchor skip behavior, grounded anchor spawn selection, idle-on-ground, map change, and movement reset side effects |
-| `src/main/java/server/bots/BotManager.java#follow-target-command` | `server.agents.runtime.AgentFollowTargetCommandService` | `MIGRATED_TO_AGENT`; follow-target command application now accepts `AgentRuntimeEntry` collections while preserving target resolution, null/missing/self-target filtering, reply queuing, delay scheduling, auto-equip, potion sharing, and follow-start ordering |
+| `src/main/java/server/bots/BotManager.java#follow-target-command` | `server.agents.capabilities.follow.AgentFollowTargetCommandService` | `MIGRATED_TO_AGENT`; follow-target command application now accepts `AgentRuntimeEntry` collections while preserving target resolution, null/missing/self-target filtering, reply queuing, delay scheduling, auto-equip, potion sharing, and follow-start ordering |
 | `src/main/java/server/bots/BotManager.java#follow-target-candidates` | `server.agents.capabilities.follow.AgentFollowTargetCandidateService` | `MIGRATED_TO_AGENT`; follow-target candidate selection now accepts Agent runtime sibling entries while preserving leader inclusion, party-member filtering, sibling-agent filtering, and duplicate suppression |
 | `src/main/java/server/bots/BotManager.java#movement-command-runtime` | `server.agents.capabilities.movement.AgentMovementCommandRuntime` | `MIGRATED_TO_AGENT`; follow, stop, move-to, farm-here, patrol, and grind command entry points now accept `AgentRuntimeEntry` while preserving prepared-mode ordering, script-task clearing, shop cancellation, patrol-region lookup, missing-region reply text, navigation-state clearing, and mode transitions |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; fidget runtime now accepts `AgentRuntimeEntry` while preserving idle/social/speed-mismatch selection, prone/sideways/jump behavior, return-to-origin, movement broadcasts, and visual prone-attack packets |
@@ -2994,3 +2994,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentFollowTargetResolutionService` moved from generic
   runtime to `capabilities.follow`. Exact/prefix matching, ambiguity behavior,
   and all leader-facing messages remain unchanged.
+- Capability ownership: `AgentFollowTargetCommandService` moved from generic
+  runtime to `capabilities.follow`. Entry filtering, reply timing, auto-equip,
+  potion-share, and follow-start ordering remain unchanged.
