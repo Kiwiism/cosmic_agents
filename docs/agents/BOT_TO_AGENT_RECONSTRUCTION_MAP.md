@@ -3294,3 +3294,7 @@ Recent capability extraction notes:
   `commands.AgentLeaderTransferCoordinator`, removing its name collision with
   item-transfer capability runtime while preserving leader-transfer command
   behavior and lifecycle callbacks.
+- Command bridge consolidation: `AgentRecruitRuntime` and `AgentDismissRuntime`
+  were deleted after their hook assembly moved into
+  `AgentLifecycleCommandCoordinator`; lifecycle services remain runtime-owned
+  and behavior is unchanged.

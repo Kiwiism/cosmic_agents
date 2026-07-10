@@ -1,7 +1,10 @@
 package server.agents.commands;
 
 import client.Character;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import server.agents.runtime.AgentRuntimeRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +13,43 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyString;
 
 class AgentLifecycleCommandCoordinatorTest {
+    @BeforeEach
+    void clearRegistry() {
+        AgentRuntimeRegistry.entriesByLeaderId().clear();
+    }
+
+    @Test
+    void preservesMissingOwnerlessAgentRecruitReply() {
+        Character leader = leader(6);
+
+        try (MockedStatic<AgentRuntimeRegistry> registry = mockStatic(AgentRuntimeRegistry.class)) {
+            registry.when(() -> AgentRuntimeRegistry.findUnclaimedOnlineAgentByName("agent123", 0))
+                    .thenReturn(null);
+
+            String result = AgentLifecycleCommandCoordinator.recruitAgent(
+                    6,
+                    leader,
+                    "agent123",
+                    (leaderId, recruitLeader, agent) -> {
+                    });
+
+            assertEquals("No ownerless bot named 'agent123' found.", result);
+        }
+    }
+
+    @Test
+    void dismissReturnsFalseWhenLeaderHasNoAgents() {
+        assertFalse(AgentLifecycleCommandCoordinator.dismissAgent(6, "agent123", entry -> {
+        }));
+    }
+
     @Test
     void handlesRecruitCommandWithLegacyReply() {
         Character leader = leader(7);

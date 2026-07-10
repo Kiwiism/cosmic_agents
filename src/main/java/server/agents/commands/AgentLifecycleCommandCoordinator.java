@@ -2,19 +2,30 @@ package server.agents.commands;
 
 import server.agents.capabilities.trade.AgentTransferCommandService;
 import server.agents.capabilities.trade.AgentTransferService;
-import server.agents.runtime.AgentDismissRuntime;
-import server.agents.runtime.AgentRecruitRuntime;
+import server.agents.auth.AgentOwnershipService;
+import server.agents.capabilities.dialogue.AgentDialogueSelector;
+import server.agents.integration.AgentReplyRuntime;
+import server.agents.runtime.AgentLifecycleService;
+import server.agents.runtime.AgentRandom;
 import server.agents.runtime.AgentRecruitService;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentScheduledTaskRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import client.Character;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * Agent-owned lifecycle chat command wiring for recruit, transfer, and dismiss.
  */
 public final class AgentLifecycleCommandCoordinator {
+    private static final List<String> FAREWELL_MESSAGES = List.of(
+            "ok", "sure", "alright", "gotcha",
+            "later!", "see ya", "take care", "cya", "peace out");
+
     private AgentLifecycleCommandCoordinator() {
     }
 
@@ -22,7 +33,15 @@ public final class AgentLifecycleCommandCoordinator {
                                       Character leader,
                                       String agentName,
                                       AgentRecruitService.AgentRegistrar registrar) {
-        return AgentRecruitRuntime.recruitAgent(leaderCharId, leader, agentName, registrar);
+        return AgentRecruitService.recruitAgent(
+                leaderCharId,
+                leader,
+                agentName,
+                new AgentRecruitService.Hooks(
+                        AgentRuntimeRegistry::findUnclaimedOnlineAgentByName,
+                        (candidateLeader, agent) -> AgentOwnershipService.getInstance()
+                                .ensureCanControl(candidateLeader, agent),
+                        registrar));
     }
 
     public static String transferAgent(int leaderCharId,
@@ -38,7 +57,16 @@ public final class AgentLifecycleCommandCoordinator {
     public static boolean dismissAgent(int leaderCharId,
                                        String agentName,
                                        Consumer<AgentRuntimeEntry> stopAgent) {
-        return AgentDismissRuntime.dismissAgentByName(leaderCharId, agentName, stopAgent);
+        return AgentLifecycleService.dismissAgentByName(
+                leaderCharId,
+                agentName,
+                new AgentLifecycleService.DismissHooks(
+                        AgentScheduledTaskRuntime::cancelScheduledTask,
+                        stopAgent,
+                        AgentSchedulerRuntime::afterDelay,
+                        () -> AgentRandom.randMs(400, 600),
+                        AgentReplyRuntime::replyNow,
+                        () -> AgentDialogueSelector.randomReply(FAREWELL_MESSAGES)));
     }
 
     public static boolean handleRecruitCommand(Character leader,
