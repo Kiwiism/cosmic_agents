@@ -1,7 +1,6 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentFormationService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTargetSnapshot;
 

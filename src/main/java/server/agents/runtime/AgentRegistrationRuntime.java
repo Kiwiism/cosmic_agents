@@ -2,6 +2,7 @@ package server.agents.runtime;
 
 import client.Character;
 import server.TimerManager;
+import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 /**

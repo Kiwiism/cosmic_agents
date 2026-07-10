@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.follow.AgentFollowAnchorService;
 
 import client.Character;

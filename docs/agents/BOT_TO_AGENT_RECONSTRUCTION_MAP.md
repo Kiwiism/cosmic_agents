@@ -1915,7 +1915,7 @@ Recent map updates:
   `server.agents.runtime.AgentRuntimeConfig`; BotManager keeps `cfg` as a
   compatibility alias while Agent modules consume the Agent-owned config source.
 - BotManager formation map storage moved to
-  `server.agents.runtime.AgentFormationService`; BotManager still contains the
+  `server.agents.capabilities.movement.AgentFormationService`; BotManager still contains the
   temporary command parsing and snapshot wiring around that Agent-owned store.
 - BotManager follow-target position resolver moved to
   `server.agents.capabilities.follow.AgentFollowTargetPositionService`; the Agent movement
@@ -1949,7 +1949,7 @@ Recent map updates:
   `server.agents.runtime.AgentTargetSnapshotService`; BotManager now only wires
   temporary sibling/formation storage and the follow-target resolver callback.
 - BotManager formation state lookup moved to
-  `server.agents.runtime.AgentFormationService`; BotManager still stores the
+  `server.agents.capabilities.movement.AgentFormationService`; BotManager still stores the
   temporary per-leader formation map for command compatibility.
 - BotManager tick leader/session refresh moved to
   `server.agents.runtime.AgentLeaderSessionService`; BotManager remains a
@@ -1965,7 +1965,7 @@ Recent map updates:
   `server.agents.runtime.AgentTargetSnapshot`; movement/navigation callers and
   tests consume the Agent-owned record.
 - BotManager formation type/state and offset calculation moved to
-  `server.agents.runtime.AgentFormationService`; command parsing and the
+  `server.agents.capabilities.movement.AgentFormationService`; command parsing and the
   temporary per-leader map remain in BotManager for now.
 - BotManager tick failure count/window/disable/force-idle decision ownership
   moved to `server.agents.runtime.AgentTickFailurePolicy`; BotManager still owns
@@ -2300,7 +2300,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#follow-target-candidates` | `server.agents.capabilities.follow.AgentFollowTargetCandidateService` | `MIGRATED_TO_AGENT`; follow-target candidate selection now accepts Agent runtime sibling entries while preserving leader inclusion, party-member filtering, sibling-agent filtering, and duplicate suppression |
 | `src/main/java/server/bots/BotManager.java#movement-command-runtime` | `server.agents.capabilities.movement.AgentMovementCommandRuntime` | `MIGRATED_TO_AGENT`; follow, stop, move-to, farm-here, patrol, and grind command entry points now accept `AgentRuntimeEntry` while preserving prepared-mode ordering, script-task clearing, shop cancellation, patrol-region lookup, missing-region reply text, navigation-state clearing, and mode transitions |
 | `src/main/java/server/bots/BotFidgetManager.java` | `server.agents.capabilities.movement.fidget.AgentFidgetService` | `MIGRATED_TO_AGENT`; fidget runtime now accepts `AgentRuntimeEntry` while preserving idle/social/speed-mismatch selection, prone/sideways/jump behavior, return-to-origin, movement broadcasts, and visual prone-attack packets |
-| `src/main/java/server/bots/BotManager.java#formation-state` | `server.agents.runtime.AgentFormationService` | `MIGRATED_TO_AGENT`; formation state lookup and offset application now accept Agent runtime entries while preserving formation store access, leader/default resolution, and offset assignment patterns |
+| `src/main/java/server/bots/BotManager.java#formation-state` | `server.agents.capabilities.movement.AgentFormationService` | `MIGRATED_TO_AGENT`; formation state lookup and offset application now accept Agent runtime entries while preserving formation store access, leader/default resolution, and offset assignment patterns |
 | `src/main/java/server/bots/BotManager.java#formation-command` | `server.agents.runtime.AgentFormationCommandService` | `MIGRATED_TO_AGENT`; formation command handling now accepts Agent runtime entries while preserving command matching, help/status replies, snap range updates, formation writes, offset application, and first-entry/leader reply routing |
 | `src/main/java/server/bots/BotManager.java#common-tick-systems` | `server.agents.runtime.AgentCommonTickService` | `MIGRATED_TO_AGENT`; common per-tick system ordering now accepts `AgentRuntimeEntry` while preserving mob damage, death short-circuiting, monster release, passive loot/trade gating, potion and recovery ticks, build level-up checks, AFK/status checks, trade/manual-trade, PQ/script/NPC-lock gates, action-lock handling, AI-gated combat systems, and final action-lock return behavior. Mob-touch sweep runtime now accepts `AgentRuntimeEntry` |
 | `src/main/java/server/bots/BotManager.java#live-mode-tick` | `server.agents.runtime.AgentLiveModeTickService` | `MIGRATED_TO_AGENT`; live-mode tick phase ordering now accepts `AgentRuntimeEntry` while preserving shop-visit, follow-opportunity, follow-idle, scripted-move combat, anchored farm, grind dispatch, target propagation, consumed-tick short-circuits, and final movement tail behavior |
@@ -3038,3 +3038,7 @@ Recent capability extraction notes:
 - Capability ownership: `AgentRecoveryTickService` moved from generic runtime
   to `capabilities.recovery`. Shop suppression, follow/party/target ordering,
   and short-circuit behavior remain unchanged.
+- Capability ownership: `AgentFormationService` moved from generic runtime to
+  `capabilities.movement`. Formation state storage, leader/default resolution,
+  every offset formula and random range, and live offset application remain
+  unchanged.

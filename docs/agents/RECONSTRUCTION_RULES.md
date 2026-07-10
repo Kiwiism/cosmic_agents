@@ -1514,7 +1514,7 @@ Recent reconstruction notes:
 - BotManager target snapshot data lives in `server.agents.runtime.AgentTargetSnapshot`;
   movement/navigation callers and tests consume the Agent-owned record.
 - BotManager formation type/state and follow-offset application moved to
-  `server.agents.runtime.AgentFormationService`. BotManager still owns the
+  `server.agents.capabilities.movement.AgentFormationService`. BotManager still owns the
   formation command text flow and temporary per-leader formation map, but the
   formation model and legacy offset math are Agent-owned.
 - BotManager tick failure counting and escalation thresholds moved to
@@ -4080,7 +4080,7 @@ Recent reconstruction notes:
   cached-leader, mismatched-leader, offline-leader, and missing-leader behavior
   exactly.
 - Formation state lookup now lives in
-  `server.agents.runtime.AgentFormationService`; BotManager still owns the
+  `server.agents.capabilities.movement.AgentFormationService`; BotManager still owns the
   temporary per-leader formation map but no longer owns the default-vs-custom
   resolution rule.
 - Target snapshot composition now lives in
@@ -7079,6 +7079,10 @@ Current physics correction:
   `capabilities.recovery` module. Shop-visit follow-sync suppression, follow-map
   sync, party recovery, target recovery order, and first-success short circuit
   are unchanged; live-tick runtime remains the hook adapter.
+- Capability ownership: `AgentFormationService` now lives under
+  `capabilities.movement`. Formation types, offset formulas, random range,
+  leader/default lookup, shared live formation storage, and offset assignment
+  are unchanged; runtime formation wiring continues to use the same service.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

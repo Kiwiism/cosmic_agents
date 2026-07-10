@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.auth.AgentAuthorizationResult;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;

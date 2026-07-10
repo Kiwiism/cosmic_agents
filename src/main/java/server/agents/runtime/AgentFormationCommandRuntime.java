@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.integration.AgentReplyRuntime;
 
 public final class AgentFormationCommandRuntime {

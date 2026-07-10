@@ -18,7 +18,7 @@ import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
-import server.agents.runtime.AgentFormationService;
+import server.agents.capabilities.movement.AgentFormationService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Rope;

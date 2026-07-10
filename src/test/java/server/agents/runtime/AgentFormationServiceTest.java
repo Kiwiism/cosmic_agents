@@ -2,8 +2,9 @@ package server.agents.runtime;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
-import server.agents.runtime.AgentFormationService.FormationState;
-import server.agents.runtime.AgentFormationService.FormationType;
+import server.agents.capabilities.movement.AgentFormationService;
+import server.agents.capabilities.movement.AgentFormationService.FormationState;
+import server.agents.capabilities.movement.AgentFormationService.FormationType;
 
 import java.util.List;
 import java.util.Map;

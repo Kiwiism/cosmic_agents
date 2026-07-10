@@ -1,7 +1,7 @@
 package server.agents.integration;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.runtime.AgentFormationService;
+import server.agents.capabilities.movement.AgentFormationService;
 
 import server.agents.capabilities.navigation.AgentNavigationMapLoader;
 
