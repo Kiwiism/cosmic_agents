@@ -77,7 +77,7 @@ with the workspace WZ and generated catalog fixtures linked read-only.
 | `AgentCatalogServiceTest` with all four generated catalog roots | PASS, 10 tests |
 | `BotMovementSimulationLabTest` | PASS, 9 tests |
 | Maven package with tests skipped | PASS |
-| Broader repository suite excluding the hanging movement simulation class | 4,242 tests; 4,239 pass, 3 known failures |
+| Broader repository suite, including the movement simulation class | 4,251 tests; 4,248 pass, 3 known failures |
 
 Known broader failures, unchanged from the branch baseline:
 
