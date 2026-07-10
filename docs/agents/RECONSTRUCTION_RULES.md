@@ -4339,7 +4339,7 @@ Recent reconstruction notes:
   performance timing. The same farm-anchor presence check and consumed-tick
   result are preserved.
 - Follow map-sync and teleport recovery dispatch now lives in
-  `server.agents.runtime.AgentRecoveryTickService`. BotManager keeps temporary
+  `server.agents.capabilities.recovery.AgentRecoveryTickService`. BotManager keeps temporary
   compatibility hooks for follow-map synchronization, grind-party distance
   recovery, and target-distance recovery. The same shop-visit follow-sync guard,
   short-circuit order, and consumed/fall-through behavior are preserved.
@@ -7075,6 +7075,10 @@ Current physics correction:
   `capabilities.combat`. Dead-state entry/due checks, HP restore, cross-map
   return, ground fallback, teleport/reset/broadcast order, `back!` speech, and
   glare emote are unchanged; death/respawn runtime classes remain hook adapters.
+- Capability ownership: `AgentRecoveryTickService` now lives under the new
+  `capabilities.recovery` module. Shop-visit follow-sync suppression, follow-map
+  sync, party recovery, target recovery order, and first-success short circuit
+  are unchanged; live-tick runtime remains the hook adapter.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

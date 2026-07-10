@@ -1649,7 +1649,7 @@ Recent map updates:
   `server.agents.runtime.AgentTrackedMapChangeTickService`. BotManager now
   supplies the temporary tracked-map-change handler and performance timing.
 - Follow map-sync and teleport recovery dispatch moved from BotManager to
-  `server.agents.runtime.AgentRecoveryTickService`. BotManager now supplies
+  `server.agents.capabilities.recovery.AgentRecoveryTickService`. BotManager now supplies
   temporary hooks for follow map sync, grind-party recovery teleport, and
   target-distance recovery teleport.
 - Anchored-farm mode dispatch moved from BotManager to
@@ -2291,7 +2291,7 @@ Recent map updates:
 | `src/main/java/server/bots/BotManager.java#ownerless-tick` | `server.agents.runtime.AgentOwnerlessTickService` | `MIGRATED_TO_AGENT`; ownerless tick handling now accepts `AgentRuntimeEntry` while preserving follow-mode clearing, map-change grounding short-circuit, standalone move-target ticking, and idle fallback behavior |
 | `src/main/java/server/bots/BotManager.java#death-tick` | `server.agents.capabilities.combat.AgentDeathTickService`, `server.agents.runtime.AgentRespawnRuntime` | `MIGRATED_TO_AGENT`; death tick and respawn-near-leader handling now accept `AgentRuntimeEntry` while preserving dead-state entry checks, respawn timing, HP restore, map-change, grounding, teleport, reset, movement broadcast, map speech, and glare emote behavior |
 | `src/main/java/server/bots/BotManager.java#leader-safety-runtime` | `server.agents.runtime.AgentLeaderSafetyRuntime` | `MIGRATED_TO_AGENT`; inactive-leader runtime now accepts `AgentRuntimeEntry` while preserving active-return cleanup, town eligibility, safe-mode entry, town-scroll fallback, formation target selection, map-change grounding, movement reset, and return announcements |
-| `src/main/java/server/bots/BotManager.java#recovery-tick` | `server.agents.runtime.AgentRecoveryTickService` | `MIGRATED_TO_AGENT`; recovery tick handling now accepts `AgentRuntimeEntry` while preserving shop-visit follow-sync suppression, follow-map sync, party recovery, target recovery ordering, and short-circuit behavior |
+| `src/main/java/server/bots/BotManager.java#recovery-tick` | `server.agents.capabilities.recovery.AgentRecoveryTickService` | `MIGRATED_TO_AGENT`; recovery tick handling now accepts `AgentRuntimeEntry` while preserving shop-visit follow-sync suppression, follow-map sync, party recovery, target recovery ordering, and short-circuit behavior |
 | `src/main/java/server/bots/BotManager.java#tracked-map-change-tick` | `server.agents.runtime.AgentTrackedMapChangeTickService` | `MIGRATED_TO_AGENT`; tracked map-change tick handling now accepts `AgentRuntimeEntry` while preserving handler dispatch and consumed/fall-through behavior |
 | `src/main/java/server/bots/BotManager.java#map-transition` | `server.agents.runtime.AgentMapTransitionService` | `MIGRATED_TO_AGENT`; map transition grounding and tracked-map-change handling now accept `AgentRuntimeEntry` while preserving tracking checks, foothold index capture, grounding teleport, reset, graph warmup, movement broadcast, grind/follow/PQ dispatch, shop map-change, and status-check ordering |
 | `src/main/java/server/bots/BotManager.java#recovery-teleport` | `server.agents.runtime.AgentRecoveryTeleportService` | `MIGRATED_TO_AGENT`; recovery teleport distance handling now accepts `AgentRuntimeEntry` while preserving target distance checks, out-of-bounds checks, grind-party constraints, shop-visit suppression, multiplier math, grounding lookup, teleport/reset, and movement broadcast side effects |
@@ -3035,3 +3035,6 @@ Recent capability extraction notes:
 - Capability ownership: `AgentDeathTickService` moved from generic runtime to
   `capabilities.combat`. Dead-state timing and respawn map/HP/position/reset/
   broadcast/dialogue/emote ordering remain unchanged.
+- Capability ownership: `AgentRecoveryTickService` moved from generic runtime
+  to `capabilities.recovery`. Shop suppression, follow/party/target ordering,
+  and short-circuit behavior remain unchanged.

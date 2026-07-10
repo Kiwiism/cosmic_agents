@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.recovery.AgentRecoveryTickService;
+
 import client.Character;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.shop.AgentShopStateRuntime;
