@@ -4118,7 +4118,7 @@ Recent reconstruction notes:
   `server.agents.runtime.AgentScriptTaskCompletionService`; BotManager still
   supplies temporary follow-target resolution and movement-distance configuration.
 - Ownerless/offline-leader tick branching now lives in
-  `server.agents.runtime.AgentOwnerlessTickService`; BotManager still supplies
+  `server.agents.capabilities.movement.AgentOwnerlessTickService`; BotManager still supplies
   temporary grounding, standalone move-target, and idle callbacks. This preserves
   the same following-clear, map-change grounding early return, explicit
   move-target pass-through, and idle fallback ordering.
@@ -7177,6 +7177,10 @@ Current physics correction:
   state clearing, active-leader restoration, formation-aware cluster targets,
   return-scroll fallback, and per-leader dispatch ordering remain unchanged;
   runtime remains the hook adapter.
+- Capability ownership: `AgentOwnerlessTickService` now lives under
+  `capabilities.movement`. Follow clearing, map-change grounding short-circuit,
+  standalone move-target selection, AI-tick forwarding, and idle fallback
+  remain unchanged.
 - Reconstruction audit: production `src/main/java/server/agents/**` no longer
   references `server.bots`, and `src/main/java/server/bots/**` is absent.
   Remaining historical bot names in reconstruction notes or test harness labels

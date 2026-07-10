@@ -1,5 +1,6 @@
 package server.agents.runtime;
 
+import server.agents.capabilities.movement.AgentOwnerlessTickService;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
 
 import client.Character;

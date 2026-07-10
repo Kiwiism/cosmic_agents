@@ -1,8 +1,8 @@
-package server.agents.runtime;
+package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.runtime.AgentModeStateRuntime;
-import server.agents.capabilities.movement.AgentMoveTargetStateRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
