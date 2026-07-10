@@ -26,6 +26,16 @@ public final class AgentStuckDetectionService {
     private AgentStuckDetectionService() {
     }
 
+    public static void tickStuckDetection(AgentRuntimeEntry entry, boolean enableUnstuck) {
+        tickStuckDetection(
+                entry,
+                new StuckDetectionHooks(
+                        AgentMovementTimers::tickDown,
+                        AgentMovementRecoveryService::tickUnstuck,
+                        AgentMovementPhysicsConfig.configuredMovementTickMs(),
+                        enableUnstuck));
+    }
+
     public static void tickStuckDetection(AgentRuntimeEntry entry, StuckDetectionHooks hooks) {
         if (!AgentPerformanceMonitor.enabled()) {
             doStuckDetection(entry, hooks);

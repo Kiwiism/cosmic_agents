@@ -3236,3 +3236,6 @@ Recent capability extraction notes:
 - Movement bridge removal: `AgentMovementPhaseRuntime` was deleted after its
   default dispatch hooks moved into `AgentMovementPhaseService`; climbing,
   swimming, airborne, and grounded branch priority remains unchanged.
+- Movement bridge removal: `AgentStuckDetectionRuntime` was deleted after its
+  configured hooks moved into `AgentStuckDetectionService`; timing, distance,
+  reset, cooldown, and unstuck trigger semantics remain unchanged.
