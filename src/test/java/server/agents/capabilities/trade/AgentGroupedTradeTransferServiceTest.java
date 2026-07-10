@@ -2,6 +2,8 @@ package server.agents.capabilities.trade;
 
 import client.inventory.Item;
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.dialogue.AgentDialogueCatalog;
+import server.agents.capabilities.dialogue.AgentInventoryDialogueReporter;
 import server.agents.capabilities.inventory.AgentEquipTradeGroupService.AgentEquipTradeGroups;
 import server.agents.capabilities.inventory.AgentInventoryAmmoPolicy.AmmoTradeGroups;
 
@@ -52,7 +54,10 @@ class AgentGroupedTradeTransferServiceTest {
                 replies::add);
 
         assertEquals(1, replies.size());
-        assertTrue(replies.get(0).contains("equips"));
+        List<String> expectedReplies = AgentDialogueCatalog.noItemsReplies().stream()
+                .map(template -> AgentInventoryDialogueReporter.noItemsReply("equips", List.of(template)))
+                .toList();
+        assertTrue(expectedReplies.contains(replies.get(0)));
     }
 
     @Test
