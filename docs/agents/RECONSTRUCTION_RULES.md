@@ -1,5 +1,9 @@
 # Agent Reconstruction Rules
 
+Every retained class in `server.agents.runtime` is classified in
+`AGENT_RUNTIME_CLASSIFICATION.md`. `AgentRuntimeClassificationTest` requires the
+inventory to match the package exactly.
+
 The reconstruction model is: move behavior from one large bot bin into specialized Agent bins without changing observable behavior.
 
 Rules:

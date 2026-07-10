@@ -10,6 +10,10 @@ Status values:
 
 This map tracks reconstruction from the source/master bot baseline into neutral Agent modules.
 
+The authoritative classification of every retained runtime class is maintained
+in `AGENT_RUNTIME_CLASSIFICATION.md` and enforced by
+`AgentRuntimeClassificationTest`.
+
 Recent map updates:
 
 - Integration runtime adapter audit has started. Current classification:
