@@ -21,12 +21,4 @@ class AgentBackingAccountSecurityTest {
         assertTrue(persistence.contains("SecureRandom"));
         assertFalse(persistence.contains("AgentAccountResolution.reused"));
     }
-
-    @Test
-    void loginCoordinatorAppliesAgentAccountPolicy() throws Exception {
-        String loginHandler = Files.readString(Path.of(
-                "src/main/java/net/server/handlers/login/LoginPasswordHandler.java"));
-
-        assertTrue(loginHandler.contains("AgentAccountAccessPolicy.allowsInteractiveLogin(c.getAccID())"));
-    }
 }

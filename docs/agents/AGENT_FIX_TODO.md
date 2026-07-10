@@ -115,6 +115,39 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
     - Shadow Partner adds the expected extra lines without rerolling original
       damage incorrectly.
     - supported attack/buff skills have explicit capability status.
+- [ ] Post-reconstruction: lift the Agent Shadow Partner ranged-only
+  restriction and apply it to close-range/melee and magic attacks as well.
+  - Current behavior: `AgentCombatHitCounter.shadowPartnerHitMultiplier`
+    returns the doubled line multiplier only for `AgentAttackRoute.RANGED`.
+    Agent melee and magic plans therefore ignore an active Shadow Partner buff.
+  - Implementation direction:
+    - recognize an active Shadow Partner buff for `RANGED`, `CLOSE`, and
+      `MAGIC` attack plans.
+    - preserve the normal line count when the buff is absent.
+    - append partner lines after the original lines and scale each partner line
+      from its corresponding original line using the active buff percentage;
+      do not independently reroll partner damage.
+    - keep the encoded damage-line count within the packet's four-bit limit.
+      Prefer at most seven original lines and fourteen total lines while Shadow
+      Partner is active rather than allowing a doubled count to overflow into
+      the attacked-mob nibble.
+    - route damage application through the normal close-range, magic, or ranged
+      combat gateway and broadcast the resulting attack packet to nearby
+      player clients.
+    - keep this behavior server-side for Agents; the Ezorsia local-player
+      Shadow Partner client patch is not an Agent runtime dependency.
+  - Validation later:
+    - buff off: basic and skill attacks retain their original line counts on
+      all three routes.
+    - buff on: ranged, close-range/melee, and magic attacks emit the expected
+      paired line count and damage percentage.
+    - nearby player clients display every generated Agent damage line for all
+      three attack packet types.
+    - low-level and max-level Shadow Partner percentages scale correctly.
+    - seven-line attacks produce fourteen lines; larger inputs cannot corrupt
+      the packet's attacked-mob count.
+    - damage application, critical-line metadata, MP/ammo consumption, and
+      combat-plan scoring remain consistent with the generated lines.
 
 ## Server/Economy Fixes To Coordinate
 

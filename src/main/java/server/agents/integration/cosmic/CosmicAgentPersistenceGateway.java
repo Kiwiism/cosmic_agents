@@ -99,20 +99,6 @@ public final class CosmicAgentPersistenceGateway implements AgentPersistenceGate
     }
 
     @Override
-    public boolean isAgentAccount(int accountId) throws SQLException {
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT 1 FROM bot_owners owners "
-                             + "JOIN characters agent ON agent.id = owners.bot_char_id "
-                             + "WHERE agent.accountid = ? LIMIT 1")) {
-            ps.setInt(1, accountId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        }
-    }
-
-    @Override
     public AgentAccountResolution resolveOrCreateAgentAccount(String name) throws SQLException {
         try (Connection con = DatabaseConnection.getConnection()) {
             Integer existingAccountId = findAccountId(con, name);

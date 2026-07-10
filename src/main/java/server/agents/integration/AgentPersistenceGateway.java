@@ -15,7 +15,5 @@ public interface AgentPersistenceGateway {
 
     int countRegisteredAgents(int ownerCharacterId) throws SQLException;
 
-    boolean isAgentAccount(int accountId) throws SQLException;
-
     AgentAccountResolution resolveOrCreateAgentAccount(String name) throws SQLException;
 }

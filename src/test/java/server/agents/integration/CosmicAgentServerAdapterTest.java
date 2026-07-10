@@ -1,5 +1,8 @@
 package server.agents.integration;
 
+import client.BotClient;
+import client.Character;
+import client.Client;
 import org.junit.jupiter.api.Test;
 import server.agents.integration.cosmic.CosmicAgentServerAdapter;
 import server.agents.integration.cosmic.CosmicAgentClientGateway;
@@ -13,8 +16,13 @@ import server.agents.integration.cosmic.CosmicPartyGateway;
 import server.agents.integration.cosmic.CosmicAgentPersistenceGateway;
 import server.agents.integration.cosmic.CosmicShopGateway;
 import server.agents.integration.cosmic.CosmicTradeGateway;
+import server.integration.AgentPresence;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CosmicAgentServerAdapterTest {
     @Test
@@ -70,5 +78,18 @@ class CosmicAgentServerAdapterTest {
     @Test
     void exposesCosmicPersistenceGateway() {
         assertSame(CosmicAgentPersistenceGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.persistence());
+    }
+
+    @Test
+    void installsBotClientAgentPresenceProvider() {
+        CosmicAgentServerAdapter adapter = CosmicAgentServerAdapter.INSTANCE;
+        Character agent = mock(Character.class);
+        Character player = mock(Character.class);
+        when(agent.getClient()).thenReturn(mock(BotClient.class));
+        when(player.getClient()).thenReturn(mock(Client.class));
+
+        assertSame(CosmicCharacterGateway.INSTANCE, adapter.characters());
+        assertTrue(AgentPresence.isAgent(agent));
+        assertFalse(AgentPresence.isAgent(player));
     }
 }

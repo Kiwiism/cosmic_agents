@@ -16,11 +16,13 @@ import server.agents.integration.SkillGateway;
 import server.agents.integration.ShopGateway;
 import server.agents.integration.SchedulerGateway;
 import server.agents.integration.TradeGateway;
+import server.integration.AgentPresence;
 
 public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     public static final CosmicAgentServerAdapter INSTANCE = new CosmicAgentServerAdapter();
 
     private CosmicAgentServerAdapter() {
+        AgentPresence.install(CosmicCharacterGateway.INSTANCE::isAgentCharacter);
     }
 
     @Override

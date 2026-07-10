@@ -1,7 +1,7 @@
 # Agent Backing Account Security
 
-Agent backing accounts are implementation details for headless characters. They
-must not be used as player accounts.
+Agent backing-account credentials must remain unique and protected like any
+other account credentials.
 
 ## Provisioning policy
 
@@ -23,11 +23,10 @@ agents.provisioning.maxPerController
 
 ## Existing shared-password accounts
 
-Interactive login is denied whenever an account contains a character registered
-in `bot_owners`, so old accounts using the historical shared password are blocked
-without a schema migration. Administrators should still rotate those hashes as
-defense in depth after taking a database backup. Generate a unique BCrypt hash
-per affected account and update only accounts selected through this relationship:
+Administrators should rotate hashes for old Agent accounts that used the
+historical shared password after taking a database backup. Generate a unique
+BCrypt hash per affected account and update only accounts selected through this
+relationship:
 
 ```sql
 SELECT DISTINCT accounts.id, accounts.name

@@ -7565,10 +7565,9 @@ Current physics correction:
   limited to three successful provisions per controller per ten minutes and 25
   registered Agents per controller, and can be tuned with
   `agents.provisioning.*` system properties. New accounts receive an unreported
-  random credential, existing same-name accounts are never commandeered, and
-  registered Agent accounts are denied normal interactive login. Existing
-  shared-password Agent accounts are protected by the login denial immediately;
-  credential rotation guidance is in `AGENT_BACKING_ACCOUNT_SECURITY.md`.
+  random credential, and existing same-name accounts are never commandeered.
+  Existing shared-password Agent accounts require credential rotation guidance
+  from `AGENT_BACKING_ACCOUNT_SECURITY.md`.
 - Async queue bounds: LLM inference/compaction, navigation graph warmup, and
   trade/item-query background workers now use fixed-size FIFO queues with the
   original worker counts. Queue capacities default to 64, 64+64, and 128 and

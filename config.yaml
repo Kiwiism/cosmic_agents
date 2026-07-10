@@ -480,7 +480,7 @@ server:
     MAKER_CRYSTAL_ONLY_IMPROVE: true    # Black/Dark crystal only improves stats and never decreases, vanilla: false
 
     # Godly Stats: chance for equipment to receive random bonus stats (like free-pre-applied chaos scroll)
-    GODLY_STATS_ENABLED: true
+    GODLY_STATS_ENABLED: false
     GODLY_STATS_DROP_CHANCE: 20          # % chance for dropped
     GODLY_STATS_MAKER_CHANCE: 20         # % chance for maker skill (with stimulant)
     GODLY_STATS_QUEST_CHANCE: 100        # % chance for quest reward equips
