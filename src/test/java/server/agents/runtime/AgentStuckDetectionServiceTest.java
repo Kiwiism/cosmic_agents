@@ -46,7 +46,7 @@ class AgentStuckDetectionServiceTest {
 
     @Test
     void movingResetsStuckProgressAndUpdatesCheckPosition() {
-        Character agent = agentAt(new Point(10, 20));
+        Character agent = agentAt(new Point(20, 20));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
         AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(0, 20));
@@ -57,6 +57,19 @@ class AgentStuckDetectionServiceTest {
 
         assertEquals(0, AgentMovementStuckStateRuntime.stuckMs(entry));
         assertTrue(AgentMovementStuckStateRuntime.hasStuckCheckPosition(entry));
+        assertEquals(0, unstucks.get());
+    }
+
+    @Test
+    void motorStepBounceInsideDriftRadiusStillCountsAsStuck() {
+        AgentRuntimeEntry entry = entryAt(new Point(10, 20));
+        AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 20), false);
+        AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, new Point(0, 20));
+        AtomicInteger unstucks = new AtomicInteger();
+
+        AgentStuckDetectionService.tickStuckDetection(entry, hooks(unstucks, 100, true, remaining -> remaining));
+
+        assertEquals(100, AgentMovementStuckStateRuntime.stuckMs(entry));
         assertEquals(0, unstucks.get());
     }
 

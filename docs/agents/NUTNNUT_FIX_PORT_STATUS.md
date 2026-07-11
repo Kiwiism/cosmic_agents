@@ -73,3 +73,25 @@ coordinate. The detour remains active until its crossing is completed and is
 cleared when the edge or movement phase changes. Detour steering uses zero
 stop distance so normal follow hysteresis cannot park the Agent before the
 crossing.
+
+## Movement: off-graph target recovery
+
+Source reference: `f78f85d4bd` from `source/dev`.
+
+This behavior was already present in the reconstructed Agent recovery pipeline:
+target-distance and map-bounds recovery runs before movement core, consumes the
+tick after teleport, resets transient movement state, and broadcasts the new
+position. Existing recovery and movement-only ordering tests verify the source
+invariant, so no duplicate travel-specific path was introduced.
+
+## Navigation: reproducible directional walk-off drops
+
+Source reference: `8a7e7b3a55` from `source/dev`.
+
+Directional DROP edges are now authored by the same ground-motion walk-off
+simulation used at execution time instead of a fall from the exact lip pixel.
+Execution accepts any real descending dismount out of the source region rather
+than requiring a knife-edge landing-region match. Narrow jump windows expand
+to at least one motor step, and the stuck watchdog treats movement inside a
+16-pixel drift radius as a bounce rather than progress. Agent graph cache
+version 50 invalidates lip-authored DROP edges.

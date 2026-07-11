@@ -51,6 +51,14 @@ public final class AgentJumpProbeService {
     public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
                                                              Point from,
                                                              int desiredDir,
+                                                             AgentMovementProfile profile) {
+        return from == null ? null : simulateWalkOffLanding(
+                map, from, desiredDir, new AgentGroundTravelState(from.x, 0.0, 0.0), profile);
+    }
+
+    public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
+                                                             Point from,
+                                                             int desiredDir,
                                                              AgentGroundTravelState initialState,
                                                              AgentMovementProfile profile) {
         if (map == null || from == null || desiredDir == 0 || initialState == null) {

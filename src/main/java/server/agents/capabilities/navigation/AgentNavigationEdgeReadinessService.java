@@ -43,7 +43,9 @@ public final class AgentNavigationEdgeReadinessService {
                                                                     AgentNavigationGraph.Edge edge,
                                                                     int selectedLaunchX,
                                                                     int tolerance) {
-        if (!canExecuteJumpFromCurrentPosition(graph, botPos, edge)) {
+        if (edge.type != AgentNavigationGraph.EdgeType.JUMP
+                || !AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(
+                        graph, botPos, edge, Math.max(1, tolerance))) {
             return false;
         }
         return Math.abs(botPos.x - selectedLaunchX) <= Math.max(1, tolerance);

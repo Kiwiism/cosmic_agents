@@ -32,6 +32,22 @@ class AgentNavigationLaunchWindowServiceTest {
     }
 
     @Test
+    void narrowJumpWindowExpandsToOneMotorStep() {
+        AgentNavigationGraph graph = graphWithGroundRegion(1, 0, 200, 50);
+        AgentNavigationGraph.Edge jump = edge(AgentNavigationGraph.EdgeType.JUMP,
+                new Point(108, 50), new Point(150, 0), 108, 108, 0);
+
+        assertFalse(AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(
+                graph, new Point(104, 50), jump));
+        assertTrue(AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(
+                graph, new Point(104, 50), jump, 8));
+        assertTrue(AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(
+                graph, new Point(112, 50), jump, 8));
+        assertFalse(AgentNavigationLaunchWindowService.isWithinJumpLaunchWindow(
+                graph, new Point(113, 50), jump, 8));
+    }
+
+    @Test
     void dropLaunchWindowRejectsDirectionalDropsAndRopeRegions() {
         AgentNavigationGraph graph = graphWithGroundRegion(1, 0, 100, 50);
         AgentNavigationGraph.Edge straightDrop = edge(AgentNavigationGraph.EdgeType.DROP,

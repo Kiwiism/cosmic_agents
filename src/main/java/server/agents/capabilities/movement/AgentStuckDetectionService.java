@@ -12,6 +12,8 @@ import java.util.function.IntUnaryOperator;
  * Agent-owned stuck detection and unstuck trigger used by the movement tick tail.
  */
 public final class AgentStuckDetectionService {
+    private static final int STUCK_DRIFT_RADIUS_PX = 16;
+
     @FunctionalInterface
     public interface UnstuckAction {
         void tick(AgentRuntimeEntry entry);
@@ -70,7 +72,8 @@ public final class AgentStuckDetectionService {
             return;
         }
 
-        boolean moved = AgentMovementStuckStateRuntime.movedSinceStuckCheck(entry, agentPosition, 8);
+        boolean moved = AgentMovementStuckStateRuntime.movedSinceStuckCheck(
+                entry, agentPosition, STUCK_DRIFT_RADIUS_PX);
         if (moved) {
             AgentMovementStuckStateRuntime.resetStuckMs(entry);
             AgentMovementStuckStateRuntime.rememberStuckCheckPosition(entry, agentPosition);

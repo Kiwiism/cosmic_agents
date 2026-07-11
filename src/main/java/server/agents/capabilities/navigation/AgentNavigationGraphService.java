@@ -2,6 +2,7 @@ package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentJumpLanding;
+import server.agents.capabilities.movement.AgentWalkOffLanding;
 import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
@@ -38,7 +39,7 @@ import java.util.concurrent.RejectedExecutionException;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 49;
+    private static final int GRAPH_VERSION = 50;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1043,29 +1044,28 @@ public final class AgentNavigationGraphService {
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
         int stepX = AgentMovementKinematicsService.walkStep(map, movementProfile) * direction;
-        AgentJumpLanding landing = AgentJumpProbeService.simulateFallLanding(map, endpoint, stepX);
-        if (landing == null) {
+        AgentWalkOffLanding walkOff = AgentJumpProbeService.simulateWalkOffLanding(
+                map, startPoint, direction, movementProfile);
+        if (walkOff == null || walkOff.landing() == null || walkOff.landing().foothold() == null) {
             return;
         }
+        AgentJumpLanding landing = walkOff.landing();
 
         int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
         AgentNavigationGraph.Region below = regionsById.get(toRegionId);
         if (below == null || below.id == from.id) {
             return;
         }
-        if (landing.point().y <= endpoint.y + 4) {
+        if (landing.point().y <= walkOff.launchPoint().y + 4) {
             return;
         }
-
-        int travelMs = AgentJumpProbeService.estimateFallLandingTimeMs(map, endpoint, stepX)
-                + estimateHorizontalTravelTimeMs(actualRunway, movementProfile);
 
         addEdge(from.id, below.id, AgentNavigationGraph.EdgeType.DROP,
                 startPoint,
                 landing.point(),
                 stepX,
                 0,
-                travelMs,
+                walkOff.travelTimeMs(),
                 outgoing,
                 edgeKeys);
     }
