@@ -44,10 +44,12 @@ tree.
 
 ## Current Evidence
 
-On 2026-07-11, all 610 uniquely named tests under `src/test/java/server/agents`
-passed in Level 1 batches. The Level 2 runner then passed twice independently.
-The first Level 2 attempt exposed and led to a fix for stale map binding during
-offline Agent placement.
+On 2026-07-11, all 613 fully qualified test classes under
+`src/test/java/server/agents` passed in Level 1 batches. They use 610 distinct
+simple class names; all six classes belonging to the three duplicated names
+were also run explicitly. The Level 2 runner then passed three times
+independently. The first Level 2 attempt exposed and led to a fix for stale map
+binding during offline Agent placement.
 
 This is server-side Level 2 evidence. Client rendering, animation, packet
 presentation, and visual movement still require a real MapleStory client.
