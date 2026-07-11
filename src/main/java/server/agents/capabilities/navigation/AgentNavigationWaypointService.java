@@ -86,10 +86,6 @@ public final class AgentNavigationWaypointService {
             return selectStraightDropWaypoint(graph, botPos, edge);
         }
 
-        if (AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(botPos, edge)) {
-            return new Point(edge.endPoint);
-        }
-
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return new Point(edge.endPoint);
@@ -119,7 +115,7 @@ public final class AgentNavigationWaypointService {
             return false;
         }
         int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landingFoothold.getId(), -1);
-        if (landingRegionId < 0 || landingRegionId == edge.fromRegionId) {
+        if (landingRegionId != edge.toRegionId) {
             return false;
         }
         if (outcome.launchPoint() == null || outcome.landing().point().y <= outcome.launchPoint().y + 4) {

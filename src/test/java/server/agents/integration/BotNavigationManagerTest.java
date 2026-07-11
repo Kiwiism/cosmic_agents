@@ -844,14 +844,16 @@ class BotNavigationManagerTest {
         AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(260, 220);
-        Point steeringTarget = AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
+        AgentFallbackMovementService.Steering steering =
+                AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
         assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
-        assertNotNull(steeringTarget);
-        assertTrue(steeringTarget.y > bot.getPosition().y);
-        assertTrue(steeringTarget.x > 200 || steeringTarget.x < 0,
+        assertNotNull(steering.target());
+        assertTrue(steering.walkOffLedge());
+        assertTrue(steering.target().y > bot.getPosition().y);
+        assertTrue(steering.target().x > 200 || steering.target().x < 0,
                 "fallback should steer past a legal ledge so normal walk-off physics handles the drop");
     }
 
@@ -868,12 +870,14 @@ class BotNavigationManagerTest {
         AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
 
         Point target = new Point(320, 212);
-        Point steeringTarget = AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
+        AgentFallbackMovementService.Steering steering =
+                AgentFallbackMovementService.resolveSteeringTarget(entry, bot.getPosition(), target);
         boolean immediateAction = AgentFallbackMovementService.tryImmediateAction(entry, bot.getPosition(), target);
 
         assertFalse(immediateAction);
         assertFalse(AgentMovementStateRuntime.downJumpPending(entry));
-        assertEquals(target, steeringTarget);
+        assertEquals(target, steering.target());
+        assertFalse(steering.walkOffLedge());
     }
 
     private static Character mockBot(Point startPosition, MapleMap map) {

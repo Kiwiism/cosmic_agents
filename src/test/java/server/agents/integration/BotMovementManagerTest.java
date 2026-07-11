@@ -574,6 +574,27 @@ class BotMovementManagerTest {
     }
 
     @Test
+    void shouldWalkThroughFallbackLedgeWaypoint() {
+        MapleMap map = new MapleMap(910000061, 0, 0, 910000061, 1.0f);
+        map.setSwim(true);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(
+                new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(new Foothold(new Point(-37, -100), new Point(35, -100), 1));
+        footholds.insert(new Foothold(new Point(33, 100), new Point(300, 100), 2));
+        map.setFootholds(footholds);
+
+        Character bot = mockBot(new Point(35, -100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
+        AgentModeStateRuntime.setFollowing(entry, true);
+
+        AgentGroundMovementRuntimeService.tickGrounded(entry, new Point(253, 100));
+
+        assertTrue(AgentMovementStateRuntime.inAir(entry) || bot.getPosition().x > 35,
+                "fallback must walk through its ledge waypoint instead of stopping at the lip");
+    }
+
+    @Test
     void shouldAttachNearbyRopeDuringGraphWarmupFallbackWhenTargetIsAbove() {
         MapleMap map = new MapleMap(910000032, 0, 0, 910000032, 1.0f);
         server.maps.FootholdTree footholds = new server.maps.FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));

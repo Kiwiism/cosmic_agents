@@ -13,14 +13,22 @@ public final class AgentGroundActionPlanner {
     }
 
     public static AgentGroundAction planGroundAction(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, Point targetPos) {
+        return planGroundAction(entry, currentFoothold, botPos, targetPos, false);
+    }
+
+    public static AgentGroundAction planGroundAction(AgentRuntimeEntry entry,
+                                                     Foothold currentFoothold,
+                                                     Point botPos,
+                                                     Point targetPos,
+                                                     boolean walkOffWaypoint) {
         AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         boolean directionalDrop = AgentGroundMovementPolicy.isDirectionalDropEdge(navEdge);
         boolean footholdDetour = AgentFootholdDetourService.active(entry);
-        int stopDist = directionalDrop || footholdDetour ? 0 : AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
+        int stopDist = directionalDrop || footholdDetour || walkOffWaypoint ? 0 : AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
                 ? AgentGroundMovementPolicy.preciseNavStopDist(navEdge)
                 : AgentMovementPhysicsConfig.configuredStopDist();
         // No hysteresis when navigating to an edge: always move toward the waypoint.
-        int followDist = directionalDrop || footholdDetour ? 0
+        int followDist = directionalDrop || footholdDetour || walkOffWaypoint ? 0
                 : (navEdge != null || AgentNavigationDebugStateRuntime.navPreciseTarget(entry))
                 ? stopDist
                 : AgentMovementPhysicsConfig.configuredFollowDist();

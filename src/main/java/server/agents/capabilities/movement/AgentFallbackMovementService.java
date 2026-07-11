@@ -15,16 +15,19 @@ public final class AgentFallbackMovementService {
     private AgentFallbackMovementService() {
     }
 
-    public static Point resolveSteeringTarget(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
+    public record Steering(Point target, boolean walkOffLedge) {
+    }
+
+    public static Steering resolveSteeringTarget(AgentRuntimeEntry entry, Point botPos, Point targetPos) {
         Rope rope = selectNearbyRope(entry, botPos, targetPos);
         Point ledgeTarget = resolveFallbackLedgeTarget(entry, botPos, targetPos, rope);
         if (ledgeTarget != null) {
-            return ledgeTarget;
+            return new Steering(ledgeTarget, true);
         }
         if (rope == null) {
-            return targetPos;
+            return new Steering(targetPos, false);
         }
-        return new Point(rope.x(), botPos.y);
+        return new Steering(new Point(rope.x(), botPos.y), false);
     }
 
     public static boolean tryImmediateAction(AgentRuntimeEntry entry, Point botPos, Point targetPos) {

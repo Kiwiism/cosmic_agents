@@ -56,6 +56,26 @@ public final class AgentJumpProbeService {
                 map, from, desiredDir, new AgentGroundTravelState(from.x, 0.0, 0.0), profile);
     }
 
+    public static List<AgentWalkOffLanding> walkOffLandingVariants(MapleMap map,
+                                                                   Point from,
+                                                                   int desiredDir,
+                                                                   AgentMovementProfile profile) {
+        List<AgentWalkOffLanding> outcomes = new java.util.ArrayList<>();
+        double terminalHSpeed = AgentMovementKinematicsService.maxHorizontalSpeedPerClientStep(profile) * desiredDir;
+        double[] physicsXPhases = {0.0, -0.4, 0.4};
+        double[] carryPhases = {0.0, AgentMovementKinematicsService.CLIENT_GROUND_STEP_MS / 2.0};
+        double[] launchSpeeds = {0.0, terminalHSpeed};
+        for (double phase : physicsXPhases) {
+            for (double carryMs : carryPhases) {
+                for (double horizontalSpeed : launchSpeeds) {
+                    outcomes.add(simulateWalkOffLanding(map, from, desiredDir,
+                            new AgentGroundTravelState(from.x + phase, horizontalSpeed, carryMs), profile));
+                }
+            }
+        }
+        return outcomes;
+    }
+
     public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
                                                              Point from,
                                                              int desiredDir,

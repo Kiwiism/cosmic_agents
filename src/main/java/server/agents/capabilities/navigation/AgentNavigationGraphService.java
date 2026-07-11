@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 51;
+    private static final int GRAPH_VERSION = 52;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1150,8 +1150,9 @@ public final class AgentNavigationGraphService {
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
         int stepX = AgentMovementKinematicsService.walkStep(map, movementProfile) * direction;
-        AgentWalkOffLanding walkOff = AgentJumpProbeService.simulateWalkOffLanding(
+        List<AgentWalkOffLanding> walkOffVariants = AgentJumpProbeService.walkOffLandingVariants(
                 map, startPoint, direction, movementProfile);
+        AgentWalkOffLanding walkOff = walkOffVariants.isEmpty() ? null : walkOffVariants.get(0);
         if (walkOff == null || walkOff.landing() == null || walkOff.landing().foothold() == null) {
             return;
         }
@@ -1164,6 +1165,12 @@ public final class AgentNavigationGraphService {
         }
         if (landing.point().y <= walkOff.launchPoint().y + 4) {
             return;
+        }
+        for (AgentWalkOffLanding variant : walkOffVariants) {
+            if (variant == null || variant.landing() == null || variant.landing().foothold() == null
+                    || regionIdByFootholdId.getOrDefault(variant.landing().foothold().getId(), -1) != toRegionId) {
+                return;
+            }
         }
 
         // Keep the established route weight while authoring the endpoint from the
