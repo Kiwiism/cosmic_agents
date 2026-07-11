@@ -221,9 +221,11 @@ public final class AgentNavigationPathService {
             int relaxations = 0;
             int openPeak = 1;
             boolean capped = false;
+            Map<Integer, Integer> costToGoal = zeroHeuristic ? Map.of() : graph.costToGoal(targetRegionId);
 
             gScore.put(startState, 0);
-            open.add(new SearchNode(startState, 0, zeroHeuristic ? 0 : heuristic(graph, startPos, targetPos)));
+            open.add(new SearchNode(startState, 0,
+                    zeroHeuristic ? 0 : heuristic(startRegionId, targetRegionId, costToGoal)));
 
             while (!open.isEmpty()) {
                 SearchNode current = open.poll();
@@ -271,7 +273,8 @@ public final class AgentNavigationPathService {
                     gScore.put(nextState, tentativeCost);
                     cameFrom.put(nextState, current.state);
                     cameByEdge.put(nextState, edge);
-                    int fScore = tentativeCost + (zeroHeuristic ? 0 : heuristic(graph, edge.endPoint, targetPos));
+                    int fScore = tentativeCost + (zeroHeuristic
+                            ? 0 : heuristic(edge.toRegionId, targetRegionId, costToGoal));
                     open.add(new SearchNode(nextState, tentativeCost, fScore));
                     openPeak = Math.max(openPeak, open.size());
                     long reachedDistance = rawDistance(edge.endPoint, targetPos);
@@ -363,6 +366,15 @@ public final class AgentNavigationPathService {
 
     public static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
         return intraRegionTravelCost(graph, from, targetPos);
+    }
+
+    private static int heuristic(int regionId,
+                                 int targetRegionId,
+                                 Map<Integer, Integer> costToGoal) {
+        if (regionId == targetRegionId) {
+            return 0;
+        }
+        return costToGoal.getOrDefault(regionId, 0);
     }
 
     public static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {

@@ -12,8 +12,10 @@ Source references: `e8f7b9e23e`, `6c8896f987`, `46b1d9a9f5`, and
 - Path search exits immediately across disconnected graph components and caps
   edge checks. Committed movement can retain its closest reached frontier at
   the cap; scoring and reachability probes never accept partial routes.
-- Retreat and approach probes use the goal heuristic while ordinary committed
-  route behavior and target scoring retain their established search modes.
+- Retreat and approach probes use a cached reverse-Dijkstra edge-cost lower
+  bound while ordinary committed route behavior and target scoring retain
+  their established search modes. The lower bound omits intra-region travel
+  and portal cooldown, so it cannot change an optimal route by overestimating.
 - Test graph caches live under Maven's build directory, isolated from runtime
   caches. Warmup workers run at minimum Java thread priority.
 
