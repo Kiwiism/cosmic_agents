@@ -21,3 +21,13 @@ Ground-region sampling now prefers the standing foothold and its direct
 client's standing-foothold model and prevents a walk across a joined fork from
 snapping onto a lower dead-end arm. Agent navigation graph cache version 47
 invalidates graphs authored with the previous walk simulation.
+
+## Navigation: shared-ground continuity
+
+Source reference: `59c5288994` from `source/dev`.
+
+Jump edges whose landing lies exactly on the source region's own surface are
+now rejected as phantom cross-region transitions. Runtime region resolution
+also remembers the occupied region while coincident chains share the same
+surface, resetting that memory when the graph instance changes. Agent graph
+cache version 48 invalidates graphs containing the old edges.

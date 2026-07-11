@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 public final class AgentNavigationGraph implements Serializable {
+    static final int SHARED_GROUND_Y_PX = 0;
     // Cached nav graphs are serialized to disk. Keep explicit serialVersionUIDs so
     // harmless method-only edits do not break cache loading; use GRAPH_VERSION for
     // intentional cache invalidation when the serialized data shape changes.
@@ -139,6 +140,19 @@ public final class AgentNavigationGraph implements Serializable {
             this.maxX = ropeX;
             this.minY = topY;
             this.maxY = bottomY;
+        }
+
+        boolean surfaceCoversPoint(int x, int y, int yTolerance) {
+            if (isRopeRegion || x < minX || x > maxX) {
+                return false;
+            }
+            for (Segment segment : segments) {
+                if (segment.containsX(x)
+                        && Math.abs(segment.pointAt(x).y - y) <= yTolerance) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public int width() {

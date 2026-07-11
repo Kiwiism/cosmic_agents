@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationContinuityState;
 import server.agents.capabilities.navigation.AgentNavigationDebugState;
 import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
@@ -363,6 +364,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     }
 
     private final AgentNavigationDebugState navigationDebugState = new AgentNavigationDebugState();
+    private final AgentNavigationContinuityState navigationContinuityState = new AgentNavigationContinuityState();
     private final AgentNavigationEdgeState navigationEdgeState = new AgentNavigationEdgeState();
     private final AgentNavigationTargetState navigationTargetState = new AgentNavigationTargetState();
     private final AgentFarmAnchorState farmAnchorState = new AgentFarmAnchorState();
@@ -384,6 +386,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentNavigationDebugState navigationDebugState() {
         return navigationDebugState;
+    }
+
+    public AgentNavigationContinuityState navigationContinuityState() {
+        return navigationContinuityState;
     }
 
     public AgentNavigationEdgeState navigationEdgeState() {

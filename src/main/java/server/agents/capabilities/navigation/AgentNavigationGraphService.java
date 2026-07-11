@@ -37,7 +37,7 @@ import java.util.concurrent.RejectedExecutionException;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 47;
+    private static final int GRAPH_VERSION = 48;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1118,6 +1118,9 @@ public final class AgentNavigationGraphService {
                 if (launchWindow == null) {
                     continue;
                 }
+                if (isPhantomSharedGroundLanding(from, launchWindow.endPoint())) {
+                    continue;
+                }
 
                 addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.JUMP,
                         launchWindow.startPoint(), launchWindow.endPoint(),
@@ -1139,6 +1142,13 @@ public final class AgentNavigationGraphService {
                     stats.cacheMisses,
                     System.nanoTime() - startedAt));
         }
+    }
+
+    static boolean isPhantomSharedGroundLanding(AgentNavigationGraph.Region source, Point landing) {
+        return source != null
+                && landing != null
+                && source.surfaceCoversPoint(
+                landing.x, landing.y, AgentNavigationGraph.SHARED_GROUND_Y_PX);
     }
 
     private static AgentPostLandingJump simulateJumpLandingCached(MapleMap map,

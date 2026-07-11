@@ -48,7 +48,28 @@ public final class AgentNavigationRegionService {
             // edge even though the authored graph and ballistic landing simulation still agree.
             return -1;
         }
-        return graph.findRegionId(map, botPos);
+        int coordinateRegionId = graph.findRegionId(map, botPos);
+        return preserveRegionContinuity(graph, entry, coordinateRegionId, botPos);
+    }
+
+    static int preserveRegionContinuity(AgentNavigationGraph graph,
+                                        AgentRuntimeEntry entry,
+                                        int coordinateRegionId,
+                                        Point position) {
+        if (graph == null || entry == null || position == null) {
+            return coordinateRegionId;
+        }
+        AgentNavigationContinuityState state = entry.navigationContinuityState();
+        int lastRegionId = state.lastRegionId(graph);
+        if (lastRegionId >= 0 && lastRegionId != coordinateRegionId) {
+            AgentNavigationGraph.Region lastRegion = graph.getRegion(lastRegionId);
+            if (lastRegion != null && lastRegion.surfaceCoversPoint(
+                    position.x, position.y, AgentNavigationGraph.SHARED_GROUND_Y_PX)) {
+                coordinateRegionId = lastRegionId;
+            }
+        }
+        state.remember(graph, coordinateRegionId);
+        return coordinateRegionId;
     }
 
     public static int resolveTargetRegionId(AgentNavigationGraph graph,
