@@ -118,6 +118,7 @@ public class MapleMap {
     private final AtomicInteger spawnedMonstersOnMap = new AtomicInteger(0);
     private final AtomicInteger droppedItemCount = new AtomicInteger(0);
     private final Collection<Character> characters = new LinkedHashSet<>();
+    private final MapPlayerObserverState playerObservers = new MapPlayerObserverState();
     private final Map<Integer, Set<Integer>> mapParty = new LinkedHashMap<>();
     private final Map<Integer, Portal> portals = new HashMap<>();
     private final Map<Integer, Integer> backgroundTypes = new HashMap<>();
@@ -2331,7 +2332,9 @@ public class MapleMap {
         Party party = chr.getParty();
         chrWLock.lock();
         try {
-            characters.add(chr);
+            if (characters.add(chr)) {
+                playerObservers.characterAdded(chr);
+            }
             chrSize = characters.size();
 
             if (party != null && party.getMemberById(chr.getId()) != null) {
@@ -2657,7 +2660,9 @@ public class MapleMap {
                 removePartyMemberInternal(chr, party.getId());
             }
 
-            characters.remove(chr);
+            if (characters.remove(chr)) {
+                playerObservers.characterRemoved(chr);
+            }
         } finally {
             chrWLock.unlock();
         }
@@ -2751,6 +2756,9 @@ public class MapleMap {
     }
 
     private void broadcastMessage(Character source, Packet packet, double rangeSq, Point rangedFrom) {
+        if (source != null && source.getClient() instanceof BotClient && !isObservedByPlayer()) {
+            return;
+        }
         final long slowThresholdMs = 100;
         long broadcastStartedNs = server.monitoring.SlowOperationLogger.start();
         if (net.packet.logging.MonitoredChrLogger.hasMonitoredCharacters()) {
@@ -2778,6 +2786,11 @@ public class MapleMap {
             server.monitoring.SlowOperationLogger.warnIfSlow("map-broadcast map=" + mapid + " chars=" + characters.size(),
                     broadcastStartedNs, slowThresholdMs);
         }
+    }
+
+    /** True when at least one real client, including a hidden GM, can render this map. */
+    public boolean isObservedByPlayer() {
+        return playerObservers.isObserved();
     }
 
     private void updateBossSpawn(Monster monster) {

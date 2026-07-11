@@ -15,6 +15,7 @@ class AgentMovementBroadcastStateRuntimeTest {
         assertFalse(AgentMovementBroadcastStateRuntime.matches(entry, 10, 20, 1, 2, 3, 4));
 
         AgentMovementBroadcastStateRuntime.record(entry, 10, 20, 1, 2, 3, 4);
+        AgentMovementBroadcastStateRuntime.markReconciled(entry);
 
         assertTrue(AgentMovementBroadcastStateRuntime.matches(entry, 10, 20, 1, 2, 3, 4));
         assertFalse(AgentMovementBroadcastStateRuntime.matches(entry, 11, 20, 1, 2, 3, 4));
@@ -25,5 +26,10 @@ class AgentMovementBroadcastStateRuntimeTest {
         AgentMovementBroadcastStateRuntime.invalidate(entry);
 
         assertFalse(AgentMovementBroadcastStateRuntime.matches(entry, 10, 20, 1, 2, 3, 4));
+        assertTrue(AgentMovementBroadcastStateRuntime.reconciledThisTick(entry));
+
+        AgentMovementBroadcastStateRuntime.beginTick(entry);
+
+        assertFalse(AgentMovementBroadcastStateRuntime.reconciledThisTick(entry));
     }
 }

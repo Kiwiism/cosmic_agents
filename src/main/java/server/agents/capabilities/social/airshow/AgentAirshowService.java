@@ -204,6 +204,9 @@ public final class AgentAirshowService {
     }
 
     private static void maybeChemTrail(AgentRuntimeEntry entry, MapleMap map, Point position) {
+        if (!map.isObservedByPlayer()) {
+            return;
+        }
         long now = System.currentTimeMillis();
         if (!AgentAirshowStateRuntime.trailDue(entry, now, TRAIL_INTERVAL_MS)) {
             return;

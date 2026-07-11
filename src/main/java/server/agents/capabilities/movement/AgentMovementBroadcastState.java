@@ -8,6 +8,7 @@ public final class AgentMovementBroadcastState {
     private int velocityY = 0;
     private int stance = 0;
     private int footholdId = 0;
+    private boolean reconciledThisTick;
 
     public boolean valid() {
         return valid;
@@ -15,6 +16,18 @@ public final class AgentMovementBroadcastState {
 
     public void setValid(boolean valid) {
         this.valid = valid;
+    }
+
+    public void beginTick() {
+        reconciledThisTick = false;
+    }
+
+    public void markReconciled() {
+        reconciledThisTick = true;
+    }
+
+    public boolean reconciledThisTick() {
+        return reconciledThisTick;
     }
 
     public boolean matches(int x, int y, int velocityX, int velocityY, int stance, int footholdId) {

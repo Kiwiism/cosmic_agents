@@ -121,7 +121,7 @@ public enum CosmicPacketGateway implements PacketGateway {
 
     @Override
     public void broadcastChatText(Character speaker, String message, boolean gm, int show) {
-        if (speaker == null || speaker.getMap() == null) {
+        if (speaker == null || speaker.getMap() == null || !speaker.getMap().isObservedByPlayer()) {
             return;
         }
         speaker.getMap().broadcastMessage(PacketCreator.getChatText(speaker.getId(), message, gm, show));

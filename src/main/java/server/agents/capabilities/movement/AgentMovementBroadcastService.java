@@ -32,7 +32,12 @@ public final class AgentMovementBroadcastService {
     }
 
     private static void doBroadcastMovement(AgentRuntimeEntry entry) {
+        AgentMovementBroadcastStateRuntime.markReconciled(entry);
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
+        if (bot.getMap() == null || !bot.getMap().isObservedByPlayer()) {
+            AgentMovementBroadcastStateRuntime.invalidate(entry);
+            return;
+        }
         int x = bot.getPosition().x;
         int y = bot.getPosition().y;
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
@@ -88,6 +93,7 @@ public final class AgentMovementBroadcastService {
      * in the same movement path.
      */
     public static void broadcastFlashJump(AgentRuntimeEntry entry, int relativeX, int relativeY) {
+        AgentMovementBroadcastStateRuntime.markReconciled(entry);
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
         int footholdId = resolveBroadcastFhId(entry, agent);
@@ -117,6 +123,7 @@ public final class AgentMovementBroadcastService {
      * {@code x, y, foothold, stance, elapsed} with zero elapsed time.
      */
     public static void broadcastTeleport(AgentRuntimeEntry entry, Point origin, Point destination) {
+        AgentMovementBroadcastStateRuntime.markReconciled(entry);
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         AgentMovementPacketSnapshot snapshot = AgentMovementSnapshotService.currentSnapshot(entry);
         int destinationFootholdId = resolveBroadcastFhId(entry, agent);

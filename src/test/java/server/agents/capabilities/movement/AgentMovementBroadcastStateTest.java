@@ -18,6 +18,7 @@ class AgentMovementBroadcastStateTest {
         assertEquals(0, state.velocityY());
         assertEquals(0, state.stance());
         assertEquals(0, state.footholdId());
+        assertFalse(state.reconciledThisTick());
     }
 
     @Test
@@ -27,6 +28,7 @@ class AgentMovementBroadcastStateTest {
         assertFalse(state.matches(10, 20, 1, 2, 3, 4));
 
         state.record(10, 20, 1, 2, 3, 4);
+        state.markReconciled();
 
         assertTrue(state.matches(10, 20, 1, 2, 3, 4));
         assertFalse(state.matches(11, 20, 1, 2, 3, 4));
@@ -37,5 +39,10 @@ class AgentMovementBroadcastStateTest {
         state.setValid(false);
 
         assertFalse(state.matches(10, 20, 1, 2, 3, 4));
+        assertTrue(state.reconciledThisTick());
+
+        state.beginTick();
+
+        assertFalse(state.reconciledThisTick());
     }
 }
