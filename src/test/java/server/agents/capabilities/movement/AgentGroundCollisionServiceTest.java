@@ -1,12 +1,17 @@
 package server.agents.capabilities.movement;
 
 import org.junit.jupiter.api.Test;
+import server.agents.capabilities.navigation.AgentNavigationGraph;
+import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupService;
 import server.maps.Foothold;
 import server.maps.FootholdTree;
 import server.maps.MapleMap;
 
 import java.awt.Point;
+import java.util.List;
+import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -83,6 +88,38 @@ class AgentGroundCollisionServiceTest {
 
         assertTrue(AgentGroundCollisionService.isGroundRunwayBlockedByWall(
                 map, new Point(44, 100), new Point(56, 100)));
+    }
+
+    @Test
+    void followsStandingFootholdChainAcrossJoinedFork() {
+        MapleMap map = createEmptyTestMap(910000058);
+        Foothold standing = new Foothold(new Point(0, 100), new Point(50, 90), 1);
+        Foothold ridge = new Foothold(new Point(50, 90), new Point(100, 50), 2);
+        Foothold lowerSpur = new Foothold(new Point(50, 90), new Point(100, 90), 3);
+        standing.setNext(ridge.getId());
+        ridge.setPrev(standing.getId());
+        map.getFootholds().insert(standing);
+        map.getFootholds().insert(ridge);
+        map.getFootholds().insert(lowerSpur);
+
+        AgentNavigationGraph.Region region = new AgentNavigationGraph.Region(11, List.of(
+                new AgentNavigationGraph.Segment(standing),
+                new AgentNavigationGraph.Segment(ridge),
+                new AgentNavigationGraph.Segment(lowerSpur)));
+        AgentNavigationWalkRegionLookupService.setBuildWalkRegionLookup(
+                map,
+                Map.of(region.id, region),
+                Map.of(standing.getId(), region.id, ridge.getId(), region.id, lowerSpur.getId(), region.id),
+                Map.of(standing.getId(), standing, ridge.getId(), ridge, lowerSpur.getId(), lowerSpur));
+        try {
+            Point selected = AgentGroundCollisionService.findWalkRegionGroundPoint(
+                    map, standing, 60, 90);
+
+            assertTrue(selected.y < lowerSpur.getY1());
+            assertEquals(new Point(60, 82), selected);
+        } finally {
+            AgentNavigationWalkRegionLookupService.clearBuildWalkRegionLookup();
+        }
     }
 
     private static MapleMap createEmptyTestMap(int mapId) {

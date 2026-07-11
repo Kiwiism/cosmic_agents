@@ -120,6 +120,12 @@ public final class AgentGroundCollisionService {
         return lookup.regionIdByFootholdId().getOrDefault(foothold.getId(), -1) >= 0;
     }
 
+    private static boolean isChainStep(Foothold foothold, int candidateFootholdId) {
+        return candidateFootholdId == foothold.getId()
+                || candidateFootholdId == foothold.getNext()
+                || candidateFootholdId == foothold.getPrev();
+    }
+
     private static GroundRegionSample findWalkRegionGroundSample(MapleMap map, Foothold foothold, int x, int referenceY) {
         if (map == null || foothold == null) {
             return null;
@@ -139,6 +145,7 @@ public final class AgentGroundCollisionService {
         AgentNavigationGraph.Segment bestSegment = null;
         Point bestPoint = null;
         int bestScore = Integer.MAX_VALUE;
+        boolean bestChainStep = false;
         boolean foundContainingSegment = false;
         for (AgentNavigationGraph.Segment segment : region.segments) {
             if (segment.containsX(x)) {
@@ -161,13 +168,17 @@ public final class AgentGroundCollisionService {
                 continue;
             }
 
+            boolean chainStep = isChainStep(foothold, segment.footholdId);
             int score = dx * 1000 + Math.abs(dy);
-            if (bestPoint == null
-                    || score < bestScore
-                    || (score == bestScore && candidate.y > bestPoint.y)) {
+            boolean better = bestSegment == null
+                    || (chainStep && !bestChainStep)
+                    || (chainStep == bestChainStep
+                    && (score < bestScore || (score == bestScore && candidate.y > bestPoint.y)));
+            if (better) {
                 bestSegment = segment;
                 bestPoint = candidate;
                 bestScore = score;
+                bestChainStep = chainStep;
             }
         }
 
