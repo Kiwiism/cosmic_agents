@@ -182,3 +182,21 @@ fail the lifecycle eligibility gate, duplicate starts are atomically rejected,
 one failing Agent does not stop later candidates, reconciliation is bounded and
 stable, disabled mode leaves sessions untouched, confirmed wipe is metadata
 only, and every steady/fast-start task is cancelled at shutdown.
+
+## Validation status
+
+- Compile and package builds pass on the completed branch.
+- Every source test class was exercised. The single full-suite invocation
+  exceeded fifteen minutes after 514 green classes, so the remaining classes
+  were run in bounded batches. One Pet-Walking-Road route-selection regression
+  was found, corrected, and its focused simulation plus the directional-drop
+  graph regression now pass. Two transient missing-class errors caused by the
+  concurrently running IDE server were rerun after a forced compile and pass.
+- Production and test `server/bots` directories are absent. There are no
+  production imports or runtime dependencies on that package; the sole text
+  occurrence is the reconstruction audit's forbidden-package assertion.
+- Agent code reaches `TimerManager` only through `CosmicSchedulerGateway`.
+- The branch has no database changelog/schema diff from `master`.
+- Live-client movement, combat/buff packet display, and population ramp/clear
+  remain required before production enablement. Population stays disabled by
+  default until an administrator explicitly enables its external roster.
