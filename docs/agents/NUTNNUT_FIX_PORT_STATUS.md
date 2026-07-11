@@ -123,6 +123,23 @@ weights. Directional edges retain the established route-cost estimate while
 using the execution simulation for their landing endpoint, preserving legacy
 route selection on Pet-Walking-Road without restoring incorrect destinations.
 
+## Navigation: bounded search, cache isolation, and warmup priority
+
+Source references: `e8f7b9e23e`, `6c8896f987`, `46b1d9a9f5`, and
+`509e53707f` from `source/dev`.
+
+Agent path searches now reject disconnected graph components before expanding
+nodes and enforce a bounded edge-check budget. Committed movement may return
+the closest reached frontier when the budget is exhausted, while scoring and
+candidate probes remain strict so a partial route cannot make an unreachable
+target appear valid. Shop and retreat probes use the normal admissible
+heuristic instead of the expensive zero-heuristic diagnostic path.
+
+Navigation graph tests write caches beneath Maven's build directory instead of
+the production cache tree. Graph warmup workers run at minimum thread priority
+so first-load graph construction yields CPU to channel and Agent runtime work.
+These changes do not alter a completed route's edge costs or ordering.
+
 ## Combat: magic passive damage refresh
 
 Source reference: `71c86ad516` from `source/dev`.

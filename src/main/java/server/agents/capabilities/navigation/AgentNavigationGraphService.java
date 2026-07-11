@@ -50,7 +50,9 @@ public final class AgentNavigationGraphService {
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
     private static final int FAST_WARMUP_MAX_FOOTHOLDS = 200;
     private static final long DEFAULT_GRAPH_CACHE_MAX_WEIGHT = 1_000_000L;
-    private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
+    private static final Path CACHE_DIR = Path.of(
+            System.getProperty("agents.navigation.cacheDir", "cache/bot-nav"),
+            "v" + GRAPH_VERSION);
     private static final AgentWeightedLruCache<GraphCacheKey, AgentNavigationGraph> GRAPHS =
             new AgentWeightedLruCache<>(configuredGraphCacheMaxWeight(), AgentNavigationGraphService::graphWeight);
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
@@ -520,13 +522,15 @@ public final class AgentNavigationGraphService {
                         "bot-nav-graph-warmup",
                         1,
                         AgentBoundedExecutorFactory.positiveIntegerProperty(
-                                "agents.async.navigation.queueCapacity", 64)),
+                                "agents.async.navigation.queueCapacity", 64),
+                        Thread.MIN_PRIORITY),
                 AgentBoundedExecutorFactory.fixed(
                         "navigation-fast",
                         "bot-nav-graph-warmup-fast",
                         1,
                         AgentBoundedExecutorFactory.positiveIntegerProperty(
-                                "agents.async.navigation.fastQueueCapacity", 64)));
+                                "agents.async.navigation.fastQueueCapacity", 64),
+                        Thread.MIN_PRIORITY));
     }
 
     private static void awaitWarmupTermination(ExecutorService executor, String lane) {
@@ -598,6 +602,10 @@ public final class AgentNavigationGraphService {
 
     private static Path graphFile(GraphCacheKey key) {
         return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
+    }
+
+    static Path cacheDirectory() {
+        return CACHE_DIR;
     }
 
     private static AgentNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {

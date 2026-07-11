@@ -220,6 +220,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <agents.navigation.cacheDir>${project.build.directory}/agent-nav-test-cache</agents.navigation.cacheDir>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
 
             <!-- Enable assembling jar that includes all dependencies -->

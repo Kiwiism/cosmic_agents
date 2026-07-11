@@ -11,6 +11,7 @@ import java.awt.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -293,6 +294,7 @@ public final class AgentNavigationGraph implements Serializable {
     public final Map<Integer, Region> regionsById;
     public final Map<Integer, Integer> regionIdByFootholdId;
     final Map<Integer, List<Edge>> outgoingByRegionId;
+    private transient volatile Map<Integer, Integer> connectedComponentByRegionId;
     final java.util.Set<Integer> collidableWallIds;
     public final java.util.Set<Integer> collidableFromBelowIds;
 
@@ -357,6 +359,54 @@ public final class AgentNavigationGraph implements Serializable {
 
     public List<Edge> getOutgoing(int regionId) {
         return outgoingByRegionId.getOrDefault(regionId, List.of());
+    }
+
+    public int connectedComponentId(int regionId) {
+        Map<Integer, Integer> components = connectedComponentByRegionId;
+        if (components == null) {
+            synchronized (this) {
+                components = connectedComponentByRegionId;
+                if (components == null) {
+                    components = buildConnectedComponents();
+                    connectedComponentByRegionId = components;
+                }
+            }
+        }
+        return components.getOrDefault(regionId, -1);
+    }
+
+    private Map<Integer, Integer> buildConnectedComponents() {
+        Map<Integer, Set<Integer>> neighbors = new HashMap<>();
+        for (Integer regionId : regionsById.keySet()) {
+            neighbors.put(regionId, new HashSet<>());
+        }
+        for (List<Edge> outgoing : outgoingByRegionId.values()) {
+            for (Edge edge : outgoing) {
+                neighbors.computeIfAbsent(edge.fromRegionId, ignored -> new HashSet<>()).add(edge.toRegionId);
+                neighbors.computeIfAbsent(edge.toRegionId, ignored -> new HashSet<>()).add(edge.fromRegionId);
+            }
+        }
+
+        Map<Integer, Integer> components = new HashMap<>();
+        int componentId = 0;
+        for (Integer start : neighbors.keySet()) {
+            if (components.containsKey(start)) {
+                continue;
+            }
+            ArrayDeque<Integer> pending = new ArrayDeque<>();
+            pending.add(start);
+            components.put(start, componentId);
+            while (!pending.isEmpty()) {
+                int current = pending.removeFirst();
+                for (Integer neighbor : neighbors.getOrDefault(current, Set.of())) {
+                    if (components.putIfAbsent(neighbor, componentId) == null) {
+                        pending.addLast(neighbor);
+                    }
+                }
+            }
+            componentId++;
+        }
+        return components;
     }
 
     public boolean hasInterRegionEdge(int fromRegionId, int toRegionId) {
