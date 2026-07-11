@@ -1307,6 +1307,7 @@ class BotCombatManagerTest {
     @Test
     void shouldMatchOpenStoryGroundMobKnockbackWhenHitFromRight() {
         MapleMap map = mock(MapleMap.class);
+        when(map.isObservedByPlayer()).thenReturn(true);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         Monster mob = mockMob(new Point(140, 200), 9300000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
@@ -1328,6 +1329,7 @@ class BotCombatManagerTest {
     @Test
     void shouldOnlyRedirectHorizontalVelocityWhenMobHitOccursMidAir() {
         MapleMap map = mock(MapleMap.class);
+        when(map.isObservedByPlayer()).thenReturn(true);
         Character bot = mockBot(new Point(100, 200), map, 20_000, null);
         Monster mob = mockMob(new Point(60, 200), 9300001);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);

@@ -12,6 +12,7 @@ import server.maps.MapleMap;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +26,7 @@ class AgentReplyRuntimeTest {
 
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(7);
+        when(map.isObservedByPlayer()).thenReturn(true);
 
         AgentReplyRuntime.visibleSayNow(entry, "hello");
 
@@ -58,9 +60,23 @@ class AgentReplyRuntimeTest {
         when(bot.getParty()).thenReturn(null);
         when(bot.getMap()).thenReturn(map);
         when(bot.getId()).thenReturn(7);
+        when(map.isObservedByPlayer()).thenReturn(true);
 
         AgentReplyRuntime.sayPartyNow(bot, "party");
 
         verify(map).broadcastMessage(any(Packet.class));
+    }
+
+    @Test
+    void visibleSaySkipsBroadcastWhenMapHasNoPlayerObserver() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+
+        when(bot.getMap()).thenReturn(map);
+
+        AgentReplyRuntime.visibleSayNow(entry, "hello");
+
+        verify(map, never()).broadcastMessage(any(Packet.class));
     }
 }
