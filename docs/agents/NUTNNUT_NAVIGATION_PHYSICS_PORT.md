@@ -79,3 +79,15 @@ Source references: `569862626d` and `49cec7e234`.
   preserve the existing snap behavior.
 - Navigation graph cache version 53 invalidates portal edges authored against
   unstandable collision-portal centers.
+
+## Validation
+
+Validated from a clean detached worktree at `92c89cb528`:
+
+- `mvnw -q -DskipTests package`: passed.
+- Combined search, graph, walk-off, climb, swim, observer, settle, tick,
+  portal, spawn-fall, combat-retreat, and movement-skill packet regressions:
+  86 tests passed and one WZ-dependent case was skipped because ignored local
+  WZ data is not copied into detached worktrees.
+- LOD classes, runtime switching, abstract movement/combat, and LOD cadence
+  changes were not ported.
