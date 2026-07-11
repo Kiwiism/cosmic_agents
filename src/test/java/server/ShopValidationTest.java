@@ -48,4 +48,14 @@ class ShopValidationTest {
         assertFalse(Shop.canReceiveSaleProceeds(player, 50));
         verify(player).canHoldMeso(50);
     }
+
+    @Test
+    void shouldRejectMesoOverflowSaleWithoutStockWarning() {
+        Client client = mock(Client.class);
+
+        Shop.rejectSaleForMesoCapacity(client);
+
+        verify(client).sendPacket(PacketCreator.shopTransaction((byte) 0x8));
+        verify(client).sendPacket(PacketCreator.serverNotice(1, "You cannot carry any more mesos."));
+    }
 }
