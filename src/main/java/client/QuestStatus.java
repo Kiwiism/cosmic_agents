@@ -349,5 +349,12 @@ public class QuestStatus {
             progress = Collections.unmodifiableMap(new LinkedHashMap<>(progress));
             medalMaps = Collections.unmodifiableList(new LinkedList<>(medalMaps));
         }
+
+        public boolean shouldPersist() {
+            return status != Status.NOT_STARTED.getId()
+                    || forfeited != 0
+                    || !progress.isEmpty()
+                    || !medalMaps.isEmpty();
+        }
     }
 }

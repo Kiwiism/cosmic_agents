@@ -8776,7 +8776,11 @@ public class Character extends AbstractCharacterObject {
             }
         }
         List<QuestStatus.PersistenceSnapshot> questSnapshot = savePlan.includes(PersistenceSection.QUESTS)
-                ? getQuests().stream().map(QuestStatus::persistenceSnapshot).toList() : List.of();
+                ? getQuests().stream()
+                        .map(QuestStatus::persistenceSnapshot)
+                        .filter(QuestStatus.PersistenceSnapshot::shouldPersist)
+                        .toList()
+                : List.of();
         Mount.PersistenceSnapshot mountSnapshot = savePlan.includes(PersistenceSection.STATS) && maplemount != null
                 ? maplemount.persistenceSnapshot() : new Mount.PersistenceSnapshot(0, 1, 0);
         boolean saveStorage = (savePlan.includes(PersistenceSection.SOCIAL)
