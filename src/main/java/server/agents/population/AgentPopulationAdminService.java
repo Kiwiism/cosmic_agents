@@ -3,6 +3,7 @@ package server.agents.population;
 import server.agents.registry.AgentResolvedCharacter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -84,11 +85,23 @@ public final class AgentPopulationAdminService {
     }
 
     public WipeResult wipeConfirm() throws IOException {
-        int managed = registry.snapshot().agents().size();
-        int stopped = clearLive();
-        registry.clear();
-        return new WipeResult(managed, stopped, List.of(
-                "Removed " + managed + " Agent(s) from the external population roster.",
-                "Backing characters and accounts were not deleted."));
+        int removed = 0;
+        int stopped = 0;
+        List<String> messages = new ArrayList<>();
+        for (AgentPopulationRecord record : List.copyOf(registry.snapshot().agents())) {
+            try {
+                if (sessions.stop(record)) stopped++;
+            } catch (Exception failure) {
+                metrics.recordFailure();
+            }
+            if (sessions.isLive(record.characterId())) {
+                messages.add("retained " + record.name() + ": live session did not stop");
+                continue;
+            }
+            registry.remove(record.name());
+            removed++;
+        }
+        messages.add("Backing characters and accounts were not deleted.");
+        return new WipeResult(removed, stopped, List.copyOf(messages));
     }
 }

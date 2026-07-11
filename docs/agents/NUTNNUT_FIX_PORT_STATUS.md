@@ -174,7 +174,9 @@ GM6 `@agentpop` and compatibility alias `@botpop` both call the same
 AgentPopulationAdminService for status, enable/disable, multiplier, bounded
 list, sweep, add/remove, crew, clear, and confirmed roster wipe operations.
 Wipe removes only external roster records and never deletes Cosmic characters
-or accounts. Fast-start callbacks are generation-scoped and cancelled on
+or accounts. A live Agent whose stop fails remains registered so the operation
+can be retried instead of orphaning an unmanaged autonomous session. Fast-start
+callbacks are generation-scoped and cancelled on
 disable or shutdown.
 
 Automated population acceptance coverage verifies that ordinary characters

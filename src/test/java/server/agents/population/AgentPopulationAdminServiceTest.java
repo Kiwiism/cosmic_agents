@@ -33,6 +33,20 @@ class AgentPopulationAdminServiceTest {
         assertTrue(result.messages().stream().anyMatch(line -> line.contains("were not deleted")));
     }
 
+    @Test
+    void confirmedWipeRetainsAgentWhoseLiveSessionCannotStop() throws IOException {
+        Fixture fixture = new Fixture(true);
+        fixture.registry.add(new AgentPopulationRecord(1, "agent", null));
+        fixture.backend.live = true;
+        fixture.backend.stopSucceeds = false;
+
+        AgentPopulationAdminService.WipeResult result = fixture.admin.wipeConfirm();
+
+        assertEquals(0, result.removed());
+        assertEquals(1, fixture.registry.snapshot().agents().size());
+        assertTrue(result.messages().stream().anyMatch(line -> line.contains("retained agent")));
+    }
+
     private static final class Fixture {
         final MemoryStore store = new MemoryStore();
         final AgentPopulationRegistry registry;
@@ -55,11 +69,15 @@ class AgentPopulationAdminServiceTest {
     private static final class Backend implements AgentPopulationSessionService.Backend {
         final boolean eligible;
         boolean live;
+        boolean stopSucceeds = true;
         Backend(boolean eligible) { this.eligible = eligible; }
         @Override public boolean isEligibleAgent(int characterId) { return eligible; }
         @Override public boolean isLive(int characterId) { return live; }
         @Override public boolean spawnSelfDirected(AgentPopulationRecord record) { live = true; return true; }
-        @Override public boolean stop(int characterId) { boolean wasLive = live; live = false; return wasLive; }
+        @Override public boolean stop(int characterId) {
+            if (!stopSucceeds) return false;
+            boolean wasLive = live; live = false; return wasLive;
+        }
     }
 
     private static final class MemoryStore implements AgentPopulationStore {
