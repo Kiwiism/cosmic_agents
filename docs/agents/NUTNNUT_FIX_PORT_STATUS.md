@@ -156,3 +156,9 @@ order, bounds each sweep, and isolates individual failures. A disabled registry
 does not disturb existing sessions. The Agent-owned steady scheduler is
 cancellable and catches top-level sweep failures, while target/live/managed,
 failure, and sweep timing metrics remain bounded counters.
+
+The first Cosmic population adapter now treats the Agent-only account lock as
+the offline eligibility boundary, rejects already-online and unavailable-world
+loads, self-registers accepted sessions into autonomous grind mode, and removes
+runtime/map state if registration fails. Session stop removes the Agent runtime
+before synchronously disconnecting its headless client.
