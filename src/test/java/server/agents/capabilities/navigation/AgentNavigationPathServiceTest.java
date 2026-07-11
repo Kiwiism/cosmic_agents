@@ -214,6 +214,28 @@ class AgentNavigationPathServiceTest {
         assertEquals(0, outcome.expandedNodes());
     }
 
+    @Test
+    void retreatProbeKeepsOptimalRouteCost() {
+        AgentNavigationGraph.Edge first = edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                new Point(0, 100), new Point(100, 100), 100);
+        AgentNavigationGraph.Edge second = edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
+                new Point(100, 100), new Point(200, 100), 100);
+        AgentNavigationGraph.Edge direct = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(0, 100), new Point(200, 100), 250);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(1, List.of(direct, first), 2, List.of(second)));
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPathForRetreatProbe(
+                graph, null, new Point(0, 100), 1, 3, new Point(200, 100));
+
+        assertEquals(List.of(first, second), path);
+        assertEquals(200, path.stream().mapToInt(edge -> edge.cost).sum());
+    }
+
     private static AgentNavigationGraph graphWithRegion(AgentNavigationGraph.Region region) {
         return new AgentNavigationGraph(
                 1,

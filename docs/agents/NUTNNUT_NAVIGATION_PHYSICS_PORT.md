@@ -4,6 +4,19 @@ This ledger tracks correctness and presentation fixes selected from NuTNNuT
 branches for the reconstructed Agent runtime. Simulation LOD is deliberately
 excluded; see `simulation-tier-runtime/NUTNNUT_LOD_COMPARISON.md`.
 
+## Search And Warmup Cost Controls
+
+Source references: `e8f7b9e23e`, `6c8896f987`, `46b1d9a9f5`, and
+`509e53707f`.
+
+- Path search exits immediately across disconnected graph components and caps
+  edge checks. Committed movement can retain its closest reached frontier at
+  the cap; scoring and reachability probes never accept partial routes.
+- Retreat and approach probes use the goal heuristic while ordinary committed
+  route behavior and target scoring retain their established search modes.
+- Test graph caches live under Maven's build directory, isolated from runtime
+  caches. Warmup workers run at minimum Java thread priority.
+
 ## Directional Walk-Off Reliability
 
 Source references: `a9c33a1a4f`, `f5787ab0c6`, and `362926fdf9`.
