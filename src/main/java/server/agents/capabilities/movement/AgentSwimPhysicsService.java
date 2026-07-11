@@ -114,6 +114,10 @@ public final class AgentSwimPhysicsService {
         } else if (collision.type() == AgentJumpProbeService.AirCollisionType.WALL) {
             nextX = collision.point().x;
             velocityX = 0.0;
+            AgentSwimStateRuntime.setSwimWallBlocked(
+                    entry, AgentSwimStateRuntime.swimMoveDirection(entry) != 0);
+        } else {
+            AgentSwimStateRuntime.setSwimWallBlocked(entry, false);
         }
 
         if (AgentSwimStateRuntime.swimMoveDirection(entry) > 0) {

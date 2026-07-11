@@ -57,6 +57,30 @@ class AgentGroundActionPlannerTest {
     }
 
     @Test
+    void shouldJumpIntoWaterWhenGroundedSwimmerIsBlockedByWall() {
+        MapleMap map = new MapleMap(910000012, 0, 0, 910000012, 1.0f);
+        map.setSwim(true);
+        Foothold ground = new Foothold(new Point(0, 100), new Point(50, 100), 1);
+        Foothold wall = new Foothold(new Point(50, 60), new Point(50, 100), 2);
+        Foothold upper = new Foothold(new Point(50, 60), new Point(120, 60), 3);
+        wall.setNext(ground.getId());
+        wall.setPrev(upper.getId());
+        FootholdTree tree = new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000));
+        tree.insert(ground);
+        tree.insert(wall);
+        tree.insert(upper);
+        map.setFootholds(tree);
+
+        Character bot = mockBot(new Point(44, 100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+
+        AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(
+                entry, ground, new Point(44, 100), new Point(100, 100));
+
+        assertEquals(AgentGroundAction.Type.JUMP, action.type());
+    }
+
+    @Test
     void shouldPlanJumpWhenMobBlocksWalkLaneAndLandingStaysInCurrentRegion() {
         MapleMap map = spy(new MapleMap(910009048, 0, 0, 910009048, 1.0f));
         Foothold foothold = new Foothold(new Point(0, 100), new Point(300, 100), 1);

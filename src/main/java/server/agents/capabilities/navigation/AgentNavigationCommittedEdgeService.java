@@ -204,9 +204,14 @@ public final class AgentNavigationCommittedEdgeService {
             }
             return edge;
         }
-        // While climbing, always keep the edge. Ground foothold lookup can report the platform
-        // below/behind the rope as current region and otherwise drop the exit edge too early.
+        // Ground lookup can report a platform behind a rope, so committed CLIMB exits survive
+        // false-positive regions. Ground edges are valid only from their authored source.
         if (AgentClimbStateRuntime.climbing(entry) && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
+            if (edge.type != AgentNavigationGraph.EdgeType.CLIMB
+                    && startRegionId >= 0
+                    && startRegionId != edge.fromRegionId) {
+                return null;
+            }
             return edge;
         }
         // DROP/JUMP arcs may enter the destination region before the bot touches down. Keep the

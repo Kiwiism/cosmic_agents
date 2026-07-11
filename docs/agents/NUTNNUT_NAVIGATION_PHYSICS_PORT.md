@@ -21,3 +21,15 @@ Source references: `a9c33a1a4f`, `f5787ab0c6`, and `362926fdf9`.
 These changes preserve valid route costs and ordinary ground movement while
 removing edges and execution shortcuts that cannot be reproduced by live
 physics.
+
+## Climb And Swim Recovery
+
+Source references: `e9788de7cf`, `f424904a88`, and `3516aa238b`.
+
+- A climbing Agent retains committed CLIMB exits across ambiguous ground
+  readings, but drops a stale ground JUMP whose source is another region.
+- A grounded Agent on a swim map jumps into the water when a wall blocks the
+  direct ground step.
+- Swim collision records a wall hit only while horizontal steering is active.
+  The following intent tick requests a cooldown-gated upward burst and holds up
+  between bursts, preventing repeated horizontal pressure into the wall.

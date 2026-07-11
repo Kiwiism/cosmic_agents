@@ -49,6 +49,14 @@ public final class AgentSwimStateRuntime {
         state(entry).setNextJumpAtMs(nextJumpAtMs);
     }
 
+    public static boolean swimWallBlocked(AgentRuntimeEntry entry) {
+        return state(entry).wallBlocked();
+    }
+
+    public static void setSwimWallBlocked(AgentRuntimeEntry entry, boolean blocked) {
+        state(entry).setWallBlocked(blocked);
+    }
+
     public static void clearSwimInput(AgentRuntimeEntry entry) {
         state(entry).clearInput();
     }

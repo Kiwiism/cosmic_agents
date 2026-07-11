@@ -64,4 +64,19 @@ class AgentSwimMovementServiceTest {
         assertTrue(AgentSwimStateRuntime.swimJumpRequested(entry));
         assertEquals(-1, AgentSwimStateRuntime.swimVerticalHold(entry));
     }
+
+    @Test
+    void wallBlockedSteeringRequestsCooldownGatedEscapeBurst() {
+        Character agent = mock(Character.class);
+        when(agent.getPosition()).thenReturn(new Point(100, 100));
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        AgentSwimStateRuntime.setSwimWallBlocked(entry, true);
+
+        AgentSwimMovementService.computeSwimIntents(entry, new Point(300, 100));
+
+        assertEquals(1, AgentSwimStateRuntime.swimMoveDirection(entry));
+        assertEquals(-1, AgentSwimStateRuntime.swimVerticalHold(entry));
+        assertTrue(AgentSwimStateRuntime.swimJumpRequested(entry));
+        assertTrue(AgentSwimStateRuntime.swimNextJumpAtMs(entry) > 0L);
+    }
 }

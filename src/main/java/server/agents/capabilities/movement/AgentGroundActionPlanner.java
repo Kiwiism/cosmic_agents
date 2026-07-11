@@ -41,6 +41,9 @@ public final class AgentGroundActionPlanner {
         if (!canWalkStep) {
             boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(
                     AgentRuntimeIdentityRuntime.botMap(entry), botPos, currentFoothold, stepX);
+            if (blockedByWall && AgentRuntimeIdentityRuntime.botMap(entry).isSwim()) {
+                return AgentGroundAction.jump(stepX);
+            }
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
                     || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {

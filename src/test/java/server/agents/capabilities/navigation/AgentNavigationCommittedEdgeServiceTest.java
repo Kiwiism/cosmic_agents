@@ -210,6 +210,23 @@ class AgentNavigationCommittedEdgeServiceTest {
     }
 
     @Test
+    void reuseCommittedEdgeDropsGroundJumpFromAnotherRegionWhileClimbing() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationGraph.Edge staleJump = edge(7, 4, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(1544, -47), new Point(1495, -107), 1530, 1559, -6, 0, 0, 0, 0);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleJump);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 4);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
+
+        AgentNavigationGraph.Edge reused = AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 30, 4,
+                (graph, bot, candidate) -> true,
+                (graph, candidate) -> false);
+
+        assertNull(reused);
+    }
+
+    @Test
     void reuseCommittedEdgeRejectsStaleRetargetedGroundEdge() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,

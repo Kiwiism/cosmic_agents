@@ -68,5 +68,15 @@ public final class AgentSwimMovementService {
         } else {
             AgentSwimStateRuntime.setSwimVerticalHold(entry, prevVerticalHold > 0 ? 1 : 0);
         }
+
+        if (AgentSwimStateRuntime.swimWallBlocked(entry)
+                && AgentSwimStateRuntime.swimMoveDirection(entry) != 0) {
+            if (now >= AgentSwimStateRuntime.swimNextJumpAtMs(entry)) {
+                AgentSwimStateRuntime.setSwimJumpRequested(entry, true);
+                AgentSwimStateRuntime.setSwimNextJumpAtMs(
+                        entry, now + AgentMovementPhysicsConfig.configuredSwimJumpCooldownMs());
+            }
+            AgentSwimStateRuntime.setSwimVerticalHold(entry, -1);
+        }
     }
 }
