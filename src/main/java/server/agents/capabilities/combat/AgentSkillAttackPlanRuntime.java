@@ -90,8 +90,8 @@ public final class AgentSkillAttackPlanRuntime {
         }
         primaryTarget = targetSelection.target();
 
-        int attackCount = AgentCombatHitCounter.effectiveHitCount(effect)
-                * AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, route);
+        int attackCount = AgentCombatHitCounter.packetSafeHitCount(
+                bot, route, AgentCombatHitCounter.effectiveHitCount(effect));
         if (!AgentAttackExecutionProvider.canUseRangedAttackRoute(
                 route, weaponType, bot.getPosition(), primaryTarget.getPosition())) {
             return null;

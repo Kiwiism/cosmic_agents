@@ -31,13 +31,14 @@ public final class AgentCombatAttackRuntime {
             return;
         }
 
-        int numAttacked = attackPlan.targets.size();
+        int numAttacked = AgentAttackPacketPolicy.targetCount(attackPlan.targets.size());
+        int numDamage = AgentAttackPacketPolicy.damageLineCount(attackPlan.numDamage);
         AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
         attack.skill = attackPlan.skillId;
         attack.skilllevel = attackPlan.skillLevel;
-        attack.numDamage = attackPlan.numDamage;
+        attack.numDamage = numDamage;
         attack.numAttacked = numAttacked;
-        attack.numAttackedAndDamage = (numAttacked << 4) | attackPlan.numDamage;
+        attack.numAttackedAndDamage = AgentAttackPacketPolicy.packCounts(numAttacked, numDamage);
         attack.speed = attackPlan.speed;
         attack.stance = attackPlan.stance;
         attack.display = attackPlan.display;
@@ -50,9 +51,9 @@ public final class AgentCombatAttackRuntime {
         attack.magic = damageProfile.magicAttack();
         attack.targets = new HashMap<>();
 
-        for (Monster target : attackPlan.targets) {
+        for (Monster target : attackPlan.targets.subList(0, numAttacked)) {
             attack.targets.put(target.getObjectId(),
-                    CombatFormulaProvider.getInstance().makeTarget(bot, target, attackPlan.numDamage,
+                    CombatFormulaProvider.getInstance().makeTarget(bot, target, numDamage,
                             attackPlan.skillId, damageProfile, attackPlan.hitDelayMs));
         }
 

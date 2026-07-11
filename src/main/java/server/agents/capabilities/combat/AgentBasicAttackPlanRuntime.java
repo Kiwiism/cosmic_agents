@@ -28,7 +28,7 @@ public final class AgentBasicAttackPlanRuntime {
 
         AgentAttackExecutionProvider.BasicAttackData basicAttackData = selection.attackData();
         Monster effective = selection.target();
-        int numDamage = AgentCombatHitCounter.shadowPartnerHitMultiplier(bot, basicAttackData.route());
+        int numDamage = AgentCombatHitCounter.packetSafeHitCount(bot, basicAttackData.route(), 1);
         return new AgentAttackPlan(0, 0, numDamage, basicAttackData.hitBox(), List.of(effective), basicAttackData.route(),
                 basicAttackData.display(), basicAttackData.direction(), basicAttackData.rangedDirection(),
                 basicAttackData.stance(), basicAttackData.speed(), basicAttackData.hitDelayMs(),

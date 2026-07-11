@@ -383,6 +383,48 @@ class CombatFormulaProviderTest {
     }
 
     @Test
+    void shadowPartnerLinesReplayOriginalDamageAtActivePercentage() {
+        assertEquals(500, CombatFormulaProvider.shadowPartnerLine(1_000, 50));
+        assertEquals(350, CombatFormulaProvider.shadowPartnerLine(1_000, 35));
+        assertEquals(0, CombatFormulaProvider.shadowPartnerLine(0, 50));
+    }
+
+    @Test
+    void shadowPartnerLinesInheritOriginalCriticalMetadata() {
+        assertEquals(java.util.Set.of(7, 9),
+                CombatFormulaProvider.shadowPartnerCritIndices(java.util.Set.of(0, 2), 7, 4));
+    }
+
+    @Test
+    void shadowPartnerProducesSevenOriginalAndSevenDerivedLinesForPhysicalAndMagicProfiles() {
+        Character agent = mock(Character.class);
+        StatEffect shadowPartner = mock(StatEffect.class);
+        when(shadowPartner.getX()).thenReturn(40);
+        when(agent.getBuffEffect(BuffStat.SHADOWPARTNER)).thenReturn(shadowPartner);
+
+        for (boolean magic : new boolean[]{false, true}) {
+            CombatFormulaProvider.DamageProfile profile =
+                    new CombatFormulaProvider.DamageProfile(777, 777, magic, true);
+            var target = provider.makeTarget(agent, null, 14, 0, profile, 0);
+
+            assertEquals(14, target.damageLines().size());
+            assertTrue(target.damageLines().subList(0, 7).stream().allMatch(line -> line == 777));
+            assertTrue(target.damageLines().subList(7, 14).stream().allMatch(line -> line == 310));
+        }
+    }
+
+    @Test
+    void noShadowPartnerPreservesOriginalLineCountAndDamage() {
+        Character agent = mock(Character.class);
+        CombatFormulaProvider.DamageProfile profile =
+                new CombatFormulaProvider.DamageProfile(555, 555, false, true);
+
+        var target = provider.makeTarget(agent, null, 7, 0, profile, 0);
+
+        assertEquals(java.util.Collections.nCopies(7, 555), target.damageLines());
+    }
+
+    @Test
     void shouldTreatFixedDamageSkillsAsAlwaysHit() {
         Character bot = mockDamageBot();
         StatEffect effect = mock(StatEffect.class);

@@ -126,3 +126,16 @@ from the common tick before ordinary combat-only buff gating. Defense data also
 exposes the HP/MP-limited effective health pool used for survival valuation.
 No-buff damage, zero MP, insufficient MP, redundant casting, and buff-disable
 behavior are covered by focused tests.
+
+## Combat: Shadow Partner route and packet parity
+
+Source references: `3445fef5f3` and `eddb5bc65e` from `source/dev`, extended
+to the required CLOSE, RANGED, and MAGIC Agent routes.
+
+Shadow Partner now doubles planned lines for every attack route, derives each
+partner line from its corresponding original using the active buff percentage,
+and copies physical critical metadata instead of rerolling hit, miss, damage,
+or critical state. Planning caps the original side at seven lines so the
+largest partnered packet is 7 original / 14 total; target and line counts are
+also clamped independently before packing their four-bit fields. Ranged ammo
+cost behavior remains doubled, while CLOSE and MAGIC add no ammo cost.

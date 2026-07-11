@@ -277,7 +277,16 @@ public final class CombatFormulaProvider {
                                                       int skillId, DamageProfile damageProfile, int hitDelayMs) {
         int normalizedHitDelay = Math.max(0, Math.min(Short.MAX_VALUE, hitDelayMs));
         if (damageProfile.alwaysHit()) {
-            List<Integer> lines = rollDamageLines(hits, damageProfile.minDamage(), damageProfile.maxDamage(), 1.0d);
+            boolean shadowPartner = hits > 1 && bot.getBuffEffect(BuffStat.SHADOWPARTNER) != null;
+            int mainHits = shadowPartner ? hits / 2 : hits;
+            int partnerHits = shadowPartner ? hits - mainHits : 0;
+            List<Integer> lines = new ArrayList<>(
+                    rollDamageLines(mainHits, damageProfile.minDamage(), damageProfile.maxDamage(), 1.0d));
+            int percentage = shadowPartnerPercentage(bot);
+            for (int i = 0; i < partnerHits; i++) {
+                int original = i < mainHits ? lines.get(i) : 0;
+                lines.add(shadowPartnerLine(original, percentage));
+            }
             return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines);
         }
         long rawMin = applyCharacterDamageModifiers(damageProfile.minDamage(), bot, skillId);
@@ -307,7 +316,7 @@ public final class CombatFormulaProvider {
                 return rollBarrageDamageLines(hits, adjustedDamage, hitChance, crit, normalizedHitDelay);
             }
             if (shadowPartner) {
-                return rollWithShadowPartnerPhysical(hits, adjustedDamage, hitChance, crit, normalizedHitDelay);
+                return rollWithShadowPartnerPhysical(bot, hits, adjustedDamage, hitChance, crit, normalizedHitDelay);
             }
             CritDamageResult result = rollDamageLinesWithCrit(hits, adjustedDamage[0], adjustedDamage[1],
                     hitChance, crit.critChance(), crit.critMultiplier());
@@ -346,8 +355,7 @@ public final class CombatFormulaProvider {
                 int mainHits = normalizedHits / 2;
                 int partnerHits = normalizedHits - mainHits;
                 double mainAverage = averageDamage(adjustedDamage[0], adjustedDamage[1]);
-                double partnerAverage = averageDamage(Math.max(1, Math.min(adjustedDamage[1] / 2, adjustedDamage[0] / 2)),
-                        Math.max(1, adjustedDamage[1] / 2));
+                double partnerAverage = mainAverage * shadowPartnerPercentage(bot) / 100.0d;
                 return hitChance * (mainAverage * mainHits + partnerAverage * partnerHits);
             }
             return hitChance * averageDamage(adjustedDamage[0], adjustedDamage[1]) * normalizedHits;
@@ -371,10 +379,10 @@ public final class CombatFormulaProvider {
         if (shadowPartner) {
             int mainHits = normalizedHits / 2;
             int partnerHits = normalizedHits - mainHits;
-            int partnerMax = Math.max(1, adjustedDamage[1] / 2);
-            int partnerMin = Math.max(1, Math.min(partnerMax, adjustedDamage[0] / 2));
+            double partnerRatio = shadowPartnerPercentage(bot) / 100.0d;
             return expectedPhysicalLineDamage(adjustedDamage[0], adjustedDamage[1], hitChance, crit) * mainHits
-                    + expectedPhysicalLineDamage(partnerMin, partnerMax, hitChance, crit) * partnerHits;
+                    + expectedPhysicalLineDamage(adjustedDamage[0], adjustedDamage[1], hitChance, crit)
+                    * partnerRatio * partnerHits;
         }
         return expectedPhysicalLineDamage(adjustedDamage[0], adjustedDamage[1], hitChance, crit) * normalizedHits;
     }
@@ -395,7 +403,7 @@ public final class CombatFormulaProvider {
         if (shadowPartner) {
             int mainHits = normalizedHits / 2;
             int partnerHits = normalizedHits - mainHits;
-            int partnerMin = Math.max(1, Math.min(Math.max(1, adjustedDamage[1] / 2), minLine / 2));
+            int partnerMin = shadowPartnerLine(minLine, shadowPartnerPercentage(bot));
             return minLine * mainHits + partnerMin * partnerHits;
         }
         return minLine * normalizedHits;
@@ -437,21 +445,19 @@ public final class CombatFormulaProvider {
     }
 
     private AbstractDealDamageHandler.AttackTarget rollWithShadowPartnerPhysical(
-            int hits, int[] adjustedDamage, double hitChance, CritProfile crit, int normalizedHitDelay) {
+            Character bot, int hits, int[] adjustedDamage, double hitChance, CritProfile crit, int normalizedHitDelay) {
         int mainHits = hits / 2;
         int partnerHits = hits - mainHits;
-        int partnerMax = Math.max(1, adjustedDamage[1] / 2);
-        int partnerMin = Math.max(1, Math.min(partnerMax, adjustedDamage[0] / 2));
         CritDamageResult main = rollDamageLinesWithCrit(mainHits, adjustedDamage[0], adjustedDamage[1],
                 hitChance, crit.critChance(), crit.critMultiplier());
-        CritDamageResult partner = rollDamageLinesWithCrit(partnerHits, partnerMin, partnerMax,
-                hitChance, crit.critChance(), crit.critMultiplier());
         List<Integer> lines = new ArrayList<>(main.lines());
-        lines.addAll(partner.lines());
-        Set<Integer> critIndices = new HashSet<>(main.critIndices());
-        for (int idx : partner.critIndices()) {
-            critIndices.add(mainHits + idx);
+        int percentage = shadowPartnerPercentage(bot);
+        for (int i = 0; i < partnerHits; i++) {
+            int original = i < main.lines().size() ? main.lines().get(i) : 0;
+            lines.add(shadowPartnerLine(original, percentage));
         }
+        Set<Integer> critIndices = new HashSet<>(main.critIndices());
+        critIndices.addAll(shadowPartnerCritIndices(main.critIndices(), mainHits, partnerHits));
         return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines, critIndices);
     }
 
@@ -459,11 +465,36 @@ public final class CombatFormulaProvider {
             Character bot, Monster monster, int hits, int[] adjustedDamage, int normalizedHitDelay) {
         int mainHits = hits / 2;
         int partnerHits = hits - mainHits;
-        int partnerMax = Math.max(1, adjustedDamage[1] / 2);
-        int partnerMin = Math.max(1, Math.min(partnerMax, adjustedDamage[0] / 2));
-        List<Integer> lines = new ArrayList<>(rollDamageLines(bot, monster, mainHits, adjustedDamage[0], adjustedDamage[1], true));
-        lines.addAll(rollDamageLines(bot, monster, partnerHits, partnerMin, partnerMax, true));
+        List<Integer> main = rollDamageLines(bot, monster, mainHits,
+                adjustedDamage[0], adjustedDamage[1], true);
+        List<Integer> lines = new ArrayList<>(main);
+        int percentage = shadowPartnerPercentage(bot);
+        for (int i = 0; i < partnerHits; i++) {
+            int original = i < main.size() ? main.get(i) : 0;
+            lines.add(shadowPartnerLine(original, percentage));
+        }
         return new AbstractDealDamageHandler.AttackTarget((short) normalizedHitDelay, lines);
+    }
+
+    static int shadowPartnerLine(int originalLine, int percentage) {
+        return (int) Math.floor(Math.max(0, originalLine) * Math.clamp(percentage, 0, 100) / 100.0d);
+    }
+
+    static Set<Integer> shadowPartnerCritIndices(Set<Integer> mainCritIndices,
+                                                  int mainHits,
+                                                  int partnerHits) {
+        Set<Integer> result = new HashSet<>();
+        for (int i = 0; i < partnerHits; i++) {
+            if (mainCritIndices.contains(i)) {
+                result.add(mainHits + i);
+            }
+        }
+        return result;
+    }
+
+    private static int shadowPartnerPercentage(Character bot) {
+        StatEffect effect = bot == null ? null : bot.getBuffEffect(BuffStat.SHADOWPARTNER);
+        return effect == null ? 0 : Math.clamp(effect.getX(), 0, 100);
     }
 
     // Barrage hits j>3 deal 2^(j-3)x damage — matches parseDamage lines 847-851
