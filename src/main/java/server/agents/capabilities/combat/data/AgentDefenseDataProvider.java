@@ -1,5 +1,6 @@
 package server.agents.capabilities.combat.data;
 
+import client.BuffStat;
 import client.Character;
 import client.Job;
 import server.life.Monster;
@@ -188,6 +189,21 @@ public final class AgentDefenseDataProvider {
         }
 
         return table.firstEntry().getValue();
+    }
+
+    public static int effectiveMaximumHp(Character agent) {
+        int maximumHp = Math.max(1, agent.getCurrentMaxHp());
+        Integer magicGuard = agent.getBuffedValue(BuffStat.MAGIC_GUARD);
+        if (magicGuard == null) {
+            return maximumHp;
+        }
+        double ratio = magicGuard / 100.0d;
+        if (ratio <= 0.0d || ratio >= 1.0d) {
+            return maximumHp;
+        }
+        double hpLimitedDamage = maximumHp / (1.0d - ratio);
+        double mpLimitedDamage = Math.max(0, agent.getMp()) / ratio;
+        return Math.max(maximumHp, (int) Math.min(hpLimitedDamage, mpLimitedDamage));
     }
 
     private double computeC(Character bot) {

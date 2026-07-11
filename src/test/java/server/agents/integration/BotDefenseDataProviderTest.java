@@ -1,10 +1,14 @@
 package server.agents.integration;
 
+import client.BuffStat;
+import client.Character;
 import client.Job;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.combat.data.AgentDefenseDataProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentDefenseDataProviderTest {
     private final AgentDefenseDataProvider provider = AgentDefenseDataProvider.getInstance();
@@ -39,5 +43,17 @@ class AgentDefenseDataProviderTest {
         assertEquals(24, provider.getStandardPdd(Job.THUNDERBREAKER1, 10));
         assertEquals(54, provider.getStandardPdd(Job.ARAN1, 10));
         assertEquals(25, provider.getStandardPdd(Job.EVAN1, 8));
+    }
+
+    @Test
+    void effectiveMaximumHpCountsMagicGuardUntilEitherPoolRunsOut() {
+        Character agent = mock(Character.class);
+        when(agent.getCurrentMaxHp()).thenReturn(1_000);
+        when(agent.getBuffedValue(BuffStat.MAGIC_GUARD)).thenReturn(80);
+        when(agent.getMp()).thenReturn(3_200);
+        assertEquals(4_000, AgentDefenseDataProvider.effectiveMaximumHp(agent));
+
+        when(agent.getMp()).thenReturn(10_000);
+        assertEquals(5_000, AgentDefenseDataProvider.effectiveMaximumHp(agent));
     }
 }

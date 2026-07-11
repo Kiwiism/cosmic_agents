@@ -114,3 +114,15 @@ Agent attack planning now rejects Panic and Coma unless the COMBO buff value
 represents at least one held orb. The shared close-range execution handler also
 consumes an orb only while the buff still exists, covering expiry between plan
 and execution without changing ordinary close-range attack behavior.
+
+## Combat: Magic Guard and defensive parity
+
+Source reference: `930ca5a01a` from `source/dev`.
+
+Incoming Agent damage now passes through an Agent-owned policy that splits HP
+and MP by the active Magic Guard percentage and returns insufficient MP to HP.
+Magic Guard variants are treated as critical survival buffs and are attempted
+from the common tick before ordinary combat-only buff gating. Defense data also
+exposes the HP/MP-limited effective health pool used for survival valuation.
+No-buff damage, zero MP, insufficient MP, redundant casting, and buff-disable
+behavior are covered by focused tests.

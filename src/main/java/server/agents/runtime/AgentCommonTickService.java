@@ -20,6 +20,7 @@ public final class AgentCommonTickService {
                                   BiConsumer<AgentRuntimeEntry, Character> tickPassiveLoot,
                                   BiConsumer<AgentRuntimeEntry, Character> tickPotionCheck,
                                   BiConsumer<AgentRuntimeEntry, Character> tickPassiveRecovery,
+                                  BiConsumer<AgentRuntimeEntry, Character> tickCriticalSurvivalBuff,
                                   BiConsumer<AgentRuntimeEntry, Character> checkLevelUp,
                                   TriConsumer<AgentRuntimeEntry, Character, Character> tickAfkCheck,
                                   BiConsumer<AgentRuntimeEntry, Character> tickTrade,
@@ -77,6 +78,10 @@ public final class AgentCommonTickService {
         if (perf) startedAt = System.nanoTime();
         hooks.tickPassiveRecovery().accept(entry, agent);
         if (perf) AgentPerformanceMonitor.record("common-passive-recovery", System.nanoTime() - startedAt);
+
+        if (perf) startedAt = System.nanoTime();
+        hooks.tickCriticalSurvivalBuff().accept(entry, agent);
+        if (perf) AgentPerformanceMonitor.record("common-critical-survival-buff", System.nanoTime() - startedAt);
 
         if (perf) startedAt = System.nanoTime();
         hooks.checkLevelUp().accept(entry, agent);

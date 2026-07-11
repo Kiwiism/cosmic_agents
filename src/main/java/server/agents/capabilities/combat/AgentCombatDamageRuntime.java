@@ -81,7 +81,9 @@ public final class AgentCombatDamageRuntime {
             return;
         }
 
-        bot.addMPHPAndTriggerAutopot(-dmg, 0);
+        AgentIncomingDamagePolicy.DamageSplit split = AgentIncomingDamagePolicy.splitMagicGuard(
+                dmg, bot.getBuffedValue(BuffStat.MAGIC_GUARD), bot.getMp());
+        bot.addMPHPAndTriggerAutopot(-split.hpLoss(), -split.mpLoss());
 
         AgentPacketGatewayRuntime.packets().broadcastDamagePlayer(
                 bot, damageFrom, monsterId, dmg, 0, broadcastDirection, false, 0, false, 0, 0, 0);

@@ -1,16 +1,24 @@
 package server.agents.capabilities.combat;
 
+import client.BuffStat;
 import client.Character;
 import client.Skill;
+import constants.skills.BlazeWizard;
+import constants.skills.Evan;
+import constants.skills.Magician;
 import server.StatEffect;
 import server.agents.capabilities.dialogue.AgentCombatDialogueReporter;
 import server.agents.integration.AgentSkillGatewayRuntime;
 import server.agents.integration.SkillGateway;
+import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.runtime.AgentModeStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.life.Monster;
 
 public final class AgentCombatBuffRuntime {
+    private static final java.util.Set<Integer> CRITICAL_SURVIVAL_BUFFS = java.util.Set.of(
+            Magician.MAGIC_GUARD, BlazeWizard.MAGIC_GUARD, Evan.MAGIC_GUARD);
+
     private AgentCombatBuffRuntime() {
     }
 
@@ -61,6 +69,41 @@ public final class AgentCombatBuffRuntime {
         }
         AgentSkillBuffDebugStateRuntime.rememberAction(
                 entry, System.currentTimeMillis(), AgentCombatSupportPolicy.allSkillBuffsActiveOrOnCooldownSummary());
+    }
+
+    public static boolean tryCastCriticalSurvivalBuff(AgentRuntimeEntry entry, Character bot) {
+        return tryCastCriticalSurvivalBuff(entry, bot, AgentSkillGatewayRuntime.skills());
+    }
+
+    static boolean tryCastCriticalSurvivalBuff(AgentRuntimeEntry entry, Character bot, SkillGateway skills) {
+        if (AgentCombatCooldownStateRuntime.hasAttackCooldown(entry)
+                || AgentMovementStateRuntime.inAir(entry)
+                || AgentMovementStateRuntime.climbing(entry)
+                || !AgentCombatBuffStateRuntime.skillBuffsEnabled(entry)
+                || bot == null
+                || !bot.isAlive()
+                || bot.getBuffedValue(BuffStat.MAGIC_GUARD) != null) {
+            return false;
+        }
+        for (int skillId : CRITICAL_SURVIVAL_BUFFS) {
+            if (!AgentCombatSkillCacheStateRuntime.buffSkillIds(entry).contains(skillId)) {
+                continue;
+            }
+            if (bot.skillIsCooling(skillId)) {
+                return false;
+            }
+            Skill skill = skills.getSkill(skillId);
+            int level = skill == null ? 0 : bot.getSkillLevel(skill);
+            if (level <= 0) {
+                continue;
+            }
+            StatEffect effect = skill.getEffect(level);
+            if (!AgentCombatSkillClassifier.isActiveSupportSkill(skill, effect)) {
+                return false;
+            }
+            return castSupportSkill(entry, bot, skill, effect, System.currentTimeMillis());
+        }
+        return false;
     }
 
     private static boolean trySupportBuff(AgentRuntimeEntry entry, Character bot, AgentCombatConfig.Config config,

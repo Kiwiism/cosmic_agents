@@ -36,6 +36,7 @@ class AgentCommonTickServiceTest {
 
         assertFalse(consumed);
         assertFalse(scenario.calls.contains("passiveLoot"));
+        assertTrue(scenario.calls.contains("criticalSurvivalBuff"));
         assertEquals("actionLocked", scenario.calls.get(scenario.calls.size() - 1));
     }
 
@@ -95,6 +96,7 @@ class AgentCommonTickServiceTest {
                     (entry, agent) -> calls.add("passiveLoot"),
                     (entry, agent) -> calls.add("potionCheck"),
                     (entry, agent) -> calls.add("passiveRecovery"),
+                    (entry, agent) -> calls.add("criticalSurvivalBuff"),
                     (entry, agent) -> calls.add("levelUp"),
                     (entry, agent, leader) -> calls.add("afk"),
                     (entry, agent) -> calls.add("trade"),
