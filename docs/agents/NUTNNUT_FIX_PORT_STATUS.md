@@ -149,3 +149,10 @@ multipliers, rejects duplicate character identities/names, and publishes state
 only after persistence succeeds. Stable case-insensitive ordering and bounded
 per-sweep/list policy constants prepare the roster for deterministic
 reconciliation without adding Cosmic schema state or starting live sessions.
+
+Population reconciliation now atomically claims each character transition,
+rechecks Agent eligibility at the lifecycle boundary, converges in stable roster
+order, bounds each sweep, and isolates individual failures. A disabled registry
+does not disturb existing sessions. The Agent-owned steady scheduler is
+cancellable and catches top-level sweep failures, while target/live/managed,
+failure, and sweep timing metrics remain bounded counters.
