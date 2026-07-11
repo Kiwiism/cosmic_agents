@@ -1015,13 +1015,17 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void newClient(Client c) {
+        newClient(c, c.getChannelServer().getMapFactory().getMap(getMapId()));
+    }
+
+    public void newClient(Client c, MapleMap targetMap) {
         this.loggedIn = true;
         if (this.client instanceof BotClient && !(c instanceof BotClient)) {
             AgentRuntimeCleanupService.cleanupAgentRuntimeState(this);
         }
         c.setAccountName(this.client.getAccountName());//No null's for accountName
         this.setClient(c);
-        this.map = c.getChannelServer().getMapFactory().getMap(getMapId());
+        this.map = targetMap;
         Portal portal = map.findClosestPlayerSpawnpoint(getPosition());
         if (portal == null) {
             portal = map.getPortal(0);

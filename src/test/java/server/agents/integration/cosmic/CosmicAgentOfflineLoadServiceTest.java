@@ -74,7 +74,7 @@ class CosmicAgentOfflineLoadServiceTest {
         verify(client).setAccID(123);
         verify(agent).silentApplyDiseases(diseases);
         verify(agent).setMapId(2000);
-        verify(agent).newClient(client);
+        verify(agent).newClient(client, spawnMap);
         verify(agent).recalcLocalStats();
         verify(agent).setPosition(spawnPosition);
         verify(agent).setEnteredChannelWorld();
