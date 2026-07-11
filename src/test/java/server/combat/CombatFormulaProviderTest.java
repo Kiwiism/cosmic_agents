@@ -10,12 +10,14 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import constants.skills.ILMage;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import server.StatEffect;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -347,6 +349,37 @@ class CombatFormulaProviderTest {
         assertEquals(401L, provider.magicDamageBase(3000, 200));
         // MIN: matk=3000, totalInt=0, mastery=0.5 → ceil((9000+1350)/30) = ceil(345) = 345
         assertEquals(345L, provider.magicDamageBaseMin(3000, 0, 0.5));
+    }
+
+    @Test
+    void magicDamageResolutionObservesElementAmplificationLevelChanges() {
+        Character bot = mockDamageBot();
+        when(bot.getJob()).thenReturn(Job.IL_MAGE);
+        when(bot.getTotalMagic()).thenReturn(3000);
+        when(bot.getTotalInt()).thenReturn(0);
+        StatEffect attackEffect = mock(StatEffect.class);
+        when(attackEffect.getX()).thenReturn(50);
+        when(attackEffect.getMatk()).thenReturn((short) 5);
+        Skill amplificationSkill = mock(Skill.class);
+        StatEffect amplificationEffect = mock(StatEffect.class);
+        when(amplificationSkill.getEffect(10)).thenReturn(amplificationEffect);
+        when(amplificationEffect.getY()).thenReturn(150);
+        AtomicInteger amplificationLevel = new AtomicInteger();
+        when(bot.getSkillLevel(amplificationSkill))
+                .thenAnswer(ignored -> (byte) amplificationLevel.get());
+
+        try (MockedStatic<SkillFactory> skills = Mockito.mockStatic(SkillFactory.class)) {
+            skills.when(() -> SkillFactory.getSkill(ILMage.ELEMENT_AMPLIFICATION))
+                    .thenReturn(amplificationSkill);
+            CombatFormulaProvider.DamageProfile before =
+                    provider.resolveDamageProfile(bot, 2101004, attackEffect, true);
+            amplificationLevel.set(10);
+            CombatFormulaProvider.DamageProfile after =
+                    provider.resolveDamageProfile(bot, 2101004, attackEffect, true);
+
+            assertEquals(2_000, before.maxDamage());
+            assertEquals(3_000, after.maxDamage());
+        }
     }
 
     @Test

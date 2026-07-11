@@ -95,3 +95,13 @@ than requiring a knife-edge landing-region match. Narrow jump windows expand
 to at least one motor step, and the stuck watchdog treats movement inside a
 16-pixel drift radius as a bounce rather than progress. Agent graph cache
 version 50 invalidates lip-authored DROP edges.
+
+## Combat: magic passive damage refresh
+
+Source reference: `71c86ad516` from `source/dev`.
+
+The reconstructed combat path does not retain the donor's damage-profile cache;
+it resolves a fresh profile for every attack, while the shared formula provider
+already applies Element Amplification. A regression now changes the passive
+skill level between consecutive resolutions and verifies that magic damage
+updates immediately, proving that stale cached passive state cannot survive.
