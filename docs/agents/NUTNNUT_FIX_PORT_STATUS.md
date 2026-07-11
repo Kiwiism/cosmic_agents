@@ -2,6 +2,14 @@
 
 Branch: `port/nutnnut-agent-correctness-population`
 
+## Unobserved-map LOD exclusion
+
+NuTNNuT's binary LOD0/LOD1 runtime is intentionally excluded from this port.
+Cosmic Agents has a separate four-mode Simulation Tier Runtime design with
+capability-owned shortcuts, sensitive-map policy, central-scheduler budgets,
+and audited materialization. The comparison and reusable ideas are recorded in
+`simulation-tier-runtime/NUTNNUT_LOD_COMPARISON.md`.
+
 ## Movement-skill client packet rendering
 
 Source references: `37065bf620` and `2dc063adfc` from the source branches.
