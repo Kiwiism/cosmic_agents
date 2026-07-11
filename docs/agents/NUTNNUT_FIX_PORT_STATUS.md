@@ -62,3 +62,14 @@ within the same region. The reconstruction does not retain the donor's full
 committed-route list; its independent movement stuck state already survives
 navigation-edge clears and counts both active-edge and direct-target stalls,
 providing the source watchdog behavior without restoring that monolith state.
+
+## Navigation: foothold detour continuity
+
+Source reference: `f5fe4b0a4d` from `source/dev`.
+
+Branch-shaped source regions now use a sticky foothold-chain detour when an
+edge launch can only be approached by initially walking away from its X
+coordinate. The detour remains active until its crossing is completed and is
+cleared when the edge or movement phase changes. Detour steering uses zero
+stop distance so normal follow hysteresis cannot park the Agent before the
+crossing.

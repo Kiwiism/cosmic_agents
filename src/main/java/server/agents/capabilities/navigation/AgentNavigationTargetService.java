@@ -299,6 +299,20 @@ public final class AgentNavigationTargetService {
                                         AgentNavigationGraph graph,
                                         Point botPos,
                                         AgentNavigationGraph.Edge edge) {
+        if (!AgentMovementStateRuntime.inAir(entry) && !AgentClimbStateRuntime.climbing(entry)) {
+            if (edge.type == AgentNavigationGraph.EdgeType.JUMP
+                    || edge.type == AgentNavigationGraph.EdgeType.CLIMB
+                    || edge.type == AgentNavigationGraph.EdgeType.DROP) {
+                Point detour = AgentFootholdDetourService.waypoint(entry, graph, botPos, edge);
+                if (detour != null) {
+                    return detour;
+                }
+            } else {
+                AgentFootholdDetourService.clear(entry);
+            }
+        } else {
+            AgentFootholdDetourService.clear(entry);
+        }
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
             case CLIMB -> AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);

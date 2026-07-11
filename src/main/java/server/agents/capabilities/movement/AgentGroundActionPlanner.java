@@ -3,6 +3,7 @@ package server.agents.capabilities.movement;
 import java.awt.Point;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentFootholdDetourService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -14,11 +15,12 @@ public final class AgentGroundActionPlanner {
     public static AgentGroundAction planGroundAction(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, Point targetPos) {
         AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         boolean directionalDrop = AgentGroundMovementPolicy.isDirectionalDropEdge(navEdge);
-        int stopDist = directionalDrop ? 0 : AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
+        boolean footholdDetour = AgentFootholdDetourService.active(entry);
+        int stopDist = directionalDrop || footholdDetour ? 0 : AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
                 ? AgentGroundMovementPolicy.preciseNavStopDist(navEdge)
                 : AgentMovementPhysicsConfig.configuredStopDist();
         // No hysteresis when navigating to an edge: always move toward the waypoint.
-        int followDist = directionalDrop ? 0
+        int followDist = directionalDrop || footholdDetour ? 0
                 : (navEdge != null || AgentNavigationDebugStateRuntime.navPreciseTarget(entry))
                 ? stopDist
                 : AgentMovementPhysicsConfig.configuredFollowDist();

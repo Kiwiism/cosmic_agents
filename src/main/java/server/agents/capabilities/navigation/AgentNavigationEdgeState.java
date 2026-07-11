@@ -5,6 +5,8 @@ import java.awt.Point;
 public final class AgentNavigationEdgeState {
     private AgentNavigationGraph.Edge activeEdge = null;
     private Point plannedTargetPosition = null;
+    private AgentNavigationGraph.Edge footholdDetourEdge = null;
+    private Point footholdDetourTarget = null;
     private AgentNavigationGraph.Edge jumpLaunchEdge = null;
     private int jumpLaunchX = Integer.MIN_VALUE;
 
@@ -23,6 +25,7 @@ public final class AgentNavigationEdgeState {
     public void clearActiveEdge() {
         activeEdge = null;
         plannedTargetPosition = null;
+        clearFootholdDetour();
     }
 
     public Point plannedTargetPosition() {
@@ -31,6 +34,28 @@ public final class AgentNavigationEdgeState {
 
     public void setPlannedTargetPosition(Point position) {
         plannedTargetPosition = position == null ? null : new Point(position);
+    }
+
+    public Point footholdDetourTarget() {
+        return footholdDetourTarget == null ? null : new Point(footholdDetourTarget);
+    }
+
+    public boolean hasFootholdDetour() {
+        return footholdDetourTarget != null;
+    }
+
+    public boolean footholdDetourMatches(AgentNavigationGraph.Edge edge) {
+        return sameEdge(footholdDetourEdge, edge);
+    }
+
+    public void setFootholdDetour(AgentNavigationGraph.Edge edge, Point target) {
+        footholdDetourEdge = edge;
+        footholdDetourTarget = target == null ? null : new Point(target);
+    }
+
+    public void clearFootholdDetour() {
+        footholdDetourEdge = null;
+        footholdDetourTarget = null;
     }
 
     public boolean hasJumpLaunchEdge() {
