@@ -47,18 +47,23 @@ public final class AgentPopulationReconciler {
         int target = snapshot.enabled() ? curve.target(records.size(), snapshot.multiplier()) : 0;
         List<AgentPopulationRecord> live = new ArrayList<>();
         List<AgentPopulationRecord> offline = new ArrayList<>();
+        int failed = 0;
         for (AgentPopulationRecord record : records) {
-            (sessions.isLive(record.characterId()) ? live : offline).add(record);
+            try {
+                (sessions.isLive(record.characterId()) ? live : offline).add(record);
+            } catch (RuntimeException failure) {
+                failed++;
+                metrics.recordFailure();
+            }
         }
         int liveBefore = live.size();
         if (!snapshot.enabled()) {
             metrics.recordCensus(0, liveBefore, records.size());
             metrics.recordSweep(startedAt, Math.max(0L, clock.millis() - startedAt));
-            return new Result(false, 0, liveBefore, liveBefore, 0, 0, 0);
+            return new Result(false, 0, liveBefore, liveBefore, 0, 0, failed);
         }
         int started = 0;
         int stopped = 0;
-        int failed = 0;
         int budget = policy.maxActionsPerSweep();
 
         if (live.size() < target) {

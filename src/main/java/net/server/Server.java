@@ -71,6 +71,7 @@ import server.ExpLogger;
 import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
+import server.agents.population.AgentPopulationRuntime;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.monitoring.CharacterSaveDiagnostics;
@@ -988,6 +989,7 @@ public class Server {
             ch.reloadEventScriptManager();
         }
 
+        AgentPopulationRuntime.start();
         startDatabaseConsoleBridge();
     }
 
@@ -2160,6 +2162,7 @@ public class Server {
         }
         List<World> shuttingWorlds = new ArrayList<>(getWorlds());
         List<Channel> allChannels = getAllChannels();
+        AgentPopulationRuntime.stop();
         shutdownChannelsBounded(allChannels);
         for (World world : shuttingWorlds) {
             world.shutdownWorldResources();

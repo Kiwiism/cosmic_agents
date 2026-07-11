@@ -26,6 +26,10 @@ public final class AgentPopulationSessionService {
         return backend.isLive(characterId);
     }
 
+    public boolean isEligible(int characterId) {
+        return backend.isEligibleAgent(characterId);
+    }
+
     public boolean start(AgentPopulationRecord record) throws Exception {
         if (!transitions.add(record.characterId())) {
             return false;

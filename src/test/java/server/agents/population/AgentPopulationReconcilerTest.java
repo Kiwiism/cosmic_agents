@@ -47,6 +47,17 @@ class AgentPopulationReconcilerTest {
     }
 
     @Test
+    void oneCensusFailureDoesNotPreventOtherAgents() throws IOException {
+        Fixture fixture = new Fixture(true, 1.0, 3);
+        fixture.backend.failCensus.add(1);
+
+        AgentPopulationReconciler.Result result = fixture.reconciler.reconcile();
+
+        assertEquals(List.of(2, 3), fixture.backend.started);
+        assertEquals(1, result.failed());
+    }
+
+    @Test
     void excessSessionsStopInReverseStableOrder() throws IOException {
         Fixture fixture = new Fixture(true, 1.0 / 3.0, 5);
         fixture.backend.live.addAll(List.of(1, 2, 3));
@@ -76,11 +87,15 @@ class AgentPopulationReconcilerTest {
     private static final class FakeBackend implements AgentPopulationSessionService.Backend {
         final Set<Integer> live = new HashSet<>();
         final Set<Integer> failStart = new HashSet<>();
+        final Set<Integer> failCensus = new HashSet<>();
         final List<Integer> started = new ArrayList<>();
         final List<Integer> stopped = new ArrayList<>();
 
         @Override public boolean isEligibleAgent(int characterId) { return true; }
-        @Override public boolean isLive(int characterId) { return live.contains(characterId); }
+        @Override public boolean isLive(int characterId) {
+            if (failCensus.contains(characterId)) throw new IllegalStateException("census failed");
+            return live.contains(characterId);
+        }
         @Override public boolean spawnSelfDirected(AgentPopulationRecord record) throws Exception {
             if (failStart.contains(record.characterId())) throw new Exception("failed");
             started.add(record.characterId()); live.add(record.characterId()); return true;

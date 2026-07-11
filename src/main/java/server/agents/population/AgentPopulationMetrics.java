@@ -5,7 +5,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class AgentPopulationMetrics {
     public record Snapshot(int target, int live, int managed, long failures,
-                           long lastSweepStartedMs, long lastSweepDurationMs) {
+                           long lastSweepStartedMs, long lastSweepDurationMs,
+                           long reconciliationLagMs, int queuedCallbacks) {
     }
 
     private final AtomicInteger target = new AtomicInteger();
@@ -14,6 +15,8 @@ public final class AgentPopulationMetrics {
     private final AtomicLong failures = new AtomicLong();
     private final AtomicLong lastSweepStartedMs = new AtomicLong();
     private final AtomicLong lastSweepDurationMs = new AtomicLong();
+    private final AtomicLong reconciliationLagMs = new AtomicLong();
+    private final AtomicInteger queuedCallbacks = new AtomicInteger();
 
     void recordCensus(int targetCount, int liveCount, int managedCount) {
         target.set(targetCount);
@@ -30,8 +33,17 @@ public final class AgentPopulationMetrics {
         lastSweepDurationMs.set(durationMs);
     }
 
+    void recordExpectedSweep(long expectedMs, long actualMs) {
+        reconciliationLagMs.set(Math.max(0L, actualMs - expectedMs));
+    }
+
+    void setQueuedCallbacks(int count) {
+        queuedCallbacks.set(Math.max(0, count));
+    }
+
     public Snapshot snapshot() {
         return new Snapshot(target.get(), live.get(), managed.get(), failures.get(),
-                lastSweepStartedMs.get(), lastSweepDurationMs.get());
+                lastSweepStartedMs.get(), lastSweepDurationMs.get(),
+                reconciliationLagMs.get(), queuedCallbacks.get());
     }
 }

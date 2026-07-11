@@ -162,3 +162,20 @@ the offline eligibility boundary, rejects already-online and unavailable-world
 loads, self-registers accepted sessions into autonomous grind mode, and removes
 runtime/map state if registration fails. Session stop removes the Agent runtime
 before synchronously disconnecting its headless client.
+
+The population composition root starts after worlds/channels and shuts down
+before channel teardown. Its default external store is
+`.runtime/agents/population.json` (override with
+`COSMIC_AGENT_POPULATION_FILE`), and a missing file is disabled by default.
+GM6 `@agentpop` and compatibility alias `@botpop` both call the same
+AgentPopulationAdminService for status, enable/disable, multiplier, bounded
+list, sweep, add/remove, crew, clear, and confirmed roster wipe operations.
+Wipe removes only external roster records and never deletes Cosmic characters
+or accounts. Fast-start callbacks are generation-scoped and cancelled on
+disable or shutdown.
+
+Automated population acceptance coverage verifies that ordinary characters
+fail the lifecycle eligibility gate, duplicate starts are atomically rejected,
+one failing Agent does not stop later candidates, reconciliation is bounded and
+stable, disabled mode leaves sessions untouched, confirmed wipe is metadata
+only, and every steady/fast-start task is cancelled at shutdown.

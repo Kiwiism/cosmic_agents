@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
 
 class CosmicAgentPopulationBackendTest {
     @Test
@@ -51,7 +50,7 @@ class CosmicAgentPopulationBackendTest {
         boolean agentOnly;
         boolean channelAvailable = true;
         boolean throwOnRegister;
-        final Character loadedCharacter = mock(Character.class);
+        final Character loadedCharacter = newCharacter();
         final AtomicBoolean loaded = new AtomicBoolean();
         final AtomicBoolean runtimeRemoved = new AtomicBoolean();
         final AtomicBoolean disconnected = new AtomicBoolean();
@@ -64,11 +63,21 @@ class CosmicAgentPopulationBackendTest {
         }
         @Override public AgentRuntimeEntry register(int characterId, Character agent) {
             if (throwOnRegister) throw new IllegalStateException("register failed");
-            return mock(AgentRuntimeEntry.class);
+            return new AgentRuntimeEntry(agent, agent, null);
         }
         @Override public void startSelfDirected(AgentRuntimeEntry entry) { }
         @Override public void removeRuntime(int characterId) { runtimeRemoved.set(true); }
         @Override public void disconnect(Character agent) { disconnected.set(true); }
         @Override public boolean channelAvailable(int world, int channel) { return channelAvailable; }
+
+        private static Character newCharacter() {
+            try {
+                var constructor = Character.class.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                return constructor.newInstance();
+            } catch (ReflectiveOperationException failure) {
+                throw new AssertionError(failure);
+            }
+        }
     }
 }

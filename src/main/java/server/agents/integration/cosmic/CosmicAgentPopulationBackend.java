@@ -2,7 +2,7 @@ package server.agents.integration.cosmic;
 
 import client.Character;
 import net.server.Server;
-import server.agents.auth.AgentOwnershipService;
+import server.agents.integration.AgentPersistenceGatewayRuntime;
 import server.agents.population.AgentPopulationRecord;
 import server.agents.population.AgentPopulationSessionService;
 import server.agents.registry.AgentResolvedCharacter;
@@ -100,7 +100,11 @@ public final class CosmicAgentPopulationBackend implements AgentPopulationSessio
     private static Hooks defaultHooks() {
         return new Hooks() {
             @Override public AgentResolvedCharacter resolve(int characterId) {
-                return AgentOwnershipService.getInstance().resolveCharacterById(characterId);
+                try {
+                    return AgentPersistenceGatewayRuntime.persistence().findCharacterById(characterId);
+                } catch (SQLException failure) {
+                    return null;
+                }
             }
             @Override public boolean isAgentOnlyAccount(int accountId) throws SQLException {
                 return CosmicAgentBackingAccountSecurity.isAgentOnlyAccount(accountId);
