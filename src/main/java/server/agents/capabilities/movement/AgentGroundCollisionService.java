@@ -1,17 +1,12 @@
 package server.agents.capabilities.movement;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Agent-owned seam for grounded collision and ledge queries.
@@ -56,7 +51,12 @@ public final class AgentGroundCollisionService {
     }
 
     public static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
-        return findGroundWallCollision(map, from, to).type() == CollisionType.WALL;
+        GroundCollision collision = findGroundWallCollision(map, from, to);
+        if (collision.type() != CollisionType.WALL) {
+            return false;
+        }
+        Foothold standing = AgentGroundingService.findGroundFoothold(map, from);
+        return collision.foothold() == null || !hasWalkRegion(map, standing);
     }
 
     public static boolean canStartDownJump(MapleMap map, Point position) {
@@ -107,7 +107,9 @@ public final class AgentGroundCollisionService {
                 ? standingPoint.y
                 : currentPos.y;
 
-        GroundCollision wall = findGroundWallCollision(map, currentPos, new Point(nextX, baseY));
+        GroundCollision wall = constrainToWalkRegion
+                ? mapSideBoundaryCollision(map, currentPos, new Point(nextX, baseY))
+                : findGroundWallCollision(map, currentPos, new Point(nextX, baseY));
         if (wall.type() == CollisionType.WALL) {
             return new GroundStepPreview(baseY, currentPos, foothold, false, true);
         }
@@ -246,10 +248,9 @@ public final class AgentGroundCollisionService {
             return GroundCollision.none();
         }
 
-        Set<Integer> collidableWalls = getCollidableWallIds(map);
         GroundCollision best = mapSideBoundaryCollision(map, previousPos, nextPos);
         for (Foothold foothold : map.getFootholds().getAllFootholds()) {
-            if (!foothold.isWall() || !collidableWalls.contains(foothold.getId())) {
+            if (!AgentWallCollisionPolicy.collides(map, foothold, AgentWallCollisionPolicy.ALL_GROUPS)) {
                 continue;
             }
             GroundCollision collision = wallCollision(foothold, previousPos, nextPos);
@@ -281,7 +282,7 @@ public final class AgentGroundCollisionService {
         }
 
         double yAtBoundary = previousPos.y + (nextPos.y - previousPos.y) * progress;
-        return new GroundCollision(CollisionType.WALL, progress);
+        return new GroundCollision(CollisionType.WALL, progress, null);
     }
 
     private static int effectiveLeftBoundaryX(MapleMap map, Rectangle area) {
@@ -315,25 +316,6 @@ public final class AgentGroundCollisionService {
                 && map.getFootholds().getMinDropX() < map.getFootholds().getMaxDropX();
     }
 
-    private static Set<Integer> getCollidableWallIds(MapleMap map) {
-        Set<Integer> cached = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
-        if (cached != null) {
-            return cached;
-        }
-        List<Foothold> all = map.getFootholds().getAllFootholds();
-        HashMap<Integer, Foothold> byId = new HashMap<>(all.size());
-        for (Foothold foothold : all) {
-            byId.put(foothold.getId(), foothold);
-        }
-        Set<Integer> result = new HashSet<>();
-        for (Foothold foothold : all) {
-            if (Foothold.isCollidableWall(foothold, byId)) {
-                result.add(foothold.getId());
-            }
-        }
-        return result;
-    }
-
     private static GroundCollision wallCollision(Foothold wall, Point previousPos, Point nextPos) {
         int wallX = wall.getX1();
         int startX = previousPos.x;
@@ -357,7 +339,7 @@ public final class AgentGroundCollisionService {
             return GroundCollision.none();
         }
 
-        return new GroundCollision(CollisionType.WALL, progress);
+        return new GroundCollision(CollisionType.WALL, progress, wall);
     }
 
     private static boolean isWalkableGroundWallEndpoint(double yAtWall, int minY, int maxY) {
@@ -373,9 +355,9 @@ public final class AgentGroundCollisionService {
         WALL
     }
 
-    private record GroundCollision(CollisionType type, double progress) {
+    private record GroundCollision(CollisionType type, double progress, Foothold foothold) {
         static GroundCollision none() {
-            return new GroundCollision(CollisionType.NONE, Double.POSITIVE_INFINITY);
+            return new GroundCollision(CollisionType.NONE, Double.POSITIVE_INFINITY, null);
         }
     }
 

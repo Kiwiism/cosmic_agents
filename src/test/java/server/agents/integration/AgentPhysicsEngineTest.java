@@ -728,16 +728,14 @@ class AgentPhysicsEngineTest {
     }
 
     @Test
-    void shouldTreatMap193000000BottomAnchoredWallsAsCollidable() {
+    void shouldLoadMap193000000WallZMassMetadata() {
         MapleMap map = AgentNavigationMapLoader.loadMapGeometry(193000000);
-        AgentNavigationGraphService.rebuildGraph(map);
+        java.util.Map<Integer, Foothold> byId = map.getFootholds().getAllFootholds().stream()
+                .collect(java.util.stream.Collectors.toMap(Foothold::getId, foothold -> foothold));
 
-        java.util.Set<Integer> collidableWallIds = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
-
-        assertNotNull(collidableWallIds);
-        assertTrue(collidableWallIds.contains(2), "top-right shaft wall should be collidable");
-        assertTrue(collidableWallIds.contains(10), "left lower wall should be collidable");
-        assertTrue(collidableWallIds.contains(13), "bottom platform right wall should be collidable");
+        assertTrue(byId.get(2).getZMass() >= 0, "top-right shaft wall should carry its WZ zMass");
+        assertTrue(byId.get(10).getZMass() >= 0, "left lower wall should carry its WZ zMass");
+        assertTrue(byId.get(13).getZMass() >= 0, "bottom platform right wall should carry its WZ zMass");
     }
 
     @Test

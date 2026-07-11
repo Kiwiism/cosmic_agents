@@ -40,3 +40,14 @@ Ground synchronization now resolves the foothold from the remembered navigation
 region before falling back to coordinate-only lookup. Ground action planning
 also passes its already-resolved standing foothold into collision preview. This
 keeps the movement motor on the same coincident chain selected by navigation.
+
+## Movement: client-compatible wall collision
+
+Source reference: wall-collision portion of `43b9f06c8c` from `source/dev`.
+
+Footholds now retain their WZ layer and zMass group. Region-constrained ground
+walking follows its foothold chain without scanning unrelated vertical walls,
+while airborne collision considers only base-group walls and walls belonging
+to the mover's last grounded zMass group. Synthetic footholds with no group
+metadata retain conservative all-wall collision. Agent graph cache version 49
+invalidates graphs authored with the former chain-reaches-ground heuristic.

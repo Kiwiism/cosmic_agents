@@ -114,6 +114,8 @@ public final class AgentNavigationMapLoader {
                     foothold.setPrev(DataTool.getInt(footHold.getChildByPath("prev")));
                     foothold.setNext(DataTool.getInt(footHold.getChildByPath("next")));
                     foothold.setForbidFallDown(DataTool.getInt(footHold.getChildByPath("forbidFallDown"), 0) != 0);
+                    foothold.setLayer(parseFootholdGroupId(footRoot.getName()));
+                    foothold.setZMass(parseFootholdGroupId(footCategory.getName()));
                     footholds.add(foothold);
                     lowerBound.x = Math.min(lowerBound.x, Math.min(x1, x2));
                     lowerBound.y = Math.min(lowerBound.y, Math.min(y1, y2));
@@ -147,5 +149,13 @@ public final class AgentNavigationMapLoader {
 
     private static String getMapName(int mapId) {
         return "Map/Map" + (mapId / 100000000) + "/" + String.format("%09d", mapId) + ".img";
+    }
+
+    private static int parseFootholdGroupId(String name) {
+        try {
+            return Integer.parseInt(name);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }

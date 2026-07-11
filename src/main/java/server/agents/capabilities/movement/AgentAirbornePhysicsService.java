@@ -33,8 +33,10 @@ public final class AgentAirbornePhysicsService {
 
         Point previousPosition = roundedAirPosition(entry);
         Point nextPosition = advanceAirbornePosition(entry);
+        int moverZMass = AgentWallCollisionPolicy.moverZMassForRegion(
+                agent.getMap(), entry.navigationContinuityState().lastRegionIdForMap(agent.getMapId()));
         AgentJumpProbeService.AirCollision collision =
-                AgentJumpProbeService.resolveAirCollision(agent.getMap(), previousPosition, nextPosition);
+                AgentJumpProbeService.resolveAirCollision(agent.getMap(), previousPosition, nextPosition, moverZMass);
         if (collision.type() == AgentJumpProbeService.AirCollisionType.WALL) {
             collideWithAirWall(entry, agent, collision.point());
             return AgentAirborneStepResult.WALL;

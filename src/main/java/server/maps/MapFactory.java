@@ -206,6 +206,8 @@ public class MapFactory {
                     fh.setPrev(DataTool.getInt(footHold.getChildByPath("prev")));
                     fh.setNext(DataTool.getInt(footHold.getChildByPath("next")));
                     fh.setForbidFallDown(DataTool.getInt(footHold.getChildByPath("forbidFallDown"), 0) != 0);
+                    fh.setLayer(parseFootholdGroupId(footRoot.getName()));
+                    fh.setZMass(parseFootholdGroupId(footCat.getName()));
                     if (fh.getX1() < lBound.x) {
                         lBound.x = fh.getX1();
                     }
@@ -348,6 +350,14 @@ public class MapFactory {
         map.generateMapDropRangeCache();
 
         return map;
+    }
+
+    private static int parseFootholdGroupId(String name) {
+        try {
+            return Integer.parseInt(name);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private static AbstractLoadedLife loadLife(int id, String type, int cy, int f, int fh, int rx0, int rx1, int x, int y, int hide) {

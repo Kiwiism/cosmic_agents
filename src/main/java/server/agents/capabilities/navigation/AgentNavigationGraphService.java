@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentWallCollisionPolicy;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -37,7 +38,7 @@ import java.util.concurrent.RejectedExecutionException;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 48;
+    private static final int GRAPH_VERSION = 49;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -51,7 +52,6 @@ public final class AgentNavigationGraphService {
             new AgentWeightedLruCache<>(configuredGraphCacheMaxWeight(), AgentNavigationGraphService::graphWeight);
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
-    private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
     private static final ExecutorService GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
@@ -524,7 +524,6 @@ public final class AgentNavigationGraphService {
             Map<Integer, Foothold> footholdsById = new HashMap<>();
             List<Foothold> walkableFootholds = new ArrayList<>();
             long phaseStartedAt = System.nanoTime();
-            Set<Integer> collidableWallIds = new HashSet<>();
             Set<Integer> collidableFromBelowIds;
             for (Foothold foothold : footholds) {
                 footholdsById.put(foothold.getId(), foothold);
@@ -533,16 +532,10 @@ public final class AgentNavigationGraphService {
                 }
             }
             collidableFromBelowIds = classifyCollidableFromBelowFootholds(footholdsById);
-            for (Foothold foothold : footholds) {
-                if (Foothold.isCollidableWall(foothold, footholdsById)) {
-                    collidableWallIds.add(foothold.getId());
-                }
-            }
             buildProfile.collectFootholdsNs = System.nanoTime() - phaseStartedAt;
             buildProfile.footholdCount = footholds.size();
             buildProfile.walkableFootholdCount = walkableFootholds.size();
             buildProfile.ropeCount = map.getRopes().size();
-            COLLIDABLE_WALL_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableWallIds));
             COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableFromBelowIds));
 
             List<AgentNavigationGraph.Region> regions = new ArrayList<>();
@@ -627,7 +620,7 @@ public final class AgentNavigationGraphService {
 
             AgentNavigationGraph graph = new AgentNavigationGraph(
                     map.getId(), GRAPH_VERSION, movementProfile, regions, regionsById, regionIdByFootholdId, outgoing,
-                    collidableWallIds, collidableFromBelowIds);
+                    Set.of(), collidableFromBelowIds);
             GraphBuildReport report = buildProfile.finish();
             LAST_BUILD_REPORTS.put(GraphCacheKey.from(map.getId(), movementProfile), report);
             log.debug("Built bot nav graph map {} speed={} jump={} in {} ms (regions={}, edges={}, drop={} ms, jump={} ms, jumpSamples={}, cacheHits={})",
@@ -653,7 +646,6 @@ public final class AgentNavigationGraphService {
         for (GraphCacheKey evictedKey : evicted) {
             LAST_BUILD_REPORTS.remove(evictedKey);
             if (!GRAPHS.anyKeyMatches(candidate -> candidate.mapId() == evictedKey.mapId())) {
-                COLLIDABLE_WALL_IDS_BY_MAP_ID.remove(evictedKey.mapId());
                 COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.remove(evictedKey.mapId());
             }
         }
@@ -689,10 +681,6 @@ public final class AgentNavigationGraphService {
         return LAST_BUILD_REPORTS.get(GraphCacheKey.from(mapId, movementProfile));
     }
 
-    public static Set<Integer> getCachedCollidableWallIds(int mapId) {
-        return COLLIDABLE_WALL_IDS_BY_MAP_ID.get(mapId);
-    }
-
     public static Set<Integer> getCachedCollidableFromBelowIds(int mapId) {
         return COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.get(mapId);
     }
@@ -715,7 +703,6 @@ public final class AgentNavigationGraphService {
     }
 
     private static void seedCachedFootholdCollisionIds(AgentNavigationGraph graph) {
-        COLLIDABLE_WALL_IDS_BY_MAP_ID.put(graph.mapId, new HashSet<>(graph.collidableWallIds));
         COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(graph.mapId, new HashSet<>(graph.collidableFromBelowIds));
     }
 
@@ -1441,7 +1428,7 @@ public final class AgentNavigationGraphService {
             return null;
         }
         Point launchPoint = from.pointAt(launchX);
-        if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
+        if (isBlockedWallBoundaryLaunch(from, map, launchPoint)) {
             return null;
         }
         if (!AgentGroundCollisionService.canStartDownJump(map, launchPoint)
@@ -1470,7 +1457,7 @@ public final class AgentNavigationGraphService {
             return false;
         }
         Point launchPoint = from.pointAt(launchX);
-        if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
+        if (isBlockedWallBoundaryLaunch(from, map, launchPoint)) {
             return false;
         }
         if (launchX > from.minX && canWalkToLaunchX(from, map, launchX - 1, launchX)) {
@@ -1570,20 +1557,20 @@ public final class AgentNavigationGraphService {
         return grab != null;
     }
 
-    private static boolean isBlockedWallBoundaryLaunch(MapleMap map, Point launchPoint) {
+    private static boolean isBlockedWallBoundaryLaunch(AgentNavigationGraph.Region from,
+                                                       MapleMap map,
+                                                       Point launchPoint) {
         if (map == null || map.getFootholds() == null || launchPoint == null) {
             return false;
         }
 
-        Set<Integer> collidableWallIds = getCachedCollidableWallIds(map.getId());
-        if (collidableWallIds == null || collidableWallIds.isEmpty()) {
-            return false;
-        }
-
+        int moverZMass = from == null || from.isRopeRegion || from.segments.isEmpty()
+                ? AgentWallCollisionPolicy.UNKNOWN_GROUP
+                : zMassForFoothold(map, from.segments.getFirst().footholdId);
         for (Foothold foothold : map.getFootholds().getAllFootholds()) {
             if (!foothold.isWall()
-                    || !collidableWallIds.contains(foothold.getId())
-                    || foothold.getX1() != launchPoint.x) {
+                    || foothold.getX1() != launchPoint.x
+                    || !AgentWallCollisionPolicy.collides(map, foothold, moverZMass)) {
                 continue;
             }
 
@@ -1594,6 +1581,18 @@ public final class AgentNavigationGraphService {
             }
         }
         return false;
+    }
+
+    private static int zMassForFoothold(MapleMap map, int footholdId) {
+        if (map == null || map.getFootholds() == null) {
+            return AgentWallCollisionPolicy.UNKNOWN_GROUP;
+        }
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (foothold.getId() == footholdId) {
+                return foothold.getZMass();
+            }
+        }
+        return AgentWallCollisionPolicy.UNKNOWN_GROUP;
     }
 
     private static boolean canWalkToLaunchX(AgentNavigationGraph.Region from, MapleMap map, int fromX, int launchX) {
