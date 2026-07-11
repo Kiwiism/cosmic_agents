@@ -211,7 +211,9 @@ The population composition root starts after worlds/channels and shuts down
 before channel teardown. Its default external store is
 `.runtime/agents/population.json` (override with
 `COSMIC_AGENT_POPULATION_FILE`), and a missing file is disabled by default.
-GM6 `@agentpop` and compatibility alias `@botpop` both call the same
+GM6 `@agentpop` owns the reconstructed population command surface. Legacy
+`@botpop` is registered through a separate compatibility command so the two
+surfaces can evolve independently; both currently call the same
 AgentPopulationAdminService for status, enable/disable, multiplier, bounded
 list, sweep, add/remove, crew, clear, and confirmed roster wipe operations.
 Wipe removes only external roster records and never deletes Cosmic characters

@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /** GM6 administrative surface for the external Agent population module. */
-public final class AgentPopCommand extends Command {
+public class AgentPopCommand extends Command {
     public AgentPopCommand() {
         setDescription("Manage external Agent population scheduling.");
     }
@@ -37,12 +37,13 @@ public final class AgentPopCommand extends Command {
                     player.yellowMessage("Population sweep: target=" + result.target() + " live=" + result.liveAfter()
                             + " started=" + result.started() + " stopped=" + result.stopped() + " failed=" + result.failed());
                 }
-                case "add" -> named(player, params, admin::add, "@agentpop add <agent>");
-                case "remove" -> named(player, params, admin::remove, "@agentpop remove <agent>");
+                case "add" -> named(player, params, admin::add, commandPrefix() + " add <agent>");
+                case "remove" -> named(player, params, admin::remove, commandPrefix() + " remove <agent>");
                 case "crew" -> crew(player, admin, params);
                 case "clear" -> player.yellowMessage("Stopped " + admin.clearLive() + " managed Agent session(s). Roster retained.");
                 case "wipe" -> wipe(player, admin, params);
-                default -> player.yellowMessage("Usage: @agentpop status|on|off|multiplier <n>|list|sweep|add|remove|crew|clear|wipe");
+                default -> player.yellowMessage("Usage: " + commandPrefix()
+                        + " status|on|off|multiplier <n>|list|sweep|add|remove|crew|clear|wipe");
             }
         } catch (IOException | IllegalArgumentException | IllegalStateException failure) {
             player.yellowMessage("Agent population operation failed: " + failure.getMessage());
@@ -59,8 +60,8 @@ public final class AgentPopCommand extends Command {
                 + " queued=" + metrics.queuedCallbacks());
     }
 
-    private static void multiplier(Character player, AgentPopulationAdminService admin, String[] params) throws IOException {
-        if (params.length < 2) { player.yellowMessage("Usage: @agentpop multiplier <nonnegative value>"); return; }
+    private void multiplier(Character player, AgentPopulationAdminService admin, String[] params) throws IOException {
+        if (params.length < 2) { player.yellowMessage("Usage: " + commandPrefix() + " multiplier <nonnegative value>"); return; }
         double value = Double.parseDouble(params[1]);
         admin.setMultiplier(value);
         player.yellowMessage("Agent population multiplier set to " + value + "x.");
@@ -73,19 +74,19 @@ public final class AgentPopCommand extends Command {
                 + (record.crewId() == null ? "" : " crew=" + record.crewId())).toList());
     }
 
-    private static void crew(Character player, AgentPopulationAdminService admin, String[] params) throws IOException {
-        if (params.length < 3) { player.yellowMessage("Usage: @agentpop crew <id|none> <agents...>"); return; }
+    private void crew(Character player, AgentPopulationAdminService admin, String[] params) throws IOException {
+        if (params.length < 3) { player.yellowMessage("Usage: " + commandPrefix() + " crew <id|none> <agents...>"); return; }
         Integer crewId = params[1].equalsIgnoreCase("none") ? null : Integer.valueOf(params[1]);
         int changed = admin.assignCrew(crewId, Arrays.asList(params).subList(2, params.length));
         player.yellowMessage("Updated crew assignment for " + changed + " managed Agent(s).");
     }
 
-    private static void wipe(Character player, AgentPopulationAdminService admin, String[] params) throws IOException {
+    private void wipe(Character player, AgentPopulationAdminService admin, String[] params) throws IOException {
         boolean confirm = params.length >= 2 && params[1].equalsIgnoreCase("confirm");
         if (!confirm) {
             player.yellowMessage("Population roster wipe preview (backing characters will NOT be deleted):");
             printBounded(player, admin.wipePreview());
-            player.yellowMessage("Run: @agentpop wipe confirm");
+            player.yellowMessage("Run: " + commandPrefix() + " wipe confirm");
             return;
         }
         AgentPopulationAdminService.WipeResult result = admin.wipeConfirm();
@@ -104,4 +105,8 @@ public final class AgentPopCommand extends Command {
     }
 
     @FunctionalInterface private interface NamedOperation { String apply(String name) throws IOException; }
+
+    protected String commandPrefix() {
+        return "@agentpop";
+    }
 }
