@@ -5,14 +5,10 @@ Cosmic Agents is a Global MapleStory v83 server project built on top of
 server-validated Agent platform for autonomous characters that remain normal
 Cosmic characters and obey server-side gameplay rules.
 
-The behavior-preserving Agent reconstruction and 12-phase runtime hardening are
-complete on `master`. Production and test `server.bots` packages are absent;
-Agent behavior is owned by modules under `server.agents`.
-
 ## Credits And Upstream Lineage
 
 - [P0nk/Cosmic](https://github.com/P0nk/Cosmic) is the upstream v83 server base.
-  Cosmic was created and maintained by Ponk with contributions from the wider
+  Cosmic was created and maintained by P0nk with contributions from the wider
   Cosmic community.
 - [nutnnut/Cosmic](https://github.com/nutnnut/Cosmic) provided the companion
   behavior from which the reconstructed Agent runtime was derived.
