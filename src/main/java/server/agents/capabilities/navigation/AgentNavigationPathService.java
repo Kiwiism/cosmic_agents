@@ -24,6 +24,7 @@ public final class AgentNavigationPathService {
     private static final int NO_MOVEMENT_WALK_TOLERANCE = 4;
     private static final long PORTAL_USE_COOLDOWN_MS = 250L;
     private static final long SLOW_PATHFIND_WARN_NS = 50_000_000L;
+    static final int MAX_EDGE_CHECKS = 160_000;
 
     static boolean useAdmissibleHeuristic = true;
 
@@ -56,10 +57,18 @@ public final class AgentNavigationPathService {
                                    int relaxations,
                                    int openPeak,
                                    int bestGoalCost,
-                                   int resultEdges) {
+                                   int resultEdges,
+                                   boolean capped) {
     }
 
-    public record SearchOutcome(List<AgentNavigationGraph.Edge> path, int cost, int expandedNodes, boolean usesPortal) {
+    public record SearchOutcome(List<AgentNavigationGraph.Edge> path,
+                                int cost,
+                                int expandedNodes,
+                                boolean usesPortal,
+                                boolean reached,
+                                boolean capped,
+                                boolean bestEffort,
+                                int finalRegionId) {
     }
 
     public record PathOptimality(int currentCost, int optimalCost, boolean currentUsesPortal,
@@ -107,6 +116,26 @@ public final class AgentNavigationPathService {
         return findPath(graph, map, startPos, startRegionId, targetRegionId, targetPos, "target-score");
     }
 
+    public static List<AgentNavigationGraph.Edge> findPathForRetreatProbe(AgentNavigationGraph graph,
+                                                                          MapleMap map,
+                                                                          Point startPos,
+                                                                          int startRegionId,
+                                                                          int targetRegionId,
+                                                                          Point targetPos) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                "retreat-probe", false, true).path();
+    }
+
+    public static List<AgentNavigationGraph.Edge> findPathForApproachProbe(AgentNavigationGraph graph,
+                                                                           MapleMap map,
+                                                                           Point startPos,
+                                                                           int startRegionId,
+                                                                           int targetRegionId,
+                                                                           Point targetPos) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                "approach-probe", false, true).path();
+    }
+
     public static AgentNavigationGraph.Edge findNextEdge(AgentNavigationGraph graph,
                                                          Character bot,
                                                          int startRegionId,
@@ -152,15 +181,38 @@ public final class AgentNavigationPathService {
                                           String pathfindCaller,
                                           boolean zeroHeuristic,
                                           boolean instrument) {
+        return runSearch(graph, map, startPos, startRegionId, targetRegionId, targetPos,
+                pathfindCaller, zeroHeuristic, instrument, MAX_EDGE_CHECKS);
+    }
+
+    static SearchOutcome runSearch(AgentNavigationGraph graph,
+                                   MapleMap map,
+                                   Point startPos,
+                                   int startRegionId,
+                                   int targetRegionId,
+                                   Point targetPos,
+                                   String pathfindCaller,
+                                   boolean zeroHeuristic,
+                                   boolean instrument,
+                                   int edgeCheckBudget) {
         long startedAt = System.nanoTime();
         PathfindProfile profile = null;
         try {
+            int startComponent = graph.connectedComponentId(startRegionId);
+            int targetComponent = graph.connectedComponentId(targetRegionId);
+            if (startComponent < 0 || targetComponent < 0 || startComponent != targetComponent) {
+                return new SearchOutcome(List.of(), Integer.MAX_VALUE, 0, false,
+                        false, false, false, startRegionId);
+            }
+
             PriorityQueue<SearchNode> open = new PriorityQueue<>(Comparator.comparingInt(node -> node.score));
             Map<SearchState, Integer> gScore = new HashMap<>();
             Map<SearchState, SearchState> cameFrom = new HashMap<>();
             Map<SearchState, AgentNavigationGraph.Edge> cameByEdge = new HashMap<>();
             SearchState startState = new SearchState(startRegionId, new Point(startPos), false);
             SearchState bestGoalState = null;
+            SearchState closestState = startState;
+            long closestDistance = rawDistance(startPos, targetPos);
             int bestGoalCost = Integer.MAX_VALUE;
             int expandedNodes = 0;
             int staleNodes = 0;
@@ -168,9 +220,12 @@ public final class AgentNavigationPathService {
             int usableEdges = 0;
             int relaxations = 0;
             int openPeak = 1;
+            boolean capped = false;
+            Map<Integer, Integer> costToGoal = zeroHeuristic ? Map.of() : graph.costToGoal(targetRegionId);
 
             gScore.put(startState, 0);
-            open.add(new SearchNode(startState, 0, zeroHeuristic ? 0 : heuristic(graph, startPos, targetPos)));
+            open.add(new SearchNode(startState, 0,
+                    zeroHeuristic ? 0 : heuristic(startRegionId, targetRegionId, costToGoal)));
 
             while (!open.isEmpty()) {
                 SearchNode current = open.poll();
@@ -193,6 +248,10 @@ public final class AgentNavigationPathService {
 
                 for (AgentNavigationGraph.Edge edge : graph.getOutgoing(current.state.regionId)) {
                     edgeChecks++;
+                    if (edgeChecks > Math.max(1, edgeCheckBudget)) {
+                        capped = true;
+                        break;
+                    }
                     if (!isEdgeUsable(graph, map, edge)) {
                         continue;
                     }
@@ -214,13 +273,27 @@ public final class AgentNavigationPathService {
                     gScore.put(nextState, tentativeCost);
                     cameFrom.put(nextState, current.state);
                     cameByEdge.put(nextState, edge);
-                    int fScore = tentativeCost + (zeroHeuristic ? 0 : heuristic(graph, edge.endPoint, targetPos));
+                    int fScore = tentativeCost + (zeroHeuristic
+                            ? 0 : heuristic(edge.toRegionId, targetRegionId, costToGoal));
                     open.add(new SearchNode(nextState, tentativeCost, fScore));
                     openPeak = Math.max(openPeak, open.size());
+                    long reachedDistance = rawDistance(edge.endPoint, targetPos);
+                    if (reachedDistance < closestDistance) {
+                        closestDistance = reachedDistance;
+                        closestState = nextState;
+                    }
+                }
+                if (capped) {
+                    break;
                 }
             }
 
-            List<AgentNavigationGraph.Edge> path = reconstructPath(startState, bestGoalState, cameFrom, cameByEdge);
+            SearchState resultState = bestGoalState;
+            if (resultState == null && capped && bestEffortCaller(pathfindCaller)
+                    && !closestState.equals(startState)) {
+                resultState = closestState;
+            }
+            List<AgentNavigationGraph.Edge> path = reconstructPath(startState, resultState, cameFrom, cameByEdge);
             profile = new PathfindProfile(
                     System.nanoTime() - startedAt,
                     expandedNodes,
@@ -230,7 +303,8 @@ public final class AgentNavigationPathService {
                     relaxations,
                     openPeak,
                     bestGoalCost,
-                    path.size());
+                    path.size(),
+                    capped);
             boolean usesPortal = false;
             for (AgentNavigationGraph.Edge edge : path) {
                 if (edge.type == AgentNavigationGraph.EdgeType.PORTAL) {
@@ -238,7 +312,10 @@ public final class AgentNavigationPathService {
                     break;
                 }
             }
-            return new SearchOutcome(path, bestGoalCost, expandedNodes, usesPortal);
+            int finalRegionId = resultState == null ? startRegionId : resultState.regionId;
+            boolean reached = resultState != null && finalRegionId == targetRegionId;
+            return new SearchOutcome(path, bestGoalCost, expandedNodes, usesPortal,
+                    reached, capped, !reached && !path.isEmpty(), finalRegionId);
         } finally {
             if (instrument) {
                 if (profile == null) {
@@ -251,12 +328,26 @@ public final class AgentNavigationPathService {
                             0,
                             0,
                             Integer.MAX_VALUE,
-                            0);
+                            0,
+                            false);
                 }
                 logSlowPathfind(graph, map, startPos, startRegionId, targetRegionId, targetPos, pathfindCaller, profile);
                 AgentPerformanceMonitor.recordPathfind(pathfindCaller, System.nanoTime() - startedAt);
             }
         }
+    }
+
+    private static boolean bestEffortCaller(String caller) {
+        return caller == null || caller.isBlank() || "committed".equals(caller);
+    }
+
+    private static long rawDistance(Point from, Point to) {
+        if (from == null || to == null) {
+            return Long.MAX_VALUE;
+        }
+        long dx = (long) to.x - from.x;
+        long dy = (long) to.y - from.y;
+        return dx * dx + dy * dy;
     }
 
     public static int intraRegionTravelCost(AgentNavigationGraph graph, Point from, Point to) {
@@ -275,6 +366,15 @@ public final class AgentNavigationPathService {
 
     public static int heuristic(AgentNavigationGraph graph, Point from, Point targetPos) {
         return intraRegionTravelCost(graph, from, targetPos);
+    }
+
+    private static int heuristic(int regionId,
+                                 int targetRegionId,
+                                 Map<Integer, Integer> costToGoal) {
+        if (regionId == targetRegionId) {
+            return 0;
+        }
+        return costToGoal.getOrDefault(regionId, 0);
     }
 
     public static AgentNavigationGraph.Edge collapseLeadingWalkEdges(List<AgentNavigationGraph.Edge> path) {
@@ -364,7 +464,7 @@ public final class AgentNavigationPathService {
         String caller = pathfindCaller == null || pathfindCaller.isBlank() ? "default" : pathfindCaller;
         int bestGoalCost = profile.bestGoalCost() == Integer.MAX_VALUE ? -1 : profile.bestGoalCost();
         log.warn(
-                "Slow bot pathfind: caller={} took {} ms map={} startRegion={} targetRegion={} regions={} startOut={} startPos=({}, {}) targetPos=({}, {}) expanded={} stale={} edgeChecks={} usableEdges={} relaxations={} openPeak={} bestGoalCost={} resultEdges={}",
+                "Slow bot pathfind: caller={} took {} ms map={} startRegion={} targetRegion={} regions={} startOut={} startPos=({}, {}) targetPos=({}, {}) expanded={} stale={} edgeChecks={} usableEdges={} relaxations={} openPeak={} bestGoalCost={} resultEdges={} capped={}",
                 caller,
                 String.format("%.1f", profile.elapsedNs() / 1_000_000.0),
                 map != null ? map.getId() : -1,
@@ -383,7 +483,8 @@ public final class AgentNavigationPathService {
                 profile.relaxations(),
                 profile.openPeak(),
                 bestGoalCost,
-                profile.resultEdges());
+                profile.resultEdges(),
+                profile.capped());
     }
 
     private static List<AgentNavigationGraph.Edge> reconstructPath(SearchState startState,

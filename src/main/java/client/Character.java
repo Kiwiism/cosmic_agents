@@ -1015,13 +1015,17 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void newClient(Client c) {
+        newClient(c, c.getChannelServer().getMapFactory().getMap(getMapId()));
+    }
+
+    public void newClient(Client c, MapleMap targetMap) {
         this.loggedIn = true;
         if (this.client instanceof BotClient && !(c instanceof BotClient)) {
             AgentRuntimeCleanupService.cleanupAgentRuntimeState(this);
         }
         c.setAccountName(this.client.getAccountName());//No null's for accountName
         this.setClient(c);
-        this.map = c.getChannelServer().getMapFactory().getMap(getMapId());
+        this.map = targetMap;
         Portal portal = map.findClosestPlayerSpawnpoint(getPosition());
         if (portal == null) {
             portal = map.getPortal(0);
@@ -8006,8 +8010,9 @@ public class Character extends AbstractCharacterObject {
                 localmaxmp += (hbmp.doubleValue() / 100) * localmaxmp;
             }
 
-            localmaxhp = Math.min(300000, localmaxhp);
-            localmaxmp = Math.min(300000, localmaxmp);
+            int hpMpCap = GameConstants.getPlayerHpMpCap();
+            localmaxhp = Math.min(hpMpCap, localmaxhp);
+            localmaxmp = Math.min(hpMpCap, localmaxmp);
 
             StatEffect combo = getBuffEffect(BuffStat.ARAN_COMBO);
             if (combo != null) {
@@ -8776,7 +8781,11 @@ public class Character extends AbstractCharacterObject {
             }
         }
         List<QuestStatus.PersistenceSnapshot> questSnapshot = savePlan.includes(PersistenceSection.QUESTS)
-                ? getQuests().stream().map(QuestStatus::persistenceSnapshot).toList() : List.of();
+                ? getQuests().stream()
+                        .map(QuestStatus::persistenceSnapshot)
+                        .filter(QuestStatus.PersistenceSnapshot::shouldPersist)
+                        .toList()
+                : List.of();
         Mount.PersistenceSnapshot mountSnapshot = savePlan.includes(PersistenceSection.STATS) && maplemount != null
                 ? maplemount.persistenceSnapshot() : new Mount.PersistenceSnapshot(0, 1, 0);
         boolean saveStorage = (savePlan.includes(PersistenceSection.SOCIAL)
@@ -9540,7 +9549,7 @@ public class Character extends AbstractCharacterObject {
 
     private int calcHpRatioUpdate(int curpoint, int maxpoint, int diffpoint) {
         int curMax = maxpoint;
-        int nextMax = Math.min(300000, maxpoint + diffpoint);
+        int nextMax = Math.min(GameConstants.getPlayerHpMpCap(), maxpoint + diffpoint);
 
         float temp = curpoint * nextMax;
         int ret = (int) Math.ceil(temp / curMax);
@@ -9551,7 +9560,7 @@ public class Character extends AbstractCharacterObject {
 
     private int calcMpRatioUpdate(int curpoint, int maxpoint, int diffpoint) {
         int curMax = maxpoint;
-        int nextMax = Math.min(300000, maxpoint + diffpoint);
+        int nextMax = Math.min(GameConstants.getPlayerHpMpCap(), maxpoint + diffpoint);
 
         float temp = curpoint * nextMax;
         int ret = (int) Math.ceil(temp / curMax);

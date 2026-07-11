@@ -10,12 +10,14 @@ import client.inventory.Inventory;
 import client.inventory.InventoryType;
 import client.inventory.Item;
 import client.inventory.WeaponType;
+import constants.skills.ILMage;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import server.StatEffect;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -347,6 +349,79 @@ class CombatFormulaProviderTest {
         assertEquals(401L, provider.magicDamageBase(3000, 200));
         // MIN: matk=3000, totalInt=0, mastery=0.5 → ceil((9000+1350)/30) = ceil(345) = 345
         assertEquals(345L, provider.magicDamageBaseMin(3000, 0, 0.5));
+    }
+
+    @Test
+    void magicDamageResolutionObservesElementAmplificationLevelChanges() {
+        Character bot = mockDamageBot();
+        when(bot.getJob()).thenReturn(Job.IL_MAGE);
+        when(bot.getTotalMagic()).thenReturn(3000);
+        when(bot.getTotalInt()).thenReturn(0);
+        StatEffect attackEffect = mock(StatEffect.class);
+        when(attackEffect.getX()).thenReturn(50);
+        when(attackEffect.getMatk()).thenReturn((short) 5);
+        Skill amplificationSkill = mock(Skill.class);
+        StatEffect amplificationEffect = mock(StatEffect.class);
+        when(amplificationSkill.getEffect(10)).thenReturn(amplificationEffect);
+        when(amplificationEffect.getY()).thenReturn(150);
+        AtomicInteger amplificationLevel = new AtomicInteger();
+        when(bot.getSkillLevel(amplificationSkill))
+                .thenAnswer(ignored -> (byte) amplificationLevel.get());
+
+        try (MockedStatic<SkillFactory> skills = Mockito.mockStatic(SkillFactory.class)) {
+            skills.when(() -> SkillFactory.getSkill(ILMage.ELEMENT_AMPLIFICATION))
+                    .thenReturn(amplificationSkill);
+            CombatFormulaProvider.DamageProfile before =
+                    provider.resolveDamageProfile(bot, 2101004, attackEffect, true);
+            amplificationLevel.set(10);
+            CombatFormulaProvider.DamageProfile after =
+                    provider.resolveDamageProfile(bot, 2101004, attackEffect, true);
+
+            assertEquals(2_000, before.maxDamage());
+            assertEquals(3_000, after.maxDamage());
+        }
+    }
+
+    @Test
+    void shadowPartnerLinesReplayOriginalDamageAtActivePercentage() {
+        assertEquals(500, CombatFormulaProvider.shadowPartnerLine(1_000, 50));
+        assertEquals(350, CombatFormulaProvider.shadowPartnerLine(1_000, 35));
+        assertEquals(0, CombatFormulaProvider.shadowPartnerLine(0, 50));
+    }
+
+    @Test
+    void shadowPartnerLinesInheritOriginalCriticalMetadata() {
+        assertEquals(java.util.Set.of(7, 9),
+                CombatFormulaProvider.shadowPartnerCritIndices(java.util.Set.of(0, 2), 7, 4));
+    }
+
+    @Test
+    void shadowPartnerProducesSevenOriginalAndSevenDerivedLinesForPhysicalAndMagicProfiles() {
+        Character agent = mock(Character.class);
+        StatEffect shadowPartner = mock(StatEffect.class);
+        when(shadowPartner.getX()).thenReturn(40);
+        when(agent.getBuffEffect(BuffStat.SHADOWPARTNER)).thenReturn(shadowPartner);
+
+        for (boolean magic : new boolean[]{false, true}) {
+            CombatFormulaProvider.DamageProfile profile =
+                    new CombatFormulaProvider.DamageProfile(777, 777, magic, true);
+            var target = provider.makeTarget(agent, null, 14, 0, profile, 0);
+
+            assertEquals(14, target.damageLines().size());
+            assertTrue(target.damageLines().subList(0, 7).stream().allMatch(line -> line == 777));
+            assertTrue(target.damageLines().subList(7, 14).stream().allMatch(line -> line == 310));
+        }
+    }
+
+    @Test
+    void noShadowPartnerPreservesOriginalLineCountAndDamage() {
+        Character agent = mock(Character.class);
+        CombatFormulaProvider.DamageProfile profile =
+                new CombatFormulaProvider.DamageProfile(555, 555, false, true);
+
+        var target = provider.makeTarget(agent, null, 7, 0, profile, 0);
+
+        assertEquals(java.util.Collections.nCopies(7, 555), target.damageLines());
     }
 
     @Test

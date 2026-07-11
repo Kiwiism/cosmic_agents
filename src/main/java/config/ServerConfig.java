@@ -152,6 +152,7 @@ public class ServerConfig {
     public boolean USE_UNITPRICE_WITH_COMMA;
     public byte MAX_MONITORED_BUFFSTATS;
     public int MAX_AP;
+    public int PLAYER_HP_MP_CAP = 30000;
     public int MAX_EVENT_LEVELS;
     public long BLOCK_NPC_RACE_CONDT;
     public int TOT_MOB_QUEST_REQUIREMENT;

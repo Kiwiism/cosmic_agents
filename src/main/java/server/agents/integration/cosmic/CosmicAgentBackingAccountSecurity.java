@@ -22,4 +22,17 @@ public final class CosmicAgentBackingAccountSecurity {
             return statement.executeUpdate() == 1;
         }
     }
+
+    public static boolean isAgentOnlyAccount(int accountId) throws SQLException {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT banned, banreason FROM accounts WHERE id = ?")) {
+            statement.setInt(1, accountId);
+            try (var result = statement.executeQuery()) {
+                return result.next()
+                        && result.getInt("banned") == 1
+                        && AGENT_ONLY_BAN_REASON.equals(result.getString("banreason"));
+            }
+        }
+    }
 }

@@ -9,6 +9,7 @@ public final class AgentSwimIntentState {
     private int verticalHold;
     private boolean jumpRequested;
     private long nextJumpAtMs;
+    private boolean wallBlocked;
 
     public boolean swimming() {
         return swimming;
@@ -48,6 +49,14 @@ public final class AgentSwimIntentState {
 
     public void setNextJumpAtMs(long nextJumpAtMs) {
         this.nextJumpAtMs = nextJumpAtMs;
+    }
+
+    public boolean wallBlocked() {
+        return wallBlocked;
+    }
+
+    public void setWallBlocked(boolean wallBlocked) {
+        this.wallBlocked = wallBlocked;
     }
 
     public void clearInput() {

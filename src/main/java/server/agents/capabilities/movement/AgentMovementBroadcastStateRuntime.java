@@ -13,6 +13,30 @@ public final class AgentMovementBroadcastStateRuntime {
         entry.movementBroadcastState().setValid(false);
     }
 
+    public static void beginTick(AgentRuntimeEntry entry) {
+        entry.movementBroadcastState().beginTick();
+    }
+
+    public static void markReconciled(AgentRuntimeEntry entry) {
+        entry.movementBroadcastState().markReconciled();
+    }
+
+    public static boolean reconciledThisTick(AgentRuntimeEntry entry) {
+        return entry.movementBroadcastState().reconciledThisTick();
+    }
+
+    public static boolean valid(AgentRuntimeEntry entry) {
+        return entry.movementBroadcastState().valid();
+    }
+
+    public static int lastVelocityX(AgentRuntimeEntry entry) {
+        return entry.movementBroadcastState().velocityX();
+    }
+
+    public static int lastVelocityY(AgentRuntimeEntry entry) {
+        return entry.movementBroadcastState().velocityY();
+    }
+
     public static boolean matches(AgentRuntimeEntry entry,
                                   int x,
                                   int y,

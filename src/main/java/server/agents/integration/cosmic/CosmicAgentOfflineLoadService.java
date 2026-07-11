@@ -92,7 +92,7 @@ public final class CosmicAgentOfflineLoadService {
         Point spawnPosition = hooks.spawnPositionResolver().resolve(spawnMap, desired);
 
         agent.setMapId(spawnMap.getId());
-        agent.newClient(client);
+        agent.newClient(client, spawnMap);
         agent.recalcLocalStats();
         hooks.rateInitializer().initialize(agent);
         agent.setPosition(spawnPosition);

@@ -66,6 +66,8 @@ import server.agents.capabilities.combat.AgentCombatBuffStateRuntime;
 import server.agents.capabilities.combat.AgentCombatBuffRuntime;
 import server.agents.capabilities.combat.AgentCombatCooldownStateRuntime;
 import server.agents.capabilities.combat.AgentCombatDamageRuntime;
+import server.agents.capabilities.combat.AgentFallDamageCalculator;
+import server.agents.capabilities.combat.AgentIncomingDamagePolicy;
 import server.agents.capabilities.combat.AgentCombatDeathRuntime;
 import server.agents.capabilities.combat.AgentCombatFacingRuntime;
 import server.agents.capabilities.combat.AgentCombatGroundRuntime;
@@ -1363,6 +1365,23 @@ class BotCombatManagerTest {
         assertEquals(0, AgentMovementPhysicsStateRuntime.airVelocityX(entry));
         assertEquals(0.0f, AgentMovementPhysicsStateRuntime.verticalVelocity(entry), 1.0e-4f);
         assertDamageDirection(map, bot, 1, 0);
+    }
+
+    @Test
+    void shouldSplitIncomingFallDamageThroughMagicGuardWithMpOverflow() {
+        MapleMap map = mock(MapleMap.class);
+        Character bot = mockBot(new Point(100, 200), map, 20_000, null);
+        when(bot.getBuffedValue(BuffStat.MAGIC_GUARD)).thenReturn(80);
+        when(bot.getMp()).thenReturn(10);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        int damage = AgentFallDamageCalculator.fallDamageFromDistance(3861.0f);
+        AgentIncomingDamagePolicy.DamageSplit expected =
+                AgentIncomingDamagePolicy.splitMagicGuard(damage, 80, 10);
+
+        runWithStubbedBotAfter(() ->
+                AgentCombatDamageRuntime.applyFallDamage(entry, bot, 3861.0f, AgentCombatConfig.cfg));
+
+        verify(bot).addMPHPAndTriggerAutopot(-expected.hpLoss(), -expected.mpLoss());
     }
 
     @Test

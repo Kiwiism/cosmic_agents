@@ -3,6 +3,7 @@ package server.agents.capabilities.movement;
 import java.awt.Point;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationDebugStateRuntime;
+import server.agents.capabilities.navigation.AgentFootholdDetourService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.maps.Foothold;
@@ -12,13 +13,22 @@ public final class AgentGroundActionPlanner {
     }
 
     public static AgentGroundAction planGroundAction(AgentRuntimeEntry entry, Foothold currentFoothold, Point botPos, Point targetPos) {
+        return planGroundAction(entry, currentFoothold, botPos, targetPos, false);
+    }
+
+    public static AgentGroundAction planGroundAction(AgentRuntimeEntry entry,
+                                                     Foothold currentFoothold,
+                                                     Point botPos,
+                                                     Point targetPos,
+                                                     boolean walkOffWaypoint) {
         AgentNavigationGraph.Edge navEdge = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         boolean directionalDrop = AgentGroundMovementPolicy.isDirectionalDropEdge(navEdge);
-        int stopDist = directionalDrop ? 0 : AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
+        boolean footholdDetour = AgentFootholdDetourService.active(entry);
+        int stopDist = directionalDrop || footholdDetour || walkOffWaypoint ? 0 : AgentNavigationDebugStateRuntime.navPreciseTarget(entry)
                 ? AgentGroundMovementPolicy.preciseNavStopDist(navEdge)
                 : AgentMovementPhysicsConfig.configuredStopDist();
         // No hysteresis when navigating to an edge: always move toward the waypoint.
-        int followDist = directionalDrop ? 0
+        int followDist = directionalDrop || footholdDetour || walkOffWaypoint ? 0
                 : (navEdge != null || AgentNavigationDebugStateRuntime.navPreciseTarget(entry))
                 ? stopDist
                 : AgentMovementPhysicsConfig.configuredFollowDist();
@@ -26,9 +36,14 @@ public final class AgentGroundActionPlanner {
         if (stepX == 0) {
             return AgentGroundAction.idle();
         }
-        boolean canWalkStep = AgentGroundCollisionService.canWalkGroundStep(AgentRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
+        boolean canWalkStep = AgentGroundCollisionService.canWalkGroundStep(
+                AgentRuntimeIdentityRuntime.botMap(entry), botPos, currentFoothold, stepX);
         if (!canWalkStep) {
-            boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(AgentRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
+            boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(
+                    AgentRuntimeIdentityRuntime.botMap(entry), botPos, currentFoothold, stepX);
+            if (blockedByWall && AgentRuntimeIdentityRuntime.botMap(entry).isSwim()) {
+                return AgentGroundAction.jump(stepX);
+            }
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
                     || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {

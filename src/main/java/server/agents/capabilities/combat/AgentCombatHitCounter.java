@@ -13,9 +13,17 @@ public final class AgentCombatHitCounter {
     }
 
     public static int shadowPartnerHitMultiplier(Character agent, AgentAttackRoute route) {
-        if (route != AgentAttackRoute.RANGED || agent == null) {
+        if (route == null || agent == null) {
             return 1;
         }
         return agent.getBuffEffect(BuffStat.SHADOWPARTNER) != null ? 2 : 1;
+    }
+
+    public static int packetSafeHitCount(Character agent, AgentAttackRoute route, int originalHits) {
+        int normalizedOriginal = Math.max(1, originalHits);
+        if (shadowPartnerHitMultiplier(agent, route) == 1) {
+            return Math.min(15, normalizedOriginal);
+        }
+        return Math.min(7, normalizedOriginal) * 2;
     }
 }

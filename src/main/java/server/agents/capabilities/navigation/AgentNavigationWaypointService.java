@@ -86,10 +86,6 @@ public final class AgentNavigationWaypointService {
             return selectStraightDropWaypoint(graph, botPos, edge);
         }
 
-        if (AgentNavigationLaunchWindowService.hasReachedDirectionalDropRunway(botPos, edge)) {
-            return new Point(edge.endPoint);
-        }
-
         AgentNavigationGraph.Region fromRegion = graph.getRegion(edge.fromRegionId);
         if (fromRegion == null || fromRegion.isRopeRegion) {
             return new Point(edge.endPoint);
@@ -118,13 +114,17 @@ public final class AgentNavigationWaypointService {
         if (landingFoothold == null) {
             return false;
         }
-        if (graph.regionIdByFootholdId.getOrDefault(landingFoothold.getId(), -1) != edge.toRegionId) {
+        int landingRegionId = graph.regionIdByFootholdId.getOrDefault(landingFoothold.getId(), -1);
+        if (landingRegionId != edge.toRegionId) {
             return false;
         }
-        int xTolerance = Math.max(6, Math.abs(edge.launchStepX) + 2);
-        int yTolerance = AgentMovementPhysicsConfig.configuredJumpYThreshold() * 2;
-        return Math.abs(outcome.landing().point().x - edge.endPoint.x) <= xTolerance
-                && Math.abs(outcome.landing().point().y - edge.endPoint.y) <= yTolerance;
+        if (outcome.launchPoint() == null || outcome.landing().point().y <= outcome.launchPoint().y + 4) {
+            return false;
+        }
+        int slack = Math.max(6, Math.abs(edge.launchStepX) + 2);
+        return edge.launchStepX < 0
+                ? outcome.launchPoint().x >= edge.endPoint.x - slack
+                : outcome.launchPoint().x <= edge.endPoint.x + slack;
     }
 
     public static int selectJumpLaunchX(AgentRuntimeEntry entry,

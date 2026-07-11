@@ -16,6 +16,7 @@ class AgentSwimIntentStateTest {
         assertEquals(0, state.verticalHold());
         assertFalse(state.jumpRequested());
         assertEquals(0L, state.nextJumpAtMs());
+        assertFalse(state.wallBlocked());
     }
 
     @Test
@@ -48,10 +49,12 @@ class AgentSwimIntentStateTest {
         state.setSwimming(true);
         state.setJumpRequested(true);
         state.setNextJumpAtMs(1234L);
+        state.setWallBlocked(true);
 
         assertTrue(state.swimming());
         assertTrue(state.jumpRequested());
         assertEquals(1234L, state.nextJumpAtMs());
+        assertTrue(state.wallBlocked());
     }
 
     @Test
@@ -62,6 +65,7 @@ class AgentSwimIntentStateTest {
         state.setVerticalHold(-1);
         state.setJumpRequested(true);
         state.setNextJumpAtMs(77L);
+        state.setWallBlocked(true);
 
         state.clearInput();
 
@@ -70,5 +74,6 @@ class AgentSwimIntentStateTest {
         assertEquals(0, state.verticalHold());
         assertFalse(state.jumpRequested());
         assertEquals(77L, state.nextJumpAtMs());
+        assertTrue(state.wallBlocked());
     }
 }

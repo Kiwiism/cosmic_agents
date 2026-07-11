@@ -16,8 +16,17 @@ public final class AgentBoundedExecutorFactory {
     }
 
     public static ThreadPoolExecutor fixed(String metricName, String threadName, int threads, int queueCapacity) {
+        return fixed(metricName, threadName, threads, queueCapacity, Thread.NORM_PRIORITY);
+    }
+
+    public static ThreadPoolExecutor fixed(String metricName,
+                                           String threadName,
+                                           int threads,
+                                           int queueCapacity,
+                                           int threadPriority) {
         int workerCount = Math.max(1, threads);
         int capacity = Math.max(1, queueCapacity);
+        int priority = Math.clamp(threadPriority, Thread.MIN_PRIORITY, Thread.MAX_PRIORITY);
         return new ThreadPoolExecutor(
                 workerCount,
                 workerCount,
@@ -27,6 +36,7 @@ public final class AgentBoundedExecutorFactory {
                 runnable -> {
                     Thread thread = new Thread(runnable, threadName);
                     thread.setDaemon(true);
+                    thread.setPriority(priority);
                     return thread;
                 },
                 (task, executor) -> {

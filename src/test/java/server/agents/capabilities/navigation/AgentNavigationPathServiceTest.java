@@ -153,6 +153,89 @@ class AgentNavigationPathServiceTest {
         assertEquals(0, optimality.costDelta());
     }
 
+    @Test
+    void cappedMovementSearchReturnsClosestReachedFrontier() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(
+                        1, List.of(edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                                new Point(0, 100), new Point(100, 100), 10)),
+                        2, List.of(edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
+                                new Point(100, 100), new Point(200, 100), 10))));
+
+        AgentNavigationPathService.SearchOutcome outcome = AgentNavigationPathService.runSearch(
+                graph, null, new Point(0, 100), 1, 3, new Point(200, 100),
+                "committed", true, false, 1);
+
+        assertTrue(outcome.capped());
+        assertTrue(outcome.bestEffort());
+        assertFalse(outcome.reached());
+        assertEquals(1, outcome.path().size());
+        assertEquals(2, outcome.finalRegionId());
+    }
+
+    @Test
+    void cappedScoringSearchDoesNotReturnPartialRoute() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(
+                        1, List.of(edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                                new Point(0, 100), new Point(100, 100), 10)),
+                        2, List.of(edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
+                                new Point(100, 100), new Point(200, 100), 10))));
+
+        AgentNavigationPathService.SearchOutcome outcome = AgentNavigationPathService.runSearch(
+                graph, null, new Point(0, 100), 1, 3, new Point(200, 100),
+                "target-score", true, false, 1);
+
+        assertTrue(outcome.capped());
+        assertFalse(outcome.bestEffort());
+        assertTrue(outcome.path().isEmpty());
+    }
+
+    @Test
+    void disconnectedComponentsExitWithoutSearch() {
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(groundRegion(1, 0, 100, 100), groundRegion(2, 200, 300, 100)),
+                Map.of());
+
+        AgentNavigationPathService.SearchOutcome outcome = AgentNavigationPathService.runSearch(
+                graph, null, new Point(0, 100), 1, 2, new Point(200, 100),
+                "committed", true, false);
+
+        assertFalse(outcome.reached());
+        assertFalse(outcome.capped());
+        assertEquals(0, outcome.expandedNodes());
+    }
+
+    @Test
+    void retreatProbeKeepsOptimalRouteCost() {
+        AgentNavigationGraph.Edge first = edge(1, 2, AgentNavigationGraph.EdgeType.WALK,
+                new Point(0, 100), new Point(100, 100), 100);
+        AgentNavigationGraph.Edge second = edge(2, 3, AgentNavigationGraph.EdgeType.WALK,
+                new Point(100, 100), new Point(200, 100), 100);
+        AgentNavigationGraph.Edge direct = edge(1, 3, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(0, 100), new Point(200, 100), 250);
+        AgentNavigationGraph graph = graphWithRegionsAndEdges(
+                List.of(
+                        groundRegion(1, 0, 100, 100),
+                        groundRegion(2, 100, 200, 100),
+                        groundRegion(3, 200, 300, 100)),
+                Map.of(1, List.of(direct, first), 2, List.of(second)));
+
+        List<AgentNavigationGraph.Edge> path = AgentNavigationPathService.findPathForRetreatProbe(
+                graph, null, new Point(0, 100), 1, 3, new Point(200, 100));
+
+        assertEquals(List.of(first, second), path);
+        assertEquals(200, path.stream().mapToInt(edge -> edge.cost).sum());
+    }
+
     private static AgentNavigationGraph graphWithRegion(AgentNavigationGraph.Region region) {
         return new AgentNavigationGraph(
                 1,

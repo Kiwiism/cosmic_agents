@@ -1,5 +1,10 @@
 # Agent Central Scheduler
 
+This document describes the scheduler that exists today and how to operate its
+optional central-sequential mode. The production migration to a fully
+centralized, sharded, asynchronous, budgeted scheduler is specified in
+`AGENT_FULL_CENTRALIZED_SCHEDULER_IMPLEMENTATION_PLAN.md`.
+
 ## Current mode
 
 The legacy one-repeating-task-per-Agent path remains the default. Set the JVM

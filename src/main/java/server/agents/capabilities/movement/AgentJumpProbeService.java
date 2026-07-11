@@ -8,8 +8,6 @@ import server.maps.Rope;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +51,34 @@ public final class AgentJumpProbeService {
     public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
                                                              Point from,
                                                              int desiredDir,
+                                                             AgentMovementProfile profile) {
+        return from == null ? null : simulateWalkOffLanding(
+                map, from, desiredDir, new AgentGroundTravelState(from.x, 0.0, 0.0), profile);
+    }
+
+    public static List<AgentWalkOffLanding> walkOffLandingVariants(MapleMap map,
+                                                                   Point from,
+                                                                   int desiredDir,
+                                                                   AgentMovementProfile profile) {
+        List<AgentWalkOffLanding> outcomes = new java.util.ArrayList<>();
+        double terminalHSpeed = AgentMovementKinematicsService.maxHorizontalSpeedPerClientStep(profile) * desiredDir;
+        double[] physicsXPhases = {0.0, -0.4, 0.4};
+        double[] carryPhases = {0.0, AgentMovementKinematicsService.CLIENT_GROUND_STEP_MS / 2.0};
+        double[] launchSpeeds = {0.0, terminalHSpeed};
+        for (double phase : physicsXPhases) {
+            for (double carryMs : carryPhases) {
+                for (double horizontalSpeed : launchSpeeds) {
+                    outcomes.add(simulateWalkOffLanding(map, from, desiredDir,
+                            new AgentGroundTravelState(from.x + phase, horizontalSpeed, carryMs), profile));
+                }
+            }
+        }
+        return outcomes;
+    }
+
+    public static AgentWalkOffLanding simulateWalkOffLanding(MapleMap map,
+                                                             Point from,
+                                                             int desiredDir,
                                                              AgentGroundTravelState initialState,
                                                              AgentMovementProfile profile) {
         if (map == null || from == null || desiredDir == 0 || initialState == null) {
@@ -69,6 +95,9 @@ public final class AgentJumpProbeService {
         AgentGroundTravelState state = initialState;
         int elapsedMs = 0;
         for (int i = 0; i < 256; i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             AgentGroundPhysicsService.GroundStepResult step =
                     AgentGroundPhysicsService.simulateGroundMotion(map, cursor, currentFoothold, desiredDir, state, profile);
             if (step.lostGround()) {
@@ -190,6 +219,9 @@ public final class AgentJumpProbeService {
         Foothold currentFoothold = landing.foothold();
         AgentGroundTravelState state = new AgentGroundTravelState(cursor.x, 0.0, 0.0);
         for (int i = 0; i < Math.max(0, ticks); i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             AgentGroundPhysicsService.GroundStepResult step =
                     AgentGroundPhysicsService.simulateGroundMotion(map, cursor, currentFoothold, desiredDir, state, profile);
             if (step.lostGround()) {
@@ -242,6 +274,9 @@ public final class AgentJumpProbeService {
         float maxFall = maxFallPerTick();
 
         for (int tick = 0; tick < (1500 / AgentMovementPhysicsConfig.configuredMovementTickMs()); tick++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             Point current = new Point((int) Math.round(physicsX), (int) Math.round(physicsY));
             if (canGrabRopeAtPoint(current, targetRope)) {
                 return new RopeGrabResult(new Point(targetRope.x(), current.y), tick);
@@ -304,6 +339,9 @@ public final class AgentJumpProbeService {
         float maxFall = maxFallPerTick();
 
         for (int tick = 0; tick < (1500 / AgentMovementPhysicsConfig.configuredMovementTickMs()); tick++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             if (remainingLandingGraceMs > 0L) {
                 remainingLandingGraceMs = Math.max(0L,
                         remainingLandingGraceMs - AgentMovementPhysicsConfig.configuredMovementTickMs());
@@ -354,10 +392,15 @@ public final class AgentJumpProbeService {
     }
 
     static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos) {
+        return resolveAirCollision(map, previousPos, nextPos,
+                AgentWallCollisionPolicy.moverZMassAt(map, previousPos));
+    }
+
+    static AirCollision resolveAirCollision(MapleMap map, Point previousPos, Point nextPos, int moverZMass) {
         if (map == null || map.getFootholds() == null || previousPos == null || nextPos == null) {
             return AirCollision.none();
         }
-        AirCollision wall = findWallCollision(map, previousPos, nextPos);
+        AirCollision wall = findWallCollision(map, previousPos, nextPos, moverZMass);
         AirCollision ceiling = findCeilingCollision(map, previousPos, nextPos);
         AirCollision landing = findGroundCollision(map, previousPos, nextPos);
         AirCollision best = AirCollision.none();
@@ -373,15 +416,14 @@ public final class AgentJumpProbeService {
         return best;
     }
 
-    private static AirCollision findWallCollision(MapleMap map, Point previousPos, Point nextPos) {
+    private static AirCollision findWallCollision(MapleMap map, Point previousPos, Point nextPos, int moverZMass) {
         if (map == null || map.getFootholds() == null || previousPos.x == nextPos.x) {
             return AirCollision.none();
         }
 
-        Set<Integer> collidableWalls = getCollidableWallIds(map);
         AirCollision best = mapSideBoundaryCollision(map, previousPos, nextPos);
         for (Foothold foothold : map.getFootholds().getAllFootholds()) {
-            if (!foothold.isWall() || !collidableWalls.contains(foothold.getId())) {
+            if (!AgentWallCollisionPolicy.collides(map, foothold, moverZMass)) {
                 continue;
             }
             AirCollision collision = wallCollision(foothold, previousPos, nextPos, false);
@@ -448,25 +490,6 @@ public final class AgentJumpProbeService {
     private static boolean hasUsableFootholdXBounds(MapleMap map) {
         return map.getFootholds() != null
                 && map.getFootholds().getMinDropX() < map.getFootholds().getMaxDropX();
-    }
-
-    private static Set<Integer> getCollidableWallIds(MapleMap map) {
-        Set<Integer> cached = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
-        if (cached != null) {
-            return cached;
-        }
-        List<Foothold> all = map.getFootholds().getAllFootholds();
-        HashMap<Integer, Foothold> byId = new HashMap<>(all.size());
-        for (Foothold foothold : all) {
-            byId.put(foothold.getId(), foothold);
-        }
-        Set<Integer> result = new HashSet<>();
-        for (Foothold foothold : all) {
-            if (Foothold.isCollidableWall(foothold, byId)) {
-                result.add(foothold.getId());
-            }
-        }
-        return result;
     }
 
     private static Set<Integer> getCollidableFromBelowIds(MapleMap map) {
@@ -549,6 +572,10 @@ public final class AgentJumpProbeService {
                                                 double progress,
                                                 int probeY,
                                                 boolean requireTangentFloor) {
+        var footholds = map.getFootholds();
+        if (footholds == null) {
+            return AirCollision.none();
+        }
         Point probe = new Point(x, probeY);
         Point floor = map.getPointBelow(probe);
         if (floor == null) {
@@ -564,7 +591,7 @@ public final class AgentJumpProbeService {
             return AirCollision.none();
         }
 
-        Foothold foothold = map.getFootholds().findBelow(probe);
+        Foothold foothold = footholds.findBelow(probe);
         if (foothold == null) {
             return AirCollision.none();
         }

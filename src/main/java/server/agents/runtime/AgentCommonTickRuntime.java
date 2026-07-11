@@ -55,6 +55,7 @@ public final class AgentCommonTickRuntime {
                         agent,
                         AgentInventoryGatewayRuntime.inventory()),
                 (entry, agent) -> AgentPotionService.tickPassiveRecovery(entry, agent),
+                AgentCombatBuffRuntime::tryCastCriticalSurvivalBuff,
                 (entry, agent) -> AgentBuildService.checkLevelUp(entry, agent),
                 (entry, agent, leader) -> AgentChatStatusOrchestrator.tickAfkCheck(entry, leader),
                 (entry, agent) -> AgentInventoryTickRuntime.tickTrade(entry, agent),

@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import server.agents.monitoring.AgentPerformanceMonitor;
+import server.agents.capabilities.movement.AgentMovementSettleService;
 
 import server.agents.runtime.AgentTickCadenceStateRuntime;
 import server.agents.runtime.AgentTickStateRuntime;
@@ -31,8 +32,10 @@ public final class AgentTickOrchestrator {
                                       TickFailureHandler failureHandler) {
         long startedAt = AgentPerformanceMonitor.enabled() ? System.nanoTime() : 0L;
         try {
+            AgentMovementSettleService.beginTick(entry);
             AgentMailboxRuntime.drain(entry);
             tickCore.run(entry, leaderCharId, agentCharId);
+            AgentMovementSettleService.settleIfNeeded(entry);
             AgentTickFailurePolicy.resetFailures(entry);
         } catch (Throwable t) {
             failureHandler.handle(entry, leaderCharId, agentCharId, t);

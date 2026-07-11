@@ -194,17 +194,38 @@ class BotMovementSimulationLabTest {
                 0, 0, 0, 0, 0, 400
         ), 19, true);
 
-        lab.step(20);
+        lab.step(22);
 
-        List<String> trace = lab.formatRecentTrace("JOHN", 20);
+        List<String> trace = lab.formatRecentTrace("JOHN", 22);
 
         assertTrue(trace.stream().anyMatch(line -> line.contains("nav=exec")
                         && line.contains("edge=JUMP r28->r27")),
                 "seeded jump edge should execute once the bot reaches its launch point");
-        assertTrue(trace.stream().anyMatch(line -> line.contains("nav=new")
-                        && line.contains("phys=GND")
-                        && line.contains("edge=JUMP r27->r")),
-                "after landing, the next AI tick should commit the next authored jump from the new region");
+        int landingFrame = -1;
+        boolean seededJumpExecuted = false;
+        for (int i = 0; i < trace.size(); i++) {
+            String line = trace.get(i);
+            if (line.contains("nav=exec") && line.contains("edge=JUMP r28->r27")) {
+                seededJumpExecuted = true;
+            } else if (seededJumpExecuted && line.contains("phys=GND")
+                    && line.contains("edge=JUMP r28->r27")) {
+                landingFrame = i;
+                break;
+            }
+        }
+        int nextAiFrame = -1;
+        for (int i = landingFrame + 1; i < trace.size(); i++) {
+            if (trace.get(i).contains("ai=Y")) {
+                nextAiFrame = i;
+                break;
+            }
+        }
+        assertTrue(landingFrame >= 0 && nextAiFrame >= 0
+                        && (trace.get(nextAiFrame).contains("nav=new")
+                        || trace.get(nextAiFrame).contains("nav=exec"))
+                        && trace.get(nextAiFrame).contains("edge=JUMP r27->r"),
+                () -> "after landing, the next AI tick should commit the next authored jump from the new region:\n"
+                        + String.join("\n", trace));
         assertTrue(trace.stream().noneMatch(line -> line.contains("phys=AIR") && line.contains("edge=none")),
                 "bot should not drop navigation and enter an uncommitted fall between chained jumps");
     }
@@ -333,4 +354,5 @@ class BotMovementSimulationLabTest {
 
     private record LedgeDropScenario(AgentNavigationGraph.Edge edge, Point startPoint) {
     }
+
 }

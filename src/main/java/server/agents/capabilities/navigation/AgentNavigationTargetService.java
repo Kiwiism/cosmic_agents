@@ -70,7 +70,8 @@ public final class AgentNavigationTargetService {
             int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(graph, entry, bot.getMap(), rawTargetPos);
             Point pathTargetPos = adjustPathTarget(entry, graph, targetRegionId, rawTargetPos);
 
-            AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId, targetRegionId);
+            AgentNavigationGraph.Edge edge = reuseCommittedEdge(
+                    graph, entry, startRegionId, targetRegionId, pathTargetPos);
             boolean edgeReused = (edge != null);
             if (edgeReused) {
                 AgentNavigationGraph.Edge refreshedEdge = refreshPendingClimbExitEdge(
@@ -96,6 +97,7 @@ public final class AgentNavigationTargetService {
                 edge = AgentNavigationPathService.findNextEdge(graph, bot, startRegionId, targetRegionId, pathTargetPos);
                 if (edge != null) {
                     AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+                    AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, pathTargetPos);
                     AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
                 }
             }
@@ -162,7 +164,8 @@ public final class AgentNavigationTargetService {
         int startRegionId = AgentNavigationRegionService.resolveCurrentRegionId(
                 graph, entry, AgentRuntimeIdentityRuntime.botMap(entry), botPos);
         AgentNavigationGraph.Edge edge = reuseCommittedEdge(graph, entry, startRegionId,
-                AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
+                AgentNavigationDebugStateRuntime.navTargetRegionId(entry),
+                AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry));
         if (edge == null) {
             AgentMovementStateResetService.clearNavigationState(entry);
             return false;
@@ -209,8 +212,10 @@ public final class AgentNavigationTargetService {
     private static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
                                                                AgentRuntimeEntry entry,
                                                                int startRegionId,
-                                                               int targetRegionId) {
+                                                               int targetRegionId,
+                                                               Point targetPos) {
         return AgentNavigationCommittedEdgeService.reuseCommittedEdge(graph, entry, startRegionId, targetRegionId,
+                targetPos,
                 AgentNavigationPathService::isEdgeUsable,
                 AgentNavigationRopeEdgeService::isRopeEntryEdge);
     }
@@ -294,6 +299,20 @@ public final class AgentNavigationTargetService {
                                         AgentNavigationGraph graph,
                                         Point botPos,
                                         AgentNavigationGraph.Edge edge) {
+        if (!AgentMovementStateRuntime.inAir(entry) && !AgentClimbStateRuntime.climbing(entry)) {
+            if (edge.type == AgentNavigationGraph.EdgeType.JUMP
+                    || edge.type == AgentNavigationGraph.EdgeType.CLIMB
+                    || edge.type == AgentNavigationGraph.EdgeType.DROP) {
+                Point detour = AgentFootholdDetourService.waypoint(entry, graph, botPos, edge);
+                if (detour != null) {
+                    return detour;
+                }
+            } else {
+                AgentFootholdDetourService.clear(entry);
+            }
+        } else {
+            AgentFootholdDetourService.clear(entry);
+        }
         return switch (edge.type) {
             case WALK -> new Point(edge.endPoint);
             case CLIMB -> AgentNavigationWaypointService.selectClimbWaypoint(graph, entry, botPos, edge);

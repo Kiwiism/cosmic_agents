@@ -36,6 +36,14 @@ public final class AgentInteractionRuntime {
                 AgentInteractionRuntime::tick);
     }
 
+    /** Registers an autonomous population Agent using itself as its runtime anchor. */
+    public static AgentRuntimeEntry registerSelfDirectedAgent(Character agent) {
+        AgentRuntimeEntry entry = AgentRegistrationCoordinator.registerSpawnedAgent(
+                agent.getId(), agent, agent, AgentInteractionRuntime::tick);
+        AgentMovementCommandRuntime.grind(entry);
+        return entry;
+    }
+
     public static AgentLifecycleService.AgentSpawnResult spawnAgentForLeader(Character leader, String agentName) {
         return CosmicAgentSpawnCoordinator.spawnAgentForLeader(
                 leader,

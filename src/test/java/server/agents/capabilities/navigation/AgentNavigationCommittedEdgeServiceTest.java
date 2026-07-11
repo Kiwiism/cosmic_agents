@@ -210,6 +210,23 @@ class AgentNavigationCommittedEdgeServiceTest {
     }
 
     @Test
+    void reuseCommittedEdgeDropsGroundJumpFromAnotherRegionWhileClimbing() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationGraph.Edge staleJump = edge(7, 4, AgentNavigationGraph.EdgeType.JUMP,
+                new Point(1544, -47), new Point(1495, -107), 1530, 1559, -6, 0, 0, 0, 0);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, staleJump);
+        AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, 4);
+        AgentClimbStateRuntime.setClimbingOnRope(entry, mock(Rope.class));
+
+        AgentNavigationGraph.Edge reused = AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 30, 4,
+                (graph, bot, candidate) -> true,
+                (graph, candidate) -> false);
+
+        assertNull(reused);
+    }
+
+    @Test
     void reuseCommittedEdgeRejectsStaleRetargetedGroundEdge() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
         AgentNavigationGraph.Edge edge = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
@@ -220,6 +237,22 @@ class AgentNavigationCommittedEdgeServiceTest {
         assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
                 null, entry, 1, 3, (graph, bot, candidate) -> true, (graph, candidate) -> false));
         assertEquals(3, AgentNavigationDebugStateRuntime.navTargetRegionId(entry));
+    }
+
+    @Test
+    void reuseCommittedEdgeRejectsGoalPointMovedBeyondReplanRadius() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationGraph.Edge edge = edge(1, 1, AgentNavigationGraph.EdgeType.PORTAL,
+                new Point(0, 0), new Point(20, 0), 0, 0, 0, 7, 0, 0, 0);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, new Point(0, 0));
+
+        assertSame(edge, AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 1, 1, new Point(128, 0),
+                (graph, bot, candidate) -> true, (graph, candidate) -> false));
+        assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 1, 1, new Point(129, 0),
+                (graph, bot, candidate) -> true, (graph, candidate) -> false));
     }
 
     @Test

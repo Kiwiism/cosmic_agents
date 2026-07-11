@@ -1,17 +1,12 @@
 package server.agents.capabilities.movement;
 
 import server.agents.capabilities.navigation.AgentNavigationGraph;
-import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.navigation.AgentNavigationWalkRegionLookupService;
 import server.maps.Foothold;
 import server.maps.MapleMap;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Agent-owned seam for grounded collision and ledge queries.
@@ -28,6 +23,13 @@ public final class AgentGroundCollisionService {
             return false;
         }
         Foothold foothold = AgentGroundingService.findGroundFoothold(map, from);
+        return canWalkGroundStep(map, from, foothold, stepX);
+    }
+
+    public static boolean canWalkGroundStep(MapleMap map, Point from, Foothold foothold, int stepX) {
+        if (map == null || from == null) {
+            return false;
+        }
         GroundStepPreview preview = previewGroundStep(map, from, foothold, from.x + stepX);
         return preview != null && !preview.lostGround() && !preview.blocked();
     }
@@ -37,12 +39,24 @@ public final class AgentGroundCollisionService {
             return false;
         }
         Foothold foothold = AgentGroundingService.findGroundFoothold(map, from);
+        return isGroundStepBlockedByWall(map, from, foothold, stepX);
+    }
+
+    public static boolean isGroundStepBlockedByWall(MapleMap map, Point from, Foothold foothold, int stepX) {
+        if (map == null || from == null || stepX == 0) {
+            return false;
+        }
         GroundStepPreview preview = previewGroundStep(map, from, foothold, from.x + stepX);
         return preview != null && preview.blocked();
     }
 
     public static boolean isGroundRunwayBlockedByWall(MapleMap map, Point from, Point to) {
-        return findGroundWallCollision(map, from, to).type() == CollisionType.WALL;
+        GroundCollision collision = findGroundWallCollision(map, from, to);
+        if (collision.type() != CollisionType.WALL) {
+            return false;
+        }
+        Foothold standing = AgentGroundingService.findGroundFoothold(map, from);
+        return collision.foothold() == null || !hasWalkRegion(map, standing);
     }
 
     public static boolean canStartDownJump(MapleMap map, Point position) {
@@ -63,6 +77,18 @@ public final class AgentGroundCollisionService {
         return sample == null ? null : sample.point();
     }
 
+    public static Foothold findWalkRegionGroundFoothold(
+            MapleMap map,
+            int regionId,
+            int x,
+            int referenceY) {
+        AgentNavigationWalkRegionLookupService.WalkRegionLookup lookup =
+                AgentNavigationWalkRegionLookupService.resolveWalkRegionLookup(map);
+        GroundRegionSample sample = findWalkRegionGroundSample(
+                lookup, regionId, null, x, referenceY);
+        return sample == null ? null : sample.foothold();
+    }
+
     static GroundStepPreview previewGroundStep(MapleMap map, Point currentPos, Foothold foothold, int nextX) {
         if (map == null || currentPos == null) {
             return null;
@@ -81,7 +107,9 @@ public final class AgentGroundCollisionService {
                 ? standingPoint.y
                 : currentPos.y;
 
-        GroundCollision wall = findGroundWallCollision(map, currentPos, new Point(nextX, baseY));
+        GroundCollision wall = constrainToWalkRegion
+                ? mapSideBoundaryCollision(map, currentPos, new Point(nextX, baseY))
+                : findGroundWallCollision(map, currentPos, new Point(nextX, baseY));
         if (wall.type() == CollisionType.WALL) {
             return new GroundStepPreview(baseY, currentPos, foothold, false, true);
         }
@@ -120,6 +148,12 @@ public final class AgentGroundCollisionService {
         return lookup.regionIdByFootholdId().getOrDefault(foothold.getId(), -1) >= 0;
     }
 
+    private static boolean isChainStep(Foothold foothold, int candidateFootholdId) {
+        return candidateFootholdId == foothold.getId()
+                || candidateFootholdId == foothold.getNext()
+                || candidateFootholdId == foothold.getPrev();
+    }
+
     private static GroundRegionSample findWalkRegionGroundSample(MapleMap map, Foothold foothold, int x, int referenceY) {
         if (map == null || foothold == null) {
             return null;
@@ -131,6 +165,18 @@ public final class AgentGroundCollisionService {
             return null;
         }
         int regionId = lookup.regionIdByFootholdId().getOrDefault(foothold.getId(), -1);
+        return findWalkRegionGroundSample(lookup, regionId, foothold, x, referenceY);
+    }
+
+    private static GroundRegionSample findWalkRegionGroundSample(
+            AgentNavigationWalkRegionLookupService.WalkRegionLookup lookup,
+            int regionId,
+            Foothold foothold,
+            int x,
+            int referenceY) {
+        if (lookup == null) {
+            return null;
+        }
         AgentNavigationGraph.Region region = lookup.regionsById().get(regionId);
         if (region == null || region.isRopeRegion) {
             return null;
@@ -139,6 +185,7 @@ public final class AgentGroundCollisionService {
         AgentNavigationGraph.Segment bestSegment = null;
         Point bestPoint = null;
         int bestScore = Integer.MAX_VALUE;
+        boolean bestChainStep = false;
         boolean foundContainingSegment = false;
         for (AgentNavigationGraph.Segment segment : region.segments) {
             if (segment.containsX(x)) {
@@ -161,13 +208,17 @@ public final class AgentGroundCollisionService {
                 continue;
             }
 
+            boolean chainStep = foothold == null || isChainStep(foothold, segment.footholdId);
             int score = dx * 1000 + Math.abs(dy);
-            if (bestPoint == null
-                    || score < bestScore
-                    || (score == bestScore && candidate.y > bestPoint.y)) {
+            boolean better = bestSegment == null
+                    || (chainStep && !bestChainStep)
+                    || (chainStep == bestChainStep
+                    && (score < bestScore || (score == bestScore && candidate.y > bestPoint.y)));
+            if (better) {
                 bestSegment = segment;
                 bestPoint = candidate;
                 bestScore = score;
+                bestChainStep = chainStep;
             }
         }
 
@@ -197,10 +248,9 @@ public final class AgentGroundCollisionService {
             return GroundCollision.none();
         }
 
-        Set<Integer> collidableWalls = getCollidableWallIds(map);
         GroundCollision best = mapSideBoundaryCollision(map, previousPos, nextPos);
         for (Foothold foothold : map.getFootholds().getAllFootholds()) {
-            if (!foothold.isWall() || !collidableWalls.contains(foothold.getId())) {
+            if (!AgentWallCollisionPolicy.collides(map, foothold, AgentWallCollisionPolicy.ALL_GROUPS)) {
                 continue;
             }
             GroundCollision collision = wallCollision(foothold, previousPos, nextPos);
@@ -232,7 +282,7 @@ public final class AgentGroundCollisionService {
         }
 
         double yAtBoundary = previousPos.y + (nextPos.y - previousPos.y) * progress;
-        return new GroundCollision(CollisionType.WALL, progress);
+        return new GroundCollision(CollisionType.WALL, progress, null);
     }
 
     private static int effectiveLeftBoundaryX(MapleMap map, Rectangle area) {
@@ -266,25 +316,6 @@ public final class AgentGroundCollisionService {
                 && map.getFootholds().getMinDropX() < map.getFootholds().getMaxDropX();
     }
 
-    private static Set<Integer> getCollidableWallIds(MapleMap map) {
-        Set<Integer> cached = AgentNavigationGraphService.getCachedCollidableWallIds(map.getId());
-        if (cached != null) {
-            return cached;
-        }
-        List<Foothold> all = map.getFootholds().getAllFootholds();
-        HashMap<Integer, Foothold> byId = new HashMap<>(all.size());
-        for (Foothold foothold : all) {
-            byId.put(foothold.getId(), foothold);
-        }
-        Set<Integer> result = new HashSet<>();
-        for (Foothold foothold : all) {
-            if (Foothold.isCollidableWall(foothold, byId)) {
-                result.add(foothold.getId());
-            }
-        }
-        return result;
-    }
-
     private static GroundCollision wallCollision(Foothold wall, Point previousPos, Point nextPos) {
         int wallX = wall.getX1();
         int startX = previousPos.x;
@@ -308,7 +339,7 @@ public final class AgentGroundCollisionService {
             return GroundCollision.none();
         }
 
-        return new GroundCollision(CollisionType.WALL, progress);
+        return new GroundCollision(CollisionType.WALL, progress, wall);
     }
 
     private static boolean isWalkableGroundWallEndpoint(double yAtWall, int minY, int maxY) {
@@ -324,9 +355,9 @@ public final class AgentGroundCollisionService {
         WALL
     }
 
-    private record GroundCollision(CollisionType type, double progress) {
+    private record GroundCollision(CollisionType type, double progress, Foothold foothold) {
         static GroundCollision none() {
-            return new GroundCollision(CollisionType.NONE, Double.POSITIVE_INFINITY);
+            return new GroundCollision(CollisionType.NONE, Double.POSITIVE_INFINITY, null);
         }
     }
 

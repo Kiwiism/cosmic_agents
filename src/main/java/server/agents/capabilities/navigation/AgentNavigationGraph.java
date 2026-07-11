@@ -11,13 +11,18 @@ import java.awt.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class AgentNavigationGraph implements Serializable {
+    static final int SHARED_GROUND_Y_PX = 0;
     // Cached nav graphs are serialized to disk. Keep explicit serialVersionUIDs so
     // harmless method-only edits do not break cache loading; use GRAPH_VERSION for
     // intentional cache invalidation when the serialized data shape changes.
@@ -139,6 +144,19 @@ public final class AgentNavigationGraph implements Serializable {
             this.maxX = ropeX;
             this.minY = topY;
             this.maxY = bottomY;
+        }
+
+        boolean surfaceCoversPoint(int x, int y, int yTolerance) {
+            if (isRopeRegion || x < minX || x > maxX) {
+                return false;
+            }
+            for (Segment segment : segments) {
+                if (segment.containsX(x)
+                        && Math.abs(segment.pointAt(x).y - y) <= yTolerance) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public int width() {
@@ -279,6 +297,8 @@ public final class AgentNavigationGraph implements Serializable {
     public final Map<Integer, Region> regionsById;
     public final Map<Integer, Integer> regionIdByFootholdId;
     final Map<Integer, List<Edge>> outgoingByRegionId;
+    private transient volatile Map<Integer, Integer> connectedComponentByRegionId;
+    private transient volatile Map<Integer, Map<Integer, Integer>> costToGoalByTargetRegion;
     final java.util.Set<Integer> collidableWallIds;
     public final java.util.Set<Integer> collidableFromBelowIds;
 
@@ -343,6 +363,101 @@ public final class AgentNavigationGraph implements Serializable {
 
     public List<Edge> getOutgoing(int regionId) {
         return outgoingByRegionId.getOrDefault(regionId, List.of());
+    }
+
+    public int connectedComponentId(int regionId) {
+        Map<Integer, Integer> components = connectedComponentByRegionId;
+        if (components == null) {
+            synchronized (this) {
+                components = connectedComponentByRegionId;
+                if (components == null) {
+                    components = buildConnectedComponents();
+                    connectedComponentByRegionId = components;
+                }
+            }
+        }
+        return components.getOrDefault(regionId, -1);
+    }
+
+    private Map<Integer, Integer> buildConnectedComponents() {
+        Map<Integer, Set<Integer>> neighbors = new HashMap<>();
+        for (Integer regionId : regionsById.keySet()) {
+            neighbors.put(regionId, new HashSet<>());
+        }
+        for (List<Edge> outgoing : outgoingByRegionId.values()) {
+            for (Edge edge : outgoing) {
+                neighbors.computeIfAbsent(edge.fromRegionId, ignored -> new HashSet<>()).add(edge.toRegionId);
+                neighbors.computeIfAbsent(edge.toRegionId, ignored -> new HashSet<>()).add(edge.fromRegionId);
+            }
+        }
+
+        Map<Integer, Integer> components = new HashMap<>();
+        int componentId = 0;
+        for (Integer start : neighbors.keySet()) {
+            if (components.containsKey(start)) {
+                continue;
+            }
+            ArrayDeque<Integer> pending = new ArrayDeque<>();
+            pending.add(start);
+            components.put(start, componentId);
+            while (!pending.isEmpty()) {
+                int current = pending.removeFirst();
+                for (Integer neighbor : neighbors.getOrDefault(current, Set.of())) {
+                    if (components.putIfAbsent(neighbor, componentId) == null) {
+                        pending.addLast(neighbor);
+                    }
+                }
+            }
+            componentId++;
+        }
+        return components;
+    }
+
+    Map<Integer, Integer> costToGoal(int targetRegionId) {
+        Map<Integer, Map<Integer, Integer>> cache = costToGoalByTargetRegion;
+        if (cache == null) {
+            synchronized (this) {
+                cache = costToGoalByTargetRegion;
+                if (cache == null) {
+                    cache = new ConcurrentHashMap<>();
+                    costToGoalByTargetRegion = cache;
+                }
+            }
+        }
+        return cache.computeIfAbsent(targetRegionId, this::computeCostToGoal);
+    }
+
+    private Map<Integer, Integer> computeCostToGoal(int targetRegionId) {
+        Map<Integer, List<int[]>> reverseEdges = new HashMap<>();
+        for (List<Edge> edges : outgoingByRegionId.values()) {
+            for (Edge edge : edges) {
+                reverseEdges.computeIfAbsent(edge.toRegionId, ignored -> new ArrayList<>())
+                        .add(new int[]{edge.fromRegionId, Math.max(0, edge.cost)});
+            }
+        }
+
+        Map<Integer, Integer> distances = new HashMap<>();
+        PriorityQueue<int[]> pending = new PriorityQueue<>(Comparator.comparingInt(value -> value[1]));
+        distances.put(targetRegionId, 0);
+        pending.add(new int[]{targetRegionId, 0});
+        while (!pending.isEmpty()) {
+            int[] current = pending.poll();
+            int regionId = current[0];
+            int distance = current[1];
+            if (distance > distances.getOrDefault(regionId, Integer.MAX_VALUE)) {
+                continue;
+            }
+            for (int[] reverseEdge : reverseEdges.getOrDefault(regionId, List.of())) {
+                int previousRegionId = reverseEdge[0];
+                long candidateLong = (long) distance + reverseEdge[1];
+                int candidate = (int) Math.min(Integer.MAX_VALUE, candidateLong);
+                if (candidate < distances.getOrDefault(previousRegionId, Integer.MAX_VALUE)) {
+                    distances.put(previousRegionId, candidate);
+                    pending.add(new int[]{previousRegionId, candidate});
+                }
+            }
+        }
+        return Map.copyOf(distances);
     }
 
     public boolean hasInterRegionEdge(int fromRegionId, int toRegionId) {

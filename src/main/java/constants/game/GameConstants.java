@@ -20,6 +20,7 @@ import java.util.*;
  * @author Ronan
  */
 public class GameConstants {
+    private static final int MAX_SUPPORTED_PLAYER_HP_MP = 300000;
     public static String[] WORLD_NAMES = {"Scania", "Bera", "Broa", "Windia", "Khaini", "Bellocan", "Mardia", "Kradia", "Yellonde", "Demethos", "Galicia", "El Nido", "Zenith", "Arcenia", "Kastia", "Judis", "Plana", "Kalluna", "Stius", "Croa", "Medere"};
     public static final String[] stats = {"tuc", "reqLevel", "reqJob", "reqSTR", "reqDEX", "reqINT", "reqLUK", "reqPOP", "cash", "cursed", "success", "setItemID", "equipTradeBlock", "durability", "randOption", "randStat", "masterLevel", "reqSkillLevel", "elemDefault", "incRMAS", "incRMAF", "incRMAI", "incRMAL", "canLevel", "skill", "charmEXP"};
     public static final int[] CASH_DATA = new int[]{50200004, 50200069, 50200117, 50100008, 50000047};
@@ -39,6 +40,14 @@ public class GameConstants {
             Disease.SEAL, Disease.DARKNESS, Disease.WEAKEN, Disease.CURSE};
 
     public static final int MAX_FIELD_MOB_DAMAGE = getMaxObstacleMobDamageFromWz() * 2;
+
+    public static int getPlayerHpMpCap() {
+        int configuredCap = YamlConfig.config.server.PLAYER_HP_MP_CAP;
+        if (configuredCap <= 0) {
+            configuredCap = 30000;
+        }
+        return Math.max(50, Math.min(configuredCap, MAX_SUPPORTED_PLAYER_HP_MP));
+    }
 
     public static int getPlayerBonusDropRate(int slot) {
         return (DROP_RATE_GAIN[slot]);

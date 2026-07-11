@@ -13,6 +13,8 @@ import java.awt.Point;
  * Agent-owned committed-edge comparison and retention policy.
  */
 public final class AgentNavigationCommittedEdgeService {
+    private static final int TARGET_REPLAN_DISTANCE_PX = 128;
+
     private AgentNavigationCommittedEdgeService() {
     }
 
@@ -75,6 +77,7 @@ public final class AgentNavigationCommittedEdgeService {
         }
 
         AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
+        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, targetPos);
         AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         AgentNavigationDebugStateRuntime.clearNavTargetPosition(entry);
         AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
@@ -109,6 +112,7 @@ public final class AgentNavigationCommittedEdgeService {
         }
 
         AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, bestEdge);
+        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, targetPos);
         AgentNavigationDebugStateRuntime.setNavTargetRegionId(entry, targetRegionId);
         AgentNavigationDebugStateRuntime.clearNavTargetPosition(entry);
         AgentNavigationDebugStateRuntime.setNavPreciseTarget(entry, false);
@@ -119,11 +123,20 @@ public final class AgentNavigationCommittedEdgeService {
                                                                AgentRuntimeEntry entry,
                                                                int startRegionId,
                                                                int targetRegionId) {
+        return reuseCommittedEdge(graph, entry, startRegionId, targetRegionId, null);
+    }
+
+    public static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
+                                                               AgentRuntimeEntry entry,
+                                                               int startRegionId,
+                                                               int targetRegionId,
+                                                               Point targetPos) {
         return reuseCommittedEdge(
                 graph,
                 entry,
                 startRegionId,
                 targetRegionId,
+                targetPos,
                 AgentNavigationPathService::isEdgeUsable,
                 AgentNavigationRopeEdgeService::isRopeEntryEdge);
     }
@@ -134,11 +147,25 @@ public final class AgentNavigationCommittedEdgeService {
                                                                int targetRegionId,
                                                                EdgeUsabilityChecker edgeUsabilityChecker,
                                                                RopeEntryChecker ropeEntryChecker) {
+        return reuseCommittedEdge(graph, entry, startRegionId, targetRegionId, null,
+                edgeUsabilityChecker, ropeEntryChecker);
+    }
+
+    public static AgentNavigationGraph.Edge reuseCommittedEdge(AgentNavigationGraph graph,
+                                                               AgentRuntimeEntry entry,
+                                                               int startRegionId,
+                                                               int targetRegionId,
+                                                               Point targetPos,
+                                                               EdgeUsabilityChecker edgeUsabilityChecker,
+                                                               RopeEntryChecker ropeEntryChecker) {
         AgentNavigationGraph.Edge edge = (AgentNavigationGraph.Edge) AgentNavigationDebugStateRuntime.activeNavigationEdge(entry);
         if (edge == null) {
             return null;
         }
         if (targetRegionId < 0) {
+            return null;
+        }
+        if (!plannedTargetStillMatches(entry, targetPos)) {
             return null;
         }
         int previousTargetRegionId = AgentNavigationDebugStateRuntime.navTargetRegionId(entry);
@@ -177,9 +204,14 @@ public final class AgentNavigationCommittedEdgeService {
             }
             return edge;
         }
-        // While climbing, always keep the edge. Ground foothold lookup can report the platform
-        // below/behind the rope as current region and otherwise drop the exit edge too early.
+        // Ground lookup can report a platform behind a rope, so committed CLIMB exits survive
+        // false-positive regions. Ground edges are valid only from their authored source.
         if (AgentClimbStateRuntime.climbing(entry) && (startRegionId < 0 || startRegionId != edge.toRegionId)) {
+            if (edge.type != AgentNavigationGraph.EdgeType.CLIMB
+                    && startRegionId >= 0
+                    && startRegionId != edge.fromRegionId) {
+                return null;
+            }
             return edge;
         }
         // DROP/JUMP arcs may enter the destination region before the bot touches down. Keep the
@@ -194,6 +226,15 @@ public final class AgentNavigationCommittedEdgeService {
             return edge;
         }
         return null;
+    }
+
+    static boolean plannedTargetStillMatches(AgentRuntimeEntry entry, Point targetPos) {
+        Point plannedTarget = AgentNavigationDebugStateRuntime.plannedNavigationTargetPosition(entry);
+        if (plannedTarget == null || targetPos == null) {
+            return plannedTarget == null && targetPos == null;
+        }
+        return plannedTarget.distanceSq(targetPos)
+                <= (long) TARGET_REPLAN_DISTANCE_PX * TARGET_REPLAN_DISTANCE_PX;
     }
 
     public static boolean sameEdge(AgentNavigationGraph.Edge left, AgentNavigationGraph.Edge right) {

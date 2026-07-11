@@ -3,7 +3,7 @@ package server.agents.capabilities.movement;
 import server.maps.MapleMap;
 
 public final class AgentMovementKinematicsService {
-    private static final double CLIENT_GROUND_STEP_MS = 8.0;
+    static final double CLIENT_GROUND_STEP_MS = 8.0;
     private static final double CLIENT_GROUND_STEP_S = CLIENT_GROUND_STEP_MS / 1000.0;
     private static final double GROUNDSLIP = 3.0;
     private static final double FRICTION = 0.3;
@@ -89,7 +89,7 @@ public final class AgentMovementKinematicsService {
         return profileOrBase(profile).hForcePxs() * CLIENT_GROUND_STEP_S;
     }
 
-    private static double maxHorizontalSpeedPerClientStep(AgentMovementProfile profile) {
+    static double maxHorizontalSpeedPerClientStep(AgentMovementProfile profile) {
         return maxHorizontalForcePerClientStep(profile) * GROUNDSLIP / (FRICTION + SLOPEFACTOR);
     }
 

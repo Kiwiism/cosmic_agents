@@ -699,7 +699,7 @@ public final class AgentShopService {
                             graph, entry, bot.getMap(), candidate);
                     if (targetRegionId < 0) continue;
                     if (startRegionId == targetRegionId
-                            || !AgentNavigationPathService.findPath(graph, bot.getMap(), botPos,
+                            || !AgentNavigationPathService.findPathForApproachProbe(graph, bot.getMap(), botPos,
                                     startRegionId, targetRegionId, candidate).isEmpty()) {
                         reachable.add(candidate);
                     }

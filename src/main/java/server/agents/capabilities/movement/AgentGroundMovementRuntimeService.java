@@ -38,13 +38,18 @@ public final class AgentGroundMovementRuntimeService {
             }
 
             targetPos = AgentGroundTargetService.adjustGrindingTargetPosition(entry, currentFoothold, targetPos);
+            boolean walkOffWaypoint = false;
             if (AgentNavigationDebugStateRuntime.graphWarmupFallback(entry) && targetPos != null) {
                 if (AgentFallbackMovementService.tryImmediateAction(entry, botPos, targetPos)) {
                     return;
                 }
-                targetPos = AgentFallbackMovementService.resolveSteeringTarget(entry, botPos, targetPos);
+                AgentFallbackMovementService.Steering steering =
+                        AgentFallbackMovementService.resolveSteeringTarget(entry, botPos, targetPos);
+                targetPos = steering.target();
+                walkOffWaypoint = steering.walkOffLedge();
             }
-            AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(entry, currentFoothold, botPos, targetPos);
+            AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(
+                    entry, currentFoothold, botPos, targetPos, walkOffWaypoint);
             AgentGroundActionExecutor.applyGroundAction(entry, currentFoothold, action);
         } finally {
             AgentPerformanceMonitor.record("move-ground", System.nanoTime() - startedAt);

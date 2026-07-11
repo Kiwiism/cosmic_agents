@@ -14,7 +14,19 @@ public final class AgentNavigationLaunchWindowService {
     public static boolean isWithinJumpLaunchWindow(AgentNavigationGraph graph,
                                                    Point botPos,
                                                    AgentNavigationGraph.Edge edge) {
-        if (botPos == null || edge.type != AgentNavigationGraph.EdgeType.JUMP || !edge.containsLaunchX(botPos.x)) {
+        return isWithinJumpLaunchWindow(graph, botPos, edge, 0);
+    }
+
+    public static boolean isWithinJumpLaunchWindow(AgentNavigationGraph graph,
+                                                   Point botPos,
+                                                   AgentNavigationGraph.Edge edge,
+                                                   int minimumAcceptanceSpanPx) {
+        if (botPos == null || edge.type != AgentNavigationGraph.EdgeType.JUMP) {
+            return false;
+        }
+        int tolerance = Math.max(0,
+                (minimumAcceptanceSpanPx - (edge.launchMaxX - edge.launchMinX) + 1) / 2);
+        if (!edge.containsLaunchX(botPos.x, tolerance)) {
             return false;
         }
 

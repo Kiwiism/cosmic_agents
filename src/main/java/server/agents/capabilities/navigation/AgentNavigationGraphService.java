@@ -2,10 +2,12 @@ package server.agents.capabilities.navigation;
 
 import server.agents.capabilities.movement.AgentJumpProbeService;
 import server.agents.capabilities.movement.AgentJumpLanding;
+import server.agents.capabilities.movement.AgentWalkOffLanding;
 import server.agents.capabilities.movement.AgentPostLandingJump;
 import server.agents.capabilities.movement.AgentGroundCollisionService;
 import server.agents.capabilities.movement.AgentGroundingService;
 import server.agents.capabilities.movement.AgentMovementKinematicsService;
+import server.agents.capabilities.movement.AgentWallCollisionPolicy;
 
 import server.agents.capabilities.movement.AgentMovementProfile;
 import server.agents.capabilities.movement.AgentMovementPhysicsConfig;
@@ -30,14 +32,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 46;
+    private static final int GRAPH_VERSION = 53;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -46,24 +50,21 @@ public final class AgentNavigationGraphService {
     private static final int MAX_PROFILED_JUMP_REGIONS = 5;
     private static final int FAST_WARMUP_MAX_FOOTHOLDS = 200;
     private static final long DEFAULT_GRAPH_CACHE_MAX_WEIGHT = 1_000_000L;
-    private static final Path CACHE_DIR = Path.of("cache", "bot-nav", "v" + GRAPH_VERSION);
+    private static final Path CACHE_DIR = Path.of(
+            System.getProperty("agents.navigation.cacheDir", "cache/bot-nav"),
+            "v" + GRAPH_VERSION);
     private static final AgentWeightedLruCache<GraphCacheKey, AgentNavigationGraph> GRAPHS =
             new AgentWeightedLruCache<>(configuredGraphCacheMaxWeight(), AgentNavigationGraphService::graphWeight);
     private static final Map<GraphCacheKey, CompletableFuture<AgentNavigationGraph>> PENDING_GRAPHS = new ConcurrentHashMap<>();
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
-    private static final Map<Integer, Set<Integer>> COLLIDABLE_WALL_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
-    private static final ExecutorService GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
-            "navigation",
-            "bot-nav-graph-warmup",
-            1,
-            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.queueCapacity", 64));
-    private static final ExecutorService FAST_GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
-            "navigation-fast",
-            "bot-nav-graph-warmup-fast",
-            1,
-            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.fastQueueCapacity", 64));
+    private static final Object WARMUP_LIFECYCLE_LOCK = new Object();
+    private static volatile WarmupExecutors warmupExecutors = createWarmupExecutors();
+    private static volatile boolean acceptingAsyncWarmups = true;
+
+    private record WarmupExecutors(ExecutorService regular, ExecutorService fast) {
+    }
 
     private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
         static GraphCacheKey from(int mapId, AgentMovementProfile profile) {
@@ -384,7 +385,7 @@ public final class AgentNavigationGraphService {
     }
 
     public static void warmGraphAsync(MapleMap map, AgentMovementProfile movementProfile) {
-        if (map == null) {
+        if (map == null || !acceptingAsyncWarmups) {
             return;
         }
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
@@ -392,6 +393,36 @@ public final class AgentNavigationGraphService {
             return;
         }
         getOrStartGraphLoad(map, movementProfile, key, true);
+    }
+
+    public static void startAsyncWarmups() {
+        synchronized (WARMUP_LIFECYCLE_LOCK) {
+            if (warmupExecutors == null
+                    || warmupExecutors.regular().isShutdown()
+                    || warmupExecutors.fast().isShutdown()) {
+                warmupExecutors = createWarmupExecutors();
+            }
+            acceptingAsyncWarmups = true;
+        }
+    }
+
+    public static void shutdownAsyncWarmups() {
+        WarmupExecutors executors;
+        synchronized (WARMUP_LIFECYCLE_LOCK) {
+            acceptingAsyncWarmups = false;
+            executors = warmupExecutors;
+            warmupExecutors = null;
+            PENDING_GRAPHS.values().forEach(future -> future.cancel(true));
+            PENDING_GRAPHS.clear();
+        }
+        if (executors == null) {
+            return;
+        }
+
+        executors.regular().shutdownNow();
+        executors.fast().shutdownNow();
+        awaitWarmupTermination(executors.regular(), "regular");
+        awaitWarmupTermination(executors.fast(), "fast");
     }
 
     public static AgentNavigationGraph rebuildGraph(MapleMap map) {
@@ -432,9 +463,13 @@ public final class AgentNavigationGraphService {
 
         Runnable task = () -> {
             try {
+                throwIfCancelled(async, future);
                 AgentNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
+                throwIfCancelled(async, future);
                 cacheGraph(key, graph);
                 future.complete(graph);
+            } catch (CancellationException cancelled) {
+                future.cancel(false);
             } catch (Throwable t) {
                 future.completeExceptionally(t);
                 log.warn("Failed to warm bot nav graph for map {} speed={} jump={}",
@@ -450,7 +485,9 @@ public final class AgentNavigationGraphService {
             } catch (RejectedExecutionException e) {
                 PENDING_GRAPHS.remove(key, future);
                 future.completeExceptionally(e);
-                log.warn("Skipped Agent navigation graph warmup for map {} because the queue is full", key.mapId());
+                if (acceptingAsyncWarmups) {
+                    log.warn("Skipped Agent navigation graph warmup for map {} because the queue is full", key.mapId());
+                }
             }
         } else {
             task.run();
@@ -459,7 +496,59 @@ public final class AgentNavigationGraphService {
     }
 
     private static ExecutorService selectWarmupExecutor(MapleMap map) {
-        return isFastWarmupCandidate(map) ? FAST_GRAPH_WARMUP_EXECUTOR : GRAPH_WARMUP_EXECUTOR;
+        WarmupExecutors executors = warmupExecutors;
+        if (!acceptingAsyncWarmups || executors == null) {
+            throw new RejectedExecutionException("Agent navigation graph warmups are stopping");
+        }
+        return isFastWarmupCandidate(map) ? executors.fast() : executors.regular();
+    }
+
+    public static int pendingWarmupCount() {
+        return PENDING_GRAPHS.size();
+    }
+
+    static boolean asyncWarmupsRunning() {
+        WarmupExecutors executors = warmupExecutors;
+        return acceptingAsyncWarmups
+                && executors != null
+                && !executors.regular().isShutdown()
+                && !executors.fast().isShutdown();
+    }
+
+    private static WarmupExecutors createWarmupExecutors() {
+        return new WarmupExecutors(
+                AgentBoundedExecutorFactory.fixed(
+                        "navigation",
+                        "bot-nav-graph-warmup",
+                        1,
+                        AgentBoundedExecutorFactory.positiveIntegerProperty(
+                                "agents.async.navigation.queueCapacity", 64),
+                        Thread.MIN_PRIORITY),
+                AgentBoundedExecutorFactory.fixed(
+                        "navigation-fast",
+                        "bot-nav-graph-warmup-fast",
+                        1,
+                        AgentBoundedExecutorFactory.positiveIntegerProperty(
+                                "agents.async.navigation.fastQueueCapacity", 64),
+                        Thread.MIN_PRIORITY));
+    }
+
+    private static void awaitWarmupTermination(ExecutorService executor, String lane) {
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                log.warn("Agent navigation {} warmup worker did not stop within 10 seconds", lane);
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while stopping Agent navigation {} warmup worker", lane);
+        }
+    }
+
+    private static void throwIfCancelled(boolean cancellable,
+                                         CompletableFuture<AgentNavigationGraph> future) {
+        if (cancellable && (future.isCancelled() || Thread.currentThread().isInterrupted())) {
+            throw new CancellationException("Agent navigation graph warmup cancelled");
+        }
     }
 
     private static boolean isFastWarmupCandidate(MapleMap map) {
@@ -515,7 +604,12 @@ public final class AgentNavigationGraphService {
         return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
     }
 
+    static Path cacheDirectory() {
+        return CACHE_DIR;
+    }
+
     private static AgentNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {
+        throwIfBuildInterrupted();
         movementProfile = movementProfile == null ? AgentMovementProfile.base() : movementProfile;
         BuildProfileBuilder buildProfile = new BuildProfileBuilder(map.getId(), movementProfile);
         ACTIVE_BUILD_PROFILE.set(buildProfile);
@@ -524,7 +618,6 @@ public final class AgentNavigationGraphService {
             Map<Integer, Foothold> footholdsById = new HashMap<>();
             List<Foothold> walkableFootholds = new ArrayList<>();
             long phaseStartedAt = System.nanoTime();
-            Set<Integer> collidableWallIds = new HashSet<>();
             Set<Integer> collidableFromBelowIds;
             for (Foothold foothold : footholds) {
                 footholdsById.put(foothold.getId(), foothold);
@@ -533,16 +626,11 @@ public final class AgentNavigationGraphService {
                 }
             }
             collidableFromBelowIds = classifyCollidableFromBelowFootholds(footholdsById);
-            for (Foothold foothold : footholds) {
-                if (Foothold.isCollidableWall(foothold, footholdsById)) {
-                    collidableWallIds.add(foothold.getId());
-                }
-            }
             buildProfile.collectFootholdsNs = System.nanoTime() - phaseStartedAt;
             buildProfile.footholdCount = footholds.size();
             buildProfile.walkableFootholdCount = walkableFootholds.size();
             buildProfile.ropeCount = map.getRopes().size();
-            COLLIDABLE_WALL_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableWallIds));
+            throwIfBuildInterrupted();
             COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableFromBelowIds));
 
             List<AgentNavigationGraph.Region> regions = new ArrayList<>();
@@ -588,12 +676,14 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (Foothold foothold : walkableFootholds) {
+                throwIfBuildInterrupted();
                 addWalkEdges(foothold, footholdsById, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
             buildProfile.buildWalkEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : groundRegions) {
+                throwIfBuildInterrupted();
                 addDropEdges(region, map, regionsById, regionIdByFootholdId,
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, movementProfile);
             }
@@ -601,6 +691,7 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : groundRegions) {
+                throwIfBuildInterrupted();
                 addJumpEdges(region, map, regionsById, regionIdByFootholdId,
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, jumpLandingCache, movementProfile);
             }
@@ -608,6 +699,7 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : ropeRegions) {
+                throwIfBuildInterrupted();
                 addRopeEntryEdges(region, groundRegions, ropeByRegionId, map, anchorsByRegionId,
                         outgoing, edgeKeys, ropeGrabCache, movementProfile);
             }
@@ -615,19 +707,21 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : ropeRegions) {
+                throwIfBuildInterrupted();
                 addRopeExitEdges(region, ropeRegions, ropeByRegionId, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
             buildProfile.buildRopeExitEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (Portal portal : map.getPortals()) {
+                throwIfBuildInterrupted();
                 addPortalEdges(portal, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
             }
             buildProfile.buildPortalEdgesNs = System.nanoTime() - phaseStartedAt;
 
             AgentNavigationGraph graph = new AgentNavigationGraph(
                     map.getId(), GRAPH_VERSION, movementProfile, regions, regionsById, regionIdByFootholdId, outgoing,
-                    collidableWallIds, collidableFromBelowIds);
+                    Set.of(), collidableFromBelowIds);
             GraphBuildReport report = buildProfile.finish();
             LAST_BUILD_REPORTS.put(GraphCacheKey.from(map.getId(), movementProfile), report);
             log.debug("Built bot nav graph map {} speed={} jump={} in {} ms (regions={}, edges={}, drop={} ms, jump={} ms, jumpSamples={}, cacheHits={})",
@@ -648,12 +742,17 @@ public final class AgentNavigationGraphService {
         }
     }
 
+    private static void throwIfBuildInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Agent navigation graph build interrupted");
+        }
+    }
+
     private static void cacheGraph(GraphCacheKey key, AgentNavigationGraph graph) {
         List<GraphCacheKey> evicted = GRAPHS.put(key, graph);
         for (GraphCacheKey evictedKey : evicted) {
             LAST_BUILD_REPORTS.remove(evictedKey);
             if (!GRAPHS.anyKeyMatches(candidate -> candidate.mapId() == evictedKey.mapId())) {
-                COLLIDABLE_WALL_IDS_BY_MAP_ID.remove(evictedKey.mapId());
                 COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.remove(evictedKey.mapId());
             }
         }
@@ -689,10 +788,6 @@ public final class AgentNavigationGraphService {
         return LAST_BUILD_REPORTS.get(GraphCacheKey.from(mapId, movementProfile));
     }
 
-    public static Set<Integer> getCachedCollidableWallIds(int mapId) {
-        return COLLIDABLE_WALL_IDS_BY_MAP_ID.get(mapId);
-    }
-
     public static Set<Integer> getCachedCollidableFromBelowIds(int mapId) {
         return COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.get(mapId);
     }
@@ -715,7 +810,6 @@ public final class AgentNavigationGraphService {
     }
 
     private static void seedCachedFootholdCollisionIds(AgentNavigationGraph graph) {
-        COLLIDABLE_WALL_IDS_BY_MAP_ID.put(graph.mapId, new HashSet<>(graph.collidableWallIds));
         COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(graph.mapId, new HashSet<>(graph.collidableFromBelowIds));
     }
 
@@ -1056,20 +1150,32 @@ public final class AgentNavigationGraphService {
 
         // Ballistic fall from ledge at max walk velocity — single simulation call.
         int stepX = AgentMovementKinematicsService.walkStep(map, movementProfile) * direction;
-        AgentJumpLanding landing = AgentJumpProbeService.simulateFallLanding(map, endpoint, stepX);
-        if (landing == null) {
+        List<AgentWalkOffLanding> walkOffVariants = AgentJumpProbeService.walkOffLandingVariants(
+                map, startPoint, direction, movementProfile);
+        AgentWalkOffLanding walkOff = walkOffVariants.isEmpty() ? null : walkOffVariants.get(0);
+        if (walkOff == null || walkOff.landing() == null || walkOff.landing().foothold() == null) {
             return;
         }
+        AgentJumpLanding landing = walkOff.landing();
 
         int toRegionId = regionIdByFootholdId.getOrDefault(landing.foothold().getId(), -1);
         AgentNavigationGraph.Region below = regionsById.get(toRegionId);
         if (below == null || below.id == from.id) {
             return;
         }
-        if (landing.point().y <= endpoint.y + 4) {
+        if (landing.point().y <= walkOff.launchPoint().y + 4) {
             return;
         }
+        for (AgentWalkOffLanding variant : walkOffVariants) {
+            if (variant == null || variant.landing() == null || variant.landing().foothold() == null
+                    || regionIdByFootholdId.getOrDefault(variant.landing().foothold().getId(), -1) != toRegionId) {
+                return;
+            }
+        }
 
+        // Keep the established route weight while authoring the endpoint from the
+        // execution-accurate walk-off simulation. Sub-tick acceleration detail must
+        // not make A* abandon a previously preferred, valid local drop route.
         int travelMs = AgentJumpProbeService.estimateFallLandingTimeMs(map, endpoint, stepX)
                 + estimateHorizontalTravelTimeMs(actualRunway, movementProfile);
 
@@ -1096,6 +1202,7 @@ public final class AgentNavigationGraphService {
         int jumpStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
         for (Point anchor : anchors) {
+            throwIfBuildInterrupted();
             for (int launchStepX : new int[]{-jumpStep, 0, jumpStep}) {
                 AgentPostLandingJump simulatedLanding = simulateJumpLandingCached(
                         map, anchor, launchStepX, jumpLandingCache, stats, movementProfile);
@@ -1116,6 +1223,9 @@ public final class AgentNavigationGraphService {
                 JumpLaunchWindow launchWindow = expandJumpLaunchWindow(from, map, regionIdByFootholdId,
                         anchor.x, launchStepX, to.id, stats, jumpLandingCache, movementProfile);
                 if (launchWindow == null) {
+                    continue;
+                }
+                if (isPhantomSharedGroundLanding(from, launchWindow.endPoint())) {
                     continue;
                 }
 
@@ -1139,6 +1249,13 @@ public final class AgentNavigationGraphService {
                     stats.cacheMisses,
                     System.nanoTime() - startedAt));
         }
+    }
+
+    static boolean isPhantomSharedGroundLanding(AgentNavigationGraph.Region source, Point landing) {
+        return source != null
+                && landing != null
+                && source.surfaceCoversPoint(
+                landing.x, landing.y, AgentNavigationGraph.SHARED_GROUND_Y_PX);
     }
 
     private static AgentPostLandingJump simulateJumpLandingCached(MapleMap map,
@@ -1431,7 +1548,7 @@ public final class AgentNavigationGraphService {
             return null;
         }
         Point launchPoint = from.pointAt(launchX);
-        if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
+        if (isBlockedWallBoundaryLaunch(from, map, launchPoint)) {
             return null;
         }
         if (!AgentGroundCollisionService.canStartDownJump(map, launchPoint)
@@ -1460,7 +1577,7 @@ public final class AgentNavigationGraphService {
             return false;
         }
         Point launchPoint = from.pointAt(launchX);
-        if (isBlockedWallBoundaryLaunch(map, launchPoint)) {
+        if (isBlockedWallBoundaryLaunch(from, map, launchPoint)) {
             return false;
         }
         if (launchX > from.minX && canWalkToLaunchX(from, map, launchX - 1, launchX)) {
@@ -1560,20 +1677,20 @@ public final class AgentNavigationGraphService {
         return grab != null;
     }
 
-    private static boolean isBlockedWallBoundaryLaunch(MapleMap map, Point launchPoint) {
+    private static boolean isBlockedWallBoundaryLaunch(AgentNavigationGraph.Region from,
+                                                       MapleMap map,
+                                                       Point launchPoint) {
         if (map == null || map.getFootholds() == null || launchPoint == null) {
             return false;
         }
 
-        Set<Integer> collidableWallIds = getCachedCollidableWallIds(map.getId());
-        if (collidableWallIds == null || collidableWallIds.isEmpty()) {
-            return false;
-        }
-
+        int moverZMass = from == null || from.isRopeRegion || from.segments.isEmpty()
+                ? AgentWallCollisionPolicy.UNKNOWN_GROUP
+                : zMassForFoothold(map, from.segments.getFirst().footholdId);
         for (Foothold foothold : map.getFootholds().getAllFootholds()) {
             if (!foothold.isWall()
-                    || !collidableWallIds.contains(foothold.getId())
-                    || foothold.getX1() != launchPoint.x) {
+                    || foothold.getX1() != launchPoint.x
+                    || !AgentWallCollisionPolicy.collides(map, foothold, moverZMass)) {
                 continue;
             }
 
@@ -1584,6 +1701,18 @@ public final class AgentNavigationGraphService {
             }
         }
         return false;
+    }
+
+    private static int zMassForFoothold(MapleMap map, int footholdId) {
+        if (map == null || map.getFootholds() == null) {
+            return AgentWallCollisionPolicy.UNKNOWN_GROUP;
+        }
+        for (Foothold foothold : map.getFootholds().getAllFootholds()) {
+            if (foothold.getId() == footholdId) {
+                return foothold.getZMass();
+            }
+        }
+        return AgentWallCollisionPolicy.UNKNOWN_GROUP;
     }
 
     private static boolean canWalkToLaunchX(AgentNavigationGraph.Region from, MapleMap map, int fromX, int launchX) {
@@ -1837,21 +1966,42 @@ public final class AgentNavigationGraphService {
         // causing findBelow to skip the correct foothold and land on the next lower platform.
         // Probe MAX_SNAP_DROP above the portal position so findBelow always finds the right foothold.
         int snapUp = AgentMovementPhysicsConfig.configuredMaxSnapDrop();
-        AgentNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId,
-                new Point(portal.getPosition().x, portal.getPosition().y - snapUp));
-        AgentNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
-                new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp));
+        Point portalApproach = AgentPortalApproachService.target(map, portal);
+        Point targetApproach = AgentPortalApproachService.target(map, targetPortal);
+        AgentNavigationGraph.Region from = findPortalApproachRegion(
+                portal, portalApproach, map, regionsById, regionIdByFootholdId, snapUp);
+        AgentNavigationGraph.Region to = findPortalApproachRegion(
+                targetPortal, targetApproach, map, regionsById, regionIdByFootholdId, snapUp);
         if (from == null || to == null) {
             return;
         }
 
-        Point start = from.pointAt(portal.getPosition().x);
-        Point end = to.pointAt(targetPortal.getPosition().x);
+        Point start = from.isRopeRegion ? new Point(portalApproach) : from.pointAt(portalApproach.x);
+        Point end = to.isRopeRegion ? new Point(targetApproach) : to.pointAt(targetApproach.x);
         // A single portal is instantaneous, so its base edge cost is 0. The only real time a
         // portal costs is the post-use cooldown the bot pays when it chains straight into another
         // portal; that is modelled path-dependently in AgentNavigationPathService A* (the viaPortal
         // state flag), not as a flat per-edge cost. See PORTAL_USE_COOLDOWN_MS.
         addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 0, outgoing, edgeKeys);
+    }
+
+    private static AgentNavigationGraph.Region findPortalApproachRegion(
+            Portal portal,
+            Point approach,
+            MapleMap map,
+            Map<Integer, AgentNavigationGraph.Region> regionsById,
+            Map<Integer, Integer> regionIdByFootholdId,
+            int snapUp) {
+        if (portal.getType() == AgentPortalApproachService.COLLISION_PORTAL_TYPE) {
+            for (AgentNavigationGraph.Region region : regionsById.values()) {
+                if (region.isRopeRegion && approach.x == region.minX
+                        && approach.y >= region.minY && approach.y <= region.maxY) {
+                    return region;
+                }
+            }
+        }
+        return findRegionBelow(map, regionsById, regionIdByFootholdId,
+                new Point(approach.x, approach.y - snapUp));
     }
 
     private static Map<Integer, List<Integer>> buildFeatureXsByRegionId(MapleMap map,
@@ -1868,16 +2018,18 @@ public final class AgentNavigationGraphService {
 
         for (Portal portal : map.getPortals()) {
             int snapUp = AgentMovementPhysicsConfig.configuredMaxSnapDrop();
-            Point portalProbe = new Point(portal.getPosition().x, portal.getPosition().y - snapUp);
-            addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portal.getPosition().x);
+            Point portalApproach = AgentPortalApproachService.target(map, portal);
+            Point portalProbe = new Point(portalApproach.x, portalApproach.y - snapUp);
+            addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portalApproach.x);
             if (portal.getTargetMapId() != map.getId()) {
                 continue;
             }
 
             Portal targetPortal = map.getPortal(portal.getTarget());
             if (targetPortal != null) {
-                Point targetProbe = new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp);
-                addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, targetProbe), targetPortal.getPosition().x);
+                Point targetApproach = AgentPortalApproachService.target(map, targetPortal);
+                Point targetProbe = new Point(targetApproach.x, targetApproach.y - snapUp);
+                addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, targetProbe), targetApproach.x);
             }
         }
 

@@ -79,7 +79,7 @@ public final class AgentGrindNavigationTargetSelector {
         return new NavigationHooks(
                 AgentNavigationRegionService::resolveCurrentRegionId,
                 AgentNavigationRegionService::resolveTargetRegionId,
-                AgentNavigationPathService::findPath,
+                AgentNavigationPathService::findPathForRetreatProbe,
                 AgentMovementPhysicsConfig.configuredGrindEdgeMargin(),
                 AgentMovementPhysicsConfig.configuredJumpYThreshold());
     }

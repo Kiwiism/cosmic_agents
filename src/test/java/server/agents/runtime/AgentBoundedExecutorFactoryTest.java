@@ -53,6 +53,19 @@ class AgentBoundedExecutorFactoryTest {
         }
     }
 
+    @Test
+    void appliesRequestedWorkerPriority() throws Exception {
+        ThreadPoolExecutor executor = AgentBoundedExecutorFactory.fixed(
+                "agent-priority", "agent-priority-worker", 1, 1, Thread.MIN_PRIORITY);
+        try {
+            java.util.concurrent.CompletableFuture<Integer> priority = new java.util.concurrent.CompletableFuture<>();
+            executor.execute(() -> priority.complete(Thread.currentThread().getPriority()));
+            assertEquals(Thread.MIN_PRIORITY, priority.get(5, TimeUnit.SECONDS));
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     private static void await(CountDownLatch latch) {
         try {
             latch.await();

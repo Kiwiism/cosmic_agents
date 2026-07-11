@@ -18,6 +18,7 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -68,6 +69,65 @@ class BotDirectionalDropNavigationTest {
 
         assertEquals(fixture.edge.endPoint, waypoint,
                 "once the bot has crossed the negative-direction drop anchor, nav should keep holding the drop direction");
+    }
+
+    @Test
+    void shouldSteerBackToRunwayWhenBotStandsOnWrongFootholdPastAnchor() {
+        MapleMap map = new MapleMap(910000043, 0, 0, 910000043, 1.0f);
+        Foothold wrongLedge = new Foothold(new Point(-200, 100), new Point(40, 100), 1);
+        Foothold runway = new Foothold(new Point(60, 100), new Point(200, 100), 2);
+        Foothold lower = new Foothold(new Point(-300, 160), new Point(300, 160), 3);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(
+                new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(wrongLedge);
+        footholds.insert(runway);
+        footholds.insert(lower);
+        map.setFootholds(footholds);
+
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+        AgentNavigationGraph.Edge edge = graph.regions.stream()
+                .flatMap(region -> graph.getOutgoing(region.id).stream())
+                .filter(candidate -> candidate.type == AgentNavigationGraph.EdgeType.DROP
+                        && candidate.launchStepX < 0
+                        && candidate.endPoint.y > candidate.startPoint.y
+                        && candidate.startPoint.x > 40)
+                .findFirst()
+                .orElse(null);
+        assertNotNull(edge);
+
+        Character bot = mockBot(new Point(0, 100), map);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        AgentMovementPhysicsStateRuntime.setPhysicsX(entry, bot.getPosition().x);
+        AgentMovementPhysicsStateRuntime.setPhysicsY(entry, bot.getPosition().y);
+
+        Point waypoint = AgentNavigationWaypointService.selectDropWaypoint(entry, graph, bot.getPosition(), edge);
+
+        assertEquals(edge.startPoint, waypoint,
+                "a different foothold beyond the x anchor must not satisfy the committed drop");
+    }
+
+    @Test
+    void shouldNotAuthorWalkOffWhoseLandingRegionChangesWithLaunchState() {
+        MapleMap map = new MapleMap(910000044, 0, 0, 910000044, 1.0f);
+        Foothold upper = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold knifeShelf = new Foothold(new Point(138, 160), new Point(280, 160), 2);
+        Foothold floor = new Foothold(new Point(-100, 400), new Point(600, 400), 3);
+        server.maps.FootholdTree footholds = new server.maps.FootholdTree(
+                new Point(-2000, -2000), new Point(2000, 2000));
+        footholds.insert(upper);
+        footholds.insert(knifeShelf);
+        footholds.insert(floor);
+        map.setFootholds(footholds);
+
+        AgentNavigationGraph graph = AgentNavigationGraphService.rebuildGraph(map);
+
+        boolean hasRightWalkOffFromUpper = graph.regions.stream()
+                .flatMap(region -> graph.getOutgoing(region.id).stream())
+                .anyMatch(edge -> edge.type == AgentNavigationGraph.EdgeType.DROP
+                        && edge.launchStepX > 0
+                        && edge.startPoint.y == 100);
+        assertFalse(hasRightWalkOffFromUpper,
+                "variant-sensitive walk-off landings must not become committed graph edges");
     }
 
     private static DropTestFixture createDirectionalDropFixture(int mapId) {
