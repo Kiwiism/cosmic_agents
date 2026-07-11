@@ -139,3 +139,13 @@ or critical state. Planning caps the original side at seven lines so the
 largest partnered packet is 7 original / 14 total; target and line counts are
 also clamped independently before packing their four-bit fields. Ranged ammo
 cost behavior remains doubled, while CLOSE and MAGIC add no ammo cost.
+
+## Population: external roster foundation
+
+The Agent population implementation now has an Agent-owned, externally stored
+roster foundation under `server.agents.population`. The JSON store writes by
+atomic replacement, defaults to disabled when absent, validates bounded finite
+multipliers, rejects duplicate character identities/names, and publishes state
+only after persistence succeeds. Stable case-insensitive ordering and bounded
+per-sweep/list policy constants prepare the roster for deterministic
+reconciliation without adding Cosmic schema state or starting live sessions.
