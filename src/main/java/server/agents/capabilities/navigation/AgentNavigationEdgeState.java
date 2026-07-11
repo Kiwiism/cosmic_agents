@@ -1,7 +1,10 @@
 package server.agents.capabilities.navigation;
 
+import java.awt.Point;
+
 public final class AgentNavigationEdgeState {
     private AgentNavigationGraph.Edge activeEdge = null;
+    private Point plannedTargetPosition = null;
     private AgentNavigationGraph.Edge jumpLaunchEdge = null;
     private int jumpLaunchX = Integer.MIN_VALUE;
 
@@ -19,6 +22,15 @@ public final class AgentNavigationEdgeState {
 
     public void clearActiveEdge() {
         activeEdge = null;
+        plannedTargetPosition = null;
+    }
+
+    public Point plannedTargetPosition() {
+        return plannedTargetPosition == null ? null : new Point(plannedTargetPosition);
+    }
+
+    public void setPlannedTargetPosition(Point position) {
+        plannedTargetPosition = position == null ? null : new Point(position);
     }
 
     public boolean hasJumpLaunchEdge() {

@@ -51,3 +51,14 @@ while airborne collision considers only base-group walls and walls belonging
 to the mover's last grounded zMass group. Synthetic footholds with no group
 metadata retain conservative all-wall collision. Agent graph cache version 49
 invalidates graphs authored with the former chain-reaches-ground heuristic.
+
+## Navigation: stale target and blocked-route recovery
+
+Source reference: runtime-recovery portion of `43b9f06c8c` from `source/dev`.
+
+Retained Agent navigation edges now carry the goal point used to plan them and
+are rejected after that goal moves more than 128 pixels, including movement
+within the same region. The reconstruction does not retain the donor's full
+committed-route list; its independent movement stuck state already survives
+navigation-edge clears and counts both active-edge and direct-target stalls,
+providing the source watchdog behavior without restoring that monolith state.

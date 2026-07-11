@@ -223,6 +223,22 @@ class AgentNavigationCommittedEdgeServiceTest {
     }
 
     @Test
+    void reuseCommittedEdgeRejectsGoalPointMovedBeyondReplanRadius() {
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
+        AgentNavigationGraph.Edge edge = edge(1, 1, AgentNavigationGraph.EdgeType.PORTAL,
+                new Point(0, 0), new Point(20, 0), 0, 0, 0, 7, 0, 0, 0);
+        AgentNavigationDebugStateRuntime.setActiveNavigationEdge(entry, edge);
+        AgentNavigationDebugStateRuntime.setPlannedNavigationTargetPosition(entry, new Point(0, 0));
+
+        assertSame(edge, AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 1, 1, new Point(128, 0),
+                (graph, bot, candidate) -> true, (graph, candidate) -> false));
+        assertNull(AgentNavigationCommittedEdgeService.reuseCommittedEdge(
+                null, entry, 1, 1, new Point(129, 0),
+                (graph, bot, candidate) -> true, (graph, candidate) -> false));
+    }
+
+    @Test
     void reuseCommittedEdgeKeepsClimbAndAirborneArcsUntilTheyCanSettle() {
         AgentNavigationGraph.Edge jump = edge(1, 2, AgentNavigationGraph.EdgeType.JUMP,
                 new Point(0, 0), new Point(20, 0), 0, 20, 1, 0, 0, 0, 0);

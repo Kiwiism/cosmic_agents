@@ -142,6 +142,14 @@ public final class AgentNavigationDebugStateRuntime {
         entry.navigationEdgeState().setActiveEdge(edge);
     }
 
+    public static Point plannedNavigationTargetPosition(AgentRuntimeEntry entry) {
+        return entry.navigationEdgeState().plannedTargetPosition();
+    }
+
+    public static void setPlannedNavigationTargetPosition(AgentRuntimeEntry entry, Point position) {
+        entry.navigationEdgeState().setPlannedTargetPosition(position);
+    }
+
     public static void clearActiveNavigationEdge(AgentRuntimeEntry entry) {
         entry.navigationEdgeState().clearActiveEdge();
     }
