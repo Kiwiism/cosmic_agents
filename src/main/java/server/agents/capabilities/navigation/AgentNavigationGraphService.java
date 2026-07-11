@@ -32,9 +32,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
@@ -55,16 +57,12 @@ public final class AgentNavigationGraphService {
     private static final Map<GraphCacheKey, GraphBuildReport> LAST_BUILD_REPORTS = new ConcurrentHashMap<>();
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
-    private static final ExecutorService GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
-            "navigation",
-            "bot-nav-graph-warmup",
-            1,
-            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.queueCapacity", 64));
-    private static final ExecutorService FAST_GRAPH_WARMUP_EXECUTOR = AgentBoundedExecutorFactory.fixed(
-            "navigation-fast",
-            "bot-nav-graph-warmup-fast",
-            1,
-            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.navigation.fastQueueCapacity", 64));
+    private static final Object WARMUP_LIFECYCLE_LOCK = new Object();
+    private static volatile WarmupExecutors warmupExecutors = createWarmupExecutors();
+    private static volatile boolean acceptingAsyncWarmups = true;
+
+    private record WarmupExecutors(ExecutorService regular, ExecutorService fast) {
+    }
 
     private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
         static GraphCacheKey from(int mapId, AgentMovementProfile profile) {
@@ -385,7 +383,7 @@ public final class AgentNavigationGraphService {
     }
 
     public static void warmGraphAsync(MapleMap map, AgentMovementProfile movementProfile) {
-        if (map == null) {
+        if (map == null || !acceptingAsyncWarmups) {
             return;
         }
         GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
@@ -393,6 +391,36 @@ public final class AgentNavigationGraphService {
             return;
         }
         getOrStartGraphLoad(map, movementProfile, key, true);
+    }
+
+    public static void startAsyncWarmups() {
+        synchronized (WARMUP_LIFECYCLE_LOCK) {
+            if (warmupExecutors == null
+                    || warmupExecutors.regular().isShutdown()
+                    || warmupExecutors.fast().isShutdown()) {
+                warmupExecutors = createWarmupExecutors();
+            }
+            acceptingAsyncWarmups = true;
+        }
+    }
+
+    public static void shutdownAsyncWarmups() {
+        WarmupExecutors executors;
+        synchronized (WARMUP_LIFECYCLE_LOCK) {
+            acceptingAsyncWarmups = false;
+            executors = warmupExecutors;
+            warmupExecutors = null;
+            PENDING_GRAPHS.values().forEach(future -> future.cancel(true));
+            PENDING_GRAPHS.clear();
+        }
+        if (executors == null) {
+            return;
+        }
+
+        executors.regular().shutdownNow();
+        executors.fast().shutdownNow();
+        awaitWarmupTermination(executors.regular(), "regular");
+        awaitWarmupTermination(executors.fast(), "fast");
     }
 
     public static AgentNavigationGraph rebuildGraph(MapleMap map) {
@@ -433,9 +461,13 @@ public final class AgentNavigationGraphService {
 
         Runnable task = () -> {
             try {
+                throwIfCancelled(async, future);
                 AgentNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
+                throwIfCancelled(async, future);
                 cacheGraph(key, graph);
                 future.complete(graph);
+            } catch (CancellationException cancelled) {
+                future.cancel(false);
             } catch (Throwable t) {
                 future.completeExceptionally(t);
                 log.warn("Failed to warm bot nav graph for map {} speed={} jump={}",
@@ -451,7 +483,9 @@ public final class AgentNavigationGraphService {
             } catch (RejectedExecutionException e) {
                 PENDING_GRAPHS.remove(key, future);
                 future.completeExceptionally(e);
-                log.warn("Skipped Agent navigation graph warmup for map {} because the queue is full", key.mapId());
+                if (acceptingAsyncWarmups) {
+                    log.warn("Skipped Agent navigation graph warmup for map {} because the queue is full", key.mapId());
+                }
             }
         } else {
             task.run();
@@ -460,7 +494,57 @@ public final class AgentNavigationGraphService {
     }
 
     private static ExecutorService selectWarmupExecutor(MapleMap map) {
-        return isFastWarmupCandidate(map) ? FAST_GRAPH_WARMUP_EXECUTOR : GRAPH_WARMUP_EXECUTOR;
+        WarmupExecutors executors = warmupExecutors;
+        if (!acceptingAsyncWarmups || executors == null) {
+            throw new RejectedExecutionException("Agent navigation graph warmups are stopping");
+        }
+        return isFastWarmupCandidate(map) ? executors.fast() : executors.regular();
+    }
+
+    public static int pendingWarmupCount() {
+        return PENDING_GRAPHS.size();
+    }
+
+    static boolean asyncWarmupsRunning() {
+        WarmupExecutors executors = warmupExecutors;
+        return acceptingAsyncWarmups
+                && executors != null
+                && !executors.regular().isShutdown()
+                && !executors.fast().isShutdown();
+    }
+
+    private static WarmupExecutors createWarmupExecutors() {
+        return new WarmupExecutors(
+                AgentBoundedExecutorFactory.fixed(
+                        "navigation",
+                        "bot-nav-graph-warmup",
+                        1,
+                        AgentBoundedExecutorFactory.positiveIntegerProperty(
+                                "agents.async.navigation.queueCapacity", 64)),
+                AgentBoundedExecutorFactory.fixed(
+                        "navigation-fast",
+                        "bot-nav-graph-warmup-fast",
+                        1,
+                        AgentBoundedExecutorFactory.positiveIntegerProperty(
+                                "agents.async.navigation.fastQueueCapacity", 64)));
+    }
+
+    private static void awaitWarmupTermination(ExecutorService executor, String lane) {
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                log.warn("Agent navigation {} warmup worker did not stop within 10 seconds", lane);
+            }
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while stopping Agent navigation {} warmup worker", lane);
+        }
+    }
+
+    private static void throwIfCancelled(boolean cancellable,
+                                         CompletableFuture<AgentNavigationGraph> future) {
+        if (cancellable && (future.isCancelled() || Thread.currentThread().isInterrupted())) {
+            throw new CancellationException("Agent navigation graph warmup cancelled");
+        }
     }
 
     private static boolean isFastWarmupCandidate(MapleMap map) {
@@ -517,6 +601,7 @@ public final class AgentNavigationGraphService {
     }
 
     private static AgentNavigationGraph buildGraph(MapleMap map, AgentMovementProfile movementProfile) {
+        throwIfBuildInterrupted();
         movementProfile = movementProfile == null ? AgentMovementProfile.base() : movementProfile;
         BuildProfileBuilder buildProfile = new BuildProfileBuilder(map.getId(), movementProfile);
         ACTIVE_BUILD_PROFILE.set(buildProfile);
@@ -537,6 +622,7 @@ public final class AgentNavigationGraphService {
             buildProfile.footholdCount = footholds.size();
             buildProfile.walkableFootholdCount = walkableFootholds.size();
             buildProfile.ropeCount = map.getRopes().size();
+            throwIfBuildInterrupted();
             COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID.put(map.getId(), new HashSet<>(collidableFromBelowIds));
 
             List<AgentNavigationGraph.Region> regions = new ArrayList<>();
@@ -582,12 +668,14 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (Foothold foothold : walkableFootholds) {
+                throwIfBuildInterrupted();
                 addWalkEdges(foothold, footholdsById, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
             buildProfile.buildWalkEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : groundRegions) {
+                throwIfBuildInterrupted();
                 addDropEdges(region, map, regionsById, regionIdByFootholdId,
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, movementProfile);
             }
@@ -595,6 +683,7 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : groundRegions) {
+                throwIfBuildInterrupted();
                 addJumpEdges(region, map, regionsById, regionIdByFootholdId,
                         anchorsByRegionId.getOrDefault(region.id, List.of()), outgoing, edgeKeys, jumpLandingCache, movementProfile);
             }
@@ -602,6 +691,7 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : ropeRegions) {
+                throwIfBuildInterrupted();
                 addRopeEntryEdges(region, groundRegions, ropeByRegionId, map, anchorsByRegionId,
                         outgoing, edgeKeys, ropeGrabCache, movementProfile);
             }
@@ -609,12 +699,14 @@ public final class AgentNavigationGraphService {
 
             phaseStartedAt = System.nanoTime();
             for (AgentNavigationGraph.Region region : ropeRegions) {
+                throwIfBuildInterrupted();
                 addRopeExitEdges(region, ropeRegions, ropeByRegionId, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys, movementProfile);
             }
             buildProfile.buildRopeExitEdgesNs = System.nanoTime() - phaseStartedAt;
 
             phaseStartedAt = System.nanoTime();
             for (Portal portal : map.getPortals()) {
+                throwIfBuildInterrupted();
                 addPortalEdges(portal, map, regionsById, regionIdByFootholdId, outgoing, edgeKeys);
             }
             buildProfile.buildPortalEdgesNs = System.nanoTime() - phaseStartedAt;
@@ -639,6 +731,12 @@ public final class AgentNavigationGraphService {
         } finally {
             AgentNavigationPhysicsService.clearBuildWalkRegionLookup();
             ACTIVE_BUILD_PROFILE.remove();
+        }
+    }
+
+    private static void throwIfBuildInterrupted() {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancellationException("Agent navigation graph build interrupted");
         }
     }
 
@@ -1089,6 +1187,7 @@ public final class AgentNavigationGraphService {
         int jumpStep = AgentMovementKinematicsService.walkStep(map, movementProfile);
         JumpBuildStats stats = new JumpBuildStats();
         for (Point anchor : anchors) {
+            throwIfBuildInterrupted();
             for (int launchStepX : new int[]{-jumpStep, 0, jumpStep}) {
                 AgentPostLandingJump simulatedLanding = simulateJumpLandingCached(
                         map, anchor, launchStepX, jumpLandingCache, stats, movementProfile);

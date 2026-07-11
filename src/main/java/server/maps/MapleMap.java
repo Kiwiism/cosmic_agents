@@ -512,7 +512,11 @@ public class MapleMap {
     }
 
     private Point calcPointBelow(Point initial) {
-        Foothold fh = footholds.findBelow(initial);
+        FootholdTree currentFootholds = footholds;
+        if (currentFootholds == null) {
+            return null;
+        }
+        Foothold fh = currentFootholds.findBelow(initial);
         if (fh == null) {
             return null;
         }

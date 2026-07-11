@@ -72,6 +72,7 @@ import server.SkillbookInformationProvider;
 import server.ThreadManager;
 import server.TimerManager;
 import server.agents.population.AgentPopulationRuntime;
+import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.monitoring.CharacterSaveDiagnostics;
@@ -896,6 +897,7 @@ public class Server {
         Instant beforeInit = Instant.now();
         log.info("Cosmic v{} starting up.", ServerConstants.VERSION);
 
+        AgentNavigationGraphService.startAsyncWarmups();
         warnRiskyRuntimeFeatures();
 
         if (YamlConfig.config.server.SHUTDOWNHOOK) {
@@ -2163,6 +2165,7 @@ public class Server {
         List<World> shuttingWorlds = new ArrayList<>(getWorlds());
         List<Channel> allChannels = getAllChannels();
         AgentPopulationRuntime.stop();
+        AgentNavigationGraphService.shutdownAsyncWarmups();
         shutdownChannelsBounded(allChannels);
         for (World world : shuttingWorlds) {
             world.shutdownWorldResources();

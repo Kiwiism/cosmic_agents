@@ -75,6 +75,9 @@ public final class AgentJumpProbeService {
         AgentGroundTravelState state = initialState;
         int elapsedMs = 0;
         for (int i = 0; i < 256; i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             AgentGroundPhysicsService.GroundStepResult step =
                     AgentGroundPhysicsService.simulateGroundMotion(map, cursor, currentFoothold, desiredDir, state, profile);
             if (step.lostGround()) {
@@ -196,6 +199,9 @@ public final class AgentJumpProbeService {
         Foothold currentFoothold = landing.foothold();
         AgentGroundTravelState state = new AgentGroundTravelState(cursor.x, 0.0, 0.0);
         for (int i = 0; i < Math.max(0, ticks); i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             AgentGroundPhysicsService.GroundStepResult step =
                     AgentGroundPhysicsService.simulateGroundMotion(map, cursor, currentFoothold, desiredDir, state, profile);
             if (step.lostGround()) {
@@ -248,6 +254,9 @@ public final class AgentJumpProbeService {
         float maxFall = maxFallPerTick();
 
         for (int tick = 0; tick < (1500 / AgentMovementPhysicsConfig.configuredMovementTickMs()); tick++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             Point current = new Point((int) Math.round(physicsX), (int) Math.round(physicsY));
             if (canGrabRopeAtPoint(current, targetRope)) {
                 return new RopeGrabResult(new Point(targetRope.x(), current.y), tick);
@@ -310,6 +319,9 @@ public final class AgentJumpProbeService {
         float maxFall = maxFallPerTick();
 
         for (int tick = 0; tick < (1500 / AgentMovementPhysicsConfig.configuredMovementTickMs()); tick++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
             if (remainingLandingGraceMs > 0L) {
                 remainingLandingGraceMs = Math.max(0L,
                         remainingLandingGraceMs - AgentMovementPhysicsConfig.configuredMovementTickMs());
@@ -540,6 +552,10 @@ public final class AgentJumpProbeService {
                                                 double progress,
                                                 int probeY,
                                                 boolean requireTangentFloor) {
+        var footholds = map.getFootholds();
+        if (footholds == null) {
+            return AirCollision.none();
+        }
         Point probe = new Point(x, probeY);
         Point floor = map.getPointBelow(probe);
         if (floor == null) {
@@ -555,7 +571,7 @@ public final class AgentJumpProbeService {
             return AirCollision.none();
         }
 
-        Foothold foothold = map.getFootholds().findBelow(probe);
+        Foothold foothold = footholds.findBelow(probe);
         if (foothold == null) {
             return AirCollision.none();
         }

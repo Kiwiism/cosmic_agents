@@ -53,3 +53,21 @@ binding during offline Agent placement.
 
 This is server-side Level 2 evidence. Client rendering, animation, packet
 presentation, and visual movement still require a real MapleStory client.
+
+## Navigation Warmup Shutdown
+
+`AgentNavigationShutdownSmokeMain` reproduces shutdown while a heavy,
+uncached navigation graph warmup is active. It verifies that server shutdown
+stops Agent graph workers before channel map disposal, avoiding late access to
+the cleared foothold tree.
+
+After building the test runtime and classpath as above, run:
+
+```powershell
+$deps = (Get-Content -Raw tmp/agent-level2-classpath.txt).Trim()
+$cp = "target/test-classes;target/classes;$deps"
+& "$env:JAVA_HOME\bin\java.exe" -Xms512m -Xmx2048m -cp $cp server.agents.integration.live.AgentNavigationShutdownSmokeMain
+```
+
+The smoke must report that an active warmup was observed, exit successfully,
+and leave no login, channel, or bridge ports listening.
