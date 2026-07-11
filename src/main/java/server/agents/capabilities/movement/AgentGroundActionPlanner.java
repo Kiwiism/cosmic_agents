@@ -26,9 +26,11 @@ public final class AgentGroundActionPlanner {
         if (stepX == 0) {
             return AgentGroundAction.idle();
         }
-        boolean canWalkStep = AgentGroundCollisionService.canWalkGroundStep(AgentRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
+        boolean canWalkStep = AgentGroundCollisionService.canWalkGroundStep(
+                AgentRuntimeIdentityRuntime.botMap(entry), botPos, currentFoothold, stepX);
         if (!canWalkStep) {
-            boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(AgentRuntimeIdentityRuntime.botMap(entry), botPos, stepX);
+            boolean blockedByWall = AgentGroundCollisionService.isGroundStepBlockedByWall(
+                    AgentRuntimeIdentityRuntime.botMap(entry), botPos, currentFoothold, stepX);
             if (!blockedByWall
                     && ((directionalDrop && Integer.signum(stepX) == Integer.signum(navEdge.launchStepX))
                     || AgentFallbackMovementService.shouldWalkOffLedge(entry, botPos, targetPos, stepX))) {

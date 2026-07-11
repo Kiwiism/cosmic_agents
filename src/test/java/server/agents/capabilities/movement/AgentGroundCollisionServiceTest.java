@@ -122,6 +122,30 @@ class AgentGroundCollisionServiceTest {
         }
     }
 
+    @Test
+    void resolvesGroundFromRememberedRegionAcrossCoincidentChains() {
+        MapleMap map = createEmptyTestMap(910000060);
+        Foothold remembered = new Foothold(new Point(0, 100), new Point(100, 100), 1);
+        Foothold overlapping = new Foothold(new Point(0, 100), new Point(100, 100), 2);
+        map.getFootholds().insert(remembered);
+        map.getFootholds().insert(overlapping);
+        AgentNavigationGraph.Region rememberedRegion = new AgentNavigationGraph.Region(
+                6, List.of(new AgentNavigationGraph.Segment(remembered)));
+        AgentNavigationGraph.Region overlappingRegion = new AgentNavigationGraph.Region(
+                3, List.of(new AgentNavigationGraph.Segment(overlapping)));
+        AgentNavigationWalkRegionLookupService.setBuildWalkRegionLookup(
+                map,
+                Map.of(6, rememberedRegion, 3, overlappingRegion),
+                Map.of(remembered.getId(), 6, overlapping.getId(), 3),
+                Map.of(remembered.getId(), remembered, overlapping.getId(), overlapping));
+        try {
+            assertEquals(remembered, AgentGroundCollisionService.findWalkRegionGroundFoothold(
+                    map, 6, 50, 100));
+        } finally {
+            AgentNavigationWalkRegionLookupService.clearBuildWalkRegionLookup();
+        }
+    }
+
     private static MapleMap createEmptyTestMap(int mapId) {
         MapleMap map = new MapleMap(mapId, 0, 0, mapId, 1.0f);
         map.setFootholds(new FootholdTree(new Point(-2000, -2000), new Point(2000, 2000)));

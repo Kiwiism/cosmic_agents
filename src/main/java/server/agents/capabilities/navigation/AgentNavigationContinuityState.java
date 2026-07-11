@@ -21,4 +21,8 @@ public final class AgentNavigationContinuityState {
             lastRegionId = regionId;
         }
     }
+
+    public int lastRegionIdForMap(int mapId) {
+        return graph != null && graph.mapId == mapId ? lastRegionId : -1;
+    }
 }

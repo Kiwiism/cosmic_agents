@@ -23,7 +23,18 @@ public final class AgentGroundPhysicsService {
 
     public static Foothold syncAndDetectGround(AgentRuntimeEntry entry, Character agent) {
         syncGroundPosition(entry, agent.getPosition().x);
-        Foothold foothold = AgentGroundingService.findGroundFoothold(agent.getMap(), agent.getPosition());
+        MapleMap map = agent.getMap();
+        Point position = agent.getPosition();
+        int lastRegionId = entry == null || map == null
+                ? -1
+                : entry.navigationContinuityState().lastRegionIdForMap(map.getId());
+        Foothold foothold = lastRegionId < 0
+                ? null
+                : AgentGroundCollisionService.findWalkRegionGroundFoothold(
+                map, lastRegionId, position.x, position.y);
+        if (foothold == null) {
+            foothold = AgentGroundingService.findGroundFoothold(map, position);
+        }
         if (foothold == null) {
             beginFall(entry, agent, 0);
         }

@@ -28,6 +28,13 @@ public final class AgentGroundCollisionService {
             return false;
         }
         Foothold foothold = AgentGroundingService.findGroundFoothold(map, from);
+        return canWalkGroundStep(map, from, foothold, stepX);
+    }
+
+    public static boolean canWalkGroundStep(MapleMap map, Point from, Foothold foothold, int stepX) {
+        if (map == null || from == null) {
+            return false;
+        }
         GroundStepPreview preview = previewGroundStep(map, from, foothold, from.x + stepX);
         return preview != null && !preview.lostGround() && !preview.blocked();
     }
@@ -37,6 +44,13 @@ public final class AgentGroundCollisionService {
             return false;
         }
         Foothold foothold = AgentGroundingService.findGroundFoothold(map, from);
+        return isGroundStepBlockedByWall(map, from, foothold, stepX);
+    }
+
+    public static boolean isGroundStepBlockedByWall(MapleMap map, Point from, Foothold foothold, int stepX) {
+        if (map == null || from == null || stepX == 0) {
+            return false;
+        }
         GroundStepPreview preview = previewGroundStep(map, from, foothold, from.x + stepX);
         return preview != null && preview.blocked();
     }
@@ -61,6 +75,18 @@ public final class AgentGroundCollisionService {
     public static Point findWalkRegionGroundPoint(MapleMap map, Foothold foothold, int x, int referenceY) {
         GroundRegionSample sample = findWalkRegionGroundSample(map, foothold, x, referenceY);
         return sample == null ? null : sample.point();
+    }
+
+    public static Foothold findWalkRegionGroundFoothold(
+            MapleMap map,
+            int regionId,
+            int x,
+            int referenceY) {
+        AgentNavigationWalkRegionLookupService.WalkRegionLookup lookup =
+                AgentNavigationWalkRegionLookupService.resolveWalkRegionLookup(map);
+        GroundRegionSample sample = findWalkRegionGroundSample(
+                lookup, regionId, null, x, referenceY);
+        return sample == null ? null : sample.foothold();
     }
 
     static GroundStepPreview previewGroundStep(MapleMap map, Point currentPos, Foothold foothold, int nextX) {
@@ -137,6 +163,18 @@ public final class AgentGroundCollisionService {
             return null;
         }
         int regionId = lookup.regionIdByFootholdId().getOrDefault(foothold.getId(), -1);
+        return findWalkRegionGroundSample(lookup, regionId, foothold, x, referenceY);
+    }
+
+    private static GroundRegionSample findWalkRegionGroundSample(
+            AgentNavigationWalkRegionLookupService.WalkRegionLookup lookup,
+            int regionId,
+            Foothold foothold,
+            int x,
+            int referenceY) {
+        if (lookup == null) {
+            return null;
+        }
         AgentNavigationGraph.Region region = lookup.regionsById().get(regionId);
         if (region == null || region.isRopeRegion) {
             return null;
@@ -168,7 +206,7 @@ public final class AgentGroundCollisionService {
                 continue;
             }
 
-            boolean chainStep = isChainStep(foothold, segment.footholdId);
+            boolean chainStep = foothold == null || isChainStep(foothold, segment.footholdId);
             int score = dx * 1000 + Math.abs(dy);
             boolean better = bestSegment == null
                     || (chainStep && !bestChainStep)

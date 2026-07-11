@@ -31,3 +31,12 @@ now rejected as phantom cross-region transitions. Runtime region resolution
 also remembers the occupied region while coincident chains share the same
 surface, resetting that memory when the graph instance changes. Agent graph
 cache version 48 invalidates graphs containing the old edges.
+
+## Movement: overlapping-foothold motor continuity
+
+Source reference: `235b6aefa4` from `source/dev`.
+
+Ground synchronization now resolves the foothold from the remembered navigation
+region before falling back to coordinate-only lookup. Ground action planning
+also passes its already-resolved standing foothold into collision preview. This
+keeps the movement motor on the same coincident chain selected by navigation.
