@@ -53,13 +53,13 @@ class AgentSwimPhysicsServiceTest {
         map.setFootholds(footholds);
 
         Character agent = mock(Character.class);
-        when(agent.getPosition()).thenReturn(new Point(40, 50));
+        when(agent.getPosition()).thenReturn(new Point(48, 50));
         when(agent.getHp()).thenReturn(1);
         when(agent.getMap()).thenReturn(map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
         AgentSwimStateRuntime.setSwimming(entry, true);
         AgentSwimStateRuntime.setSwimMoveDirection(entry, 1);
-        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, 40, 50);
+        AgentMovementPhysicsStateRuntime.setPhysicsPosition(entry, 48, 50);
         AgentMovementPhysicsStateRuntime.setHorizontalSpeed(entry, 400);
 
         AgentSwimPhysicsService.applySwimMotion(entry);

@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import server.agents.capabilities.navigation.AgentNavigationGraph;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.runtime.AgentModeStateRuntime;
@@ -22,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -74,8 +76,17 @@ class AgentGroundActionPlannerTest {
         Character bot = mockBot(new Point(44, 100), map);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
 
-        AgentGroundAction action = AgentGroundActionPlanner.planGroundAction(
-                entry, ground, new Point(44, 100), new Point(100, 100));
+        Point botPosition = new Point(44, 100);
+        int stepX = AgentMovementKinematicsService.walkStep(map, AgentMovementProfile.base());
+        AgentGroundAction action;
+        try (MockedStatic<AgentGroundCollisionService> collision = mockStatic(AgentGroundCollisionService.class)) {
+            collision.when(() -> AgentGroundCollisionService.canWalkGroundStep(
+                    map, botPosition, ground, stepX)).thenReturn(false);
+            collision.when(() -> AgentGroundCollisionService.isGroundStepBlockedByWall(
+                    map, botPosition, ground, stepX)).thenReturn(true);
+            action = AgentGroundActionPlanner.planGroundAction(
+                    entry, ground, botPosition, new Point(200, 100));
+        }
 
         assertEquals(AgentGroundAction.Type.JUMP, action.type());
     }
