@@ -8006,8 +8006,9 @@ public class Character extends AbstractCharacterObject {
                 localmaxmp += (hbmp.doubleValue() / 100) * localmaxmp;
             }
 
-            localmaxhp = Math.min(300000, localmaxhp);
-            localmaxmp = Math.min(300000, localmaxmp);
+            int hpMpCap = GameConstants.getPlayerHpMpCap();
+            localmaxhp = Math.min(hpMpCap, localmaxhp);
+            localmaxmp = Math.min(hpMpCap, localmaxmp);
 
             StatEffect combo = getBuffEffect(BuffStat.ARAN_COMBO);
             if (combo != null) {
@@ -9544,7 +9545,7 @@ public class Character extends AbstractCharacterObject {
 
     private int calcHpRatioUpdate(int curpoint, int maxpoint, int diffpoint) {
         int curMax = maxpoint;
-        int nextMax = Math.min(300000, maxpoint + diffpoint);
+        int nextMax = Math.min(GameConstants.getPlayerHpMpCap(), maxpoint + diffpoint);
 
         float temp = curpoint * nextMax;
         int ret = (int) Math.ceil(temp / curMax);
@@ -9555,7 +9556,7 @@ public class Character extends AbstractCharacterObject {
 
     private int calcMpRatioUpdate(int curpoint, int maxpoint, int diffpoint) {
         int curMax = maxpoint;
-        int nextMax = Math.min(300000, maxpoint + diffpoint);
+        int nextMax = Math.min(GameConstants.getPlayerHpMpCap(), maxpoint + diffpoint);
 
         float temp = curpoint * nextMax;
         int ret = (int) Math.ceil(temp / curMax);

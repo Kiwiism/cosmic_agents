@@ -300,13 +300,19 @@ public class HiredMerchant extends AbstractMapObject {
             KarmaManipulator.toggleKarmaFlagToUntradeable(newItem);
 
             int price = (int) Math.min((float) pItem.getPrice() * quantity, Integer.MAX_VALUE);
+            int proceeds = price - Trade.getFee(price);
             if (c.getPlayer().getMeso() >= price) {
+                if (!canOwnerHoldMerchantMesos(proceeds)) {
+                    c.getPlayer().dropMessage(1, "Transaction failed since the shop owner can't hold any more mesos.");
+                    c.sendPacket(PacketCreator.enableActions());
+                    return;
+                }
+
                 if (canBuy(c, newItem)) {
                     c.getPlayer().gainMeso(-price, false);
-                    price -= Trade.getFee(price);  // thanks BHB for pointing out trade fees not applying here
 
                     synchronized (sold) {
-                        sold.add(new SoldItem(c.getPlayer().getName(), pItem.getItem().getItemId(), newItem.getQuantity(), price));
+                        sold.add(new SoldItem(c.getPlayer().getName(), pItem.getItem().getItemId(), newItem.getQuantity(), proceeds));
                     }
 
                     pItem.setBundles((short) (pItem.getBundles() - quantity));
@@ -315,12 +321,12 @@ public class HiredMerchant extends AbstractMapObject {
                     }
 
                     if (YamlConfig.config.server.USE_ANNOUNCE_SHOPITEMSOLD) {   // idea thanks to Vcoc
-                        announceItemSold(newItem, price, getQuantityLeft(pItem.getItem().getItemId()));
+                        announceItemSold(newItem, proceeds, getQuantityLeft(pItem.getItem().getItemId()));
                     }
 
                     Character owner = Server.getInstance().getWorld(world).getPlayerStorage().getCharacterByName(ownerName);
                     if (owner != null) {
-                        owner.addMerchantMesos(price);
+                        owner.addMerchantMesos(proceeds);
                     } else {
                         try (Connection con = DatabaseConnection.getConnection()) {
                             long merchantMesos = 0;
@@ -332,10 +338,10 @@ public class HiredMerchant extends AbstractMapObject {
                                     }
                                 }
                             }
-                            merchantMesos += price;
+                            merchantMesos += proceeds;
 
                             try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET MerchantMesos = ? WHERE id = ?", PreparedStatement.RETURN_GENERATED_KEYS)) {
-                                ps.setInt(1, (int) Math.min(merchantMesos, Integer.MAX_VALUE));
+                                ps.setInt(1, (int) merchantMesos);
                                 ps.setInt(2, ownerId);
                                 ps.executeUpdate();
                             }
@@ -359,6 +365,28 @@ public class HiredMerchant extends AbstractMapObject {
                 monitoring.RuntimeFailureLogger.log(e);
             }
         }
+    }
+
+    private boolean canOwnerHoldMerchantMesos(int proceeds) {
+        Character owner = Server.getInstance().getWorld(world).getPlayerStorage().getCharacterByName(ownerName);
+        if (owner != null) {
+            return canHoldMerchantMesos(owner.getMerchantMeso(), proceeds);
+        }
+
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT MerchantMesos FROM characters WHERE id = ?")) {
+            ps.setInt(1, ownerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && canHoldMerchantMesos(rs.getInt(1), proceeds);
+            }
+        } catch (SQLException e) {
+            monitoring.RuntimeFailureLogger.log(e);
+            return false;
+        }
+    }
+
+    static boolean canHoldMerchantMesos(int currentMesos, int proceeds) {
+        return proceeds >= 0 && (long) currentMesos + proceeds <= Integer.MAX_VALUE;
     }
 
     private void announceItemSold(Item item, int mesos, int inStore) {

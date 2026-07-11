@@ -28,6 +28,7 @@ import client.Client;
 import client.Stat;
 import client.command.Command;
 import config.YamlConfig;
+import constants.game.GameConstants;
 
 public class MaxStatCommand extends Command {
     {
@@ -46,7 +47,8 @@ public class MaxStatCommand extends Command {
         player.setWorldRates();
         player.updateStrDexIntLuk(Short.MAX_VALUE);
         player.setFame(13337);
-        player.updateMaxHpMaxMp(30000, 30000);
+        int hpMpCap = GameConstants.getPlayerHpMpCap();
+        player.updateMaxHpMaxMp(hpMpCap, hpMpCap);
         player.updateSingleStat(Stat.LEVEL, 255);
         player.updateSingleStat(Stat.FAME, 13337);
         player.yellowMessage("Stats maxed out.");

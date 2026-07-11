@@ -269,6 +269,10 @@ public class Shop {
         return quantity;
     }
 
+    static boolean canReceiveSaleProceeds(client.Character player, int recvMesos) {
+        return recvMesos <= 0 || player.canHoldMeso(recvMesos);
+    }
+
     public void sell(Client c, InventoryType type, short slot, short quantity) {
         if (quantity == 0xFFFF || quantity == 0) {
             quantity = 1;
@@ -279,10 +283,15 @@ public class Shop {
         Item item = c.getPlayer().getInventory(type).getItem(slot);
         if (canSell(item, quantity)) {
             quantity = getSellingQuantity(item, quantity);
-            InventoryManipulator.removeFromSlot(c, type, (byte) slot, quantity, false);
-
             ItemInformationProvider ii = ItemInformationProvider.getInstance();
             int recvMesos = ii.getPrice(item.getItemId(), quantity);
+            if (!canReceiveSaleProceeds(c.getPlayer(), recvMesos)) {
+                c.sendPacket(PacketCreator.shopTransaction((byte) 0x5));
+                c.sendPacket(PacketCreator.serverNotice(1, "You cannot carry any more mesos."));
+                return;
+            }
+
+            InventoryManipulator.removeFromSlot(c, type, (byte) slot, quantity, false);
             if (recvMesos > 0) {
                 c.getPlayer().gainMeso(recvMesos, false);
             }

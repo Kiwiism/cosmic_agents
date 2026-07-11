@@ -266,20 +266,21 @@ public abstract class AbstractCharacterObject extends AbstractAnimatedMapObject 
     }
 
     protected void setMaxHp(int hp_) {
-        if (this.maxhp < hp_) {
+        int cappedHp = Math.max(50, Math.min(GameConstants.getPlayerHpMpCap(), hp_));
+        if (this.maxhp < cappedHp) {
             this.transienthp = Float.NEGATIVE_INFINITY;
         }
-        this.maxhp = hp_;
-        this.clientmaxhp = Math.min(300000, hp_);
+        this.maxhp = cappedHp;
+        this.clientmaxhp = cappedHp;
     }
 
     protected void setMaxMp(int mp_) {
-        if (this.maxmp < mp_) {
+        int cappedMp = Math.max(5, Math.min(GameConstants.getPlayerHpMpCap(), mp_));
+        if (this.maxmp < cappedMp) {
             this.transientmp = Float.NEGATIVE_INFINITY;
         }
-        this.maxmp = mp_;
-//        int clientMaxMP = mp_ >= 30000 ? mp_ / 1000 : mp_;
-        this.clientmaxmp = Math.min(300000, mp_);
+        this.maxmp = cappedMp;
+        this.clientmaxmp = cappedMp;
     }
 
     private static long clampStat(int v, int min, int max) {
@@ -425,7 +426,7 @@ public abstract class AbstractCharacterObject extends AbstractAnimatedMapObject 
     }
 
     public void healHpMp() {
-        updateHpMp(30000);
+        updateHpMp(localmaxhp, localmaxmp);
     }
 
     public void updateHpMp(int x) {
@@ -613,7 +614,7 @@ public abstract class AbstractCharacterObject extends AbstractAnimatedMapObject 
         effLock.lock();
         statWlock.lock();
         try {
-            if (remainingAp - deltaAp < 0 || hpMpApUsed + deltaAp < 0 || maxhp >= 30000) {
+            if (remainingAp - deltaAp < 0 || hpMpApUsed + deltaAp < 0 || maxhp >= GameConstants.getPlayerHpMpCap()) {
                 return false;
             }
 
@@ -633,7 +634,7 @@ public abstract class AbstractCharacterObject extends AbstractAnimatedMapObject 
         effLock.lock();
         statWlock.lock();
         try {
-            if (remainingAp - deltaAp < 0 || hpMpApUsed + deltaAp < 0 || maxmp >= 30000) {
+            if (remainingAp - deltaAp < 0 || hpMpApUsed + deltaAp < 0 || maxmp >= GameConstants.getPlayerHpMpCap()) {
                 return false;
             }
 
