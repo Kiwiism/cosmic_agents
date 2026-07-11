@@ -48,3 +48,19 @@ Source references: `ddfd9cb51e` and `03622d9d18`.
   grounded idle step only when a previously moving Agent completes a tick
   without any movement reconciliation. This clears stale WALK presentation
   without adding handler-specific settle calls or steady-state packet spam.
+
+## Portal Approach And Spawn Fall
+
+Source references: `569862626d` and `49cec7e234`.
+
+- Collision portals resolve a real rope or platform point within their trigger
+  box instead of assuming the WZ portal center is standable. The Agent graph
+  uses that point and its rope/ground region for same-map portal edges. The
+  service is also the reusable approach boundary for a future cross-map travel
+  capability; the removed legacy travel manager is not recreated.
+- Map transitions retain a portal spawn point when the floor is more than 12
+  pixels below it, initialize zero-velocity airborne state, and let ordinary
+  Agent gravity land the character. Near-ground and missing-ground transitions
+  preserve the existing snap behavior.
+- Navigation graph cache version 53 invalidates portal edges authored against
+  unstandable collision-portal centers.

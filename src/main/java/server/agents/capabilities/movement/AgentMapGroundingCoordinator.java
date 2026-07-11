@@ -21,6 +21,7 @@ public final class AgentMapGroundingCoordinator {
                 AgentFootholdIndexService::buildFhIndex,
                 AgentGroundingService::findGroundPoint,
                 AgentMovementPoseService::teleportTo,
+                AgentSpawnFallService::beginFall,
                 AgentMovementStateResetService::resetEntryStateAfterTeleport,
                 AgentNavigationGraphService::warmGraphAsync,
                 AgentMovementBroadcastService::broadcastMovement);

@@ -69,6 +69,22 @@ class AgentMapTransitionServiceTest {
     }
 
     @Test
+    void keepsPortalPositionAndStartsPhysicsWhenGroundIsFarBelow() {
+        MapleMap map = map(100000007);
+        Point current = new Point(30, 40);
+        Character agent = character(200, map, map.getId(), current);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
+        Counters counters = new Counters();
+
+        boolean grounded = AgentMapTransitionService.groundAfterMapChange(
+                entry, agent, hooks(counters, new Point(30, 100)));
+
+        assertTrue(grounded);
+        assertEquals(current, counters.teleportPoint.get());
+        assertEquals(1, counters.spawnFalls.get());
+    }
+
+    @Test
     void trackedMapChangeRunsGrindBeforeFollowAndCommonSideEffects() {
         MapleMap map = map(100000003);
         Character agent = character(200, map, map.getId(), new Point(10, 20));
@@ -153,6 +169,7 @@ class AgentMapTransitionServiceTest {
                     counters.teleports.incrementAndGet();
                     counters.teleportPoint.set(new Point(point));
                 },
+                (entry, agent) -> counters.spawnFalls.incrementAndGet(),
                 entry -> counters.resets.incrementAndGet(),
                 (map, profile) -> {
                     counters.graphWarms.incrementAndGet();
@@ -195,6 +212,7 @@ class AgentMapTransitionServiceTest {
         private final AtomicInteger groundQueries = new AtomicInteger();
         private final AtomicInteger teleports = new AtomicInteger();
         private final AtomicInteger resets = new AtomicInteger();
+        private final AtomicInteger spawnFalls = new AtomicInteger();
         private final AtomicInteger graphWarms = new AtomicInteger();
         private final AtomicInteger broadcasts = new AtomicInteger();
         private final AtomicInteger grindIssues = new AtomicInteger();
@@ -211,6 +229,7 @@ class AgentMapTransitionServiceTest {
             assertEquals(0, groundQueries.get());
             assertEquals(0, teleports.get());
             assertEquals(0, resets.get());
+            assertEquals(0, spawnFalls.get());
             assertEquals(0, graphWarms.get());
             assertEquals(0, broadcasts.get());
         }

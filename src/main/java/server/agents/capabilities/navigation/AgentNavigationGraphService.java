@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 52;
+    private static final int GRAPH_VERSION = 53;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1966,21 +1966,42 @@ public final class AgentNavigationGraphService {
         // causing findBelow to skip the correct foothold and land on the next lower platform.
         // Probe MAX_SNAP_DROP above the portal position so findBelow always finds the right foothold.
         int snapUp = AgentMovementPhysicsConfig.configuredMaxSnapDrop();
-        AgentNavigationGraph.Region from = findRegionBelow(map, regionsById, regionIdByFootholdId,
-                new Point(portal.getPosition().x, portal.getPosition().y - snapUp));
-        AgentNavigationGraph.Region to = findRegionBelow(map, regionsById, regionIdByFootholdId,
-                new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp));
+        Point portalApproach = AgentPortalApproachService.target(map, portal);
+        Point targetApproach = AgentPortalApproachService.target(map, targetPortal);
+        AgentNavigationGraph.Region from = findPortalApproachRegion(
+                portal, portalApproach, map, regionsById, regionIdByFootholdId, snapUp);
+        AgentNavigationGraph.Region to = findPortalApproachRegion(
+                targetPortal, targetApproach, map, regionsById, regionIdByFootholdId, snapUp);
         if (from == null || to == null) {
             return;
         }
 
-        Point start = from.pointAt(portal.getPosition().x);
-        Point end = to.pointAt(targetPortal.getPosition().x);
+        Point start = from.isRopeRegion ? new Point(portalApproach) : from.pointAt(portalApproach.x);
+        Point end = to.isRopeRegion ? new Point(targetApproach) : to.pointAt(targetApproach.x);
         // A single portal is instantaneous, so its base edge cost is 0. The only real time a
         // portal costs is the post-use cooldown the bot pays when it chains straight into another
         // portal; that is modelled path-dependently in AgentNavigationPathService A* (the viaPortal
         // state flag), not as a flat per-edge cost. See PORTAL_USE_COOLDOWN_MS.
         addEdge(from.id, to.id, AgentNavigationGraph.EdgeType.PORTAL, start, end, 0, portal.getId(), 0, outgoing, edgeKeys);
+    }
+
+    private static AgentNavigationGraph.Region findPortalApproachRegion(
+            Portal portal,
+            Point approach,
+            MapleMap map,
+            Map<Integer, AgentNavigationGraph.Region> regionsById,
+            Map<Integer, Integer> regionIdByFootholdId,
+            int snapUp) {
+        if (portal.getType() == AgentPortalApproachService.COLLISION_PORTAL_TYPE) {
+            for (AgentNavigationGraph.Region region : regionsById.values()) {
+                if (region.isRopeRegion && approach.x == region.minX
+                        && approach.y >= region.minY && approach.y <= region.maxY) {
+                    return region;
+                }
+            }
+        }
+        return findRegionBelow(map, regionsById, regionIdByFootholdId,
+                new Point(approach.x, approach.y - snapUp));
     }
 
     private static Map<Integer, List<Integer>> buildFeatureXsByRegionId(MapleMap map,
@@ -1997,16 +2018,18 @@ public final class AgentNavigationGraphService {
 
         for (Portal portal : map.getPortals()) {
             int snapUp = AgentMovementPhysicsConfig.configuredMaxSnapDrop();
-            Point portalProbe = new Point(portal.getPosition().x, portal.getPosition().y - snapUp);
-            addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portal.getPosition().x);
+            Point portalApproach = AgentPortalApproachService.target(map, portal);
+            Point portalProbe = new Point(portalApproach.x, portalApproach.y - snapUp);
+            addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, portalProbe), portalApproach.x);
             if (portal.getTargetMapId() != map.getId()) {
                 continue;
             }
 
             Portal targetPortal = map.getPortal(portal.getTarget());
             if (targetPortal != null) {
-                Point targetProbe = new Point(targetPortal.getPosition().x, targetPortal.getPosition().y - snapUp);
-                addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, targetProbe), targetPortal.getPosition().x);
+                Point targetApproach = AgentPortalApproachService.target(map, targetPortal);
+                Point targetProbe = new Point(targetApproach.x, targetApproach.y - snapUp);
+                addFeatureX(featureXs, findRegionIdBelow(map, regionIdByFootholdId, targetProbe), targetApproach.x);
             }
         }
 

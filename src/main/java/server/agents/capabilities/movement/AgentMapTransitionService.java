@@ -19,9 +19,15 @@ public final class AgentMapTransitionService {
         void teleport(AgentRuntimeEntry entry, Character agent, Point position);
     }
 
+    @FunctionalInterface
+    public interface SpawnFallInitializer {
+        void begin(AgentRuntimeEntry entry, Character agent);
+    }
+
     public record GroundingHooks(Function<MapleMap, Map<Integer, Foothold>> footholdIndexBuilder,
                                  BiFunction<MapleMap, Point, Point> groundPointFinder,
                                  TeleportAction teleporter,
+                                 SpawnFallInitializer spawnFallInitializer,
                                  Consumer<AgentRuntimeEntry> afterTeleportReset,
                                  BiConsumer<MapleMap, AgentMovementProfile> graphWarmer,
                                  Consumer<AgentRuntimeEntry> movementBroadcaster) {
@@ -49,8 +55,12 @@ public final class AgentMapTransitionService {
         AgentMapStateRuntime.setMapTracking(entry, agent.getMapId(), hooks.footholdIndexBuilder().apply(map));
         Point current = agent.getPosition();
         Point ground = hooks.groundPointFinder().apply(map, new Point(current.x, current.y - 1));
-        hooks.teleporter().teleport(entry, agent, ground != null ? ground : current);
+        boolean spawnFall = AgentSpawnFallService.shouldFall(current, ground);
+        hooks.teleporter().teleport(entry, agent, spawnFall || ground == null ? current : ground);
         hooks.afterTeleportReset().accept(entry);
+        if (spawnFall) {
+            hooks.spawnFallInitializer().begin(entry, agent);
+        }
         hooks.graphWarmer().accept(map, AgentMovementStateRuntime.movementProfile(entry));
         hooks.movementBroadcaster().accept(entry);
         return true;
