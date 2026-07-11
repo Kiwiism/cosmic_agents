@@ -333,4 +333,5 @@ class BotMovementSimulationLabTest {
 
     private record LedgeDropScenario(AgentNavigationGraph.Edge edge, Point startPoint) {
     }
+
 }

@@ -39,7 +39,7 @@ import java.util.concurrent.RejectedExecutionException;
 public final class AgentNavigationGraphService {
     private static final Logger log = LoggerFactory.getLogger(AgentNavigationGraphService.class);
 
-    private static final int GRAPH_VERSION = 50;
+    private static final int GRAPH_VERSION = 51;
     private static final int ENDPOINT_ANCHOR_SPACING_PX = 10;
     private static final int DOWN_JUMP_PRELAUNCH_WINDOW_PX = 20;
     private static final int SAME_SOLID_NEST_GAP_PX = 8;
@@ -1060,12 +1060,18 @@ public final class AgentNavigationGraphService {
             return;
         }
 
+        // Keep the established route weight while authoring the endpoint from the
+        // execution-accurate walk-off simulation. Sub-tick acceleration detail must
+        // not make A* abandon a previously preferred, valid local drop route.
+        int travelMs = AgentJumpProbeService.estimateFallLandingTimeMs(map, endpoint, stepX)
+                + estimateHorizontalTravelTimeMs(actualRunway, movementProfile);
+
         addEdge(from.id, below.id, AgentNavigationGraph.EdgeType.DROP,
                 startPoint,
                 landing.point(),
                 stepX,
                 0,
-                walkOff.travelTimeMs(),
+                travelMs,
                 outgoing,
                 edgeKeys);
     }

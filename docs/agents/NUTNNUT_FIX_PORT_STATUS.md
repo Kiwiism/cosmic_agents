@@ -94,7 +94,10 @@ Execution accepts any real descending dismount out of the source region rather
 than requiring a knife-edge landing-region match. Narrow jump windows expand
 to at least one motor step, and the stuck watchdog treats movement inside a
 16-pixel drift radius as a bounce rather than progress. Agent graph cache
-version 50 invalidates lip-authored DROP edges.
+version 51 invalidates lip-authored DROP edges and the initial walk-off timing
+weights. Directional edges retain the established route-cost estimate while
+using the execution simulation for their landing endpoint, preserving legacy
+route selection on Pet-Walking-Road without restoring incorrect destinations.
 
 ## Combat: magic passive damage refresh
 
