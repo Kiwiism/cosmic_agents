@@ -2,6 +2,22 @@
 
 Branch: `port/nutnnut-agent-correctness-population`
 
+## Movement-skill client packet rendering
+
+Source references: `37065bf620` and `2dc063adfc` from the source branches.
+
+Agent movement broadcasting now owns the verified v83 packet encodings for
+Flash Jump and Teleport. Flash Jump command 6 is preceded by an absolute
+position fragment in the same movement path. Teleport uses the client decode
+layout (`x`, `y`, foothold, stance, elapsed), keeps elapsed at zero, and follows
+the origin/destination fragments with an absolute landing settle. Focused byte
+layout tests preserve both visual fixes.
+
+This ports the client-GFX corrections only. Skill eligibility, MP consumption,
+physics impulses, and navigation graph edges remain separate capability work;
+ordinary Agent movement behavior is unchanged until those execution paths call
+the new broadcasters.
+
 ## Quest-status placeholder persistence
 
 Source reference: `85249c8f0f` from

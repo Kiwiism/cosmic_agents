@@ -295,10 +295,16 @@ Related server/economy hardening item: `docs/SERVER_SCALE_TODO.md`.
   - Current bot movement only uses walking/jumping/climbing/portals plus recovery teleports.
   - No agent capability was found that casts/uses Teleport as a movement skill.
   - Future design should model Teleport as a validated short-range movement capability with MP cost, cooldown/action delay, collision/foothold validation, and path planner integration.
+  - The verified client packet layout from source commit `2dc063adfc` is now
+    available through `AgentMovementBroadcastService`; capability execution and
+    navigation wiring are still outstanding.
 - [ ] Implement agent Flash Jump movement capability.
   - Skill constants exist for Hermit/Night Walker, and thief builds learn Flash Jump.
   - No agent capability was found that casts/uses Flash Jump as a movement skill.
   - Future design should model Flash Jump as an airborne movement extension with MP cost, skill level distance scaling, movement packet/action timing, and navigation graph support.
+  - The absolute-anchor visual fix from source commit `37065bf620` is now
+    available through `AgentMovementBroadcastService`; capability execution and
+    navigation wiring are still outstanding.
 
 ## Spell And Skill Capability Coverage
 
