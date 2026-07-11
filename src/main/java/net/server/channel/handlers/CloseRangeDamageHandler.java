@@ -96,8 +96,8 @@ public final class CloseRangeDamageHandler extends AbstractDealDamageHandler {
         if (GameConstants.isFinisherSkill(attack.skill)) {
             if (comboBuff != null) {
                 numFinisherOrbs = comboBuff - 1;
+                chr.handleOrbconsume();
             }
-            chr.handleOrbconsume();
         } else if (attack.numAttacked > 0) {
             if (attack.skill != 1111008 && comboBuff != null) {
                 int orbcount = chr.getBuffedValue(BuffStat.COMBO);

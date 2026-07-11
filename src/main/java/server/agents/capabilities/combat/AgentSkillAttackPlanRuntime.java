@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import client.BuffStat;
 import client.Skill;
 import client.inventory.WeaponType;
 import constants.skills.DragonKnight;
@@ -27,6 +28,9 @@ public final class AgentSkillAttackPlanRuntime {
         Skill skill = skills.getSkill(skillId);
         int skillLevel = skill == null ? 0 : bot.getSkillLevel(skill);
         StatEffect effect = skill == null || skillLevel <= 0 ? null : skill.getEffect(skillLevel);
+        if (!AgentComboFinisherPolicy.canPlan(skillId, bot.getBuffedValue(BuffStat.COMBO))) {
+            return null;
+        }
         AgentSkillAttackPlanner.SkillAttackReadiness readiness = AgentSkillAttackPlanner.skillAttackReadiness(
                 skillId,
                 skillId != 0 && bot.skillIsCooling(skillId),

@@ -105,3 +105,12 @@ it resolves a fresh profile for every attack, while the shared formula provider
 already applies Element Amplification. A regression now changes the passive
 skill level between consecutive resolutions and verifies that magic damage
 updates immediately, proving that stale cached passive state cannot survive.
+
+## Combat: combo-finisher orb guard
+
+Source reference: `0399459152` from `source/dev`.
+
+Agent attack planning now rejects Panic and Coma unless the COMBO buff value
+represents at least one held orb. The shared close-range execution handler also
+consumes an orb only while the buff still exists, covering expiry between plan
+and execution without changing ordinary close-range attack behavior.
