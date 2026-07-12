@@ -35,6 +35,7 @@ live pass.
 | Agent cache/tick failure after exchange recovers forward | `ProfileTransitionCoordinatorTest.agentCacheRebuildFailureAfterExchangeRecoversForwardAndResumesBarrier` | Fault-injection pass |
 | Simultaneous trigger requests execute one transition | `AdventurerPartnerServiceTest.simultaneousSwitchRequestsExecuteOnlyOneTransition` | Fault-injection pass |
 | Presentation order, packet-safe inventory chunks, final action enable, and both public actor look refreshes | `InventoryPacketChunkerTest`, `CosmicProfilePresentationServiceTest` | Automated adapter pass; observer-client pending |
+| Partner switching emits skill packets only for added, removed, level-changed, master-level-changed, or expiration-changed records; ordinary job advancement remains outside this adapter | `CosmicProfilePresentationServiceTest.partnerRefreshOnlySendsSkillRecordsThatDifferBetweenProfiles`; structural scope audit | Automated pass; live hitch comparison pending |
 | Prepared presentation snapshots do not grow across sessions | `CosmicProfilePresentationServiceTest`, successful-release and failed-activation eviction tests | Automated pass |
 | Presentation failure keeps the server binding authoritative | `ProfileTransitionCoordinatorTest.presentationFailureKeepsCommittedServerBinding` | Fault-injection pass |
 | Disconnect during presentation waits for the transition and restores canonical ownership | `PartnerRecoveryServiceTest.disconnectDuringPresentationRefreshWaitsThenRestoresCanonicalOwnership` | Fault-injection pass |

@@ -5,6 +5,7 @@ import client.Client;
 import client.Job;
 import client.MonsterBook;
 import client.QuestStatus;
+import client.Skill;
 import config.YamlConfig;
 import net.opcodes.SendOpcode;
 import net.packet.Packet;
@@ -30,6 +31,59 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CosmicProfilePresentationServiceTest {
+    @Test
+    void partnerRefreshOnlySendsSkillRecordsThatDifferBetweenProfiles() throws Exception {
+        CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
+        Character human = character(900_001, "SkillA");
+        Character partner = character(900_002, "SkillB");
+        Client humanClient = mock(Client.class);
+        human.setClient(humanClient);
+
+        attachSkill(human, 1000000, 1, 0, -1L);       // unchanged
+        attachSkill(partner, 1000000, 1, 0, -1L);
+        attachSkill(human, 1000001, 1, 0, -1L);       // removed
+        attachSkill(partner, 1000002, 1, 0, -1L);     // added
+        attachSkill(human, 1000003, 1, 0, -1L);       // level changed
+        attachSkill(partner, 1000003, 2, 0, -1L);
+        attachSkill(human, 1000004, 1, 10, -1L);      // master level changed
+        attachSkill(partner, 1000004, 1, 20, -1L);
+        attachSkill(human, 1000005, 1, 0, 100L);      // expiration changed
+        attachSkill(partner, 1000005, 1, 0, 200L);
+
+        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.publicPresentation;
+        YamlConfig.config.adventurerPartner.publicPresentation = false;
+        try {
+            presentation.prepare(human, partner);
+            Character.ProfileExchangeResult exchange =
+                    Character.exchangeProfileBindings(human, partner);
+
+            presentation.refresh(human, partner, PartnerMode.SOLO_TAG, exchange);
+
+            ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
+            verify(humanClient, atLeastOnce()).sendPacket(packets.capture());
+            List<byte[]> skillPackets = packets.getAllValues().stream()
+                    .filter(packet -> opcode(packet.getBytes()) == SendOpcode.UPDATE_SKILLS.getValue())
+                    .map(Packet::getBytes)
+                    .toList();
+            assertEquals(5, skillPackets.size());
+            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
+                    bytes, PacketCreator.updateSkill(1000001, -1, 0, -1L).getBytes())));
+            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
+                    bytes, PacketCreator.updateSkill(1000002, 1, 0, -1L).getBytes())));
+            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
+                    bytes, PacketCreator.updateSkill(1000003, 2, 0, -1L).getBytes())));
+            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
+                    bytes, PacketCreator.updateSkill(1000004, 1, 20, -1L).getBytes())));
+            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
+                    bytes, PacketCreator.updateSkill(1000005, 1, 0, 200L).getBytes())));
+            assertFalse(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
+                    bytes, PacketCreator.updateSkill(1000000, 1, 0, -1L).getBytes())));
+        } finally {
+            YamlConfig.config.adventurerPartner.publicPresentation = previousPublicPresentation;
+            presentation.discardPrepared(human, partner);
+        }
+    }
+
     @Test
     void preparedSnapshotsAreDiscardedAtSessionEnd() throws Exception {
         CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
@@ -140,6 +194,16 @@ class CosmicProfilePresentationServiceTest {
         monsterBook.setAccessible(true);
         monsterBook.set(character, new MonsterBook());
         return character;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void attachSkill(Character character, int skillId, int level,
+                                    int masterLevel, long expiration) throws Exception {
+        var field = Character.class.getDeclaredField("skills");
+        field.setAccessible(true);
+        ((Map<Skill, Character.SkillEntry>) field.get(character)).put(
+                new Skill(skillId),
+                new Character.SkillEntry((byte) level, masterLevel, expiration));
     }
 
     @SuppressWarnings("unchecked")

@@ -142,13 +142,27 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
     private static void refreshSkills(PacketCounter counter,
                                       PreparedStaticPresentation oldProfile,
                                       PreparedStaticPresentation newProfile) {
+        Map<Integer, SkillSnapshot> oldSkillsById = new LinkedHashMap<>();
         for (SkillSnapshot oldSkill : oldProfile.skills()) {
-            counter.send("skills", PacketCreator.updateSkill(
-                    oldSkill.skillId(), -1, 0, -1));
+            oldSkillsById.put(oldSkill.skillId(), oldSkill);
+        }
+        Map<Integer, SkillSnapshot> newSkillsById = new LinkedHashMap<>();
+        for (SkillSnapshot newSkill : newProfile.skills()) {
+            newSkillsById.put(newSkill.skillId(), newSkill);
+        }
+
+        for (SkillSnapshot oldSkill : oldProfile.skills()) {
+            if (!newSkillsById.containsKey(oldSkill.skillId())) {
+                counter.send("skills", PacketCreator.updateSkill(
+                        oldSkill.skillId(), -1, 0, -1));
+            }
         }
         for (SkillSnapshot newSkill : newProfile.skills()) {
-            counter.send("skills", PacketCreator.updateSkill(
-                    newSkill.skillId(), newSkill.level(), newSkill.masterLevel(), newSkill.expiration()));
+            if (!newSkill.equals(oldSkillsById.get(newSkill.skillId()))) {
+                counter.send("skills", PacketCreator.updateSkill(
+                        newSkill.skillId(), newSkill.level(),
+                        newSkill.masterLevel(), newSkill.expiration()));
+            }
         }
     }
 
