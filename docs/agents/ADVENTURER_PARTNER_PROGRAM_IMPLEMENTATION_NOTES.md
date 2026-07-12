@@ -28,11 +28,13 @@ The removed snapshot/row-replacement Double Agent POC is not used or restored.
 - Solo Tag keeps the Partner profile in a detached, dormant holder. Double Partner uses the existing headless Agent lifecycle and Follow runtime.
 - `CharacterProfileBinding` carries canonical owner, binding generation, and mutation version independently of actor ID.
 - Profile exchange keeps actor IDs, clients/controllers, map membership, object IDs, positions, footholds, and movement fixed while exchanging the profile-owned object graph in O(1).
+- Derived-stat reconstruction now runs after the O(1) binding exchange and outside the profile locks; the recorded lock duration therefore measures the atomic exchange rather than WZ-backed equipment reconstruction.
 - Canonical saves route stats, inventories, equipment, skills, keymap/macros/quickslots, quests, Monster Book, pets, locations, cooldowns, diseases, and profile progression through the attached profile owner ID.
 - Actor-owned social/map/session state keeps the actor ID and a separate dirty signal. Account storage is not exchanged.
 - Agent ticks use a scheduler-independent read/write transition barrier. Scoped callbacks and mailbox actions carry a transition generation and reject stale work.
 - Buff, disease, cooldown, quest, item-expiry, and pet-hunger callbacks are owner/generation stamped. A profile transition drains in-flight callbacks before the O(1) binding exchange and rebuilds actor-bound schedules afterward.
 - Activation precomputes copied skill, binding, inventory, and slot-limit presentation inputs by profile owner/version. Agent movement and combat caches are warmed before switching is enabled.
+- Prepared presentation snapshots are discarded after successful release and failed activation, preventing copied inventory/macro state from accumulating across sessions.
 - Presentation cancels old state, refreshes complete local state in deterministic packet-safe chunks, updates public appearance/effects, and records packet counts/bytes by category.
 - Disconnect, channel transition, Agent removal, and the GM `!partnerprogram diag|recover [characterId]` surface route through `PartnerRecoveryService`.
 - Channel, Cash Shop, and MTS transitions synchronously require canonical recovery before actor-keyed buff export or persistence. Failed saves and Agent teardown leave the runtime and leases available for a deterministic retry.
@@ -50,10 +52,12 @@ Canonical names are deliberately not mutated. The human actor and Agent actor re
 
 ## Verification status
 
-- Focused Partner/profile/Agent/login/deletion and shared bot-combat regression suite: 243 tests across 30 reports passed, 0 failures, 0 errors, 0 skipped.
-- The focused suite includes 1,000 repeated binding-and-lease reversals, release retry fault injection, post-exchange authoritative recovery, SWAPPING disconnect recovery, login/deletion reservation races, mailbox barrier rejection, and Agent cache owner/version stamping.
+- Focused Partner/profile/persistence/Agent/login/deletion and shared bot-combat regression suite: 263 tests across 34 reports passed, 0 failures, 0 errors, 0 skipped.
+- The focused suite includes two 1,000-iteration soaks (domain reversal and full Double coordinator), complete profile-bundle exchange, real presentation packet ordering/public-look calls, release retry fault injection, disconnect during presentation, Agent cache-rebuild failure, simultaneous triggers, stale profile-task rejection, SWAPPING recovery, login/deletion reservation races, mailbox barrier rejection, and Agent cache owner/version stamping.
 - `mvnw.cmd -q -DskipTests package`: passed after the final production-code changes.
 - `node --check scripts/npc/9000036.js`: passed.
 - Liquibase changelog XML parsed successfully. Migration `026-adventurer-partner.sql` was applied against a disposable MySQL 8.4 schema; constraints, two-row quickslot migration, and link/session cascade behavior passed, and the disposable schema was removed. The existing `cosmic` database was not modified.
-- The full repository suite produced 513 suite reports before stalling after `AgentNavigationGraphFallbackTest`; isolated `AgentNavigationGraphServiceTest` also timed out without producing a report. No navigation-graph files are changed by this branch.
+- Independent worktree catalogs were generated from the read-only WZ junction and verified: game 75/75, NPC 115/115, reactor 7/7, and derived Agent/LLM 51/51. `AgentCatalogServiceTest` then passed.
+- A bounded expanded repository run produced 3,798 tests across 513 reports with 0 errors and 3 skips before entering the unrelated CPU-heavy `BotMovementSimulationLabTest`. Its single movement-fidget failure passed immediately in isolation. Earlier thread dumps likewise isolated `AgentNavigationGraphServiceTest` and `AgentPhysicsEngineTest` as navigation-graph bottlenecks. No navigation-graph files are changed by this branch.
+- The requirement-to-evidence and live execution checklist is recorded in `ADVENTURER_PARTNER_PROGRAM_ACCEPTANCE_MATRIX.md`.
 - Real v83 client acceptance, nearby-observer verification, live disconnect/save fault injection, and a long-running server/client memory soak still require the game client/server test environment. They must not be inferred from unit tests.

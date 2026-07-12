@@ -6,6 +6,9 @@ public interface ProfilePresentationService {
     default void prepare(Character firstProfile, Character secondProfile) {
     }
 
+    default void discardPrepared(Character firstProfile, Character secondProfile) {
+    }
+
     RefreshMetrics refresh(Character humanActor,
                            Character partnerActorOrDormantProfile,
                            PartnerMode mode,

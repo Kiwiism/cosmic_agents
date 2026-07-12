@@ -49,6 +49,18 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
     }
 
     @Override
+    public void discardPrepared(Character firstProfile, Character secondProfile) {
+        discardPrepared(firstProfile);
+        discardPrepared(secondProfile);
+    }
+
+    private void discardPrepared(Character profile) {
+        if (profile != null) {
+            preparedByProfileOwner.remove(profile.getProfileOwnerCharacterId());
+        }
+    }
+
+    @Override
     public RefreshMetrics refresh(Character humanActor,
                                   Character partnerActorOrDormantProfile,
                                   PartnerMode mode,

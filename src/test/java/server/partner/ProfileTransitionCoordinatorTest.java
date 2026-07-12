@@ -2,6 +2,8 @@ package server.partner;
 
 import client.Character;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentTransitionBarrierState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +52,8 @@ class ProfileTransitionCoordinatorTest {
         verify(human).exitProfileTransitionWindow();
         verify(dormant).enterProfileTransitionWindow();
         verify(dormant).exitProfileTransitionWindow();
+        verify(human).rebuildDerivedProfileStats();
+        verify(dormant).rebuildDerivedProfileStats();
     }
 
     @Test
@@ -133,6 +138,119 @@ class ProfileTransitionCoordinatorTest {
         assertEquals(0, leases.leaseForProfile(10).orElseThrow().actorCharacterId());
         verify(human).rebuildDerivedProfileStats();
         verify(dormant).rebuildDerivedProfileStats();
+    }
+
+    @Test
+    void agentCacheRebuildFailureAfterExchangeRecoversForwardAndResumesBarrier() {
+        ProfileLeaseRegistry leases = new ProfileLeaseRegistry();
+        PartnerSessionRuntime session = new PartnerSessionRuntime(
+                9L, 6L, 10, 20, 10, 20, PartnerMode.DOUBLE_PARTNER);
+        session.activate();
+        assertTrue(leases.acquire(9L, Map.of(10, 10, 20, 20)).acquired());
+        AtomicInteger humanOwner = new AtomicInteger(10);
+        AtomicInteger agentOwner = new AtomicInteger(20);
+        Character human = characterWithDynamicOwner(humanOwner);
+        Character agent = characterWithDynamicOwner(agentOwner);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        AgentTransitionBarrierState barrier = new AgentTransitionBarrierState();
+        when(entry.transitionBarrierState()).thenReturn(barrier);
+        ProfilePresentationService presentation = mock(ProfilePresentationService.class);
+        when(presentation.refresh(
+                org.mockito.ArgumentMatchers.eq(human),
+                org.mockito.ArgumentMatchers.eq(agent),
+                org.mockito.ArgumentMatchers.eq(PartnerMode.DOUBLE_PARTNER),
+                org.mockito.ArgumentMatchers.any(Character.ProfileExchangeResult.class)))
+                .thenReturn(new ProfilePresentationService.RefreshMetrics(7, 112L, 700L));
+        PartnerProfileCacheInvalidator invalidator = mock(PartnerProfileCacheInvalidator.class);
+        doThrow(new IllegalStateException("agent tick cache fault"))
+                .doNothing()
+                .when(invalidator).invalidate(entry, agent);
+        List<JournalEvent> journal = new ArrayList<>();
+        ProfileTransitionCoordinator coordinator = new ProfileTransitionCoordinator(
+                leases,
+                presentation,
+                invalidator,
+                (sessionId, orientation, generation, status, reason) ->
+                        journal.add(new JournalEvent(sessionId, orientation, generation, status, reason)),
+                (left, right) -> {
+                    humanOwner.set(20);
+                    agentOwner.set(10);
+                    return new Character.ProfileExchangeResult(20, 10, 1L, 1L, 200L);
+                });
+
+        ProfileTransitionCoordinator.TransitionResult result = coordinator.transition(
+                session, human, agent, entry, 0L);
+
+        assertTrue(result.committed());
+        assertTrue(result.presentationComplete());
+        assertEquals(ProfileOrientation.SWAPPED, session.bindings().orientation());
+        assertEquals(10, leases.leaseForProfile(20).orElseThrow().actorCharacterId());
+        assertEquals(20, leases.leaseForProfile(10).orElseThrow().actorCharacterId());
+        assertFalse(barrier.isPaused());
+        verify(invalidator, times(2)).invalidate(entry, agent);
+        assertTrue(journal.getLast().reason().contains("agent tick cache fault"));
+    }
+
+    @Test
+    void thousandDoubleTransitionsKeepBindingsLeasesBarrierAndJournalConsistent() {
+        ProfileLeaseRegistry leases = new ProfileLeaseRegistry();
+        PartnerSessionRuntime session = new PartnerSessionRuntime(
+                11L, 12L, 10, 20, 10, 20, PartnerMode.DOUBLE_PARTNER);
+        session.activate();
+        assertTrue(leases.acquire(11L, Map.of(10, 10, 20, 20)).acquired());
+        AtomicInteger humanOwner = new AtomicInteger(10);
+        AtomicInteger agentOwner = new AtomicInteger(20);
+        Character human = characterWithDynamicOwner(humanOwner);
+        Character agent = characterWithDynamicOwner(agentOwner);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        AgentTransitionBarrierState barrier = new AgentTransitionBarrierState();
+        when(entry.transitionBarrierState()).thenReturn(barrier);
+        ProfilePresentationService presentation = mock(ProfilePresentationService.class);
+        when(presentation.refresh(
+                org.mockito.ArgumentMatchers.eq(human),
+                org.mockito.ArgumentMatchers.eq(agent),
+                org.mockito.ArgumentMatchers.eq(PartnerMode.DOUBLE_PARTNER),
+                org.mockito.ArgumentMatchers.any(Character.ProfileExchangeResult.class)))
+                .thenReturn(new ProfilePresentationService.RefreshMetrics(6, 96L, 600L));
+        PartnerProfileCacheInvalidator invalidator = mock(PartnerProfileCacheInvalidator.class);
+        List<JournalEvent> journal = new ArrayList<>();
+        ProfileTransitionCoordinator coordinator = new ProfileTransitionCoordinator(
+                leases,
+                presentation,
+                invalidator,
+                (sessionId, orientation, generation, status, reason) ->
+                        journal.add(new JournalEvent(sessionId, orientation, generation, status, reason)),
+                (left, right) -> {
+                    int previousHuman = humanOwner.get();
+                    humanOwner.set(agentOwner.get());
+                    agentOwner.set(previousHuman);
+                    return new Character.ProfileExchangeResult(
+                            humanOwner.get(), agentOwner.get(),
+                            session.generation(), session.generation(), 100L);
+                },
+                ignored -> { });
+
+        for (int transition = 0; transition < 1_000; transition++) {
+            ProfileTransitionCoordinator.TransitionResult result = coordinator.transition(
+                    session, human, agent, entry, session.generation());
+            assertTrue(result.committed());
+            assertTrue(result.presentationComplete());
+        }
+
+        assertEquals(ProfileOrientation.CANONICAL, session.bindings().orientation());
+        assertEquals(10, humanOwner.get());
+        assertEquals(20, agentOwner.get());
+        assertEquals(10, leases.leaseForProfile(10).orElseThrow().actorCharacterId());
+        assertEquals(20, leases.leaseForProfile(20).orElseThrow().actorCharacterId());
+        assertEquals(1_000L, session.generation());
+        assertEquals(1_000, journal.size());
+        assertFalse(barrier.isPaused());
+        verify(presentation, times(1_000)).refresh(
+                org.mockito.ArgumentMatchers.eq(human),
+                org.mockito.ArgumentMatchers.eq(agent),
+                org.mockito.ArgumentMatchers.eq(PartnerMode.DOUBLE_PARTNER),
+                org.mockito.ArgumentMatchers.any(Character.ProfileExchangeResult.class));
+        verify(invalidator, times(1_000)).invalidate(entry, agent);
     }
 
     private static PartnerSessionRuntime soloSession() {

@@ -13,6 +13,11 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,6 +40,7 @@ class AdventurerPartnerServiceTest {
     private PartnerRuntimeRegistry runtimes;
     private PartnerRosterQueryService.RuntimeAvailability availability;
     private PartnerAgentLifecycleBridge agents;
+    private PartnerTriggerPolicy triggerPolicy;
     private ProfileTransitionCoordinator transitions;
     private AdventurerPartnerService service;
     private Character player;
@@ -51,6 +58,7 @@ class AdventurerPartnerServiceTest {
         runtimes = new PartnerRuntimeRegistry();
         availability = mock(PartnerRosterQueryService.RuntimeAvailability.class);
         agents = mock(PartnerAgentLifecycleBridge.class);
+        triggerPolicy = mock(PartnerTriggerPolicy.class);
         transitions = mock(ProfileTransitionCoordinator.class);
         service = new AdventurerPartnerService(
                 config,
@@ -60,7 +68,7 @@ class AdventurerPartnerServiceTest {
                 runtimes,
                 new PartnerRosterQueryService(repository, availability),
                 agents,
-                new PartnerTriggerPolicy(),
+                triggerPolicy,
                 transitions);
 
         player = character(10, 10, 1, 0);
@@ -108,6 +116,7 @@ class AdventurerPartnerServiceTest {
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 1L,
                 PartnerLifecycleStatus.CLOSED, "test release");
+        verify(transitions).discardPreparedProfiles(player, partner);
     }
 
     @Test
@@ -184,6 +193,21 @@ class AdventurerPartnerServiceTest {
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 0L,
                 PartnerLifecycleStatus.FAILED, "Canonical profile load failed");
+        verify(transitions).discardPreparedProfiles(player, null);
+    }
+
+    @Test
+    void failureAfterPresentationPrecomputeDiscardsPreparedSnapshots() throws Exception {
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        doThrow(new IllegalStateException("precompute failed"))
+                .when(transitions).prepareProfiles(player, partner);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.activate(player, PartnerMode.SOLO_TAG));
+
+        verify(transitions).discardPreparedProfiles(player, partner);
+        assertFalse(leases.isLeased(10));
+        assertFalse(leases.isLeased(20));
     }
 
     @Test
@@ -225,6 +249,45 @@ class AdventurerPartnerServiceTest {
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 2L,
                 PartnerLifecycleStatus.CLOSED, "retry after fault injection");
+    }
+
+    @Test
+    void simultaneousSwitchRequestsExecuteOnlyOneTransition() throws Exception {
+        config.switchCooldownMs = 0L;
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        when(triggerPolicy.validate(any(), any()))
+                .thenReturn(new PartnerTriggerPolicy.Result(true, null));
+        CountDownLatch transitionEntered = new CountDownLatch(1);
+        CountDownLatch allowTransition = new CountDownLatch(1);
+        when(transitions.transition(any(), any(), any(), any(), anyLong()))
+                .thenAnswer(invocation -> {
+                    transitionEntered.countDown();
+                    assertTrue(allowTransition.await(10, TimeUnit.SECONDS));
+                    return new ProfileTransitionCoordinator.TransitionResult(
+                            true, true, 1L, 1L, 0L,
+                            ProfilePresentationService.RefreshMetrics.none(), null);
+                });
+        service.activate(player, PartnerMode.SOLO_TAG);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<AdventurerPartnerService.TriggerResult> first = executor.submit(
+                    () -> service.handleSwitchTrigger(player, config.triggerSkillIds.getFirst()));
+            assertTrue(transitionEntered.await(10, TimeUnit.SECONDS));
+
+            AdventurerPartnerService.TriggerResult simultaneous =
+                    service.handleSwitchTrigger(player, config.triggerSkillIds.getFirst());
+
+            assertTrue(simultaneous.handled());
+            assertFalse(simultaneous.switched());
+            assertTrue(simultaneous.message().contains("lifecycle operation"));
+            allowTransition.countDown();
+            assertTrue(first.get(10, TimeUnit.SECONDS).switched());
+            verify(transitions, times(1)).transition(any(), any(), any(), any(), anyLong());
+        } finally {
+            allowTransition.countDown();
+            executor.shutdownNow();
+            service.release(player, "simultaneous trigger test cleanup");
+        }
     }
 
     @Test

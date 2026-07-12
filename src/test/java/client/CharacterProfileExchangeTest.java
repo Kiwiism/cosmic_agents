@@ -2,16 +2,25 @@ package client;
 
 import client.inventory.InventoryType;
 import client.inventory.Item;
+import client.inventory.Equip;
+import client.inventory.Pet;
 import client.keybind.KeyBinding;
 import org.junit.jupiter.api.Test;
+import server.TimerManager;
+import server.life.MobSkill;
+import tools.Pair;
 
 import java.awt.Point;
 import java.sql.ResultSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -38,6 +47,38 @@ class CharacterProfileExchangeTest {
         second.changeQuickslotKeybinding(secondQuickslots);
         first.updateMacros(0, new SkillMacro(1000, 1001, 1002, "Pio macro", 0, 0));
         second.updateMacros(0, new SkillMacro(2000, 2001, 2002, "Yoona macro", 1, 0));
+        first.setClient(mock(Client.class));
+        second.setClient(mock(Client.class));
+        first.gainMeso(1_000, false);
+        second.gainMeso(2_000, false);
+        Skill firstSkill = mock(Skill.class);
+        Skill secondSkill = mock(Skill.class);
+        when(firstSkill.getId()).thenReturn(4_111_001);
+        when(secondSkill.getId()).thenReturn(2_101_001);
+        setField(first, "skills", new LinkedHashMap<>(Map.of(
+                firstSkill, new Character.SkillEntry((byte) 11, 20, -1L))));
+        setField(second, "skills", new LinkedHashMap<>(Map.of(
+                secondSkill, new Character.SkillEntry((byte) 7, 10, -1L))));
+        QuestStatus firstQuest = mock(QuestStatus.class);
+        QuestStatus secondQuest = mock(QuestStatus.class);
+        questMap(first).put((short) 100, firstQuest);
+        questMap(second).put((short) 200, secondQuest);
+        MonsterBook firstBook = new MonsterBook();
+        MonsterBook secondBook = new MonsterBook();
+        setField(first, "monsterbook", firstBook);
+        setField(second, "monsterbook", secondBook);
+        Pet firstPet = mock(Pet.class);
+        Pet secondPet = mock(Pet.class);
+        first.addPet(firstPet);
+        second.addPet(secondPet);
+        first.addCooldown(4_111_001, 1_000L, 60_000L);
+        second.addCooldown(2_101_001, 2_000L, 90_000L);
+        MobSkill firstDiseaseSkill = mock(MobSkill.class);
+        MobSkill secondDiseaseSkill = mock(MobSkill.class);
+        first.silentApplyDiseases(Map.of(
+                Disease.SLOW, new Pair<>(60_000L, firstDiseaseSkill)));
+        second.silentApplyDiseases(Map.of(
+                Disease.SEAL, new Pair<>(90_000L, secondDiseaseSkill)));
 
         Character.ProfileExchangeResult result = Character.exchangeProfileState(first, second, false);
 
@@ -69,6 +110,20 @@ class CharacterProfileExchangeTest {
                 second.getQuickslotBindingForPresentation().GetKeybindings());
         assertEquals("Yoona macro", first.getMacros()[0].getName());
         assertEquals("Pio macro", second.getMacros()[0].getName());
+        assertEquals(2_000, first.getMeso());
+        assertEquals(1_000, second.getMeso());
+        assertTrue(first.getSkills().containsKey(secondSkill));
+        assertTrue(second.getSkills().containsKey(firstSkill));
+        assertSame(secondQuest, first.getQuestStatusesSnapshot().getFirst());
+        assertSame(firstQuest, second.getQuestStatusesSnapshot().getFirst());
+        assertSame(secondBook, first.getMonsterBook());
+        assertSame(firstBook, second.getMonsterBook());
+        assertSame(secondPet, first.getPet(0));
+        assertSame(firstPet, second.getPet(0));
+        assertEquals(2_101_001, first.getAllCooldowns().getFirst().skillId);
+        assertEquals(4_111_001, second.getAllCooldowns().getFirst().skillId);
+        assertTrue(first.getAllDiseases().containsKey(Disease.SEAL));
+        assertTrue(second.getAllDiseases().containsKey(Disease.SLOW));
         assertEquals(20, result.leftProfileOwnerCharacterId());
         assertEquals(10, result.rightProfileOwnerCharacterId());
         assertEquals(1L, result.leftBindingGeneration());
@@ -76,6 +131,10 @@ class CharacterProfileExchangeTest {
     }
 
     private static void addInventorySentinels(Character character, int suffix) {
+        Equip equipped = mock(Equip.class);
+        when(equipped.getItemId()).thenReturn(1_001_000 + suffix);
+        when(equipped.getPosition()).thenReturn((short) -5);
+        character.getInventory(InventoryType.EQUIPPED).addItemFromDB(equipped);
         character.getInventory(InventoryType.EQUIP).addItemFromDB(
                 new Item(1000000 + suffix, (short) 2, (short) 1));
         character.getInventory(InventoryType.SETUP).addItemFromDB(
@@ -87,10 +146,29 @@ class CharacterProfileExchangeTest {
     }
 
     private static void assertInventorySentinels(Character character, int suffix) {
+        assertNotNull(character.getInventory(InventoryType.EQUIPPED).findById(1_001_000 + suffix));
         assertNotNull(character.getInventory(InventoryType.EQUIP).findById(1000000 + suffix));
         assertNotNull(character.getInventory(InventoryType.SETUP).findById(3000000 + suffix));
         assertNotNull(character.getInventory(InventoryType.ETC).findById(4000000 + suffix));
         assertNotNull(character.getInventory(InventoryType.CASH).findById(5000000 + suffix));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<Short, QuestStatus> questMap(Character character) throws Exception {
+        var field = Character.class.getDeclaredField("quests");
+        field.setAccessible(true);
+        Map<Short, QuestStatus> quests = (Map<Short, QuestStatus>) field.get(character);
+        if (quests == null) {
+            quests = new LinkedHashMap<>();
+            field.set(character, quests);
+        }
+        return quests;
+    }
+
+    private static void setField(Character character, String name, Object value) throws Exception {
+        var field = Character.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(character, value);
     }
 
     @Test
@@ -123,6 +201,30 @@ class CharacterProfileExchangeTest {
 
         assertFalse(character.isProfileTransitioning());
         assertThrows(IllegalStateException.class, character::exitProfileTransitionWindow);
+    }
+
+    @Test
+    void staleCooldownCallbackCannotMutateTheNewlyAttachedProfile() throws Exception {
+        Character first = character(10, "Pio", 28, Job.ASSASSIN, 30030);
+        Character second = character(20, "Yoona", 17, Job.MAGICIAN, 20020);
+        first.setClient(mock(Client.class));
+        second.setClient(mock(Client.class));
+        first.addCooldown(1001, 0L, 1L);
+        second.addCooldown(2001, 0L, 1L);
+        TimerManager.getInstance().start();
+        try {
+            first.skillCooldownTask();
+
+            Character.exchangeProfileBindings(first, second);
+            TimeUnit.MILLISECONDS.sleep(2_000L);
+
+            assertTrue(first.skillIsCooling(2001));
+            assertTrue(second.skillIsCooling(1001));
+        } finally {
+            first.cancelSkillCooldownTask();
+            second.cancelSkillCooldownTask();
+            TimerManager.getInstance().stop();
+        }
     }
 
     private static Character character(int id,

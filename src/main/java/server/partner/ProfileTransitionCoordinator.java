@@ -18,13 +18,14 @@ public final class ProfileTransitionCoordinator {
     private final PartnerProfileCacheInvalidator cacheInvalidator;
     private final PartnerJournalSink journal;
     private final ProfileExchangeOperation exchangeOperation;
+    private final DerivedProfileRebuildOperation rebuildOperation;
     private final ProfileTransitionLockManager profileLocks;
 
     public ProfileTransitionCoordinator(ProfileLeaseRegistry leases,
                                         ProfilePresentationService presentation,
                                         PartnerProfileCacheInvalidator cacheInvalidator,
                                         PartnerJournalSink journal) {
-        this(leases, presentation, cacheInvalidator, journal, Character::exchangeProfileState);
+        this(leases, presentation, cacheInvalidator, journal, Character::exchangeProfileBindings);
     }
 
     ProfileTransitionCoordinator(ProfileLeaseRegistry leases,
@@ -32,11 +33,22 @@ public final class ProfileTransitionCoordinator {
                                  PartnerProfileCacheInvalidator cacheInvalidator,
                                  PartnerJournalSink journal,
                                  ProfileExchangeOperation exchangeOperation) {
+        this(leases, presentation, cacheInvalidator, journal, exchangeOperation,
+                Character::rebuildDerivedProfileStats);
+    }
+
+    ProfileTransitionCoordinator(ProfileLeaseRegistry leases,
+                                 ProfilePresentationService presentation,
+                                 PartnerProfileCacheInvalidator cacheInvalidator,
+                                 PartnerJournalSink journal,
+                                 ProfileExchangeOperation exchangeOperation,
+                                 DerivedProfileRebuildOperation rebuildOperation) {
         this.leases = leases;
         this.presentation = presentation;
         this.cacheInvalidator = cacheInvalidator;
         this.journal = journal;
         this.exchangeOperation = exchangeOperation;
+        this.rebuildOperation = rebuildOperation;
         this.profileLocks = new ProfileTransitionLockManager();
     }
 
@@ -46,6 +58,10 @@ public final class ProfileTransitionCoordinator {
 
     public void prepareAgent(AgentRuntimeEntry entry, Character agentProfile) {
         cacheInvalidator.invalidate(entry, agentProfile);
+    }
+
+    public void discardPreparedProfiles(Character firstProfile, Character secondProfile) {
+        presentation.discardPrepared(firstProfile, secondProfile);
     }
 
     public TransitionResult transition(PartnerSessionRuntime session,
@@ -101,6 +117,9 @@ public final class ProfileTransitionCoordinator {
             }
             leasesRebound = true;
             session.commitSwap(token);
+
+            rebuildOperation.rebuild(humanActor);
+            rebuildOperation.rebuild(partnerActorOrDormantProfile);
 
             humanActor.resumeProfileRuntimeTasks();
             if (session.mode() == PartnerMode.DOUBLE_PARTNER) {
@@ -184,8 +203,8 @@ public final class ProfileTransitionCoordinator {
                         throw new IllegalStateException(recoveredLeases.rejectionReason());
                     }
                 }
-                humanActor.rebuildDerivedProfileStats();
-                partnerActorOrDormantProfile.rebuildDerivedProfileStats();
+                rebuildOperation.rebuild(humanActor);
+                rebuildOperation.rebuild(partnerActorOrDormantProfile);
                 if (!profileTasksRestored) {
                     humanActor.resumeProfileRuntimeTasks();
                     if (session.mode() == PartnerMode.DOUBLE_PARTNER) {
@@ -307,6 +326,11 @@ public final class ProfileTransitionCoordinator {
     @FunctionalInterface
     interface ProfileExchangeOperation {
         Character.ProfileExchangeResult exchange(Character left, Character right);
+    }
+
+    @FunctionalInterface
+    interface DerivedProfileRebuildOperation {
+        void rebuild(Character character);
     }
 
     public record TransitionResult(boolean committed,

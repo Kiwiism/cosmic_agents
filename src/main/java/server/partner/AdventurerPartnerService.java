@@ -230,10 +230,12 @@ public final class AdventurerPartnerService {
                     link.id(), journal.id(), player.getId(), partnerCharacterId, mode);
             return active;
         } catch (SQLException e) {
-            cleanupFailedActivation(journal, active, spawned, partnerHolder, "Canonical profile load failed", e);
+            cleanupFailedActivation(
+                    player, journal, active, spawned, partnerHolder, "Canonical profile load failed", e);
             throw new IllegalStateException("The Partner profile could not be loaded.", e);
         } catch (RuntimeException failure) {
-            cleanupFailedActivation(journal, active, spawned, partnerHolder, safeReason(failure), failure);
+            cleanupFailedActivation(
+                    player, journal, active, spawned, partnerHolder, safeReason(failure), failure);
             throw failure;
         } finally {
             player.reattachAccountPersistenceOwner();
@@ -386,6 +388,7 @@ public final class AdventurerPartnerService {
             active.runtime().close(releaseGeneration, terminal);
             leases.releaseSession(active.runtime().sessionId());
             runtimes.remove(active);
+            discardPreparedProfiles(active.humanActor(), active.partnerActorOrDormantProfile());
             log.info("partner_release link={} session={} status={} reason={}",
                     active.link().id(), active.runtime().sessionId(), terminal, reason);
         } finally {
@@ -458,8 +461,9 @@ public final class AdventurerPartnerService {
         }
     }
 
-    private void cleanupFailedActivation(PartnerSessionRecord journal,
-                                         ActivePartnerSession active,
+    private void cleanupFailedActivation(Character player,
+                                          PartnerSessionRecord journal,
+                                          ActivePartnerSession active,
                                          PartnerAgentLifecycleBridge.SpawnedPartner spawned,
                                          Character partnerHolder,
                                          String reason,
@@ -470,6 +474,7 @@ public final class AdventurerPartnerService {
         if (journal != null) {
             leases.releaseSession(journal.id());
         }
+        discardPreparedProfiles(player, partnerHolder);
         try {
             if (spawned != null) {
                 agents.release(spawned);
@@ -492,6 +497,16 @@ public final class AdventurerPartnerService {
         }
         log.warn("partner_activation failed link={} session={} reason={}",
                 journal == null ? null : journal.linkId(), journal == null ? null : journal.id(), reason);
+    }
+
+    private void discardPreparedProfiles(Character firstProfile, Character secondProfile) {
+        try {
+            transitions.discardPreparedProfiles(firstProfile, secondProfile);
+        } catch (RuntimeException cacheFailure) {
+            log.warn("partner_presentation_cache discard_failed firstActor={} secondActor={}",
+                    firstProfile == null ? null : firstProfile.getId(),
+                    secondProfile == null ? null : secondProfile.getId(), cacheFailure);
+        }
     }
 
     private void validateLoadedProfile(Character player, int expectedPartnerId, Character partnerHolder) {

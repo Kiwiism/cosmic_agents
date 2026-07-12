@@ -1,0 +1,70 @@
+# Adventurer Partner Program Acceptance Matrix
+
+Base `cosmic_agents/master`: `28555684e8d867793251e646d421fc30498ad74e`
+
+This matrix separates server-side automated evidence from behavior that can only
+be proven with a real v83 client. An automated pass is not a substitute for a
+live pass.
+
+## Automated and structural evidence
+
+| Requirement | Evidence | Status |
+| --- | --- | --- |
+| Agent E registration, view, mode, invite, release, unregister, and explanation flows | `scripts/npc/9000036.js`, `AdventurerPartnerNpcService`; `node --check` | Automated/static pass |
+| Same-account/world, self, deletion, online, lease, active-pair, and canonical-load eligibility | `PartnerRosterQueryServiceTest`, `AdventurerPartnerServiceTest`, `ProfileLeaseRegistryTest` | Automated pass |
+| Symmetric persistent pair and session constraints | migration `026-adventurer-partner.sql`; disposable MySQL 8.4 migration/constraint run | Automated database pass |
+| Solo activation uses one actor and one dormant profile | `AdventurerPartnerServiceTest`, `AdventurerPartnerLifecycleIntegrationTest` | Automated pass |
+| Double activation uses the real Agent spawn/follow boundary | `AdventurerPartnerServiceTest`; `CosmicPartnerAgentLifecycleBridge` boundary audit | Automated boundary pass; live spawn pending |
+| Actor IDs, positions, controllers, and map objects remain fixed | `CharacterProfileExchangeTest`, `AdventurerPartnerLifecycleIntegrationTest` | Automated pass |
+| Complete owner bundle follows the binding | `CharacterProfileExchangeTest`: core stats, jobs/looks, mesos, skills, keymap, macros, quickslots, quests, Monster Book, pets, diseases, cooldowns, equipped/normal/cash inventories and slot limits | Automated pass |
+| Canonical persistence owner is independent of actor | `CharacterProfileBindingTest`, lifecycle integration canonical-save assertions, owner-aware save paths | Automated pass |
+| Stable lock ordering and exclusive leases | `ProfileTransitionLockManagerTest`, `ProfileLeaseRegistryTest` | Automated pass |
+| Login/deletion cannot race Partner activation | `ProfileLeaseRegistryTest`, `PlayerLoggedinHandlerTest`, service activation tests | Automated pass |
+| Atomic binding exchange is O(1) and derived reconstruction is outside profile locks | `Character.exchangeProfileBindings`, `ProfileTransitionCoordinatorTest` | Automated/structural pass |
+| Agent barrier pauses/drains and resumes | `AgentTransitionBarrierStateTest`, `ProfileTransitionCoordinatorTest` | Automated pass |
+| Stale mailbox/capability and profile-task callbacks are rejected | `AgentActionMailboxTest`, `CharacterProfileExchangeTest.staleCooldownCallbackCannotMutateTheNewlyAttachedProfile` | Automated pass |
+| Agent cache identity includes profile owner and version | `AgentProfileCacheStampTest`, `PartnerProfileCacheInvalidator` | Automated pass |
+| Agent cache/tick failure after exchange recovers forward | `ProfileTransitionCoordinatorTest.agentCacheRebuildFailureAfterExchangeRecoversForwardAndResumesBarrier` | Fault-injection pass |
+| Simultaneous trigger requests execute one transition | `AdventurerPartnerServiceTest.simultaneousSwitchRequestsExecuteOnlyOneTransition` | Fault-injection pass |
+| Presentation order, packet-safe inventory chunks, final action enable, and both public actor look refreshes | `InventoryPacketChunkerTest`, `CosmicProfilePresentationServiceTest` | Automated adapter pass; observer-client pending |
+| Prepared presentation snapshots do not grow across sessions | `CosmicProfilePresentationServiceTest`, successful-release and failed-activation eviction tests | Automated pass |
+| Presentation failure keeps the server binding authoritative | `ProfileTransitionCoordinatorTest.presentationFailureKeepsCommittedServerBinding` | Fault-injection pass |
+| Disconnect during presentation waits for the transition and restores canonical ownership | `PartnerRecoveryServiceTest.disconnectDuringPresentationRefreshWaitsThenRestoresCanonicalOwnership` | Fault-injection pass |
+| Save and Agent teardown failures retain leases/runtime for retry | `AdventurerPartnerServiceTest` release retry cases | Fault-injection pass |
+| Channel, Cash Shop, and MTS transitions abort if canonical recovery fails | `PartnerRecoveryServiceTest`, handler integration paths | Automated pass |
+| Restart never replays swapped bindings and closes open journals canonical | `JdbcAdventurerPartnerRepository.recoverOpenSessions`; disposable MySQL verification | Automated database/static pass |
+| Repeated switching does not drift bindings, leases, journal generation, Agent barrier, or cache refresh | 1,000-transition Double coordinator soak and 1,000-reversal domain soak | Automated soak pass |
+| Disabled-by-default and startup state is logged | `config.yaml`, `AdventurerPartnerConfigTest`, `Server.init` | Automated/static pass |
+
+## Real-client acceptance still required
+
+Run from:
+
+```powershell
+Set-Location 'C:\Users\user\Documents\Cosmic Agents-adventurer-partner-program'
+.\launch.bat
+```
+
+Use two same-account characters with different jobs, appearances, equipment,
+inventory density, skills, quests, Monster Book progress, pets, buffs, diseases,
+and cooldowns. Capture server logs and client video/screenshots for every item.
+
+1. Register through Agent E and verify every roster IGN, level, job, and rejection reason.
+2. Activate Solo Tag and switch with each configured beginner-family Nimble Feet skill.
+3. Verify stats, look, equipment, every inventory tab, skills, keymap, macros, quickslots, quests, Monster Book, pets, effects, mesos, and item use.
+4. Verify no reconnect, map load, camera jump, actor movement, or ordinary Nimble Feet buff.
+5. End Solo while normal and swapped; reload both characters and compare canonical state.
+6. Invite in Double mode and verify the partner's own IGN/look and Follow behavior.
+7. Switch while actors are near and far apart in the same map; verify both looks and Agent combat behavior after each switch.
+8. Observe repeated switches from a second real client and verify public appearance, pets, buffs, and debuffs.
+9. Exercise empty, typical, nearly full, and full inventories; normal/cash equipment; and melee/ranged/ammo profiles.
+10. Exercise logout, channel change, Cash Shop, MTS, death, map change, and Agent removal while normal and swapped.
+11. Disconnect before exchange, during inventory refresh, and after exchange; reload both canonical owners.
+12. Force a save failure and Agent runtime exception in a controlled test environment; retry recovery and verify no loss or duplication.
+13. Stop the server with an active swapped session, restart it, and verify canonical owners plus a recovered closed journal.
+14. Run repeated invite/switch/release/re-invite cycles while monitoring map objects, scheduled tasks, heap, and logs.
+15. Record switch pause, lock, cache, refresh, packet-count/byte, frame-hitch, and heap/task-growth measurements.
+
+The feature does not satisfy the full Definition of Done until all 15 live items
+pass. Stock v83 actor IGN caching remains the documented client limitation;
+canonical names are never mutated.

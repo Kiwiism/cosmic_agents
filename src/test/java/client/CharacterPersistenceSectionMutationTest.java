@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,7 +32,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 class CharacterPersistenceSectionMutationTest {
     @Test
-    void representativeMutationsDirtyEveryPersistenceSection() throws Exception {
+    void representativeMutationsRouteProfileAndActorDirtyState() throws Exception {
         Character character = newCharacter();
         DirtySectionTracker<Character.PersistenceSection> tracker = tracker(character);
 
@@ -97,8 +98,10 @@ class CharacterPersistenceSectionMutationTest {
         BuddyList buddies = new BuddyList(20);
         setField(character, "buddylist", buddies);
         attachChildren(character);
+        long socialVersion = actorSocialDirtyVersion(character).get();
         buddies.put(new BuddylistEntry("friend", "Default Group", 7, -1, true));
-        assertOnlyDirty(tracker, Character.PersistenceSection.SOCIAL);
+        assertTrue(tracker.dirtySnapshot().isEmpty());
+        assertEquals(socialVersion + 1L, actorSocialDirtyVersion(character).get());
 
         clear(tracker);
         character.changeKeybinding(2, new KeyBinding(1, 100));
@@ -114,8 +117,10 @@ class CharacterPersistenceSectionMutationTest {
         assertOnlyDirty(tracker, Character.PersistenceSection.PETS);
 
         clear(tracker);
+        long storageVersion = actorSocialDirtyVersion(character).get();
         character.setUsedStorage();
-        assertOnlyDirty(tracker, Character.PersistenceSection.RELATED);
+        assertTrue(tracker.dirtySnapshot().isEmpty());
+        assertEquals(storageVersion + 1L, actorSocialDirtyVersion(character).get());
 
         FamilyEntry familyEntry = new FamilyEntry(mock(Family.class), 1, "Family", 1, Job.BEGINNER);
         familyEntry.setCharacter(character);
@@ -222,6 +227,12 @@ class CharacterPersistenceSectionMutationTest {
         Field field = Character.class.getDeclaredField("persistenceDirty");
         field.setAccessible(true);
         return (DirtySectionTracker<Character.PersistenceSection>) field.get(character);
+    }
+
+    private static AtomicLong actorSocialDirtyVersion(Character character) throws Exception {
+        Field field = Character.class.getDeclaredField("actorSocialDirtyVersion");
+        field.setAccessible(true);
+        return (AtomicLong) field.get(character);
     }
 
     private static void attachQuestStatus(Character character, QuestStatus status) throws Exception {

@@ -473,6 +473,11 @@ public class Character extends AbstractCharacterObject {
         return exchangeProfileState(left, right, true);
     }
 
+    /** O(1) profile binding exchange; the coordinator rebuilds actor-derived state afterward. */
+    public static ProfileExchangeResult exchangeProfileBindings(Character left, Character right) {
+        return exchangeProfileState(left, right, false);
+    }
+
     static ProfileExchangeResult exchangeProfileState(Character left,
                                                        Character right,
                                                        boolean refreshDerivedStats) {
