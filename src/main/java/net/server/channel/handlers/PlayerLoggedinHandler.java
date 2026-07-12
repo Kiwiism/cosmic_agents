@@ -106,13 +106,14 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
         final int cid = p.readInt(); // TODO: investigate if this is the "client id" supplied in PacketCreator#getServerIP()
         final Server server = Server.getInstance();
 
-        if (ProfileLeaseRegistry.global().isLeased(cid)) {
-            log.warn("Rejected login for Partner-leased profile character={}", cid);
+        if (!ProfileLeaseRegistry.global().tryReserveForLogin(cid)) {
+            log.warn("Rejected login for Partner-leased or concurrent-login profile character={}", cid);
             c.disconnect(true, false);
             return;
         }
 
         if (!acquireClientForLogin(c)) {
+            ProfileLeaseRegistry.global().releaseLoginReservation(cid);
             return;
         }
 
@@ -454,6 +455,7 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
         } catch (Exception e) {
             monitoring.RuntimeFailureLogger.log(e);
         } finally {
+            ProfileLeaseRegistry.global().releaseLoginReservation(cid);
             c.releaseClient();
         }
     }

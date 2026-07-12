@@ -64,7 +64,9 @@ public final class AdventurerPartnerService {
 
     public List<PartnerRosterEntry> roster(Character player) {
         requireEnabled();
-        return rosterQuery.listRoster(player.getAccountID(), player.getWorld(), player.getId());
+        List<PartnerRosterEntry> roster = rosterQuery.listRoster(
+                player.getAccountID(), player.getWorld(), player.getId());
+        return roster.stream().map(entry -> validateRosterProfile(player, entry)).toList();
     }
 
     public Optional<PartnerLink> registeredLink(Character player) {
@@ -78,7 +80,8 @@ public final class AdventurerPartnerService {
     public PartnerLink register(Character player, int partnerCharacterId) {
         requireEnabled();
         requireNoActiveSession(player.getId());
-        PartnerRosterEntry selected = roster(player).stream()
+        PartnerRosterEntry selected = rosterQuery.listRoster(
+                        player.getAccountID(), player.getWorld(), player.getId()).stream()
                 .filter(entry -> entry.characterId() == partnerCharacterId)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("That character is not in your Partner roster."));
@@ -106,9 +109,33 @@ public final class AdventurerPartnerService {
                 ? PartnerMode.DOUBLE_PARTNER : PartnerMode.SOLO_TAG;
         PartnerLink link = repository.registerLink(
                 player.getId(), partnerCharacterId, initialMode);
-        log.info("partner_registration registered link={} account={} world={} characters=[{},{}]",
-                link.id(), link.accountId(), link.worldId(), link.firstCharacterId(), link.secondCharacterId());
+        log.info("partner_registration registered link={} world={} characters=[{},{}]",
+                link.id(), link.worldId(), link.firstCharacterId(), link.secondCharacterId());
         return link;
+    }
+
+    private PartnerRosterEntry validateRosterProfile(Character player, PartnerRosterEntry entry) {
+        if (!entry.eligible()) {
+            return entry;
+        }
+        Character validationHolder = null;
+        try {
+            validationHolder = profiles.loadDetachedForValidation(
+                    entry.characterId(), player.getWorld(), player.getClient().getChannel());
+            validateLoadedProfile(player, entry.characterId(), validationHolder);
+            return entry;
+        } catch (SQLException | RuntimeException failure) {
+            log.info("partner_roster rejected character={} reason=canonical_profile_load",
+                    entry.characterId());
+            return PartnerRosterEntry.rejected(
+                    entry.characterId(), entry.name(), entry.level(), entry.jobId(),
+                    "This character's canonical profile could not be loaded.");
+        } finally {
+            player.reattachAccountPersistenceOwner();
+            if (validationHolder != null) {
+                validationHolder.suspendProfileRuntimeTasks();
+            }
+        }
     }
 
     public void changeMode(Character player, PartnerMode mode) {
@@ -167,6 +194,7 @@ public final class AdventurerPartnerService {
                 spawned = agents.spawnFollowing(player, partner.name());
                 partnerHolder = spawned.character();
                 activationPause = spawned.runtimeEntry().transitionBarrierState().pauseAndDrain();
+                profiles.restoreTransientState(partnerHolder);
             }
             player.reattachAccountPersistenceOwner();
             validateLoadedProfile(player, partnerCharacterId, partnerHolder);
@@ -224,7 +252,11 @@ public final class AdventurerPartnerService {
             return TriggerResult.notHandled();
         }
         ActivePartnerSession active = activeResult.get();
+        log.info("partner_switch requested session={} generation={} actor={} skill={}",
+                active.runtime().sessionId(), active.runtime().generation(), player.getId(), skillId);
         if (!active.tryEnterSwitchOperation()) {
+            log.info("partner_switch rejected session={} generation={} reason=lifecycle_busy",
+                    active.runtime().sessionId(), active.runtime().generation());
             return TriggerResult.rejected("A Partner lifecycle operation is already in progress.");
         }
         try {
@@ -236,6 +268,9 @@ public final class AdventurerPartnerService {
             }
             long now = System.currentTimeMillis();
             if (!active.tryAcquireSwitchCooldown(now, config.switchCooldownMs)) {
+                log.info("partner_switch rejected session={} generation={} reason=cooldown remainingMs={}",
+                        active.runtime().sessionId(), active.runtime().generation(),
+                        active.remainingSwitchCooldownMs(now));
                 return TriggerResult.rejected(
                         "Partner switch is cooling down for " + active.remainingSwitchCooldownMs(now) + " ms.");
             }
@@ -244,6 +279,8 @@ public final class AdventurerPartnerService {
                     active.runtime(), active.humanActor(), active.partnerActorOrDormantProfile(),
                     active.agentEntry(), active.runtime().generation());
             if (!transition.committed()) {
+                log.info("partner_switch rejected session={} generation={} reason={}",
+                        active.runtime().sessionId(), active.runtime().generation(), transition.reason());
                 return TriggerResult.rejected(transition.reason());
             }
             return transition.presentationComplete()
@@ -288,61 +325,98 @@ public final class AdventurerPartnerService {
             }
         }
 
-        long releaseGeneration = active.runtime().beginRelease();
-        active.runtime().restoreCanonicalForRelease(releaseGeneration);
-        RuntimeException failure = null;
-        try {
-            profiles.saveCanonical(active.humanActor());
-        } catch (RuntimeException saveFailure) {
-            failure = saveFailure;
+        AgentTransitionBarrierState.PauseLease releasePause = null;
+        if (active.runtime().mode() == PartnerMode.DOUBLE_PARTNER) {
+            if (active.agentEntry() == null) {
+                throw new IllegalStateException("Double Partner Agent runtime is unavailable for release");
+            }
+            releasePause = active.agentEntry().transitionBarrierState().pauseAndDrain();
         }
         try {
-            profiles.saveCanonical(active.partnerActorOrDormantProfile());
-        } catch (RuntimeException saveFailure) {
-            if (failure == null) {
-                failure = saveFailure;
-            } else {
-                failure.addSuppressed(saveFailure);
+            long releaseGeneration = active.runtime().beginRelease();
+            active.runtime().restoreCanonicalForRelease(releaseGeneration);
+            RuntimeException failure = null;
+            if (!active.isJournalClosed()) {
+                try {
+                    profiles.saveCanonical(active.humanActor());
+                } catch (RuntimeException saveFailure) {
+                    failure = saveFailure;
+                }
+                try {
+                    profiles.saveCanonical(active.partnerActorOrDormantProfile());
+                } catch (RuntimeException saveFailure) {
+                    if (failure == null) {
+                        failure = saveFailure;
+                    } else {
+                        failure.addSuppressed(saveFailure);
+                    }
+                }
             }
-        }
-        try {
-            if (active.runtime().mode() == PartnerMode.DOUBLE_PARTNER) {
-                agents.release(new PartnerAgentLifecycleBridge.SpawnedPartner(
-                        active.partnerActorOrDormantProfile(), active.agentEntry()));
-            } else {
-                active.partnerActorOrDormantProfile().suspendProfileRuntimeTasks();
+            if (failure != null) {
+                deferRelease(active, releaseGeneration, reason, "Canonical save failed", failure);
+                throw failure;
             }
-        } catch (RuntimeException releaseFailure) {
-            if (failure == null) {
-                failure = releaseFailure;
-            } else {
-                failure.addSuppressed(releaseFailure);
+
+            PartnerLifecycleStatus terminal = PartnerLifecycleStatus.CLOSED;
+            if (!active.isJournalClosed()) {
+                try {
+                    repository.closeSession(
+                            active.runtime().sessionId(), ProfileOrientation.CANONICAL,
+                            active.runtime().generation(), terminal, reason);
+                    active.markJournalClosed();
+                } catch (RuntimeException journalFailure) {
+                    deferRelease(active, releaseGeneration, reason, "Session journal close failed", journalFailure);
+                    throw journalFailure;
+                }
             }
-        } finally {
+
+            try {
+                if (active.runtime().mode() == PartnerMode.DOUBLE_PARTNER) {
+                    agents.release(new PartnerAgentLifecycleBridge.SpawnedPartner(
+                            active.partnerActorOrDormantProfile(), active.agentEntry()));
+                } else {
+                    profiles.storeTransientStateForLogout(active.partnerActorOrDormantProfile());
+                    active.partnerActorOrDormantProfile().suspendProfileRuntimeTasks();
+                }
+            } catch (RuntimeException releaseFailure) {
+                deferRelease(active, releaseGeneration, reason, "Partner Agent release failed", releaseFailure);
+                throw releaseFailure;
+            }
+
+            active.runtime().close(releaseGeneration, terminal);
             leases.releaseSession(active.runtime().sessionId());
             runtimes.remove(active);
+            log.info("partner_release link={} session={} status={} reason={}",
+                    active.link().id(), active.runtime().sessionId(), terminal, reason);
+        } finally {
+            if (releasePause != null) {
+                releasePause.close();
+            }
         }
+    }
 
-        PartnerLifecycleStatus terminal = failure == null
-                ? PartnerLifecycleStatus.CLOSED : PartnerLifecycleStatus.FAILED;
+    private void deferRelease(ActivePartnerSession active,
+                              long releaseGeneration,
+                              String reason,
+                              String stage,
+                              RuntimeException failure) {
         try {
-            active.runtime().close(releaseGeneration, terminal);
-            repository.closeSession(
-                    active.runtime().sessionId(), ProfileOrientation.CANONICAL,
-                    active.runtime().generation(), terminal,
-                    failure == null ? reason : reason + ": " + safeReason(failure));
-        } catch (RuntimeException journalFailure) {
-            if (failure == null) {
-                failure = journalFailure;
-            } else {
+            active.runtime().abortRelease(releaseGeneration);
+        } catch (RuntimeException stateFailure) {
+            failure.addSuppressed(stateFailure);
+        }
+        if (!active.isJournalClosed()) {
+            try {
+                repository.updateSession(
+                        active.runtime().sessionId(), ProfileOrientation.CANONICAL,
+                        active.runtime().generation(), PartnerLifecycleStatus.ACTIVE,
+                        stage + ": " + safeReason(failure));
+            } catch (RuntimeException journalFailure) {
                 failure.addSuppressed(journalFailure);
             }
         }
-        log.info("partner_release link={} session={} status={} reason={}",
-                active.link().id(), active.runtime().sessionId(), terminal, reason);
-        if (failure != null) {
-            throw failure;
-        }
+        log.warn("partner_release deferred link={} session={} stage={} reason={}",
+                active.link().id(), active.runtime().sessionId(), stage, reason, failure);
     }
 
     Optional<ActivePartnerSession> activeSessionForActor(int actorCharacterId) {
@@ -401,6 +475,7 @@ public final class AdventurerPartnerService {
                 agents.release(spawned);
             } else if (partnerHolder != null) {
                 profiles.saveCanonical(partnerHolder);
+                profiles.storeTransientStateForLogout(partnerHolder);
                 partnerHolder.suspendProfileRuntimeTasks();
             }
         } catch (RuntimeException cleanupFailure) {

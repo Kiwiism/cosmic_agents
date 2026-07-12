@@ -172,7 +172,7 @@ public class World {
     private ScheduledFuture<?> srvMessagesSchedule;
 
     private Lock activePetsLock = new ReentrantLock(true);
-    private final Map<Integer, Integer> activePets = new LinkedHashMap<>();
+    private final Map<Integer, ActivePetSchedule> activePets = new LinkedHashMap<>();
     private ScheduledFuture<?> petsSchedule;
     private long petUpdate;
 
@@ -1584,7 +1584,8 @@ public class World {
                 initProc = YamlConfig.config.server.PET_EXHAUST_COUNT - 1;
             }
 
-            activePets.put(key, initProc);
+            activePets.put(key, new ActivePetSchedule(
+                    initProc, chr.getProfileOwnerCharacterId(), chr.getProfileBindingGeneration()));
         } finally {
             activePetsLock.unlock();
         }
@@ -1602,7 +1603,7 @@ public class World {
     }
 
     public void runPetSchedule() {
-        Map<Integer, Integer> deployedPets;
+        Map<Integer, ActivePetSchedule> deployedPets;
 
         activePetsLock.lock();
         try {
@@ -1612,25 +1613,33 @@ public class World {
             activePetsLock.unlock();
         }
 
-        for (Map.Entry<Integer, Integer> dp : deployedPets.entrySet()) {
+        for (Map.Entry<Integer, ActivePetSchedule> dp : deployedPets.entrySet()) {
             Character chr = this.getPlayerStorage().getCharacterById(dp.getKey() / 4);
-            if (chr == null || !chr.isLoggedinWorld()) {
+            ActivePetSchedule scheduled = dp.getValue();
+            if (chr == null || !chr.isLoggedinWorld() || chr.isProfileTransitioning()
+                    || chr.getProfileOwnerCharacterId() != scheduled.profileOwnerId()
+                    || chr.getProfileBindingGeneration() != scheduled.bindingGeneration()) {
                 continue;
             }
 
-            int dpVal = dp.getValue() + 1;
+            int dpVal = scheduled.counter() + 1;
             if (dpVal == YamlConfig.config.server.PET_EXHAUST_COUNT) {
-                chr.runFullnessSchedule(dp.getKey() % 4);
+                chr.runFullnessSchedule(
+                        dp.getKey() % 4, scheduled.profileOwnerId(), scheduled.bindingGeneration());
                 dpVal = 0;
             }
 
             activePetsLock.lock();
             try {
-                activePets.put(dp.getKey(), dpVal);
+                activePets.replace(dp.getKey(), scheduled, new ActivePetSchedule(
+                        dpVal, scheduled.profileOwnerId(), scheduled.bindingGeneration()));
             } finally {
                 activePetsLock.unlock();
             }
         }
+    }
+
+    private record ActivePetSchedule(int counter, int profileOwnerId, long bindingGeneration) {
     }
 
     public void registerMountHunger(Character chr) {

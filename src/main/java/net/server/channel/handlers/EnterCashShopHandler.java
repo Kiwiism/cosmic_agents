@@ -28,6 +28,7 @@ import net.packet.InPacket;
 import net.server.Server;
 import server.maps.MiniDungeonInfo;
 import server.monitoring.CharacterSaveDiagnostics.SaveReason;
+import server.partner.PartnerRecoveryService;
 import tools.PacketCreator;
 
 /**
@@ -57,6 +58,14 @@ public class EnterCashShopHandler extends AbstractPacketHandler {
             }
 
             if (mc.getCashShop().isOpened()) {
+                return;
+            }
+
+            if (!PartnerRecoveryService.getInstance().recoverBeforeWorldExit(
+                    mc, "Cash Shop transition recovery")) {
+                c.sendPacket(PacketCreator.serverNotice(
+                        5, "Your Partner session could not be safely closed. Please try entering Cash Shop again."));
+                c.sendPacket(PacketCreator.enableActions());
                 return;
             }
 

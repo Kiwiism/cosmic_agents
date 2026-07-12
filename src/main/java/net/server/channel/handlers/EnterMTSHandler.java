@@ -33,6 +33,7 @@ import server.MTSItemInfo;
 import server.maps.FieldLimit;
 import server.maps.MiniDungeonInfo;
 import server.monitoring.CharacterSaveDiagnostics.SaveReason;
+import server.partner.PartnerRecoveryService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
 
@@ -79,6 +80,14 @@ public final class EnterMTSHandler extends AbstractPacketHandler {
         }
         if (chr.getLevel() < 10) {
             c.sendPacket(PacketCreator.blockedMessage2(5));
+            c.sendPacket(PacketCreator.enableActions());
+            return;
+        }
+
+        if (!PartnerRecoveryService.getInstance().recoverBeforeWorldExit(
+                chr, "MTS transition recovery")) {
+            c.sendPacket(PacketCreator.serverNotice(
+                    5, "Your Partner session could not be safely closed. Please try entering MTS again."));
             c.sendPacket(PacketCreator.enableActions());
             return;
         }

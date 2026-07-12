@@ -1558,6 +1558,14 @@ public class Client extends ChannelInboundHandlerAdapter {
             return;
         }
 
+        if (!PartnerRecoveryService.getInstance().recoverBeforeWorldExit(
+                player, "Channel transition recovery")) {
+            sendPacket(PacketCreator.serverNotice(
+                    5, "Your Partner session could not be safely closed. Please try changing channels again."));
+            sendPacket(PacketCreator.enableActions());
+            return;
+        }
+
         player.closePlayerInteractions();
         player.closePartySearchInteractions();
 

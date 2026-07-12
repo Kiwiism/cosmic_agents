@@ -13,6 +13,9 @@ public final class PartnerTriggerPolicy {
         if (active == null || active.runtime().status() != PartnerLifecycleStatus.ACTIVE) {
             return Result.rejected("No active Partner session is ready to switch.");
         }
+        if (active.isJournalClosed()) {
+            return Result.rejected("Partner release recovery is pending; release the Partner again.");
+        }
         Character human = active.humanActor();
         Character partner = active.partnerActorOrDormantProfile();
         String humanReason = validateActor(human, true);
@@ -30,6 +33,18 @@ public final class PartnerTriggerPolicy {
             AgentRuntimeEntry entry = active.agentEntry();
             if (entry == null || !AgentRuntimeRegistry.isActiveSession(entry, entry.sessionGeneration())) {
                 return Result.rejected("Your Partner's Agent runtime is unavailable.");
+            }
+            if (entry.airshowState().active()) {
+                return Result.rejected("Wait for your Partner's airshow action to finish.");
+            }
+            if (entry.shopState().hasActiveTransition()) {
+                return Result.rejected("Wait for your Partner to finish the shop sequence.");
+            }
+            if (entry.manualTradeState().tradeRef() != null) {
+                return Result.rejected("Wait for your Partner to finish trading.");
+            }
+            if (entry.pendingActionState().pendingAction() != null) {
+                return Result.rejected("Wait for your Partner's pending action to finish.");
             }
             if (entry.transitionBarrierState().isPaused()) {
                 return Result.rejected("Your Partner is already entering another transition.");
@@ -74,7 +89,9 @@ public final class PartnerTriggerPolicy {
         if (actor.getMiniGame() != null) {
             return "Leave the minigame first.";
         }
-        if (actor.getEventInstance() != null || actor.getPartyQuest() != null) {
+        if (actor.getEventInstance() != null || actor.getPartyQuest() != null
+                || actor.getMonsterCarnival() != null || actor.getAriantColiseum() != null
+                || actor.getMonsterCarnivalParty() != null) {
             return "This event or party-quest state cannot switch profiles.";
         }
         if (requireHumanClient && actor.getClient() != null

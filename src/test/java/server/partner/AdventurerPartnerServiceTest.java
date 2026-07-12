@@ -19,7 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
@@ -102,6 +104,7 @@ class AdventurerPartnerServiceTest {
         assertEquals(PartnerLifecycleStatus.CLOSED, active.runtime().status());
         verify(profiles).saveCanonical(player);
         verify(profiles).saveCanonical(partner);
+        verify(profiles).storeTransientStateForLogout(partner);
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 1L,
                 PartnerLifecycleStatus.CLOSED, "test release");
@@ -127,6 +130,46 @@ class AdventurerPartnerServiceTest {
         assertEquals(20, leases.leaseForProfile(20).orElseThrow().actorCharacterId());
         assertFalse(barrier.isPaused());
         verify(agents).spawnFollowing(player, "Yoona");
+        verify(profiles).restoreTransientState(partner);
+    }
+
+    @Test
+    void agentTeardownFailureRetainsSessionAndRetriesWithoutRepeatingDurableCloseOrSaves() {
+        PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
+                8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
+                ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
+                Instant.now(), Instant.now(), null, null);
+        when(repository.createSession(5L, 10, 20, PartnerMode.DOUBLE_PARTNER))
+                .thenReturn(doubleJournal);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        AgentTransitionBarrierState barrier = new AgentTransitionBarrierState();
+        when(entry.transitionBarrierState()).thenReturn(barrier);
+        when(agents.spawnFollowing(player, "Yoona"))
+                .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
+        doThrow(new IllegalStateException("teardown failed"))
+                .doNothing()
+                .when(agents).release(any());
+        ActivePartnerSession active = service.activate(player, PartnerMode.DOUBLE_PARTNER);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.release(player, "fault injection"));
+
+        assertTrue(active.isJournalClosed());
+        assertEquals(PartnerLifecycleStatus.ACTIVE, active.runtime().status());
+        assertTrue(leases.isLeased(10));
+        assertTrue(leases.isLeased(20));
+        assertFalse(barrier.isPaused());
+
+        service.release(player, "teardown retry");
+
+        assertEquals(PartnerLifecycleStatus.CLOSED, active.runtime().status());
+        assertFalse(leases.isLeased(10));
+        assertFalse(leases.isLeased(20));
+        verify(profiles, times(1)).saveCanonical(player);
+        verify(profiles, times(1)).saveCanonical(partner);
+        verify(repository, times(1)).closeSession(
+                8L, ProfileOrientation.CANONICAL, 1L,
+                PartnerLifecycleStatus.CLOSED, "fault injection");
     }
 
     @Test
@@ -155,21 +198,33 @@ class AdventurerPartnerServiceTest {
     }
 
     @Test
-    void saveFailureStillReleasesLeasesAndClosesFailedSession() throws Exception {
+    void saveFailureRetainsRuntimeAndLeasesUntilAReleaseRetrySucceeds() throws Exception {
         when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
         ActivePartnerSession active = service.activate(player, PartnerMode.SOLO_TAG);
-        doThrow(new IllegalStateException("save failed")).when(profiles).saveCanonical(player);
+        doThrow(new IllegalStateException("save failed"))
+                .doNothing()
+                .when(profiles).saveCanonical(player);
 
         assertThrows(IllegalStateException.class,
                 () -> service.release(player, "fault injection"));
 
+        assertTrue(leases.isLeased(10));
+        assertTrue(leases.isLeased(20));
+        assertTrue(runtimes.findByHumanActorId(10).isPresent());
+        assertEquals(PartnerLifecycleStatus.ACTIVE, active.runtime().status());
+        verify(repository).updateSession(
+                7L, ProfileOrientation.CANONICAL, 1L,
+                PartnerLifecycleStatus.ACTIVE, "Canonical save failed: save failed");
+
+        service.release(player, "retry after fault injection");
+
         assertFalse(leases.isLeased(10));
         assertFalse(leases.isLeased(20));
         assertTrue(runtimes.findByHumanActorId(10).isEmpty());
-        assertEquals(PartnerLifecycleStatus.FAILED, active.runtime().status());
+        assertEquals(PartnerLifecycleStatus.CLOSED, active.runtime().status());
         verify(repository).closeSession(
-                7L, ProfileOrientation.CANONICAL, 1L,
-                PartnerLifecycleStatus.FAILED, "fault injection: save failed");
+                7L, ProfileOrientation.CANONICAL, 2L,
+                PartnerLifecycleStatus.CLOSED, "retry after fault injection");
     }
 
     @Test
@@ -202,6 +257,23 @@ class AdventurerPartnerServiceTest {
         assertThrows(IllegalStateException.class, () -> service.register(player, 20));
 
         verify(repository, never()).registerLink(10, 20, PartnerMode.DOUBLE_PARTNER);
+    }
+
+    @Test
+    void rosterRejectsAnOtherwiseEligibleCharacterWhoseCanonicalDryLoadFails() throws Exception {
+        PartnerRosterCandidate candidate = new PartnerRosterCandidate(
+                20, 1, 0, "Yoona", 17, 200);
+        when(repository.findActiveLinkForCharacter(10)).thenReturn(Optional.empty());
+        when(repository.findActiveLinkForCharacter(20)).thenReturn(Optional.empty());
+        when(repository.findRosterCandidates(1, 0, 10)).thenReturn(List.of(candidate));
+        when(profiles.loadDetachedForValidation(20, 0, 1))
+                .thenThrow(new SQLException("corrupt profile"));
+
+        List<PartnerRosterEntry> roster = service.roster(player);
+
+        assertEquals(1, roster.size());
+        assertFalse(roster.getFirst().eligible());
+        assertTrue(roster.getFirst().rejectionReason().contains("could not be loaded"));
     }
 
     private static Character character(int actorId, int profileOwnerId, int accountId, int world) {

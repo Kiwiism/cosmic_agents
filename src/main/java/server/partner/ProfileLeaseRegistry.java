@@ -4,11 +4,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Process-local exclusivity registry for profile-to-session and actor-to-profile
@@ -22,6 +24,7 @@ public final class ProfileLeaseRegistry {
     private final Object lock = new Object();
     private final Map<Integer, ProfileLease> byProfileOwnerId = new HashMap<>();
     private final Map<Integer, ProfileLease> byActorCharacterId = new HashMap<>();
+    private final Set<Integer> exclusiveReservations = new HashSet<>();
 
     public static ProfileLeaseRegistry global() {
         return GLOBAL;
@@ -40,6 +43,10 @@ public final class ProfileLeaseRegistry {
 
         synchronized (lock) {
             for (Map.Entry<Integer, Integer> request : ordered) {
+                if (exclusiveReservations.contains(request.getKey())) {
+                    return LeaseResult.denied(
+                            "Profile " + request.getKey() + " is entering the world");
+                }
                 ProfileLease existingProfile = byProfileOwnerId.get(request.getKey());
                 if (existingProfile != null && existingProfile.sessionId() != sessionId) {
                     return LeaseResult.denied("Profile " + request.getKey() + " is already leased");
@@ -103,6 +110,43 @@ public final class ProfileLeaseRegistry {
         }
     }
 
+    public boolean isUnavailable(int profileOwnerCharacterId) {
+        synchronized (lock) {
+            return byProfileOwnerId.containsKey(profileOwnerCharacterId)
+                    || exclusiveReservations.contains(profileOwnerCharacterId);
+        }
+    }
+
+    /** Serializes a normal character login against Partner activation. */
+    public boolean tryReserveForLogin(int profileOwnerCharacterId) {
+        if (profileOwnerCharacterId <= 0) {
+            throw new IllegalArgumentException("Profile owner ID must be positive");
+        }
+        synchronized (lock) {
+            if (byProfileOwnerId.containsKey(profileOwnerCharacterId)
+                    || exclusiveReservations.contains(profileOwnerCharacterId)) {
+                return false;
+            }
+            exclusiveReservations.add(profileOwnerCharacterId);
+            return true;
+        }
+    }
+
+    public void releaseLoginReservation(int profileOwnerCharacterId) {
+        synchronized (lock) {
+            exclusiveReservations.remove(profileOwnerCharacterId);
+        }
+    }
+
+    /** Serializes character deletion against login and Partner activation. */
+    public boolean tryReserveForDeletion(int profileOwnerCharacterId) {
+        return tryReserveForLogin(profileOwnerCharacterId);
+    }
+
+    public void releaseDeletionReservation(int profileOwnerCharacterId) {
+        releaseLoginReservation(profileOwnerCharacterId);
+    }
+
     public boolean holds(long sessionId, int profileOwnerCharacterId) {
         synchronized (lock) {
             ProfileLease lease = byProfileOwnerId.get(profileOwnerCharacterId);
@@ -120,6 +164,7 @@ public final class ProfileLeaseRegistry {
         synchronized (lock) {
             byProfileOwnerId.clear();
             byActorCharacterId.clear();
+            exclusiveReservations.clear();
         }
     }
 

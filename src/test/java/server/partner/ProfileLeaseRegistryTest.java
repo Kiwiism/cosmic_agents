@@ -57,4 +57,30 @@ class ProfileLeaseRegistryTest {
         assertFalse(registry.isLeased(100));
         assertFalse(registry.isLeased(200));
     }
+
+    @Test
+    void loginReservationAndPartnerLeaseAreMutuallyExclusive() {
+        assertTrue(registry.tryReserveForLogin(100));
+
+        ProfileLeaseRegistry.LeaseResult activation = registry.acquire(10L, Map.of(100, 1));
+
+        assertFalse(activation.acquired());
+        assertTrue(activation.rejectionReason().contains("entering the world"));
+        registry.releaseLoginReservation(100);
+        assertTrue(registry.acquire(10L, Map.of(100, 1)).acquired());
+        assertFalse(registry.tryReserveForLogin(100));
+    }
+
+    @Test
+    void deletionReservationBlocksLoginAndPartnerActivation() {
+        assertTrue(registry.tryReserveForDeletion(100));
+
+        assertTrue(registry.isUnavailable(100));
+        assertFalse(registry.isLeased(100));
+        assertFalse(registry.tryReserveForLogin(100));
+        assertFalse(registry.acquire(10L, Map.of(100, 1)).acquired());
+
+        registry.releaseDeletionReservation(100);
+        assertTrue(registry.tryReserveForLogin(100));
+    }
 }

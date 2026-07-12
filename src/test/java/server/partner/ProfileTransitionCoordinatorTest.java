@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -44,6 +45,10 @@ class ProfileTransitionCoordinatorTest {
         verify(human).resumeProfileRuntimeTasks();
         verify(human).suspendProfileRuntimeTasks();
         verify(dormant, times(2)).suspendProfileRuntimeTasks();
+        verify(human).enterProfileTransitionWindow();
+        verify(human).exitProfileTransitionWindow();
+        verify(dormant).enterProfileTransitionWindow();
+        verify(dormant).exitProfileTransitionWindow();
     }
 
     @Test
@@ -94,6 +99,42 @@ class ProfileTransitionCoordinatorTest {
         assertTrue(journal.getLast().reason().contains("client refresh unavailable"));
     }
 
+    @Test
+    void failureAfterLiveBindingsChangedRecoversForwardAndCommitsAuthoritativeOrientation() {
+        ProfileLeaseRegistry leases = new ProfileLeaseRegistry();
+        PartnerSessionRuntime session = soloSession();
+        assertTrue(leases.acquire(7L, Map.of(10, 10, 20, 0)).acquired());
+        AtomicInteger humanOwner = new AtomicInteger(10);
+        AtomicInteger dormantOwner = new AtomicInteger(20);
+        Character human = characterWithDynamicOwner(humanOwner);
+        Character dormant = characterWithDynamicOwner(dormantOwner);
+        ProfilePresentationService presentation = mock(ProfilePresentationService.class);
+        when(presentation.refresh(
+                org.mockito.ArgumentMatchers.eq(human),
+                org.mockito.ArgumentMatchers.eq(dormant),
+                org.mockito.ArgumentMatchers.eq(PartnerMode.SOLO_TAG),
+                org.mockito.ArgumentMatchers.any(Character.ProfileExchangeResult.class)))
+                .thenReturn(new ProfilePresentationService.RefreshMetrics(5, 80L, 400L));
+        List<JournalEvent> journal = new ArrayList<>();
+        ProfileTransitionCoordinator coordinator = coordinator(
+                leases, presentation, journal, (left, right) -> {
+                    humanOwner.set(20);
+                    dormantOwner.set(10);
+                    throw new IllegalStateException("derived stat rebuild failed");
+                });
+
+        ProfileTransitionCoordinator.TransitionResult result = coordinator.transition(
+                session, human, dormant, null, 0L);
+
+        assertTrue(result.committed());
+        assertTrue(result.presentationComplete());
+        assertEquals(ProfileOrientation.SWAPPED, session.bindings().orientation());
+        assertEquals(10, leases.leaseForProfile(20).orElseThrow().actorCharacterId());
+        assertEquals(0, leases.leaseForProfile(10).orElseThrow().actorCharacterId());
+        verify(human).rebuildDerivedProfileStats();
+        verify(dormant).rebuildDerivedProfileStats();
+    }
+
     private static PartnerSessionRuntime soloSession() {
         PartnerSessionRuntime session = new PartnerSessionRuntime(
                 7L, 5L, 10, 0, 10, 20, PartnerMode.SOLO_TAG);
@@ -104,6 +145,13 @@ class ProfileTransitionCoordinatorTest {
     private static Character characterWithOwner(int ownerId) {
         Character character = mock(Character.class);
         when(character.getProfileOwnerCharacterId()).thenReturn(ownerId);
+        when(character.profileTransitionBlockReason()).thenReturn(null);
+        return character;
+    }
+
+    private static Character characterWithDynamicOwner(AtomicInteger ownerId) {
+        Character character = mock(Character.class);
+        when(character.getProfileOwnerCharacterId()).thenAnswer(ignored -> ownerId.get());
         when(character.profileTransitionBlockReason()).thenReturn(null);
         return character;
     }

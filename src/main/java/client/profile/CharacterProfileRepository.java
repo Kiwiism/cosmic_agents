@@ -9,5 +9,9 @@ public interface CharacterProfileRepository {
 
     Character loadDetachedForValidation(int ownerCharacterId, int world, int channel) throws SQLException;
 
+    void restoreTransientState(Character profileHolder);
+
+    void storeTransientStateForLogout(Character profileHolder);
+
     void saveCanonical(Character profileHolder);
 }

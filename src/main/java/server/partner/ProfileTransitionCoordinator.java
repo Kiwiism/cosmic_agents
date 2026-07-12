@@ -66,9 +66,15 @@ public final class ProfileTransitionCoordinator {
         boolean profileTasksSuspended = false;
         boolean leasesRebound = false;
         boolean profileTasksRestored = false;
+        boolean humanTransitionWindow = false;
+        boolean partnerTransitionWindow = false;
         Character.ProfileExchangeResult exchangeResult = null;
         long cacheRefreshNs = 0L;
         try {
+            humanActor.enterProfileTransitionWindow();
+            humanTransitionWindow = true;
+            partnerActorOrDormantProfile.enterProfileTransitionWindow();
+            partnerTransitionWindow = true;
             validateBindingsAndLeases(session, token, humanActor, partnerActorOrDormantProfile);
             if (session.mode() == PartnerMode.DOUBLE_PARTNER) {
                 if (agentEntry == null) {
@@ -138,6 +144,19 @@ public final class ProfileTransitionCoordinator {
                     session.generation(), exchangeResult.lockDurationNs(),
                     agentPause == null ? 0L : agentPause.drainDurationNs(), metrics);
         } catch (RuntimeException failure) {
+            if (!exchanged && bindingsMatch(
+                    token.after(), humanActor, partnerActorOrDormantProfile)) {
+                exchanged = true;
+                exchangeResult = new Character.ProfileExchangeResult(
+                        humanActor.getProfileOwnerCharacterId(),
+                        partnerActorOrDormantProfile.getProfileOwnerCharacterId(),
+                        humanActor.getProfileBindingGeneration(),
+                        partnerActorOrDormantProfile.getProfileBindingGeneration(),
+                        System.nanoTime() - startedNs);
+                log.warn("Partner binding exchange became authoritative before a post-exchange failure "
+                                + "session={} generation={}",
+                        session.sessionId(), token.generation());
+            }
             if (!exchanged) {
                 if (profileTasksSuspended) {
                     humanActor.resumeProfileRuntimeTasks();
@@ -165,6 +184,8 @@ public final class ProfileTransitionCoordinator {
                         throw new IllegalStateException(recoveredLeases.rejectionReason());
                     }
                 }
+                humanActor.rebuildDerivedProfileStats();
+                partnerActorOrDormantProfile.rebuildDerivedProfileStats();
                 if (!profileTasksRestored) {
                     humanActor.resumeProfileRuntimeTasks();
                     if (session.mode() == PartnerMode.DOUBLE_PARTNER) {
@@ -204,8 +225,30 @@ public final class ProfileTransitionCoordinator {
                         agentPause == null ? 0L : agentPause.drainDurationNs(), safeReason(failure));
             }
         } finally {
-            if (agentPause != null) {
-                agentPause.close();
+            RuntimeException cleanupFailure = null;
+            try {
+                if (agentPause != null) {
+                    agentPause.close();
+                }
+            } catch (RuntimeException failure) {
+                cleanupFailure = failure;
+            }
+            try {
+                if (partnerTransitionWindow) {
+                    partnerActorOrDormantProfile.exitProfileTransitionWindow();
+                }
+            } catch (RuntimeException failure) {
+                cleanupFailure = append(cleanupFailure, failure);
+            }
+            try {
+                if (humanTransitionWindow) {
+                    humanActor.exitProfileTransitionWindow();
+                }
+            } catch (RuntimeException failure) {
+                cleanupFailure = append(cleanupFailure, failure);
+            }
+            if (cleanupFailure != null) {
+                throw cleanupFailure;
             }
         }
     }
@@ -236,11 +279,29 @@ public final class ProfileTransitionCoordinator {
         }
     }
 
+    private static boolean bindingsMatch(PartnerSessionRuntime.ProfileBindings expected,
+                                         Character humanActor,
+                                         Character partnerActorOrDormantProfile) {
+        return humanActor != null && partnerActorOrDormantProfile != null
+                && humanActor.getProfileOwnerCharacterId()
+                == expected.playerActorProfileOwnerId()
+                && partnerActorOrDormantProfile.getProfileOwnerCharacterId()
+                == expected.partnerSlotProfileOwnerId();
+    }
+
     private static String safeReason(Throwable failure) {
         String message = failure.getMessage();
         String reason = message == null || message.isBlank()
                 ? failure.getClass().getSimpleName() : message;
         return reason.length() <= 480 ? reason : reason.substring(0, 480);
+    }
+
+    private static RuntimeException append(RuntimeException first, RuntimeException next) {
+        if (first == null) {
+            return next;
+        }
+        first.addSuppressed(next);
+        return first;
     }
 
     @FunctionalInterface

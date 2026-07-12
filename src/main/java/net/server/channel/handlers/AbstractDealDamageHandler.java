@@ -26,6 +26,7 @@ import client.Character;
 import client.Job;
 import client.Skill;
 import client.SkillFactory;
+import client.SkillEligibilityPolicy;
 import client.autoban.AutobanFactory;
 import client.status.MonsterStatus;
 import client.status.MonsterStatusEffect;
@@ -179,8 +180,15 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                     return;
                 }
 
-                if (!attackEffect.canPaySkillCost(player)) {
-                    if (player.getMp() < attackEffect.getMpCon()) {
+                boolean pqEventSkill = attack.skilllevel == 1
+                        && player.getSkillLevel(theSkill) == 0
+                        && GameConstants.isPqSkillMap(player.getMapId())
+                        && GameConstants.isPqSkill(attack.skill);
+                SkillEligibilityPolicy.Result eligibility = SkillEligibilityPolicy.evaluate(
+                        player, theSkill, attack.skilllevel, pqEventSkill, () -> true);
+                if (!eligibility.allowed()) {
+                    if (eligibility.rejection() == SkillEligibilityPolicy.Rejection.HP_MP_COST
+                            && player.getMp() < attackEffect.getMpCon()) {
                         AutobanFactory.MPCON.addPoint(player.getAutobanManager(), "Skill: " + attack.skill + "; Player MP: " + player.getMp() + "; MP Needed: " + attackEffect.getMpCon());
                     }
                     player.sendPacket(PacketCreator.enableActions());

@@ -99,16 +99,24 @@ public final class CharacterDeletionService {
     }
 
     public static Result deleteCharacter(int cid, int senderAccId) {
-        Result eligibility = checkDeletionEligibility(cid);
-        if (!eligibility.isSuccess()) {
-            return eligibility;
+        ProfileLeaseRegistry leases = ProfileLeaseRegistry.global();
+        if (!leases.tryReserveForDeletion(cid)) {
+            return Result.PARTNER_LEASED;
         }
+        try {
+            Result eligibility = checkDeletionEligibility(cid);
+            if (!eligibility.isSuccess()) {
+                return eligibility;
+            }
 
-        if (deleteCharacterInternal(cid, senderAccId)) {
-            return Result.SUCCESS;
+            if (deleteCharacterInternal(cid, senderAccId)) {
+                return Result.SUCCESS;
+            }
+
+            return Result.ERROR;
+        } finally {
+            leases.releaseDeletionReservation(cid);
         }
-
-        return Result.ERROR;
     }
 
     private static boolean deleteCharacterInternal(int cid, int senderAccId) {

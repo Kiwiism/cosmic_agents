@@ -62,6 +62,19 @@ class AgentActionMailboxTest {
     }
 
     @Test
+    void transitionBarrierRejectsNewMailboxActions() {
+        AgentRuntimeEntry entry = entry();
+
+        try (AgentTransitionBarrierState.PauseLease ignored =
+                     entry.transitionBarrierState().pauseAndDrain()) {
+            CompletableFuture<Integer> rejected = AgentMailboxRuntime.submit(entry, runtime -> 1);
+
+            assertTrue(rejected.isCompletedExceptionally());
+            assertEquals(0, entry.actionMailbox().size());
+        }
+    }
+
+    @Test
     void boundsPendingActions() {
         AgentRuntimeEntry entry = entry();
         AgentActionMailbox mailbox = new AgentActionMailbox(1);

@@ -3,6 +3,7 @@ package server.partner;
 import client.Character;
 import server.agents.runtime.AgentRuntimeEntry;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,6 +14,7 @@ public final class ActivePartnerSession {
     private final Character partnerActorOrDormantProfile;
     private final AgentRuntimeEntry agentEntry;
     private final AtomicLong nextAllowedSwitchAtMs = new AtomicLong();
+    private final AtomicBoolean journalClosed = new AtomicBoolean();
     private final ReentrantLock lifecycleOperationLock = new ReentrantLock(true);
 
     public ActivePartnerSession(PartnerLink link,
@@ -61,6 +63,14 @@ public final class ActivePartnerSession {
 
     public AgentRuntimeEntry agentEntry() {
         return agentEntry;
+    }
+
+    public boolean isJournalClosed() {
+        return journalClosed.get();
+    }
+
+    public void markJournalClosed() {
+        journalClosed.set(true);
     }
 
     public boolean tryEnterSwitchOperation() {

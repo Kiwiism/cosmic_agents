@@ -16,5 +16,7 @@ public final class PartnerProfileCacheInvalidator {
         AgentAutoEquipThrottle.clearAgentRuntimeState(agentActor.getId());
         AgentMovementStateRuntime.refreshMovementProfile(entry, agentActor);
         AgentCombatSkillCacheRuntime.rebuildSkillCacheIfNeeded(entry, agentActor);
+        entry.markProfileCachesCurrent(
+                agentActor.getProfileOwnerCharacterId(), agentActor.getProfileVersion());
     }
 }

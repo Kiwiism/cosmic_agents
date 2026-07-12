@@ -34,7 +34,8 @@ public final class PartnerRecoveryService {
             return;
         }
         ActivePartnerSession active = found.get();
-        if (active.runtime().status() != PartnerLifecycleStatus.ACTIVE) {
+        if (active.runtime().status() == PartnerLifecycleStatus.RELEASING
+                || active.runtime().status().isTerminal()) {
             return;
         }
         String reason = serverTransition ? "Channel transition recovery" : "Player disconnect recovery";
@@ -46,12 +47,37 @@ public final class PartnerRecoveryService {
             return;
         }
         Optional<ActivePartnerSession> found = service.activeSessionForActor(agent.getId());
-        if (found.isEmpty() || found.get().runtime().status() != PartnerLifecycleStatus.ACTIVE) {
+        if (found.isEmpty()) {
             return;
         }
         ActivePartnerSession active = found.get();
+        if (active.runtime().status() == PartnerLifecycleStatus.RELEASING
+                || active.runtime().status().isTerminal()) {
+            return;
+        }
         ThreadManager.getInstance().newDatabaseTask(() ->
                 recoverActive(active, agent.getId(), reason));
+    }
+
+    /**
+     * Canonicalize and close a session before channel/Cash Shop/MTS code exports
+     * actor-keyed buffs or saves the actor row. A failed recovery leaves the
+     * session, profiles, and leases intact so the caller can safely abort.
+     */
+    public boolean recoverBeforeWorldExit(Character actor, String reason) {
+        if (actor == null) {
+            return true;
+        }
+        Optional<ActivePartnerSession> found = service.activeSessionForActor(actor.getId());
+        if (found.isEmpty()) {
+            return true;
+        }
+        ActivePartnerSession active = found.get();
+        recoverActive(active, actor.getId(), reason);
+        return active.runtime().status().isTerminal()
+                && actor.getProfileOwnerCharacterId() == actor.getId()
+                && !leases.isLeased(active.link().firstCharacterId())
+                && !leases.isLeased(active.link().secondCharacterId());
     }
 
     private void recoverActive(ActivePartnerSession active, int actorId, String reason) {
@@ -65,13 +91,19 @@ public final class PartnerRecoveryService {
                         active.runtime().sessionId(), actorId, reason, failure);
                 return;
             }
-            log.warn("partner_recovery retrying after discarding unsupported effects session={} actor={} reason={}",
-                    active.runtime().sessionId(), actorId, reason, failure);
+            boolean requiresEffectCleanup = active.runtime().bindings().orientation()
+                    == ProfileOrientation.SWAPPED;
+            log.warn("partner_recovery retrying session={} actor={} reason={} effectCleanup={}",
+                    active.runtime().sessionId(), actorId, reason, requiresEffectCleanup, failure);
             try {
-                active.humanActor().discardUnsupportedProfileEffectsForRecovery();
-                active.partnerActorOrDormantProfile().discardUnsupportedProfileEffectsForRecovery();
-                service.releaseActive(active, reason + " (forced effect cleanup)");
-                log.info("partner_recovery forced completion session={} actor={} reason={}",
+                String retryReason = reason + " (retry)";
+                if (requiresEffectCleanup) {
+                    active.humanActor().discardUnsupportedProfileEffectsForRecovery();
+                    active.partnerActorOrDormantProfile().discardUnsupportedProfileEffectsForRecovery();
+                    retryReason = reason + " (forced effect cleanup)";
+                }
+                service.releaseActive(active, retryReason);
+                log.info("partner_recovery retry completed session={} actor={} reason={}",
                         active.runtime().sessionId(), actorId, reason);
             } catch (RuntimeException forcedFailure) {
                 failure.addSuppressed(forcedFailure);

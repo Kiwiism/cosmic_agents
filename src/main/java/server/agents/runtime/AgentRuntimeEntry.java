@@ -80,6 +80,8 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentActionMailbox actionMailbox = new AgentActionMailbox(AgentMailboxRuntime.configuredCapacity());
     private final AgentTransitionBarrierState transitionBarrierState = new AgentTransitionBarrierState();
     private volatile boolean partnerManaged;
+    private volatile int cachedProfileOwnerId = -1;
+    private volatile long cachedProfileVersion = -1L;
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
 
     public AgentScheduledTaskState scheduledTaskState() {
@@ -108,6 +110,15 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public boolean isPartnerManaged() {
         return partnerManaged;
+    }
+
+    public void markProfileCachesCurrent(int profileOwnerId, long profileVersion) {
+        cachedProfileOwnerId = profileOwnerId;
+        cachedProfileVersion = profileVersion;
+    }
+
+    public boolean profileCachesMatch(int profileOwnerId, long profileVersion) {
+        return cachedProfileOwnerId == profileOwnerId && cachedProfileVersion == profileVersion;
     }
 
     public AgentAirshowState airshowState() {

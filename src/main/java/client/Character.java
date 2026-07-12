@@ -197,6 +197,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -235,7 +236,7 @@ public class Character extends AbstractCharacterObject {
 
     private int world;
     private int accountid, id, level;
-    private CharacterProfileBinding profileBinding = new CharacterProfileBinding();
+    private volatile CharacterProfileBinding profileBinding = new CharacterProfileBinding();
     private int rank, rankMove, jobRank, jobRankMove;
     private int gender, hair, face;
     private int fame, quest_fame;
@@ -280,6 +281,8 @@ public class Character extends AbstractCharacterObject {
     private final AtomicBoolean awayFromWorld = new AtomicBoolean(true);  // player is online, but on cash shop or mts
     private final AtomicBoolean pendingHpDeath = new AtomicBoolean(false);
     private final AtomicBoolean profileTransitioning = new AtomicBoolean(false);
+    private final AtomicBoolean profileTransitionWindow = new AtomicBoolean(false);
+    private final ReentrantReadWriteLock profileTaskBarrier = new ReentrantReadWriteLock(true);
     private final AtomicBoolean profileSaving = new AtomicBoolean(false);
     private volatile RuntimeException lastProfileSaveFailure;
     private volatile RuntimeException lastCooldownSaveFailure;
@@ -529,7 +532,48 @@ public class Character extends AbstractCharacterObject {
     }
 
     public boolean isProfileTransitioning() {
-        return profileTransitioning.get();
+        return profileTransitioning.get() || profileTransitionWindow.get();
+    }
+
+    public void enterProfileTransitionWindow() {
+        if (!profileTransitionWindow.compareAndSet(false, true)) {
+            throw new IllegalStateException("A profile transition window is already active");
+        }
+        profileTaskBarrier.writeLock().lock();
+    }
+
+    public void exitProfileTransitionWindow() {
+        if (!profileTransitionWindow.get()) {
+            throw new IllegalStateException("No profile transition window is active");
+        }
+        profileTaskBarrier.writeLock().unlock();
+        profileTransitionWindow.set(false);
+    }
+
+    public void rebuildDerivedProfileStats() {
+        reapplyLocalStats();
+    }
+
+    private boolean isCurrentProfileTask(CharacterProfileBinding taskBinding, long taskGeneration) {
+        return profileBinding == taskBinding
+                && taskBinding.generation() == taskGeneration
+                && !profileTransitionWindow.get();
+    }
+
+    private boolean tryEnterProfileTask(CharacterProfileBinding taskBinding, long taskGeneration) {
+        if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+            return false;
+        }
+        profileTaskBarrier.readLock().lock();
+        if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+            profileTaskBarrier.readLock().unlock();
+            return false;
+        }
+        return true;
+    }
+
+    private void exitProfileTask() {
+        profileTaskBarrier.readLock().unlock();
     }
 
     public boolean isProfileSaving() {
@@ -3443,26 +3487,38 @@ public class Character extends AbstractCharacterObject {
 
     public void diseaseExpireTask() {
         if (diseaseExpireTask == null) {
+            CharacterProfileBinding taskBinding = profileBinding;
+            long taskGeneration = taskBinding.generation();
             diseaseExpireTask = TimerManager.getInstance().register(new Runnable() {
                 @Override
                 public void run() {
-                    Set<Disease> toExpire = new LinkedHashSet<>();
-
-                    chrLock.lock();
+                    if (!tryEnterProfileTask(taskBinding, taskGeneration)) {
+                        return;
+                    }
                     try {
-                        long curTime = Server.getInstance().getCurrentTime();
+                        Set<Disease> toExpire = new LinkedHashSet<>();
 
-                        for (Entry<Disease, Long> de : diseaseExpires.entrySet()) {
-                            if (de.getValue() < curTime) {
-                                toExpire.add(de.getKey());
+                        chrLock.lock();
+                        try {
+                            long curTime = Server.getInstance().getCurrentTime();
+
+                            for (Entry<Disease, Long> de : diseaseExpires.entrySet()) {
+                                if (de.getValue() < curTime) {
+                                    toExpire.add(de.getKey());
+                                }
                             }
+                        } finally {
+                            chrLock.unlock();
+                        }
+
+                        for (Disease d : toExpire) {
+                            if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                                return;
+                            }
+                            dispelDebuff(d);
                         }
                     } finally {
-                        chrLock.unlock();
-                    }
-
-                    for (Disease d : toExpire) {
-                        dispelDebuff(d);
+                        exitProfileTask();
                     }
                 }
             }, 1500);
@@ -3478,30 +3534,42 @@ public class Character extends AbstractCharacterObject {
 
     public void buffExpireTask() {
         if (buffExpireTask == null) {
+            CharacterProfileBinding taskBinding = profileBinding;
+            long taskGeneration = taskBinding.generation();
             buffExpireTask = TimerManager.getInstance().register(new Runnable() {
                 @Override
                 public void run() {
-                    Set<Entry<Integer, Long>> es;
-                    List<BuffStatValueHolder> toCancel = new ArrayList<>();
-
-                    effLock.lock();
-                    chrLock.lock();
+                    if (!tryEnterProfileTask(taskBinding, taskGeneration)) {
+                        return;
+                    }
                     try {
-                        es = new LinkedHashSet<>(buffExpires.entrySet());
+                        Set<Entry<Integer, Long>> es;
+                        List<BuffStatValueHolder> toCancel = new ArrayList<>();
 
-                        long curTime = Server.getInstance().getCurrentTime();
-                        for (Entry<Integer, Long> bel : es) {
-                            if (curTime >= bel.getValue()) {
-                                toCancel.add(buffEffects.get(bel.getKey()).entrySet().iterator().next().getValue());    //rofl
+                        effLock.lock();
+                        chrLock.lock();
+                        try {
+                            es = new LinkedHashSet<>(buffExpires.entrySet());
+
+                            long curTime = Server.getInstance().getCurrentTime();
+                            for (Entry<Integer, Long> bel : es) {
+                                if (curTime >= bel.getValue()) {
+                                    toCancel.add(buffEffects.get(bel.getKey()).entrySet().iterator().next().getValue());    //rofl
+                                }
                             }
+                        } finally {
+                            chrLock.unlock();
+                            effLock.unlock();
+                        }
+
+                        for (BuffStatValueHolder mbsvh : toCancel) {
+                            if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                                return;
+                            }
+                            cancelEffect(mbsvh.effect, false, mbsvh.startTime);
                         }
                     } finally {
-                        chrLock.unlock();
-                        effLock.unlock();
-                    }
-
-                    for (BuffStatValueHolder mbsvh : toCancel) {
-                        cancelEffect(mbsvh.effect, false, mbsvh.startTime);
+                        exitProfileTask();
                     }
                 }
             }, 1500);
@@ -3517,27 +3585,39 @@ public class Character extends AbstractCharacterObject {
 
     public void skillCooldownTask() {
         if (skillCooldownTask == null) {
+            CharacterProfileBinding taskBinding = profileBinding;
+            long taskGeneration = taskBinding.generation();
             skillCooldownTask = TimerManager.getInstance().register(new Runnable() {
                 @Override
                 public void run() {
-                    Set<Entry<Integer, CooldownValueHolder>> es;
-
-                    effLock.lock();
-                    chrLock.lock();
-                    try {
-                        es = new LinkedHashSet<>(coolDowns.entrySet());
-                    } finally {
-                        chrLock.unlock();
-                        effLock.unlock();
+                    if (!tryEnterProfileTask(taskBinding, taskGeneration)) {
+                        return;
                     }
+                    try {
+                        Set<Entry<Integer, CooldownValueHolder>> es;
 
-                    long curTime = Server.getInstance().getCurrentTime();
-                    for (Entry<Integer, CooldownValueHolder> bel : es) {
-                        CooldownValueHolder mcdvh = bel.getValue();
-                        if (curTime >= mcdvh.startTime + mcdvh.length) {
-                            removeCooldown(mcdvh.skillId);
-                            sendPacket(PacketCreator.skillCooldown(mcdvh.skillId, 0));
+                        effLock.lock();
+                        chrLock.lock();
+                        try {
+                            es = new LinkedHashSet<>(coolDowns.entrySet());
+                        } finally {
+                            chrLock.unlock();
+                            effLock.unlock();
                         }
+
+                        long curTime = Server.getInstance().getCurrentTime();
+                        for (Entry<Integer, CooldownValueHolder> bel : es) {
+                            CooldownValueHolder mcdvh = bel.getValue();
+                            if (curTime >= mcdvh.startTime + mcdvh.length) {
+                                if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                                    return;
+                                }
+                                removeCooldown(mcdvh.skillId);
+                                sendPacket(PacketCreator.skillCooldown(mcdvh.skillId, 0));
+                            }
+                        }
+                    } finally {
+                        exitProfileTask();
                     }
                 }
             }, 1500);
@@ -3553,82 +3633,100 @@ public class Character extends AbstractCharacterObject {
 
     public void expirationTask() {
         if (itemExpireTask == null) {
+            CharacterProfileBinding taskBinding = profileBinding;
+            long taskGeneration = taskBinding.generation();
             itemExpireTask = TimerManager.getInstance().register(new Runnable() {
                 @Override
                 public void run() {
-                    boolean deletedCoupon = false;
-
-                    long expiration, currenttime = System.currentTimeMillis();
-                    Set<Skill> keys = getSkills().keySet();
-                    for (Iterator<Skill> i = keys.iterator(); i.hasNext(); ) {
-                        Skill key = i.next();
-                        SkillEntry skill = getSkills().get(key);
-                        if (skill.expiration != -1 && skill.expiration < currenttime) {
-                            changeSkillLevel(key, (byte) -1, 0, -1);
-                        }
+                    if (!tryEnterProfileTask(taskBinding, taskGeneration)) {
+                        return;
                     }
+                    try {
+                        boolean deletedCoupon = false;
 
-                    List<Item> toberemove = new ArrayList<>();
-                    for (Inventory inv : inventory) {
-                        for (Item item : inv.list()) {
-                            expiration = item.getExpiration();
+                        long expiration, currenttime = System.currentTimeMillis();
+                        Set<Skill> keys = getSkills().keySet();
+                        for (Iterator<Skill> i = keys.iterator(); i.hasNext(); ) {
+                            if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                                return;
+                            }
+                            Skill key = i.next();
+                            SkillEntry skill = getSkills().get(key);
+                            if (skill.expiration != -1 && skill.expiration < currenttime) {
+                                changeSkillLevel(key, (byte) -1, 0, -1);
+                            }
+                        }
 
-                            if (expiration != -1 && (expiration < currenttime) && ((item.getFlag() & ItemConstants.LOCK) == ItemConstants.LOCK)) {
-                                short lock = item.getFlag();
-                                lock &= ~(ItemConstants.LOCK);
-                                item.setFlag(lock); //Probably need a check, else people can make expiring items into permanent items...
-                                item.setExpiration(-1);
-                                forceUpdateItem(item);   //TEST :3
-                            } else if (expiration != -1 && expiration < currenttime) {
-                                if (!ItemConstants.isPet(item.getItemId())) {
-                                    sendPacket(PacketCreator.itemExpired(item.getItemId()));
-                                    toberemove.add(item);
-                                    if (ItemConstants.isRateCoupon(item.getItemId())) {
-                                        deletedCoupon = true;
-                                    }
-                                } else {
-                                    Pet pet = item.getPet();   // thanks Lame for noticing pets not getting despawned after expiration time
-                                    if (pet != null) {
-                                        unequipPet(pet, true);
-                                    }
+                        List<Item> toberemove = new ArrayList<>();
+                        for (Inventory inv : inventory) {
+                            if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                                return;
+                            }
+                            for (Item item : inv.list()) {
+                                expiration = item.getExpiration();
 
-                                    if (ItemConstants.isExpirablePet(item.getItemId())) {
+                                if (expiration != -1 && (expiration < currenttime) && ((item.getFlag() & ItemConstants.LOCK) == ItemConstants.LOCK)) {
+                                    short lock = item.getFlag();
+                                    lock &= ~(ItemConstants.LOCK);
+                                    item.setFlag(lock); //Probably need a check, else people can make expiring items into permanent items...
+                                    item.setExpiration(-1);
+                                    forceUpdateItem(item);   //TEST :3
+                                } else if (expiration != -1 && expiration < currenttime) {
+                                    if (!ItemConstants.isPet(item.getItemId())) {
                                         sendPacket(PacketCreator.itemExpired(item.getItemId()));
                                         toberemove.add(item);
+                                        if (ItemConstants.isRateCoupon(item.getItemId())) {
+                                            deletedCoupon = true;
+                                        }
                                     } else {
-                                        item.setExpiration(-1);
-                                        forceUpdateItem(item);
+                                        Pet pet = item.getPet();   // thanks Lame for noticing pets not getting despawned after expiration time
+                                        if (pet != null) {
+                                            unequipPet(pet, true);
+                                        }
+
+                                        if (ItemConstants.isExpirablePet(item.getItemId())) {
+                                            sendPacket(PacketCreator.itemExpired(item.getItemId()));
+                                            toberemove.add(item);
+                                        } else {
+                                            item.setExpiration(-1);
+                                            forceUpdateItem(item);
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        if (!toberemove.isEmpty()) {
-                            for (Item item : toberemove) {
-                                InventoryManipulator.removeFromSlot(client, inv.getType(), item.getPosition(), item.getQuantity(), true);
-                            }
+                            if (!toberemove.isEmpty()) {
+                                if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                                    return;
+                                }
+                                for (Item item : toberemove) {
+                                    InventoryManipulator.removeFromSlot(client, inv.getType(), item.getPosition(), item.getQuantity(), true);
+                                }
 
-                            ItemInformationProvider ii = ItemInformationProvider.getInstance();
-                            for (Item item : toberemove) {
-                                List<Integer> toadd = new ArrayList<>();
-                                Pair<Integer, String> replace = ii.getReplaceOnExpire(item.getItemId());
-                                if (replace.left > 0) {
-                                    toadd.add(replace.left);
-                                    if (!replace.right.isEmpty()) {
-                                        dropMessage(replace.right);
+                                ItemInformationProvider ii = ItemInformationProvider.getInstance();
+                                for (Item item : toberemove) {
+                                    List<Integer> toadd = new ArrayList<>();
+                                    Pair<Integer, String> replace = ii.getReplaceOnExpire(item.getItemId());
+                                    if (replace.left > 0) {
+                                        toadd.add(replace.left);
+                                        if (!replace.right.isEmpty()) {
+                                            dropMessage(replace.right);
+                                        }
+                                    }
+                                    for (Integer itemid : toadd) {
+                                        InventoryManipulator.addById(client, itemid, (short) 1);
                                     }
                                 }
-                                for (Integer itemid : toadd) {
-                                    InventoryManipulator.addById(client, itemid, (short) 1);
-                                }
+
+                                toberemove.clear();
                             }
 
-                            toberemove.clear();
+                            if (deletedCoupon) {
+                                updateCouponRates();
+                            }
                         }
-
-                        if (deletedCoupon) {
-                            updateCouponRates();
-                        }
+                    } finally {
+                        exitProfileTask();
                     }
                 }
             }, 60000);
@@ -8978,12 +9076,16 @@ public class Character extends AbstractCharacterObject {
     public synchronized void saveCooldowns() {
         lastCooldownSaveFailure = null;
         List<PlayerCoolDownValueHolder> listcd = getAllCooldowns();
+        Map<Disease, Pair<Long, MobSkill>> listds = getAllDiseases();
+        int profileOwnerId = getProfileOwnerCharacterId();
 
-        if (!listcd.isEmpty()) {
-            try (Connection con = DatabaseConnection.getConnection()) {
-                deleteWhereCharacterId(con, "DELETE FROM cooldowns WHERE charid = ?", getProfileOwnerCharacterId());
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                deleteWhereCharacterId(con, "DELETE FROM cooldowns WHERE charid = ?", profileOwnerId);
+                if (!listcd.isEmpty()) {
                 try (PreparedStatement ps = con.prepareStatement("INSERT INTO cooldowns (charid, SkillID, StartTime, length) VALUES (?, ?, ?, ?)")) {
-                    ps.setInt(1, getProfileOwnerCharacterId());
+                    ps.setInt(1, profileOwnerId);
                     for (PlayerCoolDownValueHolder cooling : listcd) {
                         ps.setInt(2, cooling.skillId);
                         ps.setLong(3, cooling.startTime);
@@ -8992,19 +9094,13 @@ public class Character extends AbstractCharacterObject {
                     }
                     ps.executeBatch();
                 }
-            } catch (SQLException se) {
-                lastCooldownSaveFailure = new IllegalStateException(
-                        "Failed to save cooldowns for profile owner " + getProfileOwnerCharacterId(), se);
-                monitoring.RuntimeFailureLogger.log(se);
-            }
-        }
+                }
 
-        Map<Disease, Pair<Long, MobSkill>> listds = getAllDiseases();
-        if (!listds.isEmpty()) {
-            try (Connection con = DatabaseConnection.getConnection()) {
-                deleteWhereCharacterId(con, "DELETE FROM playerdiseases WHERE charid = ?", getProfileOwnerCharacterId());
+                deleteWhereCharacterId(
+                        con, "DELETE FROM playerdiseases WHERE charid = ?", profileOwnerId);
+                if (!listds.isEmpty()) {
                 try (PreparedStatement ps = con.prepareStatement("INSERT INTO playerdiseases (charid, disease, mobskillid, mobskilllv, length) VALUES (?, ?, ?, ?, ?)")) {
-                    ps.setInt(1, getProfileOwnerCharacterId());
+                    ps.setInt(1, profileOwnerId);
 
                     for (Entry<Disease, Pair<Long, MobSkill>> e : listds.entrySet()) {
                         ps.setInt(2, e.getKey().ordinal());
@@ -9019,16 +9115,23 @@ public class Character extends AbstractCharacterObject {
 
                     ps.executeBatch();
                 }
-            } catch (SQLException se) {
-                RuntimeException diseaseFailure = new IllegalStateException(
-                        "Failed to save diseases for profile owner " + getProfileOwnerCharacterId(), se);
-                if (lastCooldownSaveFailure == null) {
-                    lastCooldownSaveFailure = diseaseFailure;
-                } else {
-                    lastCooldownSaveFailure.addSuppressed(diseaseFailure);
                 }
-                monitoring.RuntimeFailureLogger.log(se);
+
+                con.commit();
+            } catch (SQLException | RuntimeException failure) {
+                try {
+                    con.rollback();
+                } catch (SQLException rollbackFailure) {
+                    failure.addSuppressed(rollbackFailure);
+                }
+                throw failure;
+            } finally {
+                con.setAutoCommit(true);
             }
+        } catch (SQLException | RuntimeException failure) {
+            lastCooldownSaveFailure = new IllegalStateException(
+                    "Failed to save cooldowns and diseases for profile owner " + profileOwnerId, failure);
+            monitoring.RuntimeFailureLogger.log(failure);
         }
     }
 
@@ -9389,7 +9492,7 @@ public class Character extends AbstractCharacterObject {
             return;
         }
         try {
-        if (profileTransitioning.get()) {
+        if (isProfileTransitioning()) {
             lastProfileSaveFailure = new IllegalStateException(
                     "Cannot save actor " + id + " during a profile transition");
             log.warn("Skipping character save during profile transition actor={} reason={}", id, saveReason);
@@ -9491,7 +9594,13 @@ public class Character extends AbstractCharacterObject {
         Calendar c = Calendar.getInstance();
         log.debug("Attempting to {} chr {}", notAutosave ? "save" : "autosave", name);
 
-        Server.getInstance().updateCharacterEntry(this);
+        // A swapped holder combines actor-scoped map/name state with another
+        // character's profile stats. Publishing that hybrid into the login
+        // character-list cache would corrupt both views. Release restores
+        // canonical orientation and refreshes each entry from its own actor.
+        if (profileOwnerId == id) {
+            Server.getInstance().updateCharacterEntry(this);
+        }
 
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
@@ -10682,24 +10791,40 @@ public class Character extends AbstractCharacterObject {
     }
 
     public void runFullnessSchedule(int petSlot) {
-        Pet pet = getPet(petSlot);
-        if (pet == null) {
-            return;
-        }
+        runFullnessSchedule(petSlot, getProfileOwnerCharacterId(), getProfileBindingGeneration());
+    }
 
-        int newFullness = pet.getFullness() - PetDataFactory.getHunger(pet.getItemId());
-        if (newFullness <= 5) {
-            pet.setFullness(15);
-            pet.saveToDb();
-            unequipPet(pet, true);
-            dropMessage(6, "Your pet grew hungry! Treat it some pet food to keep it healthy!");
-        } else {
-            pet.setFullness(newFullness);
-            pet.saveToDb();
-            Item petz = getInventory(InventoryType.CASH).getItem(pet.getPosition());
-            if (petz != null) {
-                forceUpdateItem(petz);
+    public void runFullnessSchedule(int petSlot,
+                                    int expectedProfileOwnerId,
+                                    long expectedBindingGeneration) {
+        petLock.lock();
+        try {
+            if (isProfileTransitioning()
+                    || getProfileOwnerCharacterId() != expectedProfileOwnerId
+                    || getProfileBindingGeneration() != expectedBindingGeneration) {
+                return;
             }
+            Pet pet = pets[petSlot];
+            if (pet == null) {
+                return;
+            }
+
+            int newFullness = pet.getFullness() - PetDataFactory.getHunger(pet.getItemId());
+            if (newFullness <= 5) {
+                pet.setFullness(15);
+                pet.saveToDb();
+                unequipPet(pet, true);
+                dropMessage(6, "Your pet grew hungry! Treat it some pet food to keep it healthy!");
+            } else {
+                pet.setFullness(newFullness);
+                pet.saveToDb();
+                Item petz = getInventory(InventoryType.CASH).getItem(pet.getPosition());
+                if (petz != null) {
+                    forceUpdateItem(petz);
+                }
+            }
+        } finally {
+            petLock.unlock();
         }
     }
 
@@ -10955,10 +11080,12 @@ public class Character extends AbstractCharacterObject {
         try {
             if (!questExpirations.isEmpty()) {
                 if (questExpireTask == null) {
+                    CharacterProfileBinding taskBinding = profileBinding;
+                    long taskGeneration = taskBinding.generation();
                     questExpireTask = TimerManager.getInstance().register(new Runnable() {
                         @Override
                         public void run() {
-                            runQuestExpireTask();
+                            runQuestExpireTask(taskBinding, taskGeneration);
                         }
                     }, SECONDS.toMillis(10));
                 }
@@ -10968,31 +11095,41 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
-    private void runQuestExpireTask() {
-        evtLock.lock();
+    private void runQuestExpireTask(CharacterProfileBinding taskBinding, long taskGeneration) {
+        if (!tryEnterProfileTask(taskBinding, taskGeneration)) {
+            return;
+        }
         try {
-            long timeNow = Server.getInstance().getCurrentTime();
-            List<Quest> expireList = new LinkedList<>();
+            evtLock.lock();
+            try {
+                long timeNow = Server.getInstance().getCurrentTime();
+                List<Quest> expireList = new LinkedList<>();
 
-            for (Entry<Quest, Long> qe : questExpirations.entrySet()) {
-                if (qe.getValue() <= timeNow) {
-                    expireList.add(qe.getKey());
-                }
-            }
-
-            if (!expireList.isEmpty()) {
-                for (Quest quest : expireList) {
-                    expireQuest(quest);
-                    questExpirations.remove(quest);
+                for (Entry<Quest, Long> qe : questExpirations.entrySet()) {
+                    if (qe.getValue() <= timeNow) {
+                        expireList.add(qe.getKey());
+                    }
                 }
 
-                if (questExpirations.isEmpty()) {
-                    questExpireTask.cancel(false);
-                    questExpireTask = null;
+                if (!expireList.isEmpty()) {
+                    for (Quest quest : expireList) {
+                        if (!isCurrentProfileTask(taskBinding, taskGeneration)) {
+                            return;
+                        }
+                        expireQuest(quest);
+                        questExpirations.remove(quest);
+                    }
+
+                    if (questExpirations.isEmpty()) {
+                        questExpireTask.cancel(false);
+                        questExpireTask = null;
+                    }
                 }
+            } finally {
+                evtLock.unlock();
             }
         } finally {
-            evtLock.unlock();
+            exitProfileTask();
         }
     }
 
@@ -11000,10 +11137,12 @@ public class Character extends AbstractCharacterObject {
         evtLock.lock();
         try {
             if (questExpireTask == null) {
+                CharacterProfileBinding taskBinding = profileBinding;
+                long taskGeneration = taskBinding.generation();
                 questExpireTask = TimerManager.getInstance().register(new Runnable() {
                     @Override
                     public void run() {
-                        runQuestExpireTask();
+                        runQuestExpireTask(taskBinding, taskGeneration);
                     }
                 }, SECONDS.toMillis(10));
             }

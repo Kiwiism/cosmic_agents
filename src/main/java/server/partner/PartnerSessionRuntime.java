@@ -119,6 +119,22 @@ public final class PartnerSessionRuntime {
         }
     }
 
+    public void abortRelease(long releaseGeneration) {
+        transitionLock.lock();
+        try {
+            requireStatus(PartnerLifecycleStatus.RELEASING);
+            if (generation != releaseGeneration) {
+                throw new IllegalStateException("Stale Partner release generation");
+            }
+            if (bindings.orientation() != ProfileOrientation.CANONICAL) {
+                throw new IllegalStateException("Partner release cannot be retried outside canonical orientation");
+            }
+            status = PartnerLifecycleStatus.ACTIVE;
+        } finally {
+            transitionLock.unlock();
+        }
+    }
+
     public void close(long releaseGeneration, PartnerLifecycleStatus terminalStatus) {
         transitionLock.lock();
         try {

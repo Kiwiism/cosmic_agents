@@ -16,7 +16,7 @@ public final class CosmicPartnerRuntimeAvailability implements PartnerRosterQuer
 
     @Override
     public boolean isLeased(int characterId) {
-        return ProfileLeaseRegistry.global().isLeased(characterId);
+        return ProfileLeaseRegistry.global().isUnavailable(characterId);
     }
 
     @Override

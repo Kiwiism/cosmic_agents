@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 
 public final class AgentMailboxRuntime {
     private static final int DEFAULT_MAX_ACTIONS_PER_TICK = 32;
@@ -20,6 +21,10 @@ public final class AgentMailboxRuntime {
         if (entry == null) {
             return CompletableFuture.failedFuture(
                     new IllegalArgumentException("Agent runtime entry is required"));
+        }
+        if (entry.transitionBarrierState().isPaused()) {
+            return CompletableFuture.failedFuture(
+                    new RejectedExecutionException("Agent profile transition is in progress"));
         }
         return entry.actionMailbox().submit(
                 entry.sessionGeneration(),
