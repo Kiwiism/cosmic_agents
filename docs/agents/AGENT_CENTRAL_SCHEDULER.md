@@ -14,6 +14,9 @@ property below only for parity or soak validation:
 -Dagents.scheduler.central.enabled=true
 ```
 
+This flag enables the current sequential parity dispatcher, not the planned
+full sharded scheduler. Do not treat it as the production 2000-Agent mode.
+
 When enabled, one lazily started repeating task dispatches all due live Agent
 sessions in stable registration order. Cancelling the last registration also
 cancels the central loop. The same `AgentTickRuntime` and guarded
@@ -52,6 +55,27 @@ Automated validation includes callback-cadence parity and a deterministic
 500-session, 20-cadence dispatcher soak (10,000 isolated updates). This validates
 dispatcher mechanics only; live-client movement/combat parity and a sustained
 server soak remain required before changing the default mode.
+
+## Full Scheduler Readiness
+
+The implementation-ready design is maintained in
+`AGENT_FULL_CENTRALIZED_SCHEDULER_IMPLEMENTATION_PLAN.md`.
+
+Current readiness:
+
+```text
+Phase 0-1 foundation: ready to begin
+mailbox default enablement: blocked on nonblocking command results
+single-shard heap: follows mailbox ownership scans
+multi-shard execution: blocked on Cosmic thread-affinity audit
+production default switch: blocked on parity and staged soak evidence
+```
+
+Important current limitations include O(N) registry session validation,
+unclassified delayed callbacks, a blocking chat mailbox compatibility wait,
+cumulative-only metrics, and no priority/budget/shard runtime. The repository
+therefore has a useful migration foundation, not the completed centralized
+scheduler.
 
 ## Rollback
 

@@ -25,6 +25,14 @@ NuTNNuT-original behaviors are retained, gated, or disabled as legacy. Scaling
 starts after that stable gameplay baseline exists.
 ```
 
+This sequencing gates production behavior changes and default enablement. It
+does not block behavior-preserving scheduler foundation work behind disabled
+rollout modes. Central scheduler Phases 0-5 may establish measurement, APIs,
+mailbox ownership, a one-shard heap, budgets, and async completion while the
+legacy guarded tick remains the default. Multi-shard rollout, cadence changes,
+simulation-tier optimization, and making the new scheduler the default remain
+blocked until capability parity and Cosmic thread-affinity evidence exist.
+
 ## Track Split
 
 ### Track A - Optimization And Scaling

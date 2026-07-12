@@ -105,6 +105,52 @@ The production target must address these gaps:
 13. Pause/resume does not yet expose a wait-for-quiescence contract required by
     profile exchange and Double Agent operations.
 
+## Implementation Readiness Audit
+
+Audit baseline: `master` at `28555684e8` on 2026-07-12.
+
+The design is complete enough to begin Phase 0 and Phase 1. It is not safe to
+jump directly to `CENTRAL_SHARDED`, enable mailboxes by default, or change
+gameplay cadence. The following source facts are mandatory migration inputs:
+
+- `AgentSchedulerMode` currently exposes only `LEGACY_PER_AGENT` and
+  `CENTRAL`; the explicit three-mode contract is not implemented.
+- `AgentTickScheduler` is a useful sequential parity dispatcher, but performs
+  a global registration scan and due-list sort on every cycle.
+- `AgentRuntimeRegistry.isActiveSession` scans all leader entry lists. Calling
+  it for each due Agent can multiply scheduler scan cost at scale.
+- `AgentActionMailbox` is bounded and generation-stamped, but
+  `agents.mailbox.enabled` defaults to `false` and only selected ingress paths
+  use it.
+- `AgentChatMailboxDispatcher` waits up to two seconds for a mailbox result.
+  This compatibility behavior must be replaced with an asynchronous reply
+  contract before mailboxes are enabled on packet/event-loop paths.
+- entry-scoped delayed callbacks exist, but unscoped callbacks still exist and
+  must be classified as session mutation, global maintenance, or presentation
+  cleanup before migration.
+- `AgentNavigationGraphService` contains a blocking `join()` API. Scheduler
+  workers must be statically prevented from reaching it.
+- current scheduler metrics are cumulative rather than bounded rolling
+  percentiles by shard, priority, work class, and simulation mode.
+- the existing 500-session soak proves 10,000 dispatcher callback invocations;
+  it is not a 500-Agent gameplay, packet, database, or long-duration soak.
+- capability/gameplay MVP proof is not complete. Scheduler foundations may be
+  built behind disabled modes, but production default changes and behavioral
+  cadence changes remain gated by capability parity evidence.
+
+Readiness decision:
+
+```text
+Phase 0-1: ready to implement now
+Phase 2: ready only after the nonblocking result contract is designed
+Phase 3-5: may be implemented behind flags after Phase 2 scans are green
+Phase 6+: blocked on Cosmic thread-affinity audit and capability parity proof
+Default CENTRAL_SHARDED: blocked on staged live and soak acceptance
+```
+
+No phase may reinterpret the existing 500-session unit soak as production
+scale evidence.
+
 ## Required Invariants
 
 The final design must preserve these invariants.
@@ -160,10 +206,42 @@ Agent workers and queues must be separate from player packet handling, core
 server timers, save safety, and shutdown-critical work. Overload degrades Agent
 fidelity before affecting player responsiveness.
 
+### Cosmic Thread Affinity
+
+Single-writer Agent ownership does not imply exclusive ownership of Cosmic
+objects. Character, map, monster, drop, trade, inventory, packet, and event
+instance APIs may have channel, map, timer, or lock-order assumptions.
+
+Before multi-shard execution, every mutating integration gateway must be
+classified as one of:
+
+```text
+SHARD_SAFE_DIRECT
+SERVER_EXECUTOR_REQUIRED
+READ_ONLY_SNAPSHOT
+ASYNC_EXTERNAL
+UNSAFE_PENDING_REFACTOR
+```
+
+`SERVER_EXECUTOR_REQUIRED` work must be submitted to the authoritative Cosmic
+executor and return a generation-stamped completion; a shard must not wait for
+it. `UNSAFE_PENDING_REFACTOR` blocks multi-shard rollout. The audit must cover
+movement, map transfer, combat, mob control, loot, inventory, equipment, trade,
+shop, NPC, quest, party, packet broadcast, death, and despawn.
+
 ### No Catch-Up Storm
 
 Periodic work that misses several periods runs once using current state. It
 does not replay every missed tick.
+
+### Constant-Time Session Identity
+
+Scheduler hot paths must not scan leader-owned collections to validate a live
+session. Before the heap scheduler is accepted, the runtime registry must
+provide an O(1) index keyed by stable Agent identity and session generation.
+Register, replace, relogin, and remove must update the leader view and session
+index atomically from the lifecycle boundary. Tests must prove stale
+generations cannot become active again.
 
 ### Deterministic Cleanup
 
@@ -606,6 +684,47 @@ Do not block network event-loop threads waiting for a scheduler result. Existing
 synchronous command behavior must either use a short bounded handoff with no
 server locks held or be converted to an asynchronous reply.
 
+For this repository, packet/event-loop callers use asynchronous replies. The
+target command contract is:
+
+```text
+caller validates syntax and authorization
+  -> submit bounded Agent command envelope
+  -> return from packet/event-loop handler without waiting
+  -> owning shard applies or rejects command
+  -> result is emitted through Agent reply/command-result delivery
+```
+
+Result futures are optional observability handles, not permission to block a
+network, scheduler, map, or core timer thread. Every result has a deadline;
+session close, replacement, overflow, or expiry completes it exceptionally and
+removes retained state. Tests must fail if production packet handlers call
+`get`, `join`, or unbounded waits on Agent results.
+
+Mailbox enqueue must also signal the owning scheduler shard. An action must not
+wait for the next periodic gameplay cadence merely because the Agent was idle
+or scheduled far in the future. Wake signals are generation-stamped,
+coalescible, and bounded; payload ordering remains in the per-Agent mailbox.
+
+## Delayed Callback Migration
+
+Every Agent-related delayed callback must receive one final classification:
+
+```text
+SESSION_SCOPED_ACTION
+GLOBAL_AGENT_MAINTENANCE
+PRESENTATION_CLEANUP
+ASYNC_EXTERNAL_COMPLETION
+DELETE_AS_REDUNDANT
+```
+
+`SESSION_SCOPED_ACTION` carries Agent ID, generation, work class, expiry, and a
+wake reason. It returns through scheduler ingress rather than mutating runtime
+from `TimerManager`. Global maintenance and presentation cleanup may retain a
+server timer only when they do not mutate Agent session state; that exception
+must be documented at the call site. Lifecycle removal cancels or invalidates
+all session-scoped delayed work.
+
 ## Async Work Isolation
 
 Use separate bounded executors by workload characteristic:
@@ -811,6 +930,21 @@ Validate at startup:
 Do not silently convert an invalid production configuration into an unbounded
 mode.
 
+Configuration is resolved once at startup into an immutable
+`AgentSchedulerConfig` value. Resolution precedence is:
+
+```text
+explicit JVM property
+  -> config.yaml Agent scheduler setting
+  -> documented default
+```
+
+The legacy `agents.scheduler.central.enabled` property is consulted only when
+`agents.scheduler.mode` is absent. The resolved configuration and source of
+each non-default override are logged once without secrets. Tests cover invalid
+mode, invalid percentages, zero/negative capacities, legacy compatibility, and
+explicit-mode precedence.
+
 ## Observability
 
 Required global metrics:
@@ -896,6 +1030,38 @@ It must not wait forever for an LLM, graph load, or database request.
 
 ## Implementation Phases
 
+### Required Evidence Layout
+
+Implementation evidence is stored under:
+
+```text
+docs/agents/evidence/central-scheduler/<phase>/
+  SUMMARY.md
+  COMMANDS.md
+  METRICS.md
+  PARITY.md
+  REMAINING_RISKS.md
+```
+
+Generated logs, heap dumps, recordings, and large profiler captures stay out
+of Git; `SUMMARY.md` records their local path, timestamp, build commit, test
+population, duration, configuration, and checksum when retained.
+
+Every phase records:
+
+- commit and scheduler mode.
+- exact compile/test/soak commands.
+- Agent and real-player population.
+- duration and workload mix.
+- scheduler delay, work cost, queue depth, rejection, failure, heap, GC, DB,
+  packet-latency, and shutdown observations available for that phase.
+- behavior parity result and any required live-client validation.
+- rollback procedure tested for that phase.
+
+Phase 0 must add a repeatable synthetic harness for 50/100/250/500 sessions and
+must explicitly label dispatcher-only measurements. Live gameplay evidence is
+recorded separately and cannot be inferred from synthetic callback counts.
+
 ### Phase 0: Freeze And Measure Baseline
 
 Work:
@@ -904,11 +1070,14 @@ Work:
 - capture 50, 100, 250, and 500 Agent baseline metrics.
 - record visible movement/combat/dialogue parity.
 - identify current slow tick components.
+- create the evidence directory and population harness.
+- record legacy and central-sequential results separately.
 
 Exit:
 
 - repeatable baseline evidence exists.
 - no unexplained failures in current scheduler parity tests.
+- the harness reports workload type and does not claim live gameplay coverage.
 
 ### Phase 1: Extract Stable Scheduler API
 
@@ -918,26 +1087,32 @@ Work:
 - preserve `AgentTickSchedulingService` as the lifecycle facade.
 - add explicit scheduler mode configuration.
 - add typed registration/session identifiers.
+- add the O(1) active-session generation index.
 - keep central-sequential behavior identical.
 
 Exit:
 
 - legacy and central-sequential parity tests pass unchanged.
 - spawn, relogin, replacement, and despawn use only the facade.
+- scheduler hot-path session validation performs no leader-list scan.
 
 ### Phase 2: Mandatory Mailbox Ownership
 
 Work:
 
 - inventory all external Agent mutations.
+- inventory and classify all delayed callbacks.
 - migrate them one family at a time to immutable mailbox actions.
 - add coalescing, expiry, and overload result contracts.
+- replace packet/event-loop waits with asynchronous result delivery.
+- make mailbox enqueue wake the owning scheduler.
 - remove direct external mutable runtime access after each family moves.
 
 Exit:
 
 - static scan and focused tests show external entry points use mailbox/facade.
-- no network event-loop waits while holding server locks.
+- no network, scheduler, map, or core timer thread waits on Agent results.
+- every delayed callback has a documented final classification.
 
 ### Phase 3: Single-Shard Heap Scheduler
 
@@ -988,6 +1163,7 @@ Exit:
 Work:
 
 - audit shared-map integration adapters.
+- record the thread-affinity classification for every mutating gateway.
 - enable stable-hash shard ownership.
 - add shard-local state and imbalance metrics.
 - test simultaneous Agents in the same and different maps.
@@ -997,6 +1173,7 @@ Exit:
 - no duplicate execution for one Agent.
 - no lost registration during concurrent lifecycle events.
 - map/combat/loot/trade tests pass under concurrency.
+- no `UNSAFE_PENDING_REFACTOR` gateway is reachable in multi-shard mode.
 - ThreadSanitizer-equivalent stress assertions or deterministic race harnesses
   find no known ownership violations.
 
@@ -1194,6 +1371,24 @@ Every phase must update:
 
 Do not mark a phase complete from code presence alone. Record tests, live
 behavior evidence, and remaining rollback conditions.
+
+## Mandatory Source Scans
+
+Run and record these scans during Phase 0, after each ownership migration, and
+before changing the default mode:
+
+```powershell
+rg -n "AgentSchedulerRuntime\.(schedule|register)\(" src/main/java/server/agents
+rg -n "TimerManager" src/main/java/server/agents
+rg -n "\.get\([^)]*TimeUnit|\.join\(\)|Thread\.sleep" src/main/java/server/agents
+rg -n "agents\.mailbox\.enabled|agents\.scheduler\.central\.enabled" src/main/java src/test/java
+rg -n "ScheduledFuture" src/main/java/server/agents
+```
+
+Each match is classified in phase evidence; scans are not expected to be empty
+until the phase that owns the match is complete. The final scan may retain
+server-timer usage only for documented global maintenance or presentation
+cleanup that cannot mutate a live Agent session.
 
 ## Definition Of Done
 
