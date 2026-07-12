@@ -6,9 +6,12 @@ import client.inventory.Equip;
 import client.inventory.Pet;
 import client.keybind.KeyBinding;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import net.packet.Packet;
 import server.TimerManager;
 import server.life.MobSkill;
 import tools.Pair;
+import tools.PacketCreator;
 
 import java.awt.Point;
 import java.sql.ResultSet;
@@ -24,9 +27,37 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CharacterProfileExchangeTest {
+    @Test
+    void partnerSessionSkillMutatesProfileAndSendsNormalSkillPackets() throws Exception {
+        Character character = character(10, "Pio", 28, Job.ASSASSIN, 30030);
+        Client client = mock(Client.class);
+        character.setClient(client);
+        Skill shadowPartner = new Skill(4111002);
+
+        character.applyPartnerSessionSkill(10, shadowPartner, (byte) 30, 0, -1L);
+
+        assertEquals(30, character.getSkills().get(shadowPartner).skillevel);
+        ArgumentCaptor<Packet> granted = ArgumentCaptor.forClass(Packet.class);
+        verify(client).sendPacket(granted.capture());
+        assertArrayEquals(
+                PacketCreator.updateSkill(4111002, 30, 0, -1L).getBytes(),
+                granted.getValue().getBytes());
+
+        org.mockito.Mockito.clearInvocations(client);
+        character.restorePartnerSessionSkill(10, shadowPartner, null);
+
+        assertFalse(character.getSkills().containsKey(shadowPartner));
+        ArgumentCaptor<Packet> removed = ArgumentCaptor.forClass(Packet.class);
+        verify(client).sendPacket(removed.capture());
+        assertArrayEquals(
+                PacketCreator.updateSkill(4111002, -1, 0, -1L).getBytes(),
+                removed.getValue().getBytes());
+    }
+
     @Test
     void exchangesProfileOwnedStateWithoutMovingActors() throws Exception {
         Character first = character(10, "Pio", 28, Job.ASSASSIN, 30030);

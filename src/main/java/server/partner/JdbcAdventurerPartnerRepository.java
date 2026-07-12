@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -300,15 +301,152 @@ public final class JdbcAdventurerPartnerRepository implements AdventurerPartnerR
     }
 
     @Override
+    public PartnerSessionSkillGrant grantTemporarySkill(
+            long sessionId,
+            int characterId,
+            int skillId,
+            int skillLevel,
+            int masterLevel,
+            long expiration,
+            CharacterSkillState originalState) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                requireOpenSessionCharacter(con, sessionId, characterId);
+                PartnerSessionSkillGrant existing = findTemporarySkill(
+                        con, sessionId, characterId, skillId, true).orElse(null);
+                if (existing == null) {
+                    String insert = "INSERT INTO adventurer_partner_session_skills "
+                            + "(session_id, character_id, skill_id, original_skill_level, "
+                            + "original_master_level, original_expiration, granted_skill_level, "
+                            + "granted_master_level, granted_expiration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    try (PreparedStatement ps = con.prepareStatement(insert)) {
+                        ps.setLong(1, sessionId);
+                        ps.setInt(2, characterId);
+                        ps.setInt(3, skillId);
+                        if (originalState == null) {
+                            ps.setNull(4, Types.INTEGER);
+                            ps.setNull(5, Types.INTEGER);
+                            ps.setNull(6, Types.BIGINT);
+                        } else {
+                            ps.setInt(4, originalState.skillLevel());
+                            ps.setInt(5, originalState.masterLevel());
+                            ps.setLong(6, originalState.expiration());
+                        }
+                        ps.setInt(7, skillLevel);
+                        ps.setInt(8, masterLevel);
+                        ps.setLong(9, expiration);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    try (PreparedStatement ps = con.prepareStatement(
+                            "UPDATE adventurer_partner_session_skills SET granted_skill_level = ?, "
+                                    + "granted_master_level = ?, granted_expiration = ? "
+                                    + "WHERE session_id = ? AND character_id = ? AND skill_id = ?")) {
+                        ps.setInt(1, skillLevel);
+                        ps.setInt(2, masterLevel);
+                        ps.setLong(3, expiration);
+                        ps.setLong(4, sessionId);
+                        ps.setInt(5, characterId);
+                        ps.setInt(6, skillId);
+                        requireSingleRow(ps.executeUpdate(), "Temporary Partner skill could not be updated");
+                    }
+                }
+
+                try (PreparedStatement ps = con.prepareStatement(
+                        "INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) "
+                                + "VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
+                                + "skilllevel = VALUES(skilllevel), masterlevel = VALUES(masterlevel), "
+                                + "expiration = VALUES(expiration)")) {
+                    ps.setInt(1, characterId);
+                    ps.setInt(2, skillId);
+                    ps.setInt(3, skillLevel);
+                    ps.setInt(4, masterLevel);
+                    ps.setLong(5, expiration);
+                    ps.executeUpdate();
+                }
+                PartnerSessionSkillGrant granted = findTemporarySkill(
+                        con, sessionId, characterId, skillId, false)
+                        .orElseThrow(() -> new SQLException("Temporary Partner skill was not recorded"));
+                con.commit();
+                return granted;
+            } catch (RuntimeException | SQLException failure) {
+                rollback(con, failure);
+                if (failure instanceof PartnerPersistenceException persistenceFailure) {
+                    throw persistenceFailure;
+                }
+                throw new PartnerPersistenceException("Failed to grant temporary Partner skill", failure);
+            }
+        } catch (SQLException e) {
+            throw new PartnerPersistenceException("Failed to grant temporary Partner skill", e);
+        }
+    }
+
+    @Override
+    public List<PartnerSessionSkillGrant> findTemporarySkills(long sessionId) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            return findTemporarySkills(con,
+                    "SELECT " + TEMPORARY_SKILL_COLUMNS
+                            + " FROM adventurer_partner_session_skills WHERE session_id = ?",
+                    ps -> ps.setLong(1, sessionId));
+        } catch (SQLException e) {
+            throw new PartnerPersistenceException(
+                    "Failed to load temporary skills for Partner session " + sessionId, e);
+        }
+    }
+
+    @Override
+    public List<PartnerSessionSkillGrant> restoreTemporarySkills(long sessionId) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                List<PartnerSessionSkillGrant> grants = findTemporarySkills(con,
+                        "SELECT " + TEMPORARY_SKILL_COLUMNS
+                                + " FROM adventurer_partner_session_skills "
+                                + "WHERE session_id = ? FOR UPDATE",
+                        ps -> ps.setLong(1, sessionId));
+                restoreTemporarySkills(con, grants);
+                con.commit();
+                return grants;
+            } catch (RuntimeException | SQLException failure) {
+                rollback(con, failure);
+                if (failure instanceof PartnerPersistenceException persistenceFailure) {
+                    throw persistenceFailure;
+                }
+                throw new PartnerPersistenceException(
+                        "Failed to restore temporary skills for Partner session " + sessionId, failure);
+            }
+        } catch (SQLException e) {
+            throw new PartnerPersistenceException(
+                    "Failed to restore temporary skills for Partner session " + sessionId, e);
+        }
+    }
+
+    @Override
     public int recoverOpenSessions(String reason) {
         String sql = "UPDATE adventurer_partner_sessions SET current_profile_orientation = 'CANONICAL', "
                 + "generation = generation + 1, lifecycle_status = 'RECOVERED', "
                 + "last_transition_at = CURRENT_TIMESTAMP, closed_at = CURRENT_TIMESTAMP, failure_reason = ? "
                 + "WHERE closed_at IS NULL";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, reason);
-            return ps.executeUpdate();
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                List<PartnerSessionSkillGrant> grants = findTemporarySkills(con,
+                        "SELECT " + TEMPORARY_SKILL_COLUMNS
+                                + " FROM adventurer_partner_session_skills FOR UPDATE",
+                        ignored -> { });
+                restoreTemporarySkills(con, grants);
+                int recovered;
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, reason);
+                    recovered = ps.executeUpdate();
+                }
+                con.commit();
+                return recovered;
+            } catch (RuntimeException | SQLException failure) {
+                rollback(con, failure);
+                throw failure;
+            }
         } catch (SQLException e) {
             throw new PartnerPersistenceException("Failed to reconcile unfinished Partner sessions", e);
         }
@@ -320,15 +458,154 @@ public final class JdbcAdventurerPartnerRepository implements AdventurerPartnerR
                 + "generation = generation + 1, lifecycle_status = 'RECOVERED', "
                 + "last_transition_at = CURRENT_TIMESTAMP, closed_at = CURRENT_TIMESTAMP, failure_reason = ? "
                 + "WHERE link_id = ? AND closed_at IS NULL";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, reason);
-            ps.setLong(2, linkId);
-            return ps.executeUpdate();
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                List<PartnerSessionSkillGrant> grants = findTemporarySkills(con,
+                        "SELECT " + TEMPORARY_SKILL_COLUMNS
+                                + " FROM adventurer_partner_session_skills g "
+                                + "JOIN adventurer_partner_sessions s ON s.id = g.session_id "
+                                + "WHERE s.link_id = ? FOR UPDATE",
+                        ps -> ps.setLong(1, linkId));
+                restoreTemporarySkills(con, grants);
+                int recovered;
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, reason);
+                    ps.setLong(2, linkId);
+                    recovered = ps.executeUpdate();
+                }
+                con.commit();
+                return recovered;
+            } catch (RuntimeException | SQLException failure) {
+                rollback(con, failure);
+                throw failure;
+            }
         } catch (SQLException e) {
             throw new PartnerPersistenceException(
                     "Failed to reconcile unfinished Partner sessions for link " + linkId, e);
         }
+    }
+
+    private static final String TEMPORARY_SKILL_COLUMNS = "session_id, character_id, skill_id, "
+            + "original_skill_level, original_master_level, original_expiration, "
+            + "granted_skill_level, granted_master_level, granted_expiration";
+
+    private static void requireOpenSessionCharacter(Connection con,
+                                                    long sessionId,
+                                                    int characterId) throws SQLException {
+        String sql = "SELECT id FROM adventurer_partner_sessions WHERE id = ? AND closed_at IS NULL "
+                + "AND (player_actor_character_id = ? OR partner_character_id = ?) FOR UPDATE";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, sessionId);
+            ps.setInt(2, characterId);
+            ps.setInt(3, characterId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    throw new PartnerPersistenceException(
+                            "Temporary skill character is not part of the open Partner session");
+                }
+            }
+        }
+    }
+
+    private static Optional<PartnerSessionSkillGrant> findTemporarySkill(
+            Connection con,
+            long sessionId,
+            int characterId,
+            int skillId,
+            boolean forUpdate) throws SQLException {
+        String sql = "SELECT " + TEMPORARY_SKILL_COLUMNS
+                + " FROM adventurer_partner_session_skills "
+                + "WHERE session_id = ? AND character_id = ? AND skill_id = ?"
+                + (forUpdate ? " FOR UPDATE" : "");
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, sessionId);
+            ps.setInt(2, characterId);
+            ps.setInt(3, skillId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(readTemporarySkill(rs)) : Optional.empty();
+            }
+        }
+    }
+
+    private static List<PartnerSessionSkillGrant> findTemporarySkills(
+            Connection con,
+            String sql,
+            SqlStatementBinder binder) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            binder.bind(ps);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<PartnerSessionSkillGrant> grants = new ArrayList<>();
+                while (rs.next()) {
+                    grants.add(readTemporarySkill(rs));
+                }
+                return grants;
+            }
+        }
+    }
+
+    private static PartnerSessionSkillGrant readTemporarySkill(ResultSet rs) throws SQLException {
+        Integer originalLevel = nullableInt(rs, "original_skill_level");
+        Integer originalMasterLevel = nullableInt(rs, "original_master_level");
+        Long originalExpiration = nullableLong(rs, "original_expiration");
+        return new PartnerSessionSkillGrant(
+                rs.getLong("session_id"), rs.getInt("character_id"), rs.getInt("skill_id"),
+                originalLevel, originalMasterLevel, originalExpiration,
+                rs.getInt("granted_skill_level"), rs.getInt("granted_master_level"),
+                rs.getLong("granted_expiration"));
+    }
+
+    private static Integer nullableInt(ResultSet rs, String column) throws SQLException {
+        int value = rs.getInt(column);
+        return rs.wasNull() ? null : value;
+    }
+
+    private static Long nullableLong(ResultSet rs, String column) throws SQLException {
+        long value = rs.getLong(column);
+        return rs.wasNull() ? null : value;
+    }
+
+    private static void restoreTemporarySkills(
+            Connection con,
+            List<PartnerSessionSkillGrant> grants) throws SQLException {
+        for (PartnerSessionSkillGrant grant : grants) {
+            if (grant.hadOriginalSkill()) {
+                try (PreparedStatement ps = con.prepareStatement(
+                        "INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) "
+                                + "VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE "
+                                + "skilllevel = VALUES(skilllevel), masterlevel = VALUES(masterlevel), "
+                                + "expiration = VALUES(expiration)")) {
+                    ps.setInt(1, grant.characterId());
+                    ps.setInt(2, grant.skillId());
+                    ps.setInt(3, grant.originalSkillLevel());
+                    ps.setInt(4, grant.originalMasterLevel());
+                    ps.setLong(5, grant.originalExpiration());
+                    ps.executeUpdate();
+                }
+            } else {
+                try (PreparedStatement ps = con.prepareStatement(
+                        "DELETE FROM skills WHERE characterid = ? AND skillid = ?")) {
+                    ps.setInt(1, grant.characterId());
+                    ps.setInt(2, grant.skillId());
+                    ps.executeUpdate();
+                }
+            }
+        }
+        if (!grants.isEmpty()) {
+            try (PreparedStatement ps = con.prepareStatement(
+                    "DELETE FROM adventurer_partner_session_skills WHERE session_id = ?")) {
+                for (Long sessionId : grants.stream().map(PartnerSessionSkillGrant::sessionId).distinct().toList()) {
+                    ps.setLong(1, sessionId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+    }
+
+    @FunctionalInterface
+    private interface SqlStatementBinder {
+        void bind(PreparedStatement statement) throws SQLException;
     }
 
     private void executeSessionUpdate(String sql,

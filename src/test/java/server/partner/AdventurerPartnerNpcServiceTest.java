@@ -93,7 +93,7 @@ class AdventurerPartnerNpcServiceTest {
 
         String menu = npc.mainMenu(player);
 
-        assertTrue(menu.contains("Solo Tag ready"));
+        assertTrue(menu.contains("#bSolo Tag ready#k"));
         assertFalse(menu.contains("(Unprepared)"));
         assertFalse(menu.contains("Prepare Solo Tag"));
     }

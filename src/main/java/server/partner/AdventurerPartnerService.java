@@ -1,6 +1,7 @@
 package server.partner;
 
 import client.Character;
+import client.Skill;
 import client.profile.CharacterProfileRepository;
 import client.profile.CosmicCharacterProfileRepository;
 import config.AdventurerPartnerConfig;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTransitionBarrierState;
+import tools.PacketCreator;
 
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -31,6 +33,8 @@ public final class AdventurerPartnerService {
     private final PartnerAgentLifecycleBridge agents;
     private final PartnerTriggerPolicy triggerPolicy;
     private final ProfileTransitionCoordinator transitions;
+    private final PartnerSessionSkillService sessionSkills;
+    private final SoloTagBuffSharingService buffSharing;
 
     public static AdventurerPartnerService getInstance() {
         return INSTANCE;
@@ -45,6 +49,20 @@ public final class AdventurerPartnerService {
                              PartnerAgentLifecycleBridge agents,
                              PartnerTriggerPolicy triggerPolicy,
                              ProfileTransitionCoordinator transitions) {
+        this(config, repository, profiles, leases, runtimes, rosterQuery, agents,
+                triggerPolicy, transitions, new PartnerSessionSkillService(repository));
+    }
+
+    AdventurerPartnerService(AdventurerPartnerConfig config,
+                             AdventurerPartnerRepository repository,
+                             CharacterProfileRepository profiles,
+                             ProfileLeaseRegistry leases,
+                             PartnerRuntimeRegistry runtimes,
+                             PartnerRosterQueryService rosterQuery,
+                             PartnerAgentLifecycleBridge agents,
+                             PartnerTriggerPolicy triggerPolicy,
+                             ProfileTransitionCoordinator transitions,
+                             PartnerSessionSkillService sessionSkills) {
         this.config = config;
         this.repository = repository;
         this.profiles = profiles;
@@ -54,6 +72,8 @@ public final class AdventurerPartnerService {
         this.agents = agents;
         this.triggerPolicy = triggerPolicy;
         this.transitions = transitions;
+        this.sessionSkills = sessionSkills;
+        this.buffSharing = new SoloTagBuffSharingService(config);
     }
 
     public boolean isEnabled() {
@@ -145,8 +165,8 @@ public final class AdventurerPartnerService {
                 validationHolder.suspendProfileRuntimeTasks();
             }
         }
-        PartnerMode initialMode = config.DOUBLE_PARTNER_ENABLED
-                ? PartnerMode.DOUBLE_PARTNER : PartnerMode.SOLO_TAG;
+        PartnerMode initialMode = config.SOLO_TAG_ENABLED
+                ? PartnerMode.SOLO_TAG : PartnerMode.DOUBLE_PARTNER;
         PartnerLink link = repository.registerLink(
                 player.getId(), partnerCharacterId, initialMode);
         log.info("partner_registration registered link={} world={} characters=[{},{}]",
@@ -305,7 +325,10 @@ public final class AdventurerPartnerService {
                     PartnerLifecycleStatus.ACTIVE, null);
             if (mode == PartnerMode.SOLO_TAG) {
                 partnerHolder.suspendProfileRuntimeTasks();
+                transitions.prepareSessionSkills(
+                        journal.id(), mode, player, partnerHolder);
             }
+            resetTriggerSkillCooldowns(player);
             log.info("partner_activation link={} session={} player={} partner={} mode={}",
                     link.id(), journal.id(), player.getId(), partnerCharacterId, mode);
             return active;
@@ -322,6 +345,67 @@ public final class AdventurerPartnerService {
             if (activationPause != null) {
                 activationPause.close();
             }
+        }
+    }
+
+    private void resetTriggerSkillCooldowns(Character player) {
+        for (int skillId : config.TRIGGER_SKILL_IDS) {
+            player.removeCooldown(skillId);
+            player.sendPacket(PacketCreator.skillCooldown(skillId, 0));
+        }
+    }
+
+    public void onSkillPointAssigned(Character source, Skill skill) {
+        if (!config.ENABLED || !config.SOLO_TAG_BUFF_SHARING_ENABLED
+                || source == null || skill == null) {
+            return;
+        }
+        Optional<ActivePartnerSession> found =
+                runtimes.findByProfileOwnerId(source.getProfileOwnerCharacterId());
+        if (found.isEmpty()) {
+            return;
+        }
+        ActivePartnerSession active = found.get();
+        active.enterLifecycleOperation();
+        try {
+            if (active.runtime().mode() != PartnerMode.SOLO_TAG
+                    || active.runtime().status() != PartnerLifecycleStatus.ACTIVE
+                    || active.isJournalClosed()) {
+                return;
+            }
+            int sourceOwnerId = source.getProfileOwnerCharacterId();
+            Character recipient;
+            if (active.humanActor().getProfileOwnerCharacterId() == sourceOwnerId) {
+                recipient = active.partnerActorOrDormantProfile();
+            } else if (active.partnerActorOrDormantProfile().getProfileOwnerCharacterId()
+                    == sourceOwnerId) {
+                recipient = active.humanActor();
+            } else {
+                return;
+            }
+            int level = source.getSkillLevel(skill);
+            if (!buffSharing.isLearnedSelfBuffSkill(skill, level)) {
+                return;
+            }
+            sessionSkills.grant(
+                    active.runtime().sessionId(),
+                    new SoloTagBuffSharingService.SkillGrant(
+                            recipient,
+                            skill,
+                            (byte) level,
+                            source.getMasterLevel(skill),
+                            source.getSkillExpiration(skill)));
+            log.info("partner_self_buff_skill synchronized session={} sourceProfile={} "
+                            + "recipientProfile={} skill={} level={}",
+                    active.runtime().sessionId(), sourceOwnerId,
+                    recipient.getProfileOwnerCharacterId(), skill.getId(), level);
+        } catch (RuntimeException failure) {
+            log.warn("partner_self_buff_skill synchronization_failed sourceProfile={} skill={}",
+                    source.getProfileOwnerCharacterId(), skill.getId(), failure);
+            source.message("Your skill was raised, but the Partner copy could not be updated. "
+                    + "Release and prepare Solo Tag again before switching.");
+        } finally {
+            active.exitLifecycleOperation();
         }
     }
 
@@ -484,6 +568,17 @@ public final class AdventurerPartnerService {
             }
 
             try {
+                sessionSkills.restore(
+                        active.runtime().sessionId(),
+                        active.humanActor(),
+                        active.partnerActorOrDormantProfile());
+            } catch (RuntimeException skillRestoreFailure) {
+                deferRelease(active, releaseGeneration, reason,
+                        "Temporary Partner skill restoration failed", skillRestoreFailure);
+                throw skillRestoreFailure;
+            }
+
+            try {
                 if (active.runtime().mode() == PartnerMode.DOUBLE_PARTNER) {
                     agents.release(new PartnerAgentLifecycleBridge.SpawnedPartner(
                             active.partnerActorOrDormantProfile(), active.agentEntry()));
@@ -499,7 +594,6 @@ public final class AdventurerPartnerService {
             active.runtime().close(releaseGeneration, terminal);
             leases.releaseSession(active.runtime().sessionId());
             runtimes.remove(active);
-            clearTemporarySkills(active.humanActor());
             discardPreparedProfiles(active.humanActor(), active.partnerActorOrDormantProfile());
             log.info("partner_release link={} session={} status={} reason={}",
                     active.link().id(), active.runtime().sessionId(), terminal, reason);
@@ -587,6 +681,13 @@ public final class AdventurerPartnerService {
             leases.releaseSession(journal.id());
         }
         discardPreparedProfiles(player, partnerHolder);
+        if (journal != null && partnerHolder != null) {
+            try {
+                sessionSkills.restore(journal.id(), player, partnerHolder);
+            } catch (RuntimeException skillRestoreFailure) {
+                originalFailure.addSuppressed(skillRestoreFailure);
+            }
+        }
         try {
             if (spawned != null) {
                 agents.release(spawned);
@@ -618,15 +719,6 @@ public final class AdventurerPartnerService {
             log.warn("partner_presentation_cache discard_failed firstActor={} secondActor={}",
                     firstProfile == null ? null : firstProfile.getId(),
                     secondProfile == null ? null : secondProfile.getId(), cacheFailure);
-        }
-    }
-
-    private void clearTemporarySkills(Character humanActor) {
-        try {
-            transitions.clearTemporarySkills(humanActor);
-        } catch (RuntimeException presentationFailure) {
-            log.warn("partner_temporary_skills clear_failed actor={}",
-                    humanActor == null ? null : humanActor.getId(), presentationFailure);
         }
     }
 
@@ -673,6 +765,7 @@ public final class AdventurerPartnerService {
 
     private static AdventurerPartnerService productionService() {
         AdventurerPartnerRepository repository = JdbcAdventurerPartnerRepository.INSTANCE;
+        PartnerSessionSkillService sessionSkills = new PartnerSessionSkillService(repository);
         ProfileLeaseRegistry leases = ProfileLeaseRegistry.global();
         PartnerRosterQueryService roster = new PartnerRosterQueryService(
                 repository, new CosmicPartnerRuntimeAvailability(repository));
@@ -689,7 +782,9 @@ public final class AdventurerPartnerService {
                         leases,
                         CosmicProfilePresentationService.INSTANCE,
                         new PartnerProfileCacheInvalidator(),
-                        new AsyncPartnerJournalSink(repository)));
+                        new AsyncPartnerJournalSink(repository),
+                        sessionSkills),
+                sessionSkills);
     }
 
     public record TriggerResult(boolean handled,

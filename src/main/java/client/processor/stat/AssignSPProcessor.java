@@ -32,6 +32,7 @@ import constants.game.GameConstants;
 import constants.skills.Aran;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.partner.AdventurerPartnerService;
 import tools.PacketCreator;
 
 /**
@@ -96,6 +97,7 @@ public class AssignSPProcessor {
                 } else {
                     player.changeSkillLevel(skill, (byte) (curLevel + 1), player.getMasterLevel(skill), player.getSkillExpiration(skill));
                 }
+                AdventurerPartnerService.getInstance().onSkillPointAssigned(player, skill);
             }
         } finally {
             c.unlockClient();

@@ -251,8 +251,8 @@ public final class AdventurerPartnerNpcService {
         return switch (overview.presence()) {
             case OFFLINE -> "#dOffline#k";
             case ONLINE_INDEPENDENTLY -> "#rOnline independently#k";
-            case SOLO_TAG_READY -> "#gSolo Tag ready#k";
-            case DOUBLE_PARTNER_ACTIVE -> "#gDouble Partner active#k";
+            case SOLO_TAG_READY -> "#bSolo Tag ready#k";
+            case DOUBLE_PARTNER_ACTIVE -> "#bDouble Partner active#k";
             case DOUBLE_PARTNER_OTHER_MAP -> "#rActive in another map#k";
             case RECOVERY_REQUIRED -> "#rRecovery required - use Release/reset#k";
         };

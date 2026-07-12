@@ -2477,6 +2477,66 @@ public class Character extends AbstractCharacterObject {
         }
     }
 
+    /** Installs a database-tracked Partner-session skill on the currently attached profile. */
+    public void applyPartnerSessionSkill(int expectedProfileOwnerId,
+                                         Skill skill,
+                                         byte level,
+                                         int masterLevel,
+                                         long expiration) {
+        if (skill == null) {
+            throw new IllegalArgumentException("Partner-session skill is required");
+        }
+        chrLock.lock();
+        try {
+            if (getProfileOwnerCharacterId() != expectedProfileOwnerId) {
+                throw new IllegalStateException("Partner-session skill profile ownership changed");
+            }
+            Skill existingKey = skills.keySet().stream()
+                    .filter(current -> current.getId() == skill.getId())
+                    .findFirst()
+                    .orElse(skill);
+            skills.put(existingKey, new SkillEntry(level, masterLevel, expiration));
+        } finally {
+            chrLock.unlock();
+        }
+        markPersistenceDirty(PersistenceSection.SKILLS);
+        sendPacket(PacketCreator.updateSkill(skill.getId(), level, masterLevel, expiration));
+    }
+
+    /** Restores the canonical skill state after its Partner session has ended. */
+    public void restorePartnerSessionSkill(int expectedProfileOwnerId,
+                                           Skill skill,
+                                           SkillEntry originalState) {
+        if (skill == null) {
+            throw new IllegalArgumentException("Partner-session skill is required");
+        }
+        chrLock.lock();
+        try {
+            if (getProfileOwnerCharacterId() != expectedProfileOwnerId) {
+                throw new IllegalStateException("Partner-session skill profile ownership changed");
+            }
+            Skill existingKey = skills.keySet().stream()
+                    .filter(current -> current.getId() == skill.getId())
+                    .findFirst()
+                    .orElse(skill);
+            if (originalState == null) {
+                skills.remove(existingKey);
+            } else {
+                skills.put(existingKey, originalState);
+            }
+        } finally {
+            chrLock.unlock();
+        }
+        markPersistenceDirty(PersistenceSection.SKILLS);
+        if (originalState == null) {
+            sendPacket(PacketCreator.updateSkill(skill.getId(), -1, 0, -1));
+        } else {
+            sendPacket(PacketCreator.updateSkill(
+                    skill.getId(), originalState.skillevel,
+                    originalState.masterlevel, originalState.expiration));
+        }
+    }
+
     public void changeTab(int tab) {
         this.currentTab = tab;
     }
@@ -4236,6 +4296,22 @@ public class Character extends AbstractCharacterObject {
         } finally {
             chrLock.unlock();
             effLock.unlock();
+        }
+    }
+
+    /** Cancels a borrowed Partner buff before its temporary source skill is removed. */
+    public void cancelPartnerBuffFromSource(int sourceId) {
+        StatEffect effect;
+        effLock.lock();
+        chrLock.lock();
+        try {
+            effect = getEffectFromBuffSource(buffEffects.get(sourceId));
+        } finally {
+            chrLock.unlock();
+            effLock.unlock();
+        }
+        if (effect != null) {
+            cancelEffect(effect, false, -1);
         }
     }
 

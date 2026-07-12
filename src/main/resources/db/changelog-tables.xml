@@ -185,4 +185,20 @@
         <dropTable tableName="server_cms_users" cascadeConstraints="true"/>
     </changeSet>
 
+    <changeSet id="29-adventurer-partner-session-skills" author="Codex">
+        <preConditions onFail="HALT">
+            <not>
+                <tableExists tableName="adventurer_partner_session_skills"/>
+            </not>
+        </preConditions>
+        <sqlFile path="db/tables/029-adventurer-partner-session-skills.sql"/>
+    </changeSet>
+
+    <changeSet id="30-adventurer-partner-default-mode" author="Codex">
+        <preConditions onFail="HALT">
+            <tableExists tableName="adventurer_partner_links"/>
+        </preConditions>
+        <sqlFile path="db/tables/030-adventurer-partner-default-mode.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

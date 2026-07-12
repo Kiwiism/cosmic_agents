@@ -1,6 +1,8 @@
 package server.partner;
 
 import client.Character;
+import client.Skill;
+import client.BuffStat;
 import client.inventory.manipulator.InventoryManipulator;
 import config.AdventurerPartnerConfig;
 import config.YamlConfig;
@@ -13,6 +15,8 @@ import tools.Pair;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /** Item-gated, profile-directed skill-buff sharing for Solo Tag transitions. */
 public final class SoloTagBuffSharingService {
@@ -44,15 +48,53 @@ public final class SoloTagBuffSharingService {
                 eligible(partnerActorOrDormantProfile));
     }
 
+    /**
+     * Pre-registers source skills for buffs that can be shared during this Solo session.
+     * Bond-item eligibility remains a switch-time buff decision, not a skill-safety gate.
+     */
+    public void prepareSessionSkills(PartnerMode mode,
+                                     Character humanProfile,
+                                     Character partnerProfile,
+                                     Consumer<SkillGrant> skillGrant) {
+        if (!config.SOLO_TAG_BUFF_SHARING_ENABLED || mode != PartnerMode.SOLO_TAG) {
+            return;
+        }
+        grantLearnedSelfBuffSkills(humanProfile, partnerProfile, skillGrant);
+        grantLearnedSelfBuffSkills(partnerProfile, humanProfile, skillGrant);
+        grantBuffSourceSkills(humanProfile, transferableBuffs(partnerProfile), skillGrant);
+        grantBuffSourceSkills(partnerProfile, transferableBuffs(humanProfile), skillGrant);
+    }
+
+    public boolean isLearnedSelfBuffSkill(Skill skill, int level) {
+        if (skill == null || level <= 0 || skill.getMaxLevel() <= 0) {
+            return false;
+        }
+        StatEffect effect = skill.getEffect(Math.min(level, skill.getMaxLevel()));
+        if (effect == null || !effect.isSkill() || !effect.isOverTime()
+                || effect.getDuration() <= 0 || effect.getStatups().isEmpty()
+                || effect.isPartyBuff() || (!skill.getAction() && skill.getSkillType() != 2)) {
+            return false;
+        }
+        return effect.getStatups().stream().noneMatch(statup ->
+                statup.getLeft() == BuffStat.SUMMON || statup.getLeft() == BuffStat.PUPPET);
+    }
+
     /** Applies the pre-exchange source buffs to the post-exchange receiving profiles. */
     public void applyAfterExchange(SharingPlan plan, Character humanActor,
                                    Character partnerActorOrDormantProfile) {
+        applyAfterExchange(plan, humanActor, partnerActorOrDormantProfile, ignored -> { });
+    }
+
+    public void applyAfterExchange(SharingPlan plan,
+                                   Character humanActor,
+                                   Character partnerActorOrDormantProfile,
+                                   Consumer<SkillGrant> skillGrant) {
         if (!plan.enabled()) {
             return;
         }
-        apply(humanActor, plan.humanProfileBuffs(), plan.partnerProfileEligible());
+        apply(humanActor, plan.humanProfileBuffs(), plan.partnerProfileEligible(), skillGrant);
         apply(partnerActorOrDormantProfile, plan.partnerProfileBuffs(),
-                plan.humanProfileEligible());
+                plan.humanProfileEligible(), skillGrant);
     }
 
     public boolean enabled() {
@@ -83,7 +125,7 @@ public final class SoloTagBuffSharingService {
             return "Disabled";
         }
         if (eligible(character)) {
-            return "#gActive#k";
+            return "#bActive#k";
         }
         if (ownsItem(character) && ItemConstants.isEquipment(itemId())) {
             return "#rInactive - equip #t" + itemId() + "##k";
@@ -124,14 +166,23 @@ public final class SoloTagBuffSharingService {
     }
 
     private static BuffBundle transferableBuffs(Character source) {
-        List<PlayerBuffValueHolder> partyBuffs = new ArrayList<>();
-        List<PlayerBuffValueHolder> selfBuffs = new ArrayList<>();
+        List<BuffTransfer> partyBuffs = new ArrayList<>();
+        List<BuffTransfer> selfBuffs = new ArrayList<>();
+        Map<Skill, Character.SkillEntry> skills = source.getSkills();
         for (PlayerBuffValueHolder holder : source.getAllBuffs()) {
             StatEffect effect = holder.effect;
             if (effect != null && effect.isSkill() && !effect.getStatups().isEmpty()) {
-                List<PlayerBuffValueHolder> destination = effect.isPartyBuff()
+                Map.Entry<Skill, Character.SkillEntry> sourceSkill = skills.entrySet().stream()
+                        .filter(entry -> entry.getKey().getId() == effect.getBuffSourceId())
+                        .findFirst()
+                        .orElse(null);
+                BuffTransfer transfer = new BuffTransfer(
+                        new PlayerBuffValueHolder(holder.usedTime, effect),
+                        sourceSkill == null ? null : sourceSkill.getKey(),
+                        sourceSkill == null ? null : sourceSkill.getValue().persistenceCopy());
+                List<BuffTransfer> destination = effect.isPartyBuff()
                         ? partyBuffs : selfBuffs;
-                destination.add(new PlayerBuffValueHolder(holder.usedTime, effect));
+                destination.add(transfer);
             }
         }
         partyBuffs.sort(buffPriority());
@@ -139,9 +190,43 @@ public final class SoloTagBuffSharingService {
         return new BuffBundle(List.copyOf(partyBuffs), List.copyOf(selfBuffs));
     }
 
-    private static Comparator<PlayerBuffValueHolder> buffPriority() {
-        return Comparator.comparingInt(SoloTagBuffSharingService::benefitScore)
-                .thenComparingInt(holder -> holder.effect.getBuffSourceId());
+    private static Comparator<BuffTransfer> buffPriority() {
+        return Comparator.comparingInt(
+                        (BuffTransfer transfer) -> benefitScore(transfer.holder()))
+                .thenComparingInt(transfer -> transfer.holder().effect.getBuffSourceId());
+    }
+
+    private static void grantBuffSourceSkills(Character recipient,
+                                              BuffBundle sourceBuffs,
+                                              Consumer<SkillGrant> skillGrant) {
+        List<BuffTransfer> allBuffs = new ArrayList<>(sourceBuffs.partyBuffs());
+        allBuffs.addAll(sourceBuffs.selfBuffs());
+        for (BuffTransfer transfer : allBuffs) {
+            if (transfer.skill() != null && transfer.skillState() != null) {
+                skillGrant.accept(new SkillGrant(
+                        recipient,
+                        transfer.skill(),
+                        transfer.skillState().skillevel,
+                        transfer.skillState().masterlevel,
+                        transfer.skillState().expiration));
+            }
+        }
+    }
+
+    private void grantLearnedSelfBuffSkills(Character recipient,
+                                            Character source,
+                                            Consumer<SkillGrant> skillGrant) {
+        for (Map.Entry<Skill, Character.SkillEntry> entry : source.getSkills().entrySet()) {
+            Character.SkillEntry state = entry.getValue();
+            if (isLearnedSelfBuffSkill(entry.getKey(), state.skillevel)) {
+                skillGrant.accept(new SkillGrant(
+                        recipient,
+                        entry.getKey(),
+                        state.skillevel,
+                        state.masterlevel,
+                        state.expiration));
+            }
+        }
     }
 
     private static int benefitScore(PlayerBuffValueHolder holder) {
@@ -150,9 +235,11 @@ public final class SoloTagBuffSharingService {
                 .sum();
     }
 
-    private static void apply(Character recipient, BuffBundle sourceBuffs,
-                              boolean receivesSelfBuffs) {
-        List<PlayerBuffValueHolder> buffs = new ArrayList<>(sourceBuffs.partyBuffs());
+    private static void apply(Character recipient,
+                              BuffBundle sourceBuffs,
+                              boolean receivesSelfBuffs,
+                              Consumer<SkillGrant> skillGrant) {
+        List<BuffTransfer> buffs = new ArrayList<>(sourceBuffs.partyBuffs());
         if (receivesSelfBuffs) {
             buffs.addAll(sourceBuffs.selfBuffs());
         }
@@ -163,24 +250,32 @@ public final class SoloTagBuffSharingService {
         }
         long now = Server.getInstance().getCurrentTime();
         List<Pair<Long, PlayerBuffValueHolder>> timedBuffs = new ArrayList<>(buffs.size());
-        for (PlayerBuffValueHolder holder : buffs) {
-            timedBuffs.add(new Pair<>(now - holder.usedTime, holder));
+        for (BuffTransfer transfer : buffs) {
+            if (transfer.skill() != null && transfer.skillState() != null) {
+                skillGrant.accept(new SkillGrant(
+                        recipient,
+                        transfer.skill(),
+                        transfer.skillState().skillevel,
+                        transfer.skillState().masterlevel,
+                        transfer.skillState().expiration));
+            }
+            timedBuffs.add(new Pair<>(now - transfer.holder().usedTime, transfer.holder()));
         }
         recipient.silentGiveBuffs(timedBuffs);
     }
 
-    private static List<PlayerBuffValueHolder> removeWeakerDuplicateSources(
-            Character recipient, List<PlayerBuffValueHolder> incoming) {
-        List<PlayerBuffValueHolder> result = new ArrayList<>(incoming.size());
+    private static List<BuffTransfer> removeWeakerDuplicateSources(
+            Character recipient, List<BuffTransfer> incoming) {
+        List<BuffTransfer> result = new ArrayList<>(incoming.size());
         List<PlayerBuffValueHolder> existing = recipient.getAllBuffs();
-        for (PlayerBuffValueHolder candidate : incoming) {
+        for (BuffTransfer candidate : incoming) {
             PlayerBuffValueHolder sameSource = existing.stream()
                     .filter(holder -> holder.effect != null
                             && holder.effect.getBuffSourceId()
-                            == candidate.effect.getBuffSourceId())
+                            == candidate.holder().effect.getBuffSourceId())
                     .findFirst()
                     .orElse(null);
-            if (sameSource == null || strongerOrLonger(candidate, sameSource)) {
+            if (sameSource == null || strongerOrLonger(candidate.holder(), sameSource)) {
                 result.add(candidate);
             }
         }
@@ -199,8 +294,13 @@ public final class SoloTagBuffSharingService {
         return String.format("%,d", mesos);
     }
 
-    private record BuffBundle(List<PlayerBuffValueHolder> partyBuffs,
-                              List<PlayerBuffValueHolder> selfBuffs) {
+    private record BuffTransfer(PlayerBuffValueHolder holder,
+                                Skill skill,
+                                Character.SkillEntry skillState) {
+    }
+
+    private record BuffBundle(List<BuffTransfer> partyBuffs,
+                              List<BuffTransfer> selfBuffs) {
         private static BuffBundle none() {
             return new BuffBundle(List.of(), List.of());
         }
@@ -222,6 +322,13 @@ public final class SoloTagBuffSharingService {
             return humanProfileEligible || partnerProfileEligible
                     || !humanProfileBuffs.isEmpty() || !partnerProfileBuffs.isEmpty();
         }
+    }
+
+    record SkillGrant(Character recipient,
+                      Skill skill,
+                      byte level,
+                      int masterLevel,
+                      long expiration) {
     }
 
     @FunctionalInterface

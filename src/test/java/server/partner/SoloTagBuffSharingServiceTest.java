@@ -2,6 +2,7 @@ package server.partner;
 
 import client.BuffStat;
 import client.Character;
+import client.Skill;
 import config.AdventurerPartnerConfig;
 import net.server.PlayerBuffValueHolder;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,10 @@ import server.StatEffect;
 import tools.Pair;
 
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -20,6 +24,99 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class SoloTagBuffSharingServiceTest {
+    @Test
+    void soloPreparationPregrantsLearnedSelfBuffEvenWhenItIsNotActive() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        Skill shadowPartner = mock(Skill.class);
+        StatEffect effect = mock(StatEffect.class);
+        when(shadowPartner.getId()).thenReturn(4111002);
+        when(shadowPartner.getMaxLevel()).thenReturn(30);
+        when(shadowPartner.getEffect(30)).thenReturn(effect);
+        when(shadowPartner.getAction()).thenReturn(true);
+        when(effect.isSkill()).thenReturn(true);
+        when(effect.isOverTime()).thenReturn(true);
+        when(effect.getDuration()).thenReturn(180_000);
+        when(effect.getStatups()).thenReturn(List.of(
+                new Pair<>(BuffStat.SHADOWPARTNER, 50)));
+        when(effect.isPartyBuff()).thenReturn(false);
+        when(human.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(partner.getSkills()).thenReturn(Map.of());
+        when(human.getAllBuffs()).thenReturn(List.of());
+        when(partner.getAllBuffs()).thenReturn(List.of());
+        List<SoloTagBuffSharingService.SkillGrant> grants = new ArrayList<>();
+
+        sharing.prepareSessionSkills(PartnerMode.SOLO_TAG, human, partner, grants::add);
+
+        assertEquals(1, grants.size());
+        assertEquals(partner, grants.getFirst().recipient());
+        assertEquals(4111002, grants.getFirst().skill().getId());
+        assertEquals(30, grants.getFirst().level());
+    }
+
+    @Test
+    void soloPreparationPregrantsActiveBuffSkillsWithoutCheckingBondItem() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        Skill magicGuard = new Skill(2001002);
+        Skill shadowPartner = new Skill(4111002);
+        PlayerBuffValueHolder magicGuardBuff =
+                buff(BuffStat.MAGIC_GUARD, 40, magicGuard.getId());
+        PlayerBuffValueHolder shadowPartnerBuff =
+                buff(BuffStat.SHADOWPARTNER, 50, shadowPartner.getId());
+        when(human.getAllBuffs()).thenReturn(List.of(magicGuardBuff));
+        when(human.getSkills()).thenReturn(Map.of(
+                magicGuard, new Character.SkillEntry((byte) 20, 0, -1L)));
+        when(partner.getAllBuffs()).thenReturn(List.of(shadowPartnerBuff));
+        when(partner.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        List<SoloTagBuffSharingService.SkillGrant> grants = new ArrayList<>();
+
+        sharing.prepareSessionSkills(PartnerMode.SOLO_TAG, human, partner, grants::add);
+
+        assertEquals(2, grants.size());
+        assertTrue(grants.stream().anyMatch(grant -> grant.recipient() == human
+                && grant.skill().getId() == 4111002 && grant.level() == 30));
+        assertTrue(grants.stream().anyMatch(grant -> grant.recipient() == partner
+                && grant.skill().getId() == 2001002 && grant.level() == 20));
+        verify(human, never()).haveItemEquipped(anyInt());
+        verify(partner, never()).haveItemEquipped(anyInt());
+    }
+
+    @Test
+    void reportsDonorSkillAtExactLevelBeforeApplyingBorrowedBuff() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        PlayerBuffValueHolder buff = buff(BuffStat.SHADOWPARTNER, 50, shadowPartner.getId());
+        when(human.getAllBuffs()).thenReturn(List.of(buff));
+        when(human.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(partner.getAllBuffs()).thenReturn(List.of());
+        when(partner.getSkills()).thenReturn(Map.of());
+        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+
+        SoloTagBuffSharingService.SharingPlan plan =
+                sharing.capture(PartnerMode.SOLO_TAG, human, partner);
+        when(human.getAllBuffs()).thenReturn(List.of());
+        List<SoloTagBuffSharingService.SkillGrant> grants = new ArrayList<>();
+
+        sharing.applyAfterExchange(plan, human, partner, grants::add);
+
+        assertEquals(1, grants.size());
+        assertEquals(human, grants.getFirst().recipient());
+        assertEquals(4111002, grants.getFirst().skill().getId());
+        assertEquals(30, grants.getFirst().level());
+        verify(human).silentGiveBuffs(org.mockito.ArgumentMatchers.anyList());
+    }
+
     @Test
     void disabledFeatureDoesNotInspectOrApplyBuffs() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
@@ -72,6 +169,15 @@ class SoloTagBuffSharingServiceTest {
 
         assertTrue(new SoloTagBuffSharingService(config).eligible(character));
         verify(character, never()).haveItemEquipped(anyInt());
+    }
+
+    @Test
+    void activeEntitlementUsesReadableDarkBlueText() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        Character character = mock(Character.class);
+        when(character.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+
+        assertEquals("#bActive#k", new SoloTagBuffSharingService(config).entitlementStatus(character));
     }
 
     @Test

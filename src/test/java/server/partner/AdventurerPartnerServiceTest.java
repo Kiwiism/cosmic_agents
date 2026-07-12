@@ -2,12 +2,19 @@ package server.partner;
 
 import client.Character;
 import client.Client;
+import client.BuffStat;
+import client.Skill;
 import client.profile.CharacterProfileRepository;
 import config.AdventurerPartnerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import net.packet.Packet;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTransitionBarrierState;
+import server.StatEffect;
+import tools.PacketCreator;
+import tools.Pair;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -42,6 +49,7 @@ class AdventurerPartnerServiceTest {
     private PartnerAgentLifecycleBridge agents;
     private PartnerTriggerPolicy triggerPolicy;
     private ProfileTransitionCoordinator transitions;
+    private PartnerSessionSkillService sessionSkills;
     private AdventurerPartnerService service;
     private Character player;
     private Character partner;
@@ -60,6 +68,7 @@ class AdventurerPartnerServiceTest {
         agents = mock(PartnerAgentLifecycleBridge.class);
         triggerPolicy = mock(PartnerTriggerPolicy.class);
         transitions = mock(ProfileTransitionCoordinator.class);
+        sessionSkills = mock(PartnerSessionSkillService.class);
         service = new AdventurerPartnerService(
                 config,
                 repository,
@@ -69,7 +78,8 @@ class AdventurerPartnerServiceTest {
                 new PartnerRosterQueryService(repository, availability),
                 agents,
                 triggerPolicy,
-                transitions);
+                transitions,
+                sessionSkills);
 
         player = character(10, 10, 1, 0);
         partner = character(20, 20, 1, 0);
@@ -103,6 +113,9 @@ class AdventurerPartnerServiceTest {
         assertEquals(ProfileLeaseRegistry.DETACHED_ACTOR,
                 leases.leaseForProfile(20).orElseThrow().actorCharacterId());
         assertTrue(runtimes.findByHumanActorId(10).isPresent());
+        verify(transitions).prepareSessionSkills(
+                7L, PartnerMode.SOLO_TAG, player, partner);
+        assertTriggerCooldownsReset();
 
         service.release(player, "test release");
 
@@ -116,8 +129,39 @@ class AdventurerPartnerServiceTest {
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 1L,
                 PartnerLifecycleStatus.CLOSED, "test release");
-        verify(transitions).clearTemporarySkills(player);
+        verify(sessionSkills).restore(7L, player, partner);
         verify(transitions).discardPreparedProfiles(player, partner);
+    }
+
+    @Test
+    void assigningSpToSelfBuffUpdatesOtherSoloProfile() throws Exception {
+        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        Skill shadowPartner = mock(Skill.class);
+        StatEffect effect = mock(StatEffect.class);
+        when(shadowPartner.getId()).thenReturn(4111002);
+        when(shadowPartner.getMaxLevel()).thenReturn(30);
+        when(shadowPartner.getEffect(11)).thenReturn(effect);
+        when(shadowPartner.getAction()).thenReturn(true);
+        when(effect.isSkill()).thenReturn(true);
+        when(effect.isOverTime()).thenReturn(true);
+        when(effect.getDuration()).thenReturn(180_000);
+        when(effect.getStatups()).thenReturn(List.of(
+                new Pair<>(BuffStat.SHADOWPARTNER, 50)));
+        when(effect.isPartyBuff()).thenReturn(false);
+        when(player.getSkillLevel(shadowPartner)).thenReturn((byte) 11);
+        when(player.getMasterLevel(shadowPartner)).thenReturn(0);
+        when(player.getSkillExpiration(shadowPartner)).thenReturn(-1L);
+        service.activate(player, PartnerMode.SOLO_TAG);
+
+        service.onSkillPointAssigned(player, shadowPartner);
+
+        ArgumentCaptor<SoloTagBuffSharingService.SkillGrant> grant =
+                ArgumentCaptor.forClass(SoloTagBuffSharingService.SkillGrant.class);
+        verify(sessionSkills).grant(org.mockito.ArgumentMatchers.eq(7L), grant.capture());
+        assertEquals(partner, grant.getValue().recipient());
+        assertEquals(4111002, grant.getValue().skill().getId());
+        assertEquals(11, grant.getValue().level());
     }
 
     @Test
@@ -139,6 +183,7 @@ class AdventurerPartnerServiceTest {
         assertEquals(PartnerMode.DOUBLE_PARTNER, active.runtime().mode());
         assertEquals(20, leases.leaseForProfile(20).orElseThrow().actorCharacterId());
         assertFalse(barrier.isPaused());
+        assertTriggerCooldownsReset();
         verify(agents).spawnFollowing(player, 20, "Yoona");
         verify(profiles).restoreTransientState(partner);
     }
@@ -299,13 +344,13 @@ class AdventurerPartnerServiceTest {
         when(repository.findActiveLinkForCharacter(20)).thenReturn(Optional.empty());
         when(repository.findRosterCandidates(1, 0, 10)).thenReturn(List.of(candidate));
         when(profiles.loadDetachedForValidation(20, 0, 1)).thenReturn(partner);
-        when(repository.registerLink(10, 20, PartnerMode.DOUBLE_PARTNER)).thenReturn(link);
+        when(repository.registerLink(10, 20, PartnerMode.SOLO_TAG)).thenReturn(link);
 
         PartnerLink registered = service.register(player, 20);
 
         assertEquals(link, registered);
         verify(profiles).loadDetachedForValidation(20, 0, 1);
-        verify(repository).registerLink(10, 20, PartnerMode.DOUBLE_PARTNER);
+        verify(repository).registerLink(10, 20, PartnerMode.SOLO_TAG);
     }
 
     @Test
@@ -320,7 +365,7 @@ class AdventurerPartnerServiceTest {
 
         assertThrows(IllegalStateException.class, () -> service.register(player, 20));
 
-        verify(repository, never()).registerLink(10, 20, PartnerMode.DOUBLE_PARTNER);
+        verify(repository, never()).registerLink(10, 20, PartnerMode.SOLO_TAG);
     }
 
     @Test
@@ -449,5 +494,18 @@ class AdventurerPartnerServiceTest {
         when(character.isProfileTransitioning()).thenReturn(false);
         when(character.isProfileSaving()).thenReturn(false);
         return character;
+    }
+
+    private void assertTriggerCooldownsReset() {
+        for (int skillId : config.TRIGGER_SKILL_IDS) {
+            verify(player).removeCooldown(skillId);
+        }
+        ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
+        verify(player, times(config.TRIGGER_SKILL_IDS.size())).sendPacket(packets.capture());
+        for (int skillId : config.TRIGGER_SKILL_IDS) {
+            byte[] expected = PacketCreator.skillCooldown(skillId, 0).getBytes();
+            assertTrue(packets.getAllValues().stream()
+                    .anyMatch(packet -> java.util.Arrays.equals(expected, packet.getBytes())));
+        }
     }
 }

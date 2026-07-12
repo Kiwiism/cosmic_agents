@@ -33,7 +33,29 @@ public interface AdventurerPartnerRepository {
                       PartnerLifecycleStatus terminalStatus,
                       String reason);
 
+    default PartnerSessionSkillGrant grantTemporarySkill(
+            long sessionId,
+            int characterId,
+            int skillId,
+            int skillLevel,
+            int masterLevel,
+            long expiration,
+            CharacterSkillState originalState) {
+        throw new UnsupportedOperationException("Temporary Partner skills are not supported");
+    }
+
+    default List<PartnerSessionSkillGrant> findTemporarySkills(long sessionId) {
+        return List.of();
+    }
+
+    default List<PartnerSessionSkillGrant> restoreTemporarySkills(long sessionId) {
+        return List.of();
+    }
+
     int recoverOpenSessions(String reason);
 
     int recoverOpenSessionsForLink(long linkId, String reason);
+
+    record CharacterSkillState(int skillLevel, int masterLevel, long expiration) {
+    }
 }
