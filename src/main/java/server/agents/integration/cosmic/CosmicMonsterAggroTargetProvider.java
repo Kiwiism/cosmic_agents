@@ -14,6 +14,13 @@ public enum CosmicMonsterAggroTargetProvider implements MonsterAggroTargetProvid
     }
 
     @Override
+    public boolean onAcceptedDamage(Monster monster, Character attacker, int damage,
+                                    int maxDamageLine) {
+        return CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(
+                monster, attacker, damage, maxDamageLine);
+    }
+
+    @Override
     public void onControllerMovement(Monster monster, int movementCommand) {
         MonsterAggroTargetService.recordControllerMovement(
                 monster, movementCommand, System.currentTimeMillis());

@@ -111,11 +111,31 @@ class CosmicMobReactionGatewayTest {
         when(map.getMonsterByOid(112)).thenReturn(monster);
 
         CosmicMobReactionGateway.INSTANCE.prepareObservedAttack(attack(112, 40, 40), agent);
-        assertTrue(CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(monster, agent, 80));
+        assertTrue(CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(monster, agent, 80, 40));
 
         MonsterAggroTargetService.Snapshot snapshot = MonsterAggroTargetService.inspect(
                 monster, System.currentTimeMillis(), 10_000L);
         assertEquals(80, snapshot.damage());
+        assertEquals("hurt-only", snapshot.reaction());
+    }
+
+    @Test
+    void acceptedDamageOverridesPreparedEstimateInLogicalTargetState() {
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = true;
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = true;
+        MapleMap map = observedMap();
+        Character agent = character(10, "agent", map);
+        Character observer = character(20, "observer", map);
+        AgentPresence.install(candidate -> candidate == agent);
+        when(map.getAllPlayers()).thenReturn(List.of(agent, observer));
+        Monster monster = monster(113, map, 50, true);
+
+        CosmicMobReactionGateway.INSTANCE.prepareObservedAttack(attack(113, 100), agent);
+        assertTrue(CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(monster, agent, 1, 1));
+
+        MonsterAggroTargetService.Snapshot snapshot = MonsterAggroTargetService.inspect(
+                monster, System.currentTimeMillis(), 10_000L);
+        assertEquals(1, snapshot.damage());
         assertEquals("hurt-only", snapshot.reaction());
     }
 

@@ -72,6 +72,11 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
     }
 
     boolean handleAcceptedDamage(Monster monster, Character attacker, int damage) {
+        return handleAcceptedDamage(monster, attacker, damage, damage);
+    }
+
+    boolean handleAcceptedDamage(Monster monster, Character attacker, int damage,
+                                 int maxDamageLine) {
         if (monster == null || attacker == null || damage <= 0 || monster.getMap() == null) {
             return false;
         }
@@ -100,13 +105,16 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
         if (lastHitPolicy) {
             MonsterAggroTargetService.PreparedReaction prepared =
                     MonsterAggroTargetService.consumePreparedReaction(monster, attacker);
-            int recordedDamage = prepared == null ? damage : prepared.damage();
             int threshold = prepared == null ? monster.getStats().getPushed() : prepared.threshold();
-            String reaction = prepared == null ? "accepted-damage" : prepared.reaction();
+            boolean acceptedKnockback = maxDamageLine > 0 && maxDamageLine >= threshold;
+            String reaction = prepared == null ? "accepted-damage"
+                    : acceptedKnockback
+                    && "client-knockback-eligible".equals(prepared.reaction())
+                    ? "client-knockback-eligible" : "hurt-only";
             long reactionDelayMs = prepared == null ? CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS
                     : prepared.hitDelayMs() + CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS;
             MonsterAggroTargetService.record(monster, attacker, controller, agentAttacker,
-                    recordedDamage, threshold, reaction, System.currentTimeMillis(),
+                    damage, threshold, reaction, System.currentTimeMillis(),
                     reactionDelayMs);
             CosmicMonsterPursuitRuntime.ensureRunning();
         }

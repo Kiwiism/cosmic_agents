@@ -14,6 +14,11 @@ public final class MonsterAggroTargetBridge {
         return provider.onAcceptedDamage(monster, attacker, damage);
     }
 
+    public static boolean onAcceptedDamage(Monster monster, Character attacker, int damage,
+                                           int maxDamageLine) {
+        return provider.onAcceptedDamage(monster, attacker, damage, maxDamageLine);
+    }
+
     public static void onControllerMovement(Monster monster, int movementCommand) {
         provider.onControllerMovement(monster, movementCommand);
     }

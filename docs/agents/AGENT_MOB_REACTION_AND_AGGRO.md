@@ -36,7 +36,8 @@ Agent attack:
 
 ```text
 AgentCombatAttackRuntime builds the ordinary AttackInfo
-  -> AgentMobHitReactionService
+  -> AgentAttackExecutionProvider.applyAttackRoute
+  -> AgentMobHitReactionService (before every attack route, including Heal vs undead)
   -> CosmicMobReactionGateway prepares a real simulation controller
   -> existing Agent attack route broadcasts the attack once
   -> AbstractDealDamageHandler.applyAttack
@@ -46,7 +47,10 @@ AgentCombatAttackRuntime builds the ordinary AttackInfo
 ```
 
 The preparation and pursuit paths never call `MapleMap.damageMonster`, kill a
-mob, create drops, grant EXP, or update quests.
+mob, create drops, grant EXP, or update quests. Logical-target diagnostics use
+the damage and largest individual line accepted by Cosmic rather than the
+pre-dispatch damage estimate. This keeps immunity and capped-hit rewrites from
+incorrectly retaining planned knockback eligibility.
 
 ## Observer Gate
 

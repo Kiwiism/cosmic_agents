@@ -242,6 +242,7 @@ public final class AgentAttackExecutionProvider {
     }
 
     public static void applyAttackRoute(AgentAttackRoute route, AbstractDealDamageHandler.AttackInfo attack, Character bot) {
+        AgentMobHitReactionService.prepare(attack, bot);
         AgentCombatGatewayRuntime.combat().applyAttackEffects(route, attack, bot);
     }
 

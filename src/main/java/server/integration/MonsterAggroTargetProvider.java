@@ -10,6 +10,11 @@ public interface MonsterAggroTargetProvider {
      */
     boolean onAcceptedDamage(Monster monster, Character attacker, int damage);
 
+    default boolean onAcceptedDamage(Monster monster, Character attacker, int damage,
+                                     int maxDamageLine) {
+        return onAcceptedDamage(monster, attacker, damage);
+    }
+
     default void onControllerMovement(Monster monster, int movementCommand) {
     }
 
