@@ -10,6 +10,7 @@ import server.agents.integration.InventoryGateway;
 import server.agents.integration.LifeGateway;
 import server.agents.integration.MakerGateway;
 import server.agents.integration.MapGateway;
+import server.agents.integration.MobReactionGateway;
 import server.agents.integration.PacketGateway;
 import server.agents.integration.PartyGateway;
 import server.agents.integration.SkillGateway;
@@ -17,12 +18,14 @@ import server.agents.integration.ShopGateway;
 import server.agents.integration.SchedulerGateway;
 import server.agents.integration.TradeGateway;
 import server.integration.AgentPresence;
+import server.integration.MonsterAggroTargetBridge;
 
 public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     public static final CosmicAgentServerAdapter INSTANCE = new CosmicAgentServerAdapter();
 
     private CosmicAgentServerAdapter() {
         AgentPresence.install(CosmicCharacterGateway.INSTANCE::isAgentCharacter);
+        MonsterAggroTargetBridge.install(CosmicMonsterAggroTargetProvider.INSTANCE);
     }
 
     @Override
@@ -48,6 +51,11 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     @Override
     public CombatGateway combat() {
         return CosmicCombatGateway.INSTANCE;
+    }
+
+    @Override
+    public MobReactionGateway mobReactions() {
+        return CosmicMobReactionGateway.INSTANCE;
     }
 
     @Override

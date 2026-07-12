@@ -121,6 +121,7 @@ public class LifeFactory {
         stats.setHp(DataTool.getIntConvert("maxHP", monsterInfoData));
         stats.setFriendly(DataTool.getIntConvert("damagedByMob", monsterInfoData, stats.isFriendly() ? 1 : 0) == 1);
         stats.setPADamage(DataTool.getIntConvert("PADamage", monsterInfoData));
+        stats.setPushed(DataTool.getIntConvert("pushed", monsterInfoData));
         stats.setPDDamage(DataTool.getIntConvert("PDDamage", monsterInfoData));
         stats.setMADamage(DataTool.getIntConvert("MADamage", monsterInfoData));
         stats.setMDDamage(DataTool.getIntConvert("MDDamage", monsterInfoData));

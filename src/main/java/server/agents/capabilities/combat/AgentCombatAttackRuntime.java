@@ -57,6 +57,7 @@ public final class AgentCombatAttackRuntime {
                             attackPlan.skillId, damageProfile, attackPlan.hitDelayMs));
         }
 
+        AgentMobHitReactionService.prepare(attack, bot);
         AgentAttackExecutionProvider.applyAttackRoute(attackPlan.route, attack, bot);
         AgentCombatCooldownStateRuntime.maxAttackCooldown(entry, attackPlan.cooldownMs);
         AgentCombatFacingRuntime.rememberAttackFacing(entry, attackPlan.stance);

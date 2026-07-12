@@ -1057,6 +1057,17 @@ public class Server {
         if (YamlConfig.config.server.ALWAYS_MAX_INVENTORY_SLOTS) {
             log.warn("Runtime feature enabled: characters normalize to max inventory slots.");
         }
+        if (YamlConfig.config.agents != null && YamlConfig.config.agents.combat != null
+                && YamlConfig.config.agents.combat.observedMobReaction != null
+                && YamlConfig.config.agents.combat.observedMobReaction.enabled) {
+            log.warn("Experimental Agent feature enabled: observed mob hurt/knockback reactions use a real client controller.");
+        }
+        if (YamlConfig.config.agents != null && YamlConfig.config.agents.combat != null
+                && YamlConfig.config.agents.combat.lastHitAggro != null
+                && YamlConfig.config.agents.combat.lastHitAggro.enabled) {
+            log.warn("Experimental Agent feature enabled: observed mob aggro follows the latest valid hitter (timeout={}ms).",
+                    YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs);
+        }
     }
 
     private static void setAllLoggedOut(Connection con) throws SQLException {

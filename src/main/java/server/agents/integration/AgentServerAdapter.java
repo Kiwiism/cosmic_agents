@@ -11,6 +11,8 @@ public interface AgentServerAdapter {
 
     CombatGateway combat();
 
+    MobReactionGateway mobReactions();
+
     InventoryGateway inventory();
 
     ShopGateway shop();

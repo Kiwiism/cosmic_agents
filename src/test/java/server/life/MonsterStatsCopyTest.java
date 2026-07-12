@@ -16,6 +16,7 @@ class MonsterStatsCopyTest {
         source.setMp(567);
         source.setExp(890);
         source.setLevel(42);
+        source.setPushed(321);
         source.setName("Test monster");
         source.setAnimationTime("move", 300);
         source.setEffectiveness(Element.FIRE, ElementalEffectiveness.WEAK);
@@ -31,6 +32,7 @@ class MonsterStatsCopyTest {
         assertEquals(567, copy.getMp());
         assertEquals(890, copy.getExp());
         assertEquals(42, copy.getLevel());
+        assertEquals(321, copy.getPushed());
         assertEquals("Test monster", copy.getName());
         assertEquals(300, copy.getAnimationTime("move"));
         assertEquals(ElementalEffectiveness.WEAK, copy.getEffectiveness(Element.FIRE));

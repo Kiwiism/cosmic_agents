@@ -39,7 +39,7 @@ import java.util.Set;
  */
 public class MonsterStats {
     public boolean changeable;
-    public int exp, hp, mp, level, PADamage, PDDamage, MADamage, MDDamage, accuracy, avoidability, dropPeriod, cp, buffToGive = -1, removeAfter;
+    public int exp, hp, mp, level, PADamage, PDDamage, MADamage, MDDamage, accuracy, avoidability, pushed, dropPeriod, cp, buffToGive = -1, removeAfter;
     public boolean boss, undead, ffaLoot, isExplosiveReward, firstAttack, removeOnMiss;
     public String name;
     public Map<String, Integer> animationTimes = new HashMap<>();
@@ -252,6 +252,14 @@ public class MonsterStats {
         this.PADamage = PADamage;
     }
 
+    public int getPushed() {
+        return pushed;
+    }
+
+    public void setPushed(int pushed) {
+        this.pushed = pushed;
+    }
+
     public int getCP() {
         return cp;
     }
@@ -372,6 +380,7 @@ public class MonsterStats {
         copy.MDDamage = MDDamage;
         copy.accuracy = accuracy;
         copy.avoidability = avoidability;
+        copy.pushed = pushed;
         copy.dropPeriod = dropPeriod;
         copy.cp = cp;
         copy.buffToGive = buffToGive;

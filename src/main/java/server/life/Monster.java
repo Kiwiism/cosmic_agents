@@ -58,6 +58,7 @@ import scripting.event.EventInstanceManager;
 import server.StatEffect;
 import server.TimerManager;
 import server.integration.AgentPresence;
+import server.integration.MonsterAggroTargetBridge;
 import server.loot.LootManager;
 import server.maps.AbstractAnimatedMapObject;
 import server.maps.MapObjectType;
@@ -778,6 +779,7 @@ public class Monster extends AbstractLoadedLife {
     }
 
     public Character killBy(final Character killer) {
+        MonsterAggroTargetBridge.clear(this);
         distributeExperience(killer != null ? killer.getId() : 0);
 
         final Pair<Character, Boolean> lastController = aggroRemoveController();
@@ -2126,6 +2128,10 @@ public class Monster extends AbstractLoadedLife {
         MonsterAggroCoordinator mmac = this.getMapAggroCoordinator();
         mmac.addAggroDamage(this, attacker.getId(), damage);
 
+        if (MonsterAggroTargetBridge.onAcceptedDamage(this, attacker, damage)) {
+            return;
+        }
+
         Character chrController = this.getController();    // aggro based on DPS rather than first-come-first-served, now live after suggestions thanks to MedicOP, Thora, Vcoc
         if (chrController != attacker) {
             if (this.getMapAggroCoordinator().isLeadingCharacterAggro(this, attacker)) {
@@ -2242,6 +2248,7 @@ public class Monster extends AbstractLoadedLife {
     }
 
     public void dispose() {
+        MonsterAggroTargetBridge.clear(this);
         if (monsterItemDrop != null) {
             monsterItemDrop.cancel(false);
         }

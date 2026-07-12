@@ -1,3 +1,11 @@
+agents:
+    combat:
+        observedMobReaction:
+            enabled: false              # Real clients simulate normal hurt/knockback for observed Agent attacks.
+        lastHitAggro:
+            enabled: false              # Latest valid Agent/player hitter becomes the logical mob target in observed maps.
+            targetTimeoutMs: 10000      # Clear a stale logical target after this many milliseconds.
+
 #World Name: (0 "Scania", 1 "Bera", 2 "Broa", 3 "Windia", 4 "Khaini", 5 "Bellocan", 6 "Mardia", 7 "Kradia", 8 "Yellonde", 9 "Demethos", 10 "Galicia", 11 "El Nido", 12 "Zenith", 13 "Arcenia", 14 "Kastia", 15 "Judis", 16 "Plana", 17 "Kalluna", 18 "Stius", 19 "Croa", 20 "Medere")
 #Flag types: (0 = nothing, 1 = event, 2 = new, 3 = hot)
 #Recommended to use only up to 15 worlds
