@@ -36,7 +36,8 @@ final class MonsterSimulationControllerResolver {
 
     static boolean isEligible(Character candidate, MapleMap map) {
         return candidate != null && candidate.getMap() == map && candidate.isLoggedinWorld()
-                && !candidate.isChangingMaps() && !AgentPresence.isAgent(candidate)
+                && candidate.getClient() != null && !candidate.isChangingMaps()
+                && !AgentPresence.isAgent(candidate)
                 && !(candidate.getClient() instanceof BotClient);
     }
 }

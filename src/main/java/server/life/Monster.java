@@ -2010,6 +2010,10 @@ public class Monster extends AbstractLoadedLife {
      * on the map it is from...
      */
     public void aggroUpdateController() {
+        if (MonsterAggroTargetBridge.usesServerPursuit(this)) {
+            return;
+        }
+
         Character chrController = this.getActiveController();
         if (chrController != null && chrController.isAlive()) {
             return;
@@ -2108,6 +2112,10 @@ public class Monster extends AbstractLoadedLife {
      * there is already an active controller for this mob.
      */
     public void aggroAutoAggroUpdate(Character player) {
+        if (MonsterAggroTargetBridge.usesServerPursuit(this)) {
+            return;
+        }
+
         Character chrController = this.getActiveController();
 
         if (chrController == null) {

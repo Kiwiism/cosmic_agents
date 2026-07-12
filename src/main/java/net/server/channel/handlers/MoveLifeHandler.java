@@ -33,6 +33,7 @@ import server.life.MobSkillId;
 import server.life.MobSkillType;
 import server.life.Monster;
 import server.life.MonsterInformationProvider;
+import server.integration.MonsterAggroTargetBridge;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
@@ -155,6 +156,11 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
 
         try {
             int movementDataStart = p.getPosition();
+            int firstMovementCommand = -1;
+            if (p.available() >= 2 && (p.readByte() & 0xff) > 0) {
+                firstMovementCommand = p.readByte() & 0xff;
+            }
+            p.seek(movementDataStart);
             updatePosition(p, monster, -2);  // Thanks Doodle & ZERO傑洛 for noticing sponge-based bosses moving out of stage in case of no-offset applied
             long movementDataLength = p.getPosition() - movementDataStart; //how many bytes were read by updatePosition
             p.seek(movementDataStart);
@@ -168,6 +174,9 @@ public final class MoveLifeHandler extends AbstractMovementPacketHandler {
             map.broadcastMessage(player, PacketCreator.moveMonster(objectid, nextMovementCouldBeSkill, rawActivity, useSkillId, useSkillLevel, pOption, startPos, p, movementDataLength), serverStartPos);
             //updatePosition(res, monster, -2); //does this need to be done after the packet is broadcast?
             map.moveMonster(monster, monster.getPosition());
+            if (firstMovementCommand >= 0) {
+                MonsterAggroTargetBridge.onControllerMovement(monster, firstMovementCommand);
+            }
         } catch (EmptyMovementException e) {
         }
 

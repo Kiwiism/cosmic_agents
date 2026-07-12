@@ -10,6 +10,13 @@ public interface MonsterAggroTargetProvider {
      */
     boolean onAcceptedDamage(Monster monster, Character attacker, int damage);
 
+    default void onControllerMovement(Monster monster, int movementCommand) {
+    }
+
+    default boolean usesServerPursuit(Monster monster) {
+        return false;
+    }
+
     default void clear(Monster monster) {
     }
 }

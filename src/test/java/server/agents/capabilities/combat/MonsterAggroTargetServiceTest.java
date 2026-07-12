@@ -20,6 +20,9 @@ class MonsterAggroTargetServiceTest {
         Character target = validTarget(11, "agent", map);
         Character controller = validTarget(22, "player", map);
         when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
 
         MonsterAggroTargetService.record(monster, target, controller,
                 150, 100, "client-knockback-eligible", 1_000L);
@@ -44,6 +47,9 @@ class MonsterAggroTargetServiceTest {
         MapleMap otherMap = mock(MapleMap.class);
         Monster monster = mock(Monster.class);
         when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
 
         Character disconnected = validTarget(1, "disconnected", map);
         when(disconnected.isLoggedinWorld()).thenReturn(false);
@@ -61,7 +67,74 @@ class MonsterAggroTargetServiceTest {
         assertInvalid(monster, moved, 4_000L, 4_001L, 10_000L);
 
         Character timedOut = validTarget(5, "timed-out", map);
-        assertInvalid(monster, timedOut, 5_000L, 6_001L, 1_000L);
+        MonsterAggroTargetService.record(monster, timedOut, timedOut,
+                1, 1, "hurt-only", 5_000L);
+        MonsterAggroTargetService.markUnreachable(monster, 5_000L, "no-route");
+        assertFalse(MonsterAggroTargetService.inspect(monster, 6_001L, 1_000L).hasTarget());
+    }
+
+    @Test
+    void serverPursuitStartsOnlyAfterAgentImpactDelayAndValidatesExactSpawn() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character target = validTarget(11, "agent", map);
+        when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
+
+        MonsterAggroTargetService.record(monster, target, target, true,
+                150, 100, "client-knockback-eligible", 1_000L, 400L);
+
+        assertFalse(MonsterAggroTargetService.usesServerPursuit(monster, 1_399L));
+        assertTrue(MonsterAggroTargetService.usesServerPursuit(monster, 1_400L));
+
+        when(map.getMonsterByOid(100)).thenReturn(mock(Monster.class));
+        assertFalse(MonsterAggroTargetService.usesServerPursuit(monster, 1_401L));
+    }
+
+    @Test
+    void acceptedClientKnockbackCommandIsRecordedWithoutApplyingDamage() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character target = validTarget(11, "agent", map);
+        when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
+        long appliedBefore = AgentMobReactionMetrics.snapshot().knockbackApplied();
+
+        MonsterAggroTargetService.record(monster, target, target, true,
+                150, 100, "client-knockback-eligible", 1_000L, 0L);
+        MonsterAggroTargetService.recordControllerMovement(monster, 2, 1_200L);
+
+        assertEquals(appliedBefore + 1,
+                AgentMobReactionMetrics.snapshot().knockbackApplied());
+        assertEquals("client-command-2", MonsterAggroTargetService.inspect(
+                monster, 1_201L, 10_000L).latestMovement());
+    }
+
+    @Test
+    void newHitSupersedesQueuedNativeControllerRestoration() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character target = validTarget(11, "agent", map);
+        when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
+
+        MonsterAggroTargetService.record(monster, target, target, true,
+                100, 1, "hurt-only", 1_000L, 0L);
+        when(target.isAlive()).thenReturn(false);
+        assertTrue(MonsterAggroTargetService.activeTargets(1_001L, 10_000L).isEmpty());
+
+        when(target.isAlive()).thenReturn(true);
+        MonsterAggroTargetService.record(monster, target, target, true,
+                100, 1, "hurt-only", 1_002L, 0L);
+
+        assertTrue(MonsterAggroTargetService.drainExpiredTargets().isEmpty());
+        MonsterAggroTargetService.clear(monster);
     }
 
     private static void assertInvalid(Monster monster, Character target,

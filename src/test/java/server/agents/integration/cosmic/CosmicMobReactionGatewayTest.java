@@ -17,10 +17,12 @@ import server.maps.MapleMap;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -39,6 +41,8 @@ class CosmicMobReactionGatewayTest {
         originalReactionEnabled = YamlConfig.config.agents.combat.observedMobReaction.enabled;
         originalAggroEnabled = YamlConfig.config.agents.combat.lastHitAggro.enabled;
         originalTimeoutMs = YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs;
+        ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
+        CosmicMonsterPursuitRuntime.installLoopSchedulerForTest((action, periodMs) -> scheduled);
     }
 
     @AfterEach
@@ -47,6 +51,7 @@ class CosmicMobReactionGatewayTest {
         YamlConfig.config.agents.combat.lastHitAggro.enabled = originalAggroEnabled;
         YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs = originalTimeoutMs;
         AgentPresence.install(null);
+        CosmicMonsterPursuitRuntime.resetForTest();
     }
 
     @Test
@@ -216,6 +221,24 @@ class CosmicMobReactionGatewayTest {
                 System.currentTimeMillis(), 10_000L).hasTarget());
     }
 
+    @Test
+    void disabledFlagsPreserveLegacyAggroAndDamagePath() {
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = false;
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = false;
+        MapleMap map = observedMap();
+        Character agent = character(10, "agent", map);
+        AgentPresence.install(candidate -> candidate == agent);
+        Monster monster = monster(108, map, 100, true);
+
+        CosmicMobReactionGateway.INSTANCE.prepareObservedAttack(attack(108, 100), agent);
+
+        assertFalse(CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(monster, agent, 100));
+        verify(monster, never()).aggroSwitchController(any(Character.class), eq(true));
+        verify(map, never()).damageMonster(eq(agent), eq(monster), anyInt());
+        assertFalse(MonsterAggroTargetService.inspect(monster,
+                System.currentTimeMillis(), 10_000L).hasTarget());
+    }
+
     private static AbstractDealDamageHandler.AttackInfo attack(int oid, int... lines) {
         AbstractDealDamageHandler.AttackInfo attack = new AbstractDealDamageHandler.AttackInfo();
         attack.targets = new HashMap<>();
@@ -253,6 +276,7 @@ class CosmicMobReactionGatewayTest {
         when(monster.getPosition()).thenReturn(new Point(0, 0));
         when(monster.isAlive()).thenReturn(true);
         when(monster.isMobile()).thenReturn(mobile);
+        when(map.getMonsterByOid(oid)).thenReturn(monster);
         return monster;
     }
 }

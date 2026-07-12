@@ -14,6 +14,17 @@ public enum CosmicMonsterAggroTargetProvider implements MonsterAggroTargetProvid
     }
 
     @Override
+    public void onControllerMovement(Monster monster, int movementCommand) {
+        MonsterAggroTargetService.recordControllerMovement(
+                monster, movementCommand, System.currentTimeMillis());
+    }
+
+    @Override
+    public boolean usesServerPursuit(Monster monster) {
+        return MonsterAggroTargetService.usesServerPursuit(monster, System.currentTimeMillis());
+    }
+
+    @Override
     public void clear(Monster monster) {
         MonsterAggroTargetService.clear(monster);
     }

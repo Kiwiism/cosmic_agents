@@ -59,6 +59,16 @@ class MonsterSimulationControllerResolverTest {
         assertNull(MonsterSimulationControllerResolver.resolve(monster(map)));
     }
 
+    @Test
+    void characterWithoutClientIsNotAnObserverOrController() {
+        MapleMap map = observedMap();
+        Character disconnected = eligibleCharacter(5, map, null, false);
+        when(map.getAllPlayers()).thenReturn(List.of(disconnected));
+
+        assertFalse(MonsterSimulationControllerResolver.hasObserver(map));
+        assertNull(MonsterSimulationControllerResolver.resolve(monster(map)));
+    }
+
     private static MapleMap observedMap() {
         MapleMap map = mock(MapleMap.class);
         when(map.isObservedByPlayer()).thenReturn(true);

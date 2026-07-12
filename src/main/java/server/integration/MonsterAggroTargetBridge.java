@@ -14,6 +14,14 @@ public final class MonsterAggroTargetBridge {
         return provider.onAcceptedDamage(monster, attacker, damage);
     }
 
+    public static void onControllerMovement(Monster monster, int movementCommand) {
+        provider.onControllerMovement(monster, movementCommand);
+    }
+
+    public static boolean usesServerPursuit(Monster monster) {
+        return provider.usesServerPursuit(monster);
+    }
+
     public static void clear(Monster monster) {
         provider.clear(monster);
     }
