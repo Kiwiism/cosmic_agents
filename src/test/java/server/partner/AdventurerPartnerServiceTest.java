@@ -51,7 +51,7 @@ class AdventurerPartnerServiceTest {
     @BeforeEach
     void setUp() {
         config = new AdventurerPartnerConfig();
-        config.enabled = true;
+        config.ENABLED = true;
         repository = mock(AdventurerPartnerRepository.class);
         profiles = mock(CharacterProfileRepository.class);
         leases = new ProfileLeaseRegistry();
@@ -116,6 +116,7 @@ class AdventurerPartnerServiceTest {
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 1L,
                 PartnerLifecycleStatus.CLOSED, "test release");
+        verify(transitions).clearTemporarySkills(player);
         verify(transitions).discardPreparedProfiles(player, partner);
     }
 
@@ -253,7 +254,7 @@ class AdventurerPartnerServiceTest {
 
     @Test
     void simultaneousSwitchRequestsExecuteOnlyOneTransition() throws Exception {
-        config.switchCooldownMs = 0L;
+        config.SWITCH_COOLDOWN_MS = 0L;
         when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
         when(triggerPolicy.validate(any(), any()))
                 .thenReturn(new PartnerTriggerPolicy.Result(true, null));
@@ -271,11 +272,11 @@ class AdventurerPartnerServiceTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             Future<AdventurerPartnerService.TriggerResult> first = executor.submit(
-                    () -> service.handleSwitchTrigger(player, config.triggerSkillIds.getFirst()));
+                    () -> service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst()));
             assertTrue(transitionEntered.await(10, TimeUnit.SECONDS));
 
             AdventurerPartnerService.TriggerResult simultaneous =
-                    service.handleSwitchTrigger(player, config.triggerSkillIds.getFirst());
+                    service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
 
             assertTrue(simultaneous.handled());
             assertFalse(simultaneous.switched());

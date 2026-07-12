@@ -36,6 +36,7 @@ live pass.
 | Simultaneous trigger requests execute one transition | `AdventurerPartnerServiceTest.simultaneousSwitchRequestsExecuteOnlyOneTransition` | Fault-injection pass |
 | Presentation order, packet-safe inventory chunks, final action enable, and both public actor look refreshes | `InventoryPacketChunkerTest`, `CosmicProfilePresentationServiceTest` | Automated adapter pass; observer-client pending |
 | Partner switching emits skill packets only for added, removed, level-changed, master-level-changed, or expiration-changed records; ordinary job advancement remains outside this adapter | `CosmicProfilePresentationServiceTest.partnerRefreshOnlySendsSkillRecordsThatDifferBetweenProfiles`; structural scope audit | Automated pass; live hitch comparison pending |
+| A cross-job shared Solo buff registers its absent source skill client-side before `GIVE_BUFF`, retains it without switch churn, removes it on release, and never mutates canonical skills | `CosmicProfilePresentationServiceTest.soloSharedBuffSkillIsRegisteredOnceAndRemovedWhenSessionEnds`, release delegation assertion | Automated packet/state pass; Shadow Partner client-crash retest pending |
 | Prepared presentation snapshots do not grow across sessions | `CosmicProfilePresentationServiceTest`, successful-release and failed-activation eviction tests | Automated pass |
 | Presentation failure keeps the server binding authoritative | `ProfileTransitionCoordinatorTest.presentationFailureKeepsCommittedServerBinding` | Fault-injection pass |
 | Disconnect during presentation waits for the transition and restores canonical ownership | `PartnerRecoveryServiceTest.disconnectDuringPresentationRefreshWaitsThenRestoresCanonicalOwnership` | Fault-injection pass |
@@ -75,7 +76,7 @@ and cooldowns. Capture server logs and client video/screenshots for every item.
 13. Stop the server with an active swapped session, restart it, and verify canonical owners plus a recovered closed journal.
 14. Run repeated invite/switch/release/re-invite cycles while monitoring map objects, scheduled tasks, heap, and logs.
 15. Record switch pause, lock, cache, refresh, packet-count/byte, frame-hitch, and heap/task-growth measurements.
-16. Enable `soloTagBuffSharingEnabled`, buy the configured bond item separately on both characters, and test neither/left-only/right-only/both eligibility. For equipment, verify carried-but-unequipped is inactive and equipped is active. Exercise Magic Guard, Shadow Partner, weapon boosters, and overlapping party buffs at different levels; verify the strongest stat survives and remaining duration is preserved.
+16. Enable `SOLO_TAG_BUFF_SHARING_ENABLED`, buy the configured bond item separately on both characters, and test neither/left-only/right-only/both eligibility. For equipment, verify carried-but-unequipped is inactive and equipped is active. Exercise Magic Guard, Shadow Partner, weapon boosters, and overlapping party buffs at different levels; verify the strongest stat survives and remaining duration is preserved.
 
 The feature does not satisfy the full Definition of Done until all 16 live items
 pass. Stock v83 actor IGN caching remains the documented client limitation;

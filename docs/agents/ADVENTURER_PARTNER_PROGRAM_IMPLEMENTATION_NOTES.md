@@ -37,6 +37,7 @@ The removed snapshot/row-replacement Double Agent POC is not used or restored.
 - Prepared presentation snapshots are discarded after successful release and failed activation, preventing copied inventory/macro state from accumulating across sessions.
 - Presentation cancels old state, refreshes complete local state in deterministic packet-safe chunks, updates public appearance/effects, and records packet counts/bytes by category.
 - Partner presentation refreshes skills differentially by skill ID: it removes absent skills and sends new values only for additions or level/master-level/expiration changes. Identical records are left untouched, avoiding hundreds of redundant v83 skill packets. This optimization exists only in `CosmicProfilePresentationService`; normal `Character.changeJob` advancement behavior is unchanged.
+- When a shared Solo buff references a skill absent from the receiving profile, Partner presentation registers the source skill in a client-only temporary overlay before sending `GIVE_BUFF`. The overlay remains for the active Solo session to avoid add/remove churn and is removed after canonical orientation is restored during release. It never mutates `Character.skills`, never participates in server skill validation, and cannot enter a canonical database save. This specifically guards stock-client handling of cross-job self buffs such as Shadow Partner; live client retesting is still required to confirm the original crash is resolved.
 - Disconnect, channel transition, Agent removal, and the GM `!partnerprogram diag|recover [characterId]` surface route through `PartnerRecoveryService`.
 - Channel, Cash Shop, and MTS transitions synchronously require canonical recovery before actor-keyed buff export or persistence. Failed saves and Agent teardown leave the runtime and leases available for a deterministic retry.
 - Release saves both canonical owners and durably closes the session journal before tearing down the Agent. If teardown alone fails, retry skips duplicate saves/journal closure and completes the remaining cleanup.
@@ -56,14 +57,14 @@ The removed snapshot/row-replacement Double Agent POC is not used or restored.
 
 ## Configuration and rollback
 
-The feature is disabled by default under `adventurerPartner` in `config.yaml`. The dedicated switch cooldown defaults to 5000 ms. Enabling the feature requires `restoreCanonicalOnDisconnect: true`; startup rejects an unsafe configuration. Disabling the feature removes the Agent E menu and leaves the persistent link/session history intact.
+The feature is disabled by default under `adventurerPartner` in `config.yaml`. The dedicated switch cooldown defaults to 5000 ms. Enabling the feature requires `RESTORE_CANONICAL_ON_DISCONNECT: true`; startup rejects an unsafe configuration. Disabling the feature removes the Agent E menu and leaves the persistent link/session history intact. Every key in this block uses the same uppercase snake-case convention as the main server settings.
 
 Solo Tag buff sharing uses these independent settings:
 
 ```yaml
-soloTagBuffSharingEnabled: false
-soloTagBuffSharingItemId: 1142073
-soloTagBuffSharingPriceMesos: 10000000
+SOLO_TAG_BUFF_SHARING_ENABLED: false
+SOLO_TAG_BUFF_SHARING_ITEM_ID: 1142073
+SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 10000000
 ```
 
 Verified thematic demo candidates from the read-only v83 WZ data are:
@@ -78,6 +79,8 @@ Verified thematic demo candidates from the read-only v83 WZ data are:
 
 Only the single configured item ID is active at a time; the other entries are convenient category test candidates.
 
+The complete `adventurerPartner` block uses uppercase snake-case keys (`ENABLED`, `NPC_ID`, `SOLO_TAG_ENABLED`, and so on), matching the main server configuration convention.
+
 ## Stock v83 client constraint
 
 Canonical names are deliberately not mutated. The human actor and Agent actor retain their actor IGNs while appearance, job, stats, equipment, skills, inventory, quests, Monster Book, pets, buffs, debuffs, and cooldowns follow the attached profile. Any client UI that caches the character name therefore continues to show the actor IGN without a custom client.
@@ -88,7 +91,7 @@ Canonical names are deliberately not mutated. The human actor and Agent actor re
 - The focused suite includes two 1,000-iteration soaks (domain reversal and full Double coordinator), complete profile-bundle exchange, real presentation packet ordering/public-look calls, release retry fault injection, disconnect during presentation, Agent cache-rebuild failure, simultaneous triggers, stale profile-task rejection, SWAPPING recovery, login/deletion reservation races, mailbox barrier rejection, and Agent cache owner/version stamping.
 - `mvnw.cmd -q -DskipTests package`: passed after the final production-code changes.
 - `node --check scripts/npc/9000036.js`: passed.
-- The current state-driven/live-acceptance follow-up regression group passed 72 tests across 18 reports with 0 failures, 0 errors, and 0 skipped. It covers menu states, direct mode transitions, idempotent reset, independently-online protection, same-map messaging, offline-party snapshots, silent quest/card presentation, dual-actor effects, headless map-transition completion, asymmetric self-buff entitlement, automatic party-buff sharing, overlap ordering, and purchase safety.
+- The current state-driven/live-acceptance follow-up regression group passed 73 tests across 18 reports with 0 failures, 0 errors, and 0 skipped. It covers menu states, direct mode transitions, idempotent reset, independently-online protection, same-map messaging, offline-party snapshots, silent quest/card presentation, dual-actor effects, headless map-transition completion, asymmetric self-buff entitlement, automatic party-buff sharing, temporary client skill registration/removal, overlap ordering, and purchase safety.
 - Liquibase changelog XML parsed successfully. Migration `026-adventurer-partner.sql` was applied against a disposable MySQL 8.4 schema; constraints, two-row quickslot migration, and link/session cascade behavior passed, and the disposable schema was removed. The existing `cosmic` database was not modified.
 - Independent worktree catalogs were generated from the read-only WZ junction and verified: game 75/75, NPC 115/115, reactor 7/7, and derived Agent/LLM 51/51. `AgentCatalogServiceTest` then passed.
 - A bounded expanded repository run produced 3,798 tests across 513 reports with 0 errors and 3 skips before entering the unrelated CPU-heavy `BotMovementSimulationLabTest`. Its single movement-fidget failure passed immediately in isolation. Earlier thread dumps likewise isolated `AgentNavigationGraphServiceTest` and `AgentPhysicsEngineTest` as navigation-graph bottlenecks. No navigation-graph files are changed by this branch.

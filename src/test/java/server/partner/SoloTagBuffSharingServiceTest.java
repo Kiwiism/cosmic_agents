@@ -47,8 +47,8 @@ class SoloTagBuffSharingServiceTest {
         PlayerBuffValueHolder partnerBuff = buff(BuffStat.SHADOWPARTNER, 50, 4111002);
         when(human.getAllBuffs()).thenReturn(List.of(humanBuff));
         when(partner.getAllBuffs()).thenReturn(List.of(partnerBuff));
-        when(human.haveItemEquipped(config.soloTagBuffSharingItemId)).thenReturn(false);
-        when(partner.haveItemEquipped(config.soloTagBuffSharingItemId)).thenReturn(true);
+        when(human.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(false);
+        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -65,8 +65,8 @@ class SoloTagBuffSharingServiceTest {
     @Test
     void carriedNonEquipmentItemQualifiesWithoutEquipmentCheck() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.soloTagBuffSharingEnabled = true;
-        config.soloTagBuffSharingItemId = 4000144;
+        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 4000144;
         Character character = mock(Character.class);
         when(character.haveItemWithId(4000144, false)).thenReturn(true);
 
@@ -84,7 +84,7 @@ class SoloTagBuffSharingServiceTest {
         PlayerBuffValueHolder weak = buff(BuffStat.WATK, 5, 1101006);
         when(human.getAllBuffs()).thenReturn(List.of(strong, weak));
         when(partner.getAllBuffs()).thenReturn(List.of());
-        when(partner.haveItemEquipped(config.soloTagBuffSharingItemId)).thenReturn(true);
+        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
 
         SoloTagBuffSharingService.SharingPlan plan =
                 sharing.capture(PartnerMode.SOLO_TAG, human, partner);
@@ -127,9 +127,9 @@ class SoloTagBuffSharingServiceTest {
     @Test
     void successfulPurchaseChargesConfiguredPriceAfterGrant() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.soloTagBuffSharingEnabled = true;
-        config.soloTagBuffSharingItemId = 4000144;
-        config.soloTagBuffSharingPriceMesos = 12_345_678;
+        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 4000144;
+        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 12_345_678;
         Character buyer = mock(Character.class);
         when(buyer.getMeso()).thenReturn(20_000_000);
         when(buyer.canHold(4000144)).thenReturn(true);
@@ -144,8 +144,8 @@ class SoloTagBuffSharingServiceTest {
     @Test
     void failedGrantNeverChargesMesos() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.soloTagBuffSharingEnabled = true;
-        config.soloTagBuffSharingItemId = 4000144;
+        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 4000144;
         Character buyer = mock(Character.class);
         when(buyer.getMeso()).thenReturn(Integer.MAX_VALUE);
         when(buyer.canHold(4000144)).thenReturn(true);
@@ -161,8 +161,8 @@ class SoloTagBuffSharingServiceTest {
 
     private static AdventurerPartnerConfig enabledEquipConfig() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.soloTagBuffSharingEnabled = true;
-        config.soloTagBuffSharingItemId = 1142073;
+        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
         return config;
     }
 

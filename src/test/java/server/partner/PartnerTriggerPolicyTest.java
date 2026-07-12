@@ -70,7 +70,7 @@ class PartnerTriggerPolicyTest {
 
     private static AdventurerPartnerConfig config() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.enabled = true;
+        config.ENABLED = true;
         return config;
     }
 

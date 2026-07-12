@@ -920,14 +920,14 @@ public class Server {
         }
         log.info("Adventurer Partner Program enabled={} npcId={} soloTag={} doublePartner={} "
                         + "cooldownMs={} sameMap={} publicPresentation={} restoreCanonicalOnDisconnect={}",
-                YamlConfig.config.adventurerPartner.enabled,
-                YamlConfig.config.adventurerPartner.npcId,
-                YamlConfig.config.adventurerPartner.soloTagEnabled,
-                YamlConfig.config.adventurerPartner.doublePartnerEnabled,
-                YamlConfig.config.adventurerPartner.switchCooldownMs,
-                YamlConfig.config.adventurerPartner.sameMapRequired,
-                YamlConfig.config.adventurerPartner.publicPresentation,
-                YamlConfig.config.adventurerPartner.restoreCanonicalOnDisconnect);
+                YamlConfig.config.adventurerPartner.ENABLED,
+                YamlConfig.config.adventurerPartner.NPC_ID,
+                YamlConfig.config.adventurerPartner.SOLO_TAG_ENABLED,
+                YamlConfig.config.adventurerPartner.DOUBLE_PARTNER_ENABLED,
+                YamlConfig.config.adventurerPartner.SWITCH_COOLDOWN_MS,
+                YamlConfig.config.adventurerPartner.SAME_MAP_REQUIRED,
+                YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION,
+                YamlConfig.config.adventurerPartner.RESTORE_CANONICAL_ON_DISCONNECT);
 
         channelDependencies = registerChannelDependencies();
 

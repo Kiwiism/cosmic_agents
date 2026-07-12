@@ -10,48 +10,48 @@ import java.util.List;
 
 /** Configuration for the disabled-by-default Adventurer Partner Program. */
 public class AdventurerPartnerConfig {
-    public boolean enabled = false;
-    public int npcId = 9000036;
-    public boolean soloTagEnabled = true;
-    public boolean doublePartnerEnabled = true;
-    public long switchCooldownMs = 5_000L;
-    public boolean sameMapRequired = true;
-    public boolean publicPresentation = true;
-    public List<Integer> triggerSkillIds = new ArrayList<>(List.of(
+    public boolean ENABLED = false;
+    public int NPC_ID = 9000036;
+    public boolean SOLO_TAG_ENABLED = true;
+    public boolean DOUBLE_PARTNER_ENABLED = true;
+    public long SWITCH_COOLDOWN_MS = 5_000L;
+    public boolean SAME_MAP_REQUIRED = true;
+    public boolean PUBLIC_PRESENTATION = true;
+    public List<Integer> TRIGGER_SKILL_IDS = new ArrayList<>(List.of(
             Beginner.NIMBLE_FEET,
             Noblesse.NIMBLE_FEET,
             Legend.AGILE_BODY,
             Evan.NIMBLE_FEET));
-    public boolean restoreCanonicalOnDisconnect = true;
-    public boolean applyOrdinaryTriggerBuff = false;
-    public boolean soloTagBuffSharingEnabled = false;
-    public int soloTagBuffSharingItemId = 1142073;
-    public int soloTagBuffSharingPriceMesos = 10_000_000;
+    public boolean RESTORE_CANONICAL_ON_DISCONNECT = true;
+    public boolean APPLY_ORDINARY_TRIGGER_BUFF = false;
+    public boolean SOLO_TAG_BUFF_SHARING_ENABLED = false;
+    public int SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
+    public int SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 10_000_000;
 
     public void validate() {
-        if (npcId <= 0) {
-            throw new IllegalStateException("adventurerPartner.npcId must be positive");
+        if (NPC_ID <= 0) {
+            throw new IllegalStateException("adventurerPartner.NPC_ID must be positive");
         }
-        if (switchCooldownMs < 0L) {
-            throw new IllegalStateException("adventurerPartner.switchCooldownMs cannot be negative");
+        if (SWITCH_COOLDOWN_MS < 0L) {
+            throw new IllegalStateException("adventurerPartner.SWITCH_COOLDOWN_MS cannot be negative");
         }
-        if (triggerSkillIds == null || triggerSkillIds.isEmpty()
-                || triggerSkillIds.stream().anyMatch(id -> id == null || id <= 0)) {
-            throw new IllegalStateException("adventurerPartner.triggerSkillIds must contain positive skill IDs");
+        if (TRIGGER_SKILL_IDS == null || TRIGGER_SKILL_IDS.isEmpty()
+                || TRIGGER_SKILL_IDS.stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IllegalStateException("adventurerPartner.TRIGGER_SKILL_IDS must contain positive skill IDs");
         }
-        if (soloTagBuffSharingItemId <= 0) {
+        if (SOLO_TAG_BUFF_SHARING_ITEM_ID <= 0) {
             throw new IllegalStateException(
-                    "adventurerPartner.soloTagBuffSharingItemId must be positive");
+                    "adventurerPartner.SOLO_TAG_BUFF_SHARING_ITEM_ID must be positive");
         }
-        if (soloTagBuffSharingPriceMesos < 0) {
+        if (SOLO_TAG_BUFF_SHARING_PRICE_MESOS < 0) {
             throw new IllegalStateException(
-                    "adventurerPartner.soloTagBuffSharingPriceMesos cannot be negative");
+                    "adventurerPartner.SOLO_TAG_BUFF_SHARING_PRICE_MESOS cannot be negative");
         }
-        if (enabled && !restoreCanonicalOnDisconnect) {
+        if (ENABLED && !RESTORE_CANONICAL_ON_DISCONNECT) {
             throw new IllegalStateException(
                     "Adventurer Partner requires restoreCanonicalOnDisconnect=true to preserve canonical ownership");
         }
-        if (enabled && !soloTagEnabled && !doublePartnerEnabled) {
+        if (ENABLED && !SOLO_TAG_ENABLED && !DOUBLE_PARTNER_ENABLED) {
             throw new IllegalStateException(
                     "Adventurer Partner requires at least one enabled mode");
         }

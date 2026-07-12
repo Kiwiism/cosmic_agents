@@ -137,9 +137,9 @@ class AdventurerPartnerNpcServiceTest {
     @Test
     void enabledBuffSharingShowsPerCharacterStatusAndPurchaseOption() {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.soloTagBuffSharingEnabled = true;
-        config.soloTagBuffSharingItemId = 1142073;
-        config.soloTagBuffSharingPriceMesos = 10_000_000;
+        config.SOLO_TAG_BUFF_SHARING_ENABLED = true;
+        config.SOLO_TAG_BUFF_SHARING_ITEM_ID = 1142073;
+        config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS = 10_000_000;
         SoloTagBuffSharingService sharing =
                 new SoloTagBuffSharingService(config, (character, itemId) -> true);
         npc = new AdventurerPartnerNpcService(service, sharing);

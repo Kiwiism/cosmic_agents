@@ -34,7 +34,7 @@ public final class SoloTagBuffSharingService {
 
     public SharingPlan capture(PartnerMode mode, Character humanActor,
                                Character partnerActorOrDormantProfile) {
-        if (!config.soloTagBuffSharingEnabled || mode != PartnerMode.SOLO_TAG) {
+        if (!config.SOLO_TAG_BUFF_SHARING_ENABLED || mode != PartnerMode.SOLO_TAG) {
             return SharingPlan.none();
         }
         return new SharingPlan(
@@ -56,15 +56,15 @@ public final class SoloTagBuffSharingService {
     }
 
     public boolean enabled() {
-        return config.soloTagBuffSharingEnabled;
+        return config.SOLO_TAG_BUFF_SHARING_ENABLED;
     }
 
     public int itemId() {
-        return config.soloTagBuffSharingItemId;
+        return config.SOLO_TAG_BUFF_SHARING_ITEM_ID;
     }
 
     public int priceMesos() {
-        return config.soloTagBuffSharingPriceMesos;
+        return config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS;
     }
 
     public boolean eligible(Character character) {

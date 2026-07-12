@@ -57,11 +57,11 @@ public final class AdventurerPartnerService {
     }
 
     public boolean isEnabled() {
-        return config.enabled;
+        return config.ENABLED;
     }
 
     public boolean isEnabledForNpc(int npcId) {
-        return config.enabled && config.npcId == npcId;
+        return config.ENABLED && config.NPC_ID == npcId;
     }
 
     public List<PartnerRosterEntry> roster(Character player) {
@@ -145,7 +145,7 @@ public final class AdventurerPartnerService {
                 validationHolder.suspendProfileRuntimeTasks();
             }
         }
-        PartnerMode initialMode = config.doublePartnerEnabled
+        PartnerMode initialMode = config.DOUBLE_PARTNER_ENABLED
                 ? PartnerMode.DOUBLE_PARTNER : PartnerMode.SOLO_TAG;
         PartnerLink link = repository.registerLink(
                 player.getId(), partnerCharacterId, initialMode);
@@ -326,7 +326,7 @@ public final class AdventurerPartnerService {
     }
 
     public TriggerResult handleSwitchTrigger(Character player, int skillId) {
-        if (!config.enabled || !config.triggerSkillIds.contains(skillId)) {
+        if (!config.ENABLED || !config.TRIGGER_SKILL_IDS.contains(skillId)) {
             return TriggerResult.notHandled();
         }
         Optional<ActivePartnerSession> activeResult = runtimes.findByHumanActorId(player.getId());
@@ -349,7 +349,7 @@ public final class AdventurerPartnerService {
                 return TriggerResult.rejected(validation.reason());
             }
             long now = System.currentTimeMillis();
-            if (!active.tryAcquireSwitchCooldown(now, config.switchCooldownMs)) {
+            if (!active.tryAcquireSwitchCooldown(now, config.SWITCH_COOLDOWN_MS)) {
                 log.info("partner_switch rejected session={} generation={} reason=cooldown remainingMs={}",
                         active.runtime().sessionId(), active.runtime().generation(),
                         active.remainingSwitchCooldownMs(now));
@@ -366,7 +366,7 @@ public final class AdventurerPartnerService {
                 return TriggerResult.rejected(transition.reason());
             }
             return transition.presentationComplete()
-                    ? TriggerResult.switched(config.applyOrdinaryTriggerBuff)
+                    ? TriggerResult.switched(config.APPLY_ORDINARY_TRIGGER_BUFF)
                     : TriggerResult.switchedWithRefreshWarning(transition.reason());
         } finally {
             active.exitLifecycleOperation();
@@ -499,6 +499,7 @@ public final class AdventurerPartnerService {
             active.runtime().close(releaseGeneration, terminal);
             leases.releaseSession(active.runtime().sessionId());
             runtimes.remove(active);
+            clearTemporarySkills(active.humanActor());
             discardPreparedProfiles(active.humanActor(), active.partnerActorOrDormantProfile());
             log.info("partner_release link={} session={} status={} reason={}",
                     active.link().id(), active.runtime().sessionId(), terminal, reason);
@@ -620,6 +621,15 @@ public final class AdventurerPartnerService {
         }
     }
 
+    private void clearTemporarySkills(Character humanActor) {
+        try {
+            transitions.clearTemporarySkills(humanActor);
+        } catch (RuntimeException presentationFailure) {
+            log.warn("partner_temporary_skills clear_failed actor={}",
+                    humanActor == null ? null : humanActor.getId(), presentationFailure);
+        }
+    }
+
     private void validateLoadedProfile(Character player, int expectedPartnerId, Character partnerHolder) {
         if (partnerHolder == null || partnerHolder.getId() != expectedPartnerId
                 || partnerHolder.getProfileOwnerCharacterId() != expectedPartnerId
@@ -642,14 +652,14 @@ public final class AdventurerPartnerService {
     }
 
     private void requireModeEnabled(PartnerMode mode) {
-        if ((mode == PartnerMode.SOLO_TAG && !config.soloTagEnabled)
-                || (mode == PartnerMode.DOUBLE_PARTNER && !config.doublePartnerEnabled)) {
+        if ((mode == PartnerMode.SOLO_TAG && !config.SOLO_TAG_ENABLED)
+                || (mode == PartnerMode.DOUBLE_PARTNER && !config.DOUBLE_PARTNER_ENABLED)) {
             throw new IllegalStateException("That Partner Program mode is disabled.");
         }
     }
 
     private void requireEnabled() {
-        if (!config.enabled) {
+        if (!config.ENABLED) {
             throw new IllegalStateException("The Adventurer Partner Program is disabled.");
         }
     }

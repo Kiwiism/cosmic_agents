@@ -31,8 +31,8 @@ class AdventurerPartnerLifecycleIntegrationTest {
     @Test
     void soloSwitchReleaseAndReinvitePreserveActorsAndCanonicalSaveOwners() throws Exception {
         AdventurerPartnerConfig config = new AdventurerPartnerConfig();
-        config.enabled = true;
-        config.switchCooldownMs = 0L;
+        config.ENABLED = true;
+        config.SWITCH_COOLDOWN_MS = 0L;
         AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
         CharacterProfileRepository profiles = mock(CharacterProfileRepository.class);
         ProfileLeaseRegistry leases = new ProfileLeaseRegistry();

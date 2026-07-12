@@ -9,6 +9,9 @@ public interface ProfilePresentationService {
     default void discardPrepared(Character firstProfile, Character secondProfile) {
     }
 
+    default void clearTemporarySkills(Character humanActor) {
+    }
+
     RefreshMetrics refresh(Character humanActor,
                            Character partnerActorOrDormantProfile,
                            PartnerMode mode,

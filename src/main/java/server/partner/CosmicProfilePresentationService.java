@@ -37,6 +37,8 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
             InventoryType.CASH);
     private final ConcurrentHashMap<Integer, PreparedStaticPresentation> preparedByProfileOwner =
             new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Map<Integer, SkillSnapshot>> temporarySkillsByActor =
+            new ConcurrentHashMap<>();
 
     private CosmicProfilePresentationService() {
     }
@@ -60,6 +62,23 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
     }
 
     @Override
+    public void clearTemporarySkills(Character humanActor) {
+        if (humanActor == null) {
+            return;
+        }
+        Map<Integer, SkillSnapshot> temporary = temporarySkillsByActor.remove(humanActor.getId());
+        if (temporary == null || temporary.isEmpty()) {
+            return;
+        }
+        Map<Integer, SkillSnapshot> canonicalSkills = skillsById(prepared(humanActor).skills());
+        for (SkillSnapshot skill : temporary.values()) {
+            if (!canonicalSkills.containsKey(skill.skillId())) {
+                humanActor.sendPacket(PacketCreator.updateSkill(skill.skillId(), -1, 0, -1));
+            }
+        }
+    }
+
+    @Override
     public RefreshMetrics refresh(Character humanActor,
                                   Character partnerActorOrDormantProfile,
                                   PartnerMode mode,
@@ -71,7 +90,7 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
 
         cancelOldLocalPresentation(counter, partnerActorOrDormantProfile);
         counter.send("stats", PacketCreator.updatePlayerStats(fullStats(humanActor), false, humanActor));
-        refreshSkills(counter, oldPresentation, newPresentation);
+        refreshSkills(counter, humanActor, mode, oldPresentation, newPresentation);
         counter.send("bindings", PacketCreator.getKeymap(newPresentation.keymap()));
         counter.send("bindings", PacketCreator.QuickslotMappedInit(newPresentation.quickslots()));
         counter.send("bindings", PacketCreator.getMacros(newPresentation.macros()));
@@ -81,7 +100,7 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         refreshLocalDiseases(counter, humanActor);
         refreshLocalCooldowns(counter, humanActor);
 
-        if (YamlConfig.config.adventurerPartner.publicPresentation) {
+        if (YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION) {
             refreshPublicActor(counter, humanActor, partnerActorOrDormantProfile);
             if (mode == PartnerMode.DOUBLE_PARTNER) {
                 refreshPublicActor(counter, partnerActorOrDormantProfile, humanActor);
@@ -139,20 +158,23 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         return stats;
     }
 
-    private static void refreshSkills(PacketCounter counter,
-                                      PreparedStaticPresentation oldProfile,
-                                      PreparedStaticPresentation newProfile) {
-        Map<Integer, SkillSnapshot> oldSkillsById = new LinkedHashMap<>();
-        for (SkillSnapshot oldSkill : oldProfile.skills()) {
-            oldSkillsById.put(oldSkill.skillId(), oldSkill);
-        }
-        Map<Integer, SkillSnapshot> newSkillsById = new LinkedHashMap<>();
-        for (SkillSnapshot newSkill : newProfile.skills()) {
-            newSkillsById.put(newSkill.skillId(), newSkill);
-        }
+    private void refreshSkills(PacketCounter counter,
+                               Character humanActor,
+                               PartnerMode mode,
+                               PreparedStaticPresentation oldProfile,
+                               PreparedStaticPresentation newProfile) {
+        Map<Integer, SkillSnapshot> oldSkillsById = skillsById(oldProfile.skills());
+        Map<Integer, SkillSnapshot> newSkillsById = skillsById(newProfile.skills());
+        Map<Integer, SkillSnapshot> temporary = mode == PartnerMode.SOLO_TAG
+                ? temporarySkillsByActor.computeIfAbsent(
+                        humanActor.getId(), ignored -> new ConcurrentHashMap<>())
+                : Map.of();
+        registerMissingBuffSkills(
+                counter, humanActor, oldSkillsById, newSkillsById, temporary);
 
         for (SkillSnapshot oldSkill : oldProfile.skills()) {
-            if (!newSkillsById.containsKey(oldSkill.skillId())) {
+            if (!newSkillsById.containsKey(oldSkill.skillId())
+                    && !temporary.containsKey(oldSkill.skillId())) {
                 counter.send("skills", PacketCreator.updateSkill(
                         oldSkill.skillId(), -1, 0, -1));
             }
@@ -164,6 +186,36 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
                         newSkill.masterLevel(), newSkill.expiration()));
             }
         }
+    }
+
+    private static void registerMissingBuffSkills(PacketCounter counter,
+                                                   Character humanActor,
+                                                   Map<Integer, SkillSnapshot> oldSkillsById,
+                                                   Map<Integer, SkillSnapshot> newSkillsById,
+                                                   Map<Integer, SkillSnapshot> temporary) {
+        for (Character.BuffPresentationSnapshot buff : humanActor.getBuffPresentationSnapshots()) {
+            int sourceId = buff.sourceId();
+            if (sourceId <= 0 || newSkillsById.containsKey(sourceId)
+                    || temporary.containsKey(sourceId)) {
+                continue;
+            }
+            SkillSnapshot sourceSkill = oldSkillsById.get(sourceId);
+            if (sourceSkill == null) {
+                sourceSkill = new SkillSnapshot(sourceId, (byte) 1, 0, -1L);
+            }
+            temporary.put(sourceId, sourceSkill);
+            counter.send("temporary-skills", PacketCreator.updateSkill(
+                    sourceSkill.skillId(), sourceSkill.level(),
+                    sourceSkill.masterLevel(), sourceSkill.expiration()));
+        }
+    }
+
+    private static Map<Integer, SkillSnapshot> skillsById(List<SkillSnapshot> skills) {
+        Map<Integer, SkillSnapshot> result = new LinkedHashMap<>();
+        for (SkillSnapshot skill : skills) {
+            result.put(skill.skillId(), skill);
+        }
+        return result;
     }
 
     private static void refreshInventory(PacketCounter counter,

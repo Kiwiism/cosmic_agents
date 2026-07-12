@@ -77,6 +77,10 @@ public final class ProfileTransitionCoordinator {
         presentation.discardPrepared(firstProfile, secondProfile);
     }
 
+    public void clearTemporarySkills(Character humanActor) {
+        presentation.clearTemporarySkills(humanActor);
+    }
+
     public TransitionResult transition(PartnerSessionRuntime session,
                                        Character humanActor,
                                        Character partnerActorOrDormantProfile,

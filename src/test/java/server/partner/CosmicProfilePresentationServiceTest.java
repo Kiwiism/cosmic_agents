@@ -1,6 +1,7 @@
 package server.partner;
 
 import client.Character;
+import client.BuffStat;
 import client.Client;
 import client.Job;
 import client.MonsterBook;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import server.maps.MapleMap;
 import server.quest.Quest;
+import server.StatEffect;
 import tools.PacketCreator;
 
 import java.sql.ResultSet;
@@ -32,6 +34,65 @@ import static org.mockito.Mockito.when;
 
 class CosmicProfilePresentationServiceTest {
     @Test
+    void soloSharedBuffSkillIsRegisteredOnceAndRemovedWhenSessionEnds() throws Exception {
+        CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
+        Character human = character(890_001, "OverlayA");
+        Character partner = character(890_002, "OverlayB");
+        Client humanClient = mock(Client.class);
+        human.setClient(humanClient);
+        int shadowPartner = 4111002;
+        attachSkill(human, shadowPartner, 30, 0, -1L);
+
+        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
+        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = false;
+        try {
+            presentation.prepare(human, partner);
+            Character.ProfileExchangeResult firstExchange =
+                    Character.exchangeProfileBindings(human, partner);
+            attachBuff(human, shadowPartner, BuffStat.SHADOWPARTNER, 50);
+
+            presentation.refresh(human, partner, PartnerMode.SOLO_TAG, firstExchange);
+
+            ArgumentCaptor<Packet> firstPackets = ArgumentCaptor.forClass(Packet.class);
+            verify(humanClient, atLeastOnce()).sendPacket(firstPackets.capture());
+            List<Packet> sent = firstPackets.getAllValues();
+            int skillIndex = packetIndex(sent, PacketCreator.updateSkill(
+                    shadowPartner, 30, 0, -1L));
+            int buffIndex = firstOpcodeIndex(sent, SendOpcode.GIVE_BUFF);
+            assertTrue(skillIndex >= 0);
+            assertTrue(buffIndex > skillIndex);
+            assertFalse(human.getSkills().keySet().stream()
+                    .anyMatch(skill -> skill.getId() == shadowPartner));
+
+            org.mockito.Mockito.clearInvocations(humanClient);
+            Character.ProfileExchangeResult secondExchange =
+                    Character.exchangeProfileBindings(human, partner);
+            presentation.refresh(human, partner, PartnerMode.SOLO_TAG, secondExchange);
+            org.mockito.Mockito.clearInvocations(humanClient);
+            Character.ProfileExchangeResult thirdExchange =
+                    Character.exchangeProfileBindings(human, partner);
+            presentation.refresh(human, partner, PartnerMode.SOLO_TAG, thirdExchange);
+
+            ArgumentCaptor<Packet> activePackets = ArgumentCaptor.forClass(Packet.class);
+            verify(humanClient, atLeastOnce()).sendPacket(activePackets.capture());
+            assertEquals(-1, packetIndex(activePackets.getAllValues(),
+                    PacketCreator.updateSkill(shadowPartner, -1, 0, -1L)));
+
+            org.mockito.Mockito.clearInvocations(humanClient);
+            presentation.clearTemporarySkills(human);
+
+            ArgumentCaptor<Packet> releasePacket = ArgumentCaptor.forClass(Packet.class);
+            verify(humanClient).sendPacket(releasePacket.capture());
+            assertArrayEquals(PacketCreator.updateSkill(shadowPartner, -1, 0, -1L).getBytes(),
+                    releasePacket.getValue().getBytes());
+        } finally {
+            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
+            presentation.clearTemporarySkills(human);
+            presentation.discardPrepared(human, partner);
+        }
+    }
+
+    @Test
     void partnerRefreshOnlySendsSkillRecordsThatDifferBetweenProfiles() throws Exception {
         CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
         Character human = character(900_001, "SkillA");
@@ -50,8 +111,8 @@ class CosmicProfilePresentationServiceTest {
         attachSkill(human, 1000005, 1, 0, 100L);      // expiration changed
         attachSkill(partner, 1000005, 1, 0, 200L);
 
-        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.publicPresentation;
-        YamlConfig.config.adventurerPartner.publicPresentation = false;
+        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
+        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = false;
         try {
             presentation.prepare(human, partner);
             Character.ProfileExchangeResult exchange =
@@ -79,7 +140,7 @@ class CosmicProfilePresentationServiceTest {
             assertFalse(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
                     bytes, PacketCreator.updateSkill(1000000, 1, 0, -1L).getBytes())));
         } finally {
-            YamlConfig.config.adventurerPartner.publicPresentation = previousPublicPresentation;
+            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
             presentation.discardPrepared(human, partner);
         }
     }
@@ -118,8 +179,8 @@ class CosmicProfilePresentationServiceTest {
         addMonsterBookCard(partner, 2380000, 1);
         when(map.broadcastUpdateCharLookMessage(any(Character.class), any(Character.class)))
                 .thenReturn(new MapleMap.PacketBroadcastMetrics(2, 64L));
-        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.publicPresentation;
-        YamlConfig.config.adventurerPartner.publicPresentation = true;
+        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
+        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = true;
         try {
             presentation.prepare(human, partner);
             Character.ProfileExchangeResult exchange =
@@ -155,13 +216,31 @@ class CosmicProfilePresentationServiceTest {
             assertEquals(sent.size() + 6, metrics.packetCount());
             assertTrue(metrics.packetBytes() > 0L);
         } finally {
-            YamlConfig.config.adventurerPartner.publicPresentation = previousPublicPresentation;
+            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
             presentation.discardPrepared(human, partner);
         }
     }
 
     private static int opcode(byte[] packet) {
         return Byte.toUnsignedInt(packet[0]) | Byte.toUnsignedInt(packet[1]) << 8;
+    }
+
+    private static int firstOpcodeIndex(List<Packet> packets, SendOpcode opcode) {
+        for (int index = 0; index < packets.size(); index++) {
+            if (opcode(packets.get(index).getBytes()) == opcode.getValue()) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private static int packetIndex(List<Packet> packets, Packet expected) {
+        for (int index = 0; index < packets.size(); index++) {
+            if (java.util.Arrays.equals(packets.get(index).getBytes(), expected.getBytes())) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     private static int preparedProfileCount(CosmicProfilePresentationService presentation)
@@ -204,6 +283,26 @@ class CosmicProfilePresentationServiceTest {
         ((Map<Skill, Character.SkillEntry>) field.get(character)).put(
                 new Skill(skillId),
                 new Character.SkillEntry((byte) level, masterLevel, expiration));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void attachBuff(Character character, int sourceId,
+                                   BuffStat stat, int value) throws Exception {
+        StatEffect effect = mock(StatEffect.class);
+        when(effect.getBuffSourceId()).thenReturn(sourceId);
+        long now = System.currentTimeMillis();
+        Class<?> holderType = Class.forName("client.Character$BuffStatValueHolder");
+        var constructor = holderType.getDeclaredConstructor(
+                StatEffect.class, long.class, int.class);
+        constructor.setAccessible(true);
+        Object holder = constructor.newInstance(effect, now, value);
+        var effectsField = Character.class.getDeclaredField("buffEffects");
+        effectsField.setAccessible(true);
+        ((Map<Integer, Map<BuffStat, Object>>) effectsField.get(character)).put(
+                sourceId, Map.of(stat, holder));
+        var expirationsField = Character.class.getDeclaredField("buffExpires");
+        expirationsField.setAccessible(true);
+        ((Map<Integer, Long>) expirationsField.get(character)).put(sourceId, now + 30_000L);
     }
 
     @SuppressWarnings("unchecked")

@@ -7,7 +7,7 @@ import server.agents.runtime.AgentRuntimeRegistry;
 
 public final class PartnerTriggerPolicy {
     public Result validate(AdventurerPartnerConfig config, ActivePartnerSession active) {
-        if (config == null || !config.enabled) {
+        if (config == null || !config.ENABLED) {
             return Result.rejected("The Adventurer Partner Program is disabled.");
         }
         if (active == null || active.runtime().status() != PartnerLifecycleStatus.ACTIVE) {
@@ -27,7 +27,7 @@ public final class PartnerTriggerPolicy {
             if (partnerReason != null) {
                 return Result.rejected("Your Partner cannot switch right now: " + partnerReason);
             }
-            if (config.sameMapRequired && human.getMap() != partner.getMap()) {
+            if (config.SAME_MAP_REQUIRED && human.getMap() != partner.getMap()) {
                 return Result.rejected(partner.getName()
                         + " is too far away. You must be in the same map to switch roles.");
             }
