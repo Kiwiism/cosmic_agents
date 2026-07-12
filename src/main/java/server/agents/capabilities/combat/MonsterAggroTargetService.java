@@ -45,7 +45,41 @@ public final class MonsterAggroTargetService {
                 reaction,
                 now + Math.max(0L, reactionDelayMs),
                 0L,
-                "pending"));
+                "pending",
+                reaction != null && reaction.contains("knockback"),
+                0,
+                true,
+                false,
+                true));
+        AgentMobReactionMetrics.targetChange();
+    }
+
+    public static void record(Monster monster, AcceptedMobHitResult result,
+                              Character simulationController, int threshold,
+                              long now, long pursuitDelayMs) {
+        if (monster == null || result == null || result.logicalTarget() == null
+                || result.appliedDamage() <= 0 || !result.monsterAlive()
+                || result.monsterKilled() || monster.getMap() == null) {
+            return;
+        }
+        removeExpiredReference(monster);
+        targets.put(monster, new TargetState(
+                new WeakReference<>(monster.getMap()),
+                new WeakReference<>(result.logicalTarget()),
+                new WeakReference<>(simulationController),
+                result.agentTarget(),
+                now,
+                result.appliedDamage(),
+                threshold,
+                result.reaction(),
+                now + Math.max(0L, pursuitDelayMs),
+                0L,
+                "pending",
+                result.knockbackEligible(),
+                result.hitDirection(),
+                result.monsterAlive(),
+                result.monsterKilled(),
+                result.observed()));
         AgentMobReactionMetrics.targetChange();
     }
 
@@ -135,7 +169,9 @@ public final class MonsterAggroTargetService {
                     controller == null ? 0 : controller.getId(),
                     controller == null ? "none" : controller.getName(),
                     state.changedAt, state.damage, state.threshold, state.reaction,
-                    state.pursuitStartAt, state.unreachableSince, state.latestMovement);
+                    state.pursuitStartAt, state.unreachableSince, state.latestMovement,
+                    state.knockbackEligible, state.hitDirection, state.monsterAliveAtHit,
+                    state.monsterKilledByHit, state.observedAtHit);
         }
     }
 
@@ -256,11 +292,19 @@ public final class MonsterAggroTargetService {
         private final long pursuitStartAt;
         private long unreachableSince;
         private String latestMovement;
+        private final boolean knockbackEligible;
+        private final int hitDirection;
+        private final boolean monsterAliveAtHit;
+        private final boolean monsterKilledByHit;
+        private final boolean observedAtHit;
 
         private TargetState(WeakReference<MapleMap> map, WeakReference<Character> target,
                             WeakReference<Character> controller, boolean agentTarget,
                             long changedAt, int damage, int threshold, String reaction,
-                            long pursuitStartAt, long unreachableSince, String latestMovement) {
+                            long pursuitStartAt, long unreachableSince, String latestMovement,
+                            boolean knockbackEligible, int hitDirection,
+                            boolean monsterAliveAtHit, boolean monsterKilledByHit,
+                            boolean observedAtHit) {
             this.map = map;
             this.target = target;
             this.controller = controller;
@@ -272,6 +316,11 @@ public final class MonsterAggroTargetService {
             this.pursuitStartAt = pursuitStartAt;
             this.unreachableSince = unreachableSince;
             this.latestMovement = latestMovement;
+            this.knockbackEligible = knockbackEligible;
+            this.hitDirection = hitDirection;
+            this.monsterAliveAtHit = monsterAliveAtHit;
+            this.monsterKilledByHit = monsterKilledByHit;
+            this.observedAtHit = observedAtHit;
         }
     }
 
@@ -295,10 +344,12 @@ public final class MonsterAggroTargetService {
                            int controllerId, String controllerName, long changedAt,
                            int damage, int threshold, String reaction,
                            long pursuitStartAt, long unreachableSince,
-                           String latestMovement) {
+                           String latestMovement, boolean knockbackEligible,
+                           int hitDirection, boolean monsterAliveAtHit,
+                           boolean monsterKilledByHit, boolean observedAtHit) {
         static Snapshot empty() {
             return new Snapshot(0, "none", false, 0, "none", 0, 0, 0,
-                    "none", 0, 0, "none");
+                    "none", 0, 0, "none", false, 0, false, false, false);
         }
 
         public boolean hasTarget() {

@@ -3,11 +3,13 @@ package server.agents.integration.cosmic;
 import client.Character;
 import config.YamlConfig;
 import net.server.channel.handlers.AbstractDealDamageHandler;
+import server.agents.capabilities.combat.AcceptedMobHitResult;
 import server.agents.capabilities.combat.AgentMobReactionMetrics;
 import server.agents.capabilities.combat.MonsterAggroTargetService;
 import server.agents.capabilities.combat.ObservedMobSimulationPolicy;
 import server.agents.integration.MobReactionGateway;
 import server.integration.AgentPresence;
+import server.integration.MonsterDamageOutcome;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -77,6 +79,32 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
 
     boolean handleAcceptedDamage(Monster monster, Character attacker, int damage,
                                  int maxDamageLine) {
+        return handleAcceptedDamage(monster, attacker, damage, maxDamageLine,
+                monster != null && monster.isAlive(), false, direction(attacker, monster), null);
+    }
+
+    void handleAcceptedDamage(Monster monster, MonsterDamageOutcome outcome) {
+        if (outcome == null) {
+            return;
+        }
+        handleAcceptedDamage(monster, outcome.attacker(), outcome.appliedDamage(),
+                outcome.maxAcceptedDamageLine(), outcome.monsterAlive(),
+                outcome.monsterKilled(), outcome.hitDirection(), outcome.reactionDelayMs());
+    }
+
+    boolean shouldSuppressLegacyAggro(Monster monster, Character attacker) {
+        if (monster == null || attacker == null || monster.getMap() == null
+                || !MonsterSimulationControllerResolver.hasObserver(monster.getMap())) {
+            return false;
+        }
+        return lastHitAggroEnabled()
+                || observedReactionEnabled() && AgentPresence.isAgent(attacker);
+    }
+
+    private boolean handleAcceptedDamage(Monster monster, Character attacker, int damage,
+                                         int maxDamageLine, boolean monsterAlive,
+                                         boolean monsterKilled, int hitDirection,
+                                         Long acceptedReactionDelayMs) {
         if (monster == null || attacker == null || damage <= 0 || monster.getMap() == null) {
             return false;
         }
@@ -86,7 +114,8 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
         if (!reactionPolicy && !lastHitPolicy) {
             return false;
         }
-        if (!MonsterSimulationControllerResolver.hasObserver(monster.getMap())) {
+        boolean observed = MonsterSimulationControllerResolver.hasObserver(monster.getMap());
+        if (!observed) {
             return false;
         }
         if (agentAttacker) {
@@ -94,31 +123,55 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
             AgentMobReactionMetrics.hurtReaction();
         }
 
-        Character controller = MonsterSimulationControllerResolver.isEligible(attacker, monster.getMap())
-                ? attacker : MonsterSimulationControllerResolver.resolve(monster);
-        if (controller == null) {
-            AgentMobReactionMetrics.controllerFailure();
-            return agentAttacker;
-        }
-        ensureController(monster, controller);
+        MonsterAggroTargetService.PreparedReaction prepared = lastHitPolicy
+                ? MonsterAggroTargetService.consumePreparedReaction(monster, attacker) : null;
+        int threshold = prepared == null ? monster.getStats().getPushed() : prepared.threshold();
+        boolean movable = monsterAlive && !monsterKilled && monster.isMobile()
+                && monster.getStats().getFixedStance() == 0;
+        boolean preparedKnockback = prepared == null
+                || "client-knockback-eligible".equals(prepared.reaction());
+        boolean acceptedKnockback = reactionPolicy && movable && preparedKnockback
+                && maxDamageLine > 0 && maxDamageLine >= threshold;
+        String reaction = prepared == null ? "accepted-damage"
+                : acceptedKnockback
+                && "client-knockback-eligible".equals(prepared.reaction())
+                ? "client-knockback-eligible" : "hurt-only";
+        long hitDelayMs = acceptedReactionDelayMs != null
+                ? Math.max(0L, acceptedReactionDelayMs)
+                : prepared == null ? 0L : prepared.hitDelayMs();
+        AcceptedMobHitResult result = new AcceptedMobHitResult(
+                attacker, agentAttacker, damage, Math.max(0, maxDamageLine),
+                monsterAlive, monsterKilled, acceptedKnockback, hitDirection,
+                hitDelayMs, observed, reaction);
 
         if (lastHitPolicy) {
-            MonsterAggroTargetService.PreparedReaction prepared =
-                    MonsterAggroTargetService.consumePreparedReaction(monster, attacker);
-            int threshold = prepared == null ? monster.getStats().getPushed() : prepared.threshold();
-            boolean acceptedKnockback = maxDamageLine > 0 && maxDamageLine >= threshold;
-            String reaction = prepared == null ? "accepted-damage"
-                    : acceptedKnockback
-                    && "client-knockback-eligible".equals(prepared.reaction())
-                    ? "client-knockback-eligible" : "hurt-only";
-            long reactionDelayMs = prepared == null ? CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS
-                    : prepared.hitDelayMs() + CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS;
-            MonsterAggroTargetService.record(monster, attacker, controller, agentAttacker,
-                    damage, threshold, reaction, System.currentTimeMillis(),
-                    reactionDelayMs);
+            if (result.monsterKilled() || !result.monsterAlive()) {
+                MonsterAggroTargetService.clear(monster);
+                return true;
+            }
+
+            Character controller = MonsterSimulationControllerResolver.isEligible(
+                    attacker, monster.getMap())
+                    ? attacker : MonsterSimulationControllerResolver.resolve(monster);
+            if (controller == null) {
+                AgentMobReactionMetrics.controllerFailure();
+                return agentAttacker;
+            }
+            ensureController(monster, controller);
+            MonsterAggroTargetService.record(monster, result, controller, threshold,
+                    System.currentTimeMillis(),
+                    result.reactionDelayMs() + CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS);
             CosmicMonsterPursuitRuntime.ensureRunning();
         }
         return true;
+    }
+
+    private static int direction(Character attacker, Monster monster) {
+        if (attacker == null || monster == null || attacker.getPosition() == null
+                || monster.getPosition() == null) {
+            return 0;
+        }
+        return Integer.compare(monster.getPosition().x, attacker.getPosition().x);
     }
 
     @Override
@@ -141,6 +194,10 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
                 + " simulator=" + (target.agentTarget() && controller == null
                 ? "server-proxy" : "client")
                 + " lastDamage=" + target.damage() + " reaction=" + target.reaction()
+                + " knockbackEligible=" + target.knockbackEligible()
+                + " hitDirection=" + target.hitDirection()
+                + " aliveAtHit=" + target.monsterAliveAtHit()
+                + " observedAtHit=" + target.observedAtHit()
                 + " movement=" + target.latestMovement();
     }
 

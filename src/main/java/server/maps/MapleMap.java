@@ -69,6 +69,8 @@ import server.life.NPC;
 import server.life.PlayerNPC;
 import server.life.SpawnPoint;
 import server.integration.AgentPresence;
+import server.integration.MonsterAggroTargetBridge;
+import server.integration.MonsterDamageOutcome;
 import server.monitoring.MapBroadcastDiagnostics;
 import server.partyquest.CarnivalFactory;
 import server.partyquest.CarnivalFactory.MCSkill;
@@ -1291,10 +1293,15 @@ public class MapleMap {
     }
 
      public boolean damageMonster(Character chr, Monster monster, int damage) {
-        return damageMonster(chr, monster, damage, (short) 0);
+        return damageMonster(chr, monster, damage, (short) 0, damage);
      }
 
     public boolean damageMonster(final Character chr, final Monster monster, final int damage, short delay) {
+        return damageMonster(chr, monster, damage, delay, damage);
+    }
+
+    public boolean damageMonster(final Character chr, final Monster monster, final int damage,
+                                 short delay, int maxAcceptedDamageLine) {
         if (monster.getId() == MobId.ZAKUM_1) {
             for (MapObject object : chr.getMap().getMapObjects()) {
                 Monster mons = chr.getMap().getMonsterByOid(object.getObjectId());
@@ -1309,14 +1316,29 @@ public class MapleMap {
             return false;
         }
 
+        int hpBefore = monster.getHp();
         boolean killed = monster.damage(chr, damage, false);
-
+        int hpAfterDamage = Math.max(0, monster.getHp());
+        int appliedDamage = Math.max(0, hpBefore - hpAfterDamage);
         selfDestruction selfDestr = monster.getStats().selfDestruction();
-        if (selfDestr != null && selfDestr.getHp() > -1) {// should work ;p
-            if (monster.getHp() <= selfDestr.getHp()) {
-                killMonster(monster, chr, true, selfDestr.getAction());
-                return true;
+        boolean selfDestructionKill = selfDestr != null && selfDestr.getHp() > -1
+                && monster.getHp() <= selfDestr.getHp();
+        boolean finalKilled = killed || selfDestructionKill;
+        if (appliedDamage > 0) {
+            int hitDirection = 0;
+            if (chr.getPosition() != null && monster.getPosition() != null) {
+                hitDirection = Integer.compare(monster.getPosition().x, chr.getPosition().x);
             }
+            MonsterAggroTargetBridge.onAcceptedDamage(monster, new MonsterDamageOutcome(
+                    chr, appliedDamage,
+                    Math.max(0, Math.min(maxAcceptedDamageLine, damage)),
+                    !finalKilled && monster.isAlive(), finalKilled, hitDirection,
+                    Math.max(0L, delay)));
+        }
+
+        if (selfDestructionKill) {// should work ;p
+            killMonster(monster, chr, true, selfDestr.getAction());
+            return true;
         }
         if (killed) {
             killMonster(monster, chr, true, delay);

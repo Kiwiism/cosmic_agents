@@ -10,6 +10,10 @@ public final class MonsterAggroTargetBridge {
     private MonsterAggroTargetBridge() {
     }
 
+    public static boolean suppressLegacyAggro(Monster monster, Character attacker) {
+        return provider.suppressLegacyAggro(monster, attacker);
+    }
+
     public static boolean onAcceptedDamage(Monster monster, Character attacker, int damage) {
         return provider.onAcceptedDamage(monster, attacker, damage);
     }
@@ -17,6 +21,10 @@ public final class MonsterAggroTargetBridge {
     public static boolean onAcceptedDamage(Monster monster, Character attacker, int damage,
                                            int maxDamageLine) {
         return provider.onAcceptedDamage(monster, attacker, damage, maxDamageLine);
+    }
+
+    public static void onAcceptedDamage(Monster monster, MonsterDamageOutcome outcome) {
+        provider.onAcceptedDamage(monster, outcome);
     }
 
     public static void onControllerMovement(Monster monster, int movementCommand) {

@@ -29,7 +29,9 @@ Player attack:
 ```text
 client attack packet -> melee/ranged/magic handler -> broadcast attack
   -> AbstractDealDamageHandler.applyAttack
-  -> Monster.aggroMonsterDamage -> MapleMap.damageMonster
+  -> Monster.aggroMonsterDamage (analytics and pre-hit target policy)
+  -> MapleMap.damageMonster applies HP once
+  -> post-damage MonsterDamageOutcome callback
 ```
 
 Agent attack:
@@ -41,10 +43,25 @@ AgentCombatAttackRuntime builds the ordinary AttackInfo
   -> CosmicMobReactionGateway prepares a real simulation controller
   -> existing Agent attack route broadcasts the attack once
   -> AbstractDealDamageHandler.applyAttack
-  -> Monster.aggroMonsterDamage -> MapleMap.damageMonster once
-  -> MonsterAggroTargetService records the accepted latest attacker
+  -> Monster.aggroMonsterDamage (analytics and legacy-controller suppression)
+  -> MapleMap.damageMonster applies HP once and reports the actual HP delta
+  -> CosmicMobReactionGateway creates one AcceptedMobHitResult
+  -> MonsterAggroTargetService records that accepted latest attacker
   -> CosmicMonsterPursuitRuntime maintains visible pursuit when needed
 ```
+
+The pre-hit hook does not claim that damage was accepted. It only preserves
+analytics and suppresses legacy highest-DPS controller selection while the
+observed last-hit policy owns selection. The accepted callback occurs after
+the single `Monster.damage` call and only when HP actually decreases. Blocked,
+immune, stale, and zero-delta attacks cannot create reaction or pursuit state.
+
+`AcceptedMobHitResult` contains the actual applied HP delta, largest accepted
+line, final alive/dead result (including HP-triggered self-destruction),
+knockback eligibility, hit direction, impact delay, logical target, target
+type, and observer state. Delayed skills such as Heaven's Hammer and Combo
+Tempest emit this result when their scheduled damage actually lands, so their
+animation delay is not applied a second time.
 
 The preparation and pursuit paths never call `MapleMap.damageMonster`, kill a
 mob, create drops, grant EXP, or update quests. Logical-target diagnostics use
@@ -189,12 +206,19 @@ Focused tests cover:
 - one bounded scheduler registration;
 - client command 2 knockback diagnostics;
 - multi-hit/multi-target preparation without a second damage call;
+- actual HP delta rather than requested damage at the acceptance boundary;
+- rejected zero-delta hits producing no accepted callback;
+- lethal and HP-triggered self-destruction hits producing one final outcome
+  and one kill-processing entry;
+- delayed special-skill damage starting pursuit from its actual impact rather
+  than applying the animation delay twice;
 - disabled flags preserving the legacy path.
 
-The exact-once death/drop/reward guarantee also follows structurally from the
-unchanged single `AbstractDealDamageHandler.applyAttack` ->
-`MapleMap.damageMonster` route. Reaction and pursuit tests assert that neither
-new path calls `damageMonster`.
+The exact-once death/drop/reward guarantee follows from the unchanged single
+`AbstractDealDamageHandler.applyAttack` -> `MapleMap.damageMonster` route and a
+focused map-boundary test that verifies one `Monster.damage` invocation, one
+accepted outcome, and one kill-processing entry. Reaction and pursuit tests
+also assert that neither new path calls `damageMonster`.
 
 ## Live Validation
 

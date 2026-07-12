@@ -298,8 +298,7 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                         maxDamageLineToOneMonster = Math.max(maxDamageLineToOneMonster, eachd);
                     }
                     totDamage += totDamageToOneMonster;
-                    monster.aggroMonsterDamage(player, totDamageToOneMonster,
-                            maxDamageLineToOneMonster);
+                    monster.aggroMonsterDamage(player, totDamageToOneMonster);
                     if (player.getBuffedValue(BuffStat.PICKPOCKET) != null && (attack.skill == 0 || attack.skill == Rogue.DOUBLE_STAB || attack.skill == Bandit.SAVAGE_BLOW || attack.skill == ChiefBandit.ASSAULTER || attack.skill == ChiefBandit.BAND_OF_THIEVES || attack.skill == Shadower.ASSASSINATE || attack.skill == Shadower.TAUNT || attack.skill == Shadower.BOOMERANG_STEP)) {
                         Skill pickpocket = SkillFactory.getSkill(ChiefBandit.PICKPOCKET);
                         int picklv = (player.isGM()) ? pickpocket.getMaxLevel() : player.getSkillLevel(pickpocket);
@@ -531,7 +530,8 @@ public abstract class AbstractDealDamageHandler extends AbstractPacketHandler {
                             map.broadcastMessage(PacketCreator.damageMonster(monster.getObjectId(), totDamageToOneMonster));
                         }
 
-                        map.damageMonster(player, monster, totDamageToOneMonster, target.getValue().delay());
+                        map.damageMonster(player, monster, totDamageToOneMonster,
+                                target.getValue().delay(), maxDamageLineToOneMonster);
                     }
                     if (monster.isBuffed(MonsterStatus.WEAPON_REFLECT) && !attack.magic) {
                         for (MobSkillId msId : monster.getSkills()) {

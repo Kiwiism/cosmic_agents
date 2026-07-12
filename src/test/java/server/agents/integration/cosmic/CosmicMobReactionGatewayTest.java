@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.capabilities.combat.AgentMobReactionMetrics;
 import server.agents.capabilities.combat.MonsterAggroTargetService;
 import server.integration.AgentPresence;
+import server.integration.MonsterDamageOutcome;
 import server.life.Monster;
 import server.life.MonsterStats;
 import server.maps.MapleMap;
@@ -137,6 +138,70 @@ class CosmicMobReactionGatewayTest {
                 monster, System.currentTimeMillis(), 10_000L);
         assertEquals(1, snapshot.damage());
         assertEquals("hurt-only", snapshot.reaction());
+    }
+
+    @Test
+    void acceptedOutcomeIsAuthoritativeAndDelayedSkillsDoNotDelayTwice() {
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = true;
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = true;
+        MapleMap map = observedMap();
+        Character agent = character(10, "agent", map);
+        Character observer = character(20, "observer", map);
+        AgentPresence.install(candidate -> candidate == agent);
+        when(map.getAllPlayers()).thenReturn(List.of(agent, observer));
+        Monster monster = monster(114, map, 50, true);
+        AbstractDealDamageHandler.AttackInfo attack = attack(114, 100);
+        attack.targets.put(114, new AbstractDealDamageHandler.AttackTarget(
+                (short) 1777, List.of(100)));
+
+        CosmicMobReactionGateway.INSTANCE.prepareObservedAttack(attack, agent);
+        long before = System.currentTimeMillis();
+        CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(monster,
+                new MonsterDamageOutcome(agent, 60, 60, true, false, -1, 0));
+        long after = System.currentTimeMillis();
+
+        MonsterAggroTargetService.Snapshot snapshot = MonsterAggroTargetService.inspect(
+                monster, after, 10_000L);
+        assertEquals(60, snapshot.damage());
+        assertTrue(snapshot.knockbackEligible());
+        assertEquals(-1, snapshot.hitDirection());
+        assertTrue(snapshot.monsterAliveAtHit());
+        assertTrue(snapshot.observedAtHit());
+        assertTrue(snapshot.pursuitStartAt() >= before + CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS);
+        assertTrue(snapshot.pursuitStartAt() <= after + CosmicMonsterPursuitRuntime.IMPACT_SETTLE_MS);
+    }
+
+    @Test
+    void lethalAcceptedOutcomeClearsPursuitInsteadOfSelectingADeadTarget() {
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = true;
+        MapleMap map = observedMap();
+        Character agent = character(10, "agent", map);
+        Character observer = character(20, "observer", map);
+        AgentPresence.install(candidate -> candidate == agent);
+        when(map.getAllPlayers()).thenReturn(List.of(agent, observer));
+        Monster monster = monster(115, map, 50, true);
+
+        CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(monster,
+                new MonsterDamageOutcome(agent, 100, 100, false, true, 1, 0));
+
+        assertFalse(MonsterAggroTargetService.inspect(monster,
+                System.currentTimeMillis(), 10_000L).hasTarget());
+        verify(monster, never()).aggroSwitchController(any(Character.class), eq(true));
+    }
+
+    @Test
+    void legacyAggroIsSuppressedOnlyWhenObservedPolicyOwnsTargetSelection() {
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = true;
+        MapleMap observed = observedMap();
+        Character player = character(20, "player", observed);
+        when(observed.getAllPlayers()).thenReturn(List.of(player));
+        Monster monster = monster(116, observed, 50, true);
+
+        assertTrue(CosmicMobReactionGateway.INSTANCE.shouldSuppressLegacyAggro(monster, player));
+
+        when(observed.isObservedByPlayer()).thenReturn(false);
+        when(observed.getAllPlayers()).thenReturn(List.of());
+        assertFalse(CosmicMobReactionGateway.INSTANCE.shouldSuppressLegacyAggro(monster, player));
     }
 
     @Test

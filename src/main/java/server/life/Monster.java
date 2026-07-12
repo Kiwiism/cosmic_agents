@@ -2133,14 +2133,10 @@ public class Monster extends AbstractLoadedLife {
      * target update for the attacker shortly.
      */
     public void aggroMonsterDamage(Character attacker, int damage) {
-        aggroMonsterDamage(attacker, damage, damage);
-    }
-
-    public void aggroMonsterDamage(Character attacker, int damage, int maxDamageLine) {
         MonsterAggroCoordinator mmac = this.getMapAggroCoordinator();
         mmac.addAggroDamage(this, attacker.getId(), damage);
 
-        if (MonsterAggroTargetBridge.onAcceptedDamage(this, attacker, damage, maxDamageLine)) {
+        if (MonsterAggroTargetBridge.suppressLegacyAggro(this, attacker)) {
             return;
         }
 
