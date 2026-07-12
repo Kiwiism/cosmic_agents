@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
 /** Item-gated, profile-directed skill-buff sharing for Solo Tag transitions. */
@@ -268,7 +270,18 @@ public final class SoloTagBuffSharingService {
             Character recipient, List<BuffTransfer> incoming) {
         List<BuffTransfer> result = new ArrayList<>(incoming.size());
         List<PlayerBuffValueHolder> existing = recipient.getAllBuffs();
+        boolean existingBooster = existing.stream()
+                .anyMatch(holder -> hasStat(holder, BuffStat.BOOSTER));
+        Set<Integer> incomingBoosterSources = incoming.stream()
+                .filter(candidate -> hasStat(candidate.holder(), BuffStat.BOOSTER))
+                .map(candidate -> candidate.holder().effect.getBuffSourceId())
+                .collect(Collectors.toSet());
+        boolean incomingBoosterConflict = incomingBoosterSources.size() > 1;
         for (BuffTransfer candidate : incoming) {
+            if (hasStat(candidate.holder(), BuffStat.BOOSTER)
+                    && (existingBooster || incomingBoosterConflict)) {
+                continue;
+            }
             PlayerBuffValueHolder sameSource = existing.stream()
                     .filter(holder -> holder.effect != null
                             && holder.effect.getBuffSourceId()
@@ -280,6 +293,12 @@ public final class SoloTagBuffSharingService {
             }
         }
         return result;
+    }
+
+    private static boolean hasStat(PlayerBuffValueHolder holder, BuffStat stat) {
+        return holder != null && holder.effect != null
+                && holder.effect.getStatups().stream()
+                .anyMatch(statup -> statup.getLeft() == stat);
     }
 
     private static boolean strongerOrLonger(PlayerBuffValueHolder candidate,

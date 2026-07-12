@@ -205,6 +205,52 @@ class SoloTagBuffSharingServiceTest {
     }
 
     @Test
+    void incomingClawBoosterDoesNotOverwriteExistingDaggerBooster() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        PlayerBuffValueHolder clawBooster = buff(BuffStat.BOOSTER, -2, 4101003);
+        PlayerBuffValueHolder daggerBooster = buff(BuffStat.BOOSTER, -2, 4201002);
+        when(human.getAllBuffs()).thenReturn(List.of(clawBooster));
+        when(partner.getAllBuffs()).thenReturn(List.of(daggerBooster));
+        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+
+        SoloTagBuffSharingService.SharingPlan plan =
+                sharing.capture(PartnerMode.SOLO_TAG, human, partner);
+        when(human.getAllBuffs()).thenReturn(List.of(daggerBooster));
+        when(partner.getAllBuffs()).thenReturn(List.of(clawBooster));
+
+        sharing.applyAfterExchange(plan, human, partner);
+
+        verify(human, never()).silentGiveBuffs(org.mockito.ArgumentMatchers.anyList());
+    }
+
+    @Test
+    void incomingBoosterStillTransfersWhenRecipientHasNoBooster() {
+        AdventurerPartnerConfig config = enabledEquipConfig();
+        SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
+        Character human = mock(Character.class);
+        Character partner = mock(Character.class);
+        PlayerBuffValueHolder clawBooster = buff(BuffStat.BOOSTER, -2, 4101003);
+        when(human.getAllBuffs()).thenReturn(List.of(clawBooster));
+        when(partner.getAllBuffs()).thenReturn(List.of());
+        when(partner.haveItemEquipped(config.SOLO_TAG_BUFF_SHARING_ITEM_ID)).thenReturn(true);
+
+        SoloTagBuffSharingService.SharingPlan plan =
+                sharing.capture(PartnerMode.SOLO_TAG, human, partner);
+        when(human.getAllBuffs()).thenReturn(List.of());
+
+        sharing.applyAfterExchange(plan, human, partner);
+
+        ArgumentCaptor<List<Pair<Long, PlayerBuffValueHolder>>> applied =
+                ArgumentCaptor.forClass(List.class);
+        verify(human).silentGiveBuffs(applied.capture());
+        assertTrue(applied.getValue().stream()
+                .anyMatch(pair -> pair.getRight().effect == clawBooster.effect));
+    }
+
+    @Test
     void partyBuffTransfersWithoutBondItemWhileSelfBuffDoesNot() {
         AdventurerPartnerConfig config = enabledEquipConfig();
         SoloTagBuffSharingService sharing = new SoloTagBuffSharingService(config);
