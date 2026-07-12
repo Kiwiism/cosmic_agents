@@ -60,7 +60,7 @@ public final class CosmicPartyGateway implements PartyGateway {
         List<AgentPartyMemberSnapshot> members = new ArrayList<>();
         for (PartyCharacter member : party.getMembers()) {
             members.add(member == null ? null : new AgentPartyMemberSnapshot(
-                    member.getId(), member.getName(), member.isLeader(), member.getMapId()));
+                    member.getId(), member.getName(), member.getId() == party.getLeaderId(), member.getMapId()));
         }
         return new AgentPartySnapshot(party.getId(), Collections.unmodifiableList(members));
     }

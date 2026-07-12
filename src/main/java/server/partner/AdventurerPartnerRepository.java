@@ -34,4 +34,6 @@ public interface AdventurerPartnerRepository {
                       String reason);
 
     int recoverOpenSessions(String reason);
+
+    int recoverOpenSessionsForLink(long linkId, String reason);
 }

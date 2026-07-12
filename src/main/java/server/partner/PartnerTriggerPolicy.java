@@ -28,7 +28,8 @@ public final class PartnerTriggerPolicy {
                 return Result.rejected("Your Partner cannot switch right now: " + partnerReason);
             }
             if (config.sameMapRequired && human.getMap() != partner.getMap()) {
-                return Result.rejected("You and your Partner must be in the same map.");
+                return Result.rejected(partner.getName()
+                        + " is too far away. You must be in the same map to switch roles.");
             }
             AgentRuntimeEntry entry = active.agentEntry();
             if (entry == null || !AgentRuntimeRegistry.isActiveSession(entry, entry.sessionGeneration())) {

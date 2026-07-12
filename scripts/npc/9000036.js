@@ -46,8 +46,14 @@ function action(mode, type, selection) {
         return;
     }
 
-    if (flow === "mode") {
-        cm.sendOk(cm.adventurerPartnerChangeMode(selection));
+    if (flow === "unregister") {
+        cm.sendOk(cm.adventurerPartnerUnregister());
+        cm.dispose();
+        return;
+    }
+
+    if (flow === "inviteAfterModeChange") {
+        cm.sendOk(cm.adventurerPartnerInvite());
         cm.dispose();
         return;
     }
@@ -58,28 +64,33 @@ function action(mode, type, selection) {
             cm.sendSimple(cm.adventurerPartnerRosterMenu());
             break;
         case 1:
-            cm.sendOk(cm.adventurerPartnerView());
-            cm.dispose();
+            flow = "unregister";
+            cm.sendYesNo("End this partnership permanently? Any active Partner session will be released safely first. Both characters keep their canonical progress.");
             break;
         case 2:
             cm.sendOk(cm.adventurerPartnerInvite());
             cm.dispose();
             break;
         case 3:
-            cm.sendOk(cm.adventurerPartnerEnterSoloTag());
+            cm.sendOk(cm.adventurerPartnerPrepareSoloTag());
             cm.dispose();
             break;
         case 4:
-            flow = "mode";
-            cm.sendSimple("Choose the preferred mode. This can only change while the pair is inactive and canonical.\r\n\r\n"
-                    + "#L0#Solo Tag Mode#l\r\n#L1#Double Partner Mode#l");
-            break;
-        case 5:
-            cm.sendOk(cm.adventurerPartnerRelease());
+            cm.sendOk(cm.adventurerPartnerChangeToSoloTag());
             cm.dispose();
             break;
+        case 5:
+            var changeResult = cm.adventurerPartnerChangeToDoublePartner();
+            if (cm.isAdventurerPartnerDoubleModeSelected()) {
+                flow = "inviteAfterModeChange";
+                cm.sendYesNo(changeResult + "\r\n\r\nWould you like to invite your Partner now?");
+            } else {
+                cm.sendOk(changeResult);
+                cm.dispose();
+            }
+            break;
         case 6:
-            cm.sendOk(cm.adventurerPartnerUnregister());
+            cm.sendOk(cm.adventurerPartnerRelease());
             cm.dispose();
             break;
         case 7:

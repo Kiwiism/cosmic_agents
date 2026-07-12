@@ -1173,20 +1173,24 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         return AdventurerPartnerNpcService.INSTANCE.register(getPlayer(), characterId);
     }
 
-    public String adventurerPartnerView() {
-        return AdventurerPartnerNpcService.INSTANCE.view(getPlayer());
-    }
-
     public String adventurerPartnerInvite() {
         return AdventurerPartnerNpcService.INSTANCE.invite(getPlayer());
     }
 
-    public String adventurerPartnerEnterSoloTag() {
-        return AdventurerPartnerNpcService.INSTANCE.enterSoloTag(getPlayer());
+    public String adventurerPartnerPrepareSoloTag() {
+        return AdventurerPartnerNpcService.INSTANCE.prepareSoloTag(getPlayer());
     }
 
-    public String adventurerPartnerChangeMode(int mode) {
-        return AdventurerPartnerNpcService.INSTANCE.changeMode(getPlayer(), mode);
+    public String adventurerPartnerChangeToSoloTag() {
+        return AdventurerPartnerNpcService.INSTANCE.changeToSoloTag(getPlayer());
+    }
+
+    public String adventurerPartnerChangeToDoublePartner() {
+        return AdventurerPartnerNpcService.INSTANCE.changeToDoublePartner(getPlayer());
+    }
+
+    public boolean isAdventurerPartnerDoubleModeSelected() {
+        return AdventurerPartnerNpcService.INSTANCE.doublePartnerModeSelected(getPlayer());
     }
 
     public String adventurerPartnerRelease() {

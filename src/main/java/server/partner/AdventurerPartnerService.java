@@ -11,9 +11,11 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTransitionBarrierState;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** Player-facing Partner Program lifecycle and trigger service. */
 public final class AdventurerPartnerService {
@@ -71,6 +73,44 @@ public final class AdventurerPartnerService {
 
     public Optional<PartnerLink> registeredLink(Character player) {
         return repository.findActiveLinkForCharacter(player.getId());
+    }
+
+    public Optional<PartnerOverview> overview(Character player) {
+        Optional<PartnerLink> foundLink = registeredLink(player);
+        if (foundLink.isEmpty()) {
+            return Optional.empty();
+        }
+        PartnerLink link = foundLink.get();
+        int partnerCharacterId = link.partnerOf(player.getId());
+        PartnerRosterCandidate partner = repository.findCharacter(partnerCharacterId)
+                .orElse(new PartnerRosterCandidate(
+                        partnerCharacterId, link.accountId(), link.worldId(),
+                        "Unknown character", 0, -1));
+        Optional<ActivePartnerSession> active = runtimes.findByProfileOwnerId(player.getId());
+        PartnerPresence presence;
+        PartnerMode currentMode = link.preferredMode();
+        if (active.isPresent()) {
+            ActivePartnerSession session = active.get();
+            currentMode = session.runtime().mode();
+            if (session.runtime().status() != PartnerLifecycleStatus.ACTIVE) {
+                presence = PartnerPresence.RECOVERY_REQUIRED;
+            } else if (session.runtime().mode() == PartnerMode.SOLO_TAG) {
+                presence = PartnerPresence.SOLO_TAG_READY;
+            } else if (session.humanActor().getMap() == session.partnerActorOrDormantProfile().getMap()) {
+                presence = PartnerPresence.DOUBLE_PARTNER_ACTIVE;
+            } else {
+                presence = PartnerPresence.DOUBLE_PARTNER_OTHER_MAP;
+            }
+        } else if (agents.hasPartnerAgent(player.getId(), partnerCharacterId)
+                || leases.isLeased(link.firstCharacterId())
+                || leases.isLeased(link.secondCharacterId())) {
+            presence = PartnerPresence.RECOVERY_REQUIRED;
+        } else if (rosterQuery.isOnline(partnerCharacterId)) {
+            presence = PartnerPresence.ONLINE_INDEPENDENTLY;
+        } else {
+            presence = PartnerPresence.OFFLINE;
+        }
+        return Optional.of(new PartnerOverview(link, partner, currentMode, presence));
     }
 
     public Optional<PartnerRosterCandidate> findCharacter(int characterId) {
@@ -147,6 +187,46 @@ public final class AdventurerPartnerService {
         log.info("partner_mode_changed link={} character={} mode={}", link.id(), player.getId(), mode);
     }
 
+    public ActivePartnerSession changeToSoloTag(Character player) {
+        requireModeEnabled(PartnerMode.SOLO_TAG);
+        PartnerLink link = requireLink(player);
+        releaseOrReset(player, "Changed to Solo Tag Mode");
+        repository.updatePreferredMode(link.id(), PartnerMode.SOLO_TAG);
+        log.info("partner_mode_changed link={} character={} mode={}",
+                link.id(), player.getId(), PartnerMode.SOLO_TAG);
+        try {
+            return activate(player, PartnerMode.SOLO_TAG);
+        } catch (RuntimeException failure) {
+            throw new IllegalStateException(
+                    "Solo Tag Mode is selected, but it could not be prepared: " + safeReason(failure), failure);
+        }
+    }
+
+    public void changeToDoublePartner(Character player) {
+        requireModeEnabled(PartnerMode.DOUBLE_PARTNER);
+        PartnerLink link = requireLink(player);
+        releaseOrReset(player, "Changed to Double Partner Mode");
+        repository.updatePreferredMode(link.id(), PartnerMode.DOUBLE_PARTNER);
+        log.info("partner_mode_changed link={} character={} mode={}",
+                link.id(), player.getId(), PartnerMode.DOUBLE_PARTNER);
+    }
+
+    public ActivePartnerSession prepareSoloTag(Character player) {
+        PartnerLink link = requireLink(player);
+        if (link.preferredMode() != PartnerMode.SOLO_TAG) {
+            throw new IllegalStateException("Change to Solo Tag Mode before preparing it.");
+        }
+        Optional<ActivePartnerSession> active = runtimes.findByProfileOwnerId(player.getId());
+        if (active.isPresent()) {
+            if (active.get().runtime().mode() == PartnerMode.SOLO_TAG
+                    && active.get().runtime().status() == PartnerLifecycleStatus.ACTIVE) {
+                return active.get();
+            }
+            throw new IllegalStateException("Release the active Partner session first.");
+        }
+        return activate(player, PartnerMode.SOLO_TAG);
+    }
+
     public ActivePartnerSession activatePreferredMode(Character player) {
         PartnerLink link = requireLink(player);
         return activate(player, link.preferredMode());
@@ -191,7 +271,7 @@ public final class AdventurerPartnerService {
                 partnerHolder = profiles.loadDetached(
                         partnerCharacterId, player.getWorld(), player.getClient().getChannel());
             } else {
-                spawned = agents.spawnFollowing(player, partner.name());
+                spawned = agents.spawnFollowing(player, partnerCharacterId, partner.name());
                 partnerHolder = spawned.character();
                 activationPause = spawned.runtimeEntry().transitionBarrierState().pauseAndDrain();
                 profiles.restoreTransientState(partnerHolder);
@@ -297,6 +377,37 @@ public final class AdventurerPartnerService {
         ActivePartnerSession active = runtimes.findByHumanActorId(player.getId())
                 .orElseThrow(() -> new IllegalStateException("No Partner session is active."));
         releaseActive(active, reason);
+    }
+
+    public ReleaseResult releaseOrReset(Character player, String reason) {
+        PartnerLink link = requireLink(player);
+        Optional<ActivePartnerSession> active = runtimes.findByProfileOwnerId(player.getId());
+        if (active.isPresent()) {
+            long sessionId = active.get().runtime().sessionId();
+            releaseActive(active.get(), reason);
+            return new ReleaseResult(true, false, 0, 0, false, sessionId);
+        }
+
+        int partnerCharacterId = link.partnerOf(player.getId());
+        boolean partnerAgentPresent = agents.hasPartnerAgent(player.getId(), partnerCharacterId);
+        boolean independentlyOnline = !partnerAgentPresent && rosterQuery.isOnline(partnerCharacterId);
+        boolean orphanAgentReleased = agents.releasePartnerAgent(player.getId(), partnerCharacterId);
+
+        Set<Long> staleSessionIds = new HashSet<>();
+        leases.leaseForProfile(link.firstCharacterId())
+                .ifPresent(lease -> staleSessionIds.add(lease.sessionId()));
+        leases.leaseForProfile(link.secondCharacterId())
+                .ifPresent(lease -> staleSessionIds.add(lease.sessionId()));
+        staleSessionIds.forEach(leases::releaseSession);
+        int recoveredSessions = repository.recoverOpenSessionsForLink(link.id(), reason);
+        player.reattachAccountPersistenceOwner();
+        log.info("partner_reset link={} character={} orphanAgentReleased={} recoveredSessions={} "
+                        + "staleLeaseSessions={} independentlyOnline={}",
+                link.id(), player.getId(), orphanAgentReleased, recoveredSessions,
+                staleSessionIds.size(), independentlyOnline);
+        return new ReleaseResult(
+                false, orphanAgentReleased, recoveredSessions, staleSessionIds.size(),
+                independentlyOnline, null);
     }
 
     void releaseActive(ActivePartnerSession active, String reason) {
@@ -433,8 +544,8 @@ public final class AdventurerPartnerService {
 
     public void unregister(Character player) {
         requireEnabled();
-        requireNoActiveSession(player.getId());
         PartnerLink link = requireLink(player);
+        releaseOrReset(player, "Unregistered through Agent E");
         repository.disableLink(link.id());
         log.info("partner_unregistered link={} character={}", link.id(), player.getId());
     }
@@ -590,6 +701,39 @@ public final class AdventurerPartnerService {
         private static TriggerResult switchedWithRefreshWarning(String message) {
             return new TriggerResult(true, true, false,
                     "Profiles switched, but the client refresh must be retried: " + message);
+        }
+    }
+
+    public enum PartnerPresence {
+        OFFLINE,
+        ONLINE_INDEPENDENTLY,
+        SOLO_TAG_READY,
+        DOUBLE_PARTNER_ACTIVE,
+        DOUBLE_PARTNER_OTHER_MAP,
+        RECOVERY_REQUIRED;
+
+        public boolean active() {
+            return this == SOLO_TAG_READY
+                    || this == DOUBLE_PARTNER_ACTIVE
+                    || this == DOUBLE_PARTNER_OTHER_MAP;
+        }
+    }
+
+    public record PartnerOverview(PartnerLink link,
+                                  PartnerRosterCandidate partner,
+                                  PartnerMode currentMode,
+                                  PartnerPresence presence) {
+    }
+
+    public record ReleaseResult(boolean activeSessionReleased,
+                                boolean orphanAgentReleased,
+                                int recoveredSessions,
+                                int staleLeaseSessions,
+                                boolean partnerOnlineIndependently,
+                                Long releasedSessionId) {
+        public boolean changedRuntimeState() {
+            return activeSessionReleased || orphanAgentReleased
+                    || recoveredSessions > 0 || staleLeaseSessions > 0;
         }
     }
 }

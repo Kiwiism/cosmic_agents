@@ -10,7 +10,10 @@ live pass.
 
 | Requirement | Evidence | Status |
 | --- | --- | --- |
-| Agent E registration, view, mode, invite, release, unregister, and explanation flows | `scripts/npc/9000036.js`, `AdventurerPartnerNpcService`; `node --check` | Automated/static pass |
+| Agent E shows partner IGN/level/job, online/runtime status, current mode, and only state-relevant actions | `AdventurerPartnerNpcServiceTest`, `scripts/npc/9000036.js`; `node --check` | Automated/static pass; client layout pending |
+| Direct mode toggle safely releases Double before preparing Solo, and releases Solo before offering a Double invite | `AdventurerPartnerServiceTest`, `AdventurerPartnerNpcServiceTest` | Automated pass |
+| Release/reset is pair-scoped, idempotent, cleans an orphan Agent across maps, and does not disconnect an independently played character | `AdventurerPartnerServiceTest`, `CosmicPartnerAgentLifecycleBridge` | Automated boundary pass; live reset pending |
+| Offline normal-party members cannot crash Double activation | `CosmicPartyGatewayTest.snapshotsOfflinePartyMembersWithoutDereferencingLivePlayers` | Regression pass |
 | Same-account/world, self, deletion, online, lease, active-pair, and canonical-load eligibility | `PartnerRosterQueryServiceTest`, `AdventurerPartnerServiceTest`, `ProfileLeaseRegistryTest` | Automated pass |
 | Symmetric persistent pair and session constraints | migration `026-adventurer-partner.sql`; disposable MySQL 8.4 migration/constraint run | Automated database pass |
 | Solo activation uses one actor and one dormant profile | `AdventurerPartnerServiceTest`, `AdventurerPartnerLifecycleIntegrationTest` | Automated pass |
@@ -49,12 +52,12 @@ Use two same-account characters with different jobs, appearances, equipment,
 inventory density, skills, quests, Monster Book progress, pets, buffs, diseases,
 and cooldowns. Capture server logs and client video/screenshots for every item.
 
-1. Register through Agent E and verify every roster IGN, level, job, and rejection reason.
-2. Activate Solo Tag and switch with each configured beginner-family Nimble Feet skill.
+1. Register through Agent E and verify every roster IGN, level, job, and rejection reason; then verify the compact header shows partner details, status, and mode.
+2. Change directly to Solo Tag, verify it is prepared automatically, and switch with each configured beginner-family Nimble Feet skill.
 3. Verify stats, look, equipment, every inventory tab, skills, keymap, macros, quickslots, quests, Monster Book, pets, effects, mesos, and item use.
 4. Verify no reconnect, map load, camera jump, actor movement, or ordinary Nimble Feet buff.
 5. End Solo while normal and swapped; reload both characters and compare canonical state.
-6. Invite in Double mode and verify the partner's own IGN/look and Follow behavior.
+6. Change directly to Double mode, accept the invite prompt, and verify the partner's own IGN/look and Follow behavior.
 7. Switch while actors are near and far apart in the same map; verify both looks and Agent combat behavior after each switch.
 8. Observe repeated switches from a second real client and verify public appearance, pets, buffs, and debuffs.
 9. Exercise empty, typical, nearly full, and full inventories; normal/cash equipment; and melee/ranged/ammo profiles.

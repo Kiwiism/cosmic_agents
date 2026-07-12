@@ -41,6 +41,10 @@ The removed snapshot/row-replacement Double Agent POC is not used or restored.
 - Release saves both canonical owners and durably closes the session journal before tearing down the Agent. If teardown alone fails, retry skips duplicate saves/journal closure and completes the remaining cleanup.
 - Server startup closes unfinished journals in canonical orientation. Asynchronous switch journal writes are generation-guarded so stale updates cannot overwrite newer transitions or a closed session.
 - Dormant Solo profiles and headless Double actors consume and restore transient buff/disease storage with original timing. Cooldown and disease persistence now replaces both owner sets in one database transaction, including the empty-state case.
+- Agent E now presents a state-driven menu: partner IGN/level/job, online/runtime status, and current mode are always visible; registration, activation, and mode actions only appear when relevant.
+- Changing from Double to Solo restores and logs out the Agent before preloading the dormant Solo profile. Changing from Solo to Double restores canonical ownership before offering an immediate invite.
+- Release is an idempotent reset for the registered pair. It closes a normal session, removes the exact registered Partner Agent across maps, clears stale pair leases, and recovers only that link's unfinished journals. Independently played characters are never force-disconnected.
+- Agent party snapshots determine leadership from the party's canonical leader ID instead of dereferencing a live player, so offline party members cannot break Partner activation. A failed partial spawn also removes the newly created exact Partner Agent entry.
 
 ## Configuration and rollback
 
@@ -56,6 +60,7 @@ Canonical names are deliberately not mutated. The human actor and Agent actor re
 - The focused suite includes two 1,000-iteration soaks (domain reversal and full Double coordinator), complete profile-bundle exchange, real presentation packet ordering/public-look calls, release retry fault injection, disconnect during presentation, Agent cache-rebuild failure, simultaneous triggers, stale profile-task rejection, SWAPPING recovery, login/deletion reservation races, mailbox barrier rejection, and Agent cache owner/version stamping.
 - `mvnw.cmd -q -DskipTests package`: passed after the final production-code changes.
 - `node --check scripts/npc/9000036.js`: passed.
+- The state-driven Agent E follow-up regression group passed 60 tests across 15 reports with 0 failures, 0 errors, and 0 skipped. It covers menu states, direct mode transitions, idempotent reset, independently-online protection, same-map messaging, and offline-party snapshots.
 - Liquibase changelog XML parsed successfully. Migration `026-adventurer-partner.sql` was applied against a disposable MySQL 8.4 schema; constraints, two-row quickslot migration, and link/session cascade behavior passed, and the disposable schema was removed. The existing `cosmic` database was not modified.
 - Independent worktree catalogs were generated from the read-only WZ junction and verified: game 75/75, NPC 115/115, reactor 7/7, and derived Agent/LLM 51/51. `AgentCatalogServiceTest` then passed.
 - A bounded expanded repository run produced 3,798 tests across 513 reports with 0 errors and 3 skips before entering the unrelated CPU-heavy `BotMovementSimulationLabTest`. Its single movement-fidget failure passed immediately in isolation. Earlier thread dumps likewise isolated `AgentNavigationGraphServiceTest` and `AgentPhysicsEngineTest` as navigation-graph bottlenecks. No navigation-graph files are changed by this branch.

@@ -130,7 +130,7 @@ class AdventurerPartnerServiceTest {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         AgentTransitionBarrierState barrier = new AgentTransitionBarrierState();
         when(entry.transitionBarrierState()).thenReturn(barrier);
-        when(agents.spawnFollowing(player, "Yoona"))
+        when(agents.spawnFollowing(player, 20, "Yoona"))
                 .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
 
         ActivePartnerSession active = service.activate(player, PartnerMode.DOUBLE_PARTNER);
@@ -138,7 +138,7 @@ class AdventurerPartnerServiceTest {
         assertEquals(PartnerMode.DOUBLE_PARTNER, active.runtime().mode());
         assertEquals(20, leases.leaseForProfile(20).orElseThrow().actorCharacterId());
         assertFalse(barrier.isPaused());
-        verify(agents).spawnFollowing(player, "Yoona");
+        verify(agents).spawnFollowing(player, 20, "Yoona");
         verify(profiles).restoreTransientState(partner);
     }
 
@@ -153,7 +153,7 @@ class AdventurerPartnerServiceTest {
         AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
         AgentTransitionBarrierState barrier = new AgentTransitionBarrierState();
         when(entry.transitionBarrierState()).thenReturn(barrier);
-        when(agents.spawnFollowing(player, "Yoona"))
+        when(agents.spawnFollowing(player, 20, "Yoona"))
                 .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
         doThrow(new IllegalStateException("teardown failed"))
                 .doNothing()
@@ -218,7 +218,7 @@ class AdventurerPartnerServiceTest {
                 IllegalStateException.class,
                 () -> service.activate(player, PartnerMode.SOLO_TAG));
 
-        assertTrue(failure.getMessage().contains("online"));
+        assertTrue(failure.getMessage().contains("adventuring independently"));
     }
 
     @Test
@@ -337,6 +337,103 @@ class AdventurerPartnerServiceTest {
         assertEquals(1, roster.size());
         assertFalse(roster.getFirst().eligible());
         assertTrue(roster.getFirst().rejectionReason().contains("could not be loaded"));
+    }
+
+    @Test
+    void changingActiveDoubleModeReleasesAgentAndPreparesSoloTag() throws Exception {
+        PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
+                8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
+                ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
+                Instant.now(), Instant.now(), null, null);
+        when(repository.createSession(5L, 10, 20, PartnerMode.DOUBLE_PARTNER))
+                .thenReturn(doubleJournal);
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        when(entry.transitionBarrierState()).thenReturn(new AgentTransitionBarrierState());
+        PartnerAgentLifecycleBridge.SpawnedPartner spawned =
+                new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry);
+        when(agents.spawnFollowing(player, 20, "Yoona")).thenReturn(spawned);
+        service.activate(player, PartnerMode.DOUBLE_PARTNER);
+
+        ActivePartnerSession solo = service.changeToSoloTag(player);
+
+        assertEquals(PartnerMode.SOLO_TAG, solo.runtime().mode());
+        assertTrue(runtimes.findByHumanActorId(10).isPresent());
+        verify(agents).release(spawned);
+        verify(repository).updatePreferredMode(5L, PartnerMode.SOLO_TAG);
+        verify(profiles).loadDetached(20, 0, 1);
+    }
+
+    @Test
+    void changingActiveSoloModeReleasesDormantProfileBeforeSelectingDouble() throws Exception {
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        service.activate(player, PartnerMode.SOLO_TAG);
+
+        service.changeToDoublePartner(player);
+
+        assertTrue(runtimes.findByHumanActorId(10).isEmpty());
+        assertFalse(leases.isLeased(10));
+        assertFalse(leases.isLeased(20));
+        verify(repository).updatePreferredMode(5L, PartnerMode.DOUBLE_PARTNER);
+        verify(profiles).saveCanonical(player);
+        verify(profiles).saveCanonical(partner);
+    }
+
+    @Test
+    void releaseResetCleansExactOrphanAgentAndScopedOpenSessions() {
+        when(agents.hasPartnerAgent(10, 20)).thenReturn(true);
+        when(agents.releasePartnerAgent(10, 20)).thenReturn(true);
+        when(repository.recoverOpenSessionsForLink(5L, "Agent E reset")).thenReturn(1);
+        leases.acquire(99L, java.util.Map.of(10, 10, 20, 20));
+
+        AdventurerPartnerService.ReleaseResult result =
+                service.releaseOrReset(player, "Agent E reset");
+
+        assertTrue(result.orphanAgentReleased());
+        assertEquals(1, result.recoveredSessions());
+        assertFalse(leases.isLeased(10));
+        assertFalse(leases.isLeased(20));
+        verify(agents).releasePartnerAgent(10, 20);
+        verify(repository).recoverOpenSessionsForLink(5L, "Agent E reset");
+    }
+
+    @Test
+    void releaseResetDoesNotDisconnectIndependentlyOnlinePartner() {
+        when(availability.isOnline(20)).thenReturn(true);
+
+        AdventurerPartnerService.ReleaseResult result =
+                service.releaseOrReset(player, "Agent E reset");
+
+        assertTrue(result.partnerOnlineIndependently());
+        assertFalse(result.changedRuntimeState());
+        verify(agents, never()).release(any());
+        verify(agents).releasePartnerAgent(10, 20);
+    }
+
+    @Test
+    void unregisterAutomaticallyReleasesActiveSessionBeforeDisablingLink() throws Exception {
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        service.activate(player, PartnerMode.SOLO_TAG);
+
+        service.unregister(player);
+
+        assertTrue(runtimes.findByHumanActorId(10).isEmpty());
+        verify(repository).disableLink(5L);
+        verify(profiles).saveCanonical(player);
+        verify(profiles).saveCanonical(partner);
+    }
+
+    @Test
+    void overviewDistinguishesIndependentLoginFromRecoveryRequired() {
+        when(availability.isOnline(20)).thenReturn(true);
+        assertEquals(
+                AdventurerPartnerService.PartnerPresence.ONLINE_INDEPENDENTLY,
+                service.overview(player).orElseThrow().presence());
+
+        when(agents.hasPartnerAgent(10, 20)).thenReturn(true);
+        assertEquals(
+                AdventurerPartnerService.PartnerPresence.RECOVERY_REQUIRED,
+                service.overview(player).orElseThrow().presence());
     }
 
     private static Character character(int actorId, int profileOwnerId, int accountId, int world) {

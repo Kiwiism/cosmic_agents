@@ -314,6 +314,23 @@ public final class JdbcAdventurerPartnerRepository implements AdventurerPartnerR
         }
     }
 
+    @Override
+    public int recoverOpenSessionsForLink(long linkId, String reason) {
+        String sql = "UPDATE adventurer_partner_sessions SET current_profile_orientation = 'CANONICAL', "
+                + "generation = generation + 1, lifecycle_status = 'RECOVERED', "
+                + "last_transition_at = CURRENT_TIMESTAMP, closed_at = CURRENT_TIMESTAMP, failure_reason = ? "
+                + "WHERE link_id = ? AND closed_at IS NULL";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setLong(2, linkId);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new PartnerPersistenceException(
+                    "Failed to reconcile unfinished Partner sessions for link " + linkId, e);
+        }
+    }
+
     private void executeSessionUpdate(String sql,
                                       long sessionId,
                                       ProfileOrientation orientation,

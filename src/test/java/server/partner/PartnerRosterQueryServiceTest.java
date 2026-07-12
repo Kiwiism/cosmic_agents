@@ -165,5 +165,10 @@ class PartnerRosterQueryServiceTest {
         public int recoverOpenSessions(String reason) {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public int recoverOpenSessionsForLink(long linkId, String reason) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

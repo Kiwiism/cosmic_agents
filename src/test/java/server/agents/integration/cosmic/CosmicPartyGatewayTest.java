@@ -49,10 +49,10 @@ class CosmicPartyGatewayTest {
         PartyCharacter second = mock(PartyCharacter.class);
         when(character.getParty()).thenReturn(party);
         when(party.getId()).thenReturn(42);
+        when(party.getLeaderId()).thenReturn(1);
         when(party.getMembers()).thenReturn(List.of(first, second));
         when(first.getId()).thenReturn(1);
         when(first.getName()).thenReturn("Leader");
-        when(first.isLeader()).thenReturn(true);
         when(first.getMapId()).thenReturn(100000000);
         when(second.getId()).thenReturn(2);
         when(second.getName()).thenReturn("Agent");
@@ -64,5 +64,24 @@ class CosmicPartyGatewayTest {
         assertEquals(List.of("Leader", "Agent"), snapshot.members().stream().map(member -> member.name()).toList());
         assertTrue(snapshot.members().get(0).leader());
         assertEquals(100000001, snapshot.members().get(1).mapId());
+    }
+
+    @Test
+    void snapshotsOfflinePartyMembersWithoutDereferencingLivePlayers() {
+        Character character = mock(Character.class);
+        Party party = mock(Party.class);
+        PartyCharacter offlineLeader = mock(PartyCharacter.class);
+        when(character.getParty()).thenReturn(party);
+        when(party.getId()).thenReturn(42);
+        when(party.getLeaderId()).thenReturn(1);
+        when(party.getMembers()).thenReturn(List.of(offlineLeader));
+        when(offlineLeader.getId()).thenReturn(1);
+        when(offlineLeader.getName()).thenReturn("OfflineLeader");
+        when(offlineLeader.getPlayer()).thenReturn(null);
+
+        AgentPartySnapshot snapshot = CosmicPartyGateway.INSTANCE.snapshot(character);
+
+        assertEquals(1, snapshot.members().size());
+        assertTrue(snapshot.members().getFirst().leader());
     }
 }

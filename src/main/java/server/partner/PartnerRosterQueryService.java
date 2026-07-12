@@ -49,7 +49,8 @@ public final class PartnerRosterQueryService {
             return Optional.of("The Partner registration changed before activation.");
         }
         if (runtimeAvailability.isOnline(candidate.characterId())) {
-            return Optional.of("The registered Partner is currently online.");
+            return Optional.of("The registered Partner is currently adventuring independently. "
+                    + "They must log out before joining the Partner Program.");
         }
         if (runtimeAvailability.isLeased(candidate.characterId())) {
             return Optional.of("The Partner profile is already leased.");
