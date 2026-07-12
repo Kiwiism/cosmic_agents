@@ -102,6 +102,31 @@ class MapleMapAcceptedDamageBridgeTest {
         assertTrue(capture.outcome.get().monsterKilled());
     }
 
+    @Test
+    void providerFailureCannotSkipNativeLethalKillProcessing() {
+        MapleMap map = spy(new MapleMap(100, 0, 1, 100, 1.0f));
+        Character attacker = attacker(map, 0);
+        MonsterStats stats = mock(MonsterStats.class);
+        Monster monster = damageableMonster(map, stats, 80, 0, true, 10);
+        doNothing().when(map).killMonster(monster, attacker, true, (short) 90);
+        MonsterAggroTargetBridge.install(new MonsterAggroTargetProvider() {
+            @Override
+            public boolean onAcceptedDamage(Monster monster, Character attacker, int damage) {
+                return false;
+            }
+
+            @Override
+            public void onAcceptedDamage(Monster monster, MonsterDamageOutcome outcome) {
+                throw new IllegalStateException("simulated integration failure");
+            }
+        });
+
+        assertTrue(map.damageMonster(attacker, monster, 80, (short) 90, 80));
+
+        verify(monster).damage(attacker, 80, false);
+        verify(map).killMonster(monster, attacker, true, (short) 90);
+    }
+
     private static Character attacker(MapleMap map, int x) {
         Character attacker = mock(Character.class);
         when(attacker.getMap()).thenReturn(map);

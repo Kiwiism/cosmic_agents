@@ -210,6 +210,8 @@ Focused tests cover:
 - rejected zero-delta hits producing no accepted callback;
 - lethal and HP-triggered self-destruction hits producing one final outcome
   and one kill-processing entry;
+- optional reaction-provider failures falling back to native behavior without
+  skipping lethal kill processing;
 - delayed special-skill damage starting pursuit from its actual impact rather
   than applying the animation delay twice;
 - disabled flags preserving the legacy path.
