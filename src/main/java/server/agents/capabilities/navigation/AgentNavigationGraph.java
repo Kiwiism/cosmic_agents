@@ -137,7 +137,7 @@ public final class AgentNavigationGraph implements Serializable {
 
         public Region(int id, int ropeX, int topY, int bottomY, boolean isLadder) {
             this.id = id;
-            this.segments = List.of();
+            this.segments = new ArrayList<>();
             this.isRopeRegion = true;
             this.isLadder = isLadder;
             this.minX = ropeX;

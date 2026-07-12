@@ -48,6 +48,23 @@ class AgentNavigationGraphCacheFileTest {
     }
 
     @Test
+    void roundTripsGraphContainingRopeRegion() throws Exception {
+        Path file = temporaryDirectory.resolve("rope-graph.bin");
+        AgentNavigationGraph.Region rope = new AgentNavigationGraph.Region(1, 100, 50, 200, true);
+        AgentNavigationGraph graph = new AgentNavigationGraph(
+                MAP_ID, VERSION, PROFILE,
+                List.of(rope), Map.of(rope.id, rope), Map.of(), Map.of(rope.id, List.of()), Set.of());
+
+        AgentNavigationGraphCacheFile.write(file, graph);
+        AgentNavigationGraph loaded = AgentNavigationGraphCacheFile.read(
+                file, VERSION, MAP_ID, PROFILE);
+
+        assertNotNull(loaded);
+        assertEquals(1, loaded.regions.size());
+        assertEquals(rope.id, loaded.regions.getFirst().id);
+    }
+
+    @Test
     void rejectsAndDeletesUnexpectedSerializedType() throws Exception {
         Path file = temporaryDirectory.resolve("unexpected.bin");
         try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(file))) {
