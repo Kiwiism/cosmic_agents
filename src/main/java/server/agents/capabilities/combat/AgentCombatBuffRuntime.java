@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import client.BuffStat;
 import client.Character;
 import client.Skill;
+import client.SkillEligibilityPolicy;
 import constants.skills.BlazeWizard;
 import constants.skills.Evan;
 import constants.skills.Magician;
@@ -141,7 +142,11 @@ public final class AgentCombatBuffRuntime {
     private static boolean castSupportSkill(AgentRuntimeEntry entry, Character bot, Skill skill, StatEffect fx, long now) {
         int skillLevel = bot.getSkillLevel(skill);
         AgentCombatSupportPolicy.SupportCastReadiness readiness =
-                AgentCombatSupportPolicy.supportCastReadiness(skillLevel, bot.isAlive(), () -> fx.canPaySkillCost(bot));
+                AgentCombatSupportPolicy.supportCastReadiness(
+                        skillLevel,
+                        bot.isAlive(),
+                        () -> SkillEligibilityPolicy.evaluate(
+                                bot, skill, skillLevel, false, () -> true).allowed());
         String readinessSummary = readiness.legacyDebugSummary(
                 AgentCombatDialogueReporter.combatSkillLabel(skill.getId()));
         if (readinessSummary != null) {

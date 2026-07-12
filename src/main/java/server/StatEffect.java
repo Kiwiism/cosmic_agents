@@ -1807,6 +1807,10 @@ public class StatEffect {
         return null;
     }
 
+    public boolean hasSummonRuntime() {
+        return getSummonMovementType() != null;
+    }
+
     public boolean isSkill() {
         return skill;
     }

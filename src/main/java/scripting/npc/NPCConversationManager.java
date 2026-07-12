@@ -61,6 +61,7 @@ import server.maps.MapManager;
 import server.maps.MapObject;
 import server.maps.MapObjectType;
 import server.maps.MapleMap;
+import server.partner.AdventurerPartnerNpcService;
 import server.partyquest.AriantColiseum;
 import server.partyquest.MonsterCarnival;
 import server.partyquest.Pyramid;
@@ -497,7 +498,8 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         }
 
         try {
-            fredrickItems = List.copyOf(ItemFactory.MERCHANT.loadItems(getPlayer().getId(), false));
+            fredrickItems = List.copyOf(ItemFactory.MERCHANT.loadItems(
+                    getPlayer().getProfileOwnerCharacterId(), false));
             fredrickItemsLoaded = true;
             fredrickLoadFailed = false;
         } catch (SQLException e) {
@@ -515,7 +517,8 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     public void showFredrick() {
         try {
             if (!fredrickItemsLoaded) {
-                fredrickItems = List.copyOf(ItemFactory.MERCHANT.loadItems(getPlayer().getId(), false));
+                fredrickItems = List.copyOf(ItemFactory.MERCHANT.loadItems(
+                        getPlayer().getProfileOwnerCharacterId(), false));
                 fredrickItemsLoaded = true;
             }
             c.sendPacket(PacketCreator.getFredrick(getPlayer(), fredrickItems));
@@ -1152,5 +1155,49 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         }
 
         return false;
+    }
+
+    public boolean isAdventurerPartnerProgramEnabled() {
+        return AdventurerPartnerNpcService.INSTANCE.enabled(npc);
+    }
+
+    public String adventurerPartnerMainMenu() {
+        return AdventurerPartnerNpcService.INSTANCE.mainMenu(getPlayer());
+    }
+
+    public String adventurerPartnerRosterMenu() {
+        return AdventurerPartnerNpcService.INSTANCE.rosterMenu(getPlayer());
+    }
+
+    public String adventurerPartnerRegister(int characterId) {
+        return AdventurerPartnerNpcService.INSTANCE.register(getPlayer(), characterId);
+    }
+
+    public String adventurerPartnerView() {
+        return AdventurerPartnerNpcService.INSTANCE.view(getPlayer());
+    }
+
+    public String adventurerPartnerInvite() {
+        return AdventurerPartnerNpcService.INSTANCE.invite(getPlayer());
+    }
+
+    public String adventurerPartnerEnterSoloTag() {
+        return AdventurerPartnerNpcService.INSTANCE.enterSoloTag(getPlayer());
+    }
+
+    public String adventurerPartnerChangeMode(int mode) {
+        return AdventurerPartnerNpcService.INSTANCE.changeMode(getPlayer(), mode);
+    }
+
+    public String adventurerPartnerRelease() {
+        return AdventurerPartnerNpcService.INSTANCE.release(getPlayer());
+    }
+
+    public String adventurerPartnerUnregister() {
+        return AdventurerPartnerNpcService.INSTANCE.unregister(getPlayer());
+    }
+
+    public String adventurerPartnerExplanation() {
+        return AdventurerPartnerNpcService.INSTANCE.explanation();
     }
 }

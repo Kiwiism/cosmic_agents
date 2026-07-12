@@ -48,10 +48,12 @@ public final class AgentSchedulerRuntime {
             Runnable action,
             Function<Runnable, ScheduledFuture<?>> scheduler) {
         long generation = entry.sessionGeneration();
+        long transitionGeneration = entry.transitionBarrierState().generation();
         return entry.scheduledTaskScope().schedule(
                 scheduler,
                 () -> {
-                    if (AgentRuntimeRegistry.isActiveSession(entry, generation)) {
+                    if (AgentRuntimeRegistry.isActiveSession(entry, generation)
+                            && entry.transitionBarrierState().isCurrentGeneration(transitionGeneration)) {
                         action.run();
                     }
                 });

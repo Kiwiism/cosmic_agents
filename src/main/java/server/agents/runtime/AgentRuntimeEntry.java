@@ -78,6 +78,8 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentScheduledTaskState scheduledTaskState;
     private final AgentScheduledTaskScope scheduledTaskScope = new AgentScheduledTaskScope();
     private final AgentActionMailbox actionMailbox = new AgentActionMailbox(AgentMailboxRuntime.configuredCapacity());
+    private final AgentTransitionBarrierState transitionBarrierState = new AgentTransitionBarrierState();
+    private volatile boolean partnerManaged;
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
 
     public AgentScheduledTaskState scheduledTaskState() {
@@ -94,6 +96,18 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentActionMailbox actionMailbox() {
         return actionMailbox;
+    }
+
+    public AgentTransitionBarrierState transitionBarrierState() {
+        return transitionBarrierState;
+    }
+
+    public void markPartnerManaged() {
+        partnerManaged = true;
+    }
+
+    public boolean isPartnerManaged() {
+        return partnerManaged;
     }
 
     public AgentAirshowState airshowState() {

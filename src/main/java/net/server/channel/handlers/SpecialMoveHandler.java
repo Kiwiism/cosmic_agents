@@ -25,6 +25,7 @@ import client.Character;
 import client.Client;
 import client.Skill;
 import client.SkillFactory;
+import client.SkillEligibilityPolicy;
 import config.YamlConfig;
 import constants.skills.Beginner;
 import constants.skills.Brawler;
@@ -41,6 +42,7 @@ import net.AbstractPacketHandler;
 import net.packet.InPacket;
 import net.server.Server;
 import server.StatEffect;
+import server.partner.AdventurerPartnerService;
 import server.life.Monster;
 import tools.PacketCreator;
 
@@ -79,15 +81,47 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
             c.sendPacket(PacketCreator.getEnergy("energy", chr.getDojoEnergy()));
             c.sendPacket(PacketCreator.serverNotice(5, "As you used the secret skill, your energy bar has been reset."));
         }
-        if (skillLevel == 0 || skillLevel != __skillLevel) {
-            return;
-        }
 
-        StatEffect effect = skill.getEffect(skillLevel);
-        if (!effect.canPaySkillCost(chr)) {
+        boolean dojoEventSkill = skillid % 10000000 == 1010 || skillid % 10000000 == 1011;
+        SkillEligibilityPolicy.Result eligibility = SkillEligibilityPolicy.evaluate(
+                chr, skill, skillLevel, dojoEventSkill, () -> true);
+        if (!eligibility.allowed()) {
             c.sendPacket(PacketCreator.enableActions());
             return;
         }
+        skillLevel = eligibility.executionLevel();
+
+        AdventurerPartnerService.TriggerResult partnerTrigger =
+                AdventurerPartnerService.getInstance().handleSwitchTrigger(chr, skillid);
+        if (partnerTrigger.handled()) {
+            if (partnerTrigger.message() != null) {
+                chr.message(partnerTrigger.message());
+            }
+            if (partnerTrigger.switched()) {
+                int effectLevel = Math.max(1, chr.getSkillLevel(skillid));
+                chr.sendPacket(PacketCreator.showBuffEffect(
+                        chr.getId(), skillid, effectLevel));
+                chr.getMap().broadcastMessage(
+                        chr, PacketCreator.showBuffEffect(chr.getId(), skillid, effectLevel), false);
+            }
+            if (!partnerTrigger.applyOrdinaryTriggerBuff()) {
+                if (!partnerTrigger.switched() || partnerTrigger.message() != null) {
+                    c.sendPacket(PacketCreator.enableActions());
+                }
+                return;
+            }
+            skill = SkillFactory.getSkill(skillid);
+            skillLevel = chr.getSkillLevel(skill);
+        }
+        eligibility = SkillEligibilityPolicy.evaluate(
+                chr, skill, skillLevel, dojoEventSkill, () -> true);
+        if (!eligibility.allowed()) {
+            c.sendPacket(PacketCreator.enableActions());
+            return;
+        }
+
+        skillLevel = eligibility.executionLevel();
+        StatEffect effect = skill.getEffect(skillLevel);
         if (effect.getCooldown() > 0) {
             int sourceid = effect.getSourceId();
             if (chr.skillIsCooling(skillid)) {

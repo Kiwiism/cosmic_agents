@@ -159,10 +159,13 @@ class AgentCombatSkillClassifierTest {
         Skill beginnerSkill = skill(1000, true);
         Skill inJobSkill = skill(Rogue.LUCKY_SEVEN, false);
         Skill offJobSkill = skill(Warrior.POWER_STRIKE, false);
+        when(assassin.getSkillLevel(beginnerSkill)).thenReturn((byte) 1);
+        when(assassin.getSkillLevel(inJobSkill)).thenReturn((byte) 1);
+        when(assassin.getSkillLevel(offJobSkill)).thenReturn((byte) 1);
 
         assertEquals(0, AgentCombatSkillClassifier.singleTargetSkillPriority(assassin, beginnerSkill));
         assertEquals(2, AgentCombatSkillClassifier.singleTargetSkillPriority(assassin, inJobSkill));
-        assertEquals(1, AgentCombatSkillClassifier.singleTargetSkillPriority(assassin, offJobSkill));
+        assertEquals(Integer.MIN_VALUE, AgentCombatSkillClassifier.singleTargetSkillPriority(assassin, offJobSkill));
         assertEquals(Integer.MIN_VALUE, AgentCombatSkillClassifier.singleTargetSkillPriority(assassin, null));
     }
 
@@ -172,18 +175,21 @@ class AgentCombatSkillClassifierTest {
         when(assassin.getJob()).thenReturn(Job.ASSASSIN);
         Skill luckySeven = skill(Rogue.LUCKY_SEVEN, false);
         Skill powerStrike = skill(Warrior.POWER_STRIKE, false);
+        when(assassin.getSkillLevel(luckySeven)).thenReturn((byte) 1);
+        when(assassin.getSkillLevel(powerStrike)).thenReturn((byte) 1);
         StatEffect strongEffect = mock(StatEffect.class);
         StatEffect weakEffect = mock(StatEffect.class);
         when(strongEffect.getDamagePercent()).thenReturn(150);
         when(weakEffect.getDamagePercent()).thenReturn(100);
 
         assertTrue(AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(assassin, luckySeven,
-                weakEffect, 1, 4, 1, 500, Warrior.POWER_STRIKE));
-        assertTrue(AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(assassin, powerStrike,
-                strongEffect, 4, 3, 1, 150, Rogue.LUCKY_SEVEN));
+                weakEffect, 1, 4, Integer.MIN_VALUE, 500, Warrior.POWER_STRIKE));
+        assertFalse(AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(assassin, powerStrike,
+                strongEffect, 4, 3, 2, 150, Rogue.LUCKY_SEVEN));
         Skill higherIdOffJobSkill = skill(Warrior.POWER_STRIKE + 1, false);
+        when(assassin.getSkillLevel(higherIdOffJobSkill)).thenReturn((byte) 1);
         assertFalse(AgentCombatSkillClassifier.shouldUseAsBestSingleTargetSkill(assassin, higherIdOffJobSkill,
-                weakEffect, 1, 1, 1, 100, Warrior.POWER_STRIKE));
+                weakEffect, 1, 1, 2, 100, Warrior.POWER_STRIKE));
     }
 
     @Test

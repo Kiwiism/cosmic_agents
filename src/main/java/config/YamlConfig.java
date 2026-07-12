@@ -16,12 +16,16 @@ public class YamlConfig {
 
     public List<WorldConfig> worlds;
     public ServerConfig server;
+    public AdventurerPartnerConfig adventurerPartner = new AdventurerPartnerConfig();
 
     private static YamlConfig loadConfig() {
         try {
             YamlReader reader = new YamlReader(Files.newBufferedReader(Path.of(CONFIG_FILE_NAME), CharsetConstants.CHARSET));
             YamlConfig config = reader.read(YamlConfig.class);
             reader.close();
+            if (config.adventurerPartner == null) {
+                config.adventurerPartner = new AdventurerPartnerConfig();
+            }
             return config;
         } catch (FileNotFoundException e) {
             throw new RuntimeException("Could not read config file " + YamlConfig.CONFIG_FILE_NAME + ": " + e.getMessage());

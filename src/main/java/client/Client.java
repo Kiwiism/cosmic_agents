@@ -63,6 +63,7 @@ import server.MapleLeafLogger;
 import server.ThreadManager;
 import server.TimerManager;
 import server.agents.runtime.AgentRuntimeCleanupService;
+import server.partner.PartnerRecoveryService;
 import server.life.Monster;
 import server.maps.FieldLimit;
 import server.maps.MapleMap;
@@ -1031,6 +1032,9 @@ public class Client extends ChannelInboundHandlerAdapter {
     }
 
     private void disconnectInternal(boolean shutdown, boolean cashshop) {//once per Client instance
+        if (player != null) {
+            PartnerRecoveryService.getInstance().onDisconnect(player, this.serverTransition);
+        }
         if (this instanceof BotClient && player != null) {
             AgentRuntimeCleanupService.cleanupAgentRuntimeState(player);
         }

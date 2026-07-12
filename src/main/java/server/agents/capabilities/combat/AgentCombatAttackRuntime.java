@@ -21,8 +21,8 @@ public final class AgentCombatAttackRuntime {
                         AgentCombatCooldownStateRuntime.hasAttackCooldown(entry),
                         AgentAmmoStateRuntime.noAmmo(entry),
                         attackPlan.skillId,
-                        () -> AgentCombatSkillUsePolicy.canPaySkillCost(
-                                bot, attackPlan.skillId, attackPlan.skillLevel),
+                        () -> AgentCombatSkillUsePolicy.canUseAttackAtExecution(
+                                bot, attackPlan.skillId, attackPlan.skillLevel, attackPlan.route),
                         () -> entry != null && attackPlan != null && AgentCombatRangePolicy.canUseAttackPlanNow(
                                 AgentMovementStateRuntime.grounded(entry),
                                 AgentAttackExecutionProvider.getEquippedWeaponType(bot),

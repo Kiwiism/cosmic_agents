@@ -110,6 +110,23 @@
         <sqlFile path="db/tables/025-bot-ownership.sql"/>
     </changeSet>
 
+    <changeSet id="26-adventurer-partner-program" author="Codex">
+        <preConditions onFail="HALT">
+            <and>
+            <not>
+                <tableExists tableName="adventurer_partner_links"/>
+            </not>
+            <not>
+                <tableExists tableName="adventurer_partner_sessions"/>
+            </not>
+            <not>
+                <tableExists tableName="character_quickslots"/>
+            </not>
+            </and>
+        </preConditions>
+        <sqlFile path="db/tables/026-adventurer-partner.sql"/>
+    </changeSet>
+
     <!-- Retire the removed experimental Double Agent POC table on existing installs. -->
     <changeSet id="27-remove-character-tag-sessions" author="Codex">
         <preConditions onFail="MARK_RAN">

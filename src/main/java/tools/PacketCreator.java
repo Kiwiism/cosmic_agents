@@ -2983,12 +2983,18 @@ public class PacketCreator {
     }
 
     public static Packet giveDebuff(List<Pair<Disease, Integer>> statups, MobSkill skill) {
+        return giveDebuff(statups, skill, skill.getDuration());
+    }
+
+    public static Packet giveDebuff(List<Pair<Disease, Integer>> statups,
+                                    MobSkill skill,
+                                    long remainingDurationMs) {
         final OutPacket p = OutPacket.create(SendOpcode.GIVE_BUFF);
         writeLongMaskD(p, statups);
         for (Pair<Disease, Integer> statup : statups) {
             p.writeShort(statup.getRight().shortValue());
             writeMobSkillId(p, skill.getId());
-            p.writeInt((int) skill.getDuration());
+            p.writeInt((int) Math.min(Integer.MAX_VALUE, Math.max(0L, remainingDurationMs)));
         }
         p.writeShort(0); // ??? wk charges have 600 here o.o
         p.writeShort(900);//Delay
@@ -4450,9 +4456,13 @@ public class PacketCreator {
     }
 
     public static Packet showPet(Character chr, Pet pet, boolean remove, boolean hunger) {
+        return showPetAtIndex(chr, chr.getPetIndex(pet), pet, remove, hunger);
+    }
+
+    public static Packet showPetAtIndex(Character chr, byte petIndex, Pet pet, boolean remove, boolean hunger) {
         OutPacket p = OutPacket.create(SendOpcode.SPAWN_PET);
         p.writeInt(chr.getId());
-        p.writeByte(chr.getPetIndex(pet));
+        p.writeByte(petIndex);
         if (remove) {
             p.writeByte(0);
             p.writeBool(hunger);
@@ -4995,7 +5005,8 @@ public class PacketCreator {
     }
 
     public static Packet getFredrick(Character chr) throws SQLException {
-        List<Pair<Item, InventoryType>> items = ItemFactory.MERCHANT.loadItems(chr.getId(), false);
+        List<Pair<Item, InventoryType>> items = ItemFactory.MERCHANT.loadItems(
+                chr.getProfileOwnerCharacterId(), false);
         return getFredrick(chr, items);
     }
 

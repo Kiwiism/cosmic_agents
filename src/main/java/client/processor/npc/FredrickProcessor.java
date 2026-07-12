@@ -341,11 +341,12 @@ public class FredrickProcessor {
     static void persistRetrieval(Connection con, Character chr,
                                  List<Pair<Item, InventoryType>> inventorySnapshot,
                                  int expectedMerchantMeso, int settledMeso) throws SQLException {
-        ItemFactory.INVENTORY.saveItems(inventorySnapshot, chr.getId(), con);
+        int profileOwnerId = chr.getProfileOwnerCharacterId();
+        ItemFactory.INVENTORY.saveItems(inventorySnapshot, profileOwnerId, con);
 
         try (PreparedStatement ps = con.prepareStatement(
                 "DELETE FROM inventorymerchant WHERE characterid = ?")) {
-            ps.setInt(1, chr.getId());
+            ps.setInt(1, profileOwnerId);
             ps.executeUpdate();
         }
         try (PreparedStatement ps = con.prepareStatement(
@@ -353,19 +354,19 @@ public class FredrickProcessor {
                         "LEFT JOIN inventoryequipment USING(inventoryitemid) " +
                         "WHERE type = ? AND characterid = ?")) {
             ps.setInt(1, ItemFactory.MERCHANT.getValue());
-            ps.setInt(2, chr.getId());
+            ps.setInt(2, profileOwnerId);
             ps.executeUpdate();
         }
         try (PreparedStatement ps = con.prepareStatement(
                 "UPDATE characters SET meso = ?, MerchantMesos = 0 WHERE id = ? AND MerchantMesos = ?")) {
             ps.setInt(1, settledMeso);
-            ps.setInt(2, chr.getId());
+            ps.setInt(2, profileOwnerId);
             ps.setInt(3, expectedMerchantMeso);
             if (ps.executeUpdate() != 1) {
                 throw new SQLException("Merchant balance changed during Fredrick retrieval");
             }
         }
-        removeFredrickLog(con, chr.getId());
+        removeFredrickLog(con, profileOwnerId);
     }
 
     public void fredrickRetrieveItems(Client c) {     // thanks Gustav for pointing out the dupe on Fredrick handling
@@ -379,8 +380,9 @@ public class FredrickProcessor {
                     try (Connection con = DatabaseConnection.getConnection()) {
                         con.setAutoCommit(false);
                         try {
-                            MerchantBalance merchantBalance = loadMerchantBalanceForUpdate(con, chr.getId());
-                            items = ItemFactory.MERCHANT.loadMerchantItemsForUpdate(chr.getId(), con);
+                            int profileOwnerId = chr.getProfileOwnerCharacterId();
+                            MerchantBalance merchantBalance = loadMerchantBalanceForUpdate(con, profileOwnerId);
+                            items = ItemFactory.MERCHANT.loadMerchantItemsForUpdate(profileOwnerId, con);
                             byte response = canRetrieveFromFredrick(chr, items, merchantBalance.netMeso());
                             if (response != 0) {
                                 con.rollback();

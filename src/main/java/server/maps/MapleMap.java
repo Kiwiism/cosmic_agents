@@ -2896,17 +2896,26 @@ public class MapleMap {
         }
     }
 
-    public void broadcastUpdateCharLookMessage(Character source, Character player) {
+    public PacketBroadcastMetrics broadcastUpdateCharLookMessage(Character source, Character player) {
+        int packetCount = 0;
+        long packetBytes = 0L;
         chrRLock.lock();
         try {
             for (Character chr : characters) {
                 if (chr != source) {
-                    chr.sendPacket(PacketCreator.updateCharLook(chr.getClient(), player));
+                    Packet packet = PacketCreator.updateCharLook(chr.getClient(), player);
+                    chr.sendPacket(packet);
+                    packetCount++;
+                    packetBytes += packet.getBytes().length;
                 }
             }
         } finally {
             chrRLock.unlock();
         }
+        return new PacketBroadcastMetrics(packetCount, packetBytes);
+    }
+
+    public record PacketBroadcastMetrics(int packetCount, long packetBytes) {
     }
 
     public void dropMessage(int type, String message) {

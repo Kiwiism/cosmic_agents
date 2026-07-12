@@ -762,6 +762,66 @@ public abstract class AbstractCharacterObject extends AbstractAnimatedMapObject 
         }
     }
 
+    protected CoreProfileStats captureCoreProfileStats() {
+        statRlock.lock();
+        try {
+            return new CoreProfileStats(
+                    str, dex, int_, luk, hp, maxhp, mp, maxmp,
+                    hpMpApUsed, remainingAp, Arrays.copyOf(remainingSp, remainingSp.length),
+                    clientmaxhp, clientmaxmp, localmaxhp, localmaxmp,
+                    transienthp, transientmp);
+        } finally {
+            statRlock.unlock();
+        }
+    }
+
+    protected void applyCoreProfileStats(CoreProfileStats state) {
+        this.str = state.str();
+        this.dex = state.dex();
+        this.int_ = state.intelligence();
+        this.luk = state.luk();
+        this.hp = state.hp();
+        this.maxhp = state.maxHp();
+        this.mp = state.mp();
+        this.maxmp = state.maxMp();
+        this.hpMpApUsed = state.hpMpApUsed();
+        this.remainingAp = state.remainingAp();
+        this.remainingSp = Arrays.copyOf(state.remainingSp(), state.remainingSp().length);
+        this.clientmaxhp = state.clientMaxHp();
+        this.clientmaxmp = state.clientMaxMp();
+        this.localmaxhp = state.localMaxHp();
+        this.localmaxmp = state.localMaxMp();
+        this.transienthp = state.transientHp();
+        this.transientmp = state.transientMp();
+    }
+
+    protected record CoreProfileStats(int str,
+                                      int dex,
+                                      int intelligence,
+                                      int luk,
+                                      int hp,
+                                      int maxHp,
+                                      int mp,
+                                      int maxMp,
+                                      int hpMpApUsed,
+                                      int remainingAp,
+                                      int[] remainingSp,
+                                      int clientMaxHp,
+                                      int clientMaxMp,
+                                      int localMaxHp,
+                                      int localMaxMp,
+                                      float transientHp,
+                                      float transientMp) {
+        public CoreProfileStats {
+            remainingSp = Arrays.copyOf(remainingSp, remainingSp.length);
+        }
+
+        @Override
+        public int[] remainingSp() {
+            return Arrays.copyOf(remainingSp, remainingSp.length);
+        }
+    }
+
     protected void updateRemainingSp(int remainingSp, int skillbook) {
         changeRemainingSp(remainingSp, skillbook, false);
     }

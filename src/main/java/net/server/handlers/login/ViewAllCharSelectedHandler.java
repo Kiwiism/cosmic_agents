@@ -32,6 +32,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.PacketCreator;
+import server.partner.ProfileLeaseRegistry;
 import tools.Randomizer;
 
 import java.net.InetAddress;
@@ -53,6 +54,11 @@ public final class ViewAllCharSelectedHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int charId = p.readInt();
+
+        if (ProfileLeaseRegistry.global().isLeased(charId)) {
+            c.sendPacket(PacketCreator.getAfterLoginError(7));
+            return;
+        }
         p.readInt(); // please don't let the client choose which world they should login
 
         String macs = p.readString();

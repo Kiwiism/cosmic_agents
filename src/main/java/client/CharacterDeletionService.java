@@ -5,6 +5,7 @@ import net.server.world.Party;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.monitoring.SlowOperationLogger;
+import server.partner.ProfileLeaseRegistry;
 import tools.DatabaseConnection;
 
 import java.sql.Connection;
@@ -22,6 +23,7 @@ public final class CharacterDeletionService {
         SUCCESS(0, "Character deleted."),
         NOT_FOUND(0x09, "Character could not be found."),
         ERROR(0x09, "Character could not be deleted."),
+        PARTNER_LEASED(0x09, "Character is active in an Adventurer Partner session."),
         GUILD_LEADER(0x16, "Character is currently a guild leader."),
         PENDING_WORLD_TRANSFER(0x1A, "Character has a pending world transfer."),
         FAMILY_WITH_MEMBERS(0x1D, "Character is still linked to other family members.");
@@ -48,6 +50,9 @@ public final class CharacterDeletionService {
     }
 
     public static Result checkDeletionEligibility(int cid) {
+        if (ProfileLeaseRegistry.global().isLeased(cid)) {
+            return Result.PARTNER_LEASED;
+        }
         long startedNs = SlowOperationLogger.start();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT `world`, `guildid`, `guildrank`, `familyId` FROM characters WHERE id = ?");

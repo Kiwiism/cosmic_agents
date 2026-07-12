@@ -73,7 +73,9 @@ public final class HiredMerchantRequest extends AbstractPacketHandler {
         if (GameConstants.isFreeMarketRoom(chr.getMapId())) {
             if (!chr.hasMerchant()) {
                 try {
-                    if (ItemFactory.MERCHANT.loadItems(chr.getId(), false).isEmpty() && chr.getMerchantMeso() == 0) {
+                    if (ItemFactory.MERCHANT.loadItems(
+                            chr.getProfileOwnerCharacterId(), false).isEmpty()
+                            && chr.getMerchantMeso() == 0) {
                         c.sendPacket(PacketCreator.hiredMerchantBox());
                     } else {
                         chr.sendPacket(PacketCreator.retrieveFirstMessage());

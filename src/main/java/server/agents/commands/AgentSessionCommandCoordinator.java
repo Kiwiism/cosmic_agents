@@ -28,6 +28,10 @@ public final class AgentSessionCommandCoordinator {
         return new AgentChatSessionRequestFlow.SessionRequestCallbacks() {
             @Override
             public void requestRelog() {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(entry, "Agent E manages this Partner session. Use Release Partner instead.");
+                    return;
+                }
                 AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.RELOG);
                     AgentMovementCommandRuntime.stop(entry);
@@ -37,6 +41,10 @@ public final class AgentSessionCommandCoordinator {
 
             @Override
             public void requestLogout() {
+                if (entry.isPartnerManaged()) {
+                    AgentReplyRuntime.replyNow(entry, "Agent E manages this Partner session. Use Release Partner instead.");
+                    return;
+                }
                 AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
                     AgentPendingActionStateRuntime.setPendingAction(entry, AgentChatPendingAction.LOGOUT);
                     AgentMovementCommandRuntime.stop(entry);
@@ -55,6 +63,9 @@ public final class AgentSessionCommandCoordinator {
     }
 
     public static void scheduleRelogConfirm(AgentRuntimeEntry entry) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
             Character owner = owner(entry);
             if (owner == null) {
@@ -77,6 +88,9 @@ public final class AgentSessionCommandCoordinator {
     }
 
     public static void scheduleLogoutConfirm(AgentRuntimeEntry entry) {
+        if (entry.isPartnerManaged()) {
+            return;
+        }
         AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, () -> {
             AgentReplyRuntime.replyNow(entry, AgentChatSessionRequestFlow.logoutConfirmedReply());
             AgentSchedulerRuntime.afterRandomDelay(entry, 1800, 2200, () -> {
@@ -174,6 +188,9 @@ public final class AgentSessionCommandCoordinator {
         }
 
         for (AgentRuntimeEntry owned : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
+            if (owned.isPartnerManaged()) {
+                continue;
+            }
             AgentMovementCommandRuntime.stop(owned);
             AgentSchedulerRuntime.afterRandomDelay(owned, 1200, 1800, () -> {
                 Character ownedBot = bot(owned);

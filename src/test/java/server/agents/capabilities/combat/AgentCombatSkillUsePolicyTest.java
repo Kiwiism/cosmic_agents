@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import client.Character;
+import client.Job;
 import client.Skill;
 import org.junit.jupiter.api.Test;
 import server.StatEffect;
@@ -27,10 +28,14 @@ class AgentCombatSkillUsePolicyTest {
         Skill skill = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);
         SkillGateway skills = mock(SkillGateway.class);
-        when(skills.getSkill(2000)).thenReturn(skill);
+        int skillId = 1001004;
+        when(skills.getSkill(skillId)).thenReturn(skill);
+        when(skill.getId()).thenReturn(skillId);
         when(skill.getEffect(3)).thenReturn(effect);
+        when(bot.getSkillLevel(skill)).thenReturn((byte) 3);
+        when(bot.getJob()).thenReturn(Job.HERO);
         when(effect.canPaySkillCost(bot)).thenReturn(true);
 
-        assertTrue(AgentCombatSkillUsePolicy.canPaySkillCost(bot, 2000, 3, skills));
+        assertTrue(AgentCombatSkillUsePolicy.canPaySkillCost(bot, skillId, 3, skills));
     }
 }

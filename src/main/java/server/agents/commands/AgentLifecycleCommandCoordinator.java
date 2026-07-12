@@ -49,6 +49,10 @@ public final class AgentLifecycleCommandCoordinator {
                                        String targetName,
                                        AgentTransferService.AgentStopper stopper,
                                        AgentTransferService.AgentRegistrar registrar) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByName(leaderCharId, agentName);
+        if (entry != null && entry.isPartnerManaged()) {
+            return "Agent E manages this Partner session. Release the Partner before transferring them.";
+        }
         return AgentLeaderTransferCoordinator.transferAgent(
                 leaderCharId, leader, agentName, targetName, stopper, registrar);
     }
@@ -56,6 +60,10 @@ public final class AgentLifecycleCommandCoordinator {
     public static boolean dismissAgent(int leaderCharId,
                                        String agentName,
                                        Consumer<AgentRuntimeEntry> stopAgent) {
+        AgentRuntimeEntry entry = AgentRuntimeRegistry.findByName(leaderCharId, agentName);
+        if (entry != null && entry.isPartnerManaged()) {
+            return false;
+        }
         return AgentLifecycleService.dismissAgentByName(
                 leaderCharId,
                 agentName,

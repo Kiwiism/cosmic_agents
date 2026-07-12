@@ -11,6 +11,7 @@ import java.util.concurrent.RejectedExecutionException;
 /** Bounded per-session FIFO for immutable actions entering from external threads. */
 public final class AgentActionMailbox {
     private record Envelope<R>(long sessionGeneration,
+                               long transitionGeneration,
                                AgentMailboxAction<R> action,
                                CompletableFuture<R> result) {
     }
@@ -26,6 +27,13 @@ public final class AgentActionMailbox {
     public synchronized <R> CompletableFuture<R> submit(
             long sessionGeneration,
             AgentMailboxAction<R> action) {
+        return submit(sessionGeneration, 0L, action);
+    }
+
+    public synchronized <R> CompletableFuture<R> submit(
+            long sessionGeneration,
+            long transitionGeneration,
+            AgentMailboxAction<R> action) {
         CompletableFuture<R> result = new CompletableFuture<>();
         if (closed) {
             result.completeExceptionally(new RejectedExecutionException("Agent mailbox is closed"));
@@ -37,7 +45,7 @@ public final class AgentActionMailbox {
             AgentAsyncQueueMetrics.recordRejected("mailbox", actions.size());
             return result;
         }
-        actions.addLast(new Envelope<>(sessionGeneration, action, result));
+        actions.addLast(new Envelope<>(sessionGeneration, transitionGeneration, action, result));
         AgentAsyncQueueMetrics.recordSubmitted("mailbox", actions.size());
         return result;
     }
@@ -87,9 +95,11 @@ public final class AgentActionMailbox {
         if (envelope.result().isCancelled()) {
             return;
         }
-        if (entry == null || envelope.sessionGeneration() != entry.sessionGeneration()) {
+        if (entry == null
+                || envelope.sessionGeneration() != entry.sessionGeneration()
+                || !entry.transitionBarrierState().isCurrentGeneration(envelope.transitionGeneration())) {
             envelope.result().completeExceptionally(
-                    new RejectedExecutionException("Agent action belongs to a stale session"));
+                    new RejectedExecutionException("Agent action belongs to a stale session or profile generation"));
             return;
         }
         try {

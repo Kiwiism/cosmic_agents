@@ -69,6 +69,7 @@ public class HiredMerchant extends AbstractMapObject {
     private final int mesos = 0;
     private final int channel;
     private final int world;
+    private final int persistenceOwnerId;
     private final long start;
     private String ownerName = "";
     private String description = "";
@@ -91,6 +92,7 @@ public class HiredMerchant extends AbstractMapObject {
         this.setPosition(owner.getPosition());
         this.start = System.currentTimeMillis();
         this.ownerId = owner.getId();
+        this.persistenceOwnerId = owner.getProfileOwnerCharacterId();
         this.channel = owner.getClient().getChannel();
         this.world = owner.getWorld();
         this.itemId = itemId;
@@ -709,8 +711,8 @@ public class HiredMerchant extends AbstractMapObject {
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
             try {
-                ItemFactory.MERCHANT.saveItems(itemsWithType, bundles, this.ownerId, con);
-                FredrickProcessor.insertFredrickLog(con, this.ownerId);
+                ItemFactory.MERCHANT.saveItems(itemsWithType, bundles, this.persistenceOwnerId, con);
+                FredrickProcessor.insertFredrickLog(con, this.persistenceOwnerId);
                 con.commit();
             } catch (SQLException | RuntimeException failure) {
                 con.rollback();

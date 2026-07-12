@@ -6,6 +6,7 @@ import server.agents.capabilities.movement.AgentMovementStateRuntime;
 
 import client.Character;
 import client.Skill;
+import client.SkillEligibilityPolicy;
 import net.server.channel.handlers.AbstractDealDamageHandler;
 import server.StatEffect;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -80,7 +81,8 @@ public final class AgentCombatHealRuntime {
             }
         }
 
-        if (!fx.canPaySkillCost(bot) || !fx.applyTo(bot)) return false;
+        if (!SkillEligibilityPolicy.evaluate(bot, skill, lvl, false, () -> true).allowed()
+                || !fx.applyTo(bot)) return false;
 
         long now = System.currentTimeMillis();
         AgentAttackExecutionProvider.BasicAttackData fallbackAttackData =

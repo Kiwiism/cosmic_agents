@@ -11,20 +11,26 @@ public final class AgentTickRuntime {
                             int agentCharId,
                             Consumer<AgentRuntimeEntry> issueGrind,
                             Consumer<AgentRuntimeEntry> issueFollow) {
-        AgentTickOrchestrator.runGuardedTick(
-                entry,
-                leaderCharId,
-                agentCharId,
-                (tickEntry, tickLeaderId, tickAgentId) -> AgentTickCoreRuntime.tickCore(
-                        tickEntry,
-                        tickLeaderId,
-                        tickAgentId,
-                        issueGrind,
-                        issueFollow),
-                (failedEntry, failedLeaderId, failedAgentId, failure) -> AgentTickFailureRuntime.handleFailure(
-                        failedEntry,
-                        failedLeaderId,
-                        failedAgentId,
-                        failure));
+        AgentTransitionBarrierState.TickPermit permit = entry.transitionBarrierState().tryEnterTick();
+        if (permit == null) {
+            return;
+        }
+        try (permit) {
+            AgentTickOrchestrator.runGuardedTick(
+                    entry,
+                    leaderCharId,
+                    agentCharId,
+                    (tickEntry, tickLeaderId, tickAgentId) -> AgentTickCoreRuntime.tickCore(
+                            tickEntry,
+                            tickLeaderId,
+                            tickAgentId,
+                            issueGrind,
+                            issueFollow),
+                    (failedEntry, failedLeaderId, failedAgentId, failure) -> AgentTickFailureRuntime.handleFailure(
+                            failedEntry,
+                            failedLeaderId,
+                            failedAgentId,
+                            failure));
+        }
     }
 }

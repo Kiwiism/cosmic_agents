@@ -12,6 +12,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentTransferRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.partner.PartnerRecoveryService;
 
 import client.Character;
 
@@ -22,27 +23,37 @@ public final class AgentRuntimeCleanupService {
     }
 
     public static void removeAgentsForLeader(int leaderCharId) {
-        List<Integer> agentIds = AgentRuntimeRegistry.entriesForLeader(leaderCharId).stream()
+        List<Character> agents = AgentRuntimeRegistry.entriesForLeader(leaderCharId).stream()
                 .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(java.util.Objects::nonNull)
-                .map(Character::getId)
                 .toList();
+        agents.forEach(agent -> PartnerRecoveryService.getInstance().onAgentRuntimeRemoval(
+                agent, "Agent leader runtime was removed"));
         AgentLifecycleService.removeLeaderEntries(
                 AgentRuntimeRegistry.entriesByLeaderId(),
                 AgentFormationService.formationsByLeaderId(),
                 AgentLeaderSafetyService.townClusterAnchorsByLeaderId(),
                 leaderCharId,
                 AgentLifecycleService::cancelScheduledTickIfPresent);
-        agentIds.forEach(AgentRuntimeCleanupService::clearAgentStateIfInactive);
+        agents.stream().map(Character::getId)
+                .forEach(AgentRuntimeCleanupService::clearAgentStateIfInactive);
         clearLeaderStateIfInactive(leaderCharId);
     }
 
     public static boolean removeAgentByCharacterId(int agentCharId) {
+        List<AgentRuntimeEntry> matchingEntries = AgentRuntimeRegistry.entriesByLeaderId().values().stream()
+                .flatMap(List::stream)
+                .filter(runtime -> AgentRuntimeIdentityRuntime.botIs(runtime, agentCharId))
+                .toList();
         List<Integer> leaderIds = AgentRuntimeRegistry.entriesByLeaderId().entrySet().stream()
                 .filter(entry -> entry.getValue().stream()
                         .anyMatch(runtime -> AgentRuntimeIdentityRuntime.botIs(runtime, agentCharId)))
                 .map(java.util.Map.Entry::getKey)
                 .toList();
+        matchingEntries.stream().map(AgentRuntimeIdentityRuntime::bot)
+                .filter(java.util.Objects::nonNull)
+                .forEach(agent -> PartnerRecoveryService.getInstance().onAgentRuntimeRemoval(
+                        agent, "Agent runtime was removed by character ID"));
         boolean removed = AgentLifecycleService.removeAgentByCharacterId(
                 AgentRuntimeRegistry.entriesByLeaderId(),
                 AgentFormationService.formationsByLeaderId(),
@@ -57,6 +68,8 @@ public final class AgentRuntimeCleanupService {
     public static boolean removeAgent(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         Character leader = AgentRuntimeIdentityRuntime.owner(entry);
+        PartnerRecoveryService.getInstance().onAgentRuntimeRemoval(
+                agent, "Agent runtime was removed");
         boolean removed = AgentLifecycleService.removeAgentEntry(
                 AgentRuntimeRegistry.entriesByLeaderId(),
                 AgentFormationService.formationsByLeaderId(),

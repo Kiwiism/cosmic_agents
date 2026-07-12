@@ -41,6 +41,7 @@ import client.keybind.QuickslotBinding;
 import client.newyear.NewYearCardRecord;
 import client.processor.action.PetAutopotProcessor;
 import client.processor.npc.FredrickProcessor;
+import client.profile.CharacterProfileBinding;
 import config.YamlConfig;
 import constants.game.ExpTable;
 import constants.game.GameConstants;
@@ -193,6 +194,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
@@ -233,6 +235,7 @@ public class Character extends AbstractCharacterObject {
 
     private int world;
     private int accountid, id, level;
+    private CharacterProfileBinding profileBinding = new CharacterProfileBinding();
     private int rank, rankMove, jobRank, jobRankMove;
     private int gender, hair, face;
     private int fame, quest_fame;
@@ -276,12 +279,17 @@ public class Character extends AbstractCharacterObject {
     private final AtomicBoolean mapTransitioning = new AtomicBoolean(true);  // player client is currently trying to change maps or log in the game map
     private final AtomicBoolean awayFromWorld = new AtomicBoolean(true);  // player is online, but on cash shop or mts
     private final AtomicBoolean pendingHpDeath = new AtomicBoolean(false);
-    private final AtomicInteger exp = new AtomicInteger();
-    private final AtomicInteger gachaexp = new AtomicInteger();
-    private final AtomicInteger meso = new AtomicInteger();
+    private final AtomicBoolean profileTransitioning = new AtomicBoolean(false);
+    private final AtomicBoolean profileSaving = new AtomicBoolean(false);
+    private volatile RuntimeException lastProfileSaveFailure;
+    private volatile RuntimeException lastCooldownSaveFailure;
+    private AtomicInteger exp = new AtomicInteger();
+    private AtomicInteger gachaexp = new AtomicInteger();
+    private AtomicInteger meso = new AtomicInteger();
     private final AtomicInteger chair = new AtomicInteger(-1);
-    private final DirtySectionTracker<PersistenceSection> persistenceDirty =
+    private DirtySectionTracker<PersistenceSection> persistenceDirty =
             new DirtySectionTracker<>(PersistenceSection.class, DIRTY_FULL_CHECKPOINT_AUTOSAVES);
+    private final AtomicLong actorSocialDirtyVersion = new AtomicLong();
     private long totalExpGained = 0;
     private int merchantmeso;
     private BuddyList buddylist;
@@ -297,7 +305,7 @@ public class Character extends AbstractCharacterObject {
     private RockPaperScissor rps;
     private Mount maplemount;
     private Party party;
-    private final Pet[] pets = new Pet[3];
+    private Pet[] pets = new Pet[3];
     private PlayerShop playerShop = null;
     private Shop shop = null;
     private SkinColor skinColor = SkinColor.LIGHT;
@@ -305,28 +313,28 @@ public class Character extends AbstractCharacterObject {
     private Trade trade = null;
     private MonsterBook monsterbook;
     private CashShop cashshop;
-    private final Set<NewYearCardRecord> newyears = new LinkedHashSet<>();
-    private final SavedLocation[] savedLocations;
-    private final SkillMacro[] skillMacros = new SkillMacro[5];
+    private Set<NewYearCardRecord> newyears = new LinkedHashSet<>();
+    private SavedLocation[] savedLocations;
+    private SkillMacro[] skillMacros = new SkillMacro[5];
     private List<Integer> lastmonthfameids;
     private final List<WeakReference<MapleMap>> lastVisitedMaps = new LinkedList<>();
     private WeakReference<MapleMap> ownedMap = new WeakReference<>(null);
-    private final Map<Short, QuestStatus> quests;
+    private Map<Short, QuestStatus> quests;
     private final Set<Monster> controlled = new LinkedHashSet<>();
     private final Map<Integer, String> entered = new LinkedHashMap<>();
     private final Set<MapObject> visibleMapObjects = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Map<Skill, SkillEntry> skills = new LinkedHashMap<>();
-    private final Map<Integer, Integer> activeCoupons = new LinkedHashMap<>();
-    private final Map<Integer, Integer> activeCouponRates = new LinkedHashMap<>();
-    private final EnumMap<BuffStat, BuffStatValueHolder> effects = new EnumMap<>(BuffStat.class);
-    private final Map<BuffStat, Byte> buffEffectsCount = new LinkedHashMap<>();
-    private final Map<Disease, Long> diseaseExpires = new LinkedHashMap<>();
-    private final Map<Integer, Map<BuffStat, BuffStatValueHolder>> buffEffects = new LinkedHashMap<>(); // non-overriding buffs thanks to Ronan
-    private final Map<Integer, Long> buffExpires = new LinkedHashMap<>();
-    private final Map<Integer, KeyBinding> keymap = Collections.synchronizedMap(new LinkedHashMap<>());
+    private Map<Skill, SkillEntry> skills = new LinkedHashMap<>();
+    private Map<Integer, Integer> activeCoupons = new LinkedHashMap<>();
+    private Map<Integer, Integer> activeCouponRates = new LinkedHashMap<>();
+    private EnumMap<BuffStat, BuffStatValueHolder> effects = new EnumMap<>(BuffStat.class);
+    private Map<BuffStat, Byte> buffEffectsCount = new LinkedHashMap<>();
+    private Map<Disease, Long> diseaseExpires = new LinkedHashMap<>();
+    private Map<Integer, Map<BuffStat, BuffStatValueHolder>> buffEffects = new LinkedHashMap<>(); // non-overriding buffs thanks to Ronan
+    private Map<Integer, Long> buffExpires = new LinkedHashMap<>();
+    private Map<Integer, KeyBinding> keymap = Collections.synchronizedMap(new LinkedHashMap<>());
     private final Map<Integer, Summon> summons = new LinkedHashMap<>();
-    private final Map<Integer, CooldownValueHolder> coolDowns = new LinkedHashMap<>();
-    private final EnumMap<Disease, Pair<DiseaseValueHolder, MobSkill>> diseases = new EnumMap<>(Disease.class);
+    private Map<Integer, CooldownValueHolder> coolDowns = new LinkedHashMap<>();
+    private EnumMap<Disease, Pair<DiseaseValueHolder, MobSkill>> diseases = new EnumMap<>(Disease.class);
     private byte[] m_aQuickslotLoaded;
     private QuickslotBinding m_pQuickslotKeyMapped;
     private Door pdoor = null;
@@ -349,31 +357,31 @@ public class Character extends AbstractCharacterObject {
     private final Lock petLock = new ReentrantLock(true);
     private final Lock prtLock = new ReentrantLock();
     private final Lock cpnLock = new ReentrantLock();
-    private final Map<Integer, Set<Integer>> excluded = new LinkedHashMap<>();
-    private final Set<Integer> excludedItems = new LinkedHashSet<>();
+    private Map<Integer, Set<Integer>> excluded = new LinkedHashMap<>();
+    private Set<Integer> excludedItems = new LinkedHashSet<>();
     private final Set<Integer> disabledPartySearchInvites = new LinkedHashSet<>();
     private static final String[] ariantroomleader = new String[3];
     private static final int[] ariantroomslot = new int[3];
     private long portaldelay = 0, lastcombo = 0;
     private short combocounter = 0;
     private final List<String> blockedPortals = new ArrayList<>();
-    private final Map<Short, String> area_info = new LinkedHashMap<>();
+    private Map<Short, String> area_info = new LinkedHashMap<>();
     private AutobanManager autoban;
     private boolean isbanned = false;
     private boolean blockCashShop = false;
     private boolean allowExpGain = true;
     private byte pendantExp = 0, lastmobcount = 0, doorSlot = -1;
-    private final List<Integer> trockmaps = new ArrayList<>();
-    private final List<Integer> viptrockmaps = new ArrayList<>();
-    private final Map<String, Events> events = Collections.synchronizedMap(new LinkedHashMap<>());
+    private List<Integer> trockmaps = new ArrayList<>();
+    private List<Integer> viptrockmaps = new ArrayList<>();
+    private Map<String, Events> events = Collections.synchronizedMap(new LinkedHashMap<>());
     private PartyQuest partyQuest = null;
     private final List<Pair<DelayedQuestUpdate, Object[]>> npcUpdateQuests = new LinkedList<>();
     private Dragon dragon = null;
     private Ring marriageRing;
     private int marriageItemid = -1;
     private int partnerId = -1;
-    private final List<Ring> crushRings = new ArrayList<>();
-    private final List<Ring> friendshipRings = new ArrayList<>();
+    private List<Ring> crushRings = new ArrayList<>();
+    private List<Ring> friendshipRings = new ArrayList<>();
     private boolean loggedIn = false;
     private boolean useCS;  //chaos scroll upon crafting item.
     private long npcCd;
@@ -456,6 +464,454 @@ public class Character extends AbstractCharacterObject {
         }
         quests = new LinkedHashMap<>();
         setPosition(new Point(0, 0));
+    }
+
+    public static ProfileExchangeResult exchangeProfileState(Character left, Character right) {
+        return exchangeProfileState(left, right, true);
+    }
+
+    static ProfileExchangeResult exchangeProfileState(Character left,
+                                                       Character right,
+                                                       boolean refreshDerivedStats) {
+        if (left == null || right == null || left == right) {
+            throw new IllegalArgumentException("Two distinct Character profile holders are required");
+        }
+        Character first = left.getId() <= right.getId() ? left : right;
+        Character second = first == left ? right : left;
+        if (!left.profileTransitioning.compareAndSet(false, true)) {
+            throw new IllegalStateException("The first character is already switching profiles");
+        }
+        if (!right.profileTransitioning.compareAndSet(false, true)) {
+            left.profileTransitioning.set(false);
+            throw new IllegalStateException("The second character is already switching profiles");
+        }
+
+        long lockStartedNs = System.nanoTime();
+        lockProfileState(first);
+        lockProfileState(second);
+        try {
+            String leftBlock = left.profileTransitionBlockReasonLocked();
+            if (leftBlock != null) {
+                throw new IllegalStateException(leftBlock);
+            }
+            String rightBlock = right.profileTransitionBlockReasonLocked();
+            if (rightBlock != null) {
+                throw new IllegalStateException(rightBlock);
+            }
+
+            ProfileState leftState = ProfileState.capture(left);
+            ProfileState rightState = ProfileState.capture(right);
+            try {
+                rightState.applyTo(left);
+                leftState.applyTo(right);
+            } catch (RuntimeException | Error failure) {
+                leftState.applyTo(left);
+                rightState.applyTo(right);
+                throw failure;
+            }
+
+            if (refreshDerivedStats) {
+                left.reapplyLocalStats();
+                right.reapplyLocalStats();
+            }
+            return new ProfileExchangeResult(
+                    left.getProfileOwnerCharacterId(),
+                    right.getProfileOwnerCharacterId(),
+                    left.getProfileBindingGeneration(),
+                    right.getProfileBindingGeneration(),
+                    System.nanoTime() - lockStartedNs);
+        } finally {
+            unlockProfileState(second);
+            unlockProfileState(first);
+            right.profileTransitioning.set(false);
+            left.profileTransitioning.set(false);
+        }
+    }
+
+    public boolean isProfileTransitioning() {
+        return profileTransitioning.get();
+    }
+
+    public boolean isProfileSaving() {
+        return profileSaving.get();
+    }
+
+    public String profileTransitionBlockReason() {
+        effLock.lock();
+        chrLock.lock();
+        try {
+            return profileTransitionBlockReasonLocked();
+        } finally {
+            chrLock.unlock();
+            effLock.unlock();
+        }
+    }
+
+    private String profileTransitionBlockReasonLocked() {
+        if (profileSaving.get()) {
+            return "A canonical profile save is in progress.";
+        }
+        if (!summons.isEmpty() || pdoor != null || dragon != null) {
+            return "Summons, doors, and dragons must be dismissed before switching.";
+        }
+        if (maplemount != null && maplemount.isActive()) {
+            return "Dismount before switching Partner profiles.";
+        }
+        if (chair.get() != -1) {
+            return "Stand up before switching Partner profiles.";
+        }
+        if (dragonBloodSchedule != null || hpDecreaseTask != null || beholderHealingSchedule != null
+                || beholderBuffSchedule != null || berserkSchedule != null || recoveryTask != null
+                || extraRecoveryTask != null || pendantOfSpirit != null) {
+            return "A periodic character effect prevents profile switching.";
+        }
+        for (Map<BuffStat, BuffStatValueHolder> holders : buffEffects.values()) {
+            for (BuffStatValueHolder holder : holders.values()) {
+                StatEffect effect = holder.effect;
+                if (effect != null && (effect.hasSummonRuntime() || effect.isDragonBlood()
+                        || effect.isRecovery() || effect.isBeholder() || effect.isMonsterRiding()
+                        || effect.isMagicDoor() || effect.isMorph())) {
+                    return "An unsupported map-bound or periodic buff prevents profile switching.";
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void lockProfileState(Character character) {
+        character.effLock.lock();
+        character.statWlock.lock();
+        character.chrLock.lock();
+        character.petLock.lock();
+    }
+
+    private static void unlockProfileState(Character character) {
+        character.petLock.unlock();
+        character.chrLock.unlock();
+        character.statWlock.unlock();
+        character.effLock.unlock();
+    }
+
+    public record ProfileExchangeResult(int leftProfileOwnerCharacterId,
+                                        int rightProfileOwnerCharacterId,
+                                        long leftBindingGeneration,
+                                        long rightBindingGeneration,
+                                        long lockDurationNs) {
+    }
+
+    private static final class ProfileState {
+        private CharacterProfileBinding binding;
+        private CoreProfileStats coreStats;
+        private int level;
+        private int gender;
+        private int hair;
+        private int face;
+        private int fame;
+        private int questFame;
+        private int gmLevel;
+        private SkinColor skinColor;
+        private Job job;
+        private AtomicInteger exp;
+        private AtomicInteger gachaExp;
+        private AtomicInteger meso;
+        private long totalExpGained;
+        private int merchantMeso;
+        private boolean hasMerchant;
+        private int expRate;
+        private int mesoRate;
+        private int dropRate;
+        private int expCoupon;
+        private int mesoCoupon;
+        private int dropCoupon;
+        private int energyBar;
+        private short comboCounter;
+        private boolean equippedMesoMagnet;
+        private boolean equippedItemPouch;
+        private boolean equippedPetItemIgnore;
+        private boolean hasSandboxItem;
+        private Inventory[] inventory;
+        private Pet[] pets;
+        private Mount mount;
+        private MonsterBook monsterBook;
+        private Set<NewYearCardRecord> newYears;
+        private SavedLocation[] savedLocations;
+        private SkillMacro[] skillMacros;
+        private List<Integer> lastMonthFameIds;
+        private Map<Short, QuestStatus> quests;
+        private Map<Skill, SkillEntry> skills;
+        private Map<Integer, KeyBinding> keymap;
+        private byte[] quickslotLoaded;
+        private QuickslotBinding quickslotMapped;
+        private Map<Integer, CooldownValueHolder> cooldowns;
+        private EnumMap<Disease, Pair<DiseaseValueHolder, MobSkill>> diseases;
+        private Map<Disease, Long> diseaseExpires;
+        private EnumMap<BuffStat, BuffStatValueHolder> effects;
+        private Map<BuffStat, Byte> buffEffectsCount;
+        private Map<Integer, Map<BuffStat, BuffStatValueHolder>> buffEffects;
+        private Map<Integer, Long> buffExpires;
+        private Map<Quest, Long> questExpirations;
+        private Map<Integer, Integer> activeCoupons;
+        private Map<Integer, Integer> activeCouponRates;
+        private Map<Integer, Set<Integer>> excluded;
+        private Set<Integer> excludedItems;
+        private Map<Short, String> areaInfo;
+        private List<Integer> trockMaps;
+        private List<Integer> vipTrockMaps;
+        private Map<String, Events> events;
+        private DirtySectionTracker<PersistenceSection> persistenceDirty;
+        private Ring marriageRing;
+        private int marriageItemId;
+        private int partnerId;
+        private List<Ring> crushRings;
+        private List<Ring> friendshipRings;
+        private int bookCover;
+        private int battleshipHp;
+        private int ariantPoints;
+        private int dojoPoints;
+        private int vanquisherStage;
+        private int dojoStage;
+        private int dojoEnergy;
+        private int vanquisherKills;
+        private boolean finishedDojoTutorial;
+        private int omokWins;
+        private int omokTies;
+        private int omokLosses;
+        private int matchcardWins;
+        private int matchcardTies;
+        private int matchcardLosses;
+        private int owlSearch;
+        private int itemEffect;
+        private boolean usedSafetyCharm;
+        private float autopotHpAlert;
+        private float autopotMpAlert;
+        private int linkedLevel;
+        private String linkedName;
+        private String dataString;
+        private long jailExpiration;
+        private long lastFameTime;
+        private long lastUsedCashItem;
+        private long lastExpression;
+        private long lastHealed;
+        private long lastDeathTime;
+        private long lastExpGainTime;
+        private byte pendantExp;
+        private byte extraHpRec;
+        private byte extraMpRec;
+        private short extraRecInterval;
+
+        private static ProfileState capture(Character character) {
+            ProfileState state = new ProfileState();
+            state.binding = character.profileBinding;
+            state.coreStats = character.captureCoreProfileStats();
+            state.level = character.level;
+            state.gender = character.gender;
+            state.hair = character.hair;
+            state.face = character.face;
+            state.fame = character.fame;
+            state.questFame = character.quest_fame;
+            state.gmLevel = character.gmLevel;
+            state.skinColor = character.skinColor;
+            state.job = character.job;
+            state.exp = character.exp;
+            state.gachaExp = character.gachaexp;
+            state.meso = character.meso;
+            state.totalExpGained = character.totalExpGained;
+            state.merchantMeso = character.merchantmeso;
+            state.hasMerchant = character.hasMerchant;
+            state.expRate = character.expRate;
+            state.mesoRate = character.mesoRate;
+            state.dropRate = character.dropRate;
+            state.expCoupon = character.expCoupon;
+            state.mesoCoupon = character.mesoCoupon;
+            state.dropCoupon = character.dropCoupon;
+            state.energyBar = character.energybar;
+            state.comboCounter = character.combocounter;
+            state.equippedMesoMagnet = character.equippedMesoMagnet;
+            state.equippedItemPouch = character.equippedItemPouch;
+            state.equippedPetItemIgnore = character.equippedPetItemIgnore;
+            state.hasSandboxItem = character.hasSandboxItem;
+            state.inventory = character.inventory;
+            state.pets = character.pets;
+            state.mount = character.maplemount;
+            state.monsterBook = character.monsterbook;
+            state.newYears = character.newyears;
+            state.savedLocations = character.savedLocations;
+            state.skillMacros = character.skillMacros;
+            state.lastMonthFameIds = character.lastmonthfameids;
+            state.quests = character.quests;
+            state.skills = character.skills;
+            state.keymap = character.keymap;
+            state.quickslotLoaded = character.m_aQuickslotLoaded;
+            state.quickslotMapped = character.m_pQuickslotKeyMapped;
+            state.cooldowns = character.coolDowns;
+            state.diseases = character.diseases;
+            state.diseaseExpires = character.diseaseExpires;
+            state.effects = character.effects;
+            state.buffEffectsCount = character.buffEffectsCount;
+            state.buffEffects = character.buffEffects;
+            state.buffExpires = character.buffExpires;
+            state.questExpirations = character.questExpirations;
+            state.activeCoupons = character.activeCoupons;
+            state.activeCouponRates = character.activeCouponRates;
+            state.excluded = character.excluded;
+            state.excludedItems = character.excludedItems;
+            state.areaInfo = character.area_info;
+            state.trockMaps = character.trockmaps;
+            state.vipTrockMaps = character.viptrockmaps;
+            state.events = character.events;
+            state.persistenceDirty = character.persistenceDirty;
+            state.marriageRing = character.marriageRing;
+            state.marriageItemId = character.marriageItemid;
+            state.partnerId = character.partnerId;
+            state.crushRings = character.crushRings;
+            state.friendshipRings = character.friendshipRings;
+            state.bookCover = character.bookCover;
+            state.battleshipHp = character.battleshipHp;
+            state.ariantPoints = character.ariantPoints;
+            state.dojoPoints = character.dojoPoints;
+            state.vanquisherStage = character.vanquisherStage;
+            state.dojoStage = character.dojoStage;
+            state.dojoEnergy = character.dojoEnergy;
+            state.vanquisherKills = character.vanquisherKills;
+            state.finishedDojoTutorial = character.finishedDojoTutorial;
+            state.omokWins = character.omokwins;
+            state.omokTies = character.omokties;
+            state.omokLosses = character.omoklosses;
+            state.matchcardWins = character.matchcardwins;
+            state.matchcardTies = character.matchcardties;
+            state.matchcardLosses = character.matchcardlosses;
+            state.owlSearch = character.owlSearch;
+            state.itemEffect = character.itemEffect;
+            state.usedSafetyCharm = character.usedSafetyCharm;
+            state.autopotHpAlert = character.autopotHpAlert;
+            state.autopotMpAlert = character.autopotMpAlert;
+            state.linkedLevel = character.linkedLevel;
+            state.linkedName = character.linkedName;
+            state.dataString = character.dataString;
+            state.jailExpiration = character.jailExpiration;
+            state.lastFameTime = character.lastfametime;
+            state.lastUsedCashItem = character.lastUsedCashItem;
+            state.lastExpression = character.lastExpression;
+            state.lastHealed = character.lastHealed;
+            state.lastDeathTime = character.lastDeathtime;
+            state.lastExpGainTime = character.lastExpGainTime;
+            state.pendantExp = character.pendantExp;
+            state.extraHpRec = character.extraHpRec;
+            state.extraMpRec = character.extraMpRec;
+            state.extraRecInterval = character.extraRecInterval;
+            return state;
+        }
+
+        private void applyTo(Character character) {
+            character.profileBinding = binding;
+            character.applyCoreProfileStats(coreStats);
+            character.level = level;
+            character.gender = gender;
+            character.hair = hair;
+            character.face = face;
+            character.fame = fame;
+            character.quest_fame = questFame;
+            character.gmLevel = gmLevel;
+            character.skinColor = skinColor;
+            character.job = job;
+            character.exp = exp;
+            character.gachaexp = gachaExp;
+            character.meso = meso;
+            character.totalExpGained = totalExpGained;
+            character.merchantmeso = merchantMeso;
+            character.hasMerchant = hasMerchant;
+            character.expRate = expRate;
+            character.mesoRate = mesoRate;
+            character.dropRate = dropRate;
+            character.expCoupon = expCoupon;
+            character.mesoCoupon = mesoCoupon;
+            character.dropCoupon = dropCoupon;
+            character.energybar = energyBar;
+            character.combocounter = comboCounter;
+            character.equippedMesoMagnet = equippedMesoMagnet;
+            character.equippedItemPouch = equippedItemPouch;
+            character.equippedPetItemIgnore = equippedPetItemIgnore;
+            character.hasSandboxItem = hasSandboxItem;
+            character.inventory = inventory;
+            character.pets = pets;
+            character.maplemount = mount;
+            character.monsterbook = monsterBook;
+            character.newyears = newYears;
+            character.savedLocations = savedLocations;
+            character.skillMacros = skillMacros;
+            character.lastmonthfameids = lastMonthFameIds;
+            character.quests = quests;
+            character.skills = skills;
+            character.keymap = keymap;
+            character.m_aQuickslotLoaded = quickslotLoaded;
+            character.m_pQuickslotKeyMapped = quickslotMapped;
+            character.coolDowns = cooldowns;
+            character.diseases = diseases;
+            character.diseaseExpires = diseaseExpires;
+            character.effects = effects;
+            character.buffEffectsCount = buffEffectsCount;
+            character.buffEffects = buffEffects;
+            character.buffExpires = buffExpires;
+            character.questExpirations = questExpirations;
+            character.activeCoupons = activeCoupons;
+            character.activeCouponRates = activeCouponRates;
+            character.excluded = excluded;
+            character.excludedItems = excludedItems;
+            character.area_info = areaInfo;
+            character.trockmaps = trockMaps;
+            character.viptrockmaps = vipTrockMaps;
+            character.events = events;
+            character.persistenceDirty = persistenceDirty;
+            character.marriageRing = marriageRing;
+            character.marriageItemid = marriageItemId;
+            character.partnerId = partnerId;
+            character.crushRings = crushRings;
+            character.friendshipRings = friendshipRings;
+            character.bookCover = bookCover;
+            character.battleshipHp = battleshipHp;
+            character.ariantPoints = ariantPoints;
+            character.dojoPoints = dojoPoints;
+            character.vanquisherStage = vanquisherStage;
+            character.dojoStage = dojoStage;
+            character.dojoEnergy = dojoEnergy;
+            character.vanquisherKills = vanquisherKills;
+            character.finishedDojoTutorial = finishedDojoTutorial;
+            character.omokwins = omokWins;
+            character.omokties = omokTies;
+            character.omoklosses = omokLosses;
+            character.matchcardwins = matchcardWins;
+            character.matchcardties = matchcardTies;
+            character.matchcardlosses = matchcardLosses;
+            character.owlSearch = owlSearch;
+            character.itemEffect = itemEffect;
+            character.usedSafetyCharm = usedSafetyCharm;
+            character.autopotHpAlert = autopotHpAlert;
+            character.autopotMpAlert = autopotMpAlert;
+            character.linkedLevel = linkedLevel;
+            character.linkedName = linkedName;
+            character.dataString = dataString;
+            character.jailExpiration = jailExpiration;
+            character.lastfametime = lastFameTime;
+            character.lastUsedCashItem = lastUsedCashItem;
+            character.lastExpression = lastExpression;
+            character.lastHealed = lastHealed;
+            character.lastDeathtime = lastDeathTime;
+            character.lastExpGainTime = lastExpGainTime;
+            character.pendantExp = pendantExp;
+            character.extraHpRec = extraHpRec;
+            character.extraMpRec = extraMpRec;
+            character.extraRecInterval = extraRecInterval;
+
+            for (Inventory profileInventory : character.inventory) {
+                profileInventory.attachPersistenceOwner(character);
+            }
+            if (character.maplemount != null) {
+                character.maplemount.attachOwner(character);
+            }
+            character.attachProfilePersistenceChildren();
+            character.profileBinding.markAttached();
+            character.equipchanged = true;
+        }
     }
 
     private static Job getJobStyleInternal(int jobid, byte opt) {
@@ -578,7 +1034,7 @@ public class Character extends AbstractCharacterObject {
             ps.setByte(2, chr.getInventory(InventoryType.USE).getSlotLimit());
             ps.setByte(3, chr.getInventory(InventoryType.SETUP).getSlotLimit());
             ps.setByte(4, chr.getInventory(InventoryType.ETC).getSlotLimit());
-            ps.setInt(5, chr.getId());
+            ps.setInt(5, chr.getProfileOwnerCharacterId());
             ps.executeUpdate();
         }
     }
@@ -1964,7 +2420,7 @@ public class Character extends AbstractCharacterObject {
             try (Connection con = DatabaseConnection.getConnection();
                  PreparedStatement ps = con.prepareStatement("DELETE FROM skills WHERE skillid = ? AND characterid = ?")) {
                 ps.setInt(1, skill.getId());
-                ps.setInt(2, id);
+                ps.setInt(2, getProfileOwnerCharacterId());
                 ps.executeUpdate();
             } catch (SQLException ex) {
                 monitoring.RuntimeFailureLogger.log(ex);
@@ -5296,7 +5752,7 @@ public class Character extends AbstractCharacterObject {
 
     public void setUsedStorage() {
         usedStorage.set(true);
-        markPersistenceDirty(PersistenceSection.RELATED);
+        markActorPersistenceDirty();
     }
 
     public List<Ring> getFriendshipRings() {
@@ -5354,6 +5810,166 @@ public class Character extends AbstractCharacterObject {
 
     public int getId() {
         return id;
+    }
+
+    public List<BuffPresentationSnapshot> getBuffPresentationSnapshots() {
+        effLock.lock();
+        chrLock.lock();
+        try {
+            long now = Server.getInstance().getCurrentTime();
+            List<BuffPresentationSnapshot> snapshots = new ArrayList<>(buffEffects.size());
+            for (Entry<Integer, Map<BuffStat, BuffStatValueHolder>> source : buffEffects.entrySet()) {
+                List<Pair<BuffStat, Integer>> statups = new ArrayList<>(source.getValue().size());
+                long startTime = now;
+                for (Entry<BuffStat, BuffStatValueHolder> statup : source.getValue().entrySet()) {
+                    statups.add(new Pair<>(statup.getKey(), statup.getValue().value));
+                    startTime = Math.min(startTime, statup.getValue().startTime);
+                }
+                long expiry = buffExpires.getOrDefault(source.getKey(), Long.MAX_VALUE);
+                long remaining = expiry == Long.MAX_VALUE ? Integer.MAX_VALUE : Math.max(0L, expiry - now);
+                snapshots.add(new BuffPresentationSnapshot(
+                        source.getKey(), startTime, (int) Math.min(Integer.MAX_VALUE, remaining), List.copyOf(statups)));
+            }
+            return List.copyOf(snapshots);
+        } finally {
+            chrLock.unlock();
+            effLock.unlock();
+        }
+    }
+
+    public List<BuffStat> getActiveBuffStatsSnapshot() {
+        effLock.lock();
+        chrLock.lock();
+        try {
+            return List.copyOf(effects.keySet());
+        } finally {
+            chrLock.unlock();
+            effLock.unlock();
+        }
+    }
+
+    public List<QuestStatus> getQuestStatusesSnapshot() {
+        synchronized (quests) {
+            return List.copyOf(quests.values());
+        }
+    }
+
+    public List<DiseasePresentationSnapshot> getDiseasePresentationSnapshots() {
+        chrLock.lock();
+        try {
+            long now = Server.getInstance().getCurrentTime();
+            List<DiseasePresentationSnapshot> snapshots = new ArrayList<>(diseases.size());
+            for (Entry<Disease, Pair<DiseaseValueHolder, MobSkill>> entry : diseases.entrySet()) {
+                MobSkill skill = entry.getValue().getRight();
+                long expiry = diseaseExpires.getOrDefault(entry.getKey(), now);
+                snapshots.add(new DiseasePresentationSnapshot(
+                        entry.getKey(), Math.max(0L, expiry - now), skill));
+            }
+            return List.copyOf(snapshots);
+        } finally {
+            chrLock.unlock();
+        }
+    }
+
+    public record BuffPresentationSnapshot(int sourceId,
+                                           long startTime,
+                                           int remainingDurationMs,
+                                           List<Pair<BuffStat, Integer>> statups) {
+    }
+
+    public record DiseasePresentationSnapshot(Disease disease,
+                                               long remainingDurationMs,
+                                               MobSkill skill) {
+    }
+
+    public void suspendProfileRuntimeTasks() {
+        cancelBuffExpireTask();
+        cancelSkillCooldownTask();
+        cancelDiseaseExpireTask();
+        cancelQuestExpirationTask();
+        cancelExpirationTask();
+        if (client != null && client.getWorldServer() != null) {
+            for (byte slot = 0; slot < pets.length; slot++) {
+                if (pets[slot] != null) {
+                    client.getWorldServer().unregisterPetHunger(this, slot);
+                }
+            }
+        }
+    }
+
+    public void resumeProfileRuntimeTasks() {
+        if (!buffExpires.isEmpty()) {
+            buffExpireTask();
+        }
+        if (!coolDowns.isEmpty()) {
+            skillCooldownTask();
+        }
+        if (!diseaseExpires.isEmpty()) {
+            diseaseExpireTask();
+        }
+        if (!questExpirations.isEmpty()) {
+            questExpirationTask();
+        }
+        expirationTask();
+        if (isLoggedinWorld() && client != null && client.getWorldServer() != null) {
+            for (byte slot = 0; slot < pets.length; slot++) {
+                if (pets[slot] != null) {
+                    client.getWorldServer().registerPetHunger(this, slot);
+                }
+            }
+        }
+    }
+
+    /**
+     * Disconnect recovery may discard unsupported actor-bound effects so canonical
+     * ownership can be restored. Normal switches reject these effects instead.
+     */
+    public void discardUnsupportedProfileEffectsForRecovery() {
+        cancelMagicDoor();
+        cancelAllBuffs(false);
+        cancelAllDebuffs();
+        if (dragon != null) {
+            if (map != null) {
+                map.broadcastMessage(PacketCreator.removeDragon(dragon.getObjectId()));
+            }
+            dragon = null;
+        }
+        summons.clear();
+        if (maplemount != null && maplemount.isActive()) {
+            maplemount.setActive(false);
+            if (client != null && client.getWorldServer() != null) {
+                client.getWorldServer().unregisterMountHunger(this);
+            }
+        }
+        setChair(-1);
+        unregisterChairBuff();
+        dragonBloodSchedule = cancelTask(dragonBloodSchedule);
+        hpDecreaseTask = cancelTask(hpDecreaseTask);
+        beholderHealingSchedule = cancelTask(beholderHealingSchedule);
+        beholderBuffSchedule = cancelTask(beholderBuffSchedule);
+        berserkSchedule = cancelTask(berserkSchedule);
+        recoveryTask = cancelTask(recoveryTask);
+        extraRecoveryTask = cancelTask(extraRecoveryTask);
+        pendantOfSpirit = cancelTask(pendantOfSpirit);
+    }
+
+    private static ScheduledFuture<?> cancelTask(ScheduledFuture<?> task) {
+        if (task != null) {
+            task.cancel(false);
+        }
+        return null;
+    }
+
+    public int getProfileOwnerCharacterId() {
+        return profileBinding.ownerCharacterId();
+    }
+
+    public long getProfileBindingGeneration() {
+        return profileBinding.generation();
+    }
+
+    public long getProfileVersion() {
+        return profileBinding.version();
     }
 
     public static int getAccountIdByName(String name) {
@@ -5623,7 +6239,7 @@ public class Character extends AbstractCharacterObject {
 
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("SELECT `timestamp` FROM `fredstorage` WHERE `cid` = ?")) {
-            ps.setInt(1, id);
+            ps.setInt(1, getProfileOwnerCharacterId());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -6393,11 +7009,11 @@ public class Character extends AbstractCharacterObject {
 
     public void hasGivenFame(Character to) {
         lastfametime = System.currentTimeMillis();
-        lastmonthfameids.add(Integer.valueOf(to.getId()));
+        lastmonthfameids.add(Integer.valueOf(to.getProfileOwnerCharacterId()));
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("INSERT INTO famelog (characterid, characterid_to) VALUES (?, ?)")) {
-            ps.setInt(1, getId());
-            ps.setInt(2, to.getId());
+            ps.setInt(1, getProfileOwnerCharacterId());
+            ps.setInt(2, to.getProfileOwnerCharacterId());
             ps.executeUpdate();
         } catch (SQLException e) {
             monitoring.RuntimeFailureLogger.log(e);
@@ -7063,6 +7679,7 @@ public class Character extends AbstractCharacterObject {
         try {
             ret.accountid = rs.getInt("accountid");
             ret.id = rs.getInt("id");
+            ret.profileBinding.initializeCanonicalOwner(ret.id);
             ret.name = rs.getString("name");
             ret.gender = rs.getInt("gender");
             ret.skinColor = SkinColor.getById(rs.getInt("skincolor"));
@@ -7113,6 +7730,7 @@ public class Character extends AbstractCharacterObject {
 
         ret.accountid = this.getAccountID();
         ret.id = this.getId();
+        ret.profileBinding.initializeCanonicalOwner(ret.id);
         ret.name = this.getName();
         ret.gender = this.getGender();
         ret.skinColor = this.getSkinColor();
@@ -7169,10 +7787,18 @@ public class Character extends AbstractCharacterObject {
     }
 
     public static Character loadCharFromDB(final int charid, Client client, boolean channelserver) throws SQLException {
+        return loadCharFromDB(charid, client, channelserver, true);
+    }
+
+    public static Character loadCharFromDB(final int charid,
+                                           Client client,
+                                           boolean channelserver,
+                                           boolean consumeTransientState) throws SQLException {
         long loadStartedNs = SlowOperationLogger.start();
         Character ret = new Character();
         ret.client = client;
         ret.id = charid;
+        ret.profileBinding.initializeCanonicalOwner(charid);
 
         try (Connection con = DatabaseConnection.getConnection()) {
             final int mountexp;
@@ -7543,10 +8169,12 @@ public class Character extends AbstractCharacterObject {
                     }
                 }
 
-                // Cooldowns (delete)
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM cooldowns WHERE charid = ?")) {
-                    ps.setInt(1, ret.getId());
-                    ps.executeUpdate();
+                // Cooldowns are consumed only by a real runtime load, never by registration validation.
+                if (consumeTransientState) {
+                    try (PreparedStatement ps = con.prepareStatement("DELETE FROM cooldowns WHERE charid = ?")) {
+                        ps.setInt(1, ret.getId());
+                        ps.executeUpdate();
+                    }
                 }
 
                 // Debuffs (load)
@@ -7572,13 +8200,15 @@ public class Character extends AbstractCharacterObject {
                     }
                 }
 
-                // Debuffs (delete)
-                try (PreparedStatement ps = con.prepareStatement("DELETE FROM playerdiseases WHERE charid = ?")) {
-                    ps.setInt(1, ret.getId());
-                    ps.executeUpdate();
+                // Debuffs are consumed only by a real runtime load, never by registration validation.
+                if (consumeTransientState) {
+                    try (PreparedStatement ps = con.prepareStatement("DELETE FROM playerdiseases WHERE charid = ?")) {
+                        ps.setInt(1, ret.getId());
+                        ps.executeUpdate();
+                    }
                 }
 
-                if (!loadedDiseases.isEmpty()) {
+                if (consumeTransientState && !loadedDiseases.isEmpty()) {
                     Server.getInstance().getPlayerBuffStorage().addDiseasesToStorage(ret.id, loadedDiseases);
                 }
 
@@ -7665,8 +8295,9 @@ public class Character extends AbstractCharacterObject {
             ret.attachMount();
 
             // Quickslot key config
-            try (final PreparedStatement pSelectQuickslotKeyMapped = con.prepareStatement("SELECT keymap FROM quickslotkeymapped WHERE accountid = ?;")) {
-                pSelectQuickslotKeyMapped.setInt(1, ret.getAccountID());
+            try (final PreparedStatement pSelectQuickslotKeyMapped = con.prepareStatement(
+                    "SELECT keymap FROM character_quickslots WHERE character_id = ?")) {
+                pSelectQuickslotKeyMapped.setInt(1, ret.getId());
 
                 try (final ResultSet pResultSet = pSelectQuickslotKeyMapped.executeQuery()) {
                     if (pResultSet.next()) {
@@ -8345,13 +8976,14 @@ public class Character extends AbstractCharacterObject {
     }
 
     public synchronized void saveCooldowns() {
+        lastCooldownSaveFailure = null;
         List<PlayerCoolDownValueHolder> listcd = getAllCooldowns();
 
         if (!listcd.isEmpty()) {
             try (Connection con = DatabaseConnection.getConnection()) {
-                deleteWhereCharacterId(con, "DELETE FROM cooldowns WHERE charid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM cooldowns WHERE charid = ?", getProfileOwnerCharacterId());
                 try (PreparedStatement ps = con.prepareStatement("INSERT INTO cooldowns (charid, SkillID, StartTime, length) VALUES (?, ?, ?, ?)")) {
-                    ps.setInt(1, getId());
+                    ps.setInt(1, getProfileOwnerCharacterId());
                     for (PlayerCoolDownValueHolder cooling : listcd) {
                         ps.setInt(2, cooling.skillId);
                         ps.setLong(3, cooling.startTime);
@@ -8361,6 +8993,8 @@ public class Character extends AbstractCharacterObject {
                     ps.executeBatch();
                 }
             } catch (SQLException se) {
+                lastCooldownSaveFailure = new IllegalStateException(
+                        "Failed to save cooldowns for profile owner " + getProfileOwnerCharacterId(), se);
                 monitoring.RuntimeFailureLogger.log(se);
             }
         }
@@ -8368,9 +9002,9 @@ public class Character extends AbstractCharacterObject {
         Map<Disease, Pair<Long, MobSkill>> listds = getAllDiseases();
         if (!listds.isEmpty()) {
             try (Connection con = DatabaseConnection.getConnection()) {
-                deleteWhereCharacterId(con, "DELETE FROM playerdiseases WHERE charid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM playerdiseases WHERE charid = ?", getProfileOwnerCharacterId());
                 try (PreparedStatement ps = con.prepareStatement("INSERT INTO playerdiseases (charid, disease, mobskillid, mobskilllv, length) VALUES (?, ?, ?, ?, ?)")) {
-                    ps.setInt(1, getId());
+                    ps.setInt(1, getProfileOwnerCharacterId());
 
                     for (Entry<Disease, Pair<Long, MobSkill>> e : listds.entrySet()) {
                         ps.setInt(2, e.getKey().ordinal());
@@ -8386,8 +9020,22 @@ public class Character extends AbstractCharacterObject {
                     ps.executeBatch();
                 }
             } catch (SQLException se) {
+                RuntimeException diseaseFailure = new IllegalStateException(
+                        "Failed to save diseases for profile owner " + getProfileOwnerCharacterId(), se);
+                if (lastCooldownSaveFailure == null) {
+                    lastCooldownSaveFailure = diseaseFailure;
+                } else {
+                    lastCooldownSaveFailure.addSuppressed(diseaseFailure);
+                }
                 monitoring.RuntimeFailureLogger.log(se);
             }
+        }
+    }
+
+    public synchronized void saveCooldownsOrThrow() {
+        saveCooldowns();
+        if (lastCooldownSaveFailure != null) {
+            throw lastCooldownSaveFailure;
         }
     }
 
@@ -8516,6 +9164,7 @@ public class Character extends AbstractCharacterObject {
                     try (ResultSet rs = ps.getGeneratedKeys()) {
                         if (rs.next()) {
                             this.id = rs.getInt(1);
+                            this.profileBinding.initializeCanonicalOwner(this.id);
                         } else {
                             log.error("Inserting chr {} failed", name);
                             return false;
@@ -8540,7 +9189,7 @@ public class Character extends AbstractCharacterObject {
 
                 // Key config
                 try (PreparedStatement ps = con.prepareStatement("INSERT INTO keymap (characterid, `key`, `type`, `action`) VALUES (?, ?, ?, ?)")) {
-                    ps.setInt(1, id);
+            ps.setInt(1, getProfileOwnerCharacterId());
                     for (int i = 0; i < selectedKey.length; i++) {
                         ps.setInt(2, selectedKey[i]);
                         ps.setInt(3, selectedType[i]);
@@ -8555,8 +9204,8 @@ public class Character extends AbstractCharacterObject {
                     long nQuickslotKeymapped = LongTool.BytesToLong(this.m_pQuickslotKeyMapped.GetKeybindings());
 
                     // Quickslot key config
-                    try (PreparedStatement ps = con.prepareStatement("INSERT INTO quickslotkeymapped (accountid, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?;")) {
-                        ps.setInt(1, this.getAccountID());
+                    try (PreparedStatement ps = con.prepareStatement("INSERT INTO character_quickslots (character_id, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?")) {
+                        ps.setInt(1, this.getId());
                         ps.setLong(2, nQuickslotKeymapped);
                         ps.setLong(3, nQuickslotKeymapped);
                         ps.executeUpdate();
@@ -8628,8 +9277,29 @@ public class Character extends AbstractCharacterObject {
         saveCharToDB(notAutosave, notAutosave ? SaveReason.FULL_SAVE : SaveReason.AUTO_SAVE);
     }
 
+    /** Partner recovery requires an observable failure instead of the legacy log-and-continue behavior. */
+    public synchronized void saveCanonicalProfileOrThrow() {
+        if (!loggedIn) {
+            throw new IllegalStateException("Cannot save a profile holder that is not logged in");
+        }
+        lastProfileSaveFailure = null;
+        saveCharToDB(true, SaveReason.FULL_SAVE);
+        if (lastProfileSaveFailure != null) {
+            throw lastProfileSaveFailure;
+        }
+    }
+
     public void markPersistenceDirty(PersistenceSection section) {
+        if (section == PersistenceSection.SOCIAL) {
+            markActorPersistenceDirty();
+            return;
+        }
         persistenceDirty.mark(section);
+        profileBinding.markMutated();
+    }
+
+    private void markActorPersistenceDirty() {
+        actorSocialDirtyVersion.incrementAndGet();
     }
 
     private void attachQuestStatus(QuestStatus status) {
@@ -8653,17 +9323,25 @@ public class Character extends AbstractCharacterObject {
     }
 
     private void attachPersistenceChildren() {
+        attachActorPersistenceChildren();
+        attachProfilePersistenceChildren();
+    }
+
+    private void attachActorPersistenceChildren() {
         if (buddylist != null) {
             buddylist.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.SOCIAL));
-        }
-        if (monsterbook != null) {
-            monsterbook.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.STATS));
         }
         if (storage != null) {
             storage.attachPersistenceOwner(this);
         }
         if (cashshop != null) {
-            cashshop.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.RELATED));
+            cashshop.setPersistenceDirtyMarker(this::markActorPersistenceDirty);
+        }
+    }
+
+    private void attachProfilePersistenceChildren() {
+        if (monsterbook != null) {
+            monsterbook.setPersistenceDirtyMarker(() -> markPersistenceDirty(PersistenceSection.STATS));
         }
         attachMount();
         for (SkillMacro macro : skillMacros) {
@@ -8705,9 +9383,25 @@ public class Character extends AbstractCharacterObject {
         if (!loggedIn) {
             return;
         }
+        lastProfileSaveFailure = null;
+        if (!profileSaving.compareAndSet(false, true)) {
+            log.warn("Skipping overlapping character save actor={} reason={}", id, saveReason);
+            return;
+        }
+        try {
+        if (profileTransitioning.get()) {
+            lastProfileSaveFailure = new IllegalStateException(
+                    "Cannot save actor " + id + " during a profile transition");
+            log.warn("Skipping character save during profile transition actor={} reason={}", id, saveReason);
+            return;
+        }
+        int profileOwnerId = getProfileOwnerCharacterId();
+        log.debug("character_save_routing actor={} profileOwner={} reason={}", id, profileOwnerId, saveReason);
 
         SavePlan<PersistenceSection> savePlan = persistenceDirty.plan(notAutosave);
-        if (savePlan.isEmpty()) {
+        long socialDirtyVersion = actorSocialDirtyVersion.get();
+        boolean saveSocial = notAutosave || socialDirtyVersion != 0L;
+        if (savePlan.isEmpty() && !saveSocial) {
             persistenceDirty.complete(savePlan);
             CharacterSaveDiagnostics.recordSkipped(id, name, saveReason);
             return;
@@ -8764,7 +9458,7 @@ public class Character extends AbstractCharacterObject {
         } finally {
             chrLock.unlock();
         }
-        BuddyList.PersistenceSnapshot buddySnapshot = savePlan.includes(PersistenceSection.SOCIAL)
+        BuddyList.PersistenceSnapshot buddySnapshot = saveSocial
                 ? buddylist.persistenceSnapshot() : new BuddyList.PersistenceSnapshot(0, List.of());
         Map<Short, String> areaSnapshot;
         chrLock.lock();
@@ -8788,7 +9482,7 @@ public class Character extends AbstractCharacterObject {
                 : List.of();
         Mount.PersistenceSnapshot mountSnapshot = savePlan.includes(PersistenceSection.STATS) && maplemount != null
                 ? maplemount.persistenceSnapshot() : new Mount.PersistenceSnapshot(0, 1, 0);
-        boolean saveStorage = (savePlan.includes(PersistenceSection.SOCIAL)
+        boolean saveStorage = (saveSocial
                 || savePlan.includes(PersistenceSection.RELATED))
                 && storage != null && usedStorage.getAndSet(false);
         Map<FamilyEntry, Long> savedFamilyEntries = new LinkedHashMap<>();
@@ -8806,7 +9500,7 @@ public class Character extends AbstractCharacterObject {
             try {
                 if (savePlan.includes(PersistenceSection.STATS)) {
                 long sectionStartedNs = SlowOperationLogger.start();
-                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, map = ?, meso = ?, hpMpUsed = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, messengerid = ?, messengerposition = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?,  monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ?, partySearch = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
+                try (PreparedStatement ps = con.prepareStatement("UPDATE characters SET level = ?, fame = ?, str = ?, dex = ?, luk = ?, `int` = ?, exp = ?, gachaexp = ?, hp = ?, mp = ?, maxhp = ?, maxmp = ?, sp = ?, ap = ?, gm = ?, skincolor = ?, gender = ?, job = ?, hair = ?, face = ?, meso = ?, hpMpUsed = ?, mountlevel = ?, mountexp = ?, mounttiredness= ?, equipslots = ?, useslots = ?, setupslots = ?, etcslots = ?, monsterbookcover = ?, vanquisherStage = ?, dojoPoints = ?, lastDojoStage = ?, finishedDojoTutorial = ?, vanquisherKills = ?, matchcardwins = ?, matchcardlosses = ?, matchcardties = ?, omokwins = ?, omoklosses = ?, omokties = ?, dataString = ?, fquest = ?, jailexpire = ?, partnerId = ?, marriageItemId = ?, lastExpGainTime = ?, ariantPoints = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, level);    // thanks CanIGetaPR for noticing an unnecessary "level" limitation when persisting DB data
                     ps.setInt(2, fame);
 
@@ -8844,81 +9538,74 @@ public class Character extends AbstractCharacterObject {
                     ps.setInt(18, job.getId());
                     ps.setInt(19, hair);
                     ps.setInt(20, face);
-                    if (map == null || (cashshop != null && cashshop.isOpened())) {
-                        ps.setInt(21, mapid);
-                    } else {
-                        if (map.getForcedReturnId() != MapId.NONE) {
-                            ps.setInt(21, map.getForcedReturnId());
-                        } else {
-                            ps.setInt(21, getHp() < 1 ? map.getReturnMapId() : map.getId());
-                        }
-                    }
-                    ps.setInt(22, meso.get());
-                    ps.setInt(23, hpMpApUsed);
-                    if (map == null || map.getId() == MapId.CRIMSONWOOD_VALLEY_1 || map.getId() == MapId.CRIMSONWOOD_VALLEY_2) {  // reset to first spawnpoint on those maps
-                        ps.setInt(24, 0);
-                    } else {
-                        Portal closest = map.findClosestPlayerSpawnpoint(getPosition());
-                        if (closest != null) {
-                            ps.setInt(24, closest.getId());
-                        } else {
-                            ps.setInt(24, 0);
-                        }
-                    }
-
-                    prtLock.lock();
-                    try {
-                        if (party != null) {
-                            ps.setInt(25, party.getId());
-                        } else {
-                            ps.setInt(25, -1);
-                        }
-                    } finally {
-                        prtLock.unlock();
-                    }
-
-                    ps.setInt(26, buddylist.getCapacity());
-                    if (messenger != null) {
-                        ps.setInt(27, messenger.getId());
-                        ps.setInt(28, messengerposition);
-                    } else {
-                        ps.setInt(27, 0);
-                        ps.setInt(28, 4);
-                    }
-                    ps.setInt(29, mountSnapshot.level());
-                    ps.setInt(30, mountSnapshot.exp());
-                    ps.setInt(31, mountSnapshot.tiredness());
+                    ps.setInt(21, meso.get());
+                    ps.setInt(22, hpMpApUsed);
+                    ps.setInt(23, mountSnapshot.level());
+                    ps.setInt(24, mountSnapshot.exp());
+                    ps.setInt(25, mountSnapshot.tiredness());
                     for (int i = 1; i < 5; i++) {
-                        ps.setInt(i + 31, getSlots(i));
+                        ps.setInt(i + 25, getSlots(i));
                     }
 
-                    monsterbook.saveCards(con, id);
+                    monsterbook.saveCards(con, profileOwnerId);
 
-                    ps.setInt(36, bookCover);
-                    ps.setInt(37, vanquisherStage);
-                    ps.setInt(38, dojoPoints);
-                    ps.setInt(39, dojoStage);
-                    ps.setInt(40, finishedDojoTutorial ? 1 : 0);
-                    ps.setInt(41, vanquisherKills);
-                    ps.setInt(42, matchcardwins);
-                    ps.setInt(43, matchcardlosses);
-                    ps.setInt(44, matchcardties);
-                    ps.setInt(45, omokwins);
-                    ps.setInt(46, omoklosses);
-                    ps.setInt(47, omokties);
-                    ps.setString(48, dataString);
-                    ps.setInt(49, quest_fame);
-                    ps.setLong(50, jailExpiration);
-                    ps.setInt(51, partnerId);
-                    ps.setInt(52, marriageItemid);
-                    ps.setTimestamp(53, new Timestamp(lastExpGainTime));
-                    ps.setInt(54, ariantPoints);
-                    ps.setBoolean(55, canRecvPartySearchInvite);
-                    ps.setInt(56, id);
+                    ps.setInt(30, bookCover);
+                    ps.setInt(31, vanquisherStage);
+                    ps.setInt(32, dojoPoints);
+                    ps.setInt(33, dojoStage);
+                    ps.setInt(34, finishedDojoTutorial ? 1 : 0);
+                    ps.setInt(35, vanquisherKills);
+                    ps.setInt(36, matchcardwins);
+                    ps.setInt(37, matchcardlosses);
+                    ps.setInt(38, matchcardties);
+                    ps.setInt(39, omokwins);
+                    ps.setInt(40, omoklosses);
+                    ps.setInt(41, omokties);
+                    ps.setString(42, dataString);
+                    ps.setInt(43, quest_fame);
+                    ps.setLong(44, jailExpiration);
+                    ps.setInt(45, partnerId);
+                    ps.setInt(46, marriageItemid);
+                    ps.setTimestamp(47, new Timestamp(lastExpGainTime));
+                    ps.setInt(48, ariantPoints);
+                    ps.setInt(49, profileOwnerId);
 
                     int updateRows = ps.executeUpdate();
                     if (updateRows < 1) {
-                        throw new RuntimeException("Character not in database (" + id + ")");
+                        throw new RuntimeException("Profile owner not in database (" + profileOwnerId + ")");
+                    }
+                }
+
+                try (PreparedStatement ps = con.prepareStatement(
+                        "UPDATE characters SET map = ?, spawnpoint = ?, party = ?, buddyCapacity = ?, "
+                                + "messengerid = ?, messengerposition = ?, partySearch = ? WHERE id = ?")) {
+                    if (map == null || (cashshop != null && cashshop.isOpened())) {
+                        ps.setInt(1, mapid);
+                    } else if (map.getForcedReturnId() != MapId.NONE) {
+                        ps.setInt(1, map.getForcedReturnId());
+                    } else {
+                        ps.setInt(1, getHp() < 1 ? map.getReturnMapId() : map.getId());
+                    }
+                    if (map == null || map.getId() == MapId.CRIMSONWOOD_VALLEY_1
+                            || map.getId() == MapId.CRIMSONWOOD_VALLEY_2) {
+                        ps.setInt(2, 0);
+                    } else {
+                        Portal closest = map.findClosestPlayerSpawnpoint(getPosition());
+                        ps.setInt(2, closest != null ? closest.getId() : 0);
+                    }
+                    prtLock.lock();
+                    try {
+                        ps.setInt(3, party != null ? party.getId() : -1);
+                    } finally {
+                        prtLock.unlock();
+                    }
+                    ps.setInt(4, buddylist.getCapacity());
+                    ps.setInt(5, messenger != null ? messenger.getId() : 0);
+                    ps.setInt(6, messenger != null ? messengerposition : 4);
+                    ps.setBoolean(7, canRecvPartySearchInvite);
+                    ps.setInt(8, id);
+                    if (ps.executeUpdate() < 1) {
+                        throw new RuntimeException("Character actor not in database (" + id + ")");
                     }
                 }
                 CharacterSaveDiagnostics.recordSection("character-row", sectionStartedNs);
@@ -8951,9 +9638,9 @@ public class Character extends AbstractCharacterObject {
                 if (savePlan.includes(PersistenceSection.KEYMAP)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 // Key config
-                deleteWhereCharacterId(con, "DELETE FROM keymap WHERE characterid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM keymap WHERE characterid = ?", profileOwnerId);
                 try (PreparedStatement psKey = con.prepareStatement("INSERT INTO keymap (characterid, `key`, `type`, `action`) VALUES (?, ?, ?, ?)")) {
-                    psKey.setInt(1, id);
+                    psKey.setInt(1, profileOwnerId);
 
                     for (Entry<Integer, KeyBinding> keybinding : keymapSnapshot.entrySet()) {
                         psKey.setInt(2, keybinding.getKey());
@@ -8969,8 +9656,8 @@ public class Character extends AbstractCharacterObject {
                 if (!bQuickslotEquals) {
                     long nQuickslotKeymapped = LongTool.BytesToLong(this.m_pQuickslotKeyMapped.GetKeybindings());
 
-                    try (final PreparedStatement psQuick = con.prepareStatement("INSERT INTO quickslotkeymapped (accountid, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?;")) {
-                        psQuick.setInt(1, this.getAccountID());
+                    try (final PreparedStatement psQuick = con.prepareStatement("INSERT INTO character_quickslots (character_id, keymap) VALUES (?, ?) ON DUPLICATE KEY UPDATE keymap = ?")) {
+                        psQuick.setInt(1, profileOwnerId);
                         psQuick.setLong(2, nQuickslotKeymapped);
                         psQuick.setLong(3, nQuickslotKeymapped);
                         psQuick.executeUpdate();
@@ -8980,9 +9667,9 @@ public class Character extends AbstractCharacterObject {
 
                 sectionStartedNs = SlowOperationLogger.start();
                 // Skill macros
-                deleteWhereCharacterId(con, "DELETE FROM skillmacros WHERE characterid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM skillmacros WHERE characterid = ?", profileOwnerId);
                 try (PreparedStatement psMacro = con.prepareStatement("INSERT INTO skillmacros (characterid, skill1, skill2, skill3, name, shout, position) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
-                    psMacro.setInt(1, getId());
+                    psMacro.setInt(1, profileOwnerId);
                     for (int i = 0; i < macroSnapshot.length; i++) {
                         SkillMacro macro = macroSnapshot[i];
                         if (macro != null) {
@@ -9003,16 +9690,16 @@ public class Character extends AbstractCharacterObject {
                 if (savePlan.includes(PersistenceSection.INVENTORY)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 // Items
-                ItemFactory.INVENTORY.saveItems(inventorySnapshot, id, con);
+                ItemFactory.INVENTORY.saveItems(inventorySnapshot, profileOwnerId, con);
                 CharacterSaveDiagnostics.recordSection("inventory", sectionStartedNs);
                 }
 
                 if (savePlan.includes(PersistenceSection.SKILLS)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 // Skills
-                deleteWhereCharacterId(con, "DELETE FROM skills WHERE characterid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM skills WHERE characterid = ?", profileOwnerId);
                 try (PreparedStatement psSkill = con.prepareStatement("INSERT INTO skills (characterid, skillid, skilllevel, masterlevel, expiration) VALUES (?, ?, ?, ?, ?)")) {
-                    psSkill.setInt(1, id);
+                    psSkill.setInt(1, profileOwnerId);
                     for (Entry<Skill, SkillEntry> skill : skillsSnapshot.entrySet()) {
                         psSkill.setInt(2, skill.getKey().getId());
                         psSkill.setInt(3, skill.getValue().skillevel);
@@ -9028,9 +9715,9 @@ public class Character extends AbstractCharacterObject {
                 if (savePlan.includes(PersistenceSection.LOCATIONS)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 // Saved locations
-                deleteWhereCharacterId(con, "DELETE FROM savedlocations WHERE characterid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM savedlocations WHERE characterid = ?", profileOwnerId);
                 try (PreparedStatement psLoc = con.prepareStatement("INSERT INTO savedlocations (characterid, `locationtype`, `map`, `portal`) VALUES (?, ?, ?, ?)")) {
-                    psLoc.setInt(1, id);
+                    psLoc.setInt(1, profileOwnerId);
                     for (SavedLocationType savedLocationType : SavedLocationType.values()) {
                         SavedLocation savedLocation = locationSnapshot.savedLocation(savedLocationType);
                         if (savedLocation != null) {
@@ -9043,13 +9730,13 @@ public class Character extends AbstractCharacterObject {
                     psLoc.executeBatch();
                 }
 
-                deleteWhereCharacterId(con, "DELETE FROM trocklocations WHERE characterid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM trocklocations WHERE characterid = ?", profileOwnerId);
 
                 // Regular teleport rocks
                 try (PreparedStatement psVip = con.prepareStatement("INSERT INTO trocklocations(characterid, mapid, vip) VALUES (?, ?, 0)")) {
                     for (int i = 0; i < locationSnapshot.regularTrockMaps().size(); i++) {
                         if (locationSnapshot.regularTrockMaps().get(i) != MapId.NONE) {
-                            psVip.setInt(1, getId());
+                            psVip.setInt(1, profileOwnerId);
                             psVip.setInt(2, locationSnapshot.regularTrockMaps().get(i));
                             psVip.addBatch();
                         }
@@ -9061,7 +9748,7 @@ public class Character extends AbstractCharacterObject {
                 try (PreparedStatement psReg = con.prepareStatement("INSERT INTO trocklocations(characterid, mapid, vip) VALUES (?, ?, 1)")) {
                     for (int i = 0; i < locationSnapshot.vipTrockMaps().size(); i++) {
                         if (locationSnapshot.vipTrockMaps().get(i) != MapId.NONE) {
-                            psReg.setInt(1, getId());
+                            psReg.setInt(1, profileOwnerId);
                             psReg.setInt(2, locationSnapshot.vipTrockMaps().get(i));
                             psReg.addBatch();
                         }
@@ -9071,7 +9758,7 @@ public class Character extends AbstractCharacterObject {
                 CharacterSaveDiagnostics.recordSection("locations", sectionStartedNs);
                 }
 
-                if (savePlan.includes(PersistenceSection.SOCIAL)) {
+                if (saveSocial) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 try (PreparedStatement psCapacity = con.prepareStatement(
                         "UPDATE characters SET buddyCapacity = ? WHERE id = ?")) {
@@ -9099,9 +9786,9 @@ public class Character extends AbstractCharacterObject {
                 if (savePlan.includes(PersistenceSection.RELATED)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 // Area info
-                deleteWhereCharacterId(con, "DELETE FROM area_info WHERE charid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM area_info WHERE charid = ?", profileOwnerId);
                 try (PreparedStatement psArea = con.prepareStatement("INSERT INTO area_info (id, charid, area, info) VALUES (DEFAULT, ?, ?, ?)")) {
-                    psArea.setInt(1, id);
+                    psArea.setInt(1, profileOwnerId);
 
                     for (Entry<Short, String> area : areaSnapshot.entrySet()) {
                         psArea.setInt(2, area.getKey());
@@ -9112,9 +9799,9 @@ public class Character extends AbstractCharacterObject {
                 }
 
                 // Event stats
-                deleteWhereCharacterId(con, "DELETE FROM eventstats WHERE characterid = ?");
+                deleteWhereCharacterId(con, "DELETE FROM eventstats WHERE characterid = ?", profileOwnerId);
                 try (PreparedStatement psEvent = con.prepareStatement("INSERT INTO eventstats (characterid, name, info) VALUES (?, ?, ?)")) {
-                    psEvent.setInt(1, id);
+                    psEvent.setInt(1, profileOwnerId);
 
                     for (Map.Entry<String, Integer> entry : eventSnapshot.entrySet()) {
                         psEvent.setString(2, entry.getKey());
@@ -9129,13 +9816,13 @@ public class Character extends AbstractCharacterObject {
 
                 if (savePlan.includes(PersistenceSection.QUESTS)) {
                 long sectionStartedNs = SlowOperationLogger.start();
-                deleteQuestProgressWhereCharacterId(con, id);
+                deleteQuestProgressWhereCharacterId(con, profileOwnerId);
 
                 // Quests and medals
                 try (PreparedStatement psStatus = con.prepareStatement("INSERT INTO queststatus (`queststatusid`, `characterid`, `quest`, `status`, `time`, `expires`, `forfeited`, `completed`) VALUES (DEFAULT, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
                      PreparedStatement psProgress = con.prepareStatement("INSERT INTO questprogress VALUES (DEFAULT, ?, ?, ?, ?)");
                      PreparedStatement psMedal = con.prepareStatement("INSERT INTO medalmaps VALUES (DEFAULT, ?, ?, ?)")) {
-                    psStatus.setInt(1, id);
+                    psStatus.setInt(1, profileOwnerId);
 
                     for (QuestStatus.PersistenceSnapshot qs : questSnapshot) {
                         psStatus.setInt(2, qs.questId());
@@ -9149,7 +9836,7 @@ public class Character extends AbstractCharacterObject {
                         try (ResultSet rs = psStatus.getGeneratedKeys()) {
                             rs.next();
                             for (Entry<Integer, String> progress : qs.progress().entrySet()) {
-                                psProgress.setInt(1, id);
+                                psProgress.setInt(1, profileOwnerId);
                                 psProgress.setInt(2, rs.getInt(1));
                                 psProgress.setInt(3, progress.getKey());
                                 psProgress.setString(4, progress.getValue());
@@ -9158,7 +9845,7 @@ public class Character extends AbstractCharacterObject {
                             psProgress.executeBatch();
 
                             for (Integer medalMap : qs.medalMaps()) {
-                                psMedal.setInt(1, id);
+                                psMedal.setInt(1, profileOwnerId);
                                 psMedal.setInt(2, rs.getInt(1));
                                 psMedal.setInt(3, medalMap);
                                 psMedal.addBatch();
@@ -9170,7 +9857,7 @@ public class Character extends AbstractCharacterObject {
                 CharacterSaveDiagnostics.recordSection("quests", sectionStartedNs);
                 }
 
-                if (savePlan.includes(PersistenceSection.SOCIAL) || savePlan.includes(PersistenceSection.RELATED)) {
+                if (saveSocial || savePlan.includes(PersistenceSection.RELATED)) {
                 long sectionStartedNs = SlowOperationLogger.start();
                 FamilyEntry familyEntry = getFamilyEntry(); //save family rep
                 if (familyEntry != null) {
@@ -9214,6 +9901,7 @@ public class Character extends AbstractCharacterObject {
                 con.commit();
                 savedFamilyEntries.forEach(FamilyEntry::savedSuccessfully);
                 persistenceDirty.complete(savePlan);
+                actorSocialDirtyVersion.compareAndSet(socialDirtyVersion, 0L);
                 CharacterSaveDiagnostics.recordSuccess(id, name, notAutosave, saveReason, saveStartedNs);
             } catch (Exception e) {
                 con.rollback();
@@ -9226,10 +9914,22 @@ public class Character extends AbstractCharacterObject {
             if (saveStorage) {
                 usedStorage.set(true);
             }
+            lastProfileSaveFailure = new IllegalStateException(
+                    "Canonical profile save failed for owner " + profileOwnerId, e);
             CharacterSaveDiagnostics.recordFailure(id, name, notAutosave, saveReason, saveStartedNs);
             log.error("Error saving chr {}, level: {}, job: {}", name, level, job.getId(), e);
         } finally {
             SlowOperationLogger.warnIfSlow("character-save chr=" + id + " reason=" + saveReason + " autosave=" + !notAutosave, saveStartedNs, 1000);
+        }
+        } finally {
+            profileSaving.set(false);
+        }
+    }
+
+    /** Account/world-owned storage stays attached to the human actor, never to a swappable profile holder. */
+    public void reattachAccountPersistenceOwner() {
+        if (storage != null) {
+            storage.attachPersistenceOwner(this);
         }
     }
 
@@ -9276,6 +9976,12 @@ public class Character extends AbstractCharacterObject {
         }
 
         this.sendPacket(PacketCreator.QuickslotMappedInit(pQuickslotKeyMapped));
+    }
+
+    public QuickslotBinding getQuickslotBindingForPresentation() {
+        return m_pQuickslotKeyMapped != null
+                ? m_pQuickslotKeyMapped
+                : new QuickslotBinding(QuickslotBinding.DEFAULT_QUICKSLOTS);
     }
 
     public void sendMacros() {
@@ -9410,7 +10116,7 @@ public class Character extends AbstractCharacterObject {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE characters SET HasMerchant = ? WHERE id = ?")) {
             ps.setInt(1, set ? 1 : 0);
-            ps.setInt(2, id);
+            ps.setInt(2, getProfileOwnerCharacterId());
             ps.executeUpdate();
         } catch (SQLException e) {
             monitoring.RuntimeFailureLogger.log(e);
@@ -9424,7 +10130,7 @@ public class Character extends AbstractCharacterObject {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE characters SET MerchantMesos = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, newAmount);
-            ps.setInt(2, id);
+            ps.setInt(2, getProfileOwnerCharacterId());
             ps.executeUpdate();
         } catch (SQLException e) {
             monitoring.RuntimeFailureLogger.log(e);
@@ -9437,7 +10143,7 @@ public class Character extends AbstractCharacterObject {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement("UPDATE characters SET MerchantMesos = ? WHERE id = ?", Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, set);
-            ps.setInt(2, id);
+            ps.setInt(2, getProfileOwnerCharacterId());
             ps.executeUpdate();
         } catch (SQLException e) {
             monitoring.RuntimeFailureLogger.log(e);

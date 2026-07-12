@@ -58,6 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripting.event.EventInstanceManager;
 import server.life.MobSkill;
+import server.partner.ProfileLeaseRegistry;
 import service.NoteService;
 import tools.DatabaseConnection;
 import tools.PacketCreator;
@@ -104,6 +105,12 @@ public final class PlayerLoggedinHandler extends AbstractPacketHandler {
     public final void handlePacket(InPacket p, Client c) {
         final int cid = p.readInt(); // TODO: investigate if this is the "client id" supplied in PacketCreator#getServerIP()
         final Server server = Server.getInstance();
+
+        if (ProfileLeaseRegistry.global().isLeased(cid)) {
+            log.warn("Rejected login for Partner-leased profile character={}", cid);
+            c.disconnect(true, false);
+            return;
+        }
 
         if (!acquireClientForLogin(c)) {
             return;

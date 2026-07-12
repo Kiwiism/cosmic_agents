@@ -73,6 +73,7 @@ import server.ThreadManager;
 import server.TimerManager;
 import server.agents.population.AgentPopulationRuntime;
 import server.agents.capabilities.navigation.AgentNavigationGraphService;
+import server.partner.JdbcAdventurerPartnerRepository;
 import server.expeditions.ExpeditionBossLog;
 import server.life.PlayerNPC;
 import server.monitoring.CharacterSaveDiagnostics;
@@ -899,6 +900,7 @@ public class Server {
 
         AgentNavigationGraphService.startAsyncWarmups();
         warnRiskyRuntimeFeatures();
+        YamlConfig.config.adventurerPartner.validate();
 
         if (YamlConfig.config.server.SHUTDOWNHOOK) {
             Runtime.getRuntime().addShutdownHook(new Thread(shutdown(false)));
@@ -909,6 +911,23 @@ public class Server {
         }
 
         DatabaseMigrations.runDatabaseMigrations();
+
+        int recoveredPartnerSessions = JdbcAdventurerPartnerRepository.INSTANCE.recoverOpenSessions(
+                "Server startup restored canonical profile orientation");
+        if (recoveredPartnerSessions > 0) {
+            log.warn("Recovered {} unfinished Adventurer Partner session(s) in canonical orientation",
+                    recoveredPartnerSessions);
+        }
+        log.info("Adventurer Partner Program enabled={} npcId={} soloTag={} doublePartner={} "
+                        + "cooldownMs={} sameMap={} publicPresentation={} restoreCanonicalOnDisconnect={}",
+                YamlConfig.config.adventurerPartner.enabled,
+                YamlConfig.config.adventurerPartner.npcId,
+                YamlConfig.config.adventurerPartner.soloTagEnabled,
+                YamlConfig.config.adventurerPartner.doublePartnerEnabled,
+                YamlConfig.config.adventurerPartner.switchCooldownMs,
+                YamlConfig.config.adventurerPartner.sameMapRequired,
+                YamlConfig.config.adventurerPartner.publicPresentation,
+                YamlConfig.config.adventurerPartner.restoreCanonicalOnDisconnect);
 
         channelDependencies = registerChannelDependencies();
 

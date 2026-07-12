@@ -171,6 +171,18 @@ worlds:
     channels: 3
 
 
+adventurerPartner:
+    enabled: false
+    npcId: 9000036
+    soloTagEnabled: true
+    doublePartnerEnabled: true
+    switchCooldownMs: 5000               # Dedicated Partner switch cooldown; independent from Nimble Feet.
+    sameMapRequired: true
+    publicPresentation: true
+    triggerSkillIds: [1002, 10001002, 20001002, 20011002]
+    restoreCanonicalOnDisconnect: true
+    applyOrdinaryTriggerBuff: false      # When active, Partner switching replaces the ordinary trigger buff by default.
+
 server:
     #Database Configuration
     DB_URL_FORMAT: "jdbc:mysql://%s:3306/cosmic" # If the docker ENV for DB_HOST is anything but "db", this string format should be changed from 3306 to 3307 (or whichever port it was changed to in docker) 

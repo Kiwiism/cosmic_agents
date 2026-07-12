@@ -3,6 +3,7 @@ package server.agents.capabilities.combat;
 import client.Character;
 import client.BuffStat;
 import client.Skill;
+import client.SkillEligibilityPolicy;
 import constants.game.GameConstants;
 import constants.skills.Assassin;
 import constants.skills.Bandit;
@@ -212,6 +213,9 @@ public final class AgentCombatSkillClassifier {
 
     public static int singleTargetSkillPriority(Character bot, Skill skill) {
         if (skill == null) {
+            return Integer.MIN_VALUE;
+        }
+        if (!SkillEligibilityPolicy.isLearnedAndAllowedJob(bot, skill)) {
             return Integer.MIN_VALUE;
         }
         if (skill.isBeginnerSkill()) {

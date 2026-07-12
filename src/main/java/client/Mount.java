@@ -92,6 +92,10 @@ public class Mount {
         this.persistenceDirtyMarker = Objects.requireNonNull(persistenceDirtyMarker);
     }
 
+    void attachOwner(Character owner) {
+        this.owner = Objects.requireNonNull(owner);
+    }
+
     PersistenceSnapshot persistenceSnapshot() {
         return new PersistenceSnapshot(exp, level, tiredness);
     }

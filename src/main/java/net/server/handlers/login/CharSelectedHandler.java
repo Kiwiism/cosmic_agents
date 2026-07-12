@@ -32,6 +32,7 @@ import net.server.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.PacketCreator;
+import server.partner.ProfileLeaseRegistry;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -52,6 +53,11 @@ public final class CharSelectedHandler extends AbstractPacketHandler {
     @Override
     public final void handlePacket(InPacket p, Client c) {
         int charId = p.readInt();
+
+        if (ProfileLeaseRegistry.global().isLeased(charId)) {
+            c.sendPacket(PacketCreator.getAfterLoginError(7));
+            return;
+        }
 
         String macs = p.readString();
         String hostString = p.readString();

@@ -21,7 +21,10 @@ public final class AgentMailboxRuntime {
             return CompletableFuture.failedFuture(
                     new IllegalArgumentException("Agent runtime entry is required"));
         }
-        return entry.actionMailbox().submit(entry.sessionGeneration(), action);
+        return entry.actionMailbox().submit(
+                entry.sessionGeneration(),
+                entry.transitionBarrierState().generation(),
+                action);
     }
 
     public static int drain(AgentRuntimeEntry entry) {

@@ -193,6 +193,7 @@ import client.command.commands.gm4.TravelRateCommand;
 import client.command.commands.gm4.ZakumCommand;
 import client.command.commands.gm5.DebugCommand;
 import client.command.commands.gm5.IpListCommand;
+import client.command.commands.gm5.PartnerProgramCommand;
 import client.command.commands.gm5.SetCommand;
 import client.command.commands.gm5.ShowMoveLifeCommand;
 import client.command.commands.gm5.ShowPacketsCommand;
@@ -570,6 +571,7 @@ public class CommandsExecutor {
         addCommand("showmovelife", 5, ShowMoveLifeCommand.class);
         addCommand("showsessions", 5, ShowSessionsCommand.class);
         addCommand("iplist", 5, IpListCommand.class);
+        addCommand("partnerprogram", 5, PartnerProgramCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);
     }
