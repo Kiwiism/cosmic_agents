@@ -172,17 +172,17 @@ worlds:
 
 
 adventurerPartner:
-    ENABLED: false
+    ENABLED: true
     NPC_ID: 9000036
     SOLO_TAG_ENABLED: true
     DOUBLE_PARTNER_ENABLED: true
-    SWITCH_COOLDOWN_MS: 5000               # Dedicated Partner switch cooldown; independent from Nimble Feet.
+    SWITCH_COOLDOWN_MS: 500               # Dedicated Partner switch cooldown; independent from Nimble Feet.
     SAME_MAP_REQUIRED: true
     PUBLIC_PRESENTATION: true
     TRIGGER_SKILL_IDS: [1002, 10001002, 20001002, 20011002]
     RESTORE_CANONICAL_ON_DISCONNECT: true
     APPLY_ORDINARY_TRIGGER_BUFF: false      # When active, Partner switching replaces the ordinary trigger buff by default.
-    SOLO_TAG_BUFF_SHARING_ENABLED: false     # Opt-in: share party buffs; self buffs require the receiving profile's bond item.
+    SOLO_TAG_BUFF_SHARING_ENABLED: true     # Opt-in: share party buffs; self buffs require the receiving profile's bond item.
     SOLO_TAG_BUFF_SHARING_ITEM_ID: 1142073  # Demo: Be My Friend Medal. Equipment must be equipped; other item types only need to be carried.
     SOLO_TAG_BUFF_SHARING_PRICE_MESOS: 10000000
 
