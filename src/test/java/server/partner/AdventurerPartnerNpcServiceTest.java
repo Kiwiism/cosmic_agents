@@ -79,10 +79,46 @@ class AdventurerPartnerNpcServiceTest {
         String menu = npc.mainMenu(player);
 
         assertTrue(menu.contains("Current Mode: #bSolo Tag Mode"));
+        assertTrue(menu.contains("Solo Tag Mode#k #r(Unprepared)"));
         assertTrue(menu.contains("Prepare Solo Tag"));
         assertTrue(menu.contains("Change to Double Partner Mode"));
         assertFalse(menu.contains("Invite my partner"));
         assertFalse(menu.contains("Change to Solo Tag Mode"));
+    }
+
+    @Test
+    void preparedSoloModeDoesNotShowUnpreparedMarker() {
+        overview(soloLink, AdventurerPartnerService.PartnerPresence.SOLO_TAG_READY);
+
+        String menu = npc.mainMenu(player);
+
+        assertTrue(menu.contains("Solo Tag ready"));
+        assertFalse(menu.contains("(Unprepared)"));
+        assertFalse(menu.contains("Prepare Solo Tag"));
+    }
+
+    @Test
+    void changingLiveDoubleSessionToSoloRequiresLogoutConfirmation() {
+        overview(doubleLink, AdventurerPartnerService.PartnerPresence.DOUBLE_PARTNER_ACTIVE);
+
+        assertTrue(npc.soloChangeRequiresConfirmation(player));
+        assertTrue(npc.soloChangeConfirmation(player).contains("remove the Partner Agent from the party"));
+        assertTrue(npc.soloChangeConfirmation(player).contains("log them out"));
+
+        overview(doubleLink, AdventurerPartnerService.PartnerPresence.ONLINE_INDEPENDENTLY);
+        assertTrue(npc.soloChangeRequiresConfirmation(player));
+        assertTrue(npc.soloChangeConfirmation(player).contains("will not interrupt that login"));
+    }
+
+    @Test
+    void releaseConfirmationIsRequiredForSessionsAndOnlinePartners() {
+        overview(doubleLink, AdventurerPartnerService.PartnerPresence.DOUBLE_PARTNER_ACTIVE);
+        assertTrue(npc.releaseRequiresConfirmation(player));
+        assertTrue(npc.releaseConfirmation(player).contains("log out cleanly"));
+
+        overview(doubleLink, AdventurerPartnerService.PartnerPresence.ONLINE_INDEPENDENTLY);
+        assertTrue(npc.releaseRequiresConfirmation(player));
+        assertTrue(npc.releaseConfirmation(player).contains("will not interrupt that login"));
     }
 
     @Test

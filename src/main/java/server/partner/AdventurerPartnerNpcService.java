@@ -36,8 +36,7 @@ public final class AdventurerPartnerNpcService {
                     .append("Level ").append(partner.level()).append(' ')
                     .append(jobName(partner.jobId())).append("\r\n")
                     .append("Status: ").append(statusName(overview)).append("\r\n")
-                    .append("Current Mode: #b").append(modeName(overview.currentMode()))
-                    .append("#k\r\n\r\n")
+                    .append("Current Mode: ").append(modeStatus(overview)).append("\r\n\r\n")
                     .append("#L1#Unregister adventuring partner#l\r\n");
             if (overview.currentMode() == PartnerMode.DOUBLE_PARTNER) {
                 menu.append("#L4#Change to Solo Tag Mode#l\r\n");
@@ -126,6 +125,57 @@ public final class AdventurerPartnerNpcService {
                 .orElse(false);
     }
 
+    public boolean soloChangeRequiresConfirmation(Character player) {
+        return service.overview(player)
+                .map(overview -> overview.presence()
+                        == AdventurerPartnerService.PartnerPresence.DOUBLE_PARTNER_ACTIVE
+                        || overview.presence()
+                        == AdventurerPartnerService.PartnerPresence.DOUBLE_PARTNER_OTHER_MAP
+                        || overview.presence()
+                        == AdventurerPartnerService.PartnerPresence.ONLINE_INDEPENDENTLY
+                        || overview.presence()
+                        == AdventurerPartnerService.PartnerPresence.RECOVERY_REQUIRED)
+                .orElse(false);
+    }
+
+    public String soloChangeConfirmation(Character player) {
+        return service.overview(player)
+                .map(overview -> {
+                    if (overview.presence()
+                            == AdventurerPartnerService.PartnerPresence.ONLINE_INDEPENDENTLY) {
+                        return overview.partner().name() + " is currently adventuring independently. Solo Tag "
+                                + "cannot be prepared until they log out, and changing modes will not interrupt "
+                                + "that login. Select Solo Tag Mode anyway?";
+                    }
+                    return "Changing to Solo Tag Mode will safely save "
+                            + overview.partner().name()
+                            + ", remove the Partner Agent from the party, log them out, and prepare their dormant "
+                            + "profile. Continue?";
+                })
+                .orElse("Change to Solo Tag Mode?");
+    }
+
+    public boolean releaseRequiresConfirmation(Character player) {
+        return service.overview(player)
+                .map(overview -> overview.presence()
+                        != AdventurerPartnerService.PartnerPresence.OFFLINE)
+                .orElse(false);
+    }
+
+    public String releaseConfirmation(Character player) {
+        return service.overview(player)
+                .map(overview -> {
+                    if (overview.presence()
+                            == AdventurerPartnerService.PartnerPresence.ONLINE_INDEPENDENTLY) {
+                        return overview.partner().name() + " is being played independently. Release will clear "
+                                + "Partner-managed recovery state but will not interrupt that login. Continue?";
+                    }
+                    return "Release " + overview.partner().name() + "? Their canonical profiles will be restored "
+                            + "and saved, and any Partner Agent will leave the party and log out cleanly.";
+                })
+                .orElse("Release the active Partner session?");
+    }
+
     public String release(Character player) {
         return execute(() -> {
             PartnerLink link = service.registeredLink(player)
@@ -177,6 +227,15 @@ public final class AdventurerPartnerNpcService {
             case DOUBLE_PARTNER_OTHER_MAP -> "#rActive in another map#k";
             case RECOVERY_REQUIRED -> "#rRecovery required - use Release/reset#k";
         };
+    }
+
+    private static String modeStatus(AdventurerPartnerService.PartnerOverview overview) {
+        String mode = "#b" + modeName(overview.currentMode()) + "#k";
+        if (overview.currentMode() == PartnerMode.SOLO_TAG
+                && overview.presence() != AdventurerPartnerService.PartnerPresence.SOLO_TAG_READY) {
+            return mode + " #r(Unprepared)#k";
+        }
+        return mode;
     }
 
     private PartnerRosterCandidate serviceCharacter(int characterId) {

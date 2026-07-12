@@ -7,6 +7,7 @@ import server.maps.MapleMap;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CosmicMapGatewayTest {
@@ -26,5 +27,16 @@ class CosmicMapGatewayTest {
         when(map.isSwim()).thenReturn(true);
 
         assertTrue(CosmicMapGateway.INSTANCE.isSwimMap(agent));
+    }
+
+    @Test
+    void serverControlledMapPlacementCompletesTheHeadlessTransition() {
+        Character agent = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+
+        CosmicMapGateway.INSTANCE.addMapPlayer(map, agent);
+
+        verify(map).addPlayer(agent);
+        verify(agent).setMapTransitionComplete();
     }
 }

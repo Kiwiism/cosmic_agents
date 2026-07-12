@@ -1193,6 +1193,22 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         return AdventurerPartnerNpcService.INSTANCE.doublePartnerModeSelected(getPlayer());
     }
 
+    public boolean adventurerPartnerSoloChangeRequiresConfirmation() {
+        return AdventurerPartnerNpcService.INSTANCE.soloChangeRequiresConfirmation(getPlayer());
+    }
+
+    public String adventurerPartnerSoloChangeConfirmation() {
+        return AdventurerPartnerNpcService.INSTANCE.soloChangeConfirmation(getPlayer());
+    }
+
+    public boolean adventurerPartnerReleaseRequiresConfirmation() {
+        return AdventurerPartnerNpcService.INSTANCE.releaseRequiresConfirmation(getPlayer());
+    }
+
+    public String adventurerPartnerReleaseConfirmation() {
+        return AdventurerPartnerNpcService.INSTANCE.releaseConfirmation(getPlayer());
+    }
+
     public String adventurerPartnerRelease() {
         return AdventurerPartnerNpcService.INSTANCE.release(getPlayer());
     }

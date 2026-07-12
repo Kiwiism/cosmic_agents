@@ -31,6 +31,7 @@ public enum CosmicMapGateway implements MapGateway {
             return;
         }
         map.addPlayer(agent);
+        agent.setMapTransitionComplete();
     }
 
     @Override
@@ -39,6 +40,7 @@ public enum CosmicMapGateway implements MapGateway {
             return;
         }
         agent.changeMap(map, position);
+        agent.setMapTransitionComplete();
     }
 
     @Override
@@ -47,6 +49,7 @@ public enum CosmicMapGateway implements MapGateway {
             return;
         }
         agent.forceChangeMap(map, map.findClosestPortal(position));
+        agent.setMapTransitionComplete();
     }
 
     @Override
@@ -62,7 +65,11 @@ public enum CosmicMapGateway implements MapGateway {
         int oldMapId = agent.getMapId();
         Point oldPos = agent.getPosition();
         portal.enterPortal(agent.getClient());
-        return agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
+        boolean transitioned = agent.getMapId() != oldMapId || !agent.getPosition().equals(oldPos);
+        if (transitioned) {
+            agent.setMapTransitionComplete();
+        }
+        return transitioned;
     }
 
     @Override

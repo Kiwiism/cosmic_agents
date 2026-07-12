@@ -3,7 +3,6 @@ package server.partner;
 import client.BuffStat;
 import client.Character;
 import client.Disease;
-import client.QuestStatus;
 import client.SkillMacro;
 import client.Stat;
 import client.inventory.InventoryType;
@@ -77,8 +76,6 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         counter.send("bindings", PacketCreator.QuickslotMappedInit(newPresentation.quickslots()));
         counter.send("bindings", PacketCreator.getMacros(newPresentation.macros()));
         refreshInventory(counter, oldPresentation, newPresentation);
-        refreshQuests(counter, partnerActorOrDormantProfile, humanActor);
-        refreshMonsterBook(counter, partnerActorOrDormantProfile, humanActor);
         refreshLocalPets(counter, partnerActorOrDormantProfile, humanActor);
         refreshLocalBuffs(counter, humanActor);
         refreshLocalDiseases(counter, humanActor);
@@ -90,6 +87,7 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
                 refreshPublicActor(counter, partnerActorOrDormantProfile, humanActor);
             }
         }
+        refreshSwitchEffects(counter, humanActor, partnerActorOrDormantProfile, mode);
         counter.send("actions", PacketCreator.enableActions());
         long duration = System.nanoTime() - startedNs;
         log.info("partner_presentation packets={} bytes={} durationNs={} categories={}",
@@ -181,29 +179,13 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
                         : PreparedStaticPresentation.capture(profile, version));
     }
 
-    private static void refreshQuests(PacketCounter counter, Character oldProfile, Character newProfile) {
-        for (QuestStatus oldQuest : oldProfile.getQuestStatusesSnapshot()) {
-            counter.send("quests", PacketCreator.forfeitQuest(oldQuest.getQuest().getId()));
-        }
-        for (QuestStatus newQuest : newProfile.getQuestStatusesSnapshot()) {
-            if (newQuest.getStatus() == QuestStatus.Status.COMPLETED) {
-                counter.send("quests", PacketCreator.completeQuest(
-                        newQuest.getQuest().getId(), newQuest.getCompletionTime()));
-            } else if (newQuest.getStatus() == QuestStatus.Status.STARTED) {
-                counter.send("quests", PacketCreator.updateQuest(newProfile, newQuest, false));
-            }
-        }
-    }
-
-    private static void refreshMonsterBook(PacketCounter counter, Character oldProfile, Character newProfile) {
-        for (Integer cardId : oldProfile.getMonsterBook().getCards().keySet()) {
-            counter.send("monsterbook", PacketCreator.addCard(false, cardId, 0));
-        }
-        for (Map.Entry<Integer, Integer> card : newProfile.getMonsterBook().getCards().entrySet()) {
-            counter.send("monsterbook", PacketCreator.addCard(false, card.getKey(), card.getValue()));
-        }
-        counter.send("monsterbook", PacketCreator.changeCover(newProfile.getMonsterBookCover()));
-    }
+    /*
+     * Stock v83 exposes quests and Monster Book cards only through gameplay
+     * delta packets. Replaying those packets announces every quest/card and
+     * opens the Quest Helper. The authoritative profile state still exchanges
+     * in memory and persists canonically; deliberately omit the noisy client
+     * deltas until a silent client protocol is available.
+     */
 
     private static void refreshLocalPets(PacketCounter counter, Character oldProfile, Character newProfile) {
         for (byte slot = 0; slot < 3; slot++) {
@@ -291,6 +273,26 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
                 actor.getMap().broadcastMessage(actor, packet, false);
             }
         }
+    }
+
+    private static void refreshSwitchEffects(PacketCounter counter,
+                                             Character humanActor,
+                                             Character partnerActorOrDormantProfile,
+                                             PartnerMode mode) {
+        counter.send("switch-effect", PacketCreator.showSpecialEffect(8));
+        broadcastSwitchEffect(counter, humanActor);
+        if (mode == PartnerMode.DOUBLE_PARTNER) {
+            broadcastSwitchEffect(counter, partnerActorOrDormantProfile);
+        }
+    }
+
+    private static void broadcastSwitchEffect(PacketCounter counter, Character actor) {
+        if (actor == null || actor.getMap() == null) {
+            return;
+        }
+        Packet packet = PacketCreator.showForeignEffect(actor.getId(), 8);
+        counter.record("switch-effect", packet);
+        actor.getMap().broadcastMessage(actor, packet, false);
     }
 
     private static final class PacketCounter {

@@ -4,12 +4,14 @@ import client.Character;
 import client.Client;
 import client.Job;
 import client.MonsterBook;
+import client.QuestStatus;
 import config.YamlConfig;
 import net.opcodes.SendOpcode;
 import net.packet.Packet;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import server.maps.MapleMap;
+import server.quest.Quest;
 import tools.PacketCreator;
 
 import java.sql.ResultSet;
@@ -18,9 +20,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +58,10 @@ class CosmicProfilePresentationServiceTest {
         partner.setClient(partnerClient);
         human.setMap(map);
         partner.setMap(map);
+        Quest quest = mock(Quest.class);
+        when(quest.getId()).thenReturn((short) 1000);
+        attachQuest(partner, new QuestStatus(quest, QuestStatus.Status.COMPLETED));
+        addMonsterBookCard(partner, 2380000, 1);
         when(map.broadcastUpdateCharLookMessage(any(Character.class), any(Character.class)))
                 .thenReturn(new MapleMap.PacketBroadcastMetrics(2, 64L));
         boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.publicPresentation;
@@ -78,9 +86,19 @@ class CosmicProfilePresentationServiceTest {
             assertTrue(opcodes.indexOf(SendOpcode.MACRO_SYS_DATA_INIT.getValue())
                     < opcodes.indexOf(SendOpcode.INVENTORY_GROW.getValue()));
             assertArrayEquals(PacketCreator.enableActions().getBytes(), sent.getLast().getBytes());
+            assertTrue(sent.stream().anyMatch(packet -> java.util.Arrays.equals(
+                    packet.getBytes(), PacketCreator.showSpecialEffect(8).getBytes())));
+            assertFalse(opcodes.contains(SendOpcode.SHOW_STATUS_INFO.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.MONSTER_BOOK_SET_CARD.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.MONSTER_BOOK_SET_COVER.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.UPDATE_QUEST_INFO.getValue()));
+            assertEquals(1, human.getQuestStatusesSnapshot().size());
+            assertEquals(1, human.getMonsterBook().getCards().get(2380000));
             verify(map).broadcastUpdateCharLookMessage(human, human);
             verify(map).broadcastUpdateCharLookMessage(partner, partner);
-            assertEquals(sent.size() + 4, metrics.packetCount());
+            verify(map).broadcastMessage(eq(human), any(Packet.class), eq(false));
+            verify(map).broadcastMessage(eq(partner), any(Packet.class), eq(false));
+            assertEquals(sent.size() + 6, metrics.packetCount());
             assertTrue(metrics.packetBytes() > 0L);
         } finally {
             YamlConfig.config.adventurerPartner.publicPresentation = previousPublicPresentation;
@@ -122,5 +140,19 @@ class CosmicProfilePresentationServiceTest {
         monsterBook.setAccessible(true);
         monsterBook.set(character, new MonsterBook());
         return character;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void attachQuest(Character character, QuestStatus status) throws Exception {
+        var field = Character.class.getDeclaredField("quests");
+        field.setAccessible(true);
+        ((Map<Short, QuestStatus>) field.get(character)).put(status.getQuestID(), status);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void addMonsterBookCard(Character character, int cardId, int count) throws Exception {
+        var cards = MonsterBook.class.getDeclaredField("cards");
+        cards.setAccessible(true);
+        ((Map<Integer, Integer>) cards.get(character.getMonsterBook())).put(cardId, count);
     }
 }

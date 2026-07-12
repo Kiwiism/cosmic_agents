@@ -37,6 +37,7 @@ public final class CosmicPartnerAgentLifecycleBridge implements PartnerAgentLife
         if (entry == null) {
             throw new IllegalStateException("Partner Agent was spawned without a runtime entry");
         }
+        spawn.agent().setMapTransitionComplete();
         entry.markPartnerManaged();
         return new SpawnedPartner(spawn.agent(), entry);
     }

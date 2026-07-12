@@ -58,6 +58,18 @@ function action(mode, type, selection) {
         return;
     }
 
+    if (flow === "confirmSoloChange") {
+        cm.sendOk(cm.adventurerPartnerChangeToSoloTag());
+        cm.dispose();
+        return;
+    }
+
+    if (flow === "confirmRelease") {
+        cm.sendOk(cm.adventurerPartnerRelease());
+        cm.dispose();
+        return;
+    }
+
     switch (selection) {
         case 0:
             flow = "roster";
@@ -76,8 +88,13 @@ function action(mode, type, selection) {
             cm.dispose();
             break;
         case 4:
-            cm.sendOk(cm.adventurerPartnerChangeToSoloTag());
-            cm.dispose();
+            if (cm.adventurerPartnerSoloChangeRequiresConfirmation()) {
+                flow = "confirmSoloChange";
+                cm.sendYesNo(cm.adventurerPartnerSoloChangeConfirmation());
+            } else {
+                cm.sendOk(cm.adventurerPartnerChangeToSoloTag());
+                cm.dispose();
+            }
             break;
         case 5:
             var changeResult = cm.adventurerPartnerChangeToDoublePartner();
@@ -90,8 +107,13 @@ function action(mode, type, selection) {
             }
             break;
         case 6:
-            cm.sendOk(cm.adventurerPartnerRelease());
-            cm.dispose();
+            if (cm.adventurerPartnerReleaseRequiresConfirmation()) {
+                flow = "confirmRelease";
+                cm.sendYesNo(cm.adventurerPartnerReleaseConfirmation());
+            } else {
+                cm.sendOk(cm.adventurerPartnerRelease());
+                cm.dispose();
+            }
             break;
         case 7:
             cm.sendOk(cm.adventurerPartnerExplanation());
