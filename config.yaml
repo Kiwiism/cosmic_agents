@@ -182,6 +182,9 @@ adventurerPartner:
     triggerSkillIds: [1002, 10001002, 20001002, 20011002]
     restoreCanonicalOnDisconnect: true
     applyOrdinaryTriggerBuff: false      # When active, Partner switching replaces the ordinary trigger buff by default.
+    soloTagBuffSharingEnabled: false     # Opt-in: share party buffs; self buffs require the receiving profile's bond item.
+    soloTagBuffSharingItemId: 1142073    # Demo: Be My Friend Medal. Equipment must be equipped; other item types only need to be carried.
+    soloTagBuffSharingPriceMesos: 10000000
 
 server:
     #Database Configuration

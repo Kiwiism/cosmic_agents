@@ -19,4 +19,15 @@ class AdventurerPartnerConfigTest {
 
         assertThrows(IllegalStateException.class, config::validate);
     }
+
+    @Test
+    void buffSharingItemAndPriceMustBeValidEvenWhileFeatureIsOff() {
+        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
+        config.soloTagBuffSharingItemId = 0;
+        assertThrows(IllegalStateException.class, config::validate);
+
+        config.soloTagBuffSharingItemId = 1142073;
+        config.soloTagBuffSharingPriceMesos = -1;
+        assertThrows(IllegalStateException.class, config::validate);
+    }
 }

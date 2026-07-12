@@ -20,6 +20,7 @@ public final class ProfileTransitionCoordinator {
     private final ProfileExchangeOperation exchangeOperation;
     private final DerivedProfileRebuildOperation rebuildOperation;
     private final ProfileTransitionLockManager profileLocks;
+    private final SoloTagBuffSharingService buffSharing;
 
     public ProfileTransitionCoordinator(ProfileLeaseRegistry leases,
                                         ProfilePresentationService presentation,
@@ -34,7 +35,7 @@ public final class ProfileTransitionCoordinator {
                                  PartnerJournalSink journal,
                                  ProfileExchangeOperation exchangeOperation) {
         this(leases, presentation, cacheInvalidator, journal, exchangeOperation,
-                Character::rebuildDerivedProfileStats);
+                Character::rebuildDerivedProfileStats, SoloTagBuffSharingService.INSTANCE);
     }
 
     ProfileTransitionCoordinator(ProfileLeaseRegistry leases,
@@ -43,6 +44,17 @@ public final class ProfileTransitionCoordinator {
                                  PartnerJournalSink journal,
                                  ProfileExchangeOperation exchangeOperation,
                                  DerivedProfileRebuildOperation rebuildOperation) {
+        this(leases, presentation, cacheInvalidator, journal, exchangeOperation,
+                rebuildOperation, SoloTagBuffSharingService.INSTANCE);
+    }
+
+    ProfileTransitionCoordinator(ProfileLeaseRegistry leases,
+                                 ProfilePresentationService presentation,
+                                 PartnerProfileCacheInvalidator cacheInvalidator,
+                                 PartnerJournalSink journal,
+                                 ProfileExchangeOperation exchangeOperation,
+                                 DerivedProfileRebuildOperation rebuildOperation,
+                                 SoloTagBuffSharingService buffSharing) {
         this.leases = leases;
         this.presentation = presentation;
         this.cacheInvalidator = cacheInvalidator;
@@ -50,6 +62,7 @@ public final class ProfileTransitionCoordinator {
         this.exchangeOperation = exchangeOperation;
         this.rebuildOperation = rebuildOperation;
         this.profileLocks = new ProfileTransitionLockManager();
+        this.buffSharing = buffSharing;
     }
 
     public void prepareProfiles(Character firstProfile, Character secondProfile) {
@@ -86,6 +99,8 @@ public final class ProfileTransitionCoordinator {
         boolean partnerTransitionWindow = false;
         Character.ProfileExchangeResult exchangeResult = null;
         long cacheRefreshNs = 0L;
+        SoloTagBuffSharingService.SharingPlan buffSharingPlan =
+                SoloTagBuffSharingService.SharingPlan.none();
         try {
             humanActor.enterProfileTransitionWindow();
             humanTransitionWindow = true;
@@ -102,6 +117,8 @@ public final class ProfileTransitionCoordinator {
             humanActor.suspendProfileRuntimeTasks();
             partnerActorOrDormantProfile.suspendProfileRuntimeTasks();
             profileTasksSuspended = true;
+            buffSharingPlan = buffSharing.capture(
+                    session.mode(), humanActor, partnerActorOrDormantProfile);
 
             try (ProfileTransitionLockManager.LockHandle ignored = profileLocks.lockProfiles(List.of(
                     token.before().playerActorProfileOwnerId(),
@@ -109,6 +126,8 @@ public final class ProfileTransitionCoordinator {
                 exchangeResult = exchangeOperation.exchange(humanActor, partnerActorOrDormantProfile);
             }
             exchanged = true;
+            buffSharing.applyAfterExchange(
+                    buffSharingPlan, humanActor, partnerActorOrDormantProfile);
 
             Map<Integer, Integer> desiredLeases = session.profileToActorLeases(token.after());
             ProfileLeaseRegistry.LeaseResult leaseResult = leases.rebind(session.sessionId(), desiredLeases);

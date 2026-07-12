@@ -1220,4 +1220,12 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
     public String adventurerPartnerExplanation() {
         return AdventurerPartnerNpcService.INSTANCE.explanation();
     }
+
+    public String adventurerPartnerBuffSharingPurchaseConfirmation() {
+        return AdventurerPartnerNpcService.INSTANCE.buffSharingPurchaseConfirmation();
+    }
+
+    public String adventurerPartnerPurchaseBuffSharingItem() {
+        return AdventurerPartnerNpcService.INSTANCE.purchaseBuffSharingItem(getPlayer());
+    }
 }

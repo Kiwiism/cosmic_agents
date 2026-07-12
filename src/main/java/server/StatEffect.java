@@ -1556,7 +1556,7 @@ public class StatEffect {
         return false;
     }
 
-    private boolean isPartyBuff() {
+    public boolean isPartyBuff() {
         if (lt == null || rb == null) {
             return false;
         }

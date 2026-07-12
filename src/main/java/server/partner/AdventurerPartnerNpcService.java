@@ -10,12 +10,20 @@ import java.util.Optional;
 /** Agent E dialogue adapter; gameplay and persistence remain in the service. */
 public final class AdventurerPartnerNpcService {
     public static final AdventurerPartnerNpcService INSTANCE =
-            new AdventurerPartnerNpcService(AdventurerPartnerService.getInstance());
+            new AdventurerPartnerNpcService(
+                    AdventurerPartnerService.getInstance(), SoloTagBuffSharingService.INSTANCE);
 
     private final AdventurerPartnerService service;
+    private final SoloTagBuffSharingService buffSharing;
 
     AdventurerPartnerNpcService(AdventurerPartnerService service) {
+        this(service, SoloTagBuffSharingService.INSTANCE);
+    }
+
+    AdventurerPartnerNpcService(AdventurerPartnerService service,
+                                SoloTagBuffSharingService buffSharing) {
         this.service = service;
+        this.buffSharing = buffSharing;
     }
 
     public boolean enabled(int npcId) {
@@ -26,6 +34,10 @@ public final class AdventurerPartnerNpcService {
         Optional<AdventurerPartnerService.PartnerOverview> found = service.overview(player);
         StringBuilder menu = new StringBuilder(
                 "Even the strongest adventurers need someone they can trust.\r\n\r\n");
+        if (buffSharing.enabled()) {
+            menu.append("Solo Tag Self-Buff Bond: ")
+                    .append(buffSharing.entitlementStatus(player)).append("\r\n\r\n");
+        }
         if (found.isEmpty()) {
             menu.append("#dNo adventuring Partner is registered.#k\r\n\r\n")
                     .append("#L0#Register an adventuring partner#l\r\n");
@@ -50,6 +62,11 @@ public final class AdventurerPartnerNpcService {
                 }
             }
             menu.append("#L6#Release my partner#l\r\n");
+        }
+        if (buffSharing.enabled() && !buffSharing.ownsItem(player)) {
+            menu.append("#L10#Purchase #t").append(buffSharing.itemId()).append("# for ")
+                    .append(String.format("%,d", buffSharing.priceMesos()))
+                    .append(" mesos#l\r\n");
         }
         return menu.append("#L7#Explain the Adventurer Partner Program#l\r\n")
                 .append("#L8#Continue with Agent E's regular duties#l\r\n")
@@ -202,11 +219,23 @@ public final class AdventurerPartnerNpcService {
         });
     }
 
+    public String buffSharingPurchaseConfirmation() {
+        return buffSharing.purchaseConfirmation();
+    }
+
+    public String purchaseBuffSharingItem(Character player) {
+        return execute(() -> buffSharing.purchase(player));
+    }
+
     public String explanation() {
         return "The Adventurer Partner Program links two independent characters from the same account and world. "
                 + "Your Partner's IGN, level, job, status, and selected mode are shown in my main menu.\r\n\r\n"
                 + "#bSolo Tag Mode#k safely loads one active and one dormant profile. Prepare Solo Tag, then use "
-                + "Nimble Feet to switch without moving the actor or camera.\r\n\r\n"
+                + "Nimble Feet to switch without moving the actor or camera. When Solo Tag buff sharing is enabled, "
+                + "ordinary party buffs merge automatically. A receiving character who carries the configured "
+                + "bond item (or equips it when it is equipment) also receives the other profile's self buffs. "
+                + "Eligibility is checked separately for each character, and the strongest value wins when buffs "
+                + "overlap.\r\n\r\n"
                 + "#bDouble Partner Mode#k invites your Partner as an Agent. Both actors remain visible, and Nimble "
                 + "Feet exchanges their profiles only while they are in the same map.\r\n\r\n"
                 + "#bRelease my partner#k restores canonical ownership, saves progress, logs out the Partner Agent, "

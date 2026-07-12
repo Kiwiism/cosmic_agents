@@ -70,6 +70,12 @@ function action(mode, type, selection) {
         return;
     }
 
+    if (flow === "confirmBuffSharingPurchase") {
+        cm.sendOk(cm.adventurerPartnerPurchaseBuffSharingItem());
+        cm.dispose();
+        return;
+    }
+
     switch (selection) {
         case 0:
             flow = "roster";
@@ -122,6 +128,10 @@ function action(mode, type, selection) {
         case 8:
             cm.sendDefault();
             cm.dispose();
+            break;
+        case 10:
+            flow = "confirmBuffSharingPurchase";
+            cm.sendYesNo(cm.adventurerPartnerBuffSharingPurchaseConfirmation());
             break;
         default:
             cm.dispose();

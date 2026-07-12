@@ -1,6 +1,7 @@
 package server.partner;
 
 import client.Character;
+import config.AdventurerPartnerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -131,6 +132,23 @@ class AdventurerPartnerNpcServiceTest {
         assertTrue(menu.contains("Release my partner"));
         assertFalse(menu.contains("Invite my partner"));
         assertFalse(menu.contains("Prepare Solo Tag"));
+    }
+
+    @Test
+    void enabledBuffSharingShowsPerCharacterStatusAndPurchaseOption() {
+        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
+        config.soloTagBuffSharingEnabled = true;
+        config.soloTagBuffSharingItemId = 1142073;
+        config.soloTagBuffSharingPriceMesos = 10_000_000;
+        SoloTagBuffSharingService sharing =
+                new SoloTagBuffSharingService(config, (character, itemId) -> true);
+        npc = new AdventurerPartnerNpcService(service, sharing);
+        when(service.overview(player)).thenReturn(Optional.empty());
+
+        String menu = npc.mainMenu(player);
+
+        assertTrue(menu.contains("Solo Tag Self-Buff Bond: #dNot owned"));
+        assertTrue(menu.contains("Purchase #t1142073# for 10,000,000 mesos"));
     }
 
     private void overview(PartnerLink link, AdventurerPartnerService.PartnerPresence presence) {

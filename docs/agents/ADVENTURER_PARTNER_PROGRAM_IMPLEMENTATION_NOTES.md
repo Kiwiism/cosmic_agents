@@ -48,11 +48,34 @@ The removed snapshot/row-replacement Double Agent POC is not used or restored.
 - Headless Agents now complete server-controlled map transitions immediately after placement, warp, or portal completion. They no longer remain permanently blocked by the real-client map acknowledgement flag.
 - Switch presentation plays the v83 job-change effect locally for the human and broadcasts it for both human and Partner actors in Double mode.
 - Quest and Monster Book ownership still exchange in the authoritative in-memory profile and persist canonically. Switch presentation intentionally omits their normal gameplay delta packets because stock v83 treats every replay as a new quest/card notification and opens Quest Helper; the stock client has no silent bulk refresh packet. Their client panels refresh on the next normal character load.
+- A second stock-client notification path remains for quests whose completion/auto-start conditions are evaluated locally when ordinary level/job/inventory packets change. Live examples are quests 1026, 2230, and the 2300-2310 Mushking chain. The server cannot suppress those client-generated alerts without either a client patch or deliberately hiding/desynchronizing the swapped quest items, so the server keeps the authoritative inventory correct.
 - Agent E marks inactive Solo mode as `Unprepared`, confirms a live Partner Agent logout before changing to Solo, and confirms Release whenever a session, recovery state, or online Partner is present. Independently played characters remain protected from forced logout.
+- Optional Solo Tag buff sharing is disabled by default. Before each Solo transition, active skill buffs are captured by profile. When enabled, party buffs merge automatically after the binding exchange; self-only buffs such as Magic Guard, Shadow Partner, and weapon boosters require the receiving profile to qualify independently through the configured bond item. Equipment, including cash equipment, must be equipped; Use, Setup, Etc, and Cash items only need to be carried. The existing most-significant-buff resolver retains the strongest value when effects overlap.
+- Agent E can sell the configured bond item for the configured meso price. Granting and inventory-space checks complete before mesos are charged. The demo default is `1142073` (Be My Friend Medal) at 10,000,000 mesos.
 
 ## Configuration and rollback
 
 The feature is disabled by default under `adventurerPartner` in `config.yaml`. The dedicated switch cooldown defaults to 5000 ms. Enabling the feature requires `restoreCanonicalOnDisconnect: true`; startup rejects an unsafe configuration. Disabling the feature removes the Agent E menu and leaves the persistent link/session history intact.
+
+Solo Tag buff sharing uses these independent settings:
+
+```yaml
+soloTagBuffSharingEnabled: false
+soloTagBuffSharingItemId: 1142073
+soloTagBuffSharingPriceMesos: 10000000
+```
+
+Verified thematic demo candidates from the read-only v83 WZ data are:
+
+| Inventory type | Item | Eligibility behavior |
+| --- | --- | --- |
+| Equip | `1142073` Be My Friend Medal (default) | Must be equipped |
+| Use | `2022109` The Breath of Nine Spirit | Must be carried |
+| Setup | `3010116` The Spirit of Rock Chair | Must be carried |
+| Etc | `4000144` Free Spirit | Must be carried |
+| Cash | `5121000` Fighting Spirit | Must be carried |
+
+Only the single configured item ID is active at a time; the other entries are convenient category test candidates.
 
 ## Stock v83 client constraint
 
@@ -64,7 +87,7 @@ Canonical names are deliberately not mutated. The human actor and Agent actor re
 - The focused suite includes two 1,000-iteration soaks (domain reversal and full Double coordinator), complete profile-bundle exchange, real presentation packet ordering/public-look calls, release retry fault injection, disconnect during presentation, Agent cache-rebuild failure, simultaneous triggers, stale profile-task rejection, SWAPPING recovery, login/deletion reservation races, mailbox barrier rejection, and Agent cache owner/version stamping.
 - `mvnw.cmd -q -DskipTests package`: passed after the final production-code changes.
 - `node --check scripts/npc/9000036.js`: passed.
-- The state-driven/live-acceptance follow-up regression group passed 66 tests across 16 reports with 0 failures, 0 errors, and 0 skipped. It covers menu states, direct mode transitions, idempotent reset, independently-online protection, same-map messaging, offline-party snapshots, silent quest/card presentation, dual-actor effects, and headless map-transition completion.
+- The current state-driven/live-acceptance follow-up regression group passed 72 tests across 18 reports with 0 failures, 0 errors, and 0 skipped. It covers menu states, direct mode transitions, idempotent reset, independently-online protection, same-map messaging, offline-party snapshots, silent quest/card presentation, dual-actor effects, headless map-transition completion, asymmetric self-buff entitlement, automatic party-buff sharing, overlap ordering, and purchase safety.
 - Liquibase changelog XML parsed successfully. Migration `026-adventurer-partner.sql` was applied against a disposable MySQL 8.4 schema; constraints, two-row quickslot migration, and link/session cascade behavior passed, and the disposable schema was removed. The existing `cosmic` database was not modified.
 - Independent worktree catalogs were generated from the read-only WZ junction and verified: game 75/75, NPC 115/115, reactor 7/7, and derived Agent/LLM 51/51. `AgentCatalogServiceTest` then passed.
 - A bounded expanded repository run produced 3,798 tests across 513 reports with 0 errors and 3 skips before entering the unrelated CPU-heavy `BotMovementSimulationLabTest`. Its single movement-fidget failure passed immediately in isolation. Earlier thread dumps likewise isolated `AgentNavigationGraphServiceTest` and `AgentPhysicsEngineTest` as navigation-graph bottlenecks. No navigation-graph files are changed by this branch.

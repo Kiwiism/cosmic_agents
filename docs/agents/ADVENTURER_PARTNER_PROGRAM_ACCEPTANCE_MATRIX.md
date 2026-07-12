@@ -15,7 +15,8 @@ live pass.
 | Release/reset is pair-scoped, idempotent, cleans an orphan Agent across maps, and does not disconnect an independently played character | `AdventurerPartnerServiceTest`, `CosmicPartnerAgentLifecycleBridge` | Automated boundary pass; live reset pending |
 | Offline normal-party members cannot crash Double activation | `CosmicPartyGatewayTest.snapshotsOfflinePartyMembersWithoutDereferencingLivePlayers` | Regression pass |
 | Headless Partner Agent does not remain permanently map-transitioning | `CosmicMapGatewayTest.serverControlledMapPlacementCompletesTheHeadlessTransition`, Partner bridge completion | Regression pass; live switch pending |
-| Quest/card state swaps without replaying notification or Quest Helper packets | `CosmicProfilePresentationServiceTest`; server profile exchange assertions | Automated packet pass; stock client panels refresh on relog |
+| Quest/card state swaps without replaying server notification or Quest Helper packets | `CosmicProfilePresentationServiceTest`; server profile exchange assertions | Automated packet pass; stock client panels refresh on relog; client-side auto-start/completion alerts remain |
+| Solo skill-buff sharing is disabled by default, always merges party buffs when enabled, item-gates self buffs per receiving profile, supports equipment/carried-item rules, and applies weaker overlaps before stronger ones | `SoloTagBuffSharingServiceTest`, `AdventurerPartnerConfigTest`, `AdventurerPartnerNpcServiceTest` | Automated pass; live skill matrix pending |
 | Job-change switch effect is local for the player and publicly broadcast for both Double actors | `CosmicProfilePresentationServiceTest` | Automated packet/broadcast pass; observer-client pending |
 | Solo unprepared status and online/session Release/mode confirmations are state-driven | `AdventurerPartnerNpcServiceTest`, Agent E script | Automated/static pass; client dialogue pending |
 | Same-account/world, self, deletion, online, lease, active-pair, and canonical-load eligibility | `PartnerRosterQueryServiceTest`, `AdventurerPartnerServiceTest`, `ProfileLeaseRegistryTest` | Automated pass |
@@ -59,7 +60,7 @@ and cooldowns. Capture server logs and client video/screenshots for every item.
 1. Register through Agent E and verify every roster IGN, level, job, and rejection reason; then verify the compact header shows partner details, status, and mode.
 2. Change directly to Solo Tag, verify it is prepared automatically, and switch with each configured beginner-family Nimble Feet skill.
 3. Verify stats, look, equipment, every inventory tab, skills, keymap, macros, quickslots, quests, Monster Book, pets, effects, mesos, and item use.
-   Confirm quest and Monster Book gameplay ownership follows the profile without quest/card notifications or opening Quest Helper; their stock-client panels may require relogging to reconstruct silently.
+   Confirm quest and Monster Book gameplay ownership follows the profile. Server-side replay notifications and Quest Helper activation must not occur; record any stock-client auto-start/completion alert caused by the swapped level/job/inventory. Their stock-client panels may require relogging to reconstruct silently.
 4. Verify no reconnect, map load, camera jump, actor movement, or ordinary Nimble Feet buff.
 5. End Solo while normal and swapped; reload both characters and compare canonical state.
 6. Change directly to Double mode, accept the invite prompt, and verify the partner's own IGN/look and Follow behavior.
@@ -73,7 +74,8 @@ and cooldowns. Capture server logs and client video/screenshots for every item.
 13. Stop the server with an active swapped session, restart it, and verify canonical owners plus a recovered closed journal.
 14. Run repeated invite/switch/release/re-invite cycles while monitoring map objects, scheduled tasks, heap, and logs.
 15. Record switch pause, lock, cache, refresh, packet-count/byte, frame-hitch, and heap/task-growth measurements.
+16. Enable `soloTagBuffSharingEnabled`, buy the configured bond item separately on both characters, and test neither/left-only/right-only/both eligibility. For equipment, verify carried-but-unequipped is inactive and equipped is active. Exercise Magic Guard, Shadow Partner, weapon boosters, and overlapping party buffs at different levels; verify the strongest stat survives and remaining duration is preserved.
 
-The feature does not satisfy the full Definition of Done until all 15 live items
+The feature does not satisfy the full Definition of Done until all 16 live items
 pass. Stock v83 actor IGN caching remains the documented client limitation;
 canonical names are never mutated.

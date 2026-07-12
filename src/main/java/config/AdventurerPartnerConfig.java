@@ -24,6 +24,9 @@ public class AdventurerPartnerConfig {
             Evan.NIMBLE_FEET));
     public boolean restoreCanonicalOnDisconnect = true;
     public boolean applyOrdinaryTriggerBuff = false;
+    public boolean soloTagBuffSharingEnabled = false;
+    public int soloTagBuffSharingItemId = 1142073;
+    public int soloTagBuffSharingPriceMesos = 10_000_000;
 
     public void validate() {
         if (npcId <= 0) {
@@ -35,6 +38,14 @@ public class AdventurerPartnerConfig {
         if (triggerSkillIds == null || triggerSkillIds.isEmpty()
                 || triggerSkillIds.stream().anyMatch(id -> id == null || id <= 0)) {
             throw new IllegalStateException("adventurerPartner.triggerSkillIds must contain positive skill IDs");
+        }
+        if (soloTagBuffSharingItemId <= 0) {
+            throw new IllegalStateException(
+                    "adventurerPartner.soloTagBuffSharingItemId must be positive");
+        }
+        if (soloTagBuffSharingPriceMesos < 0) {
+            throw new IllegalStateException(
+                    "adventurerPartner.soloTagBuffSharingPriceMesos cannot be negative");
         }
         if (enabled && !restoreCanonicalOnDisconnect) {
             throw new IllegalStateException(
