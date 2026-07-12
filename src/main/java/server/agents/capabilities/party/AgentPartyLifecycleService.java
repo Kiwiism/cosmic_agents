@@ -36,5 +36,10 @@ public final class AgentPartyLifecycleService {
             agent.updatePartyMemberHP();
         }
     }
-}
 
+    public static void leaveAgentParty(Character agent) {
+        if (agent != null && AgentPartyGatewayRuntime.party().snapshot(agent) != null) {
+            AgentPartyGatewayRuntime.party().leaveCurrentParty(agent);
+        }
+    }
+}

@@ -16,6 +16,7 @@ import server.agents.integration.cosmic.CosmicPartyGateway;
 import server.agents.integration.cosmic.CosmicAgentPersistenceGateway;
 import server.agents.integration.cosmic.CosmicShopGateway;
 import server.agents.integration.cosmic.CosmicTradeGateway;
+import server.agents.integration.cosmic.CosmicPrimitiveCapabilityGateway;
 import server.integration.AgentPresence;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -78,6 +79,12 @@ class CosmicAgentServerAdapterTest {
     @Test
     void exposesCosmicPersistenceGateway() {
         assertSame(CosmicAgentPersistenceGateway.INSTANCE, CosmicAgentServerAdapter.INSTANCE.persistence());
+    }
+
+    @Test
+    void exposesPrimitiveCapabilityGateway() {
+        assertSame(CosmicPrimitiveCapabilityGateway.INSTANCE,
+                CosmicAgentServerAdapter.INSTANCE.primitiveCapabilities());
     }
 
     @Test

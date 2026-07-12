@@ -1,0 +1,71 @@
+package server.agents.capabilities.primitive;
+
+import server.agents.capabilities.runtime.AgentCapabilityCommand;
+import server.agents.capabilities.runtime.AgentCapabilityContext;
+import server.agents.capabilities.runtime.AgentCapabilityResult;
+import server.agents.capabilities.runtime.AgentCapabilityStep;
+import server.agents.capabilities.runtime.AgentExecutableCapability;
+import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
+import server.agents.integration.PrimitiveCapabilityGateway;
+
+import java.util.Map;
+import java.util.Set;
+
+public final class AgentCombatCapability
+        implements AgentExecutableCapability<AgentCombatCapability.Command> {
+    public record Command(int questId, Map<Integer, Integer> requiredKillCounts)
+            implements AgentCapabilityCommand {
+        public Command {
+            requiredKillCounts = requiredKillCounts == null ? Map.of() : Map.copyOf(requiredKillCounts);
+            if (questId <= 0 || requiredKillCounts.isEmpty()
+                    || requiredKillCounts.entrySet().stream().anyMatch(entry -> entry.getKey() <= 0 || entry.getValue() <= 0)) {
+                throw new IllegalArgumentException("quest id and positive mob kill requirements are required");
+            }
+        }
+
+        @Override
+        public String type() {
+            return "combat";
+        }
+    }
+
+    private final PrimitiveCapabilityGateway gateway;
+
+    public AgentCombatCapability() {
+        this(AgentPrimitiveCapabilityGatewayRuntime.gateway());
+    }
+
+    public AgentCombatCapability(PrimitiveCapabilityGateway gateway) {
+        this.gateway = gateway;
+    }
+
+    @Override
+    public String id() {
+        return "combat";
+    }
+
+    @Override
+    public AgentCapabilityStep tick(AgentCapabilityContext context, Command command) {
+        if (!gateway.alive(context.agent())) {
+            gateway.stop(context.entry());
+            return AgentPrimitiveResults.missing("agent is dead and cannot continue combat");
+        }
+        boolean complete = command.requiredKillCounts().entrySet().stream().allMatch(entry ->
+                gateway.questProgress(context.agent(), command.questId(), entry.getKey()) >= entry.getValue());
+        if (complete) {
+            gateway.stop(context.entry());
+            return AgentCapabilityStep.terminal(AgentCapabilityResult.success("combat kill requirements verified"));
+        }
+        Set<Integer> allowedMobIds = command.requiredKillCounts().keySet();
+        if (gateway.liveMonsterCount(context.agent(), allowedMobIds) == 0) {
+            return AgentCapabilityStep.retry("no required target mob is currently available");
+        }
+        gateway.grind(context.entry(), allowedMobIds);
+        return AgentCapabilityStep.running("delegating to reconstructed combat", false);
+    }
+
+    @Override
+    public void onTerminal(AgentCapabilityContext context, Command command, AgentCapabilityResult result) {
+        gateway.stop(context.entry());
+    }
+}

@@ -34,6 +34,10 @@ class AgentLiveTickGateServiceTest {
                             calls.add("common");
                             return false;
                         },
+                        (capabilityEntry, capabilityAgent) -> {
+                            calls.add("capability");
+                            return false;
+                        },
                         (tradeEntry, tradeAgent) -> {
                             calls.add("trade");
                             return false;
@@ -52,7 +56,7 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertFalse(consumed);
-        assertEquals(List.of("common", "trade", "idle", "recovery", "mapChange"), calls);
+        assertEquals(List.of("common", "capability", "trade", "idle", "recovery", "mapChange"), calls);
     }
 
     @Test
@@ -75,6 +79,10 @@ class AgentLiveTickGateServiceTest {
                             calls.add("common");
                             return false;
                         },
+                        (capabilityEntry, capabilityAgent) -> {
+                            calls.add("capability");
+                            return false;
+                        },
                         (tradeEntry, tradeAgent) -> {
                             calls.add("trade");
                             return true;
@@ -93,6 +101,36 @@ class AgentLiveTickGateServiceTest {
                         }));
 
         assertTrue(consumed);
-        assertEquals(List.of("common", "trade"), calls);
+        assertEquals(List.of("common", "capability", "trade"), calls);
+    }
+
+    @Test
+    void activeCapabilityRunsBeforeLegacyLiveGatesAndConsumesTick() {
+        Character agent = mock(Character.class);
+        Character leader = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        List<String> calls = new ArrayList<>();
+
+        boolean consumed = AgentLiveTickGateService.tickLiveGates(
+                new AgentLiveTickGateService.Context(entry, agent, leader, leader, new Point(), true),
+                new AgentLiveTickGateService.Hooks(
+                        (commonEntry, commonAgent, commonLeader, runAiTick) -> {
+                            calls.add("common");
+                            return false;
+                        },
+                        (capabilityEntry, capabilityAgent) -> {
+                            calls.add("capability");
+                            return true;
+                        },
+                        (tradeEntry, tradeAgent) -> {
+                            calls.add("trade");
+                            return false;
+                        },
+                        (idleEntry, idleAgent) -> false,
+                        (recoveryEntry, recoveryAgent, anchor, target) -> false,
+                        (mapEntry, mapAgent) -> false));
+
+        assertTrue(consumed);
+        assertEquals(List.of("common", "capability"), calls);
     }
 }

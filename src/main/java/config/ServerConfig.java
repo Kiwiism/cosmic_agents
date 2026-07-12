@@ -110,6 +110,15 @@ public class ServerConfig {
     public boolean USE_MAP_OWNERSHIP_SYSTEM;
     public boolean USE_FISHING_SYSTEM;
     public boolean USE_NPCS_SCRIPTABLE;
+    public boolean AGENT_LEGACY_DIALOGUE_ENABLED;
+    public boolean AGENT_AMHERST_DEBUG_MESSAGES_ENABLED;
+    public boolean AGENT_AMHERST_INTENTION_CHAT_ENABLED;
+    public int AGENT_AMHERST_NPC_INTERACTION_DELAY_MIN_MS;
+    public int AGENT_AMHERST_NPC_INTERACTION_DELAY_MAX_MS;
+    public int AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MIN_MS;
+    public int AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MAX_MS;
+    public boolean AGENT_AMHERST_SHOWCASE_ENABLED;
+    public String AGENT_AMHERST_SHOWCASE_AGENT_NAME;
 
     //Events/PQs Configuration
     public boolean USE_OLD_GMS_STYLED_PQ_NPCS;

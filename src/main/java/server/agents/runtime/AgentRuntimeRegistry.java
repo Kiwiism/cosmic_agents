@@ -48,6 +48,17 @@ public final class AgentRuntimeRegistry {
         return findByCharacterId(entriesByLeaderId, leaderCharId, agentCharId);
     }
 
+    public static AgentRuntimeEntry findByAgentCharacterId(int agentCharId) {
+        for (List<AgentRuntimeEntry> entries : entriesByLeaderId.values()) {
+            for (AgentRuntimeEntry entry : entries) {
+                if (AgentRuntimeIdentityRuntime.botIs(entry, agentCharId)) {
+                    return entry;
+                }
+            }
+        }
+        return null;
+    }
+
     public static AgentRuntimeEntry findByName(Map<Integer, List<AgentRuntimeEntry>> entriesByLeaderId,
                                                int leaderCharId,
                                                String agentName) {

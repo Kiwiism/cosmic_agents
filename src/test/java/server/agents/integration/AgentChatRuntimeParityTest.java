@@ -1,5 +1,9 @@
 package server.agents.integration;
 
+import config.YamlConfig;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+
 import server.agents.runtime.AgentRuntimeEntry;
 
 import server.agents.capabilities.movement.fidget.AgentFidgetStateRuntime;
@@ -50,6 +54,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentChatRuntimeParityTest {
+    private boolean previousLegacyDialogue;
+
+    @BeforeEach
+    void enableLegacyDialogueForParityTests() {
+        previousLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    }
+
+    @AfterEach
+    void restoreLegacyDialogueFlag() {
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+    }
     @Test
     void shouldParseTradeMesosAsAllWhenNoAmountIsSpecified() {
         assertEquals("mesos", AgentTradeDialogueClassifier.matchTradeCategory("trade mesos"));

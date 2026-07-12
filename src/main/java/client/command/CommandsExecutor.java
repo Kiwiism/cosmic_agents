@@ -199,6 +199,7 @@ import client.command.commands.gm5.ShowPacketsCommand;
 import client.command.commands.gm5.ShowSessionsCommand;
 import client.command.commands.gm6.ClearQuestCacheCommand;
 import client.command.commands.gm6.AgentPopCommand;
+import client.command.commands.gm6.AmherstCommand;
 import client.command.commands.gm6.BotPopCommand;
 import client.command.commands.gm6.ClearQuestCommand;
 import client.command.commands.gm6.DCAllCommand;
@@ -597,6 +598,7 @@ public class CommandsExecutor {
         addCommand("removeworld", 6, ServerRemoveWorldCommand.class);
         addCommand("devtest", 6, DevtestCommand.class);
         addCommand("agentpop", 6, AgentPopCommand.class);
+        addCommand("amherst", 6, AmherstCommand.class);
         addCommand("botpop", 6, BotPopCommand.class);
 
         commandsNameDesc.add(levelCommandsCursor);

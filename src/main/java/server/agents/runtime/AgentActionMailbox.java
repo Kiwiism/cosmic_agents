@@ -71,8 +71,17 @@ public final class AgentActionMailbox {
             actions.clear();
             AgentAsyncQueueMetrics.recordDepth("mailbox", 0);
         }
-        RejectedExecutionException failure = new RejectedExecutionException("Agent session was removed");
-        pending.forEach(envelope -> envelope.result().completeExceptionally(failure));
+        reject(pending, "Agent session was removed");
+    }
+
+    public void discardPending(String reason) {
+        List<Envelope<?>> pending;
+        synchronized (this) {
+            pending = new ArrayList<>(actions);
+            actions.clear();
+            AgentAsyncQueueMetrics.recordDepth("mailbox", 0);
+        }
+        reject(pending, reason);
     }
 
     public synchronized int size() {
@@ -81,6 +90,11 @@ public final class AgentActionMailbox {
 
     public synchronized boolean isClosed() {
         return closed;
+    }
+
+    private static void reject(List<Envelope<?>> pending, String reason) {
+        RejectedExecutionException failure = new RejectedExecutionException(reason);
+        pending.forEach(envelope -> envelope.result().completeExceptionally(failure));
     }
 
     private static <R> void execute(AgentRuntimeEntry entry, Envelope<R> envelope) {

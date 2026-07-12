@@ -1,6 +1,7 @@
 package server.agents.integration;
 
 
+import config.YamlConfig;
 import server.agents.runtime.AgentSchedulerRuntime;
 import client.Character;
 import server.agents.capabilities.dialogue.AgentChatReplyRuntime;
@@ -21,22 +22,37 @@ public final class AgentReplyRuntime {
     }
 
     public static void queueSay(AgentRuntimeEntry entry, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         AgentChatReplyRuntime.queueSay(state(entry), message, dispatcher(entry));
     }
 
     public static void queueReply(AgentRuntimeEntry entry, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         AgentChatReplyRuntime.queueReply(state(entry), message, dispatcher(entry));
     }
 
     public static long queueSayWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
+        if (!legacyDialogueEnabled()) {
+            return 0L;
+        }
         return AgentChatReplyRuntime.queueSayWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
     public static long queueReplyWithEstimatedDelay(AgentRuntimeEntry entry, String message) {
+        if (!legacyDialogueEnabled()) {
+            return 0L;
+        }
         return AgentChatReplyRuntime.queueReplyWithEstimatedDelay(state(entry), message, dispatcher(entry));
     }
 
     public static void replyNow(AgentRuntimeEntry entry, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         switch (AgentReplyChannelStateRuntime.replyChannel(entry)) {
             case PARTY -> sayPartyNow(AgentRuntimeIdentityRuntime.bot(entry), message);
             case WHISPER -> {
@@ -56,10 +72,16 @@ public final class AgentReplyRuntime {
     }
 
     public static void visibleSayNow(AgentRuntimeEntry entry, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         sayNow(AgentRuntimeIdentityRuntime.bot(entry), AgentReplyChannelStateRuntime.replyChannel(entry), message);
     }
 
     public static void sayNow(Character bot, AgentReplyChannel channel, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         switch (channel) {
             case PARTY, WHISPER -> sayPartyNow(bot, message);
             default -> sayMapNow(bot, message);
@@ -67,6 +89,9 @@ public final class AgentReplyRuntime {
     }
 
     public static void sayMapNow(Character bot, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         AgentPacketGatewayRuntime.packets().broadcastChatText(
                 bot,
                 AgentChatTextSanitizer.sanitize(message),
@@ -75,9 +100,16 @@ public final class AgentReplyRuntime {
     }
 
     public static void sayPartyNow(Character bot, String message) {
+        if (!legacyDialogueEnabled()) {
+            return;
+        }
         if (!AgentPartyGatewayRuntime.party().sendPartyChat(bot, AgentChatTextSanitizer.sanitize(message))) {
             sayMapNow(bot, message);
         }
+    }
+
+    private static boolean legacyDialogueEnabled() {
+        return YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
     }
 
     private static AgentReplyQueue.State state(AgentRuntimeEntry entry) {

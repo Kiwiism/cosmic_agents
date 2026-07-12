@@ -9,8 +9,39 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AgentLiveModeTickServiceTest {
+    @Test
+    void seatedAgentSkipsLiveMovementModes() {
+        Character agent = mock(Character.class);
+        when(agent.getChair()).thenReturn(3010000);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, null, null);
+        Point target = new Point(30, 40);
+        List<String> calls = new ArrayList<>();
+
+        AgentLiveModeTickService.Result result = AgentLiveModeTickService.tickLiveModes(
+                new AgentLiveModeTickService.Context(
+                        entry, agent, new Point(10, 20), target, target, null, true, 123L),
+                new AgentLiveModeTickService.Hooks(
+                        (shopEntry, shopAgent, runAiTick) -> {
+                            calls.add("shop");
+                            return AgentLiveModeTickService.PhaseResult.fallThrough(null);
+                        },
+                        (followEntry, followAgent, agentPosition, targetPosition, followTarget, anchor, runAiTick) ->
+                                AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition),
+                        (idleEntry, idleAgent, targetPosition, nowMs) -> false,
+                        (scriptEntry, scriptAgent, agentPosition, targetPosition, runAiTick) ->
+                                AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition),
+                        (farmEntry, farmAgent, agentPosition, runAiTick) -> false,
+                        (grindEntry, grindAgent, agentPosition, targetPosition, runAiTick) ->
+                                AgentLiveModeTickService.PhaseResult.fallThrough(targetPosition),
+                        (moveEntry, targetPosition, runAiTick) -> calls.add("final")));
+
+        assertEquals(List.of(), calls);
+        assertEquals(target, result.targetPosition());
+    }
+
     @Test
     void preservesLiveModeOrderingAndTargetPropagation() {
         Character agent = mock(Character.class);

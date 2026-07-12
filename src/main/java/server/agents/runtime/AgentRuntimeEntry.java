@@ -6,6 +6,7 @@ import server.agents.capabilities.navigation.AgentNavigationDebugState;
 import server.agents.capabilities.navigation.AgentNavigationEdgeState;
 import server.agents.capabilities.navigation.AgentNavigationTargetState;
 import server.agents.capabilities.navigation.AgentPortalCooldownState;
+import server.agents.capabilities.runtime.AgentCapabilityRuntimeState;
 
 import server.agents.capabilities.build.AgentBuildState;
 import server.agents.capabilities.combat.AgentCombatBuffState;
@@ -18,6 +19,7 @@ import server.agents.capabilities.combat.AgentGrindTargetState;
 import server.agents.capabilities.combat.AgentBuffState;
 import server.agents.capabilities.combat.AgentCombatCooldownState;
 import server.agents.capabilities.combat.AgentCombatSkillCacheState;
+import server.agents.capabilities.combat.AgentCombatObjectiveTargetState;
 import server.agents.capabilities.combat.AgentMobTouchState;
 import server.agents.capabilities.combat.AgentDeathState;
 import server.agents.capabilities.follow.AgentOwnerMotionState;
@@ -62,6 +64,7 @@ import server.agents.capabilities.trade.AgentTradeRetryState;
 import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
+import server.agents.plans.amherst.AmherstPlanExecutionState;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +82,16 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentScheduledTaskScope scheduledTaskScope = new AgentScheduledTaskScope();
     private final AgentActionMailbox actionMailbox = new AgentActionMailbox(AgentMailboxRuntime.configuredCapacity());
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
+    private final AgentCapabilityRuntimeState capabilityRuntimeState = new AgentCapabilityRuntimeState();
+    private final AmherstPlanExecutionState amherstPlanExecutionState = new AmherstPlanExecutionState();
+
+    public AgentCapabilityRuntimeState capabilityRuntimeState() {
+        return capabilityRuntimeState;
+    }
+
+    public AmherstPlanExecutionState amherstPlanExecutionState() {
+        return amherstPlanExecutionState;
+    }
 
     public AgentScheduledTaskState scheduledTaskState() {
         return scheduledTaskState;
@@ -168,6 +181,11 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     // Grind mode
     private final AgentCombatCooldownState combatCooldownState = new AgentCombatCooldownState();
     private final AgentGrindTargetState grindTargetState = new AgentGrindTargetState();
+    private final AgentCombatObjectiveTargetState combatObjectiveTargetState = new AgentCombatObjectiveTargetState();
+
+    public AgentCombatObjectiveTargetState combatObjectiveTargetState() {
+        return combatObjectiveTargetState;
+    }
 
     public AgentGrindTargetState grindTargetState() {
         return grindTargetState;

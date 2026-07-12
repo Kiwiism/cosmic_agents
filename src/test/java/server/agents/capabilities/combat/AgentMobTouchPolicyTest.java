@@ -10,6 +10,12 @@ import org.junit.jupiter.api.Test;
 
 class AgentMobTouchPolicyTest {
     @Test
+    void tutorialSentinelDoesNotDealTouchDamageToAgents() {
+        assertTrue(AgentMobTouchPolicy.ignoresTouchDamage(9300018));
+        assertFalse(AgentMobTouchPolicy.ignoresTouchDamage(100100));
+    }
+
+    @Test
     void shouldBuildStationaryClientStyleFootSweepBounds() {
         assertEquals(new Rectangle(100, 150, 1, 51),
                 AgentMobTouchPolicy.botTouchSweepBounds(new Point(100, 200), new Point(100, 200), 50));

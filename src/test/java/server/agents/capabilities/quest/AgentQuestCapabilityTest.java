@@ -18,21 +18,21 @@ class AgentQuestCapabilityTest {
     void startCapabilityValidatesAmherstQuestButDoesNotExecuteWithoutGateway() {
         AgentQuestStartCapability capability = new AgentQuestStartCapability();
 
-        AgentQuestCapabilityResult result = capability.execute(startRequest(1000, 2101,
+        AgentQuestCapabilityResult result = capability.execute(startRequest(1031, 2101,
                 AgentQuestSnapshot.emptyLv1Beginner()));
 
         assertEquals(AgentCapabilityStatus.NOT_READY, result.status());
-        assertEquals(1000, result.questId());
-        assertEquals("Borrowing Sera's Mirror", result.requirement().questName());
+        assertEquals(1031, result.questId());
+        assertEquals("Heena and Sera", result.requirement().questName());
     }
 
     @Test
     void startCapabilityBlocksAlreadyStartedQuest() {
         AgentQuestStartCapability capability = new AgentQuestStartCapability();
         AgentQuestSnapshot snapshot = new AgentQuestSnapshot(1, 0,
-                Map.of(1000, AgentQuestStatus.STARTED), Map.of(), Map.of(), Map.of());
+                Map.of(1031, AgentQuestStatus.STARTED), Map.of(), Map.of(), Map.of());
 
-        AgentQuestCapabilityResult result = capability.plan(startRequest(1000, 2101, snapshot));
+        AgentQuestCapabilityResult result = capability.plan(startRequest(1031, 2101, snapshot));
 
         assertEquals(AgentCapabilityStatus.MISSING_REQUIREMENT, result.status());
         assertEquals("quest is not in NOT_STARTED state", result.message());
@@ -100,7 +100,7 @@ class AgentQuestCapabilityTest {
         };
         AgentQuestStartCapability capability = new AgentQuestStartCapability(new AgentQuestRequirementValidator(),
                 gateway);
-        AgentQuestCapabilityRequest request = startRequest(1000, 2101, AgentQuestSnapshot.emptyLv1Beginner());
+        AgentQuestCapabilityRequest request = startRequest(1031, 2101, AgentQuestSnapshot.emptyLv1Beginner());
 
         AgentQuestCapabilityResult result = capability.execute(request);
 

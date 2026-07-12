@@ -1,0 +1,99 @@
+package server.agents.plans.amherst;
+
+import client.Character;
+import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+
+import java.io.IOException;
+import java.nio.file.Path;
+
+public final class AgentAmherstPlanRuntime {
+    private static final Path DEFAULT_CARD_PATH = Path.of(
+            "docs", "agents", "plans", "maple-island-amherst-subphase.plan.json");
+
+    private AgentAmherstPlanRuntime() {
+    }
+
+    public static void startDefault(AgentRuntimeEntry entry, Character agent, long nowMs) throws IOException,
+            AmherstPlanValidationException {
+        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard());
+        runner.start(entry, agent, nowMs);
+    }
+
+    public static void startManual(AgentRuntimeEntry entry,
+                                   Character agent,
+                                   long nowMs,
+                                   AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard());
+        runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.MANUAL, observer);
+    }
+
+    public static void startAuto(AgentRuntimeEntry entry,
+                                 Character agent,
+                                 long nowMs,
+                                 AmherstPlanObserver observer) throws IOException, AmherstPlanValidationException {
+        AmherstPlanRuntimeRunner runner = defaultRunner(defaultCard());
+        runner.start(entry, agent, nowMs, AmherstPlanExecutionMode.AUTO, observer);
+    }
+
+    public static AmherstPlanCard defaultCard() throws IOException, AmherstPlanValidationException {
+        return new AmherstPlanCardLoader().load(DEFAULT_CARD_PATH);
+    }
+
+    public static FileAmherstPlanProgressStore defaultStore() {
+        return FileAmherstPlanProgressStore.runtimeDefault();
+    }
+
+    public static boolean tickGate(AgentRuntimeEntry entry, Character agent, long nowMs) {
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        AmherstPlanRuntimeRunner runner;
+        synchronized (state) {
+            runner = state.runner;
+        }
+        if (runner != null && runner.tick(entry, agent, nowMs)) {
+            return true;
+        }
+        if (agent.getChair() >= 0 && state.completed()) {
+            return true;
+        }
+        return AgentCapabilityRuntime.tick(entry, agent, nowMs);
+    }
+
+    public static void cancel(AgentRuntimeEntry entry) {
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        AmherstPlanRuntimeRunner runner;
+        synchronized (state) {
+            runner = state.runner;
+        }
+        if (runner != null) {
+            runner.cancel(entry);
+        }
+    }
+
+    public static boolean requestNext(AgentRuntimeEntry entry) {
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        AmherstPlanRuntimeRunner runner;
+        synchronized (state) {
+            runner = state.runner;
+        }
+        return runner != null && runner.requestAdvance(entry);
+    }
+
+    public static boolean clearSession(AgentRuntimeEntry entry) {
+        if (entry.capabilityRuntimeState().hasActiveCapability()) {
+            return false;
+        }
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        synchronized (state) {
+            state.clearRuntime();
+        }
+        return true;
+    }
+
+    private static AmherstPlanRuntimeRunner defaultRunner(AmherstPlanCard card) {
+        return new AmherstPlanRuntimeRunner(card,
+                defaultStore(), new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(), new AmherstObjectiveHandlerRegistry(),
+                AmherstObjectiveDelay.configured());
+    }
+}

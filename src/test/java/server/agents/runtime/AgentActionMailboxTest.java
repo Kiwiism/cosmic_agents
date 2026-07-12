@@ -62,6 +62,20 @@ class AgentActionMailboxTest {
     }
 
     @Test
+    void fixtureDiscardRejectsPendingButKeepsMailboxUsable() {
+        AgentRuntimeEntry entry = entry();
+        CompletableFuture<Integer> pending = AgentMailboxRuntime.submit(entry, ignored -> 1);
+
+        entry.actionMailbox().discardPending("fixture reset");
+
+        assertFalse(entry.actionMailbox().isClosed());
+        assertThrows(Exception.class, pending::join);
+        CompletableFuture<Integer> next = AgentMailboxRuntime.submit(entry, ignored -> 2);
+        assertEquals(1, entry.actionMailbox().drain(entry, 1));
+        assertEquals(2, next.join());
+    }
+
+    @Test
     void boundsPendingActions() {
         AgentRuntimeEntry entry = entry();
         AgentActionMailbox mailbox = new AgentActionMailbox(1);

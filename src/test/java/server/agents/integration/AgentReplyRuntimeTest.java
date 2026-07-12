@@ -5,7 +5,10 @@ import server.agents.runtime.AgentRuntimeEntry;
 import client.Character;
 import client.Client;
 import net.packet.Packet;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import config.YamlConfig;
 import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.maps.MapleMap;
@@ -17,6 +20,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AgentReplyRuntimeTest {
+    private boolean previousLegacyDialogue;
+
+    @BeforeEach
+    void enableLegacyDialogueForParityTests() {
+        previousLegacyDialogue = YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED;
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = true;
+    }
+
+    @AfterEach
+    void restoreLegacyDialogueFlag() {
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = previousLegacyDialogue;
+    }
+
     @Test
     void visibleSayBroadcastsToMap() {
         Character bot = mock(Character.class);
@@ -78,5 +94,21 @@ class AgentReplyRuntimeTest {
         AgentReplyRuntime.visibleSayNow(entry, "hello");
 
         verify(map, never()).broadcastMessage(any(Packet.class));
+    }
+
+    @Test
+    void legacyDialogueFlagSuppressesNuTNNuTReplies() {
+        Character bot = mock(Character.class);
+        MapleMap map = mock(MapleMap.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, null, null);
+        when(bot.getMap()).thenReturn(map);
+        YamlConfig.config.server.AGENT_LEGACY_DIALOGUE_ENABLED = false;
+
+        AgentReplyRuntime.queueSay(entry, "ambient");
+        AgentReplyRuntime.visibleSayNow(entry, "ambient");
+
+        verify(map, never()).broadcastMessage(any(Packet.class));
+        org.junit.jupiter.api.Assertions.assertEquals(
+                0, server.agents.commands.AgentMessageQueueStateRuntime.size(entry));
     }
 }

@@ -3937,6 +3937,18 @@ public class MapleMap {
         }
     }
 
+    public void clearDropsOwnedBy(int characterId) {
+        for (MapObject object : getItems()) {
+            MapItem item = (MapItem) object;
+            if (item.getOwnerId() != characterId) {
+                continue;
+            }
+            droppedItemCount.decrementAndGet();
+            removeMapObject(item);
+            broadcastMessage(PacketCreator.removeItemFromMap(item.getObjectId(), 0, characterId));
+        }
+    }
+
     public void clearDrops() {
         for (MapObject i : getMapObjectsInRange(new Point(0, 0), Double.POSITIVE_INFINITY, Arrays.asList(MapObjectType.ITEM))) {
             droppedItemCount.decrementAndGet();

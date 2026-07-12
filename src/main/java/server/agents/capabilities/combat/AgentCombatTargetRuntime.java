@@ -37,6 +37,7 @@ public final class AgentCombatTargetRuntime {
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             if (candidates.isEmpty()) return null;
 
             List<AgentScoredGrindTarget> scoredTargets = scoreGrindTargets(
@@ -61,6 +62,7 @@ public final class AgentCombatTargetRuntime {
             double rangeSq = (double) config.GRIND_SEEK_RANGE * config.GRIND_SEEK_RANGE;
             Foothold botFoothold = AgentCombatGroundRuntime.findGroundFoothold(botPos, bot);
             List<Monster> candidates = AgentCombatTargetSelector.aliveMonstersInRange(bot, botPos, rangeSq);
+            candidates.removeIf(monster -> !AgentCombatObjectiveTargetStateRuntime.allows(entry, monster.getId()));
             if (candidates.isEmpty()) {
                 return null;
             }

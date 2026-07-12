@@ -23,6 +23,10 @@ Gameplay packages include:
 
 ## First Gameplay Milestone
 
+Phased implementation authority:
+
+- `docs/agents/AMHERST_MVP_PHASED_IMPLEMENTATION_PLAN.md`
+
 Before scaling starts, the first gameplay milestone is:
 
 ```text
@@ -54,16 +58,23 @@ Required package cut:
 The capability-first baseline is the required bridge between reconstruction and
 scaling.
 
+Phases 1 and 2 of this baseline are implemented. Phase 1 provides the
+capability runtime, primitive Amherst adapters, live Cosmic gateways, guarded
+reset fixtures, and parity/regression tests. Phase 2 adds typed objective
+parents, the validated Amherst card loader, durable progress and reconciliation,
+declarative handlers, and a deterministic one-objective-at-a-time runner. The
+full Amherst run remains Phase 3.
+
 Implementation order:
 
 1. common capability command/result/status/reason-code contracts.
 2. capability frame runtime with validation, timeout, retry, cancellation, and
    explicit child-capability handoff.
-3. minimal Plan Runtime loader/objective runner.
-4. live state reader and server adapter boundaries.
-5. Amherst static catalog/runtime slice.
-6. primitive capability adapters that delegate to existing reconstructed
+3. live state reader and server adapter boundaries.
+4. Amherst static catalog/runtime slice.
+5. primitive capability adapters that delegate to existing reconstructed
    behavior.
+6. objective capabilities and minimal Plan Runtime loader/objective runner.
 7. Amherst MVP smoke run.
 8. Maple Island MVP full run.
 9. NuTNNuT-original behavior review and gating.

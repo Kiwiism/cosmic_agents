@@ -53,6 +53,19 @@ public final class AgentInteractionRuntime {
                 log);
     }
 
+    public static AgentLifecycleService.AgentSpawnResult spawnStationaryAgentForLeader(
+            Character leader, String agentName) {
+        AgentLifecycleService.RegisterSpawnedAgent registerStationaryAgent =
+                (leaderCharId, spawnLeader, agent) -> AgentRegistrationCoordinator.registerStationarySpawnedAgent(
+                        leaderCharId, spawnLeader, agent, AgentInteractionRuntime::tick);
+        return CosmicAgentSpawnCoordinator.spawnAgentForLeader(
+                leader,
+                agentName,
+                registerStationaryAgent,
+                entry -> { },
+                log);
+    }
+
     public static void handleLeaderChat(Character leader, String message, AgentReplyChannel channel) {
         AgentChatRouteCoordinator.handleChat(
                 leader,

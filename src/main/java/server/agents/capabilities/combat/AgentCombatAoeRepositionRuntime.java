@@ -39,12 +39,14 @@ public final class AgentCombatAoeRepositionRuntime {
             return null;
         }
         List<Monster> cluster = AgentCombatScoringPolicy.legacyClusterMonsters(
-                primaryTarget, bot.getMap().getAllMonsters());
+                primaryTarget, AgentCombatObjectiveTargetStateRuntime.allowedMonsters(
+                        entry, bot.getMap().getAllMonsters()));
         if (cluster.size() <= fireNowBest.targets.size()) {
             return null;
         }
         int centroidX = AgentCombatScoringPolicy.clusterCentroidX(cluster);
         AgentAttackPlan aoeNow = AgentSkillAttackPlanRuntime.planSkillAttack(bot, primaryTarget, aoeSkillId, config);
+        aoeNow = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, aoeNow);
         if (aoeNow == null || aoeNow.hitBox == null) {
             return null;
         }
@@ -60,7 +62,8 @@ public final class AgentCombatAoeRepositionRuntime {
             return null;
         }
         List<Monster> sweetTargets = AgentCombatTargetSelector.collectTargetsInHitBox(
-                sweetPrimary, shifted, aoeSkillMobs, bot.getMap().getAllMonsters());
+                sweetPrimary, shifted, aoeSkillMobs,
+                AgentCombatObjectiveTargetStateRuntime.allowedMonsters(entry, bot.getMap().getAllMonsters()));
         if (sweetTargets.size() <= fireNowBest.targets.size()) {
             return null;
         }

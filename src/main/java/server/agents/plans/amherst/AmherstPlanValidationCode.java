@@ -1,0 +1,15 @@
+package server.agents.plans.amherst;
+
+public enum AmherstPlanValidationCode {
+    MALFORMED_JSON,
+    UNSUPPORTED_SCHEMA,
+    MISSING_VALUE,
+    INVALID_VALUE,
+    UNKNOWN_OBJECTIVE_KIND,
+    DUPLICATE_OBJECTIVE_ID,
+    FORBIDDEN_MAP,
+    FORBIDDEN_NPC,
+    FORBIDDEN_QUEST,
+    QUEST_POLICY_MISMATCH,
+    FOCUS_POLICY_MISMATCH
+}

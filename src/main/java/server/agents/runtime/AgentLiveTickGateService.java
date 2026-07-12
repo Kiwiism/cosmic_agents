@@ -17,6 +17,7 @@ public final class AgentLiveTickGateService {
     }
 
     public record Hooks(CommonTickSystems commonTickSystems,
+                        ActiveCapabilityTick activeCapabilityTick,
                         TradeWindowTick tradeWindowTick,
                         IdleModeTick idleModeTick,
                         RecoveryTick recoveryTick,
@@ -26,6 +27,11 @@ public final class AgentLiveTickGateService {
     @FunctionalInterface
     public interface CommonTickSystems {
         boolean run(AgentRuntimeEntry entry, Character agent, Character leader, boolean runAiTick);
+    }
+
+    @FunctionalInterface
+    public interface ActiveCapabilityTick {
+        boolean tick(AgentRuntimeEntry entry, Character agent);
     }
 
     @FunctionalInterface
@@ -50,6 +56,9 @@ public final class AgentLiveTickGateService {
 
     public static boolean tickLiveGates(Context context, Hooks hooks) {
         if (hooks.commonTickSystems().run(context.entry(), context.agent(), context.leader(), context.runAiTick())) {
+            return true;
+        }
+        if (hooks.activeCapabilityTick().tick(context.entry(), context.agent())) {
             return true;
         }
         if (hooks.tradeWindowTick().tick(context.entry(), context.agent())) {

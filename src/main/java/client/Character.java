@@ -9681,6 +9681,58 @@ public class Character extends AbstractCharacterObject {
         markPersistenceDirty(PersistenceSection.STATS);
     }
 
+    /** Test-fixture mutation used only behind the guarded Amherst reset gateway. */
+    public synchronized void resetAmherstTestBaseline() {
+        sitChair(-1);
+        List<Item> baselineEquipment = getInventory(InventoryType.EQUIPPED).list().stream()
+                .map(Item::copy)
+                .toList();
+        cancelAllBuffs(false);
+        dispelDebuffs();
+        effLock.lock();
+        statWlock.lock();
+        try {
+            job = Job.BEGINNER;
+            level = 1;
+            exp.set(0);
+            allowExpGain = true;
+            gachaexp.set(0);
+            str = 12;
+            dex = 5;
+            int_ = 4;
+            luk = 4;
+            remainingAp = 0;
+            Arrays.fill(remainingSp, 0);
+            maxhp = 50;
+            maxmp = 5;
+            hp = maxhp;
+            mp = maxmp;
+            meso.set(0);
+            skills.clear();
+            removeAllCooldownsExcept(-1, false);
+
+            for (InventoryType type : InventoryType.values()) {
+                if (type == InventoryType.UNDEFINED || type == InventoryType.CANHOLD) {
+                    continue;
+                }
+                Inventory current = getInventory(type);
+                setInventory(type, new Inventory(this, type, current.getSlotLimit()));
+            }
+
+            Inventory equipped = getInventory(InventoryType.EQUIPPED);
+            for (Item item : baselineEquipment) {
+                equipped.addItemFromDB(item);
+            }
+            recalcLocalStats();
+            markPersistenceDirty(PersistenceSection.STATS);
+            markPersistenceDirty(PersistenceSection.SKILLS);
+            markPersistenceDirty(PersistenceSection.INVENTORY);
+        } finally {
+            statWlock.unlock();
+            effLock.unlock();
+        }
+    }
+
     public void setMap(int PmapId) {
         this.mapid = PmapId;
         markPersistenceDirty(PersistenceSection.STATS);

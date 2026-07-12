@@ -23,12 +23,14 @@ public final class AgentCombatPlanRuntime {
                     AgentCombatSkillCacheStateRuntime.attackSkillId(entry),
                     AgentCombatSkillCacheStateRuntime.aoeSkillId(entry))) {
                 AgentAttackPlan skillAttack = AgentSkillAttackPlanRuntime.planSkillAttack(bot, target, skillId, config);
+                skillAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, skillAttack);
                 if (skillAttack != null) {
                     candidates.add(skillAttack);
                 }
             }
 
             AgentAttackPlan basicAttack = AgentBasicAttackPlanRuntime.planBasicAttack(bot, target);
+            basicAttack = AgentCombatObjectiveTargetStateRuntime.restrictAttackPlan(entry, basicAttack);
             if (basicAttack != null) {
                 candidates.add(basicAttack);
             }

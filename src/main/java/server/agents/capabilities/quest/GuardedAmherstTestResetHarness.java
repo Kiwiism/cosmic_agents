@@ -8,12 +8,21 @@ public final class GuardedAmherstTestResetHarness implements AmherstTestResetHar
     private final boolean enabled;
     private final Set<Integer> allowedCharacterIds;
     private final Set<String> allowedCharacterNames;
+    private final AmherstTestResetPort resetPort;
 
     public GuardedAmherstTestResetHarness(boolean enabled, Set<Integer> allowedCharacterIds,
             Set<String> allowedCharacterNames) {
+        this(enabled, allowedCharacterIds, allowedCharacterNames, null);
+    }
+
+    public GuardedAmherstTestResetHarness(boolean enabled,
+            Set<Integer> allowedCharacterIds,
+            Set<String> allowedCharacterNames,
+            AmherstTestResetPort resetPort) {
         this.enabled = enabled;
         this.allowedCharacterIds = Set.copyOf(allowedCharacterIds);
         this.allowedCharacterNames = Set.copyOf(allowedCharacterNames);
+        this.resetPort = resetPort;
     }
 
     @Override
@@ -22,8 +31,15 @@ public final class GuardedAmherstTestResetHarness implements AmherstTestResetHar
         if (!guard.allowed()) {
             return guard;
         }
-        return AmherstTestResetResult.blocked(AgentCapabilityStatus.NOT_READY,
-                "Amherst reset harness guard passed; live character mutation is intentionally not wired yet");
+        if (resetPort == null) {
+            return AmherstTestResetResult.blocked(AgentCapabilityStatus.NOT_READY,
+                    "Amherst reset harness guard passed; live reset port is not configured");
+        }
+        AmherstTestResetResult result = resetPort.reset(request);
+        return result == null
+                ? AmherstTestResetResult.blocked(AgentCapabilityStatus.FAILED,
+                        "Amherst reset port returned no result")
+                : result;
     }
 
     AmherstTestResetResult validate(AmherstTestResetRequest request) {

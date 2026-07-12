@@ -71,4 +71,11 @@ public final class AgentMessageQueueState {
             return !sending && queue.isEmpty();
         }
     }
+
+    public void clear() {
+        synchronized (lock()) {
+            queue.clear();
+            sending = false;
+        }
+    }
 }

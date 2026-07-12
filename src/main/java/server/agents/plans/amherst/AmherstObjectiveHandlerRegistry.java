@@ -1,0 +1,140 @@
+package server.agents.plans.amherst;
+
+import server.agents.capabilities.objective.CombatQuestObjectiveCapability;
+import server.agents.capabilities.objective.InventoryUseObjectiveCapability;
+import server.agents.capabilities.objective.AmherstNpcInteractionDelay;
+import server.agents.capabilities.objective.NpcQuestObjectiveCapability;
+import server.agents.capabilities.objective.PlanStopObjectiveCapability;
+import server.agents.capabilities.objective.ReactorLootObjectiveCapability;
+import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.capabilities.runtime.AgentCapabilityCommand;
+import server.agents.capabilities.runtime.AgentCapabilityInvocation;
+import server.agents.capabilities.runtime.AgentExecutableCapability;
+import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
+import server.agents.integration.PrimitiveCapabilityGateway;
+import constants.id.ItemId;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public final class AmherstObjectiveHandlerRegistry {
+    private static final long OBJECTIVE_TIMEOUT_MS = 300_000L;
+    private static final int OBJECTIVE_RETRIES = 1;
+
+    private final PrimitiveCapabilityGateway gateway;
+    private final AmherstNpcInteractionDelay npcInteractionDelay;
+
+    public AmherstObjectiveHandlerRegistry() {
+        this(AgentPrimitiveCapabilityGatewayRuntime.gateway(), AmherstNpcInteractionDelay.configured());
+    }
+
+    public AmherstObjectiveHandlerRegistry(PrimitiveCapabilityGateway gateway) {
+        this(gateway, AmherstNpcInteractionDelay.NONE);
+    }
+
+    public AmherstObjectiveHandlerRegistry(PrimitiveCapabilityGateway gateway,
+                                            AmherstNpcInteractionDelay npcInteractionDelay) {
+        this.gateway = gateway;
+        this.npcInteractionDelay = npcInteractionDelay == null
+                ? AmherstNpcInteractionDelay.NONE : npcInteractionDelay;
+    }
+
+    public AmherstObjectiveExecution create(AmherstPlanCard card, AmherstPlanObjective objective) {
+        return switch (objective.kind()) {
+            case QUEST_START -> npcQuest(objective, List.of(operation(objective.questId(), 1,
+                    objective.npcId(), null)), false);
+            case QUEST_COMPLETE -> npcQuest(objective, List.of(operation(objective.questId(), 2,
+                    null, objective.npcId())), false);
+            case QUEST_CHAIN -> npcQuest(objective, chainOperations(objective, 2), false);
+            case QUEST_CHAIN_IF_AVAILABLE -> npcQuest(objective, chainOperations(objective, 2), true);
+            case USE_ITEM -> execution(objective.objectiveId(), new InventoryUseObjectiveCapability(gateway),
+                    new InventoryUseObjectiveCapability.Command(
+                            objective.objectiveId(), objective.questId(), objective.itemId()));
+            case KILL_MOBS -> execution(objective.objectiveId(), new CombatQuestObjectiveCapability(gateway),
+                    new CombatQuestObjectiveCapability.Command(objective.objectiveId(), objective.mapId(),
+                            objective.questId(), zip(objective.mobIds(), objective.counts()),
+                            unitCounts(objective.itemIds())));
+            case REACTOR_HIT, REACTOR_BOX_ITEMS -> execution(objective.objectiveId(),
+                    new ReactorLootObjectiveCapability(gateway),
+                    new ReactorLootObjectiveCapability.Command(objective.objectiveId(), objective.mapId(),
+                            objective.questId(), null, null, reactorItems(card, objective), null));
+            case STOP_PLAN -> execution(objective.objectiveId(), new PlanStopObjectiveCapability(gateway),
+                    new PlanStopObjectiveCapability.Command(objective.objectiveId(), card.exitCriteria().finalMapId(),
+                            card.exitCriteria().blockedCompletedQuestIds(), objective.reason(),
+                            "relaxer".equalsIgnoreCase(objective.mode()) ? ItemId.RELAXER : null));
+        };
+    }
+
+    private AmherstObjectiveExecution npcQuest(AmherstPlanObjective objective,
+                                                List<NpcQuestObjectiveCapability.QuestOperation> operations,
+                                                boolean skipUnavailable) {
+        return execution(objective.objectiveId(), new NpcQuestObjectiveCapability(
+                        gateway, npcInteractionDelay),
+                new NpcQuestObjectiveCapability.Command(
+                        objective.objectiveId(), objective.mapId(), operations, skipUnavailable));
+    }
+
+    private List<NpcQuestObjectiveCapability.QuestOperation> chainOperations(AmherstPlanObjective objective,
+                                                                             int desiredStatus) {
+        List<NpcQuestObjectiveCapability.QuestOperation> operations = new ArrayList<>();
+        for (Integer questId : objective.questIds()) {
+            operations.add(operation(questId, desiredStatus, null, null));
+        }
+        return List.copyOf(operations);
+    }
+
+    private NpcQuestObjectiveCapability.QuestOperation operation(int questId,
+                                                                 int desiredStatus,
+                                                                 Integer startOverride,
+                                                                 Integer completeOverride) {
+        var definition = AmherstQuestCatalog.find(questId)
+                .orElseThrow(() -> new IllegalArgumentException("quest is not in Amherst catalog: " + questId));
+        int startNpc = startOverride == null ? definition.startNpc().id() : startOverride;
+        int completeNpc = completeOverride == null ? definition.completeNpc().id() : completeOverride;
+        if (completeNpc <= 0) {
+            completeNpc = startNpc;
+        }
+        return new NpcQuestObjectiveCapability.QuestOperation(
+                questId, startNpc, completeNpc, desiredStatus);
+    }
+
+    private Map<Integer, Integer> reactorItems(AmherstPlanCard card, AmherstPlanObjective objective) {
+        List<Integer> itemIds = objective.itemIds();
+        if (itemIds.isEmpty()) {
+            itemIds = card.objectives().stream()
+                    .filter(candidate -> candidate.kind() == AmherstPlanObjectiveKind.REACTOR_BOX_ITEMS)
+                    .filter(candidate -> candidate.questId().equals(objective.questId()))
+                    .findFirst()
+                    .map(AmherstPlanObjective::itemIds)
+                    .orElse(List.of());
+        }
+        if (itemIds.isEmpty()) {
+            throw new IllegalArgumentException("reactor objective has no declared item postcondition");
+        }
+        Map<Integer, Integer> items = new LinkedHashMap<>();
+        itemIds.forEach(itemId -> items.put(itemId, 1));
+        return Map.copyOf(items);
+    }
+
+    private static Map<Integer, Integer> zip(List<Integer> keys, List<Integer> values) {
+        Map<Integer, Integer> result = new LinkedHashMap<>();
+        for (int i = 0; i < keys.size(); i++) {
+            result.put(keys.get(i), values.get(i));
+        }
+        return Map.copyOf(result);
+    }
+
+    private static Map<Integer, Integer> unitCounts(List<Integer> itemIds) {
+        Map<Integer, Integer> result = new LinkedHashMap<>();
+        itemIds.forEach(itemId -> result.put(itemId, 1));
+        return Map.copyOf(result);
+    }
+
+    private static <C extends AgentCapabilityCommand> AmherstObjectiveExecution execution(
+            String objectiveId, AgentExecutableCapability<C> capability, C command) {
+        return new AmherstObjectiveExecution(objectiveId,
+                new AgentCapabilityInvocation<>(capability, command, OBJECTIVE_TIMEOUT_MS, OBJECTIVE_RETRIES));
+    }
+}

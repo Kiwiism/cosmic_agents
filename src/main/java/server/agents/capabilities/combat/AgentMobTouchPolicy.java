@@ -4,6 +4,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 public final class AgentMobTouchPolicy {
+    static final int TUTORIAL_JR_SENTINEL_ID = 9300018;
+
     private AgentMobTouchPolicy() {
     }
 
@@ -32,5 +34,9 @@ public final class AgentMobTouchPolicy {
 
     public static Rectangle inclusiveRectangle(int left, int top, int right, int bottom) {
         return new Rectangle(left, top, Math.max(1, right - left + 1), Math.max(1, bottom - top + 1));
+    }
+
+    public static boolean ignoresTouchDamage(int mobId) {
+        return mobId == TUTORIAL_JR_SENTINEL_ID;
     }
 }

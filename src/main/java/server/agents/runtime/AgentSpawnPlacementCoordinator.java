@@ -35,7 +35,17 @@ public final class AgentSpawnPlacementCoordinator {
         AgentSpawnPlacementService.normalizeSpawnedAgent(entry, hooks());
     }
 
+    public static void normalizeSpawnedAgentWithoutParty(AgentRuntimeEntry entry) {
+        AgentSpawnPlacementService.normalizeSpawnedAgent(
+                entry, hooks((leader, agent) -> AgentPartyLifecycleService.leaveAgentParty(agent)));
+    }
+
     private static AgentSpawnPlacementService.Hooks<AgentRuntimeEntry> hooks() {
+        return hooks(AgentPartyLifecycleService::joinAgentToLeaderParty);
+    }
+
+    private static AgentSpawnPlacementService.Hooks<AgentRuntimeEntry> hooks(
+            AgentSpawnPlacementService.LeaderPartyJoiner partyJoiner) {
         return new AgentSpawnPlacementService.Hooks<AgentRuntimeEntry>(
                 AgentRuntimeIdentityRuntime::bot,
                 AgentRuntimeIdentityRuntime::owner,
@@ -55,6 +65,6 @@ public final class AgentSpawnPlacementCoordinator {
                 AgentMovementBroadcastStateRuntime::invalidate,
                 AgentMovementBroadcastService::broadcastMovement,
                 Character::updatePartyMemberHP,
-                AgentPartyLifecycleService::joinAgentToLeaderParty);
+                partyJoiner);
     }
 }

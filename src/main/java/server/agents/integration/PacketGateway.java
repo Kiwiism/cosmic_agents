@@ -13,6 +13,8 @@ import java.util.Map;
 public interface PacketGateway {
     void broadcastMovePlayer(Character agent, byte[] movementData);
 
+    void broadcastChair(Character agent, int itemId);
+
     void broadcastCloseRangeAttack(Character agent,
                                    int skill,
                                    int skillLevel,

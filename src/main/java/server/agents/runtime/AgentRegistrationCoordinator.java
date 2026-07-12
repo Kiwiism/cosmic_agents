@@ -26,11 +26,29 @@ public final class AgentRegistrationCoordinator {
         return registerAgent(leaderCharId, leader, agent, true, tickCallback);
     }
 
+    public static AgentRuntimeEntry registerStationarySpawnedAgent(int leaderCharId,
+                                                                   Character leader,
+                                                                   Character agent,
+                                                                   AgentLifecycleService.AgentTickCallback tickCallback) {
+        return registerAgent(leaderCharId, leader, agent, true, tickCallback,
+                AgentSpawnPlacementCoordinator::normalizeSpawnedAgentWithoutParty);
+    }
+
     public static AgentRuntimeEntry registerAgent(int leaderCharId,
                                                   Character leader,
                                                   Character agent,
                                                   boolean normalizeSpawnState,
                                                   AgentLifecycleService.AgentTickCallback tickCallback) {
+        return registerAgent(leaderCharId, leader, agent, normalizeSpawnState, tickCallback,
+                AgentSpawnPlacementCoordinator::normalizeSpawnedAgent);
+    }
+
+    private static AgentRuntimeEntry registerAgent(int leaderCharId,
+                                                   Character leader,
+                                                   Character agent,
+                                                   boolean normalizeSpawnState,
+                                                   AgentLifecycleService.AgentTickCallback tickCallback,
+                                                   java.util.function.Consumer<AgentRuntimeEntry> spawnNormalizer) {
         return AgentLifecycleService.registerAgent(
                 leaderCharId,
                 leader,
@@ -42,7 +60,7 @@ public final class AgentRegistrationCoordinator {
                         tickCallback,
                         AgentScheduledTaskRuntime::cancelScheduledTask,
                         defaultFormationState(),
-                        AgentSpawnPlacementCoordinator::normalizeSpawnedAgent,
+                        spawnNormalizer,
                         () -> AgentRandom.randMs(30_000, 31_000)));
     }
 

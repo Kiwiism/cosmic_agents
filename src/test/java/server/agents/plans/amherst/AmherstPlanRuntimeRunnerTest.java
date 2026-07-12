@@ -1,0 +1,273 @@
+package server.agents.plans.amherst;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import server.agents.capabilities.runtime.AgentCapabilityRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.testing.MutablePrimitiveGatewayFixture;
+
+import java.nio.file.Path;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+
+class AmherstPlanRuntimeRunnerTest {
+    @TempDir
+    Path tempDir;
+
+    @Test
+    void minimalPlanExecutesInOrderAndPersistsOnlyAfterLiveVerification() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner runner = runner(card, store, fixture);
+        runner.start(fixture.entry, fixture.agent, 1L);
+
+        drive(runner, fixture.entry, fixture, 2L, 300);
+
+        assertTrue(fixture.entry.amherstPlanExecutionState().completed());
+        assertEquals(2, fixture.quests.get(1031));
+        assertEquals(2, fixture.quests.get(1021));
+        assertEquals(1, fixture.questCompletions.get(1031));
+        assertEquals(1, fixture.questCompletions.get(1021));
+        assertEquals(20000, fixture.mapId.get());
+
+        AmherstPlanProgressSnapshot persisted = store.load(card.planId(), fixture.agent.getId());
+        assertTrue(card.objectives().stream().allMatch(objective ->
+                persisted.objectives().get(objective.objectiveId()).status()
+                        == AmherstObjectiveProgressStatus.SATISFIED));
+        assertEquals(AmherstPlanJournalEventType.PLAN_COMPLETED,
+                persisted.journal().get(persisted.journal().size() - 1).type());
+        assertTrue(persisted.journal().stream().anyMatch(event ->
+                event.type() == AmherstPlanJournalEventType.CHILD_HANDOFF));
+    }
+
+    @Test
+    void automaticPlanWaitsConfiguredDelayBeforeAssigningNextObjective() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner runner = new AmherstPlanRuntimeRunner(
+                card, store, new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(fixture.gateway),
+                new AmherstObjectiveHandlerRegistry(fixture.gateway), () -> 50L);
+        runner.start(fixture.entry, fixture.agent, 1L);
+
+        driveUntilSatisfied(runner, fixture.entry, fixture, "q1031", 2L, 100);
+        long readyAt = fixture.entry.amherstPlanExecutionState().nextObjectiveAtMs;
+        assertTrue(readyAt > 0L);
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+
+        assertTrue(runner.tick(fixture.entry, fixture.agent, readyAt - 1L));
+        assertNull(fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertTrue(runner.tick(fixture.entry, fixture.agent, readyAt));
+        assertEquals("q1021-start", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+    }
+
+    @Test
+    void restartReconcilesAndResumesAtFirstUnsatisfiedWithoutRepeatingReward() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner firstRunner = runner(card, store, fixture);
+        firstRunner.start(fixture.entry, fixture.agent, 1L);
+
+        long now = driveUntilSatisfied(firstRunner, fixture.entry, fixture, "q1031", 2L, 100);
+        assertEquals(1, fixture.questCompletions.get(1031));
+
+        AgentRuntimeEntry restartedEntry = new AgentRuntimeEntry(fixture.agent, mock(client.Character.class), null);
+        AmherstPlanRuntimeRunner restartedRunner = runner(card, store, fixture);
+        restartedRunner.start(restartedEntry, fixture.agent, now);
+        restartedRunner.tick(restartedEntry, fixture.agent, now + 1);
+
+        assertEquals("q1021-start", restartedEntry.amherstPlanExecutionState().assignedObjectiveId());
+        drive(restartedRunner, restartedEntry, fixture, now + 2, 300);
+        assertEquals(1, fixture.questCompletions.get(1031));
+        assertTrue(restartedEntry.amherstPlanExecutionState().completed());
+    }
+
+    @Test
+    void stalePersistedSuccessIsReopenedFromLiveState() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanProgressService progress = new AmherstPlanProgressService();
+        AmherstPlanProgressSnapshot stale = AmherstPlanProgressSnapshot.empty(card.planId(), fixture.agent.getId());
+        stale = progress.reconcile(stale, "q1031", true, "stale success", 1L);
+        store.save(stale);
+
+        AmherstPlanRuntimeRunner runner = runner(card, store, fixture);
+        runner.start(fixture.entry, fixture.agent, 2L);
+        runner.tick(fixture.entry, fixture.agent, 3L);
+
+        assertEquals("q1031", fixture.entry.amherstPlanExecutionState().assignedObjectiveId());
+        assertTrue(fixture.entry.amherstPlanExecutionState().progress().journal().stream().anyMatch(event ->
+                event.type() == AmherstPlanJournalEventType.RECONCILED_REOPENED));
+    }
+
+    @Test
+    void cancellationPersistsAndASecondStartCanResumeSafely() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner runner = runner(card, store, fixture);
+        runner.start(fixture.entry, fixture.agent, 1L);
+        runner.tick(fixture.entry, fixture.agent, 2L);
+        AgentCapabilityRuntime.tick(fixture.entry, fixture.agent, 3L);
+
+        runner.cancel(fixture.entry);
+        AgentCapabilityRuntime.tick(fixture.entry, fixture.agent, 4L);
+        runner.tick(fixture.entry, fixture.agent, 5L);
+
+        assertFalse(fixture.entry.amherstPlanExecutionState().active());
+        assertEquals(AmherstObjectiveProgressStatus.CANCELLED,
+                store.load(card.planId(), fixture.agent.getId()).objectives().get("q1031").status());
+
+        runner.start(fixture.entry, fixture.agent, 6L);
+        drive(runner, fixture.entry, fixture, 7L, 300);
+
+        assertTrue(fixture.entry.amherstPlanExecutionState().completed());
+        assertEquals(2, store.load(card.planId(), fixture.agent.getId())
+                .objectives().get("q1031").attempts());
+    }
+
+    @Test
+    void manualModeRunsExactlyOneObjectivePerAdvanceAndPublishesProgress() throws Exception {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        AmherstPlanCard card = minimalCard();
+        FileAmherstPlanProgressStore store = new FileAmherstPlanProgressStore(tempDir);
+        AmherstPlanRuntimeRunner runner = runner(card, store, fixture);
+        List<String> events = new ArrayList<>();
+        fixture.questExpRewards.put(1031, 5);
+        runner.start(fixture.entry, fixture.agent, 1L,
+                AmherstPlanExecutionMode.MANUAL, events::add);
+
+        long now = driveUntilPaused(runner, fixture.entry, fixture, 2L, 100);
+
+        assertEquals(2, fixture.quests.get(1031));
+        assertEquals(0, fixture.quests.getOrDefault(1021, 0));
+        assertTrue(fixture.entry.amherstPlanExecutionState().waitingForAdvance());
+        assertTrue(events.stream().anyMatch(message -> message.startsWith("Starting 1/")));
+        assertTrue(events.stream().anyMatch(message -> message.startsWith("SUCCESS 1/")));
+        assertTrue(events.stream().anyMatch(message ->
+                message.equals("Agent progress: Lv1 EXP 0 -> Lv1 EXP 5.")));
+        assertTrue(events.stream().anyMatch(message -> message.contains("Overall progress: 1/")));
+
+        for (int i = 0; i < 5; i++) {
+            assertFalse(runner.tick(fixture.entry, fixture.agent, now + i));
+        }
+        assertEquals(0, fixture.quests.getOrDefault(1021, 0));
+
+        assertTrue(runner.requestAdvance(fixture.entry));
+        driveUntilPaused(runner, fixture.entry, fixture, now + 10, 100);
+
+        assertEquals(1, fixture.quests.get(1021));
+    }
+
+    private static AmherstPlanRuntimeRunner runner(AmherstPlanCard card,
+                                                   AmherstPlanProgressStore store,
+                                                   MutablePrimitiveGatewayFixture fixture) {
+        return new AmherstPlanRuntimeRunner(card, store, new AmherstPlanProgressService(),
+                new AmherstObjectiveReconciler(fixture.gateway),
+                new AmherstObjectiveHandlerRegistry(fixture.gateway));
+    }
+
+    private static void drive(AmherstPlanRuntimeRunner runner,
+                              AgentRuntimeEntry entry,
+                              MutablePrimitiveGatewayFixture fixture,
+                              long startMs,
+                              int maxTicks) {
+        for (int i = 0; i < maxTicks && entry.amherstPlanExecutionState().active(); i++) {
+            long now = startMs + i;
+            boolean consumed = runner.tick(entry, fixture.agent, now);
+            if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
+                AgentCapabilityRuntime.tick(entry, fixture.agent, now);
+            }
+        }
+        assertFalse(entry.amherstPlanExecutionState().active(),
+                () -> "plan did not stop: " + entry.amherstPlanExecutionState().lastError());
+    }
+
+    private static long driveUntilSatisfied(AmherstPlanRuntimeRunner runner,
+                                            AgentRuntimeEntry entry,
+                                            MutablePrimitiveGatewayFixture fixture,
+                                            String objectiveId,
+                                            long startMs,
+                                            int maxTicks) {
+        for (int i = 0; i < maxTicks; i++) {
+            long now = startMs + i;
+            boolean consumed = runner.tick(entry, fixture.agent, now);
+            if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
+                AgentCapabilityRuntime.tick(entry, fixture.agent, now);
+            }
+            AmherstObjectiveProgress progress = entry.amherstPlanExecutionState().progress()
+                    .objectives().get(objectiveId);
+            if (progress != null && progress.status() == AmherstObjectiveProgressStatus.SATISFIED) {
+                return now + 1;
+            }
+        }
+        throw new AssertionError("objective was not satisfied");
+    }
+
+    private static long driveUntilPaused(AmherstPlanRuntimeRunner runner,
+                                         AgentRuntimeEntry entry,
+                                         MutablePrimitiveGatewayFixture fixture,
+                                         long startMs,
+                                         int maxTicks) {
+        for (int i = 0; i < maxTicks; i++) {
+            long now = startMs + i;
+            boolean consumed = runner.tick(entry, fixture.agent, now);
+            if (!consumed && entry.capabilityRuntimeState().hasActiveCapability()) {
+                AgentCapabilityRuntime.tick(entry, fixture.agent, now);
+            }
+            if (entry.amherstPlanExecutionState().waitingForAdvance()
+                    && !entry.capabilityRuntimeState().hasActiveCapability()) {
+                return now + 1;
+            }
+        }
+        throw new AssertionError("manual plan did not pause");
+    }
+
+    private static AmherstPlanCard minimalCard() {
+        List<AmherstPlanObjective> objectives = List.of(
+                objective("q1031", AmherstPlanObjectiveKind.QUEST_CHAIN, 10000,
+                        null, List.of(1031), null, null, null, null, null),
+                objective("q1021-start", AmherstPlanObjectiveKind.QUEST_START, 20000,
+                        1021, List.of(), 2000, null, null, null, null),
+                objective("q1021-use", AmherstPlanObjectiveKind.USE_ITEM, 20000,
+                        1021, List.of(), null, 2010007, null, null, null),
+                objective("q1021-complete", AmherstPlanObjectiveKind.QUEST_COMPLETE, 20000,
+                        1021, List.of(), 2000, null, null, null, null),
+                objective("stop", AmherstPlanObjectiveKind.STOP_PLAN, 20000,
+                        null, List.of(), null, null, null, null, "minimal proof complete"));
+        return new AmherstPlanCard(1, "amherst-phase2-minimal", "minimal", "test", "high", "test",
+                "ordered-with-live-quest-validation",
+                new AmherstPlanCard.FocusPolicy("locked", false, Set.of("emergency"), "always"),
+                new AmherstPlanCard.EntryCriteria(10000, "maple-island", "clean"),
+                new AmherstPlanCard.ExitCriteria("all", 20000, Set.of(1028), Set.of(1010000), Set.of(22000)),
+                Set.of(1031, 1021), Set.of(1000, 1001, 1028), objectives);
+    }
+
+    private static AmherstPlanObjective objective(String id,
+                                                  AmherstPlanObjectiveKind kind,
+                                                  int mapId,
+                                                  Integer questId,
+                                                  List<Integer> questIds,
+                                                  Integer npcId,
+                                                  Integer itemId,
+                                                  List<Integer> mobs,
+                                                  List<Integer> counts,
+                                                  String reason) {
+        return new AmherstPlanObjective(id, kind, 0, 0, mapId, questId, questIds,
+                npcId, List.of(), itemId, List.of(), mobs == null ? List.of() : mobs,
+                counts == null ? List.of() : counts, null, reason);
+    }
+}

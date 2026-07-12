@@ -33,6 +33,13 @@ public enum CosmicPacketGateway implements PacketGateway {
     }
 
     @Override
+    public void broadcastChair(Character agent, int itemId) {
+        if (agent != null && agent.getMap() != null) {
+            agent.getMap().broadcastMessage(agent, PacketCreator.showChair(agent.getId(), itemId), false);
+        }
+    }
+
+    @Override
     public void broadcastCloseRangeAttack(Character agent,
                                           int skill,
                                           int skillLevel,

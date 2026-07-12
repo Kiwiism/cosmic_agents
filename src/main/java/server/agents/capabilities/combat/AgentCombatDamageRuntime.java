@@ -23,6 +23,9 @@ public final class AgentCombatDamageRuntime {
     }
 
     public static void applyMobHit(AgentRuntimeEntry entry, Character bot, Monster mob, AgentCombatConfig.Config config) {
+        if (AgentMobTouchPolicy.ignoresTouchDamage(mob.getId())) {
+            return;
+        }
         int dmg = AgentDefenseDataProvider.getInstance().rollPhysicalTouchDamage(bot, mob);
         AgentMobKnockbackPolicy.MobHitKnockback kb =
                 AgentMobKnockbackPolicy.resolveMobHitKnockback(
@@ -42,6 +45,7 @@ public final class AgentCombatDamageRuntime {
 
             for (Monster mob : bot.getMap().getAllMonsters()) {
                 if (!AgentCombatTargetEligibilityPolicy.isHostileLivingMonster(mob)) continue;
+                if (AgentMobTouchPolicy.ignoresTouchDamage(mob.getId())) continue;
                 if (AgentMobTouchRuntime.isMobTouchingAgent(entry, bot, mob, config.MOB_TOUCH_SWEEP_HEIGHT)) {
                     applyMobHit(entry, bot, mob, config);
                     return;

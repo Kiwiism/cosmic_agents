@@ -28,7 +28,9 @@ public final class AgentGrindTargetStateRuntime {
             return null;
         }
         Monster target = activeTargetInMap(entry, bot.getMap());
-        if (target == null || target.getPosition().distanceSq(botPos) > seekRangeSq) {
+        if (target == null
+                || !AgentCombatObjectiveTargetStateRuntime.allows(entry, target.getId())
+                || target.getPosition().distanceSq(botPos) > seekRangeSq) {
             return null;
         }
         return target;

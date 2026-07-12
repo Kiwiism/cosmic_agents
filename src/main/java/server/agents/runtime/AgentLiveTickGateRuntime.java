@@ -8,6 +8,7 @@ import server.agents.capabilities.follow.AgentFollowMapSyncCoordinator;
 import server.agents.capabilities.movement.AgentIdlePhysicsService;
 import server.agents.capabilities.trade.AgentTradeWindowTickService;
 import server.agents.capabilities.recovery.AgentRecoveryTickService;
+import server.agents.plans.amherst.AgentAmherstPlanRuntime;
 
 import client.Character;
 import java.util.function.Consumer;
@@ -46,6 +47,7 @@ public final class AgentLiveTickGateRuntime {
         return new AgentLiveTickGateService.Hooks(
                 (entry, agent, leader, runAiTick) ->
                         AgentCommonTickRuntime.runCommonTickSystems(entry, agent, leader, runAiTick, tickScriptTasks),
+                (entry, agent) -> AgentAmherstPlanRuntime.tickGate(entry, agent, System.currentTimeMillis()),
                 (tradeEntry, tradeAgent) -> AgentTradeWindowTickService.tickIfTradeWindowOpen(
                         tradeEntry,
                         tradeAgent,
