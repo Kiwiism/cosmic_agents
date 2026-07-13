@@ -144,7 +144,10 @@ class AgentTickSchedulerSimulationTest {
                 false,
                 250L,
                 5_000L,
-                backgroundMapLimit);
+                backgroundMapLimit,
+                false,
+                2,
+                8);
         AgentSimulationSchedulePolicy policy = new AgentSimulationSchedulePolicy(
                 config,
                 simulationPolicy,

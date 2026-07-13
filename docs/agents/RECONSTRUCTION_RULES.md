@@ -7640,6 +7640,12 @@ Current physics correction:
   after releasing its character lock; the Cosmic presence adapter only wakes
   affected scheduler handles. Presentation cadence is unchanged, reduced
   background cadence is opt-in, and abstract execution remains denied.
+- Central scheduler tick-frame ownership: central modes may opt into an
+  entry-owned bounded frame that preserves the guarded tick's preflight,
+  lifecycle, plan/gate, and capability/movement ordering. The owning shard is
+  the only frame writer, continuation requests coalesce through its due heap,
+  and lifecycle cancellation releases incomplete frames. Legacy scheduling
+  and central tick slicing both remain disabled-by-default rollout choices.
 
 Initial reconstruction order:
 

@@ -56,6 +56,9 @@ agents.scheduler.simulation.backgroundAbstract.enabled=false
 agents.scheduler.simulation.backgroundActiveTickMs=250
 agents.scheduler.simulation.backgroundAbstractHeartbeatMs=5000
 agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle=32
+agents.scheduler.tickSlicing.enabled=false
+agents.scheduler.tickSlicing.maxSlicesPerTurn=2
+agents.scheduler.tickSlicing.maxContinuationsPerFrame=8
 ```
 
 `shardCount` is read at scheduler initialization and must remain between 1 and
@@ -127,6 +130,23 @@ map per cycle; `0` disables this guard. Presentation work is never subject to
 the map limit. Deferred records retain their ready age and continue through the
 normal bounded continuation path.
 
+## Tick slicing
+
+Central scheduler modes can opt into bounded guarded-tick slicing with
+`agents.scheduler.tickSlicing.enabled=true`. The default remains disabled.
+The existing guarded tick is represented as four ordered slices: preflight,
+lifecycle, plan/gates, and capability/movement. The same hook calls and early
+returns run in their legacy order; mailbox input is drained once when the frame
+starts, and movement settlement plus failure reset happen only after the frame
+completes.
+
+Each scheduler turn runs at most `maxSlicesPerTurn` slices. Incomplete frames
+request one coalesced immediate continuation from the owning scheduler shard.
+`maxContinuationsPerFrame` rejects a frame that cannot complete within its
+configured bound through the existing per-Agent failure policy. Despawn,
+replacement, and lifecycle cancellation clear an incomplete frame and its
+captured references. Legacy per-Agent scheduling never enables slicing.
+
 ## Isolation and lifecycle
 
 - Removed or replaced sessions are unregistered through their existing
@@ -156,6 +176,8 @@ work duration, budget exhaustion, deferral, starvation promotion, and
 ingress/due/ready depth. Work-duration windows are also available by
 `AgentWorkClass`. Each rolling window retains at most 2048 samples.
 Equivalent bounded duration windows are available by `AgentSimulationMode`.
+Tick-slice windows expose bounded duration percentiles by slice kind, and the
+snapshot includes the number of requested frame continuations.
 `shardSnapshots()` adds registrations and queue depths by shard, while the
 aggregate depth gauges sum all reporting shards. Registration imbalance is the
 largest shard population minus the smallest.
@@ -185,11 +207,12 @@ Phase 4 priority, time/cost budgets, aging, and rolling metrics: complete
 Phase 5 bounded async completion contract: complete
 Phase 6 gateway affinity and stable-hash sharding: locally complete, explicit opt-in
 Phase 7 simulation-aware cadence and transition hooks: locally complete, disabled by default
+Phase 8 bounded guarded-tick slicing: locally complete, disabled by default
 production default switch: blocked on parity and staged soak evidence
 ```
 
 The central-sequential global scan/sort has been removed. Important current
-limitations include the unsliced full Agent callback and Cosmic thread
+limitations include disabled-by-default tick slicing and Cosmic thread
 affinity that is classified but not yet live/soak validated. Scheduler-reachable navigation graph construction, Amherst
 progress persistence, LLM/network work, and trade/item analysis now run on
 separate bounded workload lanes. Their compact results return through the
@@ -221,6 +244,9 @@ per-shard metric evidence is recorded under
 Phase 7 map-presence, simulation-policy, cadence, materialization-boundary, and
 mode-metric evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-7`.
+Phase 8 tick-frame ordering, continuation bounds, lifecycle cleanup, and
+slice-metric evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-8`.
 
 ## Rollback
 

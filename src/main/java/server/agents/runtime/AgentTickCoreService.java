@@ -78,34 +78,128 @@ public final class AgentTickCoreService {
     }
 
     public static void tickCore(AgentRuntimeEntry entry, int leaderCharId, int agentCharId, Hooks hooks) {
-        long nowMs = hooks.nowMillis().get();
-        AgentTickPreflightService.Result preflight = hooks.preflightRunner().run(entry, agentCharId, nowMs);
-        if (preflight.consumedTick()) {
-            return;
-        }
-        Character agent = preflight.agent();
-        boolean runAiTick = preflight.runAiTick();
+        beginFrame(entry, leaderCharId, agentCharId, hooks).runToCompletion();
+    }
 
-        Character leader = hooks.leaderResolver().resolve(entry, leaderCharId);
-        if (hooks.inactiveLeaderTick().tick(entry, agent, leader, nowMs, leaderCharId)) {
-            return;
+    public static Frame beginFrame(AgentRuntimeEntry entry,
+                                   int leaderCharId,
+                                   int agentCharId,
+                                   Hooks hooks) {
+        if (entry == null || hooks == null) {
+            throw new IllegalArgumentException("Agent tick entry and hooks are required");
         }
-        if (leader == null) {
-            hooks.ownerlessTick().tick(entry, agent, runAiTick);
-            return;
+        return new Frame(entry, leaderCharId, agentCharId, hooks);
+    }
+
+    public static final class Frame implements AgentTickFrame {
+        private final AgentRuntimeEntry entry;
+        private final int leaderCharId;
+        private final int agentCharId;
+        private final Hooks hooks;
+        private AgentTickSliceKind nextSlice = AgentTickSliceKind.PREFLIGHT;
+        private long nowMs;
+        private Character agent;
+        private Character leader;
+        private boolean runAiTick;
+        private AgentLiveTickContextService.Context liveContext;
+        private Character followAnchor;
+        private boolean performanceEnabled;
+        private boolean complete;
+
+        private Frame(AgentRuntimeEntry entry, int leaderCharId, int agentCharId, Hooks hooks) {
+            this.entry = entry;
+            this.leaderCharId = leaderCharId;
+            this.agentCharId = agentCharId;
+            this.hooks = hooks;
         }
 
-        if (hooks.deadTick().tick(entry, agent, leader)) {
-            return;
+        @Override
+        public AgentTickSliceResult runNextSlice() {
+            if (complete) {
+                throw new IllegalStateException("Agent tick frame is already complete");
+            }
+            AgentTickSliceKind completedSlice = nextSlice;
+            switch (nextSlice) {
+                case PREFLIGHT -> runPreflight();
+                case LIFECYCLE -> runLifecycle();
+                case PLAN_AND_GATES -> runPlanAndGates();
+                case CAPABILITY_AND_MOVEMENT -> runCapabilityAndMovement();
+            }
+            return new AgentTickSliceResult(
+                    completedSlice,
+                    complete ? AgentTickNextRunHint.NORMAL_CADENCE : AgentTickNextRunHint.IMMEDIATE_CONTINUATION,
+                    complete);
         }
 
-        AgentLiveTickContextService.Context liveContext = hooks.liveContextPreparer().prepare(entry, agent, leader);
-        Character followAnchor = liveContext.followAnchor();
-        boolean perf = hooks.performanceEnabled().getAsBoolean();
-
-        if (hooks.liveGateRunner().tick(entry, agent, leader, followAnchor, liveContext, runAiTick, perf)) {
-            return;
+        public void runToCompletion() {
+            while (!complete) {
+                runNextSlice();
+            }
         }
-        hooks.liveModeRunner().tick(entry, agent, followAnchor, liveContext, runAiTick, nowMs, perf);
+
+        @Override
+        public boolean isComplete() {
+            return complete;
+        }
+
+        private void runPreflight() {
+            nowMs = hooks.nowMillis().get();
+            AgentTickPreflightService.Result preflight = hooks.preflightRunner().run(entry, agentCharId, nowMs);
+            if (preflight.consumedTick()) {
+                complete = true;
+                return;
+            }
+            agent = preflight.agent();
+            runAiTick = preflight.runAiTick();
+            nextSlice = AgentTickSliceKind.LIFECYCLE;
+        }
+
+        private void runLifecycle() {
+            leader = hooks.leaderResolver().resolve(entry, leaderCharId);
+            if (hooks.inactiveLeaderTick().tick(entry, agent, leader, nowMs, leaderCharId)) {
+                complete = true;
+                return;
+            }
+            if (leader == null) {
+                hooks.ownerlessTick().tick(entry, agent, runAiTick);
+                complete = true;
+                return;
+            }
+            if (hooks.deadTick().tick(entry, agent, leader)) {
+                complete = true;
+                return;
+            }
+            nextSlice = AgentTickSliceKind.PLAN_AND_GATES;
+        }
+
+        private void runPlanAndGates() {
+            liveContext = hooks.liveContextPreparer().prepare(entry, agent, leader);
+            followAnchor = liveContext.followAnchor();
+            performanceEnabled = hooks.performanceEnabled().getAsBoolean();
+            if (hooks.liveGateRunner().tick(
+                    entry,
+                    agent,
+                    leader,
+                    followAnchor,
+                    liveContext,
+                    runAiTick,
+                    performanceEnabled)) {
+                complete = true;
+                return;
+            }
+            nextSlice = AgentTickSliceKind.CAPABILITY_AND_MOVEMENT;
+        }
+
+        private void runCapabilityAndMovement() {
+            hooks.liveModeRunner().tick(
+                    entry,
+                    agent,
+                    followAnchor,
+                    liveContext,
+                    runAiTick,
+                    nowMs,
+                    performanceEnabled);
+            complete = true;
+        }
     }
 }

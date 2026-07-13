@@ -263,6 +263,10 @@ public final class AgentTickScheduler {
                 recordBackgroundMapWork(registration, backgroundMapWork);
                 long elapsedNs = update(registration, now, config);
                 budget.record(effectivePriority, elapsedNs);
+                if (registration.entry.tickSliceState().continuationPending()) {
+                    registration.requestImmediateContinuation(now);
+                    continuationNeeded = true;
+                }
                 if (shouldSchedule(registration)) {
                     shard.addOrUpdate(registration);
                 }
@@ -377,7 +381,7 @@ public final class AgentTickScheduler {
         return shard.ingressHighWaterMark();
     }
 
-    /* The unchanged guarded full tick remains the parity work item until Phase 8. */
+    /* The registration callback owns either one compact tick or one bounded frame turn. */
     private long update(Registration registration, long now, AgentSchedulerConfig config) {
         if (!registration.prepare(now)) {
             AgentSchedulerMetrics.recordSkipped(1);
@@ -678,6 +682,12 @@ public final class AgentTickScheduler {
 
         private void requestWake(long dueMs) {
             pendingWakeDueMs.accumulateAndGet(dueMs, Math::min);
+        }
+
+        private void requestImmediateContinuation(long dueMs) {
+            if (dueMs < nextDueMs) {
+                nextDueMs = dueMs;
+            }
         }
 
         private void applyPendingWake() {

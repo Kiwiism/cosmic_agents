@@ -30,10 +30,28 @@ public final class AgentTickCoreRuntime {
                                 int agentCharId,
                                 Consumer<AgentRuntimeEntry> issueGrind,
                                 Consumer<AgentRuntimeEntry> issueFollow) {
-        tickCore(
+        AgentTickCoreService.tickCore(
                 entry,
                 leaderCharId,
                 agentCharId,
+                defaultHooks(issueGrind, issueFollow));
+    }
+
+    public static AgentTickCoreService.Frame beginFrame(AgentRuntimeEntry entry,
+                                                        int leaderCharId,
+                                                        int agentCharId,
+                                                        Consumer<AgentRuntimeEntry> issueGrind,
+                                                        Consumer<AgentRuntimeEntry> issueFollow) {
+        return AgentTickCoreService.beginFrame(
+                entry,
+                leaderCharId,
+                agentCharId,
+                defaultHooks(issueGrind, issueFollow));
+    }
+
+    private static AgentTickCoreService.Hooks defaultHooks(Consumer<AgentRuntimeEntry> issueGrind,
+                                                           Consumer<AgentRuntimeEntry> issueFollow) {
+        return hooks(
                 (runtimeEntry, runtimeLeaderCharId) ->
                         AgentLeaderSessionResolver.resolveTickLeader(runtimeEntry, runtimeLeaderCharId),
                 (runtimeEntry, agent, leader, nowMs, runtimeLeaderCharId) ->
@@ -76,7 +94,11 @@ public final class AgentTickCoreRuntime {
                             grindRunAiTick,
                             AgentMovementTickCoordinator::stepMovementCore);
                     return new AgentLiveModeTickRuntime.LocalAttackResult(result.consumedTick(), result.targetPos());
-                });
+                },
+                AgentMovementPhysicsConfig.configuredTeleportDist(),
+                AgentMovementPhysicsConfig.configuredOutOfBoundsTeleportDist(),
+                AgentRuntimeConfig.cfg.GRIND_PARTY_TELEPORT_DIST_MULTIPLIER,
+                AgentMovementPhysicsConfig.configuredFollowDist());
     }
 
     public static void tickCore(AgentRuntimeEntry entry,

@@ -81,6 +81,11 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
 - Phase 6 classifies the closed gateway inventory, routes known sibling writes
   through destination mailboxes, and implements fixed stable-hash shards with
   local and aggregate metrics.
+- Phase 7 adds disabled-by-default simulation-aware cadence, O(1) map presence
+  wake-ups, per-map background budgets, and materialization boundaries while
+  preserving the authoritative guarded tick.
+- Phase 8 adds disabled-by-default bounded guarded-tick frames, ordered slices,
+  continuation limits, lifecycle cleanup, and per-slice metrics.
 
 The repository already contains a safe foundation:
 
@@ -103,26 +108,23 @@ Current mode selection:
 agents.scheduler.central.enabled=false
 ```
 
-When enabled, the current dispatcher:
-
-1. wakes at a fixed base cadence.
-2. scans every registration.
-3. collects due registrations.
-4. sorts due work by registration sequence.
-5. runs each selected Agent callback sequentially.
-
-This is useful for parity validation, but it is not yet the final 2000-Agent
-scheduler.
+When enabled, the current dispatcher drains bounded registration ingress into
+an indexed due-time heap, applies priority and cycle budgets, and runs selected
+work through the same guarded tick. Stable-hash sharding, simulation cadence,
+and tick slicing are implemented as separate explicit opt-ins. This is useful
+for parity and scaling validation, but it is not yet the production-approved
+2000-Agent scheduler.
 
 ## Current Gaps
 
 The production target must address these gaps:
 
-1. One slow monolithic Agent callback can overrun its current cycle before the
-   next checkpoint; Phase 8 owns tick slicing.
+1. Tick slicing is implemented but disabled by default and lacks live-client
+   parity plus measured p99 evidence.
 2. Multi-shard ownership is explicit opt-in and has not completed live/soak
    production validation.
-3. There is no map-aware or simulation-mode-aware cadence policy.
+3. Background-active cadence exists, but abstract gameplay execution remains
+   intentionally denied pending capability-specific reconciliation designs.
 4. Mailbox and central scheduler compatibility flags are disabled by default.
 5. Catalog rebuilds are not yet routed through the Phase 5 executor lane;
    current catalog loads are startup or explicit command work, not scheduler
@@ -1251,6 +1253,13 @@ Exit:
 - materialization produces valid state.
 
 ### Phase 8: Tick Slicing
+
+Status: locally complete on `feature/agent-central-scheduler-runtime`, disabled
+by default. Evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-8`. The guarded tick retains its
+existing call order and early-return behavior while central modes may execute
+the frame in bounded turns. Live-client parity and measured p99 targets remain
+rollout gates.
 
 Work:
 

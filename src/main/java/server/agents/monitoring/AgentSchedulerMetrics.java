@@ -1,6 +1,7 @@
 package server.agents.monitoring;
 
 import server.agents.runtime.simulation.AgentSimulationMode;
+import server.agents.runtime.AgentTickSliceKind;
 import server.agents.runtime.scheduler.AgentWorkClass;
 
 import java.util.EnumMap;
@@ -29,6 +30,7 @@ public final class AgentSchedulerMetrics {
                            long deferredWork,
                            long starvationPromotions,
                            long mapBudgetDeferrals,
+                           long tickContinuations,
                            long ingressDepth,
                            long ingressHighWaterMark,
                            long dueHeapDepth,
@@ -45,6 +47,12 @@ public final class AgentSchedulerMetrics {
                                          long durationP95Ns,
                                          long durationP99Ns,
                                          int sampleCount) {
+    }
+
+    public record TickSliceSnapshot(long durationP50Ns,
+                                    long durationP95Ns,
+                                    long durationP99Ns,
+                                    int sampleCount) {
     }
 
     public record ShardSnapshot(int registrations,
@@ -67,6 +75,7 @@ public final class AgentSchedulerMetrics {
     private static final LongAdder DEFERRED_WORK = new LongAdder();
     private static final LongAdder STARVATION_PROMOTIONS = new LongAdder();
     private static final LongAdder MAP_BUDGET_DEFERRALS = new LongAdder();
+    private static final LongAdder TICK_CONTINUATIONS = new LongAdder();
     private static final AtomicLong INGRESS_DEPTH = new AtomicLong();
     private static final AtomicLong INGRESS_HIGH_WATER_MARK = new AtomicLong();
     private static final AtomicLong DUE_HEAP_DEPTH = new AtomicLong();
@@ -79,6 +88,8 @@ public final class AgentSchedulerMetrics {
             new EnumMap<>(AgentWorkClass.class);
     private static final Map<AgentSimulationMode, AgentSchedulerRollingWindow> SIMULATION_MODE_WINDOWS =
             new EnumMap<>(AgentSimulationMode.class);
+    private static final Map<AgentTickSliceKind, AgentSchedulerRollingWindow> TICK_SLICE_WINDOWS =
+            new EnumMap<>(AgentTickSliceKind.class);
     private static final Map<Integer, ShardSnapshot> SHARD_SNAPSHOTS = new ConcurrentHashMap<>();
 
     static {
@@ -87,6 +98,9 @@ public final class AgentSchedulerMetrics {
         }
         for (AgentSimulationMode mode : AgentSimulationMode.values()) {
             SIMULATION_MODE_WINDOWS.put(mode, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
+        }
+        for (AgentTickSliceKind slice : AgentTickSliceKind.values()) {
+            TICK_SLICE_WINDOWS.put(slice, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
         }
     }
 
@@ -163,6 +177,14 @@ public final class AgentSchedulerMetrics {
         MAP_BUDGET_DEFERRALS.increment();
     }
 
+    public static void recordTickSlice(AgentTickSliceKind slice, long elapsedNs) {
+        TICK_SLICE_WINDOWS.get(slice).add(Math.max(0L, elapsedNs));
+    }
+
+    public static void recordTickContinuation() {
+        TICK_CONTINUATIONS.increment();
+    }
+
     public static void recordDepths(int ingressDepth,
                                     int ingressHighWaterMark,
                                     int dueHeapDepth,
@@ -225,7 +247,7 @@ public final class AgentSchedulerMetrics {
                 queueLag.p50(), queueLag.p95(), queueLag.p99(),
                 workDuration.p50(), workDuration.p95(), workDuration.p99(),
                 BUDGET_EXHAUSTIONS.sum(), DEFERRED_WORK.sum(), STARVATION_PROMOTIONS.sum(),
-                MAP_BUDGET_DEFERRALS.sum(),
+                MAP_BUDGET_DEFERRALS.sum(), TICK_CONTINUATIONS.sum(),
                 INGRESS_DEPTH.get(), INGRESS_HIGH_WATER_MARK.get(),
                 DUE_HEAP_DEPTH.get(), READY_DEPTH.get());
     }
@@ -238,6 +260,11 @@ public final class AgentSchedulerMetrics {
     public static SimulationModeSnapshot simulationModeSnapshot(AgentSimulationMode mode) {
         AgentSchedulerRollingWindow.Percentiles duration = SIMULATION_MODE_WINDOWS.get(mode).percentiles();
         return new SimulationModeSnapshot(duration.p50(), duration.p95(), duration.p99(), duration.sampleCount());
+    }
+
+    public static TickSliceSnapshot tickSliceSnapshot(AgentTickSliceKind slice) {
+        AgentSchedulerRollingWindow.Percentiles duration = TICK_SLICE_WINDOWS.get(slice).percentiles();
+        return new TickSliceSnapshot(duration.p50(), duration.p95(), duration.p99(), duration.sampleCount());
     }
 
     static void reset() {
@@ -254,6 +281,7 @@ public final class AgentSchedulerMetrics {
         DEFERRED_WORK.reset();
         STARVATION_PROMOTIONS.reset();
         MAP_BUDGET_DEFERRALS.reset();
+        TICK_CONTINUATIONS.reset();
         INGRESS_DEPTH.set(0L);
         INGRESS_HIGH_WATER_MARK.set(0L);
         DUE_HEAP_DEPTH.set(0L);
@@ -262,6 +290,7 @@ public final class AgentSchedulerMetrics {
         WORK_DURATION_WINDOW.reset();
         WORK_CLASS_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         SIMULATION_MODE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
+        TICK_SLICE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         SHARD_SNAPSHOTS.clear();
     }
 }

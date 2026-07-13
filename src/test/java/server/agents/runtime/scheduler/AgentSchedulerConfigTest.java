@@ -27,6 +27,9 @@ class AgentSchedulerConfigTest {
         System.clearProperty("agents.scheduler.simulation.backgroundActiveTickMs");
         System.clearProperty("agents.scheduler.simulation.backgroundAbstractHeartbeatMs");
         System.clearProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle");
+        System.clearProperty("agents.scheduler.tickSlicing.enabled");
+        System.clearProperty("agents.scheduler.tickSlicing.maxSlicesPerTurn");
+        System.clearProperty("agents.scheduler.tickSlicing.maxContinuationsPerFrame");
     }
 
     @Test
@@ -83,6 +86,21 @@ class AgentSchedulerConfigTest {
 
         System.setProperty("agents.scheduler.simulation.backgroundAbstractHeartbeatMs", "5000");
         System.setProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle", "-1");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+    }
+
+    @Test
+    void tickSlicingDefaultsOffAndRejectsUnboundedLimits() {
+        AgentSchedulerConfig defaults = AgentSchedulerConfig.fromSystemProperties();
+        assertEquals(false, defaults.tickSlicingEnabled());
+        assertEquals(2, defaults.maxSlicesPerTurn());
+        assertEquals(8, defaults.maxContinuationsPerFrame());
+
+        System.setProperty("agents.scheduler.tickSlicing.maxSlicesPerTurn", "0");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+
+        System.setProperty("agents.scheduler.tickSlicing.maxSlicesPerTurn", "2");
+        System.setProperty("agents.scheduler.tickSlicing.maxContinuationsPerFrame", "65");
         assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
     }
 

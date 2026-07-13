@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 class AgentTickCoreServiceTest {
@@ -102,6 +104,80 @@ class AgentTickCoreServiceTest {
                 "perf",
                 "gate:true:true",
                 "mode:123:true"), calls);
+    }
+
+    @Test
+    void exposesBoundedSlicesWithoutChangingLiveOrder() {
+        Character agent = mock(Character.class);
+        Character leader = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        List<String> calls = new ArrayList<>();
+        AgentTickCoreService.Frame frame = AgentTickCoreService.beginFrame(
+                entry,
+                1,
+                2,
+                liveHooks(agent, leader, calls));
+
+        AgentTickSliceResult preflight = frame.runNextSlice();
+        assertEquals(AgentTickSliceKind.PREFLIGHT, preflight.completedSlice());
+        assertEquals(AgentTickNextRunHint.IMMEDIATE_CONTINUATION, preflight.nextRunHint());
+        assertFalse(frame.isComplete());
+
+        assertEquals(AgentTickSliceKind.LIFECYCLE, frame.runNextSlice().completedSlice());
+        assertEquals(AgentTickSliceKind.PLAN_AND_GATES, frame.runNextSlice().completedSlice());
+        AgentTickSliceResult movement = frame.runNextSlice();
+
+        assertEquals(AgentTickSliceKind.CAPABILITY_AND_MOVEMENT, movement.completedSlice());
+        assertEquals(AgentTickNextRunHint.NORMAL_CADENCE, movement.nextRunHint());
+        assertTrue(frame.isComplete());
+        assertEquals(List.of(
+                "preflight:123",
+                "leader",
+                "inactive",
+                "dead",
+                "context",
+                "perf",
+                "gate:true:true",
+                "mode:123:true"), calls);
+    }
+
+    private static AgentTickCoreService.Hooks liveHooks(Character agent,
+                                                        Character leader,
+                                                        List<String> calls) {
+        AgentLiveTickContextService.Context liveContext = liveContext();
+        return new AgentTickCoreService.Hooks(
+                () -> 123L,
+                (tickEntry, agentCharId, nowMs) -> {
+                    calls.add("preflight:" + nowMs);
+                    return new AgentTickPreflightService.Result(false, agent, true);
+                },
+                (tickEntry, leaderCharId) -> {
+                    calls.add("leader");
+                    return leader;
+                },
+                (tickEntry, tickAgent, tickLeader, nowMs, leaderCharId) -> {
+                    calls.add("inactive");
+                    return false;
+                },
+                (tickEntry, tickAgent, runAiTick) -> calls.add("ownerless"),
+                (tickEntry, tickAgent, tickLeader) -> {
+                    calls.add("dead");
+                    return false;
+                },
+                (tickEntry, tickAgent, tickLeader) -> {
+                    calls.add("context");
+                    return liveContext;
+                },
+                () -> {
+                    calls.add("perf");
+                    return true;
+                },
+                (tickEntry, tickAgent, tickLeader, followAnchor, context, runAiTick, perf) -> {
+                    calls.add("gate:" + runAiTick + ":" + perf);
+                    return false;
+                },
+                (tickEntry, tickAgent, followAnchor, context, runAiTick, nowMs, perf) ->
+                        calls.add("mode:" + nowMs + ":" + perf));
     }
 
     private static AgentLiveTickContextService.Context liveContext() {

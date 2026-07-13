@@ -61,6 +61,11 @@ Current scheduler implementation checkpoint on
   presentation cadence is unchanged, unobserved Agents may use a reduced
   authoritative cadence, and abstract execution remains denied. Live-client
   materialization parity and staged mixed-mode soaks remain rollout gates.
+- Phase 8 is locally complete behind `agents.scheduler.tickSlicing.enabled`.
+  The guarded tick is an ordered bounded frame with continuation limits,
+  per-slice metrics, and lifecycle cleanup. Mailbox drain, early-return,
+  failure, and movement-settlement semantics remain unchanged. It is disabled
+  by default pending live-client parity and measured p99 slice evidence.
 
 ## Track Split
 

@@ -2,6 +2,7 @@ package server.agents.monitoring;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.AgentTickSliceKind;
 import server.agents.runtime.simulation.AgentSimulationMode;
 import server.agents.runtime.scheduler.AgentWorkClass;
 
@@ -91,5 +92,18 @@ class AgentSchedulerMetricsTest {
         assertEquals(1, snapshot.sampleCount());
         assertEquals(250L, snapshot.durationP50Ns());
         assertEquals(250L, snapshot.durationP99Ns());
+    }
+
+    @Test
+    void recordsBoundedTickSliceDurationAndContinuationCount() {
+        AgentSchedulerMetrics.recordTickSlice(AgentTickSliceKind.PREFLIGHT, 125L);
+        AgentSchedulerMetrics.recordTickContinuation();
+
+        AgentSchedulerMetrics.TickSliceSnapshot slice =
+                AgentSchedulerMetrics.tickSliceSnapshot(AgentTickSliceKind.PREFLIGHT);
+        assertEquals(1, slice.sampleCount());
+        assertEquals(125L, slice.durationP50Ns());
+        assertEquals(125L, slice.durationP99Ns());
+        assertEquals(1L, AgentSchedulerMetrics.snapshot().tickContinuations());
     }
 }

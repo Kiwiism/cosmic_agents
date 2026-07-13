@@ -11,6 +11,16 @@ public final class AgentTickRuntime {
                             int agentCharId,
                             Consumer<AgentRuntimeEntry> issueGrind,
                             Consumer<AgentRuntimeEntry> issueFollow) {
+        AgentTickSliceState tickSliceState = entry.tickSliceState();
+        if (tickSliceState != null && tickSliceState.enabled()) {
+            AgentTickSliceRuntime.tick(
+                    entry,
+                    leaderCharId,
+                    agentCharId,
+                    issueGrind,
+                    issueFollow);
+            return;
+        }
         AgentTickOrchestrator.runGuardedTick(
                 entry,
                 leaderCharId,

@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -616,11 +617,30 @@ class AgentLifecycleServiceTest {
         Character leader = character(100, "Leader");
         ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
 
+        AgentRuntimeEntry slicedEntry = new AgentRuntimeEntry(character(202, "Sliced"), leader, null);
+        slicedEntry.tickSliceState().configure(true, 1, 8);
+        slicedEntry.tickSliceState().startFrame(new AgentTickFrame() {
+            @Override
+            public AgentTickSliceResult runNextSlice() {
+                return new AgentTickSliceResult(
+                        AgentTickSliceKind.PREFLIGHT,
+                        AgentTickNextRunHint.IMMEDIATE_CONTINUATION,
+                        false);
+            }
+
+            @Override
+            public boolean isComplete() {
+                return false;
+            }
+        });
+
         AgentLifecycleService.cancelScheduledTickIfPresent(null);
         AgentLifecycleService.cancelScheduledTickIfPresent(new AgentRuntimeEntry(character(200, "NoTask"), leader, null));
         AgentLifecycleService.cancelScheduledTickIfPresent(new AgentRuntimeEntry(character(201, "Task"), leader, scheduledTask));
+        AgentLifecycleService.cancelScheduledTickIfPresent(slicedEntry);
 
         verify(scheduledTask).cancel(false);
+        assertNull(slicedEntry.tickSliceState().frame());
     }
 
     @Test

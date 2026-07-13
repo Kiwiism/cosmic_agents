@@ -24,6 +24,10 @@ public final class AgentScheduler {
             throw new IllegalArgumentException("Agent entry, tick, and legacy scheduler are required");
         }
         AgentSchedulerConfig config = AgentSchedulerConfig.fromSystemProperties();
+        entry.tickSliceState().configure(
+                config.mode() != AgentSchedulerMode.LEGACY_PER_AGENT && config.tickSlicingEnabled(),
+                config.maxSlicesPerTurn(),
+                config.maxContinuationsPerFrame());
         return switch (config.mode()) {
             case LEGACY_PER_AGENT -> new LegacyScheduleHandle(
                     AgentSessionId.from(entry),

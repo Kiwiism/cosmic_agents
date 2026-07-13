@@ -1,5 +1,7 @@
 package server.agents.runtime.scheduler;
 
+import server.agents.runtime.AgentTickSliceKind;
+
 import java.util.Locale;
 
 public record AgentSchedulerConfig(
@@ -19,7 +21,10 @@ public record AgentSchedulerConfig(
         boolean backgroundAbstractEnabled,
         long backgroundActiveTickMs,
         long backgroundAbstractHeartbeatMs,
-        int backgroundMaxWorkPerMapPerCycle) {
+        int backgroundMaxWorkPerMapPerCycle,
+        boolean tickSlicingEnabled,
+        int maxSlicesPerTurn,
+        int maxContinuationsPerFrame) {
     public AgentSchedulerConfig {
         if (mode == null) {
             throw new IllegalArgumentException("Agent scheduler mode is required");
@@ -62,6 +67,12 @@ public record AgentSchedulerConfig(
         if (backgroundMaxWorkPerMapPerCycle < 0) {
             throw new IllegalArgumentException("Agent background map work limit must not be negative");
         }
+        if (maxSlicesPerTurn < 1 || maxSlicesPerTurn > AgentTickSliceKind.values().length) {
+            throw new IllegalArgumentException("Agent maxSlicesPerTurn is outside the bounded tick frame");
+        }
+        if (maxContinuationsPerFrame < 1 || maxContinuationsPerFrame > 64) {
+            throw new IllegalArgumentException("Agent maxContinuationsPerFrame must be between 1 and 64");
+        }
     }
 
     public AgentSchedulerConfig(AgentSchedulerMode mode,
@@ -93,7 +104,10 @@ public record AgentSchedulerConfig(
                 false,
                 Math.max(baseTickMs, 250L),
                 Math.max(baseTickMs, 5_000L),
-                32);
+                32,
+                false,
+                2,
+                8);
     }
 
     public static AgentSchedulerConfig fromSystemProperties() {
@@ -121,7 +135,10 @@ public record AgentSchedulerConfig(
                 longProperty(
                         "agents.scheduler.simulation.backgroundAbstractHeartbeatMs",
                         Math.max(backgroundActiveTickMs, 5_000L)),
-                intProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle", 32));
+                intProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle", 32),
+                Boolean.parseBoolean(System.getProperty("agents.scheduler.tickSlicing.enabled", "false")),
+                intProperty("agents.scheduler.tickSlicing.maxSlicesPerTurn", 2),
+                intProperty("agents.scheduler.tickSlicing.maxContinuationsPerFrame", 8));
     }
 
     int effectiveMaxWorkItemsPerCycle() {

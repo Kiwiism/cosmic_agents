@@ -86,6 +86,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentCapabilityRuntimeState capabilityRuntimeState = new AgentCapabilityRuntimeState();
     private final AmherstPlanExecutionState amherstPlanExecutionState = new AmherstPlanExecutionState();
     private final AgentSimulationState simulationState = new AgentSimulationState();
+    private final AgentTickSliceState tickSliceState = new AgentTickSliceState();
 
     public AgentCapabilityRuntimeState capabilityRuntimeState() {
         return capabilityRuntimeState;
@@ -97,6 +98,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AgentSimulationState simulationState() {
         return simulationState;
+    }
+
+    public AgentTickSliceState tickSliceState() {
+        return tickSliceState;
     }
 
     public AgentScheduledTaskState scheduledTaskState() {
