@@ -3,6 +3,9 @@ package server.agents.integration;
 import client.Character;
 import client.QuestStatus;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Quest actions are scoped to the single-writer Agent session.")
 public interface AgentQuestSyncHandle {
     int id();
 

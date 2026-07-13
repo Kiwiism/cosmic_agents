@@ -10,6 +10,9 @@ import server.maps.Mist;
 import java.awt.Point;
 import java.util.Map;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Cosmic packet broadcast and channel writes are thread-safe producer operations.")
 public interface PacketGateway {
     void broadcastMovePlayer(Character agent, byte[] movementData);
 

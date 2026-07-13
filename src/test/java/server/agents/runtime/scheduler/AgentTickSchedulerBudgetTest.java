@@ -162,7 +162,8 @@ class AgentTickSchedulerBudgetTest {
                 maxWorkItems,
                 40,
                 10,
-                starvationPromotionMs);
+                starvationPromotionMs,
+                1);
         return new AgentTickScheduler(
                 now::get,
                 nanoTime::get,

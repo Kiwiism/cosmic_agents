@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import client.Character;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import server.agents.capabilities.movement.AgentFormationService;
 import server.agents.capabilities.movement.AgentFormationStateRuntime;
@@ -16,6 +17,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AgentFormationServiceTest {
+    @AfterEach
+    void clearSchedulerMode() {
+        System.clearProperty("agents.scheduler.mode");
+    }
+
     @Test
     void preservesLegacyOffsetPatterns() {
         assertEquals(60, new FormationState(FormationType.STAGGER, 60, 120).offsetFor(0, 4));
@@ -38,6 +44,23 @@ class AgentFormationServiceTest {
         AgentFormationService.applyOffsets(
                 List.of(first, second), new FormationState(FormationType.STAGGER, 60, 120));
 
+        assertEquals(60, AgentFormationStateRuntime.followOffsetX(first));
+        assertEquals(-60, AgentFormationStateRuntime.followOffsetX(second));
+    }
+
+    @Test
+    void centralModeAppliesEachOffsetThroughItsOwningMailbox() {
+        System.setProperty("agents.scheduler.mode", "central-sequential");
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), null, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(mock(Character.class), null, null);
+
+        AgentFormationService.applyOffsets(
+                List.of(first, second), new FormationState(FormationType.STAGGER, 60, 120));
+
+        assertEquals(0, AgentFormationStateRuntime.followOffsetX(first));
+        assertEquals(0, AgentFormationStateRuntime.followOffsetX(second));
+        assertEquals(1, first.actionMailbox().drain(first, 8));
+        assertEquals(1, second.actionMailbox().drain(second, 8));
         assertEquals(60, AgentFormationStateRuntime.followOffsetX(first));
         assertEquals(-60, AgentFormationStateRuntime.followOffsetX(second));
     }

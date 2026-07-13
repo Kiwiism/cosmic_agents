@@ -9,6 +9,9 @@ import java.awt.Point;
 import java.util.Collection;
 import java.util.Set;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Primitive actions are single-writer Agent operations using normal Cosmic validation paths.")
 public interface PrimitiveCapabilityGateway {
     int mapId(Character agent);
 

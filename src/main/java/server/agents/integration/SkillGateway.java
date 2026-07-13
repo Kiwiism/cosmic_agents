@@ -2,6 +2,9 @@ package server.agents.integration;
 
 import client.Skill;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.READ_ONLY_SNAPSHOT,
+        rationale = "Skill-provider access is read-only after server data initialization.")
 public interface SkillGateway {
     Skill getSkill(int skillId);
 

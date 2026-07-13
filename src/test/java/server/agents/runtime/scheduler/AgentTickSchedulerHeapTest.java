@@ -127,7 +127,8 @@ class AgentTickSchedulerHeapTest {
                 maxAgentsPerTick == 0 ? ingressCapacity : maxAgentsPerTick,
                 40,
                 10,
-                2_000L);
+                2_000L,
+                1);
         return new AgentTickScheduler(
                 now::get,
                 (loop, period) -> future,

@@ -59,4 +59,18 @@ class AgentSchedulerMetricsTest {
         assertEquals(100L, workClass.durationP50Ns());
         assertEquals(500L, workClass.durationP99Ns());
     }
+
+    @Test
+    void recordsPerShardDepthAndRegistrationImbalance() {
+        AgentSchedulerMetrics.recordShardDepths(0, 12, 2, 8, 2);
+        AgentSchedulerMetrics.recordShardDepths(1, 9, 1, 7, 1);
+
+        assertEquals(12, AgentSchedulerMetrics.shardSnapshots().get(0).registrations());
+        assertEquals(9, AgentSchedulerMetrics.shardSnapshots().get(1).registrations());
+        assertEquals(3, AgentSchedulerMetrics.shardRegistrationImbalance());
+        assertEquals(3, AgentSchedulerMetrics.snapshot().ingressDepth());
+        assertEquals(3, AgentSchedulerMetrics.snapshot().ingressHighWaterMark());
+        assertEquals(15, AgentSchedulerMetrics.snapshot().dueHeapDepth());
+        assertEquals(3, AgentSchedulerMetrics.snapshot().readyDepth());
+    }
 }

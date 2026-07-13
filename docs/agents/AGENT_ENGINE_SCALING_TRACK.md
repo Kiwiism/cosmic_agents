@@ -27,11 +27,12 @@ starts after that stable gameplay baseline exists.
 
 This sequencing gates production behavior changes and default enablement. It
 does not block behavior-preserving scheduler foundation work behind disabled
-rollout modes. Central scheduler Phases 0-5 may establish measurement, APIs,
-mailbox ownership, a one-shard heap, budgets, and async completion while the
-legacy guarded tick remains the default. Multi-shard rollout, cadence changes,
-simulation-tier optimization, and making the new scheduler the default remain
-blocked until capability parity and Cosmic thread-affinity evidence exist.
+rollout modes. Central scheduler Phases 0-6 may establish measurement, APIs,
+mailbox ownership, bounded heaps, budgets, async completion, affinity evidence,
+and fixed shard ownership while the legacy guarded tick remains the default.
+Production multi-shard rollout, cadence changes, simulation-tier optimization,
+and making the new scheduler the default remain blocked until capability
+parity and live/soak evidence exist.
 
 Current scheduler implementation checkpoint on
 `feature/agent-central-scheduler-runtime`:
@@ -51,6 +52,10 @@ Current scheduler implementation checkpoint on
   and trade/item analysis run on isolated bounded executors with generation/
   request-stamped mailbox completion. Static tests prohibit direct Agent future
   waits and restrict synchronous graph construction to explicit tools.
+- Phase 6 is locally complete: every root gateway contract has a closed
+  affinity classification, known sibling writes enter destination mailboxes,
+  and fixed stable-hash shards expose local and aggregate queue metrics.
+  `CENTRAL_SHARDED` remains explicit opt-in pending live parity and staged soak.
 
 ## Track Split
 

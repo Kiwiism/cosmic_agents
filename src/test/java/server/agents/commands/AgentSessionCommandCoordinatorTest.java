@@ -2,6 +2,7 @@ package server.agents.commands;
 
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import client.Character;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import server.agents.capabilities.dialogue.AgentChatAwayFlow;
@@ -11,6 +12,9 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentSessionControlRuntime;
+import server.agents.runtime.AgentSessionLifecycleRuntime;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -22,6 +26,11 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 class AgentSessionCommandCoordinatorTest {
+    @AfterEach
+    void clearSchedulerMode() {
+        System.clearProperty("agents.scheduler.mode");
+    }
+
     @Test
     void relogRequestSchedulesStopPromptAndPendingAction() {
         AgentRuntimeEntry entry = new AgentRuntimeEntry(null, null, null);
@@ -112,6 +121,37 @@ class AgentSessionCommandCoordinatorTest {
             AgentSchedulerRuntime.afterRandomDelay(900, 1100, action);
 
             scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(900, 1100, action));
+        }
+    }
+
+    @Test
+    void centralLogoutDispatchesEachSiblingStopThroughItsMailbox() {
+        System.setProperty("agents.scheduler.mode", "central-sequential");
+        Character owner = mock(Character.class);
+        when(owner.getId()).thenReturn(123);
+        AgentRuntimeEntry first = new AgentRuntimeEntry(mock(Character.class), owner, null);
+        AgentRuntimeEntry second = new AgentRuntimeEntry(mock(Character.class), owner, null);
+
+        try (MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class);
+             MockedStatic<AgentMovementCommandRuntime> movementCommands = mockStatic(AgentMovementCommandRuntime.class);
+             MockedStatic<AgentSessionControlRuntime> sessionControl = mockStatic(AgentSessionControlRuntime.class);
+             MockedStatic<AgentSessionLifecycleRuntime> lifecycle = mockStatic(AgentSessionLifecycleRuntime.class);
+             MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class)) {
+            sessionControl.when(() -> AgentSessionControlRuntime.shouldOfferTownForAwayCommand(first)).thenReturn(true);
+            lifecycle.when(() -> AgentSessionLifecycleRuntime.getBotEntries(123)).thenReturn(List.of(first, second));
+            scheduler.when(() -> AgentSchedulerRuntime.afterRandomDelay(eq(first), eq(700), eq(900), any(Runnable.class)))
+                    .thenAnswer(invocation -> {
+                        invocation.<Runnable>getArgument(3).run();
+                        return null;
+                    });
+
+            AgentSessionCommandCoordinator.handleOwnerAwayChoice(first, "logout");
+
+            movementCommands.verifyNoInteractions();
+            assertEquals(1, first.actionMailbox().drain(first, 8));
+            assertEquals(1, second.actionMailbox().drain(second, 8));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.stop(first));
+            movementCommands.verify(() -> AgentMovementCommandRuntime.stop(second));
         }
     }
 }

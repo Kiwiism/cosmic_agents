@@ -2,6 +2,7 @@ package server.agents.capabilities.movement;
 
 import client.Character;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.List;
@@ -65,7 +66,12 @@ public final class AgentFormationService {
             return;
         }
         for (int i = 0; i < entries.size(); i++) {
-            AgentFormationStateRuntime.setFollowOffsetX(entries.get(i), formation.offsetFor(i, entries.size()));
+            AgentRuntimeEntry entry = entries.get(i);
+            int offset = formation.offsetFor(i, entries.size());
+            AgentMailboxRuntime.dispatch(entry, ignored -> {
+                AgentFormationStateRuntime.setFollowOffsetX(entry, offset);
+                return null;
+            });
         }
     }
 }

@@ -21,6 +21,7 @@ class AgentSchedulerConfigTest {
         System.clearProperty("agents.scheduler.visibleReservePercent");
         System.clearProperty("agents.scheduler.criticalReservePercent");
         System.clearProperty("agents.scheduler.starvationPromotionMs");
+        System.clearProperty("agents.scheduler.shardCount");
     }
 
     @Test
@@ -41,6 +42,15 @@ class AgentSchedulerConfigTest {
 
         System.setProperty("agents.scheduler.mode", "central-sharded");
         assertEquals(AgentSchedulerMode.CENTRAL_SHARDED, AgentSchedulerConfig.fromSystemProperties().mode());
+    }
+
+    @Test
+    void validatesConfiguredShardCount() {
+        System.setProperty("agents.scheduler.shardCount", "3");
+        assertEquals(3, AgentSchedulerConfig.fromSystemProperties().shardCount());
+
+        System.setProperty("agents.scheduler.shardCount", "0");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
     }
 
     @Test

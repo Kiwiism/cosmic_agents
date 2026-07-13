@@ -7627,6 +7627,13 @@ Current physics correction:
   saturated submissions cannot mutate a live session. Direct future waits are
   prohibited by a source boundary test. Legacy scheduling remains the default,
   and explicit navigation debug/probe graph construction remains synchronous.
+- Central scheduler shard ownership: integration gateway contracts now carry a
+  closed thread-affinity classification, and explicit `central-sharded` mode
+  assigns every generation-stamped session to one fixed scheduler shard using a
+  stable hash. Formation, inactive-leader, and away/logout sibling writes enter
+  each destination Agent mailbox. Per-shard and aggregate depth metrics are
+  available; legacy scheduling remains the default and live/soak rollout gates
+  remain open.
 
 Initial reconstruction order:
 

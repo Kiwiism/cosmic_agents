@@ -5,6 +5,9 @@ import server.maps.MapleMap;
 
 import java.awt.Point;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Map registration and transfer use the same concurrent Cosmic APIs as live client handlers.")
 public interface MapGateway {
     MapleMap resolveMap(int world, int channel, int mapId);
 

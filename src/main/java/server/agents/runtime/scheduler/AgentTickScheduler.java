@@ -43,6 +43,7 @@ public final class AgentTickScheduler {
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler;
     private final AgentSchedulerConfig config;
     private final AgentSchedulerShard<Registration> shard;
+    private final int shardId;
     private volatile ScheduledFuture<?> centralTask;
 
     public static AgentTickScheduler instance() {
@@ -77,7 +78,7 @@ public final class AgentTickScheduler {
                        BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
                        BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
                        AgentSchedulerConfig config) {
-        this(nowMs, System::nanoTime, loopScheduler, wakeScheduler, config);
+        this(nowMs, System::nanoTime, loopScheduler, wakeScheduler, config, 0);
     }
 
     AgentTickScheduler(LongSupplier nowMs,
@@ -85,6 +86,15 @@ public final class AgentTickScheduler {
                        BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
                        BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
                        AgentSchedulerConfig config) {
+        this(nowMs, nanoTime, loopScheduler, wakeScheduler, config, 0);
+    }
+
+    AgentTickScheduler(LongSupplier nowMs,
+                       LongSupplier nanoTime,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
+                       AgentSchedulerConfig config,
+                       int shardId) {
         if (nowMs == null || nanoTime == null || loopScheduler == null || wakeScheduler == null || config == null) {
             throw new IllegalArgumentException("Agent scheduler dependencies are required");
         }
@@ -93,6 +103,7 @@ public final class AgentTickScheduler {
         this.loopScheduler = loopScheduler;
         this.wakeScheduler = wakeScheduler;
         this.config = config;
+        this.shardId = Math.max(0, shardId);
         this.shard = new AgentSchedulerShard<>(
                 config.ingressCapacityPerShard(),
                 Comparator.comparingLong(Registration::nextDueMs)
@@ -220,11 +231,20 @@ public final class AgentTickScheduler {
             if (deferred > 0 && (budgetLimited || budget.deadlineExceeded(cycleNowNs))) {
                 AgentSchedulerMetrics.recordBudgetExhausted();
             }
-            AgentSchedulerMetrics.recordDepths(
-                    shard.ingressDepth(),
-                    shard.ingressHighWaterMark(),
-                    shard.scheduledCount(),
-                    shard.readyCount());
+            if (config.mode() == AgentSchedulerMode.CENTRAL_SHARDED) {
+                AgentSchedulerMetrics.recordShardDepths(
+                        shardId,
+                        registrations.size(),
+                        shard.ingressDepth(),
+                        shard.scheduledCount(),
+                        shard.readyCount());
+            } else {
+                AgentSchedulerMetrics.recordDepths(
+                        shard.ingressDepth(),
+                        shard.ingressHighWaterMark(),
+                        shard.scheduledCount(),
+                        shard.readyCount());
+            }
         } finally {
             ticking.set(false);
             AgentSchedulerMetrics.recordCycle(Math.max(0L, nanoTime.getAsLong() - cycleStarted));
@@ -580,7 +600,7 @@ public final class AgentTickScheduler {
 
         @Override
         public AgentSchedulerMode mode() {
-            return AgentSchedulerMode.CENTRAL_SEQUENTIAL;
+            return owner.config.mode();
         }
 
         @Override

@@ -59,8 +59,8 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
 - Phase 1 moves scheduler types under `server.agents.runtime.scheduler`, adds
   the stable `AgentScheduler` facade, immutable validated mode configuration,
   typed generation-bound handles, and an O(1) active-session index.
-- `LEGACY_PER_AGENT` remains the default and `CENTRAL_SHARDED` remains
-  unavailable until its implementation phase.
+- `LEGACY_PER_AGENT` remains the default. `CENTRAL_SHARDED` is implemented as
+  an explicit opt-in and remains blocked from production default rollout.
 - Phase 2 makes mailbox ownership mandatory whenever either central mode is
   selected. Chat, whisper, equip, potion, follow, formation, pending-offer,
   Amherst mutation, airshow, and entry-scoped delayed callbacks now enter the
@@ -75,6 +75,12 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
   256-item hard guard, critical/visible reserved passes, per-registration cost
   EWMA, repeated starvation promotion up to interactive priority, immediate
   bounded continuations, and 2048-sample rolling delay/cost windows.
+- Phase 5 isolates scheduler-reachable navigation, persistence, LLM/network,
+  catalog, and economy work on bounded workload lanes with stamped mailbox
+  completion.
+- Phase 6 classifies the closed gateway inventory, routes known sibling writes
+  through destination mailboxes, and implements fixed stable-hash shards with
+  local and aggregate metrics.
 
 The repository already contains a safe foundation:
 
@@ -114,7 +120,8 @@ The production target must address these gaps:
 
 1. One slow monolithic Agent callback can overrun its current cycle before the
    next checkpoint; Phase 8 owns tick slicing.
-2. Multi-shard ownership is not enabled.
+2. Multi-shard ownership is explicit opt-in and has not completed live/soak
+   production validation.
 3. There is no map-aware or simulation-mode-aware cadence policy.
 4. Mailbox and central scheduler compatibility flags are disabled by default.
 5. Catalog rebuilds are not yet routed through the Phase 5 executor lane;
@@ -134,8 +141,9 @@ It is not safe to jump directly to `CENTRAL_SHARDED`, make central scheduling
 the default, or change gameplay cadence. The following source facts are the
 current mandatory migration inputs:
 
-- `AgentSchedulerMode` exposes all three rollout modes. Legacy and
-  central-sequential have implementations; central-sharded remains rejected.
+- `AgentSchedulerMode` exposes all three rollout modes. Legacy,
+  central-sequential, and central-sharded have implementations; sharded mode is
+  explicit opt-in and remains non-default.
 - `AgentTickScheduler` now uses bounded coalesced ingress and an indexed
   one-shard due-time heap without a global registration scan or due-list sort.
 - `AgentRuntimeRegistry.isActiveSession` now uses the generation-stamped O(1)
@@ -168,7 +176,8 @@ Phase 2: complete; evidence is recorded under phase-2
 Phase 3: complete; evidence is recorded under phase-3
 Phase 4: complete; evidence is recorded under phase-4
 Phase 5: complete; evidence is recorded under phase-5
-Phase 6+: blocked on Cosmic thread-affinity audit and capability parity proof
+Phase 6 implementation: locally complete; live thread-affinity/parity gates remain
+Phase 7+: ready only behind unchanged PRESENTATION behavior and disabled abstraction
 Default CENTRAL_SHARDED: blocked on staged live and soak acceptance
 ```
 
@@ -1194,6 +1203,12 @@ Exit:
 - scheduler workers remain responsive during slow external operations.
 
 ### Phase 6: Multi-Shard Execution
+
+Local implementation status: complete behind explicit opt-in. Gateway affinity,
+stable ownership, same/different-map deterministic execution, failure isolation,
+and concurrent cancellation evidence are recorded under
+`docs/agents/evidence/central-scheduler/phase-6`. Live packet-visible capability
+stress and staged population soak remain rollout gates.
 
 Work:
 

@@ -13,7 +13,8 @@ public record AgentSchedulerConfig(
         int maxWorkItemsPerCycle,
         int visibleReservePercent,
         int criticalReservePercent,
-        long starvationPromotionMs) {
+        long starvationPromotionMs,
+        int shardCount) {
     public AgentSchedulerConfig {
         if (mode == null) {
             throw new IllegalArgumentException("Agent scheduler mode is required");
@@ -43,6 +44,9 @@ public record AgentSchedulerConfig(
         if (starvationPromotionMs < 1L) {
             throw new IllegalArgumentException("Agent scheduler starvationPromotionMs must be positive");
         }
+        if (shardCount < 1 || shardCount > 64) {
+            throw new IllegalArgumentException("Agent scheduler shardCount must be between 1 and 64");
+        }
     }
 
     public static AgentSchedulerConfig fromSystemProperties() {
@@ -57,7 +61,8 @@ public record AgentSchedulerConfig(
                 intProperty("agents.scheduler.maxWorkItemsPerCycle", 256),
                 intProperty("agents.scheduler.visibleReservePercent", 40),
                 intProperty("agents.scheduler.criticalReservePercent", 10),
-                longProperty("agents.scheduler.starvationPromotionMs", 2_000L));
+                longProperty("agents.scheduler.starvationPromotionMs", 2_000L),
+                intProperty("agents.scheduler.shardCount", defaultShardCount()));
     }
 
     int effectiveMaxWorkItemsPerCycle() {
@@ -83,6 +88,10 @@ public record AgentSchedulerConfig(
             case "central-sharded", "sharded" -> AgentSchedulerMode.CENTRAL_SHARDED;
             default -> throw new IllegalArgumentException("Unknown Agent scheduler mode: " + value);
         };
+    }
+
+    private static int defaultShardCount() {
+        return Math.clamp(Runtime.getRuntime().availableProcessors() / 2, 1, 4);
     }
 
     private static long longProperty(String name, long defaultValue) {

@@ -2,6 +2,7 @@ package server.agents.runtime.scheduler;
 
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.integration.AgentGatewayAffinityCatalog;
 
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
@@ -28,8 +29,13 @@ public final class AgentScheduler {
                     AgentSessionId.from(entry),
                     legacyScheduler.schedule(tick, periodMs));
             case CENTRAL_SEQUENTIAL -> AgentTickScheduler.instance().register(entry, tick, periodMs);
-            case CENTRAL_SHARDED -> throw new IllegalStateException(
-                    "CENTRAL_SHARDED is not available before the shard rollout phase");
+            case CENTRAL_SHARDED -> {
+                if (!AgentGatewayAffinityCatalog.multiShardReady()) {
+                    throw new IllegalStateException(
+                            "CENTRAL_SHARDED is blocked by an unsafe Agent gateway affinity");
+                }
+                yield AgentShardedTickScheduler.instance().register(entry, tick, periodMs);
+            }
         };
     }
 

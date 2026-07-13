@@ -4,6 +4,9 @@ import server.agents.registry.AgentResolvedCharacter;
 
 import java.sql.SQLException;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.ASYNC_EXTERNAL,
+        rationale = "Persistence operations must execute off scheduler shards and return stamped completions.")
 public interface AgentPersistenceGateway {
     AgentResolvedCharacter findCharacterByName(String name) throws SQLException;
 

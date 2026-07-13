@@ -57,6 +57,7 @@ class AgentCycleBudgetTest {
                 maxWorkItems,
                 visibleReservePercent,
                 criticalReservePercent,
-                2_000L);
+                2_000L,
+                1);
     }
 }

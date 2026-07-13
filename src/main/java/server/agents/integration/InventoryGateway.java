@@ -9,6 +9,9 @@ import server.StatEffect;
 
 import java.util.Map;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Inventory mutations are scoped to the owning Agent and use normal Cosmic manipulators.")
 public interface InventoryGateway {
     String getItemName(int itemId);
 

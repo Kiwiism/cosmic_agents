@@ -77,11 +77,14 @@ public final class AgentLeaderSafetyCoordinator {
                 town,
                 AgentRuntimeIdentityRuntime::botHasMap,
                 AgentLeaderSafetyCoordinator::shouldTownWarpForInactiveEntry,
-                (entry, shouldTown) -> enterInactiveSafeMode(
-                        entry,
-                        AgentRuntimeIdentityRuntime.bot(entry),
-                        leaderCharId,
-                        shouldTown));
+                (entry, shouldTown) -> AgentMailboxRuntime.dispatch(entry, ignored -> {
+                    enterInactiveSafeMode(
+                            entry,
+                            AgentRuntimeIdentityRuntime.bot(entry),
+                            leaderCharId,
+                            shouldTown);
+                    return null;
+                }));
     }
 
     private static boolean enterInactiveSafeMode(AgentRuntimeEntry entry, Character agent, int leaderCharId, boolean town) {

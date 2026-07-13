@@ -5,6 +5,9 @@ import client.Client;
 
 import java.sql.SQLException;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.ASYNC_EXTERNAL,
+        rationale = "Backing-client creation and loading are lifecycle/SQL operations outside Agent ticks.")
 public interface AgentClientGateway {
     Client createHeadlessClient(int world, int channel);
 

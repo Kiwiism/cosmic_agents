@@ -6,6 +6,9 @@ import server.agents.runtime.AgentRuntimeEntry;
 /**
  * Integration boundary for packet-visible combat stance refreshes.
  */
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Stance refresh broadcasts the owning Agent's current presentation state.")
 public final class AgentCombatStanceGateway {
     private AgentCombatStanceGateway() {
     }

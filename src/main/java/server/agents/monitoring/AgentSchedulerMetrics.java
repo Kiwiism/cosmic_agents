@@ -4,6 +4,7 @@ import server.agents.runtime.scheduler.AgentWorkClass;
 
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -38,6 +39,12 @@ public final class AgentSchedulerMetrics {
                                     int sampleCount) {
     }
 
+    public record ShardSnapshot(int registrations,
+                                int ingressDepth,
+                                int dueHeapDepth,
+                                int readyDepth) {
+    }
+
     private static final int ROLLING_WINDOW_CAPACITY = 2_048;
     private static final LongAdder CYCLES = new LongAdder();
     private static final LongAdder UPDATED = new LongAdder();
@@ -61,6 +68,7 @@ public final class AgentSchedulerMetrics {
             new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY);
     private static final Map<AgentWorkClass, AgentSchedulerRollingWindow> WORK_CLASS_WINDOWS =
             new EnumMap<>(AgentWorkClass.class);
+    private static final Map<Integer, ShardSnapshot> SHARD_SNAPSHOTS = new ConcurrentHashMap<>();
 
     static {
         for (AgentWorkClass workClass : AgentWorkClass.values()) {
@@ -138,6 +146,48 @@ public final class AgentSchedulerMetrics {
         READY_DEPTH.set(Math.max(0, readyDepth));
     }
 
+    public static void recordShardDepths(int shardId,
+                                         int registrations,
+                                         int ingressDepth,
+                                         int dueHeapDepth,
+                                         int readyDepth) {
+        SHARD_SNAPSHOTS.put(
+                Math.max(0, shardId),
+                new ShardSnapshot(
+                        Math.max(0, registrations),
+                        Math.max(0, ingressDepth),
+                        Math.max(0, dueHeapDepth),
+                        Math.max(0, readyDepth)));
+        long aggregateIngressDepth = SHARD_SNAPSHOTS.values().stream()
+                .mapToLong(ShardSnapshot::ingressDepth)
+                .sum();
+        INGRESS_DEPTH.set(aggregateIngressDepth);
+        INGRESS_HIGH_WATER_MARK.accumulateAndGet(aggregateIngressDepth, Math::max);
+        DUE_HEAP_DEPTH.set(SHARD_SNAPSHOTS.values().stream()
+                .mapToLong(ShardSnapshot::dueHeapDepth)
+                .sum());
+        READY_DEPTH.set(SHARD_SNAPSHOTS.values().stream()
+                .mapToLong(ShardSnapshot::readyDepth)
+                .sum());
+    }
+
+    public static Map<Integer, ShardSnapshot> shardSnapshots() {
+        return Map.copyOf(SHARD_SNAPSHOTS);
+    }
+
+    public static int shardRegistrationImbalance() {
+        if (SHARD_SNAPSHOTS.isEmpty()) {
+            return 0;
+        }
+        int minimum = Integer.MAX_VALUE;
+        int maximum = Integer.MIN_VALUE;
+        for (ShardSnapshot snapshot : SHARD_SNAPSHOTS.values()) {
+            minimum = Math.min(minimum, snapshot.registrations());
+            maximum = Math.max(maximum, snapshot.registrations());
+        }
+        return maximum - minimum;
+    }
+
     public static Snapshot snapshot() {
         AgentSchedulerRollingWindow.Percentiles queueLag = QUEUE_LAG_WINDOW.percentiles();
         AgentSchedulerRollingWindow.Percentiles workDuration = WORK_DURATION_WINDOW.percentiles();
@@ -177,5 +227,6 @@ public final class AgentSchedulerMetrics {
         QUEUE_LAG_WINDOW.reset();
         WORK_DURATION_WINDOW.reset();
         WORK_CLASS_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
+        SHARD_SNAPSHOTS.clear();
     }
 }

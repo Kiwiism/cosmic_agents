@@ -4,6 +4,9 @@ import client.Character;
 import client.inventory.InventoryType;
 import server.Shop;
 
+@AgentGatewayAffinity(
+        value = AgentGatewayThreadAffinity.SHARD_SAFE_DIRECT,
+        rationale = "Shop transactions validate and mutate only the owning Agent inventory and meso state.")
 public interface ShopGateway {
     Shop findForNpc(int npcId);
 

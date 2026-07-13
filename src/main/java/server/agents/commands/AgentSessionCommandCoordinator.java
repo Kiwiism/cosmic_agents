@@ -11,6 +11,7 @@ import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 import server.agents.runtime.AgentSessionControlRuntime;
@@ -174,11 +175,14 @@ public final class AgentSessionCommandCoordinator {
         }
 
         for (AgentRuntimeEntry owned : AgentSessionLifecycleRuntime.getBotEntries(owner.getId())) {
-            AgentMovementCommandRuntime.stop(owned);
-            AgentSchedulerRuntime.afterRandomDelay(owned, 1200, 1800, () -> {
-                Character ownedBot = bot(owned);
-                AgentCharacterGatewayRuntime.characters().save(ownedBot, true);
-                AgentCharacterGatewayRuntime.characters().disconnect(ownedBot, false, false);
+            AgentMailboxRuntime.dispatch(owned, ignored -> {
+                AgentMovementCommandRuntime.stop(owned);
+                AgentSchedulerRuntime.afterRandomDelay(owned, 1200, 1800, () -> {
+                    Character ownedBot = bot(owned);
+                    AgentCharacterGatewayRuntime.characters().save(ownedBot, true);
+                    AgentCharacterGatewayRuntime.characters().disconnect(ownedBot, false, false);
+                });
+                return null;
             });
         }
     }

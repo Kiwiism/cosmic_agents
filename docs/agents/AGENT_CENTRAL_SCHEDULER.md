@@ -1,8 +1,8 @@
 # Agent Central Scheduler
 
 This document describes the scheduler that exists today and how to operate its
-optional single-shard central-sequential mode. The production migration to a fully
-centralized, sharded, asynchronous, budgeted scheduler is specified in
+optional central-sequential and central-sharded modes. The production migration
+and remaining validation gates are specified in
 `AGENT_FULL_CENTRALIZED_SCHEDULER_IMPLEMENTATION_PLAN.md`.
 
 ## Current mode
@@ -16,9 +16,10 @@ selected through the explicit JVM property:
 -Dagents.scheduler.mode=central-sharded
 ```
 
-`central-sharded` is reserved and intentionally rejected until the shard
-runtime is implemented and validated. The old compatibility property still
-selects central-sequential when no explicit mode is present:
+`central-sharded` is implemented as an explicit opt-in. It creates a fixed
+stable-hash owner set and is guarded by the closed Cosmic gateway-affinity
+catalog. It is not production-approved or the default. The old compatibility
+property still selects central-sequential when no explicit mode is present:
 
 ```text
 -Dagents.scheduler.central.enabled=true
@@ -49,7 +50,12 @@ agents.scheduler.maxWorkItemsPerCycle=256
 agents.scheduler.visibleReservePercent=40
 agents.scheduler.criticalReservePercent=10
 agents.scheduler.starvationPromotionMs=2000
+agents.scheduler.shardCount=max(1, min(4, availableProcessors / 2))
 ```
+
+`shardCount` is read at scheduler initialization and must remain between 1 and
+64. Changing it requires a server restart; live session migration between shard
+sets is intentionally unsupported.
 
 `maxAgentsPerTick=0` means unlimited. A positive cap selects the oldest due
 records first, using registration sequence as the stable tie-break. Updated
@@ -114,9 +120,13 @@ lifecycle-critical.
 Agents, failures, slow Agents, queue lag, bounded rolling p50/p95/p99 delay and
 work duration, budget exhaustion, deferral, starvation promotion, and
 ingress/due/ready depth. Work-duration windows are also available by
-`AgentWorkClass`. Each rolling window retains at most 2048 samples. Enable
-slow-tick logging during
-soak validation, then compare movement, combat, loot, dialogue, and lifecycle
+`AgentWorkClass`. Each rolling window retains at most 2048 samples.
+`shardSnapshots()` adds registrations and queue depths by shard, while the
+aggregate depth gauges sum all reporting shards. Registration imbalance is the
+largest shard population minus the smallest.
+
+Enable slow-tick logging during soak validation, then compare movement, combat,
+loot, dialogue, and lifecycle
 parity against legacy mode before considering central scheduling as the default.
 
 Automated validation includes callback-cadence parity and a deterministic
@@ -138,7 +148,7 @@ Phase 2 mandatory mailbox ownership: complete
 Phase 3 bounded one-shard ingress and indexed due-time heap: complete
 Phase 4 priority, time/cost budgets, aging, and rolling metrics: complete
 Phase 5 bounded async completion contract: complete
-multi-shard execution: blocked on Cosmic thread-affinity audit
+Phase 6 gateway affinity and stable-hash sharding: locally complete, explicit opt-in
 production default switch: blocked on parity and staged soak evidence
 ```
 
@@ -150,10 +160,9 @@ separate bounded workload lanes. Their compact results return through the
 generation/request-stamped owning mailbox, and a source boundary test rejects
 direct future waits in Agent production code. Explicit navigation debug/probe
 tools may still build a graph synchronously outside scheduler execution.
-Cross-session formation and leader-away operations require a Phase 6 gateway/
-ownership decision before multi-shard execution. The repository therefore has
-a safe single-writer migration foundation, not the completed centralized
-scheduler.
+Cross-session formation, leader-away, and away/logout operations now dispatch
+mutations through each destination mailbox. The repository has an implemented
+multi-shard foundation, not a production-validated centralized scheduler.
 
 Phase 0 baseline evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-0`. It covers deterministic
@@ -170,6 +179,9 @@ recorded under `docs/agents/evidence/central-scheduler/phase-4`.
 Phase 5 bounded workload, stale-completion, saturation, timeout, blocking-scan,
 and async persistence evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-5`.
+Phase 6 gateway-affinity, stable-hash ownership, race, failure-isolation, and
+per-shard metric evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-6`.
 
 ## Rollback
 
