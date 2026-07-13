@@ -27,11 +27,21 @@ Phased implementation authority:
 
 - `docs/agents/AMHERST_MVP_PHASED_IMPLEMENTATION_PLAN.md`
 
-Before scaling starts, the first gameplay milestone is:
+The Amherst MVP is complete. The current gameplay validation order is:
 
 ```text
-Amherst MVP smoke test, then Maple Island questline MVP
+1. validate the post-Amherst Southperry segment from its captured baseline
+2. compose and validate the clean level-1 full Maple Island-to-Southperry run
+3. move pacing and presentation variance into Agent profiles
+4. prove staged 5/10/25/50/100-Agent Maple Island completion
+5. begin Victoria first-job and level-30 progression work
 ```
+
+Current and deferred planning:
+
+- `docs/agents/MAPLE_ISLAND_SOUTHPERRY_MVP.md`
+- `docs/agents/MAPLE_ISLAND_REALISM_AND_100_AGENT_VALIDATION_PLAN.md`
+- `docs/agents/POST_MAPLE_ISLAND_VICTORIA_PROGRESSION_ROADMAP.md`
 
 Required package cut:
 
@@ -63,7 +73,9 @@ capability runtime, primitive Amherst adapters, live Cosmic gateways, guarded
 reset fixtures, and parity/regression tests. Phase 2 adds typed objective
 parents, the validated Amherst card loader, durable progress and reconciliation,
 declarative handlers, and a deterministic one-objective-at-a-time runner. The
-full Amherst run remains Phase 3.
+Phase 3 Amherst run has succeeded. Its proven end state is now the baseline for
+the current Southperry segment, after which the two segments will be composed
+into the clean full-island run.
 
 Implementation order:
 

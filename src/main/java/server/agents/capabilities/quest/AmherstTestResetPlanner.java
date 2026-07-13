@@ -6,6 +6,14 @@ public final class AmherstTestResetPlanner {
             case CLEAN_LV1_START -> fullReset(request.mode(), AmherstQuestCatalog.START_MAP_ID, false);
             case AMHERST_MVP_CLEAN -> fullReset(request.mode(), AmherstQuestCatalog.START_MAP_ID, false);
             case AMHERST_READY -> fullReset(request.mode(), AmherstQuestCatalog.FINAL_MAP_ID, true);
+            case SOUTHPERRY_MVP_START -> new AmherstTestResetPlan(
+                    request.mode(),
+                    MapleIslandSouthperryBaseline.snapshot().character().mapId(),
+                    true,
+                    true,
+                    0,
+                    false,
+                    true);
             case QUEST_SCENARIO -> new AmherstTestResetPlan(
                     request.mode(),
                     mapFor(AmherstQuestCatalog.find(request.questId()).orElseThrow(
@@ -13,6 +21,7 @@ public final class AmherstTestResetPlanner {
                     false,
                     false,
                     request.questId(),
+                    false,
                     false);
         };
     }
@@ -20,7 +29,7 @@ public final class AmherstTestResetPlanner {
     private static AmherstTestResetPlan fullReset(AmherstTestResetMode mode,
                                                    int mapId,
                                                    boolean seedPrerequisites) {
-        return new AmherstTestResetPlan(mode, mapId, true, true, 0, seedPrerequisites);
+        return new AmherstTestResetPlan(mode, mapId, true, true, 0, seedPrerequisites, false);
     }
 
     private static int mapFor(AmherstQuestSegment segment) {
@@ -31,6 +40,8 @@ public final class AmherstTestResetPlanner {
             case TUTORIAL_HUNTING_GROUND -> 40000;
             case DANGEROUS_FOREST -> 50000;
             case AMHERST -> 1000000;
+            case TRAINING_CENTER -> 1010000;
+            case SOUTHPERRY -> 2000000;
         };
     }
 }

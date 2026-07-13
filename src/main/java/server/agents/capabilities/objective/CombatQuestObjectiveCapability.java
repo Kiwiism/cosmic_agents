@@ -5,6 +5,7 @@ import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.quest.AmherstScopePolicy;
 
 import java.util.Map;
 
@@ -49,6 +50,11 @@ public final class CombatQuestObjectiveCapability
         support = new AmherstObjectiveCapabilitySupport(gateway);
     }
 
+    public CombatQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                          AmherstScopePolicy scopePolicy) {
+        support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy);
+    }
+
     @Override
     public String id() {
         return "combat-quest-objective";
@@ -76,7 +82,8 @@ public final class CombatQuestObjectiveCapability
                 return travel;
             }
             context.memory().putInt("phase", 2);
-            return AgentCapabilityStep.handoff(support.combat(command.questId(), command.requiredKills()),
+            return AgentCapabilityStep.handoff(support.combat(
+                            command.questId(), command.requiredKills(), command.requiredLoot()),
                     "combat objective delegates required kills");
         }
         if (phase == 2) {

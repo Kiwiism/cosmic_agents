@@ -2,6 +2,7 @@ package server.agents.plans.amherst;
 
 import server.agents.capabilities.quest.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstScopePolicy;
+import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,13 +11,34 @@ import java.util.Set;
 
 public final class AmherstPlanValidator {
     private final AmherstScopePolicy scopePolicy;
+    private final Set<Integer> requiredQuestIds;
+    private final int requiredForbiddenMapId;
+    private final int requiredForbiddenNpcId;
 
     public AmherstPlanValidator() {
-        this(new AmherstScopePolicy());
+        this(new AmherstScopePolicy(), AmherstQuestCatalog.requiredQuestIdSet(),
+                1010000, AmherstQuestCatalog.SHANKS_NPC_ID);
     }
 
     public AmherstPlanValidator(AmherstScopePolicy scopePolicy) {
+        this(scopePolicy, AmherstQuestCatalog.requiredQuestIdSet(),
+                1010000, AmherstQuestCatalog.SHANKS_NPC_ID);
+    }
+
+    public AmherstPlanValidator(AmherstScopePolicy scopePolicy,
+                                Set<Integer> requiredQuestIds,
+                                int requiredForbiddenMapId,
+                                int requiredForbiddenNpcId) {
         this.scopePolicy = scopePolicy;
+        this.requiredQuestIds = Set.copyOf(requiredQuestIds);
+        this.requiredForbiddenMapId = requiredForbiddenMapId;
+        this.requiredForbiddenNpcId = requiredForbiddenNpcId;
+    }
+
+    public static AmherstPlanValidator southperry() {
+        return new AmherstPlanValidator(AmherstScopePolicy.southperry(),
+                MapleIslandSouthperryQuestCatalog.requiredQuestIdSet(),
+                104000000, MapleIslandSouthperryQuestCatalog.SHANKS_NPC_ID);
     }
 
     public List<AmherstPlanValidationIssue> validate(AmherstPlanCard card) {
@@ -33,13 +55,13 @@ public final class AmherstPlanValidator {
         validateMap(card.entryCriteria().requiredStartMapId(), "entryCriteria.requiredStartMapId", issues);
         validateMap(card.exitCriteria().finalMapId(), "exitCriteria.finalMapId", issues);
         validateQuestPolicy(card, issues);
-        if (!card.exitCriteria().forbiddenMapIds().contains(1010000)) {
+        if (!card.exitCriteria().forbiddenMapIds().contains(requiredForbiddenMapId)) {
             issue(issues, AmherstPlanValidationCode.MISSING_VALUE, "exitCriteria.forbiddenActions",
-                    "Training Center map 1010000 must be forbidden");
+                    "required out-of-scope map must be forbidden: " + requiredForbiddenMapId);
         }
-        if (!card.exitCriteria().forbiddenNpcIds().contains(AmherstQuestCatalog.SHANKS_NPC_ID)) {
+        if (!card.exitCriteria().forbiddenNpcIds().contains(requiredForbiddenNpcId)) {
             issue(issues, AmherstPlanValidationCode.MISSING_VALUE, "exitCriteria.forbiddenActions",
-                    "Shanks NPC 22000 must be forbidden");
+                    "required transport NPC must be forbidden: " + requiredForbiddenNpcId);
         }
         if (card.objectives().isEmpty()) {
             issue(issues, AmherstPlanValidationCode.MISSING_VALUE, "route",
@@ -68,9 +90,14 @@ public final class AmherstPlanValidator {
     }
 
     private void validateQuestPolicy(AmherstPlanCard card, List<AmherstPlanValidationIssue> issues) {
-        if (!card.requiredQuestIds().equals(AmherstQuestCatalog.requiredQuestIdSet())) {
+        if (!card.requiredQuestIds().equals(requiredQuestIds)) {
             issue(issues, AmherstPlanValidationCode.QUEST_POLICY_MISMATCH, "questPolicy.requiredQuestIds",
-                    "required quests must match AmherstQuestCatalog");
+                    "required quests must match the configured quest catalog");
+        }
+        if (!card.requiredQuestIds().containsAll(card.exitCriteria().startOnlyQuestIds())) {
+            issue(issues, AmherstPlanValidationCode.QUEST_POLICY_MISMATCH,
+                    "exitCriteria.startOnlyQuestIds",
+                    "start-only quests must also be required quests");
         }
         Set<Integer> overlap = new HashSet<>(card.requiredQuestIds());
         overlap.retainAll(card.excludedQuestIds());

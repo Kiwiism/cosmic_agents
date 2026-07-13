@@ -8,15 +8,18 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
 import server.agents.capabilities.quest.AmherstTestResetMode;
+import server.agents.capabilities.quest.AmherstQuestCatalog;
 import server.agents.capabilities.quest.AmherstTestResetRequest;
 import server.agents.capabilities.quest.AmherstTestResetResult;
 import server.agents.capabilities.quest.AmherstTestResetService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
+import java.awt.Point;
 import java.io.IOException;
 import java.util.List;
 
@@ -131,8 +134,13 @@ public final class AmherstPlanCommandService {
                 return;
             }
         }
-        AgentLifecycleService.AgentSpawnResult spawn =
-                AgentInteractionRuntime.spawnStationaryAgentForLeader(player, showcaseAgentName);
+        var startMap = AgentMapGatewayRuntime.map().resolveMap(
+                player.getWorld(), player.getClient().getChannel(), AmherstQuestCatalog.START_MAP_ID);
+        Point startPosition = startMap.getPortal(0) != null
+                ? new Point(startMap.getPortal(0).getPosition())
+                : new Point(startMap.getRandomPlayerSpawnpoint().getPosition());
+        AgentLifecycleService.AgentSpawnResult spawn = AgentInteractionRuntime.spawnStationaryAgentForLeaderAt(
+                player, showcaseAgentName, startMap, startPosition);
         if (!spawn.success()) {
             message(player, spawn.errorMessage());
             return;

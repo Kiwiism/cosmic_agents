@@ -1,6 +1,6 @@
 package server.agents.plans.amherst;
 
-import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 
 import java.util.List;
 
@@ -45,7 +45,7 @@ public final class AmherstObjectiveFormatter {
     }
 
     private static String quest(int questId) {
-        return AmherstQuestCatalog.find(questId)
+        return MapleIslandSouthperryQuestCatalog.findAny(questId)
                 .map(definition -> "quest " + questId + " - " + definition.questName())
                 .orElse("quest " + questId);
     }

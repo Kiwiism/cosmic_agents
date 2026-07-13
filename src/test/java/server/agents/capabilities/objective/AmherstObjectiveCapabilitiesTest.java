@@ -29,6 +29,16 @@ import static org.mockito.Mockito.doNothing;
 
 class AmherstObjectiveCapabilitiesTest {
     @Test
+    void combatChildAllowsTimeForNormalTenMobHunt() {
+        var fixture = new MutablePrimitiveGatewayFixture();
+        var support = new AmherstObjectiveCapabilitySupport(fixture.gateway);
+
+        AgentCapabilityInvocation<?> invocation = support.combat(1037, Map.of(100100, 10));
+
+        assertEquals(180_000L, invocation.timeoutMs());
+    }
+
+    @Test
     void npcInteractionFacesTargetAndHonorsConfiguredPause() {
         var fixture = new MutablePrimitiveGatewayFixture();
         var capability = new NpcQuestObjectiveCapability(fixture.gateway, () -> 500L);

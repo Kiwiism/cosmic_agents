@@ -5,24 +5,37 @@ import server.agents.capabilities.runtime.AgentCapabilityContext;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.quest.AmherstScopePolicy;
 
+import java.util.Map;
 import java.util.Set;
 
 public final class PlanStopObjectiveCapability
         implements AgentExecutableCapability<PlanStopObjectiveCapability.Command> {
     public record Command(String objectiveId,
                           int finalMapId,
+                          Map<Integer, Integer> expectedQuestStatuses,
                           Set<Integer> forbiddenCompletedQuestIds,
                           String reason,
                           Integer chairItemId) implements AgentCapabilityCommand {
         public Command(String objectiveId,
                        int finalMapId,
                        Set<Integer> forbiddenCompletedQuestIds,
+                       String reason,
+                       Integer chairItemId) {
+            this(objectiveId, finalMapId, Map.of(), forbiddenCompletedQuestIds, reason, chairItemId);
+        }
+
+        public Command(String objectiveId,
+                       int finalMapId,
+                       Set<Integer> forbiddenCompletedQuestIds,
                        String reason) {
-            this(objectiveId, finalMapId, forbiddenCompletedQuestIds, reason, null);
+            this(objectiveId, finalMapId, Map.of(), forbiddenCompletedQuestIds, reason, null);
         }
 
         public Command {
+            expectedQuestStatuses = expectedQuestStatuses == null
+                    ? Map.of() : Map.copyOf(expectedQuestStatuses);
             forbiddenCompletedQuestIds = forbiddenCompletedQuestIds == null
                     ? Set.of() : Set.copyOf(forbiddenCompletedQuestIds);
             if (objectiveId == null || objectiveId.isBlank() || finalMapId <= 0
@@ -48,6 +61,11 @@ public final class PlanStopObjectiveCapability
         support = new AmherstObjectiveCapabilitySupport(gateway);
     }
 
+    public PlanStopObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                       AmherstScopePolicy scopePolicy) {
+        support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy);
+    }
+
     @Override
     public String id() {
         return "plan-stop-objective";
@@ -67,7 +85,8 @@ public final class PlanStopObjectiveCapability
             }
             context.memory().putInt("phase", 1);
             return AgentCapabilityStep.handoff(support.finalState(command.finalMapId(),
-                            java.util.Map.of(), java.util.Map.of(), command.forbiddenCompletedQuestIds()),
+                            command.expectedQuestStatuses(), java.util.Map.of(),
+                            command.forbiddenCompletedQuestIds()),
                     "plan stop requests final live-state verification");
         }
         if (command.chairItemId() == null) {

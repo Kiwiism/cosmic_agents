@@ -10,6 +10,13 @@ without making Plan Cards messy or changing gameplay requirements.
 This is a post-reconstruction package contract. It must not be wired into live
 Agent runtime until reconstructed Agent boundaries are stable.
 
+This specification covers the NPC approach and interaction-timing subset. The
+profile migration, movement fidgets, route-edge variation, incidental mob
+styles, Southperry rest distribution, and 100-Agent rollout are specified in
+`docs/agents/MAPLE_ISLAND_REALISM_AND_100_AGENT_VALIDATION_PLAN.md`. Movement
+choices should use a movement-owned policy rather than expanding NPC
+interaction code into navigation and combat ownership.
+
 ## Design Rule
 
 ```text

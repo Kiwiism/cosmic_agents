@@ -119,6 +119,8 @@ public class ServerConfig {
     public int AGENT_AMHERST_NEXT_OBJECTIVE_DELAY_MAX_MS;
     public boolean AGENT_AMHERST_SHOWCASE_ENABLED;
     public String AGENT_AMHERST_SHOWCASE_AGENT_NAME;
+    public boolean AGENT_MAPLE_ISLAND_SHOWCASE_ENABLED;
+    public String AGENT_MAPLE_ISLAND_SHOWCASE_AGENT_NAME;
 
     //Events/PQs Configuration
     public boolean USE_OLD_GMS_STYLED_PQ_NPCS;

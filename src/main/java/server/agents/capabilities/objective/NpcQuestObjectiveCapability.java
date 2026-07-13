@@ -6,6 +6,7 @@ import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityStep;
 import server.agents.capabilities.runtime.AgentExecutableCapability;
 import server.agents.integration.PrimitiveCapabilityGateway;
+import server.agents.capabilities.quest.AmherstScopePolicy;
 
 import java.util.List;
 
@@ -49,8 +50,13 @@ public final class NpcQuestObjectiveCapability
 
     public NpcQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
                                        AmherstNpcInteractionDelay npcInteractionDelay) {
-        this.support = new AmherstObjectiveCapabilitySupport(
-                gateway, new server.agents.capabilities.quest.AmherstScopePolicy(), npcInteractionDelay);
+        this(gateway, new AmherstScopePolicy(), npcInteractionDelay);
+    }
+
+    public NpcQuestObjectiveCapability(PrimitiveCapabilityGateway gateway,
+                                       AmherstScopePolicy scopePolicy,
+                                       AmherstNpcInteractionDelay npcInteractionDelay) {
+        this.support = new AmherstObjectiveCapabilitySupport(gateway, scopePolicy, npcInteractionDelay);
     }
 
     @Override

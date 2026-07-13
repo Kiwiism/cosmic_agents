@@ -30,6 +30,7 @@ import java.util.Set;
 
 final class AmherstObjectiveCapabilitySupport {
     static final long CHILD_TIMEOUT_MS = 30_000L;
+    static final long COMBAT_TIMEOUT_MS = 180_000L;
     static final long PORTAL_TIMEOUT_MS = 90_000L;
     static final int CHILD_RETRIES = 2;
     static final int NPC_RANGE_PX = AgentNpcInteractionPolicy.DEFAULT_CLICK_RANGE_PX;
@@ -88,6 +89,9 @@ final class AmherstObjectiveCapabilitySupport {
                         "no in-scope portal route reaches objective map " + destinationMapId);
             }
             portalId = gateway.directPortalIdTo(context.agent(), nextHopMapId);
+            if (portalId == null) {
+                portalId = scopePolicy.scriptedPortalId(sourceMapId, nextHopMapId);
+            }
             if (portalId == null) {
                 return blocked(AgentCapabilityStatus.BLOCKED_FORBIDDEN_MAP,
                         "expected in-scope portal to map " + nextHopMapId + " is unavailable");
@@ -190,7 +194,14 @@ final class AmherstObjectiveCapabilitySupport {
     }
 
     AgentCapabilityInvocation<?> combat(int questId, Map<Integer, Integer> kills) {
-        return invocation(new AgentCombatCapability(gateway), new AgentCombatCapability.Command(questId, kills));
+        return combat(questId, kills, Map.of());
+    }
+
+    AgentCapabilityInvocation<?> combat(int questId,
+                                        Map<Integer, Integer> kills,
+                                        Map<Integer, Integer> loot) {
+        return invocation(new AgentCombatCapability(gateway),
+                new AgentCombatCapability.Command(questId, kills, loot), COMBAT_TIMEOUT_MS);
     }
 
     AgentCapabilityInvocation<?> reactor(int mapId,
@@ -207,7 +218,7 @@ final class AmherstObjectiveCapabilitySupport {
 
     AgentCapabilityInvocation<?> loot(Map<Integer, Integer> items) {
         return invocation(new AgentLootCapability(gateway),
-                new AgentLootCapability.Command(items, AgentLootCapability.ProtectionPolicy.QUEST_ITEMS_ONLY));
+                new AgentLootCapability.Command(items, AgentLootCapability.ProtectionPolicy.ANY_REQUIRED_ITEM));
     }
 
     AgentCapabilityInvocation<?> finalState(int mapId,

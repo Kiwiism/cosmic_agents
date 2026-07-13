@@ -55,6 +55,9 @@ public final class AgentLiveTickGateService {
     }
 
     public static boolean tickLiveGates(Context context, Hooks hooks) {
+        if (hooks.trackedMapChangeTick().tick(context.entry(), context.agent())) {
+            return true;
+        }
         if (hooks.commonTickSystems().run(context.entry(), context.agent(), context.leader(), context.runAiTick())) {
             return true;
         }
@@ -67,13 +70,10 @@ public final class AgentLiveTickGateService {
         if (hooks.idleModeTick().tick(context.entry(), context.agent())) {
             return true;
         }
-        if (hooks.recoveryTick().tick(
+        return hooks.recoveryTick().tick(
                 context.entry(),
                 context.agent(),
                 context.followAnchor(),
-                context.targetPosition())) {
-            return true;
-        }
-        return hooks.trackedMapChangeTick().tick(context.entry(), context.agent());
+                context.targetPosition());
     }
 }

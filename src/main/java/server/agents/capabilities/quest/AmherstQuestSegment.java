@@ -6,5 +6,7 @@ public enum AmherstQuestSegment {
     SNAIL_FIELD,
     TUTORIAL_HUNTING_GROUND,
     DANGEROUS_FOREST,
-    AMHERST
+    AMHERST,
+    TRAINING_CENTER,
+    SOUTHPERRY
 }

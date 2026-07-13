@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import server.agents.testing.MutablePrimitiveGatewayFixture;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,9 +34,10 @@ class AmherstObjectiveReconcilerTest {
         AmherstPlanCard card = load();
         var fixture = new MutablePrimitiveGatewayFixture();
         AmherstObjectiveReconciler reconciler = new AmherstObjectiveReconciler(fixture.gateway);
-        AmherstPlanObjective optional = card.objectives().stream()
-                .filter(objective -> objective.kind() == AmherstPlanObjectiveKind.QUEST_CHAIN_IF_AVAILABLE)
-                .findFirst().orElseThrow();
+        AmherstPlanObjective optional = new AmherstPlanObjective(
+                "optional-quest", AmherstPlanObjectiveKind.QUEST_CHAIN_IF_AVAILABLE,
+                0, 0, 1000000, null, List.of(1031), null, List.of(),
+                null, List.of(), List.of(), List.of(), null, null);
 
         when(fixture.gateway.canStartQuest(any(), anyInt(), anyInt())).thenReturn(false);
         assertTrue(reconciler.reconcile(card, optional, fixture.agent).satisfied());
@@ -64,6 +66,7 @@ class AmherstObjectiveReconcilerTest {
             fixture.progress.put(MutablePrimitiveGatewayFixture.key(kills.questId(), kills.mobIds().get(i)),
                     kills.counts().get(i));
         }
+        kills.itemIds().forEach(itemId -> fixture.items.merge(itemId, 1, Integer::sum));
         assertTrue(reconciler.reconcile(card, kills, fixture.agent).satisfied());
     }
 

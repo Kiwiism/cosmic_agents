@@ -1,9 +1,13 @@
 package server.agents.plans.amherst;
 
 import client.Character;
-import server.agents.capabilities.quest.AmherstQuestCatalog;
+import server.agents.capabilities.quest.MapleIslandSouthperryQuestCatalog;
 import server.agents.integration.AgentPrimitiveCapabilityGatewayRuntime;
 import server.agents.integration.PrimitiveCapabilityGateway;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class AmherstObjectiveReconciler {
     public record Decision(boolean satisfied, String reason) {
@@ -35,6 +39,9 @@ public final class AmherstObjectiveReconciler {
             case REACTOR_HIT, REACTOR_BOX_ITEMS -> gateway.questStatus(agent, objective.questId()) == 2
                     || reactorItemsSatisfied(card, objective, agent);
             case STOP_PLAN -> gateway.mapId(agent) == card.exitCriteria().finalMapId()
+                    && card.requiredQuestIds().stream().allMatch(questId ->
+                    gateway.questStatus(agent, questId)
+                            == (card.exitCriteria().startOnlyQuestIds().contains(questId) ? 1 : 2))
                     && card.exitCriteria().blockedCompletedQuestIds().stream().noneMatch(questId ->
                     gateway.questStatus(agent, questId) == 2);
         };
@@ -51,7 +58,7 @@ public final class AmherstObjectiveReconciler {
         if (status == 1) {
             return false;
         }
-        return AmherstQuestCatalog.find(questId)
+        return MapleIslandSouthperryQuestCatalog.findAny(questId)
                 .map(definition -> !gateway.canStartQuest(agent, questId, definition.startNpc().id()))
                 .orElse(false);
     }
@@ -63,7 +70,8 @@ public final class AmherstObjectiveReconciler {
                 return false;
             }
         }
-        return objective.itemIds().stream().allMatch(itemId -> gateway.itemCount(agent, itemId) >= 1);
+        return itemCounts(objective.itemIds()).entrySet().stream().allMatch(required ->
+                gateway.itemCount(agent, required.getKey()) >= required.getValue());
     }
 
     private boolean reactorItemsSatisfied(AmherstPlanCard card,
@@ -75,6 +83,13 @@ public final class AmherstObjectiveReconciler {
                 .filter(candidate -> candidate.questId().equals(objective.questId()))
                 .findFirst().map(AmherstPlanObjective::itemIds).orElse(java.util.List.of())
                 : objective.itemIds();
-        return !itemIds.isEmpty() && itemIds.stream().allMatch(itemId -> gateway.itemCount(agent, itemId) >= 1);
+        return !itemIds.isEmpty() && itemCounts(itemIds).entrySet().stream().allMatch(required ->
+                gateway.itemCount(agent, required.getKey()) >= required.getValue());
+    }
+
+    private static Map<Integer, Integer> itemCounts(List<Integer> itemIds) {
+        Map<Integer, Integer> counts = new LinkedHashMap<>();
+        itemIds.forEach(itemId -> counts.merge(itemId, 1, Integer::sum));
+        return Map.copyOf(counts);
     }
 }

@@ -117,6 +117,7 @@ public final class AmherstPlanCardLoader {
                 new AmherstPlanCard.ExitCriteria(
                         text(exit, "completeWhen"),
                         exit.path("finalMapId").asInt(),
+                        Set.copyOf(ints(exit.path("startOnlyQuestIds"))),
                         Set.copyOf(ints(exit.path("blockedCompletedQuestIds"))),
                         forbiddenMaps,
                         forbiddenNpcs),

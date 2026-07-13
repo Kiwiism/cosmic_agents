@@ -13,12 +13,22 @@ import java.util.Set;
 
 public final class AgentCombatCapability
         implements AgentExecutableCapability<AgentCombatCapability.Command> {
-    public record Command(int questId, Map<Integer, Integer> requiredKillCounts)
+    public record Command(int questId,
+                          Map<Integer, Integer> requiredKillCounts,
+                          Map<Integer, Integer> requiredItemCounts)
             implements AgentCapabilityCommand {
+        public Command(int questId, Map<Integer, Integer> requiredKillCounts) {
+            this(questId, requiredKillCounts, Map.of());
+        }
+
         public Command {
             requiredKillCounts = requiredKillCounts == null ? Map.of() : Map.copyOf(requiredKillCounts);
+            requiredItemCounts = requiredItemCounts == null ? Map.of() : Map.copyOf(requiredItemCounts);
             if (questId <= 0 || requiredKillCounts.isEmpty()
-                    || requiredKillCounts.entrySet().stream().anyMatch(entry -> entry.getKey() <= 0 || entry.getValue() <= 0)) {
+                    || requiredKillCounts.entrySet().stream().anyMatch(entry ->
+                    entry.getKey() <= 0 || entry.getValue() <= 0)
+                    || requiredItemCounts.entrySet().stream().anyMatch(entry ->
+                    entry.getKey() <= 0 || entry.getValue() <= 0)) {
                 throw new IllegalArgumentException("quest id and positive mob kill requirements are required");
             }
         }
@@ -50,8 +60,18 @@ public final class AgentCombatCapability
             gateway.stop(context.entry());
             return AgentPrimitiveResults.missing("agent is dead and cannot continue combat");
         }
-        boolean complete = command.requiredKillCounts().entrySet().stream().allMatch(entry ->
+        if (!gateway.grounded(context.agent())) {
+            gateway.stop(context.entry());
+            return AgentCapabilityStep.running("waiting to land before combat", false);
+        }
+        if (!command.requiredItemCounts().isEmpty()) {
+            gateway.lootNearby(context.agent(), command.requiredItemCounts().keySet());
+        }
+        boolean killsComplete = command.requiredKillCounts().entrySet().stream().allMatch(entry ->
                 gateway.questProgress(context.agent(), command.questId(), entry.getKey()) >= entry.getValue());
+        boolean lootComplete = command.requiredItemCounts().entrySet().stream().allMatch(entry ->
+                gateway.itemCount(context.agent(), entry.getKey()) >= entry.getValue());
+        boolean complete = killsComplete && lootComplete;
         if (complete) {
             gateway.stop(context.entry());
             return AgentCapabilityStep.terminal(AgentCapabilityResult.success("combat kill requirements verified"));
