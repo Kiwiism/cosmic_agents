@@ -658,7 +658,6 @@ public class Character extends AbstractCharacterObject {
         private int face;
         private int fame;
         private int questFame;
-        private int gmLevel;
         private SkinColor skinColor;
         private Job job;
         private AtomicInteger exp;
@@ -760,7 +759,6 @@ public class Character extends AbstractCharacterObject {
             state.face = character.face;
             state.fame = character.fame;
             state.questFame = character.quest_fame;
-            state.gmLevel = character.gmLevel;
             state.skinColor = character.skinColor;
             state.job = character.job;
             state.exp = character.exp;
@@ -863,7 +861,6 @@ public class Character extends AbstractCharacterObject {
             character.face = face;
             character.fame = fame;
             character.quest_fame = questFame;
-            character.gmLevel = gmLevel;
             character.skinColor = skinColor;
             character.job = job;
             character.exp = exp;
@@ -2455,6 +2452,10 @@ public class Character extends AbstractCharacterObject {
     public void changeSkillLevel(Skill skill, byte newLevel, int newMasterlevel, long expiration) {
         chrLock.lock();
         try {
+            if (partnerSessionBorrowedSkills.contains(skill.getId())) {
+                throw new IllegalStateException(
+                        "A borrowed Partner skill cannot be changed as canonical character data");
+            }
             if (newLevel > -1) {
                 skills.put(skill, new SkillEntry(newLevel, newMasterlevel, expiration));
             } else {
@@ -3760,6 +3761,9 @@ public class Character extends AbstractCharacterObject {
                                 return;
                             }
                             Skill key = i.next();
+                            if (isPartnerSessionBorrowedSkill(key.getId())) {
+                                continue;
+                            }
                             SkillEntry skill = getSkills().get(key);
                             if (skill.expiration != -1 && skill.expiration < currenttime) {
                                 changeSkillLevel(key, (byte) -1, 0, -1);
@@ -6353,6 +6357,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public int getMasterLevel(int skill) {
+        if (partnerSessionBorrowedSkills.contains(skill)) {
+            return 0;
+        }
         SkillEntry ret = skills.get(SkillFactory.getSkill(skill));
         if (ret == null) {
             return 0;
@@ -6361,6 +6368,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public int getMasterLevel(Skill skill) {
+        if (skill == null || partnerSessionBorrowedSkills.contains(skill.getId())) {
+            return 0;
+        }
         if (skills.get(skill) == null) {
             return 0;
         }
@@ -7028,6 +7038,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public int getSkillLevel(int skill) {
+        if (partnerSessionBorrowedSkills.contains(skill)) {
+            return 0;
+        }
         SkillEntry ret = skills.get(SkillFactory.getSkill(skill));
         if (ret == null) {
             return 0;
@@ -7036,6 +7049,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public byte getSkillLevel(Skill skill) {
+        if (skill == null || partnerSessionBorrowedSkills.contains(skill.getId())) {
+            return 0;
+        }
         if (skills.get(skill) == null) {
             return 0;
         }
@@ -7043,6 +7059,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public long getSkillExpiration(int skill) {
+        if (partnerSessionBorrowedSkills.contains(skill)) {
+            return -1;
+        }
         SkillEntry ret = skills.get(SkillFactory.getSkill(skill));
         if (ret == null) {
             return -1;
@@ -7051,6 +7070,9 @@ public class Character extends AbstractCharacterObject {
     }
 
     public long getSkillExpiration(Skill skill) {
+        if (skill == null || partnerSessionBorrowedSkills.contains(skill.getId())) {
+            return -1;
+        }
         if (skills.get(skill) == null) {
             return -1;
         }
@@ -7381,7 +7403,9 @@ public class Character extends AbstractCharacterObject {
 
         for (Entry<Skill, SkillEntry> s : this.getSkills().entrySet()) {
             Skill skill = s.getKey();
-            if (GameConstants.isInJobTree(skill.getId(), jobId) && !skill.isBeginnerSkill()) {
+            if (!isPartnerSessionBorrowedSkill(skill.getId())
+                    && GameConstants.isInJobTree(skill.getId(), jobId)
+                    && !skill.isBeginnerSkill()) {
                 spUsed += s.getValue().skillevel;
             }
         }

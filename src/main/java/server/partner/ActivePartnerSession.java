@@ -13,6 +13,9 @@ public final class ActivePartnerSession {
     private final Character humanActor;
     private final Character partnerActorOrDormantProfile;
     private final AgentRuntimeEntry agentEntry;
+    private final AtomicBoolean switchReady;
+    private final AtomicBoolean preparationNoticeSent = new AtomicBoolean();
+    private final AtomicBoolean preparationCompletionScheduled = new AtomicBoolean();
     private final AtomicLong nextAllowedSwitchAtMs = new AtomicLong();
     private final AtomicLong nextCooldownNoticeAtMs = new AtomicLong();
     private final AtomicBoolean journalClosed = new AtomicBoolean();
@@ -23,11 +26,59 @@ public final class ActivePartnerSession {
                                 Character humanActor,
                                 Character partnerActorOrDormantProfile,
                                 AgentRuntimeEntry agentEntry) {
+        this(link, runtime, humanActor, partnerActorOrDormantProfile, agentEntry, true);
+    }
+
+    private ActivePartnerSession(PartnerLink link,
+                                 PartnerSessionRuntime runtime,
+                                 Character humanActor,
+                                 Character partnerActorOrDormantProfile,
+                                 AgentRuntimeEntry agentEntry,
+                                 boolean switchReady) {
         this.link = link;
         this.runtime = runtime;
         this.humanActor = humanActor;
         this.partnerActorOrDormantProfile = partnerActorOrDormantProfile;
         this.agentEntry = agentEntry;
+        this.switchReady = new AtomicBoolean(switchReady);
+    }
+
+    public static ActivePartnerSession preparing(PartnerLink link,
+                                                  PartnerSessionRuntime runtime,
+                                                  Character humanActor,
+                                                  Character partnerActorOrDormantProfile,
+                                                  AgentRuntimeEntry agentEntry) {
+        return new ActivePartnerSession(
+                link, runtime, humanActor, partnerActorOrDormantProfile, agentEntry, false);
+    }
+
+    public boolean isSwitchReady() {
+        return switchReady.get();
+    }
+
+    public boolean markSwitchReady() {
+        preparationNoticeSent.set(false);
+        return switchReady.compareAndSet(false, true);
+    }
+
+    public void markSwitchUnavailable() {
+        switchReady.set(false);
+        preparationNoticeSent.set(false);
+    }
+
+    public boolean tryScheduleSwitchPreparation() {
+        return !switchReady.get() && preparationCompletionScheduled.compareAndSet(false, true);
+    }
+
+    public boolean tryAcquirePreparationNotice() {
+        if (switchReady.get() || !preparationNoticeSent.compareAndSet(false, true)) {
+            return false;
+        }
+        if (switchReady.get()) {
+            preparationNoticeSent.set(false);
+            return false;
+        }
+        return true;
     }
 
     public boolean tryAcquireSwitchCooldown(long nowMs, long cooldownMs) {
@@ -36,7 +87,10 @@ public final class ActivePartnerSession {
             if (nowMs < current) {
                 return false;
             }
-            if (nextAllowedSwitchAtMs.compareAndSet(current, nowMs + Math.max(0L, cooldownMs))) {
+            long nonNegativeCooldown = Math.max(0L, cooldownMs);
+            long nextAllowed = nonNegativeCooldown > Long.MAX_VALUE - nowMs
+                    ? Long.MAX_VALUE : nowMs + nonNegativeCooldown;
+            if (nextAllowedSwitchAtMs.compareAndSet(current, nextAllowed)) {
                 nextCooldownNoticeAtMs.set(0L);
                 return true;
             }

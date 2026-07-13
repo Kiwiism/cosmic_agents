@@ -116,6 +116,11 @@ class AdventurerPartnerServiceTest {
         verify(transitions).prepareSkillUnion(7L, player, partner);
         verify(transitions).prepareSessionSkills(
                 7L, PartnerMode.SOLO_TAG, player, partner);
+        org.mockito.InOrder preparationOrder = org.mockito.Mockito.inOrder(transitions);
+        preparationOrder.verify(transitions).prepareSkillUnion(7L, player, partner);
+        preparationOrder.verify(transitions).prepareSessionSkills(
+                7L, PartnerMode.SOLO_TAG, player, partner);
+        preparationOrder.verify(transitions).prepareProfiles(player, partner);
         assertTriggerCooldownsReset();
 
         service.release(player, "test release");
@@ -131,6 +136,12 @@ class AdventurerPartnerServiceTest {
                 7L, ProfileOrientation.CANONICAL, 1L,
                 PartnerLifecycleStatus.CLOSED, "test release");
         verify(sessionSkills).restore(7L, player, partner);
+        org.mockito.InOrder durableReleaseOrder = org.mockito.Mockito.inOrder(
+                sessionSkills, repository);
+        durableReleaseOrder.verify(sessionSkills).restore(7L, player, partner);
+        durableReleaseOrder.verify(repository).closeSession(
+                7L, ProfileOrientation.CANONICAL, 1L,
+                PartnerLifecycleStatus.CLOSED, "test release");
         verify(transitions).discardPreparedProfiles(player, partner);
     }
 
@@ -188,6 +199,81 @@ class AdventurerPartnerServiceTest {
         verify(agents).spawnFollowing(player, 20, "Yoona");
         verify(profiles).restoreTransientState(partner);
         verify(transitions).prepareSkillUnion(8L, player, partner);
+    }
+
+    @Test
+    void npcDoubleInviteWaitsForAcknowledgementAndCoalescesEarlyCasts() {
+        PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
+                8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
+                ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
+                Instant.now(), Instant.now(), null, null);
+        when(repository.createSession(5L, 10, 20, PartnerMode.DOUBLE_PARTNER))
+                .thenReturn(doubleJournal);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        when(entry.transitionBarrierState()).thenReturn(new AgentTransitionBarrierState());
+        when(partner.getName()).thenReturn("Yoona");
+        when(agents.spawnFollowing(player, 20, "Yoona"))
+                .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
+
+        ActivePartnerSession active = service.beginDoublePartnerInvite(player);
+        AdventurerPartnerService.TriggerResult first =
+                service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
+        AdventurerPartnerService.TriggerResult repeated =
+                service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
+
+        assertFalse(active.isSwitchReady());
+        assertTrue(first.message().contains("still logging in"));
+        org.junit.jupiter.api.Assertions.assertNull(repeated.message());
+        verify(triggerPolicy, never()).validate(any(), any());
+        for (int skillId : config.TRIGGER_SKILL_IDS) {
+            verify(player, never()).removeCooldown(skillId);
+        }
+
+        service.completeDoublePartnerInvite(player);
+
+        assertTrue(active.isSwitchReady());
+        assertTriggerCooldownsReset();
+        verify(player).message("Yoona is ready. Double Partner Mode can now switch roles with Nimble Feet.");
+    }
+
+    @Test
+    void configuredDoubleInviteDelayKeepsSwitchLockedUntilScheduledPreparationCompletes() {
+        config.DOUBLE_PARTNER_READY_DELAY_MS = 750L;
+        List<Runnable> scheduled = new java.util.ArrayList<>();
+        List<Long> delays = new java.util.ArrayList<>();
+        service = new AdventurerPartnerService(
+                config, repository, profiles, leases, runtimes,
+                new PartnerRosterQueryService(repository, availability),
+                agents, triggerPolicy, transitions, sessionSkills,
+                (task, delayMs) -> {
+                    scheduled.add(task);
+                    delays.add(delayMs);
+                });
+        PartnerSessionRecord doubleJournal = new PartnerSessionRecord(
+                8L, 5L, 10, 20, PartnerMode.DOUBLE_PARTNER,
+                ProfileOrientation.CANONICAL, 0L, PartnerLifecycleStatus.ACTIVATING,
+                Instant.now(), Instant.now(), null, null);
+        when(repository.createSession(5L, 10, 20, PartnerMode.DOUBLE_PARTNER))
+                .thenReturn(doubleJournal);
+        AgentRuntimeEntry entry = mock(AgentRuntimeEntry.class);
+        when(entry.transitionBarrierState()).thenReturn(new AgentTransitionBarrierState());
+        when(partner.getName()).thenReturn("Yoona");
+        when(agents.spawnFollowing(player, 20, "Yoona"))
+                .thenReturn(new PartnerAgentLifecycleBridge.SpawnedPartner(partner, entry));
+
+        ActivePartnerSession active = service.beginDoublePartnerInvite(player);
+        service.completeDoublePartnerInvite(player);
+
+        assertFalse(active.isSwitchReady());
+        assertEquals(List.of(750L), delays);
+        for (int skillId : config.TRIGGER_SKILL_IDS) {
+            verify(player, never()).removeCooldown(skillId);
+        }
+
+        scheduled.getFirst().run();
+
+        assertTrue(active.isSwitchReady());
+        assertTriggerCooldownsReset();
     }
 
     @Test
@@ -259,6 +345,27 @@ class AdventurerPartnerServiceTest {
     }
 
     @Test
+    void incompleteActivationCleanupRetainsLeasesAndOpenJournalForReset() throws Exception {
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        doThrow(new IllegalStateException("union failed"))
+                .when(transitions).prepareSkillUnion(7L, player, partner);
+        doThrow(new IllegalStateException("restore failed"))
+                .when(sessionSkills).restore(7L, player, partner);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.activate(player, PartnerMode.SOLO_TAG));
+
+        assertTrue(leases.isLeased(10));
+        assertTrue(leases.isLeased(20));
+        verify(repository, never()).closeSession(
+                anyLong(), any(), anyLong(), any(), any());
+        verify(repository).updateSession(
+                7L, ProfileOrientation.CANONICAL, 0L,
+                PartnerLifecycleStatus.ACTIVATING,
+                "Activation cleanup incomplete: union failed");
+    }
+
+    @Test
     void onlinePartnerIsRejectedBeforeSessionCreationOrLoading() {
         when(availability.isOnline(20)).thenReturn(true);
 
@@ -297,6 +404,32 @@ class AdventurerPartnerServiceTest {
         verify(repository).closeSession(
                 7L, ProfileOrientation.CANONICAL, 2L,
                 PartnerLifecycleStatus.CLOSED, "retry after fault injection");
+    }
+
+    @Test
+    void skillRestoreFailureKeepsJournalOpenAndSwitchLockedUntilReleaseRetry() throws Exception {
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        ActivePartnerSession active = service.activate(player, PartnerMode.SOLO_TAG);
+        doThrow(new IllegalStateException("skill restore failed"))
+                .doNothing()
+                .when(sessionSkills).restore(7L, player, partner);
+
+        assertThrows(IllegalStateException.class,
+                () -> service.release(player, "fault injection"));
+
+        assertFalse(active.isSwitchReady());
+        assertFalse(active.isJournalClosed());
+        assertTrue(leases.isLeased(10));
+        assertTrue(leases.isLeased(20));
+        verify(repository, never()).closeSession(
+                anyLong(), any(), anyLong(), any(), any());
+
+        service.release(player, "retry after skill restore fault");
+
+        assertEquals(PartnerLifecycleStatus.CLOSED, active.runtime().status());
+        verify(repository).closeSession(
+                7L, ProfileOrientation.CANONICAL, 2L,
+                PartnerLifecycleStatus.CLOSED, "retry after skill restore fault");
     }
 
     @Test
@@ -468,6 +601,19 @@ class AdventurerPartnerServiceTest {
         assertFalse(leases.isLeased(20));
         verify(agents).releasePartnerAgent(10, 20);
         verify(repository).recoverOpenSessionsForLink(5L, "Agent E reset");
+    }
+
+    @Test
+    void releaseResetRetainsStaleLeasesWhenDurableRecoveryFails() {
+        leases.acquire(99L, java.util.Map.of(10, 10, 20, 20));
+        doThrow(new IllegalStateException("database unavailable"))
+                .when(repository).recoverOpenSessionsForLink(5L, "Agent E reset");
+
+        assertThrows(IllegalStateException.class,
+                () -> service.releaseOrReset(player, "Agent E reset"));
+
+        assertTrue(leases.isLeased(10));
+        assertTrue(leases.isLeased(20));
     }
 
     @Test

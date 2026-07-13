@@ -106,11 +106,18 @@ public final class AdventurerPartnerNpcService {
             if (link.preferredMode() != PartnerMode.DOUBLE_PARTNER) {
                 throw new IllegalStateException("Change to Double Partner Mode before inviting your Partner.");
             }
-            ActivePartnerSession active = service.activate(player, PartnerMode.DOUBLE_PARTNER);
-            return "I'll notify " + partnerName(active.link(), player.getId())
-                    + ". Stay nearby while they enter the field. Both of you will remain visible, and your Partner "
-                    + "will follow you until given another task. Use Nimble Feet to exchange roles.";
+            String partnerName = partnerName(link, player.getId());
+            player.message(partnerName
+                    + " is logging in. Agent E is preparing the Partner link.");
+            ActivePartnerSession active = service.beginDoublePartnerInvite(player);
+            return partnerName(active.link(), player.getId())
+                    + " has arrived. Their skills and profile data are prepared. Select OK to finish the link; "
+                    + "Agent E will notify you when switching is ready.";
         });
+    }
+
+    public void completeDoublePartnerInvite(Character player) {
+        service.completeDoublePartnerInvite(player);
     }
 
     public String prepareSoloTag(Character player) {
@@ -237,7 +244,8 @@ public final class AdventurerPartnerNpcService {
                 + "Eligibility is checked separately for each character, and the strongest value wins when buffs "
                 + "overlap.\r\n\r\n"
                 + "#bDouble Partner Mode#k invites your Partner as an Agent. Both actors remain visible, and Nimble "
-                + "Feet exchanges their profiles only while they are in the same map.\r\n\r\n"
+                + "Feet exchanges their profiles only while they are in the same map. Agent E prepares both "
+                + "profiles before enabling the switch and announces when the Partner link is ready.\r\n\r\n"
                 + "#bRelease my partner#k restores canonical ownership, saves progress, logs out the Partner Agent, "
                 + "and clears a stuck Partner-managed session. It never disconnects a character being played independently.";
     }

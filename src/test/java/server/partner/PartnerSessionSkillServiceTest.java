@@ -99,7 +99,7 @@ class PartnerSessionSkillServiceTest {
     }
 
     @Test
-    void unionDoesNotSynthesizeMissingSameJobSkillsThatCouldAffectPassives() {
+    void unionDoesNotSynthesizeMissingSameJobSkillsThatCouldBeMutatedAsCanonical() {
         AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
         PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
         Character first = mock(Character.class);
@@ -182,6 +182,34 @@ class PartnerSessionSkillServiceTest {
     }
 
     @Test
+    void sessionGrantNeverOverwritesAnExistingCanonicalSkill() {
+        AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
+        PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
+        Character recipient = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        when(recipient.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 5, 10, -1L)));
+
+        service.grant(7L, new SoloTagBuffSharingService.SkillGrant(
+                recipient, shadowPartner, (byte) 30, 30, -1L));
+
+        verify(repository, never()).grantTemporarySkill(
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.any());
+        verify(recipient, never()).applyPartnerSessionSkill(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyByte(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
     void releaseCancelsBorrowedBuffBeforeRemovingNewSkill() {
         AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
         PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
@@ -200,9 +228,9 @@ class PartnerSessionSkillServiceTest {
         service.restore(7L, first, second);
 
         InOrder order = inOrder(repository, second);
-        order.verify(repository).restoreTemporarySkills(7L);
         order.verify(second).cancelPartnerBuffFromSource(4111002);
         order.verify(second).restorePartnerSessionSkill(20, shadowPartner, null);
+        order.verify(repository).restoreTemporarySkills(7L);
     }
 
     @Test
@@ -229,5 +257,29 @@ class PartnerSessionSkillServiceTest {
                 org.mockito.ArgumentMatchers.eq(magicGuard),
                 state.capture());
         assertEquals(5, state.getValue().skillevel);
+    }
+
+    @Test
+    void runtimeRestoreFailureLeavesDurableSkillJournalForRetry() {
+        AdventurerPartnerRepository repository = mock(AdventurerPartnerRepository.class);
+        PartnerSessionSkillService service = new PartnerSessionSkillService(repository);
+        Character first = mock(Character.class);
+        Character second = mock(Character.class);
+        Skill shadowPartner = new Skill(4111002);
+        PartnerSessionSkillGrant grant = new PartnerSessionSkillGrant(
+                7L, 20, 4111002, null, null, null, 30, 0, -1L);
+        when(first.getProfileOwnerCharacterId()).thenReturn(10);
+        when(second.getProfileOwnerCharacterId()).thenReturn(20);
+        when(second.getSkills()).thenReturn(Map.of(
+                shadowPartner, new Character.SkillEntry((byte) 30, 0, -1L)));
+        when(repository.findTemporarySkills(7L)).thenReturn(List.of(grant));
+        org.mockito.Mockito.doThrow(new IllegalStateException("runtime restore failed"))
+                .when(second).restorePartnerSessionSkill(20, shadowPartner, null);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> service.restore(7L, first, second));
+
+        verify(repository, never()).restoreTemporarySkills(7L);
     }
 }

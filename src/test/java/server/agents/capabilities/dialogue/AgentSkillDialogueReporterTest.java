@@ -25,6 +25,7 @@ class AgentSkillDialogueReporterTest {
         skills.put(earlier, new Character.SkillEntry((byte) 10, 0, -1));
         skills.put(beginner, new Character.SkillEntry((byte) 3, 0, -1));
         when(agent.getSkills()).thenReturn(skills);
+        when(agent.isPartnerSessionBorrowedSkill(1101005)).thenReturn(true);
         SkillGateway skillsGateway = mock(SkillGateway.class);
         when(skillsGateway.getSkillName(1101005)).thenReturn("Rage");
         when(skillsGateway.getSkillName(1100001)).thenReturn("Sword Mastery");
@@ -34,8 +35,7 @@ class AgentSkillDialogueReporterTest {
 
         assertEquals(List.of(110), List.copyOf(report.keySet()));
         assertEquals(List.of(
-                new AgentSkillReportFlow.SkillLine(1100001, "Sword Mastery", 10),
-                new AgentSkillReportFlow.SkillLine(1101005, "Rage", 20)),
+                new AgentSkillReportFlow.SkillLine(1100001, "Sword Mastery", 10)),
                 report.get(110));
     }
 

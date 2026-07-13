@@ -978,9 +978,9 @@ public final class CombatFormulaProvider {
         int total = 0;
         try {
             for (var entry : bot.getSkills().entrySet()) {
-                int level = entry.getValue().skillevel;
-                if (level <= 0) continue;
                 Skill skill = entry.getKey();
+                int level = bot.getSkillLevel(skill);
+                if (level <= 0) continue;
                 StatEffect effect = skill.getEffect(level);
                 if (effect == null || effect.isOverTime()) continue;
                 total += effect.getAcc();

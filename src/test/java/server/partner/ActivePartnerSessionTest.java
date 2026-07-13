@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -26,6 +27,32 @@ class ActivePartnerSessionTest {
         assertFalse(active.tryAcquireCooldownNotice(1_002L));
         assertTrue(active.tryAcquireSwitchCooldown(6_000L, 5_000L));
         assertTrue(active.tryAcquireCooldownNotice(6_001L));
+    }
+
+    @Test
+    void preparingSessionCoalescesFeedbackUntilItBecomesReady() {
+        ActivePartnerSession ready = session();
+        ActivePartnerSession preparing = ActivePartnerSession.preparing(
+                ready.link(), ready.runtime(), ready.humanActor(),
+                ready.partnerActorOrDormantProfile(), ready.agentEntry());
+
+        assertFalse(preparing.isSwitchReady());
+        assertTrue(preparing.tryScheduleSwitchPreparation());
+        assertFalse(preparing.tryScheduleSwitchPreparation());
+        assertTrue(preparing.tryAcquirePreparationNotice());
+        assertFalse(preparing.tryAcquirePreparationNotice());
+        assertTrue(preparing.markSwitchReady());
+        assertTrue(preparing.isSwitchReady());
+        assertFalse(preparing.tryAcquirePreparationNotice());
+    }
+
+    @Test
+    void switchCooldownSaturatesInsteadOfWrapping() {
+        ActivePartnerSession active = session();
+
+        assertTrue(active.tryAcquireSwitchCooldown(Long.MAX_VALUE - 5L, 10L));
+        assertEquals(1L, active.remainingSwitchCooldownMs(Long.MAX_VALUE - 1L));
+        assertFalse(active.tryAcquireSwitchCooldown(Long.MAX_VALUE - 1L, 0L));
     }
 
     private static ActivePartnerSession session() {

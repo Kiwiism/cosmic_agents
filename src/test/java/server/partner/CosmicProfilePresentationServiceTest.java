@@ -18,8 +18,6 @@ import server.quest.Quest;
 import tools.PacketCreator;
 
 import java.sql.ResultSet;
-import java.lang.reflect.Field;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,59 +35,13 @@ class CosmicProfilePresentationServiceTest {
     @Test
     void cachedInventoryPresentationCanCreateFreshOperationsForEverySwitch() {
         Item cachedItem = new Item(2000000, (short) 1, (short) 10);
-        boolean previous = YamlConfig.config.adventurerPartner.PRESENT_INVENTORY;
-        YamlConfig.config.adventurerPartner.PRESENT_INVENTORY = true;
-        try {
-            List<client.inventory.ModifyInventory> first =
-                    CosmicProfilePresentationService.inventoryOperations(
-                            List.of(cachedItem), 3, YamlConfig.config.adventurerPartner);
-            PacketCreator.modifyInventory(false, first);
+        List<client.inventory.ModifyInventory> first =
+                CosmicProfilePresentationService.inventoryOperations(List.of(cachedItem), 3);
+        PacketCreator.modifyInventory(false, first);
 
-            assertDoesNotThrow(() -> PacketCreator.modifyInventory(false,
-                    CosmicProfilePresentationService.inventoryOperations(
-                            List.of(cachedItem), 3, YamlConfig.config.adventurerPartner)));
-            assertEquals(InventoryType.USE, cachedItem.getInventoryType());
-        } finally {
-            YamlConfig.config.adventurerPartner.PRESENT_INVENTORY = previous;
-        }
-    }
-
-    @Test
-    void diagnosticComponentSwitchesCanReduceRefreshToEnableActionsOnly() throws Exception {
-        CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
-        Character human = character(890_001, "DiagA");
-        Character partner = character(890_002, "DiagB");
-        Client humanClient = mock(Client.class);
-        human.setClient(humanClient);
-        Map<Field, Boolean> previous = new LinkedHashMap<>();
-        for (Field field : YamlConfig.config.adventurerPartner.getClass().getFields()) {
-            if (field.getName().startsWith("PRESENT_")) {
-                previous.put(field, field.getBoolean(YamlConfig.config.adventurerPartner));
-                field.setBoolean(YamlConfig.config.adventurerPartner, false);
-            }
-        }
-        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
-        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = false;
-        try {
-            presentation.prepare(human, partner);
-            Character.ProfileExchangeResult exchange =
-                    Character.exchangeProfileBindings(human, partner);
-
-            presentation.refresh(human, partner, PartnerMode.SOLO_TAG, exchange);
-
-            @SuppressWarnings("unchecked")
-            ArgumentCaptor<List<Packet>> packets = ArgumentCaptor.forClass(List.class);
-            verify(humanClient).sendPackets(packets.capture());
-            assertEquals(1, packets.getValue().size());
-            assertArrayEquals(PacketCreator.enableActions().getBytes(),
-                    packets.getValue().getFirst().getBytes());
-        } finally {
-            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
-            for (Map.Entry<Field, Boolean> entry : previous.entrySet()) {
-                entry.getKey().setBoolean(YamlConfig.config.adventurerPartner, entry.getValue());
-            }
-            presentation.discardPrepared(human, partner);
-        }
+        assertDoesNotThrow(() -> PacketCreator.modifyInventory(false,
+                CosmicProfilePresentationService.inventoryOperations(List.of(cachedItem), 3)));
+        assertEquals(InventoryType.USE, cachedItem.getInventoryType());
     }
 
     @Test
@@ -112,8 +63,6 @@ class CosmicProfilePresentationServiceTest {
         attachSkill(human, 1000005, 1, 0, 100L);      // expiration changed
         attachSkill(partner, 1000005, 1, 0, 200L);
 
-        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
-        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = false;
         try {
             presentation.prepare(human, partner);
             Character.ProfileExchangeResult exchange =
@@ -137,7 +86,6 @@ class CosmicProfilePresentationServiceTest {
                     new PacketCreator.SkillUpdate(1000005, 1, 0, 200L))).getBytes(),
                     skillPackets.getFirst());
         } finally {
-            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
             presentation.discardPrepared(human, partner);
         }
     }
@@ -176,8 +124,11 @@ class CosmicProfilePresentationServiceTest {
         addMonsterBookCard(partner, 2380000, 1);
         when(map.broadcastUpdateCharLookMessage(any(Character.class), any(Character.class)))
                 .thenReturn(new MapleMap.PacketBroadcastMetrics(2, 64L));
-        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
-        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = true;
+        int previousEffectId = YamlConfig.config.adventurerPartner.SWITCH_EFFECT_ID;
+        boolean previousEffectBroadcast =
+                YamlConfig.config.adventurerPartner.SWITCH_EFFECT_BROADCAST;
+        YamlConfig.config.adventurerPartner.SWITCH_EFFECT_ID = 10;
+        YamlConfig.config.adventurerPartner.SWITCH_EFFECT_BROADCAST = false;
         try {
             presentation.prepare(human, partner);
             Character.ProfileExchangeResult exchange =
@@ -198,7 +149,7 @@ class CosmicProfilePresentationServiceTest {
             assertFalse(opcodes.contains(SendOpcode.INVENTORY_GROW.getValue()));
             assertArrayEquals(PacketCreator.enableActions().getBytes(), sent.getLast().getBytes());
             assertTrue(sent.stream().anyMatch(packet -> java.util.Arrays.equals(
-                    packet.getBytes(), PacketCreator.showSpecialEffect(8).getBytes())));
+                    packet.getBytes(), PacketCreator.showSpecialEffect(10).getBytes())));
             assertFalse(opcodes.contains(SendOpcode.SHOW_STATUS_INFO.getValue()));
             assertFalse(opcodes.contains(SendOpcode.MONSTER_BOOK_SET_CARD.getValue()));
             assertFalse(opcodes.contains(SendOpcode.MONSTER_BOOK_SET_COVER.getValue()));
@@ -207,12 +158,11 @@ class CosmicProfilePresentationServiceTest {
             assertEquals(1, human.getMonsterBook().getCards().get(2380000));
             verify(map).broadcastUpdateCharLookMessage(human, human);
             verify(map).broadcastUpdateCharLookMessage(partner, partner);
-            verify(map).broadcastMessage(eq(human), any(Packet.class), eq(false));
-            verify(map).broadcastMessage(eq(partner), any(Packet.class), eq(false));
-            assertEquals(sent.size() + 6, metrics.packetCount());
+            assertEquals(sent.size() + 4, metrics.packetCount());
             assertTrue(metrics.packetBytes() > 0L);
         } finally {
-            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
+            YamlConfig.config.adventurerPartner.SWITCH_EFFECT_ID = previousEffectId;
+            YamlConfig.config.adventurerPartner.SWITCH_EFFECT_BROADCAST = previousEffectBroadcast;
             presentation.discardPrepared(human, partner);
         }
     }

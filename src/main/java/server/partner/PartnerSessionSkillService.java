@@ -50,6 +50,11 @@ public final class PartnerSessionSkillService {
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElse(null);
+        boolean borrowed = recipient.isPartnerSessionBorrowedSkill(skill.getId());
+        if (current != null && !borrowed) {
+            // A canonical copy is already client-safe. Do not temporarily replace real SP/mastery.
+            return false;
+        }
         if (sameState(current, request)) {
             return false;
         }
@@ -104,7 +109,7 @@ public final class PartnerSessionSkillService {
             }
         }
 
-        repository.restoreTemporarySkills(sessionId);
+        RuntimeException failure = null;
         for (PartnerSessionSkillGrant grant : grants) {
             Character holder = holders.get(grant.characterId());
             Skill skill = holder.getSkills().keySet().stream()
@@ -114,17 +119,29 @@ public final class PartnerSessionSkillService {
                         Skill canonical = SkillFactory.getSkill(grant.skillId());
                         return canonical == null ? new Skill(grant.skillId()) : canonical;
                     });
-            holder.cancelPartnerBuffFromSource(grant.skillId());
+            try {
+                holder.cancelPartnerBuffFromSource(grant.skillId());
+            } catch (RuntimeException buffFailure) {
+                failure = append(failure, buffFailure);
+            }
             Character.SkillEntry original = grant.hadOriginalSkill()
                     ? new Character.SkillEntry(
                             grant.originalSkillLevel().byteValue(),
                             grant.originalMasterLevel(),
                             grant.originalExpiration())
                     : null;
-            holder.restorePartnerSessionSkill(grant.characterId(), skill, original);
-            log.info("partner_temporary_skill restored session={} character={} skill={} hadOriginal={}",
-                    sessionId, grant.characterId(), grant.skillId(), grant.hadOriginalSkill());
+            try {
+                holder.restorePartnerSessionSkill(grant.characterId(), skill, original);
+                log.info("partner_temporary_skill restored session={} character={} skill={} hadOriginal={}",
+                        sessionId, grant.characterId(), grant.skillId(), grant.hadOriginalSkill());
+            } catch (RuntimeException restoreFailure) {
+                failure = append(failure, restoreFailure);
+            }
         }
+        if (failure != null) {
+            throw failure;
+        }
+        repository.restoreTemporarySkills(sessionId);
     }
 
     public boolean synchronizeUnionSkill(long sessionId,
@@ -203,5 +220,14 @@ public final class PartnerSessionSkillService {
                 && current.skillevel == request.level()
                 && current.masterlevel == request.masterLevel()
                 && current.expiration == request.expiration();
+    }
+
+    private static RuntimeException append(RuntimeException current,
+                                           RuntimeException addition) {
+        if (current == null) {
+            return addition;
+        }
+        current.addSuppressed(addition);
+        return current;
     }
 }

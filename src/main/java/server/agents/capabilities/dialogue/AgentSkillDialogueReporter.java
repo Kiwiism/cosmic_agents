@@ -31,7 +31,8 @@ public final class AgentSkillDialogueReporter {
             }
 
             int skillId = skill.getId();
-            if (skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
+            if (agent.isPartnerSessionBorrowedSkill(skillId)
+                    || skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
                 continue;
             }
 
@@ -62,7 +63,8 @@ public final class AgentSkillDialogueReporter {
             }
 
             int skillId = skill.getId();
-            if (!skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
+            if (agent.isPartnerSessionBorrowedSkill(skillId)
+                    || !skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
                 continue;
             }
 

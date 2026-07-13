@@ -1177,6 +1177,10 @@ public class NPCConversationManager extends AbstractPlayerInteraction {
         return AdventurerPartnerNpcService.INSTANCE.invite(getPlayer());
     }
 
+    public void adventurerPartnerCompleteDoubleInvite() {
+        AdventurerPartnerNpcService.INSTANCE.completeDoublePartnerInvite(getPlayer());
+    }
+
     public String adventurerPartnerPrepareSoloTag() {
         return AdventurerPartnerNpcService.INSTANCE.prepareSoloTag(getPlayer());
     }

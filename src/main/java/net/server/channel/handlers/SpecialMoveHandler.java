@@ -97,7 +97,8 @@ public final class SpecialMoveHandler extends AbstractPacketHandler {
             if (partnerTrigger.message() != null) {
                 chr.message(partnerTrigger.message());
             }
-            if (partnerTrigger.switched()) {
+            if (partnerTrigger.switched()
+                    && YamlConfig.config.adventurerPartner.SWITCH_TRIGGER_EFFECT_ENABLED) {
                 int effectLevel = Math.max(1, chr.getSkillLevel(skillid));
                 chr.sendPacket(PacketCreator.showBuffEffect(
                         chr.getId(), skillid, effectLevel));

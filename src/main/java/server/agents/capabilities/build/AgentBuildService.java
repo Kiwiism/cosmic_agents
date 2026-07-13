@@ -201,7 +201,8 @@ public final class AgentBuildService {
             }
 
             int skillId = skill.getId();
-            if (skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
+            if (bot.isPartnerSessionBorrowedSkill(skillId)
+                    || skill.isBeginnerSkill() || GameConstants.isHiddenSkills(skillId)) {
                 continue;
             }
             if (!GameConstants.isInJobTree(skillId, bot.getJob().getId())) {

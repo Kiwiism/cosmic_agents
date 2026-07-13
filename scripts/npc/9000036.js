@@ -36,6 +36,15 @@ function start() {
 
 function action(mode, type, selection) {
     if (mode !== 1) {
+        if (flow === "completeDoubleInvite") {
+            cm.adventurerPartnerCompleteDoubleInvite();
+        }
+        cm.dispose();
+        return;
+    }
+
+    if (flow === "completeDoubleInvite") {
+        cm.adventurerPartnerCompleteDoubleInvite();
         cm.dispose();
         return;
     }
@@ -53,8 +62,8 @@ function action(mode, type, selection) {
     }
 
     if (flow === "inviteAfterModeChange") {
+        flow = "completeDoubleInvite";
         cm.sendOk(cm.adventurerPartnerInvite());
-        cm.dispose();
         return;
     }
 
@@ -86,8 +95,8 @@ function action(mode, type, selection) {
             cm.sendYesNo("End this partnership permanently? Any active Partner session will be released safely first. Both characters keep their canonical progress.");
             break;
         case 2:
+            flow = "completeDoubleInvite";
             cm.sendOk(cm.adventurerPartnerInvite());
-            cm.dispose();
             break;
         case 3:
             cm.sendOk(cm.adventurerPartnerPrepareSoloTag());

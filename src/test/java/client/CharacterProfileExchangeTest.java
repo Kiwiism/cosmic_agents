@@ -59,9 +59,29 @@ class CharacterProfileExchangeTest {
     }
 
     @Test
+    void borrowedSkillRemainsInClientSnapshotButIsNotLearnedByServerMechanics() throws Exception {
+        Character character = character(10, "Pio", 28, Job.CHIEFBANDIT, 30030);
+        character.setClient(mock(Client.class));
+        Skill shadowPartner = new Skill(4111002);
+
+        character.applyPartnerSessionSkill(10, shadowPartner, (byte) 30, 20, -1L, false);
+        character.markPartnerSessionSkillBorrowed(10, shadowPartner.getId(), true);
+
+        assertEquals(30, character.getSkills().get(shadowPartner).skillevel);
+        assertEquals(0, character.getSkillLevel(shadowPartner));
+        assertEquals(0, character.getSkillLevel(shadowPartner.getId()));
+        assertEquals(0, character.getMasterLevel(shadowPartner));
+        assertEquals(-1L, character.getSkillExpiration(shadowPartner));
+        assertThrows(IllegalStateException.class,
+                () -> character.changeSkillLevel(shadowPartner, (byte) 1, 0, -1L));
+    }
+
+    @Test
     void exchangesProfileOwnedStateWithoutMovingActors() throws Exception {
         Character first = character(10, "Pio", 28, Job.ASSASSIN, 30030);
         Character second = character(20, "Yoona", 17, Job.MAGICIAN, 20020);
+        setField(first, "gmLevel", 5);
+        setField(second, "gmLevel", 0);
         first.setPosition(new Point(100, 50));
         second.setPosition(new Point(400, 80));
         first.getInventory(InventoryType.USE).addItemFromDB(new Item(2000000, (short) 1, (short) 5));
@@ -119,6 +139,8 @@ class CharacterProfileExchangeTest {
         assertEquals(20, second.getId());
         assertEquals("Pio", first.getName());
         assertEquals("Yoona", second.getName());
+        assertEquals(5, first.gmLevel());
+        assertEquals(0, second.gmLevel());
         assertEquals(new Point(100, 50), first.getPosition());
         assertEquals(new Point(400, 80), second.getPosition());
         assertEquals(20, first.getProfileOwnerCharacterId());

@@ -11,6 +11,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AdventurerPartnerNpcServiceTest {
@@ -71,6 +72,24 @@ class AdventurerPartnerNpcServiceTest {
         assertFalse(menu.contains("Invite my partner"));
         assertTrue(menu.contains("Change to Solo Tag Mode"));
         assertTrue(menu.contains("Release my partner"));
+    }
+
+    @Test
+    void inviteExplainsLoadingAndRequiresAReadyAcknowledgement() {
+        ActivePartnerSession active = mock(ActivePartnerSession.class);
+        when(service.registeredLink(player)).thenReturn(Optional.of(doubleLink));
+        when(service.findCharacter(20)).thenReturn(Optional.of(partner));
+        when(service.beginDoublePartnerInvite(player)).thenReturn(active);
+        when(active.link()).thenReturn(doubleLink);
+
+        String result = npc.invite(player);
+
+        verify(player).message("KiwiAgent is logging in. Agent E is preparing the Partner link.");
+        assertTrue(result.contains("has arrived"));
+        assertTrue(result.contains("Select OK to finish the link"));
+
+        npc.completeDoublePartnerInvite(player);
+        verify(service).completeDoublePartnerInvite(player);
     }
 
     @Test

@@ -48,19 +48,10 @@ class AdventurerPartnerConfigTest {
                     DOUBLE_PARTNER_ENABLED: true
                     SWITCH_COOLDOWN_MS: 321
                     SAME_MAP_REQUIRED: false
-                    PUBLIC_PRESENTATION: false
-                    PRESENT_JOB: false
-                    PRESENT_STATS: false
-                    PRESENT_SKILLS: false
-                    PRESENT_KEY_BINDINGS: false
-                    PRESENT_EQUIPMENT: false
-                    PRESENT_INVENTORY: false
-                    PRESENT_PETS: false
-                    PRESENT_BUFFS: false
-                    PRESENT_DISEASES: false
-                    PRESENT_COOLDOWNS: false
-                    PRESENT_PUBLIC_LOOK: false
-                    PRESENT_SWITCH_EFFECT: false
+                    DOUBLE_PARTNER_READY_DELAY_MS: 777
+                    SWITCH_EFFECT_ID: 11
+                    SWITCH_EFFECT_BROADCAST: true
+                    SWITCH_TRIGGER_EFFECT_ENABLED: true
                     TRIGGER_SKILL_IDS: [1002, 20011002]
                     RESTORE_CANONICAL_ON_DISCONNECT: true
                     APPLY_ORDINARY_TRIGGER_BUFF: true
@@ -80,24 +71,29 @@ class AdventurerPartnerConfigTest {
         assertTrue(config.DOUBLE_PARTNER_ENABLED);
         assertEquals(321L, config.SWITCH_COOLDOWN_MS);
         assertFalse(config.SAME_MAP_REQUIRED);
-        assertFalse(config.PUBLIC_PRESENTATION);
-        assertFalse(config.PRESENT_JOB);
-        assertFalse(config.PRESENT_STATS);
-        assertFalse(config.PRESENT_SKILLS);
-        assertFalse(config.PRESENT_KEY_BINDINGS);
-        assertFalse(config.PRESENT_EQUIPMENT);
-        assertFalse(config.PRESENT_INVENTORY);
-        assertFalse(config.PRESENT_PETS);
-        assertFalse(config.PRESENT_BUFFS);
-        assertFalse(config.PRESENT_DISEASES);
-        assertFalse(config.PRESENT_COOLDOWNS);
-        assertFalse(config.PRESENT_PUBLIC_LOOK);
-        assertFalse(config.PRESENT_SWITCH_EFFECT);
+        assertEquals(777L, config.DOUBLE_PARTNER_READY_DELAY_MS);
+        assertEquals(11, config.SWITCH_EFFECT_ID);
+        assertTrue(config.SWITCH_EFFECT_BROADCAST);
+        assertTrue(config.SWITCH_TRIGGER_EFFECT_ENABLED);
         assertEquals(List.of(1002, 20011002), config.TRIGGER_SKILL_IDS);
         assertTrue(config.RESTORE_CANONICAL_ON_DISCONNECT);
         assertTrue(config.APPLY_ORDINARY_TRIGGER_BUFF);
         assertTrue(config.SOLO_TAG_BUFF_SHARING_ENABLED);
         assertEquals(4000144, config.SOLO_TAG_BUFF_SHARING_ITEM_ID);
         assertEquals(12_345_678, config.SOLO_TAG_BUFF_SHARING_PRICE_MESOS);
+    }
+
+    @Test
+    void readinessDelayAndSwitchEffectAreBounded() {
+        AdventurerPartnerConfig config = new AdventurerPartnerConfig();
+        config.DOUBLE_PARTNER_READY_DELAY_MS = 10_001L;
+        assertThrows(IllegalStateException.class, config::validate);
+
+        config.DOUBLE_PARTNER_READY_DELAY_MS = 0L;
+        config.SWITCH_EFFECT_ID = 256;
+        assertThrows(IllegalStateException.class, config::validate);
+
+        config.SWITCH_EFFECT_ID = -1;
+        assertDoesNotThrow(config::validate);
     }
 }

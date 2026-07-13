@@ -73,40 +73,22 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         PreparedStaticPresentation newPresentation = prepared(humanActor);
         AdventurerPartnerConfig config = YamlConfig.config.adventurerPartner;
 
-        cancelOldLocalPresentation(counter, partnerActorOrDormantProfile, config);
-        List<Pair<Stat, Integer>> stats = selectedStats(humanActor, config);
-        if (!stats.isEmpty()) {
-            counter.send("stats", PacketCreator.updatePlayerStats(stats, false, humanActor));
-        }
-        if (config.PRESENT_SKILLS) {
-            refreshSkills(counter, oldPresentation, newPresentation);
-        }
-        if (config.PRESENT_KEY_BINDINGS) {
-            refreshBindings(counter, oldPresentation, newPresentation);
-        }
-        refreshInventory(counter, oldPresentation, newPresentation, config);
-        if (config.PRESENT_PETS) {
-            refreshLocalPets(counter, partnerActorOrDormantProfile, humanActor);
-        }
-        if (config.PRESENT_BUFFS) {
-            refreshLocalBuffs(counter, humanActor);
-        }
-        if (config.PRESENT_DISEASES) {
-            refreshLocalDiseases(counter, humanActor);
-        }
-        if (config.PRESENT_COOLDOWNS) {
-            refreshLocalCooldowns(counter, humanActor);
-        }
+        cancelOldLocalPresentation(counter, partnerActorOrDormantProfile);
+        counter.send("stats", PacketCreator.updatePlayerStats(
+                fullStats(humanActor), false, humanActor));
+        refreshSkills(counter, oldPresentation, newPresentation);
+        refreshBindings(counter, oldPresentation, newPresentation);
+        refreshInventory(counter, oldPresentation, newPresentation);
+        refreshLocalPets(counter, partnerActorOrDormantProfile, humanActor);
+        refreshLocalBuffs(counter, humanActor);
+        refreshLocalDiseases(counter, humanActor);
+        refreshLocalCooldowns(counter, humanActor);
 
-        if (config.PUBLIC_PRESENTATION) {
-            refreshPublicActor(counter, humanActor, partnerActorOrDormantProfile, config);
-            if (mode == PartnerMode.DOUBLE_PARTNER) {
-                refreshPublicActor(counter, partnerActorOrDormantProfile, humanActor, config);
-            }
+        refreshPublicActor(counter, humanActor, partnerActorOrDormantProfile);
+        if (mode == PartnerMode.DOUBLE_PARTNER) {
+            refreshPublicActor(counter, partnerActorOrDormantProfile, humanActor);
         }
-        if (config.PRESENT_SWITCH_EFFECT) {
-            refreshSwitchEffects(counter, humanActor, partnerActorOrDormantProfile, mode);
-        }
+        refreshSwitchEffects(counter, humanActor, partnerActorOrDormantProfile, mode, config);
         counter.send("actions", PacketCreator.enableActions());
         counter.flush();
         long duration = System.nanoTime() - startedNs;
@@ -116,46 +98,24 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
     }
 
     private static void cancelOldLocalPresentation(PacketCounter counter,
-                                                   Character oldProfileHolder,
-                                                   AdventurerPartnerConfig config) {
-        if (config.PRESENT_BUFFS) {
-            List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
-            if (!oldBuffs.isEmpty()) {
-                counter.send("cancel-buffs", PacketCreator.cancelBuff(oldBuffs));
+                                                   Character oldProfileHolder) {
+        List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
+        if (!oldBuffs.isEmpty()) {
+            counter.send("cancel-buffs", PacketCreator.cancelBuff(oldBuffs));
+        }
+        for (PlayerCoolDownValueHolder cooldown : oldProfileHolder.getAllCooldowns()) {
+            counter.send("cancel-cooldowns", PacketCreator.skillCooldown(cooldown.skillId, 0));
+        }
+        for (Character.DiseasePresentationSnapshot disease
+                : oldProfileHolder.getDiseasePresentationSnapshots()) {
+            counter.send("cancel-diseases", PacketCreator.cancelDebuff(disease.disease().getValue()));
+        }
+        for (byte slot = 0; slot < 3; slot++) {
+            if (oldProfileHolder.getPet(slot) != null) {
+                counter.send("cancel-pets", PacketCreator.showPetAtIndex(
+                        counter.character, slot, oldProfileHolder.getPet(slot), true, false));
             }
         }
-        if (config.PRESENT_COOLDOWNS) {
-            for (PlayerCoolDownValueHolder cooldown : oldProfileHolder.getAllCooldowns()) {
-                counter.send("cancel-cooldowns", PacketCreator.skillCooldown(cooldown.skillId, 0));
-            }
-        }
-        if (config.PRESENT_DISEASES) {
-            for (Character.DiseasePresentationSnapshot disease
-                    : oldProfileHolder.getDiseasePresentationSnapshots()) {
-                counter.send("cancel-diseases", PacketCreator.cancelDebuff(disease.disease().getValue()));
-            }
-        }
-        if (config.PRESENT_PETS) {
-            for (byte slot = 0; slot < 3; slot++) {
-                if (oldProfileHolder.getPet(slot) != null) {
-                    counter.send("cancel-pets", PacketCreator.showPetAtIndex(
-                            counter.character, slot, oldProfileHolder.getPet(slot), true, false));
-                }
-            }
-        }
-    }
-
-    private static List<Pair<Stat, Integer>> selectedStats(
-            Character character, AdventurerPartnerConfig config) {
-        List<Pair<Stat, Integer>> stats = fullStats(character);
-        if (config.PRESENT_STATS && config.PRESENT_JOB) {
-            return stats;
-        }
-        return stats.stream()
-                .filter(stat -> stat.getLeft() == Stat.JOB
-                        ? config.PRESENT_JOB
-                        : config.PRESENT_STATS)
-                .toList();
     }
 
     private static List<Pair<Stat, Integer>> fullStats(Character character) {
@@ -271,48 +231,34 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
 
     private static void refreshInventory(PacketCounter counter,
                                          PreparedStaticPresentation oldProfile,
-                                         PreparedStaticPresentation newProfile,
-                                         AdventurerPartnerConfig config) {
-        sendInventoryItems(counter, oldProfile.inventoryItems(), 3, config);
+                                         PreparedStaticPresentation newProfile) {
+        sendInventoryItems(counter, oldProfile.inventoryItems(), 3);
 
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.SETUP, InventoryType.ETC)) {
-            if (presentsInventoryType(type, config)
-                    && !oldProfile.slotLimits().get(type).equals(newProfile.slotLimits().get(type))) {
+            if (!oldProfile.slotLimits().get(type).equals(newProfile.slotLimits().get(type))) {
                 counter.send("inventory", PacketCreator.updateInventorySlotLimit(
                         type.getType(), newProfile.slotLimits().get(type)));
             }
         }
 
-        sendInventoryItems(counter, newProfile.inventoryItems(), 0, config);
+        sendInventoryItems(counter, newProfile.inventoryItems(), 0);
     }
 
     private static void sendInventoryItems(PacketCounter counter,
                                            List<Item> items,
-                                           int mode,
-                                           AdventurerPartnerConfig config) {
+                                           int mode) {
         for (List<ModifyInventory> chunk
-                : InventoryPacketChunker.chunk(inventoryOperations(items, mode, config))) {
+                : InventoryPacketChunker.chunk(inventoryOperations(items, mode))) {
             counter.send("inventory", PacketCreator.modifyInventory(false, chunk));
         }
     }
 
     static List<ModifyInventory> inventoryOperations(List<Item> items,
-                                                     int mode,
-                                                     AdventurerPartnerConfig config) {
+                                                     int mode) {
         return items.stream()
-                .filter(item -> presentsInventoryType(item.getInventoryType(), config))
                 .map(item -> new ModifyInventory(mode, item))
                 .toList();
-    }
-
-    private static boolean presentsInventoryType(
-            InventoryType type, AdventurerPartnerConfig config) {
-        return switch (type) {
-            case EQUIPPED, EQUIP -> config.PRESENT_EQUIPMENT;
-            case USE, SETUP, ETC, CASH -> config.PRESENT_INVENTORY;
-            default -> false;
-        };
     }
 
     private PreparedStaticPresentation prepared(Character profile) {
@@ -370,61 +316,52 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
 
     private static void refreshPublicActor(PacketCounter counter,
                                            Character actor,
-                                           Character oldProfileHolder,
-                                           AdventurerPartnerConfig config) {
+                                           Character oldProfileHolder) {
         if (actor.getMap() == null) {
             return;
         }
-        if (config.PRESENT_PUBLIC_LOOK) {
-            var lookMetrics = actor.getMap().broadcastUpdateCharLookMessage(actor, actor);
-            counter.record("public-look", lookMetrics.packetCount(), lookMetrics.packetBytes());
+        var lookMetrics = actor.getMap().broadcastUpdateCharLookMessage(actor, actor);
+        counter.record("public-look", lookMetrics.packetCount(), lookMetrics.packetBytes());
+        List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
+        if (!oldBuffs.isEmpty()) {
+            Packet packet = PacketCreator.cancelForeignBuff(actor.getId(), oldBuffs);
+            counter.record("public-buffs", packet);
+            actor.getMap().broadcastMessage(actor, packet, false);
         }
-        if (config.PRESENT_BUFFS) {
-            List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
-            if (!oldBuffs.isEmpty()) {
-                Packet packet = PacketCreator.cancelForeignBuff(actor.getId(), oldBuffs);
-                counter.record("public-buffs", packet);
-                actor.getMap().broadcastMessage(actor, packet, false);
-            }
-            for (Character.BuffPresentationSnapshot buff : actor.getBuffPresentationSnapshots()) {
-                Packet packet = PacketCreator.giveForeignBuff(actor.getId(), buff.statups());
-                counter.record("public-buffs", packet);
-                actor.getMap().broadcastMessage(actor, packet, false);
-            }
+        for (Character.BuffPresentationSnapshot buff : actor.getBuffPresentationSnapshots()) {
+            Packet packet = PacketCreator.giveForeignBuff(actor.getId(), buff.statups());
+            counter.record("public-buffs", packet);
+            actor.getMap().broadcastMessage(actor, packet, false);
         }
-        if (config.PRESENT_DISEASES) {
-            for (Character.DiseasePresentationSnapshot disease
-                    : oldProfileHolder.getDiseasePresentationSnapshots()) {
-                Packet packet = disease.disease() == Disease.SLOW
-                        ? PacketCreator.cancelForeignSlowDebuff(actor.getId())
-                        : PacketCreator.cancelForeignDebuff(actor.getId(), disease.disease().getValue());
-                counter.record("public-diseases", packet);
-                actor.getMap().broadcastMessage(actor, packet, false);
-            }
-            for (Character.DiseasePresentationSnapshot disease : actor.getDiseasePresentationSnapshots()) {
-                List<Pair<Disease, Integer>> statups = List.of(
-                        new Pair<>(disease.disease(), disease.skill().getX()));
-                Packet packet = disease.disease() == Disease.SLOW
-                        ? PacketCreator.giveForeignSlowDebuff(actor.getId(), statups, disease.skill())
-                        : PacketCreator.giveForeignDebuff(actor.getId(), statups, disease.skill());
-                counter.record("public-diseases", packet);
-                actor.getMap().broadcastMessage(actor, packet, false);
-            }
+        for (Character.DiseasePresentationSnapshot disease
+                : oldProfileHolder.getDiseasePresentationSnapshots()) {
+            Packet packet = disease.disease() == Disease.SLOW
+                    ? PacketCreator.cancelForeignSlowDebuff(actor.getId())
+                    : PacketCreator.cancelForeignDebuff(actor.getId(), disease.disease().getValue());
+            counter.record("public-diseases", packet);
+            actor.getMap().broadcastMessage(actor, packet, false);
         }
-        if (config.PRESENT_PETS) {
-            for (byte slot = 0; slot < 3; slot++) {
-                if (oldProfileHolder.getPet(slot) != null) {
-                    Packet packet = PacketCreator.showPetAtIndex(
-                            actor, slot, oldProfileHolder.getPet(slot), true, false);
-                    counter.record("public-pets", packet);
-                    actor.getMap().broadcastMessage(actor, packet, false);
-                }
-                if (actor.getPet(slot) != null) {
-                    Packet packet = PacketCreator.showPetAtIndex(
-                            actor, slot, actor.getPet(slot), false, false);
-                    counter.record("public-pets", packet);
-                    actor.getMap().broadcastMessage(actor, packet, false);
-                }
+        for (Character.DiseasePresentationSnapshot disease : actor.getDiseasePresentationSnapshots()) {
+            List<Pair<Disease, Integer>> statups = List.of(
+                    new Pair<>(disease.disease(), disease.skill().getX()));
+            Packet packet = disease.disease() == Disease.SLOW
+                    ? PacketCreator.giveForeignSlowDebuff(actor.getId(), statups, disease.skill())
+                    : PacketCreator.giveForeignDebuff(actor.getId(), statups, disease.skill());
+            counter.record("public-diseases", packet);
+            actor.getMap().broadcastMessage(actor, packet, false);
+        }
+        for (byte slot = 0; slot < 3; slot++) {
+            if (oldProfileHolder.getPet(slot) != null) {
+                Packet packet = PacketCreator.showPetAtIndex(
+                        actor, slot, oldProfileHolder.getPet(slot), true, false);
+                counter.record("public-pets", packet);
+                actor.getMap().broadcastMessage(actor, packet, false);
+            }
+            if (actor.getPet(slot) != null) {
+                Packet packet = PacketCreator.showPetAtIndex(
+                        actor, slot, actor.getPet(slot), false, false);
+                counter.record("public-pets", packet);
+                actor.getMap().broadcastMessage(actor, packet, false);
             }
         }
     }
@@ -432,19 +369,28 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
     private static void refreshSwitchEffects(PacketCounter counter,
                                              Character humanActor,
                                              Character partnerActorOrDormantProfile,
-                                             PartnerMode mode) {
-        counter.send("switch-effect", PacketCreator.showSpecialEffect(8));
-        broadcastSwitchEffect(counter, humanActor);
-        if (mode == PartnerMode.DOUBLE_PARTNER) {
-            broadcastSwitchEffect(counter, partnerActorOrDormantProfile);
+                                             PartnerMode mode,
+                                             AdventurerPartnerConfig config) {
+        int effectId = config.SWITCH_EFFECT_ID;
+        if (effectId < 0) {
+            return;
+        }
+        counter.send("switch-effect", PacketCreator.showSpecialEffect(effectId));
+        if (config.SWITCH_EFFECT_BROADCAST) {
+            broadcastSwitchEffect(counter, humanActor, effectId);
+            if (mode == PartnerMode.DOUBLE_PARTNER) {
+                broadcastSwitchEffect(counter, partnerActorOrDormantProfile, effectId);
+            }
         }
     }
 
-    private static void broadcastSwitchEffect(PacketCounter counter, Character actor) {
+    private static void broadcastSwitchEffect(PacketCounter counter,
+                                              Character actor,
+                                              int effectId) {
         if (actor == null || actor.getMap() == null) {
             return;
         }
-        Packet packet = PacketCreator.showForeignEffect(actor.getId(), 8);
+        Packet packet = PacketCreator.showForeignEffect(actor.getId(), effectId);
         counter.record("switch-effect", packet);
         actor.getMap().broadcastMessage(actor, packet, false);
     }

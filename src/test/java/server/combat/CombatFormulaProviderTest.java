@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 import server.StatEffect;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +28,20 @@ import static org.mockito.Mockito.when;
 
 class CombatFormulaProviderTest {
     private final CombatFormulaProvider provider = CombatFormulaProvider.getInstance();
+
+    @Test
+    void shouldIgnoreClientPreloadedSkillsInPassiveAccuracy() {
+        Character bot = mock(Character.class);
+        Skill preloaded = mock(Skill.class);
+        StatEffect effect = mock(StatEffect.class);
+        when(bot.getSkills()).thenReturn(Map.of(
+                preloaded, new Character.SkillEntry((byte) 30, 30, -1)));
+        when(bot.getSkillLevel(preloaded)).thenReturn((byte) 0);
+        when(preloaded.getEffect(30)).thenReturn(effect);
+        when(effect.getAcc()).thenReturn((short) 25);
+
+        assertEquals(0, provider.getPassiveSkillAccuracy(bot));
+    }
 
     @Test
     void shouldIncludeDerivedEquipAndBuffAccuracy() {

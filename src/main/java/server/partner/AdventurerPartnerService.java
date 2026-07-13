@@ -8,6 +8,7 @@ import config.AdventurerPartnerConfig;
 import config.YamlConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.TimerManager;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentTransitionBarrierState;
 import tools.PacketCreator;
@@ -35,6 +36,7 @@ public final class AdventurerPartnerService {
     private final ProfileTransitionCoordinator transitions;
     private final PartnerSessionSkillService sessionSkills;
     private final SoloTagBuffSharingService buffSharing;
+    private final PreparationScheduler preparationScheduler;
 
     public static AdventurerPartnerService getInstance() {
         return INSTANCE;
@@ -63,6 +65,22 @@ public final class AdventurerPartnerService {
                              PartnerTriggerPolicy triggerPolicy,
                              ProfileTransitionCoordinator transitions,
                              PartnerSessionSkillService sessionSkills) {
+        this(config, repository, profiles, leases, runtimes, rosterQuery, agents,
+                triggerPolicy, transitions, sessionSkills,
+                (task, delayMs) -> TimerManager.getInstance().schedule(task, delayMs));
+    }
+
+    AdventurerPartnerService(AdventurerPartnerConfig config,
+                             AdventurerPartnerRepository repository,
+                             CharacterProfileRepository profiles,
+                             ProfileLeaseRegistry leases,
+                             PartnerRuntimeRegistry runtimes,
+                             PartnerRosterQueryService rosterQuery,
+                             PartnerAgentLifecycleBridge agents,
+                             PartnerTriggerPolicy triggerPolicy,
+                             ProfileTransitionCoordinator transitions,
+                             PartnerSessionSkillService sessionSkills,
+                             PreparationScheduler preparationScheduler) {
         this.config = config;
         this.repository = repository;
         this.profiles = profiles;
@@ -74,6 +92,7 @@ public final class AdventurerPartnerService {
         this.transitions = transitions;
         this.sessionSkills = sessionSkills;
         this.buffSharing = new SoloTagBuffSharingService(config);
+        this.preparationScheduler = preparationScheduler;
     }
 
     public boolean isEnabled() {
@@ -253,6 +272,16 @@ public final class AdventurerPartnerService {
     }
 
     public ActivePartnerSession activate(Character player, PartnerMode mode) {
+        return activate(player, mode, true);
+    }
+
+    ActivePartnerSession beginDoublePartnerInvite(Character player) {
+        return activate(player, PartnerMode.DOUBLE_PARTNER, false);
+    }
+
+    private ActivePartnerSession activate(Character player,
+                                           PartnerMode mode,
+                                           boolean readyOnCompletion) {
         requireEnabled();
         requireModeEnabled(mode);
         requireNoActiveSession(player.getId());
@@ -298,7 +327,6 @@ public final class AdventurerPartnerService {
             }
             player.reattachAccountPersistenceOwner();
             validateLoadedProfile(player, partnerCharacterId, partnerHolder);
-            transitions.prepareProfiles(player, partnerHolder);
 
             PartnerSessionRuntime runtime = new PartnerSessionRuntime(
                     journal.id(), link.id(), player.getId(),
@@ -312,7 +340,7 @@ public final class AdventurerPartnerService {
                 }
             }
             runtime.activate();
-            active = new ActivePartnerSession(
+            active = ActivePartnerSession.preparing(
                     link, runtime, player, partnerHolder, spawned == null ? null : spawned.runtimeEntry());
             if (!runtimes.register(active)) {
                 throw new IllegalStateException("One of the Partner profiles already has an active session.");
@@ -326,10 +354,17 @@ public final class AdventurerPartnerService {
                 transitions.prepareSessionSkills(
                         journal.id(), mode, player, partnerHolder);
             }
+            transitions.prepareProfiles(player, partnerHolder);
             if (spawned != null) {
                 transitions.prepareAgent(spawned.runtimeEntry(), partnerHolder);
             }
-            resetTriggerSkillCooldowns(player);
+            if (activationPause != null) {
+                activationPause.close();
+                activationPause = null;
+            }
+            if (readyOnCompletion) {
+                completeSwitchPreparation(active, player, false);
+            }
             log.info("partner_activation link={} session={} player={} partner={} mode={}",
                     link.id(), journal.id(), player.getId(), partnerCharacterId, mode);
             return active;
@@ -344,8 +379,65 @@ public final class AdventurerPartnerService {
         } finally {
             player.reattachAccountPersistenceOwner();
             if (activationPause != null) {
-                activationPause.close();
+                try {
+                    activationPause.close();
+                } catch (RuntimeException pauseFailure) {
+                    log.warn("partner_activation pause_release_failed player={}",
+                            player.getId(), pauseFailure);
+                }
             }
+        }
+    }
+
+    public void completeDoublePartnerInvite(Character player) {
+        Optional<ActivePartnerSession> found = runtimes.findByHumanActorId(player.getId());
+        if (found.isEmpty() || found.get().runtime().mode() != PartnerMode.DOUBLE_PARTNER) {
+            return;
+        }
+        ActivePartnerSession active = found.get();
+        long delayMs = config.DOUBLE_PARTNER_READY_DELAY_MS;
+        if (delayMs == 0L) {
+            completeSwitchPreparation(active, player, true);
+            return;
+        }
+        if (!active.tryScheduleSwitchPreparation()) {
+            return;
+        }
+        try {
+            preparationScheduler.schedule(
+                    () -> completeScheduledSwitchPreparation(active, player), delayMs);
+        } catch (RuntimeException schedulingFailure) {
+            log.warn("partner_preparation scheduling_failed session={} delayMs={}",
+                    active.runtime().sessionId(), delayMs, schedulingFailure);
+            completeSwitchPreparation(active, player, true);
+        }
+    }
+
+    private void completeScheduledSwitchPreparation(ActivePartnerSession active,
+                                                    Character player) {
+        active.enterLifecycleOperation();
+        try {
+            if (active.runtime().status() != PartnerLifecycleStatus.ACTIVE
+                    || active.isJournalClosed()
+                    || runtimes.findByHumanActorId(player.getId()).orElse(null) != active) {
+                return;
+            }
+            completeSwitchPreparation(active, player, true);
+        } finally {
+            active.exitLifecycleOperation();
+        }
+    }
+
+    private void completeSwitchPreparation(ActivePartnerSession active,
+                                           Character player,
+                                           boolean announce) {
+        if (!active.markSwitchReady()) {
+            return;
+        }
+        resetTriggerSkillCooldowns(player);
+        if (announce) {
+            player.message(active.partnerActorOrDormantProfile().getName()
+                    + " is ready. Double Partner Mode can now switch roles with Nimble Feet.");
         }
     }
 
@@ -426,6 +518,15 @@ public final class AdventurerPartnerService {
         ActivePartnerSession active = activeResult.get();
         log.info("partner_switch requested session={} generation={} actor={} skill={}",
                 active.runtime().sessionId(), active.runtime().generation(), player.getId(), skillId);
+        if (!active.isSwitchReady()) {
+            if (active.tryAcquirePreparationNotice()) {
+                log.info("partner_switch rejected session={} generation={} reason=partner_preparing",
+                        active.runtime().sessionId(), active.runtime().generation());
+                return TriggerResult.rejected(
+                        "Your Partner is still logging in. Wait for Agent E's ready signal.");
+            }
+            return TriggerResult.rejected(null);
+        }
         if (!active.tryEnterSwitchOperation()) {
             log.info("partner_switch rejected session={} generation={} reason=lifecycle_busy",
                     active.runtime().sessionId(), active.runtime().generation());
@@ -491,8 +592,8 @@ public final class AdventurerPartnerService {
                 .ifPresent(lease -> staleSessionIds.add(lease.sessionId()));
         leases.leaseForProfile(link.secondCharacterId())
                 .ifPresent(lease -> staleSessionIds.add(lease.sessionId()));
-        staleSessionIds.forEach(leases::releaseSession);
         int recoveredSessions = repository.recoverOpenSessionsForLink(link.id(), reason);
+        staleSessionIds.forEach(leases::releaseSession);
         player.reattachAccountPersistenceOwner();
         log.info("partner_reset link={} character={} orphanAgentReleased={} recoveredSessions={} "
                         + "staleLeaseSessions={} independentlyOnline={}",
@@ -540,6 +641,7 @@ public final class AdventurerPartnerService {
         }
         try {
             long releaseGeneration = active.runtime().beginRelease();
+            active.markSwitchUnavailable();
             active.runtime().restoreCanonicalForRelease(releaseGeneration);
             RuntimeException failure = null;
             if (!active.isJournalClosed()) {
@@ -563,6 +665,17 @@ public final class AdventurerPartnerService {
                 throw failure;
             }
 
+            try {
+                sessionSkills.restore(
+                        active.runtime().sessionId(),
+                        active.humanActor(),
+                        active.partnerActorOrDormantProfile());
+            } catch (RuntimeException skillRestoreFailure) {
+                deferRelease(active, releaseGeneration, reason,
+                        "Temporary Partner skill restoration failed", skillRestoreFailure);
+                throw skillRestoreFailure;
+            }
+
             PartnerLifecycleStatus terminal = PartnerLifecycleStatus.CLOSED;
             if (!active.isJournalClosed()) {
                 try {
@@ -574,17 +687,6 @@ public final class AdventurerPartnerService {
                     deferRelease(active, releaseGeneration, reason, "Session journal close failed", journalFailure);
                     throw journalFailure;
                 }
-            }
-
-            try {
-                sessionSkills.restore(
-                        active.runtime().sessionId(),
-                        active.humanActor(),
-                        active.partnerActorOrDormantProfile());
-            } catch (RuntimeException skillRestoreFailure) {
-                deferRelease(active, releaseGeneration, reason,
-                        "Temporary Partner skill restoration failed", skillRestoreFailure);
-                throw skillRestoreFailure;
             }
 
             try {
@@ -686,15 +788,14 @@ public final class AdventurerPartnerService {
         if (active != null) {
             runtimes.remove(active);
         }
-        if (journal != null) {
-            leases.releaseSession(journal.id());
-        }
         discardPreparedProfiles(player, partnerHolder);
+        boolean cleanupComplete = true;
         if (journal != null && partnerHolder != null) {
             try {
                 sessionSkills.restore(journal.id(), player, partnerHolder);
             } catch (RuntimeException skillRestoreFailure) {
                 originalFailure.addSuppressed(skillRestoreFailure);
+                cleanupComplete = false;
             }
         }
         try {
@@ -707,12 +808,26 @@ public final class AdventurerPartnerService {
             }
         } catch (RuntimeException cleanupFailure) {
             originalFailure.addSuppressed(cleanupFailure);
+            cleanupComplete = false;
         }
-        if (journal != null) {
+        if (journal != null && cleanupComplete) {
             try {
                 repository.closeSession(
                         journal.id(), ProfileOrientation.CANONICAL, 0L,
                         PartnerLifecycleStatus.FAILED, reason);
+            } catch (RuntimeException journalFailure) {
+                originalFailure.addSuppressed(journalFailure);
+                cleanupComplete = false;
+            }
+        }
+        if (journal != null && cleanupComplete) {
+            leases.releaseSession(journal.id());
+        } else if (journal != null) {
+            try {
+                repository.updateSession(
+                        journal.id(), ProfileOrientation.CANONICAL, 0L,
+                        PartnerLifecycleStatus.ACTIVATING,
+                        "Activation cleanup incomplete: " + safeReason(originalFailure));
             } catch (RuntimeException journalFailure) {
                 originalFailure.addSuppressed(journalFailure);
             }
@@ -849,5 +964,10 @@ public final class AdventurerPartnerService {
             return activeSessionReleased || orphanAgentReleased
                     || recoveredSessions > 0 || staleLeaseSessions > 0;
         }
+    }
+
+    @FunctionalInterface
+    interface PreparationScheduler {
+        void schedule(Runnable task, long delayMs);
     }
 }
