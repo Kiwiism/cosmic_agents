@@ -1,9 +1,12 @@
 package server.integration;
 
 import client.Character;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.maps.MapleMap;
 
 public final class AgentPresence {
+    private static final Logger log = LoggerFactory.getLogger(AgentPresence.class);
     private static volatile AgentPresenceProvider provider = new NoopAgentPresenceProvider();
 
     private AgentPresence() {
@@ -20,6 +23,15 @@ public final class AgentPresence {
             }
         }
         return false;
+    }
+
+    public static void mapObservationChanged(MapleMap map, boolean observed) {
+        try {
+            provider.mapObservationChanged(map, observed);
+        } catch (RuntimeException failure) {
+            log.warn("Agent map-observation hook failed for map {} observed={}",
+                    map == null ? -1 : map.getId(), observed, failure);
+        }
     }
 
     public static void install(AgentPresenceProvider newProvider) {

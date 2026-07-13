@@ -1229,6 +1229,14 @@ Exit:
 
 ### Phase 7: Simulation-Aware Cadence
 
+Status: locally complete on `feature/agent-central-scheduler-runtime`, disabled
+by default. Evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-7`. Map observation transitions,
+mode-owned cadence and priority, and materialization/reconciliation extension
+points are implemented. Every mode still executes the normal guarded tick;
+abstract gameplay, ETA travel, packet suppression, and other compressed
+outcomes remain disabled and out of this phase.
+
 Work:
 
 - consume real-player map-presence events.

@@ -9,16 +9,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class MapPlayerObserverState {
     private final AtomicInteger count = new AtomicInteger();
 
-    void characterAdded(Character character) {
+    boolean characterAdded(Character character) {
         if (isObserver(character)) {
-            count.incrementAndGet();
+            return count.getAndIncrement() == 0;
         }
+        return false;
     }
 
-    void characterRemoved(Character character) {
+    boolean characterRemoved(Character character) {
         if (isObserver(character)) {
-            count.updateAndGet(current -> Math.max(0, current - 1));
+            int previous = count.getAndUpdate(current -> Math.max(0, current - 1));
+            return previous == 1;
         }
+        return false;
     }
 
     boolean isObserved() {

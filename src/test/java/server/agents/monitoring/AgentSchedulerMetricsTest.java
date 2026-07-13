@@ -2,6 +2,7 @@ package server.agents.monitoring;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.simulation.AgentSimulationMode;
 import server.agents.runtime.scheduler.AgentWorkClass;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,6 +39,7 @@ class AgentSchedulerMetricsTest {
         AgentSchedulerMetrics.recordBudgetExhausted();
         AgentSchedulerMetrics.recordDeferred(3L);
         AgentSchedulerMetrics.recordStarvationPromotions(2L);
+        AgentSchedulerMetrics.recordMapBudgetDeferral();
         AgentSchedulerMetrics.recordDepths(4, 8, 10, 6);
 
         AgentSchedulerMetrics.Snapshot snapshot = AgentSchedulerMetrics.snapshot();
@@ -48,6 +50,7 @@ class AgentSchedulerMetricsTest {
         assertEquals(1L, snapshot.budgetExhaustions());
         assertEquals(3L, snapshot.deferredWork());
         assertEquals(2L, snapshot.starvationPromotions());
+        assertEquals(1L, snapshot.mapBudgetDeferrals());
         assertEquals(4L, snapshot.ingressDepth());
         assertEquals(8L, snapshot.ingressHighWaterMark());
         assertEquals(10L, snapshot.dueHeapDepth());
@@ -72,5 +75,21 @@ class AgentSchedulerMetricsTest {
         assertEquals(3, AgentSchedulerMetrics.snapshot().ingressHighWaterMark());
         assertEquals(15, AgentSchedulerMetrics.snapshot().dueHeapDepth());
         assertEquals(3, AgentSchedulerMetrics.snapshot().readyDepth());
+    }
+
+    @Test
+    void recordsBoundedWorkDurationBySimulationMode() {
+        AgentSchedulerMetrics.recordUpdated(
+                1L,
+                250L,
+                AgentWorkClass.BACKGROUND_GAMEPLAY,
+                AgentSimulationMode.BACKGROUND_ACTIVE,
+                false);
+
+        AgentSchedulerMetrics.SimulationModeSnapshot snapshot =
+                AgentSchedulerMetrics.simulationModeSnapshot(AgentSimulationMode.BACKGROUND_ACTIVE);
+        assertEquals(1, snapshot.sampleCount());
+        assertEquals(250L, snapshot.durationP50Ns());
+        assertEquals(250L, snapshot.durationP99Ns());
     }
 }

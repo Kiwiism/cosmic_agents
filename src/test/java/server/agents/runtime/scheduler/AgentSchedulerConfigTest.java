@@ -22,6 +22,11 @@ class AgentSchedulerConfigTest {
         System.clearProperty("agents.scheduler.criticalReservePercent");
         System.clearProperty("agents.scheduler.starvationPromotionMs");
         System.clearProperty("agents.scheduler.shardCount");
+        System.clearProperty("agents.scheduler.simulation.enabled");
+        System.clearProperty("agents.scheduler.simulation.backgroundAbstract.enabled");
+        System.clearProperty("agents.scheduler.simulation.backgroundActiveTickMs");
+        System.clearProperty("agents.scheduler.simulation.backgroundAbstractHeartbeatMs");
+        System.clearProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle");
     }
 
     @Test
@@ -50,6 +55,34 @@ class AgentSchedulerConfigTest {
         assertEquals(3, AgentSchedulerConfig.fromSystemProperties().shardCount());
 
         System.setProperty("agents.scheduler.shardCount", "0");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+    }
+
+    @Test
+    void simulationCadenceDefaultsOffAndValidatesOrdering() {
+        AgentSchedulerConfig defaults = AgentSchedulerConfig.fromSystemProperties();
+        assertEquals(false, defaults.simulationEnabled());
+        assertEquals(false, defaults.backgroundAbstractEnabled());
+        assertEquals(250L, defaults.backgroundActiveTickMs());
+        assertEquals(5_000L, defaults.backgroundAbstractHeartbeatMs());
+        assertEquals(32, defaults.backgroundMaxWorkPerMapPerCycle());
+
+        System.setProperty("agents.scheduler.baseTickMs", "500");
+        AgentSchedulerConfig slowerBase = AgentSchedulerConfig.fromSystemProperties();
+        assertEquals(500L, slowerBase.backgroundActiveTickMs());
+        assertEquals(5_000L, slowerBase.backgroundAbstractHeartbeatMs());
+
+        System.setProperty("agents.scheduler.baseTickMs", "50");
+        System.setProperty("agents.scheduler.simulation.enabled", "true");
+        System.setProperty("agents.scheduler.simulation.backgroundActiveTickMs", "49");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+
+        System.setProperty("agents.scheduler.simulation.backgroundActiveTickMs", "250");
+        System.setProperty("agents.scheduler.simulation.backgroundAbstractHeartbeatMs", "249");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+
+        System.setProperty("agents.scheduler.simulation.backgroundAbstractHeartbeatMs", "5000");
+        System.setProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle", "-1");
         assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
     }
 

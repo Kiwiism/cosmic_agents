@@ -88,6 +88,16 @@ final class AgentSchedulerShard<T> {
         return readyMembership.containsKey(value);
     }
 
+    void updateReadyPriority(T value, AgentPriorityClass priority) {
+        AgentPriorityClass previous = readyMembership.get(value);
+        if (previous == null || previous == priority) {
+            return;
+        }
+        removeIdentity(readyQueues.get(previous), value);
+        readyMembership.put(value, priority);
+        readyQueues.get(priority).addLast(value);
+    }
+
     boolean hasReady(int maximumEffectivePriority, ToIntFunction<T> effectivePriority) {
         return selectReady(maximumEffectivePriority, effectivePriority, null) != null;
     }

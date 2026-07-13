@@ -51,6 +51,11 @@ agents.scheduler.visibleReservePercent=40
 agents.scheduler.criticalReservePercent=10
 agents.scheduler.starvationPromotionMs=2000
 agents.scheduler.shardCount=max(1, min(4, availableProcessors / 2))
+agents.scheduler.simulation.enabled=false
+agents.scheduler.simulation.backgroundAbstract.enabled=false
+agents.scheduler.simulation.backgroundActiveTickMs=250
+agents.scheduler.simulation.backgroundAbstractHeartbeatMs=5000
+agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle=32
 ```
 
 `shardCount` is read at scheduler initialization and must remain between 1 and
@@ -93,6 +98,35 @@ Waiting work promotes one level per `starvationPromotionMs`, up to
 `INTERACTIVE`; ordinary work therefore makes bounded progress without becoming
 lifecycle-critical.
 
+## Simulation-aware cadence
+
+Simulation-aware cadence is implemented only for a central scheduler mode and
+is disabled by default. `PRESENTATION` retains the registration's exact period,
+work class, priority, and guarded authoritative tick. With
+`agents.scheduler.simulation.enabled=true`, an Agent on a map with no real
+client observer becomes `BACKGROUND_ACTIVE`; it continues to run the same tick
+with a cadence no faster than `backgroundActiveTickMs` and background priority.
+
+The first real observer entering a map and the last real observer leaving it
+publish one transition event. The event performs O(1) active-session lookups
+for the Agents already in that map and only wakes their scheduler handles.
+Mode mutation remains owned by the destination scheduler shard. There is no
+per-Agent channel or world scan.
+
+`BACKGROUND_ABSTRACT` has policy, reconciliation, and materialization extension
+points, but the production execution policy denies it even when its separate
+flag is true. Phase 7 does not implement virtual combat, loot, travel, economy,
+NPC, quest, packet, or other gameplay shortcuts. All modes still execute normal
+authoritative gameplay. Returning from a background mode validates the live
+character, map, and position; an eventual abstract implementation must also
+reconcile pending outcomes before presentation resumes.
+
+Background work is also bounded per map and cycle so one invisible crowded map
+cannot monopolize a shard. The default limit is 32 authoritative callbacks per
+map per cycle; `0` disables this guard. Presentation work is never subject to
+the map limit. Deferred records retain their ready age and continue through the
+normal bounded continuation path.
+
 ## Isolation and lifecycle
 
 - Removed or replaced sessions are unregistered through their existing
@@ -121,6 +155,7 @@ Agents, failures, slow Agents, queue lag, bounded rolling p50/p95/p99 delay and
 work duration, budget exhaustion, deferral, starvation promotion, and
 ingress/due/ready depth. Work-duration windows are also available by
 `AgentWorkClass`. Each rolling window retains at most 2048 samples.
+Equivalent bounded duration windows are available by `AgentSimulationMode`.
 `shardSnapshots()` adds registrations and queue depths by shard, while the
 aggregate depth gauges sum all reporting shards. Registration imbalance is the
 largest shard population minus the smallest.
@@ -149,12 +184,13 @@ Phase 3 bounded one-shard ingress and indexed due-time heap: complete
 Phase 4 priority, time/cost budgets, aging, and rolling metrics: complete
 Phase 5 bounded async completion contract: complete
 Phase 6 gateway affinity and stable-hash sharding: locally complete, explicit opt-in
+Phase 7 simulation-aware cadence and transition hooks: locally complete, disabled by default
 production default switch: blocked on parity and staged soak evidence
 ```
 
 The central-sequential global scan/sort has been removed. Important current
-limitations include the unsliced full Agent callback and unaudited Cosmic
-thread affinity. Scheduler-reachable navigation graph construction, Amherst
+limitations include the unsliced full Agent callback and Cosmic thread
+affinity that is classified but not yet live/soak validated. Scheduler-reachable navigation graph construction, Amherst
 progress persistence, LLM/network work, and trade/item analysis now run on
 separate bounded workload lanes. Their compact results return through the
 generation/request-stamped owning mailbox, and a source boundary test rejects
@@ -182,6 +218,9 @@ and async persistence evidence is recorded under
 Phase 6 gateway-affinity, stable-hash ownership, race, failure-isolation, and
 per-shard metric evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-6`.
+Phase 7 map-presence, simulation-policy, cadence, materialization-boundary, and
+mode-metric evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-7`.
 
 ## Rollback
 

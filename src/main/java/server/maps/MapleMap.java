@@ -2329,11 +2329,12 @@ public class MapleMap {
 
     public void addPlayer(final Character chr) {
         int chrSize;
+        boolean observationStarted = false;
         Party party = chr.getParty();
         chrWLock.lock();
         try {
             if (characters.add(chr)) {
-                playerObservers.characterAdded(chr);
+                observationStarted = playerObservers.characterAdded(chr);
             }
             chrSize = characters.size();
 
@@ -2343,6 +2344,9 @@ public class MapleMap {
             itemMonitorTimeout = 1;
         } finally {
             chrWLock.unlock();
+        }
+        if (observationStarted) {
+            AgentPresence.mapObservationChanged(this, true);
         }
 
         chr.setMapId(mapid);
@@ -2654,6 +2658,7 @@ public class MapleMap {
         chr.unregisterChairBuff();
 
         Party party = chr.getParty();
+        boolean observationEnded = false;
         chrWLock.lock();
         try {
             if (party != null && party.getMemberById(chr.getId()) != null) {
@@ -2661,10 +2666,13 @@ public class MapleMap {
             }
 
             if (characters.remove(chr)) {
-                playerObservers.characterRemoved(chr);
+                observationEnded = playerObservers.characterRemoved(chr);
             }
         } finally {
             chrWLock.unlock();
+        }
+        if (observationEnded) {
+            AgentPresence.mapObservationChanged(this, false);
         }
 
         if (MiniDungeonInfo.isDungeonMap(mapid)) {

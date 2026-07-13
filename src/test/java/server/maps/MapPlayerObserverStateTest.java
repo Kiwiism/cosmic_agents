@@ -20,15 +20,29 @@ class MapPlayerObserverStateTest {
         when(agent.getClient()).thenReturn(mock(BotClient.class));
         MapPlayerObserverState state = new MapPlayerObserverState();
 
-        state.characterAdded(agent);
+        assertFalse(state.characterAdded(agent));
         assertFalse(state.isObserved());
-        state.characterAdded(player);
+        assertTrue(state.characterAdded(player));
         assertTrue(state.isObserved());
         assertEquals(1, state.count());
-        state.characterRemoved(agent);
+        assertFalse(state.characterRemoved(agent));
         assertTrue(state.isObserved());
-        state.characterRemoved(player);
+        assertTrue(state.characterRemoved(player));
         assertFalse(state.isObserved());
         assertEquals(0, state.count());
+    }
+
+    @Test
+    void reportsOnlyZeroToOneAndOneToZeroTransitions() {
+        Character first = mock(Character.class);
+        when(first.getClient()).thenReturn(mock(Client.class));
+        Character second = mock(Character.class);
+        when(second.getClient()).thenReturn(mock(Client.class));
+        MapPlayerObserverState state = new MapPlayerObserverState();
+
+        assertTrue(state.characterAdded(first));
+        assertFalse(state.characterAdded(second));
+        assertFalse(state.characterRemoved(first));
+        assertTrue(state.characterRemoved(second));
     }
 }

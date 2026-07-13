@@ -25,6 +25,11 @@ public interface MapGateway {
 
     boolean isSwimMap(Character agent);
 
+    @AgentGatewayAffinity(
+            value = AgentGatewayThreadAffinity.READ_ONLY_SNAPSHOT,
+            rationale = "MapleMap maintains an O(1) real-player observer count.")
+    boolean isObservedByPlayer(MapleMap map);
+
     Point pointBelow(MapleMap map, Point position);
 }
 

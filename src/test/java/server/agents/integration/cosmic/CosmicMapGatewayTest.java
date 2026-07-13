@@ -27,4 +27,13 @@ class CosmicMapGatewayTest {
 
         assertTrue(CosmicMapGateway.INSTANCE.isSwimMap(agent));
     }
+
+    @Test
+    void observerQueryReadsCosmicMapSnapshot() {
+        MapleMap map = mock(MapleMap.class);
+        when(map.isObservedByPlayer()).thenReturn(true);
+
+        assertFalse(CosmicMapGateway.INSTANCE.isObservedByPlayer(null));
+        assertTrue(CosmicMapGateway.INSTANCE.isObservedByPlayer(map));
+    }
 }

@@ -7634,6 +7634,12 @@ Current physics correction:
   each destination Agent mailbox. Per-shard and aggregate depth metrics are
   available; legacy scheduling remains the default and live/soak rollout gates
   remain open.
+- Central scheduler simulation ownership: each live runtime entry owns its
+  current simulation mode, and only its scheduler shard may transition that
+  state. MapleMap publishes first-real-observer and last-real-observer events
+  after releasing its character lock; the Cosmic presence adapter only wakes
+  affected scheduler handles. Presentation cadence is unchanged, reduced
+  background cadence is opt-in, and abstract execution remains denied.
 
 Initial reconstruction order:
 

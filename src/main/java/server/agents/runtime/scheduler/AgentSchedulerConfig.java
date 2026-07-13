@@ -14,7 +14,12 @@ public record AgentSchedulerConfig(
         int visibleReservePercent,
         int criticalReservePercent,
         long starvationPromotionMs,
-        int shardCount) {
+        int shardCount,
+        boolean simulationEnabled,
+        boolean backgroundAbstractEnabled,
+        long backgroundActiveTickMs,
+        long backgroundAbstractHeartbeatMs,
+        int backgroundMaxWorkPerMapPerCycle) {
     public AgentSchedulerConfig {
         if (mode == null) {
             throw new IllegalArgumentException("Agent scheduler mode is required");
@@ -47,12 +52,58 @@ public record AgentSchedulerConfig(
         if (shardCount < 1 || shardCount > 64) {
             throw new IllegalArgumentException("Agent scheduler shardCount must be between 1 and 64");
         }
+        if (backgroundActiveTickMs < baseTickMs) {
+            throw new IllegalArgumentException("Agent background-active cadence must not be faster than baseTickMs");
+        }
+        if (backgroundAbstractHeartbeatMs < backgroundActiveTickMs) {
+            throw new IllegalArgumentException(
+                    "Agent background-abstract heartbeat must not be faster than background-active cadence");
+        }
+        if (backgroundMaxWorkPerMapPerCycle < 0) {
+            throw new IllegalArgumentException("Agent background map work limit must not be negative");
+        }
+    }
+
+    public AgentSchedulerConfig(AgentSchedulerMode mode,
+                                long baseTickMs,
+                                boolean logSlowTicks,
+                                long slowTickMs,
+                                int maxAgentsPerTick,
+                                int ingressCapacityPerShard,
+                                long cycleBudgetMs,
+                                int maxWorkItemsPerCycle,
+                                int visibleReservePercent,
+                                int criticalReservePercent,
+                                long starvationPromotionMs,
+                                int shardCount) {
+        this(
+                mode,
+                baseTickMs,
+                logSlowTicks,
+                slowTickMs,
+                maxAgentsPerTick,
+                ingressCapacityPerShard,
+                cycleBudgetMs,
+                maxWorkItemsPerCycle,
+                visibleReservePercent,
+                criticalReservePercent,
+                starvationPromotionMs,
+                shardCount,
+                false,
+                false,
+                Math.max(baseTickMs, 250L),
+                Math.max(baseTickMs, 5_000L),
+                32);
     }
 
     public static AgentSchedulerConfig fromSystemProperties() {
+        long baseTickMs = longProperty("agents.scheduler.baseTickMs", 50L);
+        long backgroundActiveTickMs = longProperty(
+                "agents.scheduler.simulation.backgroundActiveTickMs",
+                Math.max(baseTickMs, 250L));
         return new AgentSchedulerConfig(
                 configuredMode(),
-                longProperty("agents.scheduler.baseTickMs", 50L),
+                baseTickMs,
                 Boolean.parseBoolean(System.getProperty("agents.scheduler.logSlowTicks", "true")),
                 longProperty("agents.scheduler.slowTickMs", 250L),
                 intProperty("agents.scheduler.maxAgentsPerTick", 0),
@@ -62,7 +113,15 @@ public record AgentSchedulerConfig(
                 intProperty("agents.scheduler.visibleReservePercent", 40),
                 intProperty("agents.scheduler.criticalReservePercent", 10),
                 longProperty("agents.scheduler.starvationPromotionMs", 2_000L),
-                intProperty("agents.scheduler.shardCount", defaultShardCount()));
+                intProperty("agents.scheduler.shardCount", defaultShardCount()),
+                Boolean.parseBoolean(System.getProperty("agents.scheduler.simulation.enabled", "false")),
+                Boolean.parseBoolean(System.getProperty(
+                        "agents.scheduler.simulation.backgroundAbstract.enabled", "false")),
+                backgroundActiveTickMs,
+                longProperty(
+                        "agents.scheduler.simulation.backgroundAbstractHeartbeatMs",
+                        Math.max(backgroundActiveTickMs, 5_000L)),
+                intProperty("agents.scheduler.simulation.backgroundMaxWorkPerMapPerCycle", 32));
     }
 
     int effectiveMaxWorkItemsPerCycle() {

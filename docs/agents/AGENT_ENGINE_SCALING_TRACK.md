@@ -56,6 +56,11 @@ Current scheduler implementation checkpoint on
   affinity classification, known sibling writes enter destination mailboxes,
   and fixed stable-hash shards expose local and aggregate queue metrics.
   `CENTRAL_SHARDED` remains explicit opt-in pending live parity and staged soak.
+- Phase 7 is locally complete behind `agents.scheduler.simulation.enabled`.
+  O(1) real-player map-observation transitions wake affected owner shards;
+  presentation cadence is unchanged, unobserved Agents may use a reduced
+  authoritative cadence, and abstract execution remains denied. Live-client
+  materialization parity and staged mixed-mode soaks remain rollout gates.
 
 ## Track Split
 

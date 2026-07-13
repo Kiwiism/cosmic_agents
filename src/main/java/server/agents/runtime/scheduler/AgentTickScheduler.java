@@ -2,13 +2,23 @@ package server.agents.runtime.scheduler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentSchedulerMetrics;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.simulation.AgentBackgroundExecutionPolicy;
+import server.agents.runtime.simulation.AgentBackgroundOutcomeReconciler;
+import server.agents.runtime.simulation.AgentDefaultSimulationPolicy;
+import server.agents.runtime.simulation.AgentMaterializationService;
+import server.agents.runtime.simulation.AgentSimulationMode;
+import server.agents.runtime.simulation.AgentSimulationScheduleDecision;
+import server.agents.runtime.simulation.AgentSimulationSchedulePolicy;
+import server.agents.runtime.simulation.AgentSimulationTransitionService;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +52,7 @@ public final class AgentTickScheduler {
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler;
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler;
     private final AgentSchedulerConfig config;
+    private final AgentSimulationSchedulePolicy simulationSchedulePolicy;
     private final AgentSchedulerShard<Registration> shard;
     private final int shardId;
     private volatile ScheduledFuture<?> centralTask;
@@ -95,14 +106,35 @@ public final class AgentTickScheduler {
                        BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
                        AgentSchedulerConfig config,
                        int shardId) {
+        this(
+                nowMs,
+                nanoTime,
+                loopScheduler,
+                wakeScheduler,
+                config,
+                shardId,
+                defaultSimulationSchedulePolicy(config));
+    }
+
+    AgentTickScheduler(LongSupplier nowMs,
+                       LongSupplier nanoTime,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
+                       AgentSchedulerConfig config,
+                       int shardId,
+                       AgentSimulationSchedulePolicy simulationSchedulePolicy) {
         if (nowMs == null || nanoTime == null || loopScheduler == null || wakeScheduler == null || config == null) {
             throw new IllegalArgumentException("Agent scheduler dependencies are required");
+        }
+        if (simulationSchedulePolicy == null) {
+            throw new IllegalArgumentException("Agent simulation schedule policy is required");
         }
         this.nowMs = nowMs;
         this.nanoTime = nanoTime;
         this.loopScheduler = loopScheduler;
         this.wakeScheduler = wakeScheduler;
         this.config = config;
+        this.simulationSchedulePolicy = simulationSchedulePolicy;
         this.shardId = Math.max(0, shardId);
         this.shard = new AgentSchedulerShard<>(
                 config.ingressCapacityPerShard(),
@@ -175,6 +207,8 @@ public final class AgentTickScheduler {
         }
         long cycleStarted = nanoTime.getAsLong();
         AgentCycleBudget budget = new AgentCycleBudget(cycleStarted, config);
+        Map<Integer, Integer> backgroundMapWork = new HashMap<>();
+        int consecutiveMapDeferrals = 0;
         boolean continuationNeeded = false;
         boolean budgetLimited = false;
         try {
@@ -208,6 +242,17 @@ public final class AgentTickScheduler {
                 }
                 AgentPriorityClass effectivePriority =
                         registration.effectivePriority(now, config.starvationPromotionMs());
+                if (!admitsBackgroundMapWork(registration, backgroundMapWork)) {
+                    shard.addReady(registration, registration.priority);
+                    continuationNeeded = true;
+                    AgentSchedulerMetrics.recordMapBudgetDeferral();
+                    consecutiveMapDeferrals++;
+                    if (consecutiveMapDeferrals >= shard.readyCount()) {
+                        break;
+                    }
+                    continue;
+                }
+                consecutiveMapDeferrals = 0;
                 if (!budget.admits(effectivePriority, registration.estimatedCostNs(), selectionTimeNs)) {
                     shard.addReadyFirst(registration, registration.priority);
                     continuationNeeded = true;
@@ -215,6 +260,7 @@ public final class AgentTickScheduler {
                     break;
                 }
                 registration.clearReady();
+                recordBackgroundMapWork(registration, backgroundMapWork);
                 long elapsedNs = update(registration, now, config);
                 budget.record(effectivePriority, elapsedNs);
                 if (shouldSchedule(registration)) {
@@ -263,9 +309,23 @@ public final class AgentTickScheduler {
             }
             shard.pollDue();
             if (shouldSchedule(registration)) {
+                registration.refreshSchedulingPolicy(now);
                 registration.markReady(now);
                 shard.addReady(registration, registration.priority);
             }
+        }
+    }
+
+    private boolean admitsBackgroundMapWork(Registration registration, Map<Integer, Integer> workByMap) {
+        int limit = config.backgroundMaxWorkPerMapPerCycle();
+        return limit == 0
+                || registration.simulationMode == AgentSimulationMode.PRESENTATION
+                || workByMap.getOrDefault(registration.mapId(), 0) < limit;
+    }
+
+    private static void recordBackgroundMapWork(Registration registration, Map<Integer, Integer> workByMap) {
+        if (registration.simulationMode != AgentSimulationMode.PRESENTATION) {
+            workByMap.merge(registration.mapId(), 1, Integer::sum);
         }
     }
 
@@ -338,6 +398,7 @@ public final class AgentTickScheduler {
                     now - registration.claimedDueMs,
                     elapsedNs,
                     registration.workClass,
+                    registration.simulationMode,
                     slow);
             if (slow && config.logSlowTicks()) {
                 log.warn("Slow central Agent tick session={} elapsedMs={}",
@@ -356,7 +417,10 @@ public final class AgentTickScheduler {
                 retireIfClosed(registration);
                 return;
             }
-            if (!shard.containsReady(registration)) {
+            registration.refreshSchedulingPolicy(nowMs.getAsLong());
+            if (shard.containsReady(registration)) {
+                shard.updateReadyPriority(registration, registration.priority);
+            } else {
                 shard.addOrUpdate(registration);
             }
         }
@@ -453,15 +517,28 @@ public final class AgentTickScheduler {
         }
     }
 
+    private static AgentSimulationSchedulePolicy defaultSimulationSchedulePolicy(AgentSchedulerConfig config) {
+        return new AgentSimulationSchedulePolicy(
+                config,
+                new AgentDefaultSimulationPolicy(
+                        config.simulationEnabled(),
+                        config.backgroundAbstractEnabled(),
+                        AgentMapGatewayRuntime.map(),
+                        AgentBackgroundExecutionPolicy.denyAll()),
+                new AgentSimulationTransitionService(
+                        AgentMaterializationService.validating(),
+                        AgentBackgroundOutcomeReconciler.noPendingOutcomes()));
+    }
+
     private static final class Registration implements AgentScheduleHandle {
         private final AgentTickScheduler owner;
         private final AgentSessionId sessionId;
         private final AgentRuntimeEntry entry;
         private final Runnable tick;
-        private final long periodMs;
+        private final long basePeriodMs;
         private final long sequence;
-        private final AgentWorkClass workClass;
-        private final AgentPriorityClass priority;
+        private final AgentWorkClass baseWorkClass;
+        private final AgentPriorityClass basePriority;
         private final AtomicLong pendingWakeDueMs = new AtomicLong(Long.MAX_VALUE);
         private final AtomicBoolean ingressQueued = new AtomicBoolean();
         private final AtomicBoolean paused = new AtomicBoolean();
@@ -469,6 +546,10 @@ public final class AgentTickScheduler {
         private final CompletableFuture<Void> completion = new CompletableFuture<>();
         private volatile long nextDueMs;
         private volatile long claimedDueMs;
+        private long periodMs;
+        private AgentWorkClass workClass;
+        private AgentPriorityClass priority;
+        private AgentSimulationMode simulationMode = AgentSimulationMode.PRESENTATION;
         private long readySinceMs = -1L;
         private long readyDueMs;
         private long estimatedCostNs = 100_000L;
@@ -488,9 +569,12 @@ public final class AgentTickScheduler {
             this.sessionId = sessionId;
             this.entry = entry;
             this.tick = tick;
-            this.periodMs = periodMs;
+            this.basePeriodMs = periodMs;
             this.nextDueMs = firstDueMs;
             this.sequence = sequence;
+            this.baseWorkClass = workClass;
+            this.basePriority = priority;
+            this.periodMs = periodMs;
             this.workClass = workClass;
             this.priority = priority;
         }
@@ -539,6 +623,10 @@ public final class AgentTickScheduler {
             return estimatedCostNs;
         }
 
+        private int mapId() {
+            return AgentRuntimeIdentityRuntime.botMapId(entry);
+        }
+
         private void recordCost(long elapsedNs) {
             long sample = Math.max(1L, elapsedNs);
             if (!costObserved) {
@@ -547,6 +635,29 @@ public final class AgentTickScheduler {
                 return;
             }
             estimatedCostNs = (estimatedCostNs * 3L + sample) / 4L;
+        }
+
+        private void refreshSchedulingPolicy(long now) {
+            try {
+                AgentSimulationScheduleDecision decision = owner.simulationSchedulePolicy.decide(
+                        entry,
+                        basePeriodMs,
+                        baseWorkClass,
+                        basePriority,
+                        now);
+                simulationMode = decision.mode();
+                periodMs = decision.periodMs();
+                workClass = decision.workClass();
+                priority = decision.priority();
+            } catch (Throwable failure) {
+                simulationMode = AgentSimulationMode.PRESENTATION;
+                periodMs = basePeriodMs;
+                workClass = baseWorkClass;
+                priority = basePriority;
+                AgentSchedulerMetrics.recordFailure();
+                log.warn("Agent simulation policy failed for session {}; using presentation schedule",
+                        sessionId, failure);
+            }
         }
 
         private boolean prepare(long now) {

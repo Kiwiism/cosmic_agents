@@ -71,6 +71,11 @@ public enum CosmicMapGateway implements MapGateway {
     }
 
     @Override
+    public boolean isObservedByPlayer(MapleMap map) {
+        return map != null && map.isObservedByPlayer();
+    }
+
+    @Override
     public Point pointBelow(MapleMap map, Point position) {
         if (map == null || position == null) {
             return null;

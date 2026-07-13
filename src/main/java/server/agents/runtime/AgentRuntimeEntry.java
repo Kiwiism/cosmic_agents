@@ -65,6 +65,7 @@ import server.agents.capabilities.trade.AgentUpgradeOfferState;
 import server.agents.plans.AgentScriptTaskQueueState;
 import server.agents.plans.AgentScriptRuntimeState;
 import server.agents.plans.amherst.AmherstPlanExecutionState;
+import server.agents.runtime.simulation.AgentSimulationState;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +85,7 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
     private final AgentMovementProfileState movementProfileState = new AgentMovementProfileState();
     private final AgentCapabilityRuntimeState capabilityRuntimeState = new AgentCapabilityRuntimeState();
     private final AmherstPlanExecutionState amherstPlanExecutionState = new AmherstPlanExecutionState();
+    private final AgentSimulationState simulationState = new AgentSimulationState();
 
     public AgentCapabilityRuntimeState capabilityRuntimeState() {
         return capabilityRuntimeState;
@@ -91,6 +93,10 @@ public class AgentRuntimeEntry implements AgentRuntimeHandle {
 
     public AmherstPlanExecutionState amherstPlanExecutionState() {
         return amherstPlanExecutionState;
+    }
+
+    public AgentSimulationState simulationState() {
+        return simulationState;
     }
 
     public AgentScheduledTaskState scheduledTaskState() {

@@ -23,7 +23,7 @@ public final class CosmicAgentServerAdapter implements AgentServerAdapter {
     public static final CosmicAgentServerAdapter INSTANCE = new CosmicAgentServerAdapter();
 
     private CosmicAgentServerAdapter() {
-        AgentPresence.install(CosmicCharacterGateway.INSTANCE::isAgentCharacter);
+        AgentPresence.install(CosmicAgentPresenceProvider.INSTANCE);
     }
 
     @Override

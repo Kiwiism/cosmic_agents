@@ -1,5 +1,6 @@
 package server.agents.monitoring;
 
+import server.agents.runtime.simulation.AgentSimulationMode;
 import server.agents.runtime.scheduler.AgentWorkClass;
 
 import java.util.EnumMap;
@@ -27,6 +28,7 @@ public final class AgentSchedulerMetrics {
                            long budgetExhaustions,
                            long deferredWork,
                            long starvationPromotions,
+                           long mapBudgetDeferrals,
                            long ingressDepth,
                            long ingressHighWaterMark,
                            long dueHeapDepth,
@@ -37,6 +39,12 @@ public final class AgentSchedulerMetrics {
                                     long durationP95Ns,
                                     long durationP99Ns,
                                     int sampleCount) {
+    }
+
+    public record SimulationModeSnapshot(long durationP50Ns,
+                                         long durationP95Ns,
+                                         long durationP99Ns,
+                                         int sampleCount) {
     }
 
     public record ShardSnapshot(int registrations,
@@ -58,6 +66,7 @@ public final class AgentSchedulerMetrics {
     private static final LongAdder BUDGET_EXHAUSTIONS = new LongAdder();
     private static final LongAdder DEFERRED_WORK = new LongAdder();
     private static final LongAdder STARVATION_PROMOTIONS = new LongAdder();
+    private static final LongAdder MAP_BUDGET_DEFERRALS = new LongAdder();
     private static final AtomicLong INGRESS_DEPTH = new AtomicLong();
     private static final AtomicLong INGRESS_HIGH_WATER_MARK = new AtomicLong();
     private static final AtomicLong DUE_HEAP_DEPTH = new AtomicLong();
@@ -68,11 +77,16 @@ public final class AgentSchedulerMetrics {
             new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY);
     private static final Map<AgentWorkClass, AgentSchedulerRollingWindow> WORK_CLASS_WINDOWS =
             new EnumMap<>(AgentWorkClass.class);
+    private static final Map<AgentSimulationMode, AgentSchedulerRollingWindow> SIMULATION_MODE_WINDOWS =
+            new EnumMap<>(AgentSimulationMode.class);
     private static final Map<Integer, ShardSnapshot> SHARD_SNAPSHOTS = new ConcurrentHashMap<>();
 
     static {
         for (AgentWorkClass workClass : AgentWorkClass.values()) {
             WORK_CLASS_WINDOWS.put(workClass, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
+        }
+        for (AgentSimulationMode mode : AgentSimulationMode.values()) {
+            SIMULATION_MODE_WINDOWS.put(mode, new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY));
         }
     }
 
@@ -93,6 +107,14 @@ public final class AgentSchedulerMetrics {
                                      long elapsedNs,
                                      AgentWorkClass workClass,
                                      boolean slow) {
+        recordUpdated(queueLagMs, elapsedNs, workClass, AgentSimulationMode.PRESENTATION, slow);
+    }
+
+    public static void recordUpdated(long queueLagMs,
+                                     long elapsedNs,
+                                     AgentWorkClass workClass,
+                                     AgentSimulationMode simulationMode,
+                                     boolean slow) {
         UPDATED.increment();
         long lag = Math.max(0L, queueLagMs);
         TOTAL_QUEUE_LAG_MS.add(lag);
@@ -101,6 +123,7 @@ public final class AgentSchedulerMetrics {
         long duration = Math.max(0L, elapsedNs);
         WORK_DURATION_WINDOW.add(duration);
         WORK_CLASS_WINDOWS.get(workClass).add(duration);
+        SIMULATION_MODE_WINDOWS.get(simulationMode).add(duration);
         if (slow) {
             SLOW.increment();
         }
@@ -134,6 +157,10 @@ public final class AgentSchedulerMetrics {
         if (count > 0L) {
             STARVATION_PROMOTIONS.add(count);
         }
+    }
+
+    public static void recordMapBudgetDeferral() {
+        MAP_BUDGET_DEFERRALS.increment();
     }
 
     public static void recordDepths(int ingressDepth,
@@ -198,6 +225,7 @@ public final class AgentSchedulerMetrics {
                 queueLag.p50(), queueLag.p95(), queueLag.p99(),
                 workDuration.p50(), workDuration.p95(), workDuration.p99(),
                 BUDGET_EXHAUSTIONS.sum(), DEFERRED_WORK.sum(), STARVATION_PROMOTIONS.sum(),
+                MAP_BUDGET_DEFERRALS.sum(),
                 INGRESS_DEPTH.get(), INGRESS_HIGH_WATER_MARK.get(),
                 DUE_HEAP_DEPTH.get(), READY_DEPTH.get());
     }
@@ -205,6 +233,11 @@ public final class AgentSchedulerMetrics {
     public static WorkClassSnapshot workClassSnapshot(AgentWorkClass workClass) {
         AgentSchedulerRollingWindow.Percentiles duration = WORK_CLASS_WINDOWS.get(workClass).percentiles();
         return new WorkClassSnapshot(duration.p50(), duration.p95(), duration.p99(), duration.sampleCount());
+    }
+
+    public static SimulationModeSnapshot simulationModeSnapshot(AgentSimulationMode mode) {
+        AgentSchedulerRollingWindow.Percentiles duration = SIMULATION_MODE_WINDOWS.get(mode).percentiles();
+        return new SimulationModeSnapshot(duration.p50(), duration.p95(), duration.p99(), duration.sampleCount());
     }
 
     static void reset() {
@@ -220,6 +253,7 @@ public final class AgentSchedulerMetrics {
         BUDGET_EXHAUSTIONS.reset();
         DEFERRED_WORK.reset();
         STARVATION_PROMOTIONS.reset();
+        MAP_BUDGET_DEFERRALS.reset();
         INGRESS_DEPTH.set(0L);
         INGRESS_HIGH_WATER_MARK.set(0L);
         DUE_HEAP_DEPTH.set(0L);
@@ -227,6 +261,7 @@ public final class AgentSchedulerMetrics {
         QUEUE_LAG_WINDOW.reset();
         WORK_DURATION_WINDOW.reset();
         WORK_CLASS_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
+        SIMULATION_MODE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         SHARD_SNAPSHOTS.clear();
     }
 }
