@@ -29,7 +29,7 @@ public final class AgentGroundTargetService {
         AgentMovementProfile profile = AgentMovementStateRuntime.movementProfile(entry);
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, profile);
         if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, profile);
+            AgentNavigationGraphService.warmGraphAsync(entry, map, profile);
             return targetPos;
         }
         Point agentPosition = AgentRuntimeIdentityRuntime.bot(entry).getPosition();

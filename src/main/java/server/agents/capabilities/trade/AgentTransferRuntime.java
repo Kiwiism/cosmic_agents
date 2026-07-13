@@ -11,36 +11,26 @@ import server.agents.integration.AgentReplyRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.capabilities.dialogue.AgentPendingActionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.runtime.AgentBoundedExecutorFactory;
+import server.agents.runtime.async.AgentAsyncTaskGateway;
+import server.agents.runtime.async.AgentAsyncWorkKind;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Agent-owned transfer chat facade over temporary bot-side inventory/trade side
  * effects.
  */
 public final class AgentTransferRuntime {
-    private static final ExecutorService TRADE_COMMAND_EXECUTOR = AgentBoundedExecutorFactory.fixed(
-            "trade",
-            "bot-trade-command",
-            2,
-            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.trade.queueCapacity", 128));
-    private static final Map<Integer, AtomicInteger> PENDING_TRANSFER_REQUESTS = new ConcurrentHashMap<>();
+    private static final String TRANSFER_REQUEST_KEY = "transfer-query";
     private static final long TRADE_COMMAND_PROFILE_WARN_NS = 50_000_000L;
 
-    private record TransferCommandResult(boolean hasItems, int count) {}
-    private record ItemQueryResult(int count) {}
+    private record TransferCommandResult(boolean hasItems, int count, long completedAtNs) {}
+    private record ItemQueryResult(int count, long completedAtNs) {}
 
     private AgentTransferRuntime() {
     }
 
     public static void clearAgentRuntimeState(int agentId) {
-        PENDING_TRANSFER_REQUESTS.remove(agentId);
+        AgentAsyncTaskGateway.runtime().clearSession(agentId);
     }
 
     public static AgentChatTransferFlow.ItemQueryCallbacks itemQueryCallbacks(AgentRuntimeEntry entry) {
@@ -73,21 +63,25 @@ public final class AgentTransferRuntime {
             return;
         }
 
-        int requestId = nextTransferRequestId(bot);
         long replyDelay = AgentSchedulerRuntime.randomDelayMs(500, 700);
         long requestedAt = System.nanoTime();
-        try {
-            CompletableFuture
-                    .supplyAsync(() -> evaluateTransferCommand(entry, transferCommand, category, bot), TRADE_COMMAND_EXECUTOR)
-                    .thenAccept(result -> {
-                        long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
-                        long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                        AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
-                                applyTransferCommandResult(entry, transferCommand, category, bot, requestId, result));
-                    });
-        } catch (RejectedExecutionException ignored) {
-            // A later command remains able to retry once bounded background work drains.
-        }
+        AgentAsyncTaskGateway.runtime().submit(
+                entry,
+                AgentAsyncWorkKind.ECONOMY_ANALYSIS,
+                TRANSFER_REQUEST_KEY,
+                () -> evaluateTransferCommand(entry, transferCommand, category, bot),
+                (completionEntry, completion) -> {
+                    if (!completion.succeeded()) {
+                        return;
+                    }
+                    TransferCommandResult result = completion.result();
+                    long elapsedMs = (result.completedAtNs() - requestedAt) / 1_000_000L;
+                    long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
+                    AgentSchedulerRuntime.afterDelay(completionEntry, remainingDelay, () ->
+                            applyTransferCommandResult(
+                                    completionEntry, transferCommand, category, bot,
+                                    completion.requestId(), result));
+                });
     }
 
     private static TransferCommandResult evaluateTransferCommand(AgentRuntimeEntry entry,
@@ -109,31 +103,21 @@ public final class AgentTransferRuntime {
         int count = hasItems && transferCommand.mode() == AgentChatTransferFlow.TransferMode.CHOICE
                 ? AgentInventoryTransferService.countTransferableItems(category, entry, bot)
                 : 0;
-        return new TransferCommandResult(hasItems, count);
+        return new TransferCommandResult(hasItems, count, System.nanoTime());
     }
 
     private static void applyTransferCommandResult(AgentRuntimeEntry entry,
                                                    AgentChatTransferFlow.TransferCommand transferCommand,
                                                    String category,
                                                    Character bot,
-                                                   int requestId,
+                                                   long requestId,
                                                    TransferCommandResult result) {
-        if (!isLatestTransferRequest(bot, requestId)) {
+        if (!AgentAsyncTaskGateway.runtime().isLatest(
+                entry, AgentAsyncWorkKind.ECONOMY_ANALYSIS, TRANSFER_REQUEST_KEY, requestId)) {
             return;
         }
         applyTransferResultDecision(entry, bot, category, AgentChatTransferFlow.transferResult(
                 transferCommand, result.hasItems(), result.count()));
-    }
-
-    private static int nextTransferRequestId(Character bot) {
-        return PENDING_TRANSFER_REQUESTS
-                .computeIfAbsent(bot.getId(), ignored -> new AtomicInteger())
-                .incrementAndGet();
-    }
-
-    private static boolean isLatestTransferRequest(Character bot, int requestId) {
-        AtomicInteger current = PENDING_TRANSFER_REQUESTS.get(bot.getId());
-        return current != null && current.get() == requestId;
     }
 
     private static void handleItemQuery(AgentRuntimeEntry entry, String itemName) {
@@ -143,30 +127,35 @@ public final class AgentTransferRuntime {
             return;
         }
 
-        int requestId = nextTransferRequestId(bot);
         long replyDelay = AgentSchedulerRuntime.randomDelayMs(500, 700);
         long requestedAt = System.nanoTime();
-        try {
-            CompletableFuture
-                    .supplyAsync(() -> new ItemQueryResult(
-                            AgentInventoryTransferService.countTransferableItems(category, entry, bot)), TRADE_COMMAND_EXECUTOR)
-                    .thenAccept(result -> {
-                        long elapsedMs = (System.nanoTime() - requestedAt) / 1_000_000L;
-                        long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
-                        AgentSchedulerRuntime.afterDelay(entry, remainingDelay, () ->
-                                applyItemQueryResult(entry, category, bot, requestId, result));
-                    });
-        } catch (RejectedExecutionException ignored) {
-            // A later query remains able to retry once bounded background work drains.
-        }
+        AgentAsyncTaskGateway.runtime().submit(
+                entry,
+                AgentAsyncWorkKind.ECONOMY_ANALYSIS,
+                TRANSFER_REQUEST_KEY,
+                () -> new ItemQueryResult(
+                        AgentInventoryTransferService.countTransferableItems(category, entry, bot),
+                        System.nanoTime()),
+                (completionEntry, completion) -> {
+                    if (!completion.succeeded()) {
+                        return;
+                    }
+                    ItemQueryResult result = completion.result();
+                    long elapsedMs = (result.completedAtNs() - requestedAt) / 1_000_000L;
+                    long remainingDelay = Math.max(0L, replyDelay - elapsedMs);
+                    AgentSchedulerRuntime.afterDelay(completionEntry, remainingDelay, () ->
+                            applyItemQueryResult(
+                                    completionEntry, category, bot, completion.requestId(), result));
+                });
     }
 
     private static void applyItemQueryResult(AgentRuntimeEntry entry,
                                              String category,
                                              Character bot,
-                                             int requestId,
+                                             long requestId,
                                              ItemQueryResult result) {
-        if (!isLatestTransferRequest(bot, requestId)) {
+        if (!AgentAsyncTaskGateway.runtime().isLatest(
+                entry, AgentAsyncWorkKind.ECONOMY_ANALYSIS, TRANSFER_REQUEST_KEY, requestId)) {
             return;
         }
         applyTransferResultDecision(entry, bot, category, AgentChatTransferFlow.itemQueryResult(category, result.count()));

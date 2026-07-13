@@ -12,6 +12,7 @@ import server.agents.capabilities.supplies.AgentPotionService;
 import server.agents.capabilities.trade.AgentManualTradeService;
 import server.agents.capabilities.trade.AgentTransferRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.runtime.async.AgentAsyncTaskGateway;
 
 import client.Character;
 
@@ -89,6 +90,7 @@ public final class AgentRuntimeCleanupService {
             return;
         }
         AgentAutoEquipThrottle.clearAgentRuntimeState(agentId);
+        AgentAsyncTaskGateway.runtime().clearSession(agentId);
         AgentTransferRuntime.clearAgentRuntimeState(agentId);
         AgentLlmReplyService.clearAgentRuntimeState(agentId);
         AgentMakerService.clearAgentRuntimeState(agentId);

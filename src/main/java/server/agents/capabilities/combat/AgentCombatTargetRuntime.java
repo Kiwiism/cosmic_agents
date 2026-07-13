@@ -335,7 +335,7 @@ public final class AgentCombatTargetRuntime {
             AgentMovementProfile profile = AgentMovementStateRuntime.movementProfileOrCharacter(entry, bot);
             AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(bot.getMap(), profile);
             if (graph == null) {
-                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), profile);
+                AgentNavigationGraphService.warmGraphAsync(entry, bot.getMap(), profile);
                 graph = AgentNavigationGraphService.peekClosestGraph(bot.getMap(), profile);
             }
             if (graph == null) {

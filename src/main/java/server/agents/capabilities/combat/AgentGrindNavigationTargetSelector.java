@@ -223,7 +223,8 @@ public final class AgentGrindNavigationTargetSelector {
         }
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, AgentMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraphService.warmGraphAsync(
+                    entry, map, AgentMovementStateRuntime.movementProfile(entry));
             return null;
         }
 
@@ -453,7 +454,8 @@ public final class AgentGrindNavigationTargetSelector {
 
         AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map, AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, AgentMovementStateRuntime.movementProfile(entry));
+            AgentNavigationGraphService.warmGraphAsync(
+                    entry, map, AgentMovementStateRuntime.movementProfile(entry));
             return false;
         }
         int agentRegionId = hooks.currentRegionResolver().resolve(graph, entry, map, agentPosition);

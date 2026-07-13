@@ -58,6 +58,7 @@ public final class AgentSpawnPlacementCoordinator {
                         mapId,
                         map != null && map.getFootholds() != null ? AgentFootholdIndexService.buildFhIndex(map) : null),
                 (entry, map) -> AgentNavigationGraphService.warmGraphAsync(
+                        entry,
                         map,
                         AgentMovementStateRuntime.movementProfile(entry)),
                 AgentTickCadenceStateRuntime::reset,

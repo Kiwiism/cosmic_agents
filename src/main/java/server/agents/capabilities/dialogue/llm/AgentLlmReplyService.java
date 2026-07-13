@@ -8,12 +8,13 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeHandle;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
-import server.agents.runtime.AgentBoundedExecutorFactory;
+import server.agents.runtime.async.AgentAsyncExecutorRegistry;
+import server.agents.runtime.async.AgentAsyncTaskGateway;
+import server.agents.runtime.async.AgentAsyncWorkKind;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,12 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class AgentLlmReplyService {
     private static final Logger log = LoggerFactory.getLogger(AgentLlmReplyService.class);
-
-    private static final ExecutorService EXEC = AgentBoundedExecutorFactory.fixed(
-            "llm",
-            "bot-llm",
-            2,
-            AgentBoundedExecutorFactory.positiveIntegerProperty("agents.async.llm.queueCapacity", 64));
+    private static final String LLM_REPLY_REQUEST_KEY = "llm-reply";
 
     private static volatile Semaphore globalGate = new Semaphore(AgentLlmConfig.maxConcurrentGlobal);
     private static volatile int gateCapacity = AgentLlmConfig.maxConcurrentGlobal;
@@ -43,9 +39,13 @@ public final class AgentLlmReplyService {
     private static final java.util.concurrent.ConcurrentHashMap<Integer, java.util.ArrayDeque<AgentMemoryStore.Turn>> recentMemoryByBotId =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    private record LlmReplyResult(List<String> parts) {
+    }
+
     private AgentLlmReplyService() {}
 
     public static void clearAgentRuntimeState(int agentId) {
+        AgentAsyncTaskGateway.runtime().clearSession(agentId);
         inflightByBotId.remove(agentId);
         recentMemoryByBotId.remove(agentId);
     }
@@ -93,10 +93,50 @@ public final class AgentLlmReplyService {
         }
 
         final String senderName = sender.getName();
+        if (request.entry() instanceof AgentRuntimeEntry runtimeEntry) {
+            AgentAsyncTaskGateway.Submission submission = AgentAsyncTaskGateway.runtime().submit(
+                    runtimeEntry,
+                    AgentAsyncWorkKind.LLM_NETWORK,
+                    LLM_REPLY_REQUEST_KEY,
+                    AgentLlmConfig.requestTimeoutMs,
+                    () -> {
+                        try {
+                            return runReply(request, senderName, message);
+                        } finally {
+                            g.release();
+                            inflight.decrementAndGet();
+                        }
+                    },
+                    (completionEntry, completion) -> {
+                        if (completion.status() == server.agents.runtime.async.AgentAsyncCompletion.Status.FAILED) {
+                            log.warn("llm reply failed: {}", completion.failure().toString());
+                            return;
+                        }
+                        if (!completion.succeeded() || completion.result() == null) {
+                            return;
+                        }
+                        deliverReplyParts(
+                                request.entry(),
+                                completion.result().parts(),
+                                replyEmitter,
+                                (action, delayMs) -> scheduleFollowUp(completionEntry, action, delayMs));
+                    });
+            if (!submission.accepted()) {
+                g.release();
+                inflight.decrementAndGet();
+                log.warn("Dropped LLM reply because the Agent LLM queue is full");
+            }
+            return;
+        }
+
         try {
-            EXEC.execute(() -> {
+            AgentAsyncExecutorRegistry.runtime().execute(AgentAsyncWorkKind.LLM_NETWORK, () -> {
                 try {
-                    runReply(request, senderName, message, replyEmitter);
+                    LlmReplyResult result = runReply(request, senderName, message);
+                    if (result != null) {
+                        deliverReplyParts(request.entry(), result.parts(), replyEmitter,
+                                (action, delayMs) -> scheduleFollowUp(request.entry(), action, delayMs));
+                    }
                 } catch (Throwable t) {
                     log.warn("llm reply failed: {}", t.toString());
                 } finally {
@@ -111,11 +151,10 @@ public final class AgentLlmReplyService {
         }
     }
 
-    private static <E extends AgentRuntimeHandle> void runReply(
+    private static <E extends AgentRuntimeHandle> LlmReplyResult runReply(
             AgentLlmReplyRequest<E> request,
             String senderName,
-            String message,
-            ReplyEmitter<E> replyEmitter) {
+            String message) {
         String botName = request.agentName();
         int botId = request.agentId();
         // Use disk-backed memory only when enabled; otherwise keep a tiny recent in-memory window.
@@ -159,7 +198,7 @@ public final class AgentLlmReplyService {
 
         if (raw.isEmpty()) {
             if (AgentLlmConfig.debugLog) log.info("llm[{}] no reply ({} ms)", botName, elapsed);
-            return;
+            return null;
         }
         String reply = sanitize(raw.get());
         if (AgentLlmConfig.debugLog) {
@@ -173,22 +212,18 @@ public final class AgentLlmReplyService {
 //            }
 //            reply = fallback;
 //        }
-        if (reply.isEmpty()) return;
+        if (reply.isEmpty()) return null;
         if (request.entry() instanceof AgentRuntimeEntry runtimeEntry
                 && !AgentSchedulerRuntime.isCurrentSession(runtimeEntry)) {
-            return;
+            return null;
         }
 
         List<String> parts = splitForChat(reply, AgentLlmConfig.maxReplyMessages,
                 AgentLlmConfig.maxReplyCharsPerMessage);
-        if (parts.isEmpty()) return;
+        if (parts.isEmpty()) return null;
         if (AgentLlmConfig.debugLog && parts.size() > 1) {
             log.info("llm[{}] split into {} messages", botName, parts.size());
         }
-
-        deliverReplyParts(request.entry(), parts,
-                replyEmitter,
-                (action, delayMs) -> scheduleFollowUp(request.entry(), action, delayMs));
 
         if (!looksLowQuality(message, reply)) {
             AgentMemoryStore.Turn turn = new AgentMemoryStore.Turn(System.currentTimeMillis(),
@@ -204,11 +239,14 @@ public final class AgentLlmReplyService {
         if (AgentLlmConfig.memoryEnabled && AgentMemoryStore.countUncompacted(botName)
                 > AgentLlmConfig.recentTurnsInPrompt + AgentLlmConfig.compactBatchSize) {
             try {
-                EXEC.execute(() -> AgentMemoryStore.compact(botName));
+                AgentAsyncExecutorRegistry.runtime().execute(
+                        AgentAsyncWorkKind.LLM_NETWORK,
+                        () -> AgentMemoryStore.compact(botName));
             } catch (RejectedExecutionException e) {
                 log.debug("Deferred Agent memory compaction because the LLM queue is full");
             }
         }
+        return new LlmReplyResult(List.copyOf(parts));
     }
 
     private static List<AgentMemoryStore.Turn> loadRecentMemory(int botId, long now) {
@@ -242,7 +280,7 @@ public final class AgentLlmReplyService {
 
     private static void scheduleFollowUp(AgentRuntimeHandle entry, Runnable action, long delayMs) {
         if (entry instanceof AgentRuntimeEntry runtimeEntry) {
-            AgentSchedulerRuntime.afterDelay(runtimeEntry, delayMs, () -> executeFollowUp(action));
+            AgentSchedulerRuntime.afterDelay(runtimeEntry, delayMs, action);
             return;
         }
         AgentSchedulerRuntime.afterDelay(delayMs, () -> executeFollowUp(action));
@@ -250,7 +288,7 @@ public final class AgentLlmReplyService {
 
     private static void executeFollowUp(Runnable action) {
         try {
-            EXEC.execute(action);
+            AgentAsyncExecutorRegistry.runtime().execute(AgentAsyncWorkKind.LLM_NETWORK, action);
         } catch (RejectedExecutionException e) {
             log.debug("Dropped LLM follow-up because the Agent LLM queue is full");
         }

@@ -27,6 +27,7 @@ public final class AgentBoundedExecutorFactory {
         int workerCount = Math.max(1, threads);
         int capacity = Math.max(1, queueCapacity);
         int priority = Math.clamp(threadPriority, Thread.MIN_PRIORITY, Thread.MAX_PRIORITY);
+        AgentAsyncQueueMetrics.recordCapacity(metricName, capacity);
         return new ThreadPoolExecutor(
                 workerCount,
                 workerCount,
@@ -52,14 +53,14 @@ public final class AgentBoundedExecutorFactory {
 
             @Override
             protected void beforeExecute(Thread thread, Runnable task) {
-                AgentAsyncQueueMetrics.recordDepth(metricName, getQueue().size());
+                AgentAsyncQueueMetrics.recordWorkerStarted(metricName, getQueue().size());
                 super.beforeExecute(thread, task);
             }
 
             @Override
             protected void afterExecute(Runnable task, Throwable failure) {
                 super.afterExecute(task, failure);
-                AgentAsyncQueueMetrics.recordDepth(metricName, getQueue().size());
+                AgentAsyncQueueMetrics.recordWorkerStopped(metricName, getQueue().size());
             }
         };
     }

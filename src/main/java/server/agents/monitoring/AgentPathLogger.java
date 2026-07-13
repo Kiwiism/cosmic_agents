@@ -175,7 +175,7 @@ public final class AgentPathLogger {
             return new GraphSnapshot(requestedProfile, closest, "closest");
         }
 
-        AgentNavigationGraphService.warmGraphAsync(map, requestedProfile);
+        AgentNavigationGraphService.warmGraphAsync(entry, map, requestedProfile);
         return new GraphSnapshot(requestedProfile, null, "none/warming");
     }
 

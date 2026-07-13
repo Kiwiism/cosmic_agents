@@ -18,7 +18,11 @@ import server.maps.Foothold;
 import server.maps.MapleMap;
 import server.maps.Portal;
 import server.maps.Rope;
-import server.agents.runtime.AgentBoundedExecutorFactory;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.async.AgentAsyncExecutorRegistry;
+import server.agents.runtime.async.AgentAsyncTaskGateway;
+import server.agents.runtime.async.AgentAsyncWorkKind;
+import server.agents.monitoring.AgentAsyncQueueMetrics;
 
 import java.awt.*;
 import java.io.IOException;
@@ -34,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -60,11 +63,7 @@ public final class AgentNavigationGraphService {
     private static final Map<Integer, Set<Integer>> COLLIDABLE_FROM_BELOW_IDS_BY_MAP_ID = new ConcurrentHashMap<>();
     private static final ThreadLocal<BuildProfileBuilder> ACTIVE_BUILD_PROFILE = new ThreadLocal<>();
     private static final Object WARMUP_LIFECYCLE_LOCK = new Object();
-    private static volatile WarmupExecutors warmupExecutors = createWarmupExecutors();
     private static volatile boolean acceptingAsyncWarmups = true;
-
-    private record WarmupExecutors(ExecutorService regular, ExecutorService fast) {
-    }
 
     private record GraphCacheKey(int mapId, int totalSpeedStat, int totalJumpStat) {
         static GraphCacheKey from(int mapId, AgentMovementProfile profile) {
@@ -321,7 +320,9 @@ public final class AgentNavigationGraphService {
         if (cached != null) {
             return cached;
         }
-        return getOrStartGraphLoad(map, movementProfile, key, false).join();
+        AgentNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
+        cacheGraph(key, graph);
+        return graph;
     }
 
     /** Returns the cached graph without triggering a build. */
@@ -395,34 +396,46 @@ public final class AgentNavigationGraphService {
         getOrStartGraphLoad(map, movementProfile, key, true);
     }
 
+    /** Starts a shared graph load and returns completion through the owning Agent mailbox. */
+    public static void warmGraphAsync(AgentRuntimeEntry entry,
+                                      MapleMap map,
+                                      AgentMovementProfile movementProfile) {
+        if (entry == null || map == null || !acceptingAsyncWarmups) {
+            return;
+        }
+        GraphCacheKey key = GraphCacheKey.from(map.getId(), movementProfile);
+        if (GRAPHS.containsKey(key)) {
+            return;
+        }
+        AgentAsyncWorkKind workKind = selectWarmupKind(map);
+        CompletableFuture<AgentNavigationGraph> graphLoad =
+                getOrStartGraphLoad(map, movementProfile, key, true);
+        AgentAsyncTaskGateway.runtime().track(
+                entry,
+                workKind,
+                graphRequestKey(key),
+                graphLoad,
+                (ignored, completion) -> {
+                    // The graph remains in the shared cache; mailbox delivery is the wake-up signal.
+                });
+    }
+
     public static void startAsyncWarmups() {
         synchronized (WARMUP_LIFECYCLE_LOCK) {
-            if (warmupExecutors == null
-                    || warmupExecutors.regular().isShutdown()
-                    || warmupExecutors.fast().isShutdown()) {
-                warmupExecutors = createWarmupExecutors();
-            }
+            AgentAsyncExecutorRegistry.runtime().start(AgentAsyncWorkKind.NAVIGATION_GRAPH);
+            AgentAsyncExecutorRegistry.runtime().start(AgentAsyncWorkKind.NAVIGATION_GRAPH_FAST);
             acceptingAsyncWarmups = true;
         }
     }
 
     public static void shutdownAsyncWarmups() {
-        WarmupExecutors executors;
         synchronized (WARMUP_LIFECYCLE_LOCK) {
             acceptingAsyncWarmups = false;
-            executors = warmupExecutors;
-            warmupExecutors = null;
             PENDING_GRAPHS.values().forEach(future -> future.cancel(true));
             PENDING_GRAPHS.clear();
         }
-        if (executors == null) {
-            return;
-        }
-
-        executors.regular().shutdownNow();
-        executors.fast().shutdownNow();
-        awaitWarmupTermination(executors.regular(), "regular");
-        awaitWarmupTermination(executors.fast(), "fast");
+        awaitWarmupTermination(AgentAsyncWorkKind.NAVIGATION_GRAPH, "regular");
+        awaitWarmupTermination(AgentAsyncWorkKind.NAVIGATION_GRAPH_FAST, "fast");
     }
 
     public static AgentNavigationGraph rebuildGraph(MapleMap map) {
@@ -461,17 +474,32 @@ public final class AgentNavigationGraphService {
             return race;
         }
 
+        AgentAsyncWorkKind workKind;
+        try {
+            workKind = selectWarmupKind(map);
+        } catch (RejectedExecutionException rejected) {
+            PENDING_GRAPHS.remove(key, future);
+            future.completeExceptionally(rejected);
+            throw rejected;
+        }
         Runnable task = () -> {
+            long startedAt = System.nanoTime();
             try {
                 throwIfCancelled(async, future);
                 AgentNavigationGraph graph = loadOrBuildGraph(map, movementProfile, key);
                 throwIfCancelled(async, future);
                 cacheGraph(key, graph);
                 future.complete(graph);
+                AgentAsyncQueueMetrics.recordCompleted(workKind.metricName(),
+                        System.nanoTime() - startedAt);
             } catch (CancellationException cancelled) {
                 future.cancel(false);
+                AgentAsyncQueueMetrics.recordFailed(workKind.metricName(),
+                        System.nanoTime() - startedAt);
             } catch (Throwable t) {
                 future.completeExceptionally(t);
+                AgentAsyncQueueMetrics.recordFailed(workKind.metricName(),
+                        System.nanoTime() - startedAt);
                 log.warn("Failed to warm bot nav graph for map {} speed={} jump={}",
                         key.mapId(), key.totalSpeedStat(), key.totalJumpStat(), t);
             } finally {
@@ -481,7 +509,7 @@ public final class AgentNavigationGraphService {
 
         if (async) {
             try {
-                selectWarmupExecutor(map).execute(task);
+                AgentAsyncExecutorRegistry.runtime().execute(workKind, task);
             } catch (RejectedExecutionException e) {
                 PENDING_GRAPHS.remove(key, future);
                 future.completeExceptionally(e);
@@ -495,12 +523,13 @@ public final class AgentNavigationGraphService {
         return future;
     }
 
-    private static ExecutorService selectWarmupExecutor(MapleMap map) {
-        WarmupExecutors executors = warmupExecutors;
-        if (!acceptingAsyncWarmups || executors == null) {
+    private static AgentAsyncWorkKind selectWarmupKind(MapleMap map) {
+        if (!acceptingAsyncWarmups) {
             throw new RejectedExecutionException("Agent navigation graph warmups are stopping");
         }
-        return isFastWarmupCandidate(map) ? executors.fast() : executors.regular();
+        return isFastWarmupCandidate(map)
+                ? AgentAsyncWorkKind.NAVIGATION_GRAPH_FAST
+                : AgentAsyncWorkKind.NAVIGATION_GRAPH;
     }
 
     public static int pendingWarmupCount() {
@@ -508,34 +537,14 @@ public final class AgentNavigationGraphService {
     }
 
     static boolean asyncWarmupsRunning() {
-        WarmupExecutors executors = warmupExecutors;
         return acceptingAsyncWarmups
-                && executors != null
-                && !executors.regular().isShutdown()
-                && !executors.fast().isShutdown();
+                && AgentAsyncExecutorRegistry.runtime().isRunning(AgentAsyncWorkKind.NAVIGATION_GRAPH)
+                && AgentAsyncExecutorRegistry.runtime().isRunning(AgentAsyncWorkKind.NAVIGATION_GRAPH_FAST);
     }
 
-    private static WarmupExecutors createWarmupExecutors() {
-        return new WarmupExecutors(
-                AgentBoundedExecutorFactory.fixed(
-                        "navigation",
-                        "bot-nav-graph-warmup",
-                        1,
-                        AgentBoundedExecutorFactory.positiveIntegerProperty(
-                                "agents.async.navigation.queueCapacity", 64),
-                        Thread.MIN_PRIORITY),
-                AgentBoundedExecutorFactory.fixed(
-                        "navigation-fast",
-                        "bot-nav-graph-warmup-fast",
-                        1,
-                        AgentBoundedExecutorFactory.positiveIntegerProperty(
-                                "agents.async.navigation.fastQueueCapacity", 64),
-                        Thread.MIN_PRIORITY));
-    }
-
-    private static void awaitWarmupTermination(ExecutorService executor, String lane) {
+    private static void awaitWarmupTermination(AgentAsyncWorkKind kind, String lane) {
         try {
-            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+            if (!AgentAsyncExecutorRegistry.runtime().shutdownAndAwait(kind, 10, TimeUnit.SECONDS)) {
                 log.warn("Agent navigation {} warmup worker did not stop within 10 seconds", lane);
             }
         } catch (InterruptedException interrupted) {
@@ -602,6 +611,10 @@ public final class AgentNavigationGraphService {
 
     private static Path graphFile(GraphCacheKey key) {
         return CACHE_DIR.resolve(key.mapId() + "-s" + key.totalSpeedStat() + "-j" + key.totalJumpStat() + ".bin");
+    }
+
+    private static String graphRequestKey(GraphCacheKey key) {
+        return key.mapId() + ":" + key.totalSpeedStat() + ":" + key.totalJumpStat();
     }
 
     static Path cacheDirectory() {

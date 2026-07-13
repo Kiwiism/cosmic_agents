@@ -8,6 +8,7 @@ public final class AmherstPlanExecutionState {
     int objectiveStartExp;
     int syncedCapabilityJournalCount;
     boolean active;
+    boolean loading;
     boolean completed;
     AmherstPlanExecutionMode mode = AmherstPlanExecutionMode.AUTO;
     boolean advanceRequested;
@@ -52,6 +53,7 @@ public final class AmherstPlanExecutionState {
         objectiveStartExp = 0;
         syncedCapabilityJournalCount = 0;
         active = false;
+        loading = false;
         completed = false;
         mode = AmherstPlanExecutionMode.AUTO;
         advanceRequested = false;

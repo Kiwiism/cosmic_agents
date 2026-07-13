@@ -22,7 +22,7 @@ public final class AgentMovementProfileService {
         if (map != null
                 && map.getFootholds() != null
                 && AgentNavigationGraphService.peekGraph(map, updated) == null) {
-            AgentNavigationGraphService.warmGraphAsync(map, updated);
+            AgentNavigationGraphService.warmGraphAsync(entry, map, updated);
         }
 
         AgentMovementStateRuntime.setMovementProfile(entry, updated);

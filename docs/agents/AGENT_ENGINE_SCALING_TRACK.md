@@ -47,8 +47,10 @@ Current scheduler implementation checkpoint on
   aging, immediate bounded continuations, and 2048-sample rolling delay/cost
   percentiles.
 - Legacy per-Agent scheduling remains the production default and rollback.
-- Phase 5 moves navigation, persistence, LLM/network, and other blocking work
-  onto bounded executors with generation/request-stamped mailbox completion.
+- Phase 5 is complete: navigation graph work, Amherst persistence, LLM/network,
+  and trade/item analysis run on isolated bounded executors with generation/
+  request-stamped mailbox completion. Static tests prohibit direct Agent future
+  waits and restrict synchronous graph construction to explicit tools.
 
 ## Track Split
 

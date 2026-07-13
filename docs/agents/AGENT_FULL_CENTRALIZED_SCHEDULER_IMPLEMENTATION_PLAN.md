@@ -117,8 +117,9 @@ The production target must address these gaps:
 2. Multi-shard ownership is not enabled.
 3. There is no map-aware or simulation-mode-aware cadence policy.
 4. Mailbox and central scheduler compatibility flags are disabled by default.
-5. Blocking database, navigation, catalog, or LLM work is not governed by one
-    scheduler completion contract.
+5. Catalog rebuilds are not yet routed through the Phase 5 executor lane;
+   current catalog loads are startup or explicit command work, not scheduler
+   callbacks.
 6. There is no formal overload or load-shedding state machine.
 7. Pause/resume does not yet expose a wait-for-quiescence contract required by
     profile exchange and Double Agent operations.
@@ -145,8 +146,11 @@ current mandatory migration inputs:
   wait for Agent mailbox results.
 - delayed callbacks are classified; generation-scoped session mutations
   validate and enter through the owning mailbox.
-- `AgentNavigationGraphService` contains a blocking `join()` API. Scheduler
-  workers must be statically prevented from reaching it.
+- scheduler-reachable navigation graph construction, Amherst progress
+  persistence, LLM/network work, and trade/item analysis use separate bounded
+  workload executors and generation/request-stamped mailbox completions.
+- direct future waits are absent under `server.agents`; synchronous navigation
+  graph access is restricted by test to explicit debug/probe tools.
 - scheduler metrics now include bounded rolling global and work-class delay/
   cost percentiles. Per-shard, priority, map, and simulation-mode breakdowns
   remain for the phases that introduce those dimensions.
@@ -163,7 +167,7 @@ Phase 0-1: ready to implement now
 Phase 2: complete; evidence is recorded under phase-2
 Phase 3: complete; evidence is recorded under phase-3
 Phase 4: complete; evidence is recorded under phase-4
-Phase 5: ready to implement behind non-default rollout modes
+Phase 5: complete; evidence is recorded under phase-5
 Phase 6+: blocked on Cosmic thread-affinity audit and capability parity proof
 Default CENTRAL_SHARDED: blocked on staged live and soak acceptance
 ```

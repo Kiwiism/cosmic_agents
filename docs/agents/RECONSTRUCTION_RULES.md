@@ -7620,6 +7620,13 @@ Current physics correction:
   continuation. Rolling delay and duration histories are fixed at 2048 samples.
   The production full tick remains visible gameplay and legacy scheduling is
   unchanged.
+- Central scheduler async ownership: scheduler-reachable navigation graph
+  construction, Amherst progress persistence, LLM/network work, and trade/item
+  analysis now execute on workload-specific bounded lanes. Results return only
+  through generation/request-stamped Agent mailboxes; stale completions and
+  saturated submissions cannot mutate a live session. Direct future waits are
+  prohibited by a source boundary test. Legacy scheduling remains the default,
+  and explicit navigation debug/probe graph construction remains synchronous.
 
 Initial reconstruction order:
 

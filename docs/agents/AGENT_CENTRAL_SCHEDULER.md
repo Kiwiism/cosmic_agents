@@ -137,18 +137,23 @@ Phase 1 stable scheduler API and O(1) session index: complete
 Phase 2 mandatory mailbox ownership: complete
 Phase 3 bounded one-shard ingress and indexed due-time heap: complete
 Phase 4 priority, time/cost budgets, aging, and rolling metrics: complete
-Phase 5 bounded async completion contract: next implementation phase
+Phase 5 bounded async completion contract: complete
 multi-shard execution: blocked on Cosmic thread-affinity audit
 production default switch: blocked on parity and staged soak evidence
 ```
 
 The central-sequential global scan/sort has been removed. Important current
-limitations include a blocking navigation graph `join()` reserved for Phase 5
-removal and blocking/external workloads that do not yet share a single
-generation/request-stamped completion contract. Cross-session
-formation and leader-away operations also require a Phase 6 gateway/ownership
-decision before multi-shard execution. The repository therefore has a safe
-single-writer migration foundation, not the completed centralized scheduler.
+limitations include the unsliced full Agent callback and unaudited Cosmic
+thread affinity. Scheduler-reachable navigation graph construction, Amherst
+progress persistence, LLM/network work, and trade/item analysis now run on
+separate bounded workload lanes. Their compact results return through the
+generation/request-stamped owning mailbox, and a source boundary test rejects
+direct future waits in Agent production code. Explicit navigation debug/probe
+tools may still build a graph synchronously outside scheduler execution.
+Cross-session formation and leader-away operations require a Phase 6 gateway/
+ownership decision before multi-shard execution. The repository therefore has
+a safe single-writer migration foundation, not the completed centralized
+scheduler.
 
 Phase 0 baseline evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-0`. It covers deterministic
@@ -162,6 +167,9 @@ Phase 3 heap, bounded-ingress, lifecycle, cadence, and deterministic 500-session
 evidence is recorded under `docs/agents/evidence/central-scheduler/phase-3`.
 Phase 4 priority, budget, cost, aging, rolling-metric, and overload evidence is
 recorded under `docs/agents/evidence/central-scheduler/phase-4`.
+Phase 5 bounded workload, stale-completion, saturation, timeout, blocking-scan,
+and async persistence evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-5`.
 
 ## Rollback
 

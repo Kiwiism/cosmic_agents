@@ -41,9 +41,14 @@ public final class AgentNavigationWaypointService {
     public static Point selectJumpWaypoint(AgentRuntimeEntry entry,
                                            Point botPos,
                                            AgentNavigationGraph.Edge edge) {
-        AgentNavigationGraph graph = AgentNavigationGraphService.getGraph(
-                AgentRuntimeIdentityRuntime.botMap(entry),
-                AgentMovementStateRuntime.movementProfile(entry));
+        MapleMap map = AgentRuntimeIdentityRuntime.botMap(entry);
+        AgentNavigationGraph graph = AgentNavigationGraphService.peekBestGraph(
+                map, AgentMovementStateRuntime.movementProfile(entry));
+        if (graph == null) {
+            AgentNavigationGraphService.warmGraphAsync(
+                    entry, map, AgentMovementStateRuntime.movementProfile(entry));
+            return new Point(edge.startPoint);
+        }
         return selectJumpWaypoint(graph, entry, botPos, edge);
     }
 

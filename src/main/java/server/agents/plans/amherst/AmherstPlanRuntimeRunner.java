@@ -8,8 +8,14 @@ import server.agents.capabilities.runtime.AgentCapabilityReasonCode;
 import server.agents.capabilities.runtime.AgentCapabilityResult;
 import server.agents.capabilities.runtime.AgentCapabilityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.async.AgentAsyncCompletion;
+import server.agents.runtime.async.AgentAsyncTaskGateway;
+import server.agents.runtime.async.AgentAsyncWorkKind;
+import server.agents.runtime.scheduler.AgentSchedulerConfig;
+import server.agents.runtime.scheduler.AgentSchedulerMode;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 public final class AmherstPlanRuntimeRunner {
@@ -51,15 +57,25 @@ public final class AmherstPlanRuntimeRunner {
                       long nowMs,
                       AmherstPlanExecutionMode mode,
                       AmherstPlanObserver observer) throws IOException {
+        if (asyncPersistenceEnabled()) {
+            startAsync(entry, agent, nowMs, mode, observer);
+            return;
+        }
+        initialize(entry, agent, nowMs, mode, observer,
+                store.load(card.planId(), agent.getId()));
+    }
+
+    private void startAsync(AgentRuntimeEntry entry,
+                            Character agent,
+                            long nowMs,
+                            AmherstPlanExecutionMode mode,
+                            AmherstPlanObserver observer) throws IOException {
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
-            AmherstPlanProgressSnapshot loaded = store.load(card.planId(), agent.getId());
-            state.progress = progressService.ensureObjectives(loaded, card, nowMs);
-            state.progress = progressService.recoverInterrupted(state.progress, nowMs);
             state.runner = this;
             state.assignedObjectiveId = null;
-            state.syncedCapabilityJournalCount = entry.capabilityRuntimeState().journalSnapshot().size();
             state.active = true;
+            state.loading = true;
             state.completed = false;
             state.mode = mode == null ? AmherstPlanExecutionMode.AUTO : mode;
             state.advanceRequested = state.mode == AmherstPlanExecutionMode.MANUAL;
@@ -67,7 +83,86 @@ public final class AmherstPlanRuntimeRunner {
             state.nextObjectiveAtMs = 0L;
             state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
             state.lastError = "";
-            saveIfChanged(loaded, state.progress);
+        }
+        AgentAsyncTaskGateway.Submission submission = AgentAsyncTaskGateway.runtime().submit(
+                entry,
+                AgentAsyncWorkKind.PERSISTENCE,
+                persistenceRequestKey("load"),
+                () -> loadProgress(agent.getId()),
+                (completionEntry, completion) -> finishAsyncStart(
+                        completionEntry, agent, nowMs, mode, observer, completion));
+        if (!submission.accepted()) {
+            synchronized (state) {
+                if (state.runner == this && state.loading) {
+                    state.clearRuntime();
+                }
+            }
+            throw new IOException("Agent persistence queue is full");
+        }
+    }
+
+    private AmherstPlanProgressSnapshot loadProgress(int agentId) {
+        try {
+            return store.load(card.planId(), agentId);
+        } catch (IOException failure) {
+            throw new UncheckedIOException(failure);
+        }
+    }
+
+    private void finishAsyncStart(AgentRuntimeEntry entry,
+                                  Character agent,
+                                  long nowMs,
+                                  AmherstPlanExecutionMode mode,
+                                  AmherstPlanObserver observer,
+                                  AgentAsyncCompletion<AmherstPlanProgressSnapshot> completion) {
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        synchronized (state) {
+            if (state.runner != this || !state.loading) {
+                return;
+            }
+            if (!completion.succeeded()) {
+                state.loading = false;
+                state.active = false;
+                state.lastError = failureMessage(completion);
+                publish(state, "PLAN ERROR: " + state.lastError);
+                return;
+            }
+        }
+        try {
+            initialize(entry, agent, nowMs, mode, observer, completion.result());
+        } catch (IOException failure) {
+            synchronized (state) {
+                state.loading = false;
+                state.active = false;
+                state.lastError = failure.getClass().getSimpleName() + ": " + failure.getMessage();
+                publish(state, "PLAN ERROR: " + state.lastError);
+            }
+        }
+    }
+
+    private void initialize(AgentRuntimeEntry entry,
+                            Character agent,
+                            long nowMs,
+                            AmherstPlanExecutionMode mode,
+                            AmherstPlanObserver observer,
+                            AmherstPlanProgressSnapshot loaded) throws IOException {
+        AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
+        synchronized (state) {
+            state.progress = progressService.ensureObjectives(loaded, card, nowMs);
+            state.progress = progressService.recoverInterrupted(state.progress, nowMs);
+            state.runner = this;
+            state.assignedObjectiveId = null;
+            state.syncedCapabilityJournalCount = entry.capabilityRuntimeState().journalSnapshot().size();
+            state.active = true;
+            state.loading = false;
+            state.completed = false;
+            state.mode = mode == null ? AmherstPlanExecutionMode.AUTO : mode;
+            state.advanceRequested = state.mode == AmherstPlanExecutionMode.MANUAL;
+            state.waitingForAdvance = false;
+            state.nextObjectiveAtMs = 0L;
+            state.observer = observer == null ? AmherstPlanObserver.NONE : observer;
+            state.lastError = "";
+            saveIfChanged(entry, state, loaded, state.progress);
             publish(state, "Plan loaded in " + state.mode + " mode. " + progressSummary(state.progress));
         }
     }
@@ -77,6 +172,9 @@ public final class AmherstPlanRuntimeRunner {
         synchronized (state) {
             if (!state.active || state.runner != this) {
                 return false;
+            }
+            if (state.loading) {
+                return true;
             }
             try {
                 syncCapabilityJournal(entry, state, nowMs);
@@ -106,13 +204,13 @@ public final class AmherstPlanRuntimeRunner {
                 }
                 state.nextObjectiveAtMs = 0L;
 
-                AmherstPlanObjective next = reconcileAndFindNext(agent, state, nowMs);
+                AmherstPlanObjective next = reconcileAndFindNext(entry, agent, state, nowMs);
                 if (next == null) {
                     AmherstPlanProgressSnapshot before = state.progress;
                     state.progress = progressService.append(state.progress,
                             new AmherstPlanJournalEvent(nowMs, AmherstPlanJournalEventType.PLAN_COMPLETED,
                                     "", "NONE", "all objectives satisfy live state"), nowMs);
-                    saveIfChanged(before, state.progress);
+                    saveIfChanged(entry, state, before, state.progress);
                     state.active = false;
                     state.completed = true;
                     state.waitingForAdvance = false;
@@ -138,7 +236,7 @@ public final class AmherstPlanRuntimeRunner {
                 state.objectiveStartExp = agent.getExp();
                 state.advanceRequested = false;
                 state.waitingForAdvance = false;
-                saveIfChanged(before, state.progress);
+                saveIfChanged(entry, state, before, state.progress);
                 publish(state, "Starting " + AmherstObjectiveFormatter.numbered(card, next));
                 publish(state, "Expected steps: " + AmherstObjectiveFormatter.expectedSteps(next));
                 AmherstPlanNarrator.announce(agent, next);
@@ -156,7 +254,7 @@ public final class AmherstPlanRuntimeRunner {
         AmherstPlanExecutionState state = entry.amherstPlanExecutionState();
         synchronized (state) {
             if (!state.active || state.completed || state.mode != AmherstPlanExecutionMode.MANUAL
-                    || state.assignedObjectiveId != null
+                    || state.loading || state.assignedObjectiveId != null
                     || entry.capabilityRuntimeState().hasActiveCapability()) {
                 return false;
             }
@@ -196,7 +294,7 @@ public final class AmherstPlanRuntimeRunner {
         state.progress = progressService.terminal(state.progress, objective.objectiveId(), result,
                 nowMs, entry.capabilityRuntimeState().journalSnapshot().size());
         state.assignedObjectiveId = null;
-        saveIfChanged(before, state.progress);
+        saveIfChanged(entry, state, before, state.progress);
         publish(state, result.status() + " " + AmherstObjectiveFormatter.numbered(card, objective)
                 + " - " + result.message());
         publish(state, "Agent progress: Lv" + state.objectiveStartLevel + " EXP " + state.objectiveStartExp
@@ -208,7 +306,8 @@ public final class AmherstPlanRuntimeRunner {
         }
     }
 
-    private AmherstPlanObjective reconcileAndFindNext(Character agent,
+    private AmherstPlanObjective reconcileAndFindNext(AgentRuntimeEntry entry,
+                                                      Character agent,
                                                       AmherstPlanExecutionState state,
                                                       long nowMs) throws IOException {
         AmherstPlanProgressSnapshot before = state.progress;
@@ -228,7 +327,7 @@ public final class AmherstPlanRuntimeRunner {
                 break;
             }
         }
-        saveIfChanged(before, state.progress);
+        saveIfChanged(entry, state, before, state.progress);
         return firstUnsatisfied;
     }
 
@@ -252,7 +351,7 @@ public final class AmherstPlanRuntimeRunner {
             publishCapabilityEvent(state, event);
         }
         state.syncedCapabilityJournalCount = journal.size();
-        saveIfChanged(before, state.progress);
+        saveIfChanged(entry, state, before, state.progress);
     }
 
     private static AmherstPlanJournalEventType translate(AgentCapabilityJournalEventType type) {
@@ -271,11 +370,62 @@ public final class AmherstPlanRuntimeRunner {
                 .orElseThrow(() -> new IllegalStateException("assigned objective is not in plan"));
     }
 
-    private void saveIfChanged(AmherstPlanProgressSnapshot before,
+    private void saveIfChanged(AgentRuntimeEntry entry,
+                               AmherstPlanExecutionState state,
+                               AmherstPlanProgressSnapshot before,
                                AmherstPlanProgressSnapshot after) throws IOException {
-        if (before != after) {
-            store.save(after);
+        if (before == after) {
+            return;
         }
+        if (!asyncPersistenceEnabled()) {
+            store.save(after);
+            return;
+        }
+        AgentAsyncTaskGateway.Submission submission = AgentAsyncTaskGateway.runtime().submit(
+                entry,
+                AgentAsyncWorkKind.PERSISTENCE,
+                persistenceRequestKey("save"),
+                () -> {
+                    try {
+                        store.save(after);
+                        return null;
+                    } catch (IOException failure) {
+                        throw new UncheckedIOException(failure);
+                    }
+                },
+                (completionEntry, completion) -> {
+                    if (completion.succeeded()) {
+                        return;
+                    }
+                    synchronized (state) {
+                        if (state.runner == this) {
+                            state.lastError = failureMessage(completion);
+                            state.active = false;
+                            publish(state, "PLAN ERROR: " + state.lastError);
+                        }
+                    }
+                });
+        if (!submission.accepted()) {
+            throw new IOException("Agent persistence queue is full");
+        }
+    }
+
+    private boolean asyncPersistenceEnabled() {
+        return AgentSchedulerConfig.fromSystemProperties().mode() != AgentSchedulerMode.LEGACY_PER_AGENT;
+    }
+
+    private String persistenceRequestKey(String operation) {
+        return "amherst:" + card.planId() + ":" + operation;
+    }
+
+    private static String failureMessage(AgentAsyncCompletion<?> completion) {
+        Throwable failure = completion.failure();
+        if (failure instanceof UncheckedIOException unchecked && unchecked.getCause() != null) {
+            failure = unchecked.getCause();
+        }
+        return failure == null
+                ? completion.status().name()
+                : failure.getClass().getSimpleName() + ": " + failure.getMessage();
     }
 
     private void publishCapabilityEvent(AmherstPlanExecutionState state,

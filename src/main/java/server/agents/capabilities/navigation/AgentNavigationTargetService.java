@@ -49,7 +49,8 @@ public final class AgentNavigationTargetService {
 
             AgentNavigationGraph graph = resolveActiveGraph(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
             if (graph == null) {
-                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+                AgentNavigationGraphService.warmGraphAsync(
+                        entry, bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
                 AgentNavigationDebugStateRuntime.setGraphWarmupFallback(entry, true);
                 AgentNavigationWarmupService.notifyWarmup(entry, bot);
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "graph-warmup");
@@ -61,7 +62,8 @@ public final class AgentNavigationTargetService {
                 return new NavigationDirective(fallbackTarget, false);
             }
             if (AgentNavigationGraphService.peekGraph(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry)) == null) {
-                AgentNavigationGraphService.warmGraphAsync(bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
+                AgentNavigationGraphService.warmGraphAsync(
+                        entry, bot.getMap(), AgentMovementStateRuntime.movementProfile(entry));
                 AgentNavigationDebugStateRuntime.setLastDecision(entry, "graph-fallback-profile");
             }
             AgentNavigationDebugStateRuntime.clearGraphWarmupFallback(entry);
@@ -156,6 +158,7 @@ public final class AgentNavigationTargetService {
                 AgentMovementStateRuntime.movementProfile(entry));
         if (graph == null) {
             AgentNavigationGraphService.warmGraphAsync(
+                    entry,
                     AgentRuntimeIdentityRuntime.botMap(entry),
                     AgentMovementStateRuntime.movementProfile(entry));
             return false;
