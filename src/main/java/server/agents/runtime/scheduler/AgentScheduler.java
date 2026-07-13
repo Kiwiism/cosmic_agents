@@ -33,6 +33,13 @@ public final class AgentScheduler {
         };
     }
 
+    public static boolean wake(AgentRuntimeEntry entry) {
+        if (entry == null || !(entry.scheduledTaskState().task() instanceof AgentScheduleHandle handle)) {
+            return false;
+        }
+        return handle.sessionId().matches(entry) && handle.wake();
+    }
+
     private static final class LegacyScheduleHandle implements AgentScheduleHandle {
         private final AgentSessionId sessionId;
         private final ScheduledFuture<?> delegate;
@@ -53,6 +60,11 @@ public final class AgentScheduler {
         @Override
         public AgentSchedulerMode mode() {
             return AgentSchedulerMode.LEGACY_PER_AGENT;
+        }
+
+        @Override
+        public boolean wake() {
+            return false;
         }
 
         @Override

@@ -51,7 +51,7 @@ class AgentWhisperCommandServiceTest {
                 "follow me",
                 hooks(handle, calls));
 
-        assertEquals(List.of("resolve:1:2", "mark", "chat:follow me"), calls);
+        assertEquals(List.of("resolve:1:2", "chat:WHISPER:follow me"), calls);
     }
 
     @Test
@@ -78,8 +78,7 @@ class AgentWhisperCommandServiceTest {
                     calls.add("resolve:" + leader.getId() + ":" + target.getId());
                     return resolved;
                 },
-                entry -> calls.add("mark"),
-                (entry, message) -> calls.add("chat:" + message));
+                (entry, message, channel) -> calls.add("chat:" + channel + ":" + message));
     }
 
     private static Character character(int id, Client client) {

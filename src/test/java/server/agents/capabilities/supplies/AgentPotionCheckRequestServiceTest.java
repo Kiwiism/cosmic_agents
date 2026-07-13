@@ -79,6 +79,34 @@ class AgentPotionCheckRequestServiceTest {
         }
     }
 
+    @Test
+    void runtimeQueuesPotionCheckMutationWhenMailboxOwnershipIsEnabled() {
+        System.setProperty("agents.mailbox.enabled", "true");
+        Character leader = mock(Character.class);
+        Character agent = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        int oldDelay = AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS;
+
+        when(leader.getId()).thenReturn(77);
+        when(agent.getId()).thenReturn(88);
+        when(agent.getClient()).thenReturn(new BotClient(0, 0));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
+        AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = 123;
+
+        try {
+            CosmicAgentPotionCheckRequestBridge.requestPotionCheckSoon(agent);
+
+            assertEquals(0, AgentPotionStateRuntime.potCheckTimerMs(entry));
+            assertEquals(1, entry.actionMailbox().drain(entry, 1));
+            assertEquals(123, AgentPotionStateRuntime.potCheckTimerMs(entry));
+        } finally {
+            System.clearProperty("agents.mailbox.enabled");
+            AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = oldDelay;
+            AgentRuntimeRegistry.clear();
+        }
+    }
+
     private static AgentPotionCheckRequestService.Hooks<TestHandle> hooks(TestHandle resolved, List<String> calls) {
         return new AgentPotionCheckRequestService.Hooks<>(
                 agent -> {

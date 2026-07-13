@@ -10,6 +10,7 @@ import server.life.Monster;
 import server.agents.capabilities.movement.AgentMovementBroadcastStateRuntime;
 import server.agents.capabilities.movement.AgentMovementPhysicsStateRuntime;
 import server.agents.runtime.AgentSchedulerRuntime;
+import server.agents.runtime.AgentMailboxRuntime;
 import server.agents.integration.AgentLifeGatewayRuntime;
 import server.agents.integration.AgentPacketGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
@@ -19,6 +20,7 @@ import server.maps.MapleMap;
 
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CompletableFuture;
 
 public final class AgentAirshowService {
     private static final int FRAME_MS = 50;
@@ -32,19 +34,23 @@ public final class AgentAirshowService {
     private AgentAirshowService() {
     }
 
-    public static String start(Character owner, String botName) {
+    public static CompletableFuture<String> startAsync(Character owner, String botName) {
         if (owner == null) {
-            return "No owner.";
+            return CompletableFuture.completedFuture("No owner.");
         }
         if (botName == null || botName.isBlank()) {
-            return "Syntax: !airshow <botname>";
+            return CompletableFuture.completedFuture("Syntax: !airshow <botname>");
         }
 
         AgentRuntimeEntry entry = AgentSessionLifecycleRuntime.getAgentEntry(owner.getId(), botName);
         if (entry == null) {
-            return "No active owned bot named '" + botName + "'.";
+            return CompletableFuture.completedFuture("No active owned bot named '" + botName + "'.");
         }
 
+        return AgentMailboxRuntime.dispatch(entry, ignored -> startOwnedSession(entry, owner, botName));
+    }
+
+    private static String startOwnedSession(AgentRuntimeEntry entry, Character owner, String botName) {
         Character bot = AgentRuntimeIdentityRuntime.bot(entry);
         MapleMap map = owner.getMap();
         if (bot == null || bot.getMap() == null || map == null || bot.getMap() != map) {

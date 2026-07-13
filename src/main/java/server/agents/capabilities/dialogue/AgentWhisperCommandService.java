@@ -1,6 +1,7 @@
 package server.agents.capabilities.dialogue;
 
 import client.Character;
+import server.agents.commands.AgentReplyChannel;
 import server.agents.integration.AgentCharacterGatewayRuntime;
 import server.agents.runtime.AgentRuntimeHandle;
 
@@ -9,7 +10,6 @@ public final class AgentWhisperCommandService {
     }
 
     public record Hooks<E extends AgentRuntimeHandle>(EntryResolver<E> entryResolver,
-                                                      ReplyChannelMarker<E> replyChannelMarker,
                                                       WhisperChatHandler<E> whisperChatHandler) {
     }
 
@@ -19,13 +19,8 @@ public final class AgentWhisperCommandService {
     }
 
     @FunctionalInterface
-    public interface ReplyChannelMarker<E extends AgentRuntimeHandle> {
-        void markWhisper(E entry);
-    }
-
-    @FunctionalInterface
     public interface WhisperChatHandler<E extends AgentRuntimeHandle> {
-        void handle(E entry, String message);
+        void handle(E entry, String message, AgentReplyChannel channel);
     }
 
     public static <E extends AgentRuntimeHandle> void handleWhisperToAgent(
@@ -45,7 +40,6 @@ public final class AgentWhisperCommandService {
             return;
         }
 
-        hooks.replyChannelMarker().markWhisper(entry);
-        hooks.whisperChatHandler().handle(entry, message);
+        hooks.whisperChatHandler().handle(entry, message, AgentReplyChannel.WHISPER);
     }
 }

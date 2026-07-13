@@ -74,8 +74,8 @@ class AgentOfferRuntimeTest {
             AgentOfferRuntime.sayMapNow(null, "map");
             AgentOfferRuntime.sayNow(null, AgentReplyChannel.PARTY, "party");
             long queueDelay = AgentOfferRuntime.queueSayWithEstimatedDelay(entry, "queued");
-            AgentOfferRuntime.afterDelay(500L, action);
-            AgentOfferRuntime.afterRandomDelay(400, 600, action);
+            AgentOfferRuntime.afterDelay(entry, 500L, action);
+            AgentOfferRuntime.afterRandomDelay(entry, 400, 600, action);
             long randomDelay = AgentOfferRuntime.randomDelayMs(1800, 2200);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
@@ -83,8 +83,8 @@ class AgentOfferRuntimeTest {
             replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "map"));
             replies.verify(() -> AgentReplyRuntime.sayNow(null, AgentReplyChannel.PARTY, "party"));
             replies.verify(() -> AgentReplyRuntime.queueSayWithEstimatedDelay(entry, "queued"));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(500L, action));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(400, 600, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 500L, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(entry, 400, 600, action));
             scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(1800, 2200));
             assertEquals(1200L, queueDelay);
             assertEquals(1900L, randomDelay);

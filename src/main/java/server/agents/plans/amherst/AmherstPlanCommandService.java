@@ -3,7 +3,6 @@ package server.agents.plans.amherst;
 import client.Character;
 import config.YamlConfig;
 import constants.id.ItemId;
-import server.TimerManager;
 import server.agents.auth.AgentOwnershipService;
 import server.agents.capabilities.movement.AgentChairService;
 import server.agents.capabilities.movement.AgentMovementCommandRuntime;
@@ -16,6 +15,8 @@ import server.agents.runtime.AgentInteractionRuntime;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,19 +49,48 @@ public final class AmherstPlanCommandService {
             return;
         }
 
+        if (mutatesAgent(verb)) {
+            AgentMailboxRuntime.dispatch(entry, ignored -> {
+                executeMutating(player, entry, agent, verb);
+                return null;
+            });
+            return;
+        }
+        try {
+            AmherstPlanCard card = AgentAmherstPlanRuntime.defaultCard();
+            switch (verb) {
+                case "status" -> status(player, entry, agent, card);
+                case "list" -> list(player, agent, card, page(params));
+                case "journal" -> journal(player, agent, card, journalCount(params));
+                default -> usage(player);
+            }
+        } catch (IOException | AmherstPlanValidationException | IllegalArgumentException failure) {
+            message(player, "Command failed: " + failure.getMessage());
+        }
+    }
+
+    private static boolean mutatesAgent(String verb) {
+        return switch (verb) {
+            case "reset", "start", "resume", "next", "retry", "cancel", "sit", "stand" -> true;
+            default -> false;
+        };
+    }
+
+    private static void executeMutating(
+            Character player,
+            AgentRuntimeEntry entry,
+            Character agent,
+            String verb) {
         try {
             AmherstPlanCard card = AgentAmherstPlanRuntime.defaultCard();
             switch (verb) {
                 case "reset" -> reset(player, entry, agent, card);
                 case "start", "resume" -> start(player, entry, agent);
                 case "next", "retry" -> next(player, entry);
-                case "status" -> status(player, entry, agent, card);
-                case "list" -> list(player, agent, card, page(params));
                 case "cancel" -> cancel(player, entry);
-                case "journal" -> journal(player, agent, card, journalCount(params));
                 case "sit" -> sit(player, entry, agent);
                 case "stand" -> stand(player, entry, agent);
-                default -> usage(player);
+                default -> throw new IllegalArgumentException("Unsupported mutating command: " + verb);
             }
         } catch (IOException | AmherstPlanValidationException | IllegalArgumentException failure) {
             message(player, "Command failed: " + failure.getMessage());
@@ -145,15 +175,18 @@ public final class AmherstPlanCommandService {
             message(player, "Showcase could not prepare because the Agent runtime is unavailable.");
             return;
         }
-        try {
-            prepareShowcase(entry, agent);
-            message(player, showcaseAgentName
-                    + " spawned at the clean start and will begin in 3 seconds.");
-            TimerManager.getInstance().schedule(
-                    () -> startShowcaseAfterDelay(player, playerId, agentId, showcaseAgentName), 3_000L);
-        } catch (IOException | AmherstPlanValidationException | RuntimeException failure) {
-            message(player, "Showcase failed to prepare: " + failure.getMessage());
-        }
+        AgentMailboxRuntime.dispatch(entry, ignored -> {
+            try {
+                prepareShowcase(entry, agent);
+                message(player, showcaseAgentName
+                        + " spawned at the clean start and will begin in 3 seconds.");
+                AgentSchedulerRuntime.schedule(entry,
+                        () -> startShowcaseAfterDelay(player, playerId, agentId, showcaseAgentName), 3_000L);
+            } catch (IOException | AmherstPlanValidationException | RuntimeException failure) {
+                message(player, "Showcase failed to prepare: " + failure.getMessage());
+            }
+            return null;
+        });
     }
 
     private static void prepareShowcase(AgentRuntimeEntry entry,

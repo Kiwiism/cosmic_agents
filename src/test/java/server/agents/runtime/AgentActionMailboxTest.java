@@ -1,20 +1,32 @@
 package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.scheduler.AgentScheduleHandle;
+import server.agents.runtime.scheduler.AgentSessionId;
+import server.agents.runtime.mailbox.AgentMailboxFailureReason;
+import server.agents.runtime.mailbox.AgentMailboxOptions;
+import server.agents.runtime.mailbox.AgentMailboxRejectedException;
+import server.agents.runtime.mailbox.AgentMailboxSubmission;
+import server.agents.runtime.mailbox.AgentMailboxSubmissionStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class AgentActionMailboxTest {
     @Test
@@ -84,6 +96,74 @@ class AgentActionMailboxTest {
     }
 
     @Test
+    void reportsStructuredCapacityRejection() {
+        AgentRuntimeEntry entry = entry();
+        AgentActionMailbox mailbox = new AgentActionMailbox(1);
+        mailbox.submit(entry.sessionGeneration(), ignored -> 1);
+
+        AgentMailboxSubmission<Integer> rejected = mailbox.submit(
+                entry.sessionGeneration(), ignored -> 2, AgentMailboxOptions.fifo());
+
+        assertEquals(AgentMailboxSubmissionStatus.REJECTED_FULL, rejected.status());
+        assertEquals(AgentMailboxFailureReason.FULL, rejectionReason(rejected.result()));
+    }
+
+    @Test
+    void coalescesOnlyActionsWithTheSameExplicitKey() {
+        AgentRuntimeEntry entry = entry();
+        AgentActionMailbox mailbox = new AgentActionMailbox(2);
+        List<Integer> executed = new ArrayList<>();
+        AgentMailboxSubmission<Integer> first = mailbox.submit(
+                entry.sessionGeneration(), ignored -> {
+                    executed.add(1);
+                    return 1;
+                }, AgentMailboxOptions.coalesceLatest("movement-target"));
+        AgentMailboxSubmission<Integer> latest = mailbox.submit(
+                entry.sessionGeneration(), ignored -> {
+                    executed.add(2);
+                    return 2;
+                }, AgentMailboxOptions.coalesceLatest("movement-target"));
+
+        assertEquals(AgentMailboxSubmissionStatus.ACCEPTED, first.status());
+        assertEquals(AgentMailboxSubmissionStatus.COALESCED, latest.status());
+        assertEquals(AgentMailboxFailureReason.COALESCED, rejectionReason(first.result()));
+        assertEquals(1, mailbox.drain(entry, 2));
+        assertEquals(List.of(2), executed);
+        assertEquals(2, latest.result().join());
+    }
+
+    @Test
+    void expiresQueuedActionWithoutExecutingIt() {
+        AgentRuntimeEntry entry = entry();
+        AtomicLong now = new AtomicLong(1_000L);
+        AgentActionMailbox mailbox = new AgentActionMailbox(2, now::get);
+        AtomicInteger executions = new AtomicInteger();
+        AgentMailboxSubmission<Integer> submission = mailbox.submit(
+                entry.sessionGeneration(), ignored -> executions.incrementAndGet(),
+                AgentMailboxOptions.expiringAt(1_050L));
+
+        now.set(1_050L);
+        assertEquals(1, mailbox.drain(entry, 1));
+
+        assertEquals(0, executions.get());
+        assertEquals(AgentMailboxFailureReason.EXPIRED, rejectionReason(submission.result()));
+    }
+
+    @Test
+    void rejectsAlreadyExpiredActionWithoutConsumingCapacity() {
+        AgentRuntimeEntry entry = entry();
+        AtomicLong now = new AtomicLong(1_000L);
+        AgentActionMailbox mailbox = new AgentActionMailbox(1, now::get);
+
+        AgentMailboxSubmission<Integer> expired = mailbox.submit(
+                entry.sessionGeneration(), ignored -> 1, AgentMailboxOptions.expiringAt(999L));
+
+        assertEquals(AgentMailboxSubmissionStatus.REJECTED_EXPIRED, expired.status());
+        assertEquals(AgentMailboxFailureReason.EXPIRED, rejectionReason(expired.result()));
+        assertEquals(0, mailbox.size());
+    }
+
+    @Test
     void acceptsConcurrentSubmissionsWithoutLosingActions() throws Exception {
         AgentRuntimeEntry entry = entry();
         AgentActionMailbox mailbox = new AgentActionMailbox(256);
@@ -112,8 +192,27 @@ class AgentActionMailboxTest {
         }
     }
 
+    @Test
+    void acceptedSubmissionRequestsGenerationBoundSchedulerWake() {
+        AgentRuntimeEntry entry = entry();
+        AgentScheduleHandle handle = mock(AgentScheduleHandle.class);
+        when(handle.sessionId()).thenReturn(AgentSessionId.from(entry));
+        when(handle.wake()).thenReturn(true);
+        entry.scheduledTaskState().attachScheduledTask(handle);
+
+        CompletableFuture<Integer> result = AgentMailboxRuntime.submit(entry, ignored -> 1);
+
+        assertFalse(result.isDone());
+        verify(handle).wake();
+    }
+
     private static AgentRuntimeEntry entry() {
         return new AgentRuntimeEntry(null, null, null);
+    }
+
+    private static AgentMailboxFailureReason rejectionReason(CompletableFuture<?> future) {
+        CompletionException failure = assertThrows(CompletionException.class, future::join);
+        return ((AgentMailboxRejectedException) failure.getCause()).reason();
     }
 
     private static void await(CountDownLatch latch) {

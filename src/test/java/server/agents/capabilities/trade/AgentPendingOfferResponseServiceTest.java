@@ -114,7 +114,7 @@ class AgentPendingOfferResponseServiceTest {
         when(speaker.getMapId()).thenReturn(20000);
         when(agent.getMapId()).thenReturn(20000);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, mock(Character.class), null);
-        AgentOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, 1L, false);
+        AgentOfferStateRuntime.setPendingLootOffer(entry, mock(Item.class), 100, Long.MAX_VALUE, false);
 
         assertTrue(AgentPendingOfferChatRouteService.isPendingOfferTarget(entry, speaker));
 

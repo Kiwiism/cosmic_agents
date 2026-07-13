@@ -6,6 +6,7 @@ import server.agents.commands.AgentTargetedCommandMatch;
 import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 
@@ -21,7 +22,6 @@ public final class AgentTargetedChatRouteService {
                         TypoSuggester typoSuggester,
                         AgentReplyQueue<E> agentReplyQueue,
                         AgentChatHandler<E> agentChatHandler,
-                        BooleanSupplier lastChatHandled,
                         LongSupplier nowMs,
                         LeaderResolver<E> leaderResolver,
                         OwnerCommandRecorder<E> ownerCommandRecorder,
@@ -62,7 +62,7 @@ public final class AgentTargetedChatRouteService {
 
     @FunctionalInterface
     public interface AgentChatHandler<E extends AgentRuntimeHandle> {
-        void handle(E entry, String commandText);
+        CompletionStage<Boolean> handle(E entry, String commandText, AgentReplyChannel channel);
     }
 
     @FunctionalInterface
@@ -109,15 +109,16 @@ public final class AgentTargetedChatRouteService {
                 }
             }
 
-            hooks.agentChatHandler().handle(entry, commandText);
-            boolean matched = hooks.lastChatHandled().getAsBoolean();
-            Character owner = hooks.leaderResolver().resolve(entry);
-            if (matched && owner != null && leader.getId() == owner.getId()) {
-                hooks.ownerCommandRecorder().record(entry, commandText, hooks.nowMs().getAsLong());
-            }
-            if (hooks.llmEnabled().getAsBoolean() && !matched) {
-                hooks.llmResponder().maybeRespond(entry, leader, commandText);
-            }
+            hooks.agentChatHandler().handle(entry, commandText, channel).whenComplete((matched, failure) -> {
+                boolean handled = failure == null && Boolean.TRUE.equals(matched);
+                Character owner = hooks.leaderResolver().resolve(entry);
+                if (handled && owner != null && leader.getId() == owner.getId()) {
+                    hooks.ownerCommandRecorder().record(entry, commandText, hooks.nowMs().getAsLong());
+                }
+                if (hooks.llmEnabled().getAsBoolean() && !handled) {
+                    hooks.llmResponder().maybeRespond(entry, leader, commandText);
+                }
+            });
             return true;
         }
         if (targetedAgent.feedbackMessage() != null) {

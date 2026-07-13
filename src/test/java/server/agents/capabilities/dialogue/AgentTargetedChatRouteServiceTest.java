@@ -8,7 +8,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -133,11 +133,48 @@ class AgentTargetedChatRouteServiceTest {
                 "llm:hi"), calls);
     }
 
+    @Test
+    void defersMatchedCommandSideEffectsUntilMailboxResultCompletes() {
+        List<String> calls = new ArrayList<>();
+        Character leader = character(1, "Leader");
+        AgentRuntimeEntry entry = entry(character(2, "Agent"), leader);
+        CompletableFuture<Boolean> result = new CompletableFuture<>();
+
+        boolean handled = AgentTargetedChatRouteService.handleTargetedChat(
+                leader,
+                List.of(entry),
+                "Agent pots",
+                AgentReplyChannel.PARTY,
+                hooks(new AgentTargetedCommandMatch<>(entry, "pots", null), false, result, calls));
+
+        assertTrue(handled);
+        assertEquals(List.of(
+                "resolve:Agent pots",
+                "follow:pots",
+                "channel:PARTY",
+                "chat:pots"), calls);
+
+        result.complete(true);
+
+        assertEquals(List.of(
+                "resolve:Agent pots",
+                "follow:pots",
+                "channel:PARTY",
+                "chat:pots",
+                "record:pots:123"), calls);
+    }
+
     private static AgentTargetedChatRouteService.Hooks<AgentRuntimeEntry> hooks(AgentTargetedCommandMatch<AgentRuntimeEntry> match,
                                                              boolean typoEnabled,
                                                              boolean matched,
                                                              List<String> calls) {
-        AtomicBoolean chatMatched = new AtomicBoolean(matched);
+        return hooks(match, typoEnabled, CompletableFuture.completedFuture(matched), calls);
+    }
+
+    private static AgentTargetedChatRouteService.Hooks<AgentRuntimeEntry> hooks(AgentTargetedCommandMatch<AgentRuntimeEntry> match,
+                                                             boolean typoEnabled,
+                                                             CompletableFuture<Boolean> chatResult,
+                                                             List<String> calls) {
         return new AgentTargetedChatRouteService.Hooks<AgentRuntimeEntry>(
                 (entries, message) -> {
                     calls.add("resolve:" + message);
@@ -155,8 +192,10 @@ class AgentTargetedChatRouteServiceTest {
                     return commandText.equals("potsz") ? "pots" : null;
                 },
                 (entry, reply) -> calls.add("reply:" + reply),
-                (entry, commandText) -> calls.add("chat:" + commandText),
-                chatMatched::get,
+                (entry, commandText, channel) -> {
+                    calls.add("chat:" + commandText);
+                    return chatResult;
+                },
                 () -> 123L,
                 AgentRuntimeEntry::owner,
                 (entry, commandText, commandAtMs) -> calls.add("record:" + commandText + ":" + commandAtMs),

@@ -219,6 +219,12 @@ public final class AgentOfferService {
         return false;
     }
 
+    public static boolean isPendingOfferResponse(String message) {
+        return message != null
+                && (POSITIVE_CONFIRM_PATTERN.matcher(message).find()
+                || NEGATIVE_CONFIRM_PATTERN.matcher(message).find());
+    }
+
     public static void expirePendingOffer(AgentRuntimeEntry entry) {
         if (AgentOfferStateRuntime.pendingOfferExpired(entry, System.currentTimeMillis())) {
             clearPendingOffer(entry);

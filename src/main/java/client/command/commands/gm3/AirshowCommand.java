@@ -18,7 +18,12 @@ public class AirshowCommand extends Command {
             return;
         }
 
-        String result = AgentAirshowService.start(player, params[0]);
-        player.yellowMessage(result);
+        AgentAirshowService.startAsync(player, params[0]).whenComplete((result, failure) -> {
+            if (failure != null) {
+                player.yellowMessage("Airshow could not be started: " + failure.getMessage());
+                return;
+            }
+            player.yellowMessage(result);
+        });
     }
 }

@@ -27,9 +27,11 @@ import server.agents.commands.AgentFollowTargetCommandCoordinator;
 import server.agents.runtime.AgentRuntimeConfig;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentMailboxRuntime;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 public final class AgentChatRouteCoordinator {
     private AgentChatRouteCoordinator() {
@@ -99,10 +101,10 @@ public final class AgentChatRouteCoordinator {
                         commandLeader,
                         text,
                         transferAction),
-                (commandLeader, text) -> AgentFormationCommandCoordinator.handleFormationCommand(
+                (commandLeader, text) -> dispatchFormationCommand(
                         commandLeader,
                         text,
-                        entriesByLeader::get,
+                        entriesByLeader,
                         defaultFormation,
                         defaultFollowStaggerPx,
                         defaultSnapRangePx),
@@ -132,13 +134,12 @@ public final class AgentChatRouteCoordinator {
                     return new AgentTargetedCommandMatch<>(match.entry(), match.commandText(), match.feedbackMessage());
                 },
                 AgentChatCommandClassifier::matchFollowTarget,
-                AgentFollowTargetCommandCoordinator::applyFollowTargetCommand,
-                AgentReplyChannelStateRuntime::setReplyChannel,
+                AgentChatRouteCoordinator::dispatchFollowTargetCommand,
+                AgentChatRouteCoordinator::setReplyChannel,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
-                AgentReplyRuntime::queueReply,
+                AgentChatRouteCoordinator::queueReply,
                 AgentChatRouteCoordinator::handleAgentChat,
-                AgentChatRuntime::wasLastChatHandled,
                 System::currentTimeMillis,
                 AgentRuntimeIdentityRuntime::owner,
                 AgentActivityStateRuntime::recordLastOwnerCommand,
@@ -150,20 +151,86 @@ public final class AgentChatRouteCoordinator {
     private static <E extends AgentRuntimeEntry> AgentUntargetedChatRouteService.Hooks<E> untargetedChatHooks() {
         return new AgentUntargetedChatRouteService.Hooks<>(
                 AgentChatCommandClassifier::matchFollowTarget,
-                AgentFollowTargetCommandCoordinator::applyFollowTargetCommand,
+                AgentChatRouteCoordinator::dispatchFollowTargetCommand,
                 AgentChatCommandClassifier::isGroupSupplyRequest,
                 (leader, entries) -> AgentGroupSupplyResponderSelector.select(
                         leader,
                         entries,
                         AgentRuntimeIdentityRuntime::botMapId),
-                AgentReplyChannelStateRuntime::setReplyChannel,
+                AgentChatRouteCoordinator::setReplyChannel,
                 AgentChatRouteCoordinator::handleAgentChat,
                 () -> AgentLlmConfig.typoSuggesterEnabled,
                 AgentCommandTypoSuggester::suggest,
-                AgentReplyRuntime::queueReply);
+                AgentChatRouteCoordinator::queueReply);
     }
 
-    private static void handleAgentChat(AgentRuntimeEntry entry, String message) {
-        AgentChatMailboxDispatcher.handleChat(entry, message);
+    private static void queueReply(
+            AgentRuntimeEntry entry,
+            String reply) {
+        AgentMailboxRuntime.dispatch(entry, ignored -> {
+            AgentReplyRuntime.queueReply(entry, reply);
+            return null;
+        });
+    }
+
+    private static void setReplyChannel(AgentRuntimeEntry entry, AgentReplyChannel channel) {
+        AgentMailboxRuntime.dispatch(entry, ignored -> {
+            AgentReplyChannelStateRuntime.setReplyChannel(entry, channel);
+            return null;
+        });
+    }
+
+    private static void dispatchFollowTargetCommand(
+            Character leader,
+            List<? extends AgentRuntimeEntry> entries,
+            String targetToken) {
+        Character target = AgentFollowTargetCommandCoordinator.resolveFollowTarget(leader, targetToken);
+        if (target == null) {
+            return;
+        }
+        for (AgentRuntimeEntry entry : entries) {
+            AgentMailboxRuntime.dispatch(entry, ignored -> {
+                AgentFollowTargetCommandCoordinator.applyResolvedFollowTargetCommand(entry, target);
+                return null;
+            });
+        }
+    }
+
+    private static <E extends AgentRuntimeEntry> boolean dispatchFormationCommand(
+            Character leader,
+            String message,
+            Map<Integer, List<E>> entriesByLeader,
+            AgentFormationService.FormationState defaultFormation,
+            int defaultFollowStaggerPx,
+            int defaultSnapRangePx) {
+        if (!server.agents.capabilities.movement.AgentFormationCommandService.matchesCommand(message)) {
+            return false;
+        }
+        List<E> entries = entriesByLeader.get(leader.getId());
+        if (entries == null || entries.isEmpty()) {
+            return AgentFormationCommandCoordinator.handleFormationCommand(
+                    leader,
+                    message,
+                    entriesByLeader::get,
+                    defaultFormation,
+                    defaultFollowStaggerPx,
+                    defaultSnapRangePx);
+        }
+        AgentMailboxRuntime.dispatch(entries.get(0), ignored ->
+                AgentFormationCommandCoordinator.handleFormationCommand(
+                        leader,
+                        message,
+                        entriesByLeader::get,
+                        defaultFormation,
+                        defaultFollowStaggerPx,
+                        defaultSnapRangePx));
+        return true;
+    }
+
+    private static CompletionStage<Boolean> handleAgentChat(
+            AgentRuntimeEntry entry,
+            String message,
+            AgentReplyChannel channel) {
+        return AgentChatMailboxDispatcher.handleChat(entry, message, channel);
     }
 }

@@ -6,4 +6,7 @@ public interface AgentScheduleHandle extends ScheduledFuture<Void> {
     AgentSessionId sessionId();
 
     AgentSchedulerMode mode();
+
+    /** Requests prompt execution without changing the periodic cadence. */
+    boolean wake();
 }

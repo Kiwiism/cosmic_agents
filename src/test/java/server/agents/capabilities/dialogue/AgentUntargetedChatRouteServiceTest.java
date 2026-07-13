@@ -7,6 +7,7 @@ import server.agents.runtime.AgentRuntimeEntry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -113,7 +114,10 @@ class AgentUntargetedChatRouteServiceTest {
                     return groupResponder;
                 },
                 (entry, channel) -> calls.add("channel:" + entry.bot().getName() + ":" + channel),
-                (entry, message) -> calls.add("chat:" + entry.bot().getName() + ":" + message),
+                (entry, message, channel) -> {
+                    calls.add("chat:" + entry.bot().getName() + ":" + message);
+                    return CompletableFuture.completedFuture(false);
+                },
                 () -> !typoDisabled,
                 message -> {
                     calls.add("typo:" + message);

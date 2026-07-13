@@ -23,12 +23,12 @@ class AgentShopRuntimeTest {
 
             AgentShopRuntime.replyNow(entry, "reply");
             AgentShopRuntime.sayMapNow(null, "shop");
-            AgentShopRuntime.afterDelay(500L, action);
+            AgentShopRuntime.afterDelay(entry, 500L, action);
             long delay = AgentShopRuntime.randomDelayMs(2000, 4001);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
             replies.verify(() -> AgentReplyRuntime.sayMapNow(null, "shop"));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(500L, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 500L, action));
             scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(2000, 4001));
             assertEquals(2500L, delay);
         }

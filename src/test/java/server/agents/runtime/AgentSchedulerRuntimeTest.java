@@ -109,4 +109,34 @@ class AgentSchedulerRuntimeTest {
             AgentRuntimeRegistry.clear();
         }
     }
+
+    @Test
+    void scopedScheduleEnqueuesThroughMailboxWhenOwnershipIsEnabled() {
+        System.setProperty("agents.mailbox.enabled", "true");
+        SchedulerGateway scheduler = mock(SchedulerGateway.class);
+        ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
+        ArgumentCaptor<Runnable> callback = ArgumentCaptor.forClass(Runnable.class);
+        AtomicInteger calls = new AtomicInteger();
+        Character agent = mock(Character.class);
+        Character leader = mock(Character.class);
+        AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(1, entry);
+
+        try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
+            runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
+            doReturn(scheduled).when(scheduler).schedule(callback.capture(), eq(250L));
+
+            AgentSchedulerRuntime.schedule(entry, calls::incrementAndGet, 250L);
+            callback.getValue().run();
+
+            assertEquals(0, calls.get());
+            assertEquals(1, entry.actionMailbox().size());
+            assertEquals(1, entry.actionMailbox().drain(entry, 1));
+            assertEquals(1, calls.get());
+        } finally {
+            System.clearProperty("agents.mailbox.enabled");
+            AgentRuntimeRegistry.clear();
+        }
+    }
 }

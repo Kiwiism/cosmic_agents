@@ -4,7 +4,6 @@ import client.Character;
 import server.agents.capabilities.dialogue.AgentChatMailboxDispatcher;
 import server.agents.capabilities.dialogue.AgentWhisperCommandService;
 import server.agents.commands.AgentReplyChannel;
-import server.agents.commands.AgentReplyChannelStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 
@@ -26,7 +25,6 @@ public final class CosmicAgentWhisperCommandBridge {
                         AgentRuntimeRegistry.entriesByLeaderId(),
                         leader.getId(),
                         target.getId()),
-                entry -> AgentReplyChannelStateRuntime.setReplyChannel(entry, AgentReplyChannel.WHISPER),
                 AgentChatMailboxDispatcher::handleChat);
     }
 }

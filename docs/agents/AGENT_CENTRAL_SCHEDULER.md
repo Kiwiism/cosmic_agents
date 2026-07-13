@@ -56,6 +56,14 @@ selection so a busy cycle cannot permanently starve later registrations.
 - One uncaught Agent failure is recorded and does not stop later Agents.
 - Missed fixed-rate periods are skipped rather than replayed in a burst.
 - Mailbox actions drain inside the same guarded tick before gameplay work.
+- Selecting a central scheduler mode also enables mandatory bounded mailbox
+  ownership. `agents.mailbox.enabled=true` remains available to exercise the
+  same boundary while the legacy scheduler owns ticks.
+- Accepted mailbox work wakes the owning registration. Multiple wake requests
+  coalesce while one immediate dispatcher wake is pending.
+- Mailbox submission reports accepted, rejected, or coalesced status and uses
+  typed closed, full, stale-session, expired, coalesced, and discarded failure
+  reasons. FIFO remains the default; latest-value coalescing is opt-in by key.
 
 ## Metrics
 
@@ -79,17 +87,18 @@ Current readiness:
 ```text
 Phase 0 baseline: complete
 Phase 1 stable scheduler API and O(1) session index: complete
-mailbox default enablement: blocked on nonblocking command results
-single-shard heap: follows mailbox ownership scans
+Phase 2 mandatory mailbox ownership: complete
+single-shard heap: next implementation phase
 multi-shard execution: blocked on Cosmic thread-affinity audit
 production default switch: blocked on parity and staged soak evidence
 ```
 
 Important current limitations include the central-sequential global scan/sort,
-unclassified delayed callbacks, a blocking chat mailbox compatibility wait,
-cumulative-only metrics, and no priority/budget/shard runtime. The repository
-therefore has a useful migration foundation, not the completed centralized
-scheduler.
+a blocking navigation graph `join()` reserved for Phase 5 removal,
+cumulative-only metrics, and no priority/budget/shard runtime. Cross-session
+formation and leader-away operations also require a Phase 6 gateway/ownership
+decision before multi-shard execution. The repository therefore has a safe
+single-writer migration foundation, not the completed centralized scheduler.
 
 Phase 0 baseline evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-0`. It covers deterministic
@@ -97,6 +106,8 @@ legacy and central-sequential callback behavior at 50, 100, 250, and 500
 sessions. It does not represent live gameplay or production load evidence.
 Phase 1 API, lifecycle, registry, and parity evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-1`.
+Phase 2 mailbox, ingress, delayed-callback, and nonblocking-result evidence is
+recorded under `docs/agents/evidence/central-scheduler/phase-2`.
 
 ## Rollback
 

@@ -33,6 +33,16 @@ legacy guarded tick remains the default. Multi-shard rollout, cadence changes,
 simulation-tier optimization, and making the new scheduler the default remain
 blocked until capability parity and Cosmic thread-affinity evidence exist.
 
+Current scheduler implementation checkpoint on
+`feature/agent-central-scheduler-runtime`:
+
+- Phase 0 baseline evidence and Phase 1 scheduler API are complete.
+- Phase 2 mandatory mailbox ownership is complete for live external ingress
+  and generation-scoped delayed callbacks.
+- Legacy per-Agent scheduling remains the production default and rollback.
+- Phase 3 replaces the central-sequential global scan/sort with a one-shard
+  indexed due-time heap; no gameplay cadence change is part of that phase.
+
 ## Track Split
 
 ### Track A - Optimization And Scaling

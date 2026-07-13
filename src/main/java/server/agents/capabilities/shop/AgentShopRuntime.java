@@ -26,11 +26,6 @@ public final class AgentShopRuntime {
         AgentSchedulerRuntime.afterDelay(entry, delayMs, action);
     }
 
-    @Deprecated(forRemoval = true)
-    public static void afterDelay(long delayMs, Runnable action) {
-        AgentSchedulerRuntime.afterDelay(delayMs, action);
-    }
-
     public static long randomDelayMs(int minMs, int maxMs) {
         return AgentSchedulerRuntime.randomDelayMs(minMs, maxMs);
     }

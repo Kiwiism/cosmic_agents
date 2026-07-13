@@ -6,17 +6,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.agents.runtime.scheduler.AgentSchedulerMode;
+import server.agents.runtime.scheduler.AgentScheduleHandle;
 import server.agents.runtime.scheduler.AgentTickScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -24,6 +29,8 @@ import static org.mockito.Mockito.verify;
 class AgentTickSchedulerTest {
     private final AtomicLong now = new AtomicLong(1_000L);
     private final AtomicReference<Runnable> centralLoop = new AtomicReference<>();
+    private final AtomicReference<Runnable> wakeTask = new AtomicReference<>();
+    private final AtomicInteger wakeSchedules = new AtomicInteger();
     private ScheduledFuture<?> centralFuture;
     private AgentTickScheduler scheduler;
 
@@ -32,10 +39,7 @@ class AgentTickSchedulerTest {
         clearProperties();
         AgentRuntimeRegistry.clear();
         centralFuture = mock(ScheduledFuture.class);
-        scheduler = new AgentTickScheduler(now::get, (loop, period) -> {
-            centralLoop.set(loop);
-            return centralFuture;
-        });
+        scheduler = scheduler();
     }
 
     @AfterEach
@@ -108,10 +112,7 @@ class AgentTickSchedulerTest {
     @Test
     void cappedCyclesContinueWithNextDueAgent() {
         System.setProperty("agents.scheduler.maxAgentsPerTick", "1");
-        scheduler = new AgentTickScheduler(now::get, (loop, period) -> {
-            centralLoop.set(loop);
-            return centralFuture;
-        });
+        scheduler = scheduler();
         AgentRuntimeEntry first = activeEntry(1, 101);
         AgentRuntimeEntry second = activeEntry(1, 102);
         List<Integer> order = new ArrayList<>();
@@ -136,12 +137,53 @@ class AgentTickSchedulerTest {
     }
 
     @Test
+    void cancellationCompletesScheduleHandleWithoutPolling() throws Exception {
+        AgentRuntimeEntry entry = activeEntry(1, 101);
+        AgentScheduleHandle handle = scheduler.register(entry, () -> { }, 50L);
+
+        assertThrows(TimeoutException.class, () -> handle.get(1L, TimeUnit.MILLISECONDS));
+        assertTrue(handle.cancel(false));
+        assertNull(handle.get(1L, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
     void centralSchedulerIsDisabledByDefault() {
         assertEquals(AgentSchedulerMode.LEGACY_PER_AGENT, AgentSchedulerConfig.fromSystemProperties().mode());
         System.setProperty("agents.scheduler.central.enabled", "true");
         assertEquals(AgentSchedulerMode.CENTRAL_SEQUENTIAL, AgentSchedulerConfig.fromSystemProperties().mode());
         System.setProperty("agents.scheduler.mode", "central-sharded");
         assertEquals(AgentSchedulerMode.CENTRAL_SHARDED, AgentSchedulerConfig.fromSystemProperties().mode());
+    }
+
+    @Test
+    void wakeMakesAgentImmediatelyDueAndCoalescesPendingWakeTask() {
+        AgentRuntimeEntry entry = activeEntry(1, 101);
+        AtomicInteger ticks = new AtomicInteger();
+        AgentScheduleHandle handle = scheduler.register(entry, ticks::incrementAndGet, 50L);
+        scheduler.tickAll();
+        now.addAndGet(10L);
+
+        assertTrue(handle.wake());
+        assertTrue(handle.wake());
+        assertEquals(1, wakeSchedules.get());
+
+        wakeTask.get().run();
+
+        assertEquals(2, ticks.get());
+    }
+
+    private AgentTickScheduler scheduler() {
+        return new AgentTickScheduler(
+                now::get,
+                (loop, period) -> {
+                    centralLoop.set(loop);
+                    return centralFuture;
+                },
+                (task, delay) -> {
+                    wakeSchedules.incrementAndGet();
+                    wakeTask.set(task);
+                    return mock(ScheduledFuture.class);
+                });
     }
 
     private AgentRuntimeEntry activeEntry(int leaderId, int agentId) {

@@ -65,6 +65,14 @@ public final class AgentFollowTargetCommandService {
             return true;
         }
 
+        applyResolvedFollowTargetCommand(entries, target, hooks);
+        return true;
+    }
+
+    public static void applyResolvedFollowTargetCommand(
+            List<? extends AgentRuntimeEntry> entries,
+            Character target,
+            Hooks hooks) {
         for (AgentRuntimeEntry entry : entries) {
             if (entry == null || !AgentRuntimeIdentityRuntime.hasBot(entry)
                     || AgentRuntimeIdentityRuntime.botIs(entry, target.getId())) {
@@ -77,6 +85,5 @@ public final class AgentFollowTargetCommandService {
                 hooks.followStarter().start(entry, target);
             });
         }
-        return true;
     }
 }

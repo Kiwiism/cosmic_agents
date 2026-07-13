@@ -61,7 +61,11 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
   typed generation-bound handles, and an O(1) active-session index.
 - `LEGACY_PER_AGENT` remains the default and `CENTRAL_SHARDED` remains
   unavailable until its implementation phase.
-- Phase 2 mailbox ownership and asynchronous result delivery remain pending.
+- Phase 2 makes mailbox ownership mandatory whenever either central mode is
+  selected. Chat, whisper, equip, potion, follow, formation, pending-offer,
+  Amherst mutation, airshow, and entry-scoped delayed callbacks now enter the
+  owning session asynchronously through bounded mailboxes. Legacy mode retains
+  its inline compatibility path unless mailboxes are explicitly enabled.
 
 The repository already contains a safe foundation:
 
@@ -153,8 +157,8 @@ Readiness decision:
 
 ```text
 Phase 0-1: ready to implement now
-Phase 2: ready only after the nonblocking result contract is designed
-Phase 3-5: may be implemented behind flags after Phase 2 scans are green
+Phase 2: complete; evidence is recorded under phase-2
+Phase 3-5: ready to implement behind non-default rollout modes
 Phase 6+: blocked on Cosmic thread-affinity audit and capability parity proof
 Default CENTRAL_SHARDED: blocked on staged live and soak acceptance
 ```

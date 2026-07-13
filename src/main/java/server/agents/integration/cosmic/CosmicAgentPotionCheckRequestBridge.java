@@ -6,6 +6,8 @@ import server.agents.capabilities.supplies.AgentPotionCheckRequestService;
 import server.agents.capabilities.supplies.AgentPotionStateRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.runtime.mailbox.AgentMailboxOptions;
 
 public final class CosmicAgentPotionCheckRequestBridge {
     private CosmicAgentPotionCheckRequestBridge() {
@@ -18,7 +20,13 @@ public final class CosmicAgentPotionCheckRequestBridge {
     private static AgentPotionCheckRequestService.Hooks<AgentRuntimeEntry> hooks() {
         return new AgentPotionCheckRequestService.Hooks<>(
                 CosmicAgentPotionCheckRequestBridge::resolveAgentEntry,
-                AgentPotionStateRuntime::requestPotionCheckSoon);
+                (entry, delayMs) -> AgentMailboxRuntime.dispatch(
+                        entry,
+                        ignored -> {
+                            AgentPotionStateRuntime.requestPotionCheckSoon(entry, delayMs);
+                            return null;
+                        },
+                        AgentMailboxOptions.coalesceLatest("potion-check-request")));
     }
 
     private static AgentRuntimeEntry resolveAgentEntry(Character agent) {

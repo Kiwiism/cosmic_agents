@@ -5,6 +5,7 @@ import server.agents.commands.AgentReplyChannel;
 import server.agents.runtime.AgentRuntimeHandle;
 
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.function.BooleanSupplier;
 
 public final class AgentUntargetedChatRouteService {
@@ -49,7 +50,7 @@ public final class AgentUntargetedChatRouteService {
 
     @FunctionalInterface
     public interface AgentChatHandler<E extends AgentRuntimeHandle> {
-        void handle(E entry, String message);
+        CompletionStage<Boolean> handle(E entry, String message, AgentReplyChannel channel);
     }
 
     @FunctionalInterface
@@ -77,7 +78,7 @@ public final class AgentUntargetedChatRouteService {
             E responder = hooks.groupSupplyResponderSelector().select(leader, entries);
             if (responder != null) {
                 hooks.replyChannelSetter().set(responder, channel);
-                hooks.agentChatHandler().handle(responder, message);
+                hooks.agentChatHandler().handle(responder, message, channel);
             }
             return;
         }
@@ -94,7 +95,7 @@ public final class AgentUntargetedChatRouteService {
 
         for (E entry : entries) {
             hooks.replyChannelSetter().set(entry, channel);
-            hooks.agentChatHandler().handle(entry, message);
+            hooks.agentChatHandler().handle(entry, message, channel);
         }
     }
 }

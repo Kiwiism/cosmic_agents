@@ -107,6 +107,10 @@ public final class AgentFormationCommandService {
         return true;
     }
 
+    public static boolean matchesCommand(String message) {
+        return message != null && FORMATION_PATTERN.matcher(message).find();
+    }
+
     private static void handleSnapCommand(Character leader,
                                           List<? extends AgentRuntimeEntry> entries,
                                           String qualifier,

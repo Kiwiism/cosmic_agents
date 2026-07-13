@@ -1,5 +1,11 @@
 package server.agents.runtime;
 
+import server.agents.runtime.scheduler.AgentScheduler;
+import server.agents.runtime.scheduler.AgentSchedulerConfig;
+import server.agents.runtime.scheduler.AgentSchedulerMode;
+import server.agents.runtime.mailbox.AgentMailboxOptions;
+import server.agents.runtime.mailbox.AgentMailboxSubmission;
+
 import java.util.concurrent.CompletableFuture;
 
 public final class AgentMailboxRuntime {
@@ -9,7 +15,8 @@ public final class AgentMailboxRuntime {
     }
 
     public static boolean enabled() {
-        return Boolean.getBoolean("agents.mailbox.enabled");
+        return Boolean.getBoolean("agents.mailbox.enabled")
+                || AgentSchedulerConfig.fromSystemProperties().mode() != AgentSchedulerMode.LEGACY_PER_AGENT;
     }
 
     public static int configuredCapacity() {
@@ -17,11 +24,46 @@ public final class AgentMailboxRuntime {
     }
 
     public static <R> CompletableFuture<R> submit(AgentRuntimeEntry entry, AgentMailboxAction<R> action) {
+        return submit(entry, action, AgentMailboxOptions.fifo()).result();
+    }
+
+    public static <R> AgentMailboxSubmission<R> submit(
+            AgentRuntimeEntry entry,
+            AgentMailboxAction<R> action,
+            AgentMailboxOptions options) {
+        if (entry == null) {
+            throw new IllegalArgumentException("Agent runtime entry is required");
+        }
+        AgentMailboxSubmission<R> submission =
+                entry.actionMailbox().submit(entry.sessionGeneration(), action, options);
+        if (submission.accepted()) {
+            AgentScheduler.wake(entry);
+        }
+        return submission;
+    }
+
+    public static <R> CompletableFuture<R> dispatch(
+            AgentRuntimeEntry entry,
+            AgentMailboxAction<R> action) {
+        return dispatch(entry, action, AgentMailboxOptions.fifo());
+    }
+
+    public static <R> CompletableFuture<R> dispatch(
+            AgentRuntimeEntry entry,
+            AgentMailboxAction<R> action,
+            AgentMailboxOptions options) {
         if (entry == null) {
             return CompletableFuture.failedFuture(
                     new IllegalArgumentException("Agent runtime entry is required"));
         }
-        return entry.actionMailbox().submit(entry.sessionGeneration(), action);
+        if (enabled()) {
+            return submit(entry, action, options).result();
+        }
+        try {
+            return CompletableFuture.completedFuture(action.execute(entry));
+        } catch (Throwable failure) {
+            return CompletableFuture.failedFuture(failure);
+        }
     }
 
     public static int drain(AgentRuntimeEntry entry) {

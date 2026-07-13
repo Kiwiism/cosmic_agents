@@ -25,6 +25,9 @@ import client.inventory.Item;
 import client.inventory.manipulator.InventoryManipulator;
 import net.AbstractPacketHandler;
 import net.packet.InPacket;
+import server.agents.runtime.AgentMailboxAction;
+import server.agents.runtime.AgentMailboxRuntime;
+import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.ItemInformationProvider;
 import config.YamlConfig;
@@ -51,62 +54,86 @@ public final class AgentEquipHandler extends AbstractPacketHandler {
         }
 
         int botIndex = p.readByte();
-        Character bot = resolveBot(player, botIndex);
-        if (bot == null) {
+        AgentRuntimeEntry entry = resolveEntry(player, botIndex);
+        if (entry == null || entry.bot() == null) {
             return;   // not an owned bot — ignore (treat all client input as hostile)
         }
 
         try {
-            switch (action) {
-                case REQ_OPEN:
-                    break;   // just snapshot, below
-                case REQ_MOVE: {
-                    int type = p.readShort();
-                    int oldPos = p.readShort();
-                    int newPos = p.readShort();
-                    p.readShort();   // count (always 1)
-                    applyBotMove(bot, type, oldPos, newPos);
-                    break;
-                }
-                case REQ_GIVE: {
-                    int srcType = p.readShort();
-                    int srcPos = p.readShort();
-                    p.readShort();   // dstPos (auto)
-                    giveToBot(c, player, bot, srcType, srcPos);
-                    break;
-                }
-                case REQ_TAKE: {
-                    int srcType = p.readShort();
-                    int srcPos = p.readShort();
-                    p.readShort();   // dstPlayerPos (auto)
-                    takeFromBot(c, player, bot, srcType, srcPos);
-                    break;
-                }
-                case REQ_SORT: {
-                    int tab = p.readShort();
-                    sortAndMerge(bot, tab);
-                    break;
-                }
-                default:
-                    return;
+            if (action == REQ_OPEN) {
+                c.sendPacket(PacketCreator.botEquipSnapshot(botIndex, entry.bot()));
+                return;
             }
+            EquipRequest request = switch (action) {
+                case REQ_MOVE -> EquipRequest.move(p.readShort(), p.readShort(), p.readShort(), p.readShort());
+                case REQ_GIVE -> EquipRequest.give(p.readShort(), p.readShort(), p.readShort());
+                case REQ_TAKE -> EquipRequest.take(p.readShort(), p.readShort(), p.readShort());
+                case REQ_SORT -> EquipRequest.sort(p.readShort());
+                default -> null;
+            };
+            if (request == null) {
+                return;
+            }
+            AgentMailboxRuntime.dispatch(entry, request).whenComplete((bot, failure) -> {
+                Character current = bot != null ? bot : entry.bot();
+                if (current != null) {
+                    c.sendPacket(PacketCreator.botEquipSnapshot(botIndex, current));
+                }
+            });
         } catch (Exception e) {
-            // never let a malformed request crash the channel packet thread
+            c.sendPacket(PacketCreator.botEquipSnapshot(botIndex, entry.bot()));
         }
-
-        c.sendPacket(PacketCreator.botEquipSnapshot(botIndex, bot));
     }
 
     // botIndex 1..5 -> the player's Nth owned bot (stable spawn order), or null.
-    private static Character resolveBot(Character player, int botIndex) {
+    private static AgentRuntimeEntry resolveEntry(Character player, int botIndex) {
         if (botIndex < 1) {
             return null;
         }
-        List<Character> bots = AgentRuntimeRegistry.activeAgentCharactersForLeader(player.getId());
-        if (botIndex > bots.size()) {
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.entriesForLeader(player.getId());
+        if (botIndex > entries.size()) {
             return null;
         }
-        return bots.get(botIndex - 1);
+        return entries.get(botIndex - 1);
+    }
+
+    private record EquipRequest(int action,
+                                int first,
+                                int second,
+                                int third) implements AgentMailboxAction<Character> {
+        private static EquipRequest move(int type, int oldPos, int newPos, int ignoredCount) {
+            return new EquipRequest(REQ_MOVE, type, oldPos, newPos);
+        }
+
+        private static EquipRequest give(int type, int position, int ignoredDestination) {
+            return new EquipRequest(REQ_GIVE, type, position, 0);
+        }
+
+        private static EquipRequest take(int type, int position, int ignoredDestination) {
+            return new EquipRequest(REQ_TAKE, type, position, 0);
+        }
+
+        private static EquipRequest sort(int tab) {
+            return new EquipRequest(REQ_SORT, tab, 0, 0);
+        }
+
+        @Override
+        public Character execute(AgentRuntimeEntry entry) {
+            Character bot = entry.bot();
+            Character player = entry.owner();
+            if (bot == null || player == null || player.getClient() == null) {
+                return bot;
+            }
+            switch (action) {
+                case REQ_MOVE -> applyBotMove(bot, first, second, third);
+                case REQ_GIVE -> giveToBot(player.getClient(), player, bot, first, second);
+                case REQ_TAKE -> takeFromBot(player.getClient(), player, bot, first, second);
+                case REQ_SORT -> sortAndMerge(bot, first);
+                default -> {
+                }
+            }
+            return bot;
+        }
     }
 
     // Bot-internal equip / unequip / reorder. Routes through the canonical

@@ -58,6 +58,27 @@ public final class AgentFollowTargetCommandCoordinator {
                         AgentMovementCommandRuntime::follow));
     }
 
+    public static void applyResolvedFollowTargetCommand(
+            AgentRuntimeEntry entry,
+            Character target) {
+        AgentFollowTargetCommandService.applyResolvedFollowTargetCommand(
+                List.of(entry),
+                target,
+                hooks());
+    }
+
+    private static AgentFollowTargetCommandService.Hooks hooks() {
+        return new AgentFollowTargetCommandService.Hooks(
+                AgentFollowTargetCommandCoordinator::resolveFollowTarget,
+                AgentFollowTargetCommandCoordinator::followTargetReply,
+                AgentReplyRuntime::queueReply,
+                () -> AgentRandom.randMs(250, 750),
+                AgentSchedulerRuntime::afterDelay,
+                AgentFollowTargetCommandCoordinator::autoEquipForFollow,
+                AgentFollowTargetCommandCoordinator::checkPotShareForFollow,
+                AgentMovementCommandRuntime::follow);
+    }
+
     private static String followTargetReply(Character target) {
         return AgentDialogueSelector.randomReply(List.of(
                 "ok",

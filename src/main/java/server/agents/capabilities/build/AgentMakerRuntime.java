@@ -21,13 +21,4 @@ public final class AgentMakerRuntime {
         AgentSchedulerRuntime.afterRandomDelay(entry, minMs, maxMs, action);
     }
 
-    @Deprecated(forRemoval = true)
-    public static void afterDelay(long delayMs, Runnable action) {
-        AgentSchedulerRuntime.afterDelay(delayMs, action);
-    }
-
-    @Deprecated(forRemoval = true)
-    public static void afterRandomDelay(int minMs, int maxMs, Runnable action) {
-        AgentSchedulerRuntime.afterRandomDelay(minMs, maxMs, action);
-    }
 }

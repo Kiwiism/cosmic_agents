@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -28,15 +29,18 @@ public final class AgentTickScheduler {
     private static final Logger log = LoggerFactory.getLogger(AgentTickScheduler.class);
     private static final AgentTickScheduler INSTANCE = new AgentTickScheduler(
             System::currentTimeMillis,
-            (task, periodMs) -> AgentSchedulerRuntime.register(task, periodMs));
+            (task, periodMs) -> AgentSchedulerRuntime.register(task, periodMs),
+            (task, delayMs) -> AgentSchedulerRuntime.schedule(task, delayMs));
 
     private final Map<AgentRuntimeEntry, Registration> registrations = new ConcurrentHashMap<>();
     private final AtomicLong nextSequence = new AtomicLong();
     private final AtomicLong roundRobinCursor = new AtomicLong();
     private final AtomicBoolean ticking = new AtomicBoolean();
+    private final AtomicBoolean wakeQueued = new AtomicBoolean();
     private final Object lifecycleLock = new Object();
     private final LongSupplier nowMs;
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler;
+    private final BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler;
     private final AgentSchedulerConfig config;
     private volatile ScheduledFuture<?> centralTask;
 
@@ -45,14 +49,36 @@ public final class AgentTickScheduler {
     }
 
     public AgentTickScheduler(LongSupplier nowMs, BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler) {
-        this(nowMs, loopScheduler, AgentSchedulerConfig.fromSystemProperties());
+        this(
+                nowMs,
+                loopScheduler,
+                (task, delayMs) -> AgentSchedulerRuntime.schedule(task, delayMs),
+                AgentSchedulerConfig.fromSystemProperties());
+    }
+
+    public AgentTickScheduler(LongSupplier nowMs,
+                              BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                              BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler) {
+        this(nowMs, loopScheduler, wakeScheduler, AgentSchedulerConfig.fromSystemProperties());
     }
 
     AgentTickScheduler(LongSupplier nowMs,
                        BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
                        AgentSchedulerConfig config) {
+        this(
+                nowMs,
+                loopScheduler,
+                (task, delayMs) -> AgentSchedulerRuntime.schedule(task, delayMs),
+                config);
+    }
+
+    AgentTickScheduler(LongSupplier nowMs,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
+                       AgentSchedulerConfig config) {
         this.nowMs = nowMs;
         this.loopScheduler = loopScheduler;
+        this.wakeScheduler = wakeScheduler;
         this.config = config;
     }
 
@@ -175,6 +201,21 @@ public final class AgentTickScheduler {
         }
     }
 
+    private void queueWake() {
+        if (!wakeQueued.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            wakeScheduler.apply(() -> {
+                wakeQueued.set(false);
+                tickAll();
+            }, 0L);
+        } catch (RuntimeException | Error failure) {
+            wakeQueued.set(false);
+            throw failure;
+        }
+    }
+
     private static final class Registration implements AgentScheduleHandle {
         private final AgentTickScheduler owner;
         private final AgentSessionId sessionId;
@@ -185,6 +226,7 @@ public final class AgentTickScheduler {
         private final AtomicLong nextDueMs;
         private final AtomicBoolean paused = new AtomicBoolean();
         private final AtomicBoolean cancelled = new AtomicBoolean();
+        private final CompletableFuture<Void> completion = new CompletableFuture<>();
         private volatile long claimedDueMs;
 
         private Registration(AgentTickScheduler owner,
@@ -243,6 +285,16 @@ public final class AgentTickScheduler {
         }
 
         @Override
+        public boolean wake() {
+            if (cancelled.get() || paused.get() || !sessionId.matches(entry)) {
+                return false;
+            }
+            nextDueMs.accumulateAndGet(owner.nowMs.getAsLong(), Math::min);
+            owner.queueWake();
+            return true;
+        }
+
+        @Override
         public long getDelay(TimeUnit unit) {
             return unit.convert(Math.max(0L, nextDueMs.get() - owner.nowMs.getAsLong()), TimeUnit.MILLISECONDS);
         }
@@ -257,6 +309,7 @@ public final class AgentTickScheduler {
             if (!cancelled.compareAndSet(false, true)) {
                 return false;
             }
+            completion.complete(null);
             owner.unregister(this);
             return true;
         }
@@ -273,23 +326,13 @@ public final class AgentTickScheduler {
 
         @Override
         public Void get() throws InterruptedException, ExecutionException {
-            while (!isDone()) {
-                Thread.sleep(10L);
-            }
-            return null;
+            return completion.get();
         }
 
         @Override
         public Void get(long timeout, TimeUnit unit)
                 throws InterruptedException, ExecutionException, TimeoutException {
-            long deadline = System.nanoTime() + unit.toNanos(timeout);
-            while (!isDone()) {
-                if (System.nanoTime() >= deadline) {
-                    throw new TimeoutException();
-                }
-                Thread.sleep(10L);
-            }
-            return null;
+            return completion.get(timeout, unit);
         }
     }
 }

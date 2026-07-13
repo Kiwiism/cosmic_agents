@@ -19,12 +19,12 @@ class AgentMakerRuntimeTest {
         try (MockedStatic<AgentReplyRuntime> replies = mockStatic(AgentReplyRuntime.class);
              MockedStatic<AgentSchedulerRuntime> scheduler = mockStatic(AgentSchedulerRuntime.class)) {
             AgentMakerRuntime.replyNow(entry, "reply");
-            AgentMakerRuntime.afterDelay(5000L, action);
-            AgentMakerRuntime.afterRandomDelay(900, 1100, action);
+            AgentMakerRuntime.afterDelay(entry, 5000L, action);
+            AgentMakerRuntime.afterRandomDelay(entry, 900, 1100, action);
 
             replies.verify(() -> AgentReplyRuntime.replyNow(entry, "reply"));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(5000L, action));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(900, 1100, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 5000L, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterRandomDelay(entry, 900, 1100, action));
         }
     }
 }

@@ -7583,16 +7583,18 @@ Current physics correction:
   expose submitted, rejected, coalesced, current-depth, and maximum-depth values
   for dialogue, LLM, navigation, and trade workers through
   `AgentAsyncQueueMetrics`.
-- Per-Agent mailbox foundation: every live `AgentRuntimeEntry` owns a bounded
-  FIFO `AgentActionMailbox`. It rejects stale generations, closes and fails
-  pending actions on despawn, isolates action failures, and drains up to 32
-  actions before gameplay work in the owning guarded tick. Agent chat ingress
-  uses `AgentChatMailboxDispatcher`; `agents.mailbox.enabled=false` remains the
-  default compatibility path, while enabling it queues immutable
-  `AgentChatMailboxAction` records and waits for the handled result required by
-  existing typo/LLM routing. Capacity and drain budget are configurable through
-  `agents.mailbox.capacity` and `agents.mailbox.maxActionsPerTick`. Remaining
-  external mutations will move behind mailbox actions only after parity testing.
+- Per-Agent mailbox ownership: every live `AgentRuntimeEntry` owns a bounded
+  `AgentActionMailbox`. It rejects stale generations, closes and fails pending
+  actions on despawn, isolates action failures, supports deterministic expiry
+  and opt-in latest-value coalescing, and drains up to 32 actions before
+  gameplay work in the owning guarded tick. Central scheduler modes require
+  this mailbox boundary; legacy mode remains inline unless
+  `agents.mailbox.enabled=true`. Chat/whisper, equip packets, potion requests,
+  follow/formation commands, pending offers, mutating Amherst commands,
+  airshow start, and entry-scoped delayed callbacks use asynchronous mailbox
+  delivery. No packet/event-loop path waits for a chat or Agent command result.
+  Capacity and drain budget remain configurable through
+  `agents.mailbox.capacity` and `agents.mailbox.maxActionsPerTick`.
 - Central scheduler foundation: `runtime.scheduler.AgentScheduler` is the
   lifecycle facade and selects the lazy central-sequential
   `AgentTickScheduler` when configured. It preserves the same

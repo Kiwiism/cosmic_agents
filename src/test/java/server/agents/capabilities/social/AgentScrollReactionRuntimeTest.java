@@ -22,11 +22,11 @@ class AgentScrollReactionRuntimeTest {
             scheduler.when(() -> AgentSchedulerRuntime.randomDelayMs(0, 2001)).thenReturn(321L);
 
             AgentScrollReactionRuntime.queueSay(entry, "nice");
-            AgentScrollReactionRuntime.afterDelay(123L, action);
+            AgentScrollReactionRuntime.afterDelay(entry, 123L, action);
             long delay = AgentScrollReactionRuntime.randomDelayMs(0, 2001);
 
             replies.verify(() -> AgentReplyRuntime.queueSay(entry, "nice"));
-            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(123L, action));
+            scheduler.verify(() -> AgentSchedulerRuntime.afterDelay(entry, 123L, action));
             scheduler.verify(() -> AgentSchedulerRuntime.randomDelayMs(0, 2001));
             assertEquals(321L, delay);
         }

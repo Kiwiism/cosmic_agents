@@ -1,5 +1,7 @@
 package server.agents.runtime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentSchedulerGatewayRuntime;
 
 import java.util.concurrent.ScheduledFuture;
@@ -10,6 +12,8 @@ import java.util.function.Function;
  * Agent-owned bridge for delayed chat/report/status callbacks.
  */
 public final class AgentSchedulerRuntime {
+    private static final Logger log = LoggerFactory.getLogger(AgentSchedulerRuntime.class);
+
     private AgentSchedulerRuntime() {
     }
 
@@ -52,9 +56,21 @@ public final class AgentSchedulerRuntime {
                 scheduler,
                 () -> {
                     if (AgentRuntimeRegistry.isActiveSession(entry, generation)) {
-                        action.run();
+                        dispatchScopedAction(entry, action);
                     }
                 });
+    }
+
+    private static void dispatchScopedAction(AgentRuntimeEntry entry, Runnable action) {
+        AgentMailboxRuntime.dispatch(entry, ignored -> {
+            action.run();
+            return null;
+        }).whenComplete((ignored, failure) -> {
+            if (failure != null) {
+                log.debug("Agent delayed action was not delivered for session {}",
+                        entry.sessionGeneration(), failure);
+            }
+        });
     }
 
     public static boolean isCurrentSession(AgentRuntimeEntry entry) {
