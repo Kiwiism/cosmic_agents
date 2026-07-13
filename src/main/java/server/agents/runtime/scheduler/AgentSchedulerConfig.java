@@ -8,7 +8,12 @@ public record AgentSchedulerConfig(
         boolean logSlowTicks,
         long slowTickMs,
         int maxAgentsPerTick,
-        int ingressCapacityPerShard) {
+        int ingressCapacityPerShard,
+        long cycleBudgetMs,
+        int maxWorkItemsPerCycle,
+        int visibleReservePercent,
+        int criticalReservePercent,
+        long starvationPromotionMs) {
     public AgentSchedulerConfig {
         if (mode == null) {
             throw new IllegalArgumentException("Agent scheduler mode is required");
@@ -25,6 +30,19 @@ public record AgentSchedulerConfig(
         if (ingressCapacityPerShard < 1) {
             throw new IllegalArgumentException("Agent scheduler ingressCapacityPerShard must be positive");
         }
+        if (cycleBudgetMs < 1L) {
+            throw new IllegalArgumentException("Agent scheduler cycleBudgetMs must be positive");
+        }
+        if (maxWorkItemsPerCycle < 1) {
+            throw new IllegalArgumentException("Agent scheduler maxWorkItemsPerCycle must be positive");
+        }
+        if (visibleReservePercent < 0 || criticalReservePercent < 0
+                || visibleReservePercent + criticalReservePercent > 100) {
+            throw new IllegalArgumentException("Agent scheduler reserve percentages must total at most 100");
+        }
+        if (starvationPromotionMs < 1L) {
+            throw new IllegalArgumentException("Agent scheduler starvationPromotionMs must be positive");
+        }
     }
 
     public static AgentSchedulerConfig fromSystemProperties() {
@@ -34,7 +52,18 @@ public record AgentSchedulerConfig(
                 Boolean.parseBoolean(System.getProperty("agents.scheduler.logSlowTicks", "true")),
                 longProperty("agents.scheduler.slowTickMs", 250L),
                 intProperty("agents.scheduler.maxAgentsPerTick", 0),
-                intProperty("agents.scheduler.ingressCapacityPerShard", 4096));
+                intProperty("agents.scheduler.ingressCapacityPerShard", 4096),
+                longProperty("agents.scheduler.cycleBudgetMs", 10L),
+                intProperty("agents.scheduler.maxWorkItemsPerCycle", 256),
+                intProperty("agents.scheduler.visibleReservePercent", 40),
+                intProperty("agents.scheduler.criticalReservePercent", 10),
+                longProperty("agents.scheduler.starvationPromotionMs", 2_000L));
+    }
+
+    int effectiveMaxWorkItemsPerCycle() {
+        return maxAgentsPerTick == 0
+                ? maxWorkItemsPerCycle
+                : Math.min(maxAgentsPerTick, maxWorkItemsPerCycle);
     }
 
     private static AgentSchedulerMode configuredMode() {

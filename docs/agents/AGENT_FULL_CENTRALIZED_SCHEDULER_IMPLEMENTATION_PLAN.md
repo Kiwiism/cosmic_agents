@@ -71,6 +71,10 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
   one coalesced synchronization marker per admitted live/closing registration;
   only the scheduler cycle mutates due time and heap ownership. The 4096-record
   default admission bound reserves cleanup capacity for the 2000-Agent target.
+- Phase 4 adds explicit work and priority classes, a 10 ms cycle deadline, a
+  256-item hard guard, critical/visible reserved passes, per-registration cost
+  EWMA, repeated starvation promotion up to interactive priority, immediate
+  bounded continuations, and 2048-sample rolling delay/cost windows.
 
 The repository already contains a safe foundation:
 
@@ -108,18 +112,15 @@ scheduler.
 
 The production target must address these gaps:
 
-1. One slow Agent delays all later Agents in the same single-shard cycle.
-2. The cap is an Agent-count cap, not a measured time or cost budget.
-3. There are no scheduler priority classes or reserved budgets.
-4. Multi-shard ownership is not enabled.
-5. There is no map-aware or simulation-mode-aware cadence policy.
-6. Mailbox and central scheduler compatibility flags are disabled by default.
-7. Blocking database, navigation, catalog, or LLM work is not governed by one
+1. One slow monolithic Agent callback can overrun its current cycle before the
+   next checkpoint; Phase 8 owns tick slicing.
+2. Multi-shard ownership is not enabled.
+3. There is no map-aware or simulation-mode-aware cadence policy.
+4. Mailbox and central scheduler compatibility flags are disabled by default.
+5. Blocking database, navigation, catalog, or LLM work is not governed by one
     scheduler completion contract.
-8. Metrics are cumulative and do not yet provide rolling p50/p95/p99 delay,
-    queue depth, budget overrun, or per-work-kind cost.
-9. There is no formal overload or load-shedding state machine.
-10. Pause/resume does not yet expose a wait-for-quiescence contract required by
+6. There is no formal overload or load-shedding state machine.
+7. Pause/resume does not yet expose a wait-for-quiescence contract required by
     profile exchange and Double Agent operations.
 
 ## Implementation Readiness Audit
@@ -146,8 +147,9 @@ current mandatory migration inputs:
   validate and enter through the owning mailbox.
 - `AgentNavigationGraphService` contains a blocking `join()` API. Scheduler
   workers must be statically prevented from reaching it.
-- current scheduler metrics are cumulative rather than bounded rolling
-  percentiles by shard, priority, work class, and simulation mode.
+- scheduler metrics now include bounded rolling global and work-class delay/
+  cost percentiles. Per-shard, priority, map, and simulation-mode breakdowns
+  remain for the phases that introduce those dimensions.
 - the existing 500-session soak proves 10,000 dispatcher callback invocations;
   it is not a 500-Agent gameplay, packet, database, or long-duration soak.
 - capability/gameplay MVP proof is not complete. Scheduler foundations may be
@@ -160,7 +162,8 @@ Readiness decision:
 Phase 0-1: ready to implement now
 Phase 2: complete; evidence is recorded under phase-2
 Phase 3: complete; evidence is recorded under phase-3
-Phase 4-5: ready to implement behind non-default rollout modes
+Phase 4: complete; evidence is recorded under phase-4
+Phase 5: ready to implement behind non-default rollout modes
 Phase 6+: blocked on Cosmic thread-affinity audit and capability parity proof
 Default CENTRAL_SHARDED: blocked on staged live and soak acceptance
 ```
@@ -1152,6 +1155,12 @@ Exit:
 - 500-Agent deterministic soak has bounded queue and delay.
 
 ### Phase 4: Time And Cost Budgets
+
+Status: complete on `feature/agent-central-scheduler-runtime`. Evidence is
+recorded under `docs/agents/evidence/central-scheduler/phase-4`. All current
+production full ticks enter as visible gameplay; later capability slicing and
+simulation policy will assign narrower work classes without changing this
+phase's scheduling contract.
 
 Work:
 

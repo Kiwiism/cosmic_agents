@@ -7612,6 +7612,14 @@ Current physics correction:
   retain registration order, missed periods coalesce, and admitted lifecycle
   cancellation retains cleanup capacity. Legacy per-Agent scheduling and the
   guarded gameplay tick are unchanged.
+- Central scheduler budget ownership: due records move into shard-local ready
+  queues classified by work kind and priority. Each cycle has a 10 ms deadline
+  and 256-item guard by default, critical/visible reserved passes, learned cost
+  admission for background work, and repeated starvation promotion capped at
+  interactive priority. Deferred work schedules a coalesced immediate
+  continuation. Rolling delay and duration histories are fixed at 2048 samples.
+  The production full tick remains visible gameplay and legacy scheduling is
+  unchanged.
 
 Initial reconstruction order:
 

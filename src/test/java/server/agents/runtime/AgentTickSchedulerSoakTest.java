@@ -20,12 +20,16 @@ class AgentTickSchedulerSoakTest {
     @AfterEach
     void tearDown() {
         System.clearProperty("agents.scheduler.central.enabled");
+        System.clearProperty("agents.scheduler.maxWorkItemsPerCycle");
+        System.clearProperty("agents.scheduler.cycleBudgetMs");
         AgentRuntimeRegistry.clear();
     }
 
     @ParameterizedTest
     @ValueSource(ints = {50, 100, 250, 500})
     void centralSequentialDispatchesTwentyCadencesAcrossBaselinePopulations(int population) {
+        System.setProperty("agents.scheduler.maxWorkItemsPerCycle", "1000");
+        System.setProperty("agents.scheduler.cycleBudgetMs", "60000");
         AtomicLong now = new AtomicLong(1_000L);
         ScheduledFuture<?> centralFuture = mock(ScheduledFuture.class);
         AgentTickScheduler scheduler = new AgentTickScheduler(now::get, (loop, period) -> centralFuture);

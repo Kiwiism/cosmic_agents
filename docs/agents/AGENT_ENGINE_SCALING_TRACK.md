@@ -42,9 +42,13 @@ Current scheduler implementation checkpoint on
 - Phase 3 replaces the central-sequential global scan/sort with bounded
   coalesced ingress and a one-shard indexed due-time heap. Deterministic
   50/100/250/500-session cadence tests pass without changing gameplay cadence.
+- Phase 4 adds explicit work/priority classes, 10 ms and 256-item default cycle
+  guards, cost EWMA, critical/visible reserved passes, repeated starvation
+  aging, immediate bounded continuations, and 2048-sample rolling delay/cost
+  percentiles.
 - Legacy per-Agent scheduling remains the production default and rollback.
-- Phase 4 adds priority classes, cycle/time budgets, cost estimates, starvation
-  aging, reserved capacity, and rolling scheduler latency/cost metrics.
+- Phase 5 moves navigation, persistence, LLM/network, and other blocking work
+  onto bounded executors with generation/request-stamped mailbox completion.
 
 ## Track Split
 

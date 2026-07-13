@@ -191,6 +191,8 @@ class AgentTickSchedulerTest {
     }
 
     private AgentTickScheduler scheduler() {
+        System.setProperty("agents.scheduler.cycleBudgetMs", "60000");
+        System.setProperty("agents.scheduler.maxWorkItemsPerCycle", "10000");
         return new AgentTickScheduler(
                 now::get,
                 (loop, period) -> {
@@ -224,5 +226,10 @@ class AgentTickSchedulerTest {
         System.clearProperty("agents.scheduler.logSlowTicks");
         System.clearProperty("agents.scheduler.slowTickMs");
         System.clearProperty("agents.scheduler.ingressCapacityPerShard");
+        System.clearProperty("agents.scheduler.cycleBudgetMs");
+        System.clearProperty("agents.scheduler.maxWorkItemsPerCycle");
+        System.clearProperty("agents.scheduler.visibleReservePercent");
+        System.clearProperty("agents.scheduler.criticalReservePercent");
+        System.clearProperty("agents.scheduler.starvationPromotionMs");
     }
 }

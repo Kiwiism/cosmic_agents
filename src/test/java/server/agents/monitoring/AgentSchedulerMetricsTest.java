@@ -2,6 +2,7 @@ package server.agents.monitoring;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.scheduler.AgentWorkClass;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -28,5 +29,34 @@ class AgentSchedulerMetricsTest {
         assertEquals(25, snapshot.maxCycleNs());
         assertEquals(4, snapshot.totalQueueLagMs());
         assertEquals(4, snapshot.maxQueueLagMs());
+    }
+
+    @Test
+    void recordsBoundedPercentilesPressureAndWorkClassCost() {
+        AgentSchedulerMetrics.recordUpdated(1L, 100L, AgentWorkClass.PRESENTATION_GAMEPLAY, false);
+        AgentSchedulerMetrics.recordUpdated(5L, 500L, AgentWorkClass.PRESENTATION_GAMEPLAY, false);
+        AgentSchedulerMetrics.recordBudgetExhausted();
+        AgentSchedulerMetrics.recordDeferred(3L);
+        AgentSchedulerMetrics.recordStarvationPromotions(2L);
+        AgentSchedulerMetrics.recordDepths(4, 8, 10, 6);
+
+        AgentSchedulerMetrics.Snapshot snapshot = AgentSchedulerMetrics.snapshot();
+        assertEquals(1L, snapshot.queueLagP50Ms());
+        assertEquals(5L, snapshot.queueLagP95Ms());
+        assertEquals(100L, snapshot.workDurationP50Ns());
+        assertEquals(500L, snapshot.workDurationP99Ns());
+        assertEquals(1L, snapshot.budgetExhaustions());
+        assertEquals(3L, snapshot.deferredWork());
+        assertEquals(2L, snapshot.starvationPromotions());
+        assertEquals(4L, snapshot.ingressDepth());
+        assertEquals(8L, snapshot.ingressHighWaterMark());
+        assertEquals(10L, snapshot.dueHeapDepth());
+        assertEquals(6L, snapshot.readyDepth());
+
+        AgentSchedulerMetrics.WorkClassSnapshot workClass =
+                AgentSchedulerMetrics.workClassSnapshot(AgentWorkClass.PRESENTATION_GAMEPLAY);
+        assertEquals(2, workClass.sampleCount());
+        assertEquals(100L, workClass.durationP50Ns());
+        assertEquals(500L, workClass.durationP99Ns());
     }
 }

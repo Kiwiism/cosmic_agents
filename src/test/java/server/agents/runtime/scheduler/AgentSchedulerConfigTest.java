@@ -16,6 +16,11 @@ class AgentSchedulerConfigTest {
         System.clearProperty("agents.scheduler.slowTickMs");
         System.clearProperty("agents.scheduler.maxAgentsPerTick");
         System.clearProperty("agents.scheduler.ingressCapacityPerShard");
+        System.clearProperty("agents.scheduler.cycleBudgetMs");
+        System.clearProperty("agents.scheduler.maxWorkItemsPerCycle");
+        System.clearProperty("agents.scheduler.visibleReservePercent");
+        System.clearProperty("agents.scheduler.criticalReservePercent");
+        System.clearProperty("agents.scheduler.starvationPromotionMs");
     }
 
     @Test
@@ -53,6 +58,15 @@ class AgentSchedulerConfigTest {
 
         System.setProperty("agents.scheduler.maxAgentsPerTick", "0");
         System.setProperty("agents.scheduler.ingressCapacityPerShard", "0");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+
+        System.setProperty("agents.scheduler.ingressCapacityPerShard", "4096");
+        System.setProperty("agents.scheduler.cycleBudgetMs", "0");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+
+        System.setProperty("agents.scheduler.cycleBudgetMs", "10");
+        System.setProperty("agents.scheduler.visibleReservePercent", "91");
+        System.setProperty("agents.scheduler.criticalReservePercent", "10");
         assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
     }
 }

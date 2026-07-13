@@ -1,0 +1,14 @@
+package server.agents.runtime.scheduler;
+
+public enum AgentWorkClass {
+    LIFECYCLE_CRITICAL,
+    PLAYER_DIRECTED,
+    PRESENTATION_MOVEMENT,
+    PRESENTATION_GAMEPLAY,
+    BACKGROUND_GAMEPLAY,
+    PLAN_ADVANCE,
+    ASYNC_COMPLETION,
+    SOCIAL,
+    COSMETIC,
+    MAINTENANCE
+}

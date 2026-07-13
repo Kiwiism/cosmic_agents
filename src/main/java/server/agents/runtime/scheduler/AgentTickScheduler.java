@@ -38,6 +38,7 @@ public final class AgentTickScheduler {
     private final AtomicBoolean wakeQueued = new AtomicBoolean();
     private final Object lifecycleLock = new Object();
     private final LongSupplier nowMs;
+    private final LongSupplier nanoTime;
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler;
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler;
     private final AgentSchedulerConfig config;
@@ -76,10 +77,19 @@ public final class AgentTickScheduler {
                        BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
                        BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
                        AgentSchedulerConfig config) {
-        if (nowMs == null || loopScheduler == null || wakeScheduler == null || config == null) {
+        this(nowMs, System::nanoTime, loopScheduler, wakeScheduler, config);
+    }
+
+    AgentTickScheduler(LongSupplier nowMs,
+                       LongSupplier nanoTime,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
+                       AgentSchedulerConfig config) {
+        if (nowMs == null || nanoTime == null || loopScheduler == null || wakeScheduler == null || config == null) {
             throw new IllegalArgumentException("Agent scheduler dependencies are required");
         }
         this.nowMs = nowMs;
+        this.nanoTime = nanoTime;
         this.loopScheduler = loopScheduler;
         this.wakeScheduler = wakeScheduler;
         this.config = config;
@@ -90,8 +100,24 @@ public final class AgentTickScheduler {
     }
 
     public AgentScheduleHandle register(AgentRuntimeEntry entry, Runnable tick, long periodMs) {
+        return register(
+                entry,
+                tick,
+                periodMs,
+                AgentWorkClass.PRESENTATION_GAMEPLAY,
+                AgentPriorityClass.VISIBLE);
+    }
+
+    AgentScheduleHandle register(AgentRuntimeEntry entry,
+                                 Runnable tick,
+                                 long periodMs,
+                                 AgentWorkClass workClass,
+                                 AgentPriorityClass priority) {
         if (entry == null || tick == null) {
             throw new IllegalArgumentException("Agent entry and tick are required");
+        }
+        if (workClass == null || priority == null) {
+            throw new IllegalArgumentException("Agent work class and priority are required");
         }
 
         Registration registration;
@@ -109,7 +135,9 @@ public final class AgentTickScheduler {
                     tick,
                     Math.max(1L, periodMs),
                     nowMs.getAsLong(),
-                    nextSequence.incrementAndGet());
+                    nextSequence.incrementAndGet(),
+                    workClass,
+                    priority);
             Registration previous = registrations.put(entry, registration);
             ownedRegistrations.put(registration, Boolean.TRUE);
             replaced = previous != null;
@@ -134,36 +162,90 @@ public final class AgentTickScheduler {
             AgentSchedulerMetrics.recordSkipped(registrations.size());
             return;
         }
-        long cycleStarted = System.nanoTime();
+        long cycleStarted = nanoTime.getAsLong();
+        AgentCycleBudget budget = new AgentCycleBudget(cycleStarted, config);
+        boolean continuationNeeded = false;
+        boolean budgetLimited = false;
         try {
             shard.drainIngress(this::synchronizeRegistration);
             long now = nowMs.getAsLong();
-            int scheduledAtStart = shard.scheduledCount();
-            int configuredLimit = config.maxAgentsPerTick();
-            int workLimit = configuredLimit == 0
-                    ? scheduledAtStart
-                    : Math.min(configuredLimit, scheduledAtStart);
-            int processed = 0;
-            while (processed < workLimit) {
-                Registration registration = shard.peekDue();
-                if (registration == null || registration.nextDueMs() > now) {
+            moveDueToReady(now);
+            while (shard.readyCount() > 0) {
+                long selectionTimeNs = nanoTime.getAsLong();
+                if (budget.exhausted(selectionTimeNs)) {
+                    continuationNeeded = true;
+                    budgetLimited = true;
                     break;
                 }
-                shard.pollDue();
-                processed++;
-                update(registration, now, config);
+                boolean criticalReady = shard.hasReady(
+                        AgentPriorityClass.CRITICAL.ordinal(),
+                        registration -> registration.effectivePriority(
+                                now, config.starvationPromotionMs()).ordinal());
+                boolean visibleReady = shard.hasReady(
+                        AgentPriorityClass.VISIBLE.ordinal(),
+                        registration -> registration.effectivePriority(
+                                now, config.starvationPromotionMs()).ordinal());
+                int maximumPriority = budget.preferredMaximumPriority(criticalReady, visibleReady);
+                Registration registration = shard.pollReady(
+                        maximumPriority,
+                        candidate -> candidate.effectivePriority(
+                                now, config.starvationPromotionMs()).ordinal(),
+                        Comparator.comparingLong(Registration::readyDueMs)
+                                .thenComparingLong(Registration::sequence));
+                if (registration == null) {
+                    break;
+                }
+                AgentPriorityClass effectivePriority =
+                        registration.effectivePriority(now, config.starvationPromotionMs());
+                if (!budget.admits(effectivePriority, registration.estimatedCostNs(), selectionTimeNs)) {
+                    shard.addReadyFirst(registration, registration.priority);
+                    continuationNeeded = true;
+                    budgetLimited = true;
+                    break;
+                }
+                registration.clearReady();
+                long elapsedNs = update(registration, now, config);
+                budget.record(effectivePriority, elapsedNs);
                 if (shouldSchedule(registration)) {
                     shard.addOrUpdate(registration);
                 }
             }
-            Registration remainingDue = shard.peekDue();
-            if (configuredLimit > 0 && remainingDue != null && remainingDue.nextDueMs() <= now) {
-                AgentSchedulerMetrics.recordSkipped(1);
+            int deferred = shard.readyCount();
+            if (deferred > 0) {
+                continuationNeeded = true;
+                AgentSchedulerMetrics.recordDeferred(deferred);
+                AgentSchedulerMetrics.recordSkipped(deferred);
             }
+            long cycleNowNs = nanoTime.getAsLong();
+            if (deferred > 0 && (budgetLimited || budget.deadlineExceeded(cycleNowNs))) {
+                AgentSchedulerMetrics.recordBudgetExhausted();
+            }
+            AgentSchedulerMetrics.recordDepths(
+                    shard.ingressDepth(),
+                    shard.ingressHighWaterMark(),
+                    shard.scheduledCount(),
+                    shard.readyCount());
         } finally {
             ticking.set(false);
-            AgentSchedulerMetrics.recordCycle(System.nanoTime() - cycleStarted);
+            AgentSchedulerMetrics.recordCycle(Math.max(0L, nanoTime.getAsLong() - cycleStarted));
             stopCentralTaskIfIdle();
+            if (continuationNeeded) {
+                queueWake();
+            }
+        }
+    }
+
+    private void moveDueToReady(long now) {
+        while (true) {
+            Registration registration = shard.peekDue();
+            if (registration == null || registration.nextDueMs() > now) {
+                return;
+            }
+            shard.pollDue();
+            if (shouldSchedule(registration)) {
+                registration.markReady(now);
+                shard.addReady(registration, registration.priority);
+            }
         }
     }
 
@@ -203,6 +285,10 @@ public final class AgentTickScheduler {
         return shard.scheduledCount();
     }
 
+    int readyRegistrationCount() {
+        return shard.readyCount();
+    }
+
     int ingressDepth() {
         return shard.ingressDepth();
     }
@@ -211,26 +297,34 @@ public final class AgentTickScheduler {
         return shard.ingressHighWaterMark();
     }
 
-    private void update(Registration registration, long now, AgentSchedulerConfig config) {
+    /* The unchanged guarded full tick remains the parity work item until Phase 8. */
+    private long update(Registration registration, long now, AgentSchedulerConfig config) {
         if (!registration.prepare(now)) {
             AgentSchedulerMetrics.recordSkipped(1);
-            return;
+            return 0L;
         }
-        long started = System.nanoTime();
+        long started = nanoTime.getAsLong();
+        long elapsedNs;
         try {
             registration.tick.run();
         } catch (Throwable failure) {
             AgentSchedulerMetrics.recordFailure();
             log.warn("Central Agent scheduler tick failed for session {}", registration.sessionId, failure);
         } finally {
-            long elapsedNs = System.nanoTime() - started;
+            elapsedNs = Math.max(0L, nanoTime.getAsLong() - started);
+            registration.recordCost(elapsedNs);
             boolean slow = elapsedNs >= TimeUnit.MILLISECONDS.toNanos(config.slowTickMs());
-            AgentSchedulerMetrics.recordUpdated(now - registration.claimedDueMs, slow);
+            AgentSchedulerMetrics.recordUpdated(
+                    now - registration.claimedDueMs,
+                    elapsedNs,
+                    registration.workClass,
+                    slow);
             if (slow && config.logSlowTicks()) {
                 log.warn("Slow central Agent tick session={} elapsedMs={}",
                         registration.sessionId, elapsedNs / 1_000_000L);
             }
         }
+        return elapsedNs;
     }
 
     private void synchronizeRegistration(Registration registration) {
@@ -242,7 +336,9 @@ public final class AgentTickScheduler {
                 retireIfClosed(registration);
                 return;
             }
-            shard.addOrUpdate(registration);
+            if (!shard.containsReady(registration)) {
+                shard.addOrUpdate(registration);
+            }
         }
     }
 
@@ -344,6 +440,8 @@ public final class AgentTickScheduler {
         private final Runnable tick;
         private final long periodMs;
         private final long sequence;
+        private final AgentWorkClass workClass;
+        private final AgentPriorityClass priority;
         private final AtomicLong pendingWakeDueMs = new AtomicLong(Long.MAX_VALUE);
         private final AtomicBoolean ingressQueued = new AtomicBoolean();
         private final AtomicBoolean paused = new AtomicBoolean();
@@ -351,6 +449,11 @@ public final class AgentTickScheduler {
         private final CompletableFuture<Void> completion = new CompletableFuture<>();
         private volatile long nextDueMs;
         private volatile long claimedDueMs;
+        private long readySinceMs = -1L;
+        private long readyDueMs;
+        private long estimatedCostNs = 100_000L;
+        private boolean costObserved;
+        private int recordedPromotionLevels;
 
         private Registration(AgentTickScheduler owner,
                              AgentSessionId sessionId,
@@ -358,7 +461,9 @@ public final class AgentTickScheduler {
                              Runnable tick,
                              long periodMs,
                              long firstDueMs,
-                             long sequence) {
+                             long sequence,
+                             AgentWorkClass workClass,
+                             AgentPriorityClass priority) {
             this.owner = owner;
             this.sessionId = sessionId;
             this.entry = entry;
@@ -366,6 +471,8 @@ public final class AgentTickScheduler {
             this.periodMs = periodMs;
             this.nextDueMs = firstDueMs;
             this.sequence = sequence;
+            this.workClass = workClass;
+            this.priority = priority;
         }
 
         private long sequence() {
@@ -374,6 +481,52 @@ public final class AgentTickScheduler {
 
         private long nextDueMs() {
             return nextDueMs;
+        }
+
+        private long readyDueMs() {
+            return readyDueMs;
+        }
+
+        private void markReady(long now) {
+            if (readySinceMs < 0L) {
+                readySinceMs = now;
+                readyDueMs = nextDueMs;
+                recordedPromotionLevels = 0;
+            }
+        }
+
+        private void clearReady() {
+            readySinceMs = -1L;
+            recordedPromotionLevels = 0;
+        }
+
+        private AgentPriorityClass effectivePriority(long now, long promotionMs) {
+            if (readySinceMs < 0L) {
+                return priority;
+            }
+            long waitedMs = Math.max(0L, now - readySinceMs);
+            int promotionLevels = (int) Math.min(
+                    priority.maximumPromotionLevels(),
+                    waitedMs / promotionMs);
+            if (promotionLevels > recordedPromotionLevels) {
+                AgentSchedulerMetrics.recordStarvationPromotions(promotionLevels - recordedPromotionLevels);
+                recordedPromotionLevels = promotionLevels;
+            }
+            return priority.promoted(promotionLevels);
+        }
+
+        private long estimatedCostNs() {
+            return estimatedCostNs;
+        }
+
+        private void recordCost(long elapsedNs) {
+            long sample = Math.max(1L, elapsedNs);
+            if (!costObserved) {
+                estimatedCostNs = sample;
+                costObserved = true;
+                return;
+            }
+            estimatedCostNs = (estimatedCostNs * 3L + sample) / 4L;
         }
 
         private boolean prepare(long now) {

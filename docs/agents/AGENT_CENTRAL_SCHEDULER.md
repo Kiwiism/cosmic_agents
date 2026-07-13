@@ -44,6 +44,11 @@ agents.scheduler.logSlowTicks=true
 agents.scheduler.slowTickMs=250
 agents.scheduler.maxAgentsPerTick=0
 agents.scheduler.ingressCapacityPerShard=4096
+agents.scheduler.cycleBudgetMs=10
+agents.scheduler.maxWorkItemsPerCycle=256
+agents.scheduler.visibleReservePercent=40
+agents.scheduler.criticalReservePercent=10
+agents.scheduler.starvationPromotionMs=2000
 ```
 
 `maxAgentsPerTick=0` means unlimited. A positive cap selects the oldest due
@@ -56,6 +61,31 @@ the number of scheduler-owned live/closing registrations. One coalesced ingress
 marker is retained per admitted registration, which reserves lifecycle cleanup
 capacity without an unbounded critical queue. New registration is rejected
 when the bound is full; an already admitted cancellation is not dropped.
+
+Each central cycle also has a wall-clock deadline and hard work-count guard.
+Critical and visible passes consume their reserved shares before general
+background selection. An expensive background record is deferred when its
+EWMA estimate does not fit the remaining cycle time; critical and visible work
+is never rejected by that estimate. Remaining ready work schedules one
+coalesced immediate continuation, so it is delayed rather than lost.
+
+`maxAgentsPerTick` remains a compatibility cap. When positive, the effective
+work guard is the lower of it and `maxWorkItemsPerCycle`.
+
+Ready work has these priority classes, from highest to lowest:
+
+```text
+CRITICAL
+INTERACTIVE
+VISIBLE
+BACKGROUND_ACTIVE
+BACKGROUND_ABSTRACT
+DEFERRED
+```
+
+Waiting work promotes one level per `starvationPromotionMs`, up to
+`INTERACTIVE`; ordinary work therefore makes bounded progress without becoming
+lifecycle-critical.
 
 ## Isolation and lifecycle
 
@@ -81,7 +111,11 @@ when the bound is full; an already admitted cancellation is not dropped.
 ## Metrics
 
 `AgentSchedulerMetrics.snapshot()` reports cycle duration, updated and skipped
-Agents, failures, slow Agents, and queue lag. Enable slow-tick logging during
+Agents, failures, slow Agents, queue lag, bounded rolling p50/p95/p99 delay and
+work duration, budget exhaustion, deferral, starvation promotion, and
+ingress/due/ready depth. Work-duration windows are also available by
+`AgentWorkClass`. Each rolling window retains at most 2048 samples. Enable
+slow-tick logging during
 soak validation, then compare movement, combat, loot, dialogue, and lifecycle
 parity against legacy mode before considering central scheduling as the default.
 
@@ -102,15 +136,16 @@ Phase 0 baseline: complete
 Phase 1 stable scheduler API and O(1) session index: complete
 Phase 2 mandatory mailbox ownership: complete
 Phase 3 bounded one-shard ingress and indexed due-time heap: complete
-Phase 4 priority, time/cost budgets, and rolling metrics: next implementation phase
+Phase 4 priority, time/cost budgets, aging, and rolling metrics: complete
+Phase 5 bounded async completion contract: next implementation phase
 multi-shard execution: blocked on Cosmic thread-affinity audit
 production default switch: blocked on parity and staged soak evidence
 ```
 
 The central-sequential global scan/sort has been removed. Important current
 limitations include a blocking navigation graph `join()` reserved for Phase 5
-removal, cumulative-only metrics, and no priority/time/cost budget runtime.
-Cross-session
+removal and blocking/external workloads that do not yet share a single
+generation/request-stamped completion contract. Cross-session
 formation and leader-away operations also require a Phase 6 gateway/ownership
 decision before multi-shard execution. The repository therefore has a safe
 single-writer migration foundation, not the completed centralized scheduler.
@@ -125,6 +160,8 @@ Phase 2 mailbox, ingress, delayed-callback, and nonblocking-result evidence is
 recorded under `docs/agents/evidence/central-scheduler/phase-2`.
 Phase 3 heap, bounded-ingress, lifecycle, cadence, and deterministic 500-session
 evidence is recorded under `docs/agents/evidence/central-scheduler/phase-3`.
+Phase 4 priority, budget, cost, aging, rolling-metric, and overload evidence is
+recorded under `docs/agents/evidence/central-scheduler/phase-4`.
 
 ## Rollback
 
