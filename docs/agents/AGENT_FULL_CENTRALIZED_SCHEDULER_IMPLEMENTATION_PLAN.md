@@ -66,6 +66,11 @@ Implementation progress on `feature/agent-central-scheduler-runtime`:
   Amherst mutation, airshow, and entry-scoped delayed callbacks now enter the
   owning session asynchronously through bounded mailboxes. Legacy mode retains
   its inline compatibility path unless mailboxes are explicitly enabled.
+- Phase 3 replaces the central-sequential registration scan and per-cycle sort
+  with one bounded-ingress shard and an indexed due-time heap. Producers submit
+  one coalesced synchronization marker per admitted live/closing registration;
+  only the scheduler cycle mutates due time and heap ownership. The 4096-record
+  default admission bound reserves cleanup capacity for the 2000-Agent target.
 
 The repository already contains a safe foundation:
 
@@ -103,46 +108,42 @@ scheduler.
 
 The production target must address these gaps:
 
-1. Every cycle performs a global registration scan.
-2. Due registrations are allocated and sorted every cycle.
-3. One slow Agent delays all later Agents in the same cycle.
-4. The cap is an Agent-count cap, not a measured time or cost budget.
-5. There are no scheduler priority classes.
-6. There is no scheduler shard ownership.
-7. There is no map-aware or simulation-mode-aware cadence policy.
-8. External Agent mutations have not all moved behind mailboxes.
-9. Mailbox and central scheduler compatibility flags are disabled by default.
-10. Blocking database, navigation, catalog, or LLM work is not governed by one
+1. One slow Agent delays all later Agents in the same single-shard cycle.
+2. The cap is an Agent-count cap, not a measured time or cost budget.
+3. There are no scheduler priority classes or reserved budgets.
+4. Multi-shard ownership is not enabled.
+5. There is no map-aware or simulation-mode-aware cadence policy.
+6. Mailbox and central scheduler compatibility flags are disabled by default.
+7. Blocking database, navigation, catalog, or LLM work is not governed by one
     scheduler completion contract.
-11. Metrics are cumulative and do not yet provide rolling p50/p95/p99 delay,
+8. Metrics are cumulative and do not yet provide rolling p50/p95/p99 delay,
     queue depth, budget overrun, or per-work-kind cost.
-12. There is no formal overload or load-shedding state machine.
-13. Pause/resume does not yet expose a wait-for-quiescence contract required by
+9. There is no formal overload or load-shedding state machine.
+10. Pause/resume does not yet expose a wait-for-quiescence contract required by
     profile exchange and Double Agent operations.
 
 ## Implementation Readiness Audit
 
-Audit baseline: `master` at `28555684e8` on 2026-07-12.
+Original design audit baseline: `master` at `28555684e8` on 2026-07-12.
+Current implementation baseline: `feature/agent-central-scheduler-runtime`
+from `26264f4cc2` plus the committed phase checkpoints.
 
-The design is complete enough to begin Phase 0 and Phase 1. It is not safe to
-jump directly to `CENTRAL_SHARDED`, enable mailboxes by default, or change
-gameplay cadence. The following source facts are mandatory migration inputs:
+It is not safe to jump directly to `CENTRAL_SHARDED`, make central scheduling
+the default, or change gameplay cadence. The following source facts are the
+current mandatory migration inputs:
 
-- `AgentSchedulerMode` now exposes all three rollout modes. Only legacy and
-  central-sequential have implementations at the Phase 1 checkpoint.
-- `AgentTickScheduler` is a useful sequential parity dispatcher, but performs
-  a global registration scan and due-list sort on every cycle.
+- `AgentSchedulerMode` exposes all three rollout modes. Legacy and
+  central-sequential have implementations; central-sharded remains rejected.
+- `AgentTickScheduler` now uses bounded coalesced ingress and an indexed
+  one-shard due-time heap without a global registration scan or due-list sort.
 - `AgentRuntimeRegistry.isActiveSession` now uses the generation-stamped O(1)
   Agent character index maintained at lifecycle registration and removal.
-- `AgentActionMailbox` is bounded and generation-stamped, but
-  `agents.mailbox.enabled` defaults to `false` and only selected ingress paths
-  use it.
-- `AgentChatMailboxDispatcher` waits up to two seconds for a mailbox result.
-  This compatibility behavior must be replaced with an asynchronous reply
-  contract before mailboxes are enabled on packet/event-loop paths.
-- entry-scoped delayed callbacks exist, but unscoped callbacks still exist and
-  must be classified as session mutation, global maintenance, or presentation
-  cleanup before migration.
+- `AgentActionMailbox` is bounded and generation-stamped. Central modes require
+  mailbox ownership; legacy mode remains inline unless explicitly configured.
+- chat command delivery is asynchronous and packet/event-loop paths do not
+  wait for Agent mailbox results.
+- delayed callbacks are classified; generation-scoped session mutations
+  validate and enter through the owning mailbox.
 - `AgentNavigationGraphService` contains a blocking `join()` API. Scheduler
   workers must be statically prevented from reaching it.
 - current scheduler metrics are cumulative rather than bounded rolling
@@ -158,7 +159,8 @@ Readiness decision:
 ```text
 Phase 0-1: ready to implement now
 Phase 2: complete; evidence is recorded under phase-2
-Phase 3-5: ready to implement behind non-default rollout modes
+Phase 3: complete; evidence is recorded under phase-3
+Phase 4-5: ready to implement behind non-default rollout modes
 Phase 6+: blocked on Cosmic thread-affinity audit and capability parity proof
 Default CENTRAL_SHARDED: blocked on staged live and soak acceptance
 ```
@@ -1130,6 +1132,11 @@ Exit:
 - every delayed callback has a documented final classification.
 
 ### Phase 3: Single-Shard Heap Scheduler
+
+Status: complete on `feature/agent-central-scheduler-runtime`. Evidence is
+recorded under `docs/agents/evidence/central-scheduler/phase-3`. This is
+dispatcher-only proof; live-client and long-duration scale evidence remain
+required before a default change.
 
 Work:
 

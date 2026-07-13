@@ -133,6 +133,7 @@ class AgentTickSchedulerTest {
         assertEquals(1, scheduler.registrationCount());
         assertTrue(handle.cancel(false));
         assertEquals(0, scheduler.registrationCount());
+        scheduler.tickAll();
         verify(centralFuture).cancel(false);
     }
 
@@ -172,6 +173,23 @@ class AgentTickSchedulerTest {
         assertEquals(2, ticks.get());
     }
 
+    @Test
+    void missedCadencesCoalesceWithoutReplayStorm() {
+        AgentRuntimeEntry entry = activeEntry(1, 101);
+        AtomicInteger ticks = new AtomicInteger();
+        scheduler.register(entry, ticks::incrementAndGet, 50L);
+
+        scheduler.tickAll();
+        now.set(10_000L);
+        scheduler.tickAll();
+        scheduler.tickAll();
+
+        assertEquals(2, ticks.get());
+        now.addAndGet(50L);
+        scheduler.tickAll();
+        assertEquals(3, ticks.get());
+    }
+
     private AgentTickScheduler scheduler() {
         return new AgentTickScheduler(
                 now::get,
@@ -205,5 +223,6 @@ class AgentTickSchedulerTest {
         System.clearProperty("agents.scheduler.baseTickMs");
         System.clearProperty("agents.scheduler.logSlowTicks");
         System.clearProperty("agents.scheduler.slowTickMs");
+        System.clearProperty("agents.scheduler.ingressCapacityPerShard");
     }
 }

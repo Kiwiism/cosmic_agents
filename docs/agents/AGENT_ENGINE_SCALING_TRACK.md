@@ -39,9 +39,12 @@ Current scheduler implementation checkpoint on
 - Phase 0 baseline evidence and Phase 1 scheduler API are complete.
 - Phase 2 mandatory mailbox ownership is complete for live external ingress
   and generation-scoped delayed callbacks.
+- Phase 3 replaces the central-sequential global scan/sort with bounded
+  coalesced ingress and a one-shard indexed due-time heap. Deterministic
+  50/100/250/500-session cadence tests pass without changing gameplay cadence.
 - Legacy per-Agent scheduling remains the production default and rollback.
-- Phase 3 replaces the central-sequential global scan/sort with a one-shard
-  indexed due-time heap; no gameplay cadence change is part of that phase.
+- Phase 4 adds priority classes, cycle/time budgets, cost estimates, starvation
+  aging, reserved capacity, and rolling scheduler latency/cost metrics.
 
 ## Track Split
 

@@ -7605,6 +7605,13 @@ Current physics correction:
   and the existing per-Agent `TimerManager.register` path is the rollback path.
   Central base cadence defaults to the current 50 ms movement cadence. See
   `AGENT_CENTRAL_SCHEDULER.md` for validation and tuning details.
+- Central scheduler heap ownership: central-sequential mode now drains one
+  bounded, coalesced ingress queue into a scheduler-owned indexed minimum heap.
+  External registration, wake, pause, resume, replacement, and cancellation
+  paths do not mutate the heap or periodic due time directly. Equal due times
+  retain registration order, missed periods coalesce, and admitted lifecycle
+  cancellation retains cleanup capacity. Legacy per-Agent scheduling and the
+  guarded gameplay tick are unchanged.
 
 Initial reconstruction order:
 

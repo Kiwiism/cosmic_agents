@@ -1,7 +1,7 @@
 # Agent Central Scheduler
 
 This document describes the scheduler that exists today and how to operate its
-optional central-sequential mode. The production migration to a fully
+optional single-shard central-sequential mode. The production migration to a fully
 centralized, sharded, asynchronous, budgeted scheduler is specified in
 `AGENT_FULL_CENTRALIZED_SCHEDULER_IMPLEMENTATION_PLAN.md`.
 
@@ -27,9 +27,11 @@ selects central-sequential when no explicit mode is present:
 This flag enables the current sequential parity dispatcher, not the planned
 full sharded scheduler. Do not treat it as the production 2000-Agent mode.
 
-When enabled, one lazily started repeating task dispatches all due live Agent
-sessions in stable registration order. Cancelling the last registration also
-cancels the central loop. The same `AgentTickRuntime` and guarded
+When enabled, one lazily started repeating task drains bounded registration
+ingress and dispatches due live Agent sessions from an indexed minimum heap.
+Equal due times retain stable registration order. Cancelling the last
+registration drains its lifecycle cleanup and then cancels the central loop.
+The same `AgentTickRuntime` and guarded
 `AgentTickOrchestrator` execute in both modes.
 
 ## Configuration
@@ -41,10 +43,19 @@ agents.scheduler.baseTickMs=50
 agents.scheduler.logSlowTicks=true
 agents.scheduler.slowTickMs=250
 agents.scheduler.maxAgentsPerTick=0
+agents.scheduler.ingressCapacityPerShard=4096
 ```
 
-`maxAgentsPerTick=0` means unlimited. A positive cap uses stable round-robin
-selection so a busy cycle cannot permanently starve later registrations.
+`maxAgentsPerTick=0` means unlimited. A positive cap selects the oldest due
+records first, using registration sequence as the stable tie-break. Updated
+records move to their next future cadence, so another overdue record runs on
+the next cycle instead of being starved.
+
+`ingressCapacityPerShard` bounds both the one-shard multi-producer ingress and
+the number of scheduler-owned live/closing registrations. One coalesced ingress
+marker is retained per admitted registration, which reserves lifecycle cleanup
+capacity without an unbounded critical queue. New registration is rejected
+when the bound is full; an already admitted cancellation is not dropped.
 
 ## Isolation and lifecycle
 
@@ -55,6 +66,8 @@ selection so a busy cycle cannot permanently starve later registrations.
 - Paused, closed/despawning, stale, and invalid sessions are skipped.
 - One uncaught Agent failure is recorded and does not stop later Agents.
 - Missed fixed-rate periods are skipped rather than replayed in a burst.
+- Producers never mutate the due heap or periodic due time. They submit a
+  coalesced synchronization marker; the scheduler cycle is the sole heap writer.
 - Mailbox actions drain inside the same guarded tick before gameplay work.
 - Selecting a central scheduler mode also enables mandatory bounded mailbox
   ownership. `agents.mailbox.enabled=true` remains available to exercise the
@@ -88,14 +101,16 @@ Current readiness:
 Phase 0 baseline: complete
 Phase 1 stable scheduler API and O(1) session index: complete
 Phase 2 mandatory mailbox ownership: complete
-single-shard heap: next implementation phase
+Phase 3 bounded one-shard ingress and indexed due-time heap: complete
+Phase 4 priority, time/cost budgets, and rolling metrics: next implementation phase
 multi-shard execution: blocked on Cosmic thread-affinity audit
 production default switch: blocked on parity and staged soak evidence
 ```
 
-Important current limitations include the central-sequential global scan/sort,
-a blocking navigation graph `join()` reserved for Phase 5 removal,
-cumulative-only metrics, and no priority/budget/shard runtime. Cross-session
+The central-sequential global scan/sort has been removed. Important current
+limitations include a blocking navigation graph `join()` reserved for Phase 5
+removal, cumulative-only metrics, and no priority/time/cost budget runtime.
+Cross-session
 formation and leader-away operations also require a Phase 6 gateway/ownership
 decision before multi-shard execution. The repository therefore has a safe
 single-writer migration foundation, not the completed centralized scheduler.
@@ -108,6 +123,8 @@ Phase 1 API, lifecycle, registry, and parity evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-1`.
 Phase 2 mailbox, ingress, delayed-callback, and nonblocking-result evidence is
 recorded under `docs/agents/evidence/central-scheduler/phase-2`.
+Phase 3 heap, bounded-ingress, lifecycle, cadence, and deterministic 500-session
+evidence is recorded under `docs/agents/evidence/central-scheduler/phase-3`.
 
 ## Rollback
 

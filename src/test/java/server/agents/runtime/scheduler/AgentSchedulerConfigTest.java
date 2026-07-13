@@ -15,6 +15,7 @@ class AgentSchedulerConfigTest {
         System.clearProperty("agents.scheduler.logSlowTicks");
         System.clearProperty("agents.scheduler.slowTickMs");
         System.clearProperty("agents.scheduler.maxAgentsPerTick");
+        System.clearProperty("agents.scheduler.ingressCapacityPerShard");
     }
 
     @Test
@@ -48,6 +49,10 @@ class AgentSchedulerConfigTest {
 
         System.setProperty("agents.scheduler.baseTickMs", "50");
         System.setProperty("agents.scheduler.maxAgentsPerTick", "-1");
+        assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
+
+        System.setProperty("agents.scheduler.maxAgentsPerTick", "0");
+        System.setProperty("agents.scheduler.ingressCapacityPerShard", "0");
         assertThrows(IllegalArgumentException.class, AgentSchedulerConfig::fromSystemProperties);
     }
 }

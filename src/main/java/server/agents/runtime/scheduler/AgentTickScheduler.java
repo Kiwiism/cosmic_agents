@@ -8,14 +8,13 @@ import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -33,8 +32,8 @@ public final class AgentTickScheduler {
             (task, delayMs) -> AgentSchedulerRuntime.schedule(task, delayMs));
 
     private final Map<AgentRuntimeEntry, Registration> registrations = new ConcurrentHashMap<>();
+    private final Map<Registration, Boolean> ownedRegistrations = new ConcurrentHashMap<>();
     private final AtomicLong nextSequence = new AtomicLong();
-    private final AtomicLong roundRobinCursor = new AtomicLong();
     private final AtomicBoolean ticking = new AtomicBoolean();
     private final AtomicBoolean wakeQueued = new AtomicBoolean();
     private final Object lifecycleLock = new Object();
@@ -42,6 +41,7 @@ public final class AgentTickScheduler {
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler;
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler;
     private final AgentSchedulerConfig config;
+    private final AgentSchedulerShard<Registration> shard;
     private volatile ScheduledFuture<?> centralTask;
 
     public static AgentTickScheduler instance() {
@@ -76,33 +76,55 @@ public final class AgentTickScheduler {
                        BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
                        BiFunction<Runnable, Long, ScheduledFuture<?>> wakeScheduler,
                        AgentSchedulerConfig config) {
+        if (nowMs == null || loopScheduler == null || wakeScheduler == null || config == null) {
+            throw new IllegalArgumentException("Agent scheduler dependencies are required");
+        }
         this.nowMs = nowMs;
         this.loopScheduler = loopScheduler;
         this.wakeScheduler = wakeScheduler;
         this.config = config;
+        this.shard = new AgentSchedulerShard<>(
+                config.ingressCapacityPerShard(),
+                Comparator.comparingLong(Registration::nextDueMs)
+                        .thenComparingLong(Registration::sequence));
     }
 
     public AgentScheduleHandle register(AgentRuntimeEntry entry, Runnable tick, long periodMs) {
         if (entry == null || tick == null) {
             throw new IllegalArgumentException("Agent entry and tick are required");
         }
-        Registration registration = new Registration(
-                this,
-                AgentSessionId.from(entry),
-                entry,
-                tick,
-                Math.max(1L, periodMs),
-                nowMs.getAsLong(),
-                nextSequence.incrementAndGet());
-        Registration previous = registrations.put(entry, registration);
-        if (previous != null) {
-            previous.cancel(false);
+
+        Registration registration;
+        boolean replaced;
+        synchronized (lifecycleLock) {
+            if (ownedRegistrations.size() >= config.ingressCapacityPerShard()) {
+                throw new RejectedExecutionException(
+                        "Agent scheduler registration capacity is full: " + config.ingressCapacityPerShard());
+            }
+            ensureCentralTaskLocked();
+            registration = new Registration(
+                    this,
+                    AgentSessionId.from(entry),
+                    entry,
+                    tick,
+                    Math.max(1L, periodMs),
+                    nowMs.getAsLong(),
+                    nextSequence.incrementAndGet());
+            Registration previous = registrations.put(entry, registration);
+            ownedRegistrations.put(registration, Boolean.TRUE);
+            replaced = previous != null;
+            if (previous != null) {
+                previous.cancelForReplacement();
+            }
+            if (!requestSync(registration)) {
+                registrations.remove(entry, registration);
+                ownedRegistrations.remove(registration);
+                registration.cancelWithoutSync();
+                throw new RejectedExecutionException("Agent scheduler ingress is full");
+            }
         }
-        try {
-            ensureCentralTask();
-        } catch (RuntimeException | Error failure) {
-            registrations.remove(entry, registration);
-            throw failure;
+        if (replaced) {
+            queueWake();
         }
         return registration;
     }
@@ -114,49 +136,79 @@ public final class AgentTickScheduler {
         }
         long cycleStarted = System.nanoTime();
         try {
+            shard.drainIngress(this::synchronizeRegistration);
             long now = nowMs.getAsLong();
-            List<Registration> due = new ArrayList<>();
-            for (Registration registration : registrations.values()) {
-                if (registration.isDue(now)) {
-                    due.add(registration);
+            int scheduledAtStart = shard.scheduledCount();
+            int configuredLimit = config.maxAgentsPerTick();
+            int workLimit = configuredLimit == 0
+                    ? scheduledAtStart
+                    : Math.min(configuredLimit, scheduledAtStart);
+            int processed = 0;
+            while (processed < workLimit) {
+                Registration registration = shard.peekDue();
+                if (registration == null || registration.nextDueMs() > now) {
+                    break;
+                }
+                shard.pollDue();
+                processed++;
+                update(registration, now, config);
+                if (shouldSchedule(registration)) {
+                    shard.addOrUpdate(registration);
                 }
             }
-            due.sort(Comparator.comparingLong(Registration::sequence));
-
-            int limit = config.maxAgentsPerTick();
-            int updateCount = limit == 0 ? due.size() : Math.min(limit, due.size());
-            if (updateCount < due.size()) {
-                AgentSchedulerMetrics.recordSkipped(due.size() - updateCount);
-            }
-            int start = limit == 0 || due.isEmpty()
-                    ? 0
-                    : (int) Math.floorMod(roundRobinCursor.getAndAdd(updateCount), due.size());
-            for (int i = 0; i < updateCount; i++) {
-                update(due.get((start + i) % due.size()), now, config);
+            Registration remainingDue = shard.peekDue();
+            if (configuredLimit > 0 && remainingDue != null && remainingDue.nextDueMs() <= now) {
+                AgentSchedulerMetrics.recordSkipped(1);
             }
         } finally {
             ticking.set(false);
             AgentSchedulerMetrics.recordCycle(System.nanoTime() - cycleStarted);
+            stopCentralTaskIfIdle();
         }
     }
 
     public void pause(AgentRuntimeEntry entry) {
-        Registration registration = registrations.get(entry);
-        if (registration != null) {
-            registration.paused.set(true);
+        synchronized (lifecycleLock) {
+            Registration registration = registrations.get(entry);
+            if (registration != null && registration.paused.compareAndSet(false, true)) {
+                requireSync(registration);
+            }
         }
     }
 
     public void resume(AgentRuntimeEntry entry) {
-        Registration registration = registrations.get(entry);
-        if (registration != null) {
-            registration.paused.set(false);
-            registration.nextDueMs.set(nowMs.getAsLong());
+        boolean resumed = false;
+        synchronized (lifecycleLock) {
+            Registration registration = registrations.get(entry);
+            if (registration != null && registration.paused.compareAndSet(true, false)) {
+                registration.requestWake(nowMs.getAsLong());
+                requireSync(registration);
+                resumed = true;
+            }
+        }
+        if (resumed) {
+            queueWake();
         }
     }
 
     public int registrationCount() {
         return registrations.size();
+    }
+
+    int ownedRegistrationCount() {
+        return ownedRegistrations.size();
+    }
+
+    int scheduledRegistrationCount() {
+        return shard.scheduledCount();
+    }
+
+    int ingressDepth() {
+        return shard.ingressDepth();
+    }
+
+    int ingressHighWaterMark() {
+        return shard.ingressHighWaterMark();
     }
 
     private void update(Registration registration, long now, AgentSchedulerConfig config) {
@@ -181,20 +233,89 @@ public final class AgentTickScheduler {
         }
     }
 
-    private void ensureCentralTask() {
+    private void synchronizeRegistration(Registration registration) {
+        registration.ingressQueued.set(false);
+        registration.applyPendingWake();
         synchronized (lifecycleLock) {
-            if (centralTask == null || centralTask.isCancelled() || centralTask.isDone()) {
-                centralTask = loopScheduler.apply(
-                        this::tickAll,
-                        config.baseTickMs());
+            if (!shouldSchedule(registration)) {
+                shard.remove(registration);
+                retireIfClosed(registration);
+                return;
             }
+            shard.addOrUpdate(registration);
         }
     }
 
-    private void unregister(Registration registration) {
-        registrations.remove(registration.entry, registration);
+    private boolean shouldSchedule(Registration registration) {
+        return !registration.cancelled.get()
+                && !registration.paused.get()
+                && registrations.get(registration.entry) == registration;
+    }
+
+    private void retireIfClosed(Registration registration) {
+        if ((registration.cancelled.get() || registrations.get(registration.entry) != registration)
+                && !registration.ingressQueued.get()) {
+            ownedRegistrations.remove(registration);
+        }
+    }
+
+    private boolean requestSync(Registration registration) {
+        if (!registration.ingressQueued.compareAndSet(false, true)) {
+            return true;
+        }
+        if (shard.offer(registration)) {
+            return true;
+        }
+        registration.ingressQueued.set(false);
+        return false;
+    }
+
+    private void requireSync(Registration registration) {
+        if (!requestSync(registration)) {
+            throw new IllegalStateException("Admitted Agent scheduler registration lost its ingress capacity");
+        }
+    }
+
+    private void ensureCentralTaskLocked() {
+        if (centralTask == null || centralTask.isCancelled() || centralTask.isDone()) {
+            centralTask = loopScheduler.apply(this::tickAll, config.baseTickMs());
+        }
+    }
+
+    private boolean cancel(Registration registration) {
         synchronized (lifecycleLock) {
-            if (registrations.isEmpty() && centralTask != null) {
+            if (!registration.cancelled.compareAndSet(false, true)) {
+                return false;
+            }
+            registration.completion.complete(null);
+            registrations.remove(registration.entry, registration);
+            requireSync(registration);
+        }
+        queueWake();
+        return true;
+    }
+
+    private boolean wake(Registration registration) {
+        synchronized (lifecycleLock) {
+            if (registration.cancelled.get()
+                    || registration.paused.get()
+                    || registrations.get(registration.entry) != registration
+                    || !registration.sessionId.matches(registration.entry)) {
+                return false;
+            }
+            registration.requestWake(nowMs.getAsLong());
+            requireSync(registration);
+        }
+        queueWake();
+        return true;
+    }
+
+    private void stopCentralTaskIfIdle() {
+        synchronized (lifecycleLock) {
+            if (registrations.isEmpty()
+                    && ownedRegistrations.isEmpty()
+                    && shard.isIdle()
+                    && centralTask != null) {
                 centralTask.cancel(false);
                 centralTask = null;
             }
@@ -223,10 +344,12 @@ public final class AgentTickScheduler {
         private final Runnable tick;
         private final long periodMs;
         private final long sequence;
-        private final AtomicLong nextDueMs;
+        private final AtomicLong pendingWakeDueMs = new AtomicLong(Long.MAX_VALUE);
+        private final AtomicBoolean ingressQueued = new AtomicBoolean();
         private final AtomicBoolean paused = new AtomicBoolean();
         private final AtomicBoolean cancelled = new AtomicBoolean();
         private final CompletableFuture<Void> completion = new CompletableFuture<>();
+        private volatile long nextDueMs;
         private volatile long claimedDueMs;
 
         private Registration(AgentTickScheduler owner,
@@ -241,7 +364,7 @@ public final class AgentTickScheduler {
             this.entry = entry;
             this.tick = tick;
             this.periodMs = periodMs;
-            this.nextDueMs = new AtomicLong(firstDueMs);
+            this.nextDueMs = firstDueMs;
             this.sequence = sequence;
         }
 
@@ -249,24 +372,47 @@ public final class AgentTickScheduler {
             return sequence;
         }
 
-        private boolean isDue(long now) {
-            return !cancelled.get() && !paused.get() && now >= nextDueMs.get();
+        private long nextDueMs() {
+            return nextDueMs;
         }
 
         private boolean prepare(long now) {
-            if (cancelled.get() || paused.get()
-                    || entry.actionMailbox().isClosed()
+            if (cancelled.get() || paused.get() || now < nextDueMs) {
+                return false;
+            }
+            long due = nextDueMs;
+            nextDueMs = nextDueAfter(due, now, periodMs);
+            if (entry.actionMailbox().isClosed()
                     || !sessionId.matches(entry)
                     || !AgentRuntimeRegistry.isActiveSession(entry, sessionId.generation())
                     || AgentRuntimeIdentityRuntime.bot(entry) == null) {
                 return false;
             }
-            long due = nextDueMs.get();
-            if (now < due || !nextDueMs.compareAndSet(due, nextDueAfter(due, now, periodMs))) {
-                return false;
-            }
             claimedDueMs = due;
             return true;
+        }
+
+        private void requestWake(long dueMs) {
+            pendingWakeDueMs.accumulateAndGet(dueMs, Math::min);
+        }
+
+        private void applyPendingWake() {
+            long requestedDueMs = pendingWakeDueMs.getAndSet(Long.MAX_VALUE);
+            if (requestedDueMs < nextDueMs) {
+                nextDueMs = requestedDueMs;
+            }
+        }
+
+        private void cancelForReplacement() {
+            if (cancelled.compareAndSet(false, true)) {
+                completion.complete(null);
+                owner.requireSync(this);
+            }
+        }
+
+        private void cancelWithoutSync() {
+            cancelled.set(true);
+            completion.complete(null);
         }
 
         private static long nextDueAfter(long due, long now, long periodMs) {
@@ -286,17 +432,12 @@ public final class AgentTickScheduler {
 
         @Override
         public boolean wake() {
-            if (cancelled.get() || paused.get() || !sessionId.matches(entry)) {
-                return false;
-            }
-            nextDueMs.accumulateAndGet(owner.nowMs.getAsLong(), Math::min);
-            owner.queueWake();
-            return true;
+            return owner.wake(this);
         }
 
         @Override
         public long getDelay(TimeUnit unit) {
-            return unit.convert(Math.max(0L, nextDueMs.get() - owner.nowMs.getAsLong()), TimeUnit.MILLISECONDS);
+            return unit.convert(Math.max(0L, nextDueMs - owner.nowMs.getAsLong()), TimeUnit.MILLISECONDS);
         }
 
         @Override
@@ -306,12 +447,7 @@ public final class AgentTickScheduler {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            if (!cancelled.compareAndSet(false, true)) {
-                return false;
-            }
-            completion.complete(null);
-            owner.unregister(this);
-            return true;
+            return owner.cancel(this);
         }
 
         @Override

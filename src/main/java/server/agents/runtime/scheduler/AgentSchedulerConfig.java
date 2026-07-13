@@ -7,7 +7,8 @@ public record AgentSchedulerConfig(
         long baseTickMs,
         boolean logSlowTicks,
         long slowTickMs,
-        int maxAgentsPerTick) {
+        int maxAgentsPerTick,
+        int ingressCapacityPerShard) {
     public AgentSchedulerConfig {
         if (mode == null) {
             throw new IllegalArgumentException("Agent scheduler mode is required");
@@ -21,6 +22,9 @@ public record AgentSchedulerConfig(
         if (maxAgentsPerTick < 0) {
             throw new IllegalArgumentException("Agent scheduler maxAgentsPerTick must not be negative");
         }
+        if (ingressCapacityPerShard < 1) {
+            throw new IllegalArgumentException("Agent scheduler ingressCapacityPerShard must be positive");
+        }
     }
 
     public static AgentSchedulerConfig fromSystemProperties() {
@@ -29,7 +33,8 @@ public record AgentSchedulerConfig(
                 longProperty("agents.scheduler.baseTickMs", 50L),
                 Boolean.parseBoolean(System.getProperty("agents.scheduler.logSlowTicks", "true")),
                 longProperty("agents.scheduler.slowTickMs", 250L),
-                intProperty("agents.scheduler.maxAgentsPerTick", 0));
+                intProperty("agents.scheduler.maxAgentsPerTick", 0),
+                intProperty("agents.scheduler.ingressCapacityPerShard", 4096));
     }
 
     private static AgentSchedulerMode configuredMode() {
