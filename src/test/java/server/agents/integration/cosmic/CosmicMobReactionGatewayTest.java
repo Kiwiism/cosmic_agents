@@ -121,6 +121,28 @@ class CosmicMobReactionGatewayTest {
     }
 
     @Test
+    void observedReactionDoesNotRequireLastHitAggroFeature() {
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = true;
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = false;
+        MapleMap map = observedMap();
+        Character agent = character(10, "agent", map);
+        Character observer = character(20, "observer", map);
+        AgentPresence.install(candidate -> candidate == agent);
+        when(map.getAllPlayers()).thenReturn(List.of(agent, observer));
+        Monster monster = monster(117, map, 50, true);
+        when(map.getMonsterByOid(117)).thenReturn(monster);
+
+        CosmicMobReactionGateway.INSTANCE.prepareObservedAttack(attack(117, 50), agent);
+        assertTrue(CosmicMobReactionGateway.INSTANCE.handleAcceptedDamage(
+                monster, agent, 50, 50));
+
+        MonsterAggroTargetService.Snapshot snapshot = MonsterAggroTargetService.inspect(
+                monster, System.currentTimeMillis(), 10_000L);
+        assertTrue(snapshot.knockbackEligible());
+        assertTrue(snapshot.impactPending());
+    }
+
+    @Test
     void acceptedDamageOverridesPreparedEstimateInLogicalTargetState() {
         YamlConfig.config.agents.combat.observedMobReaction.enabled = true;
         YamlConfig.config.agents.combat.lastHitAggro.enabled = true;

@@ -5,7 +5,7 @@
 - Feature branch: `feature/agent-mob-reaction-aggro`
 - Master base: `28555684e8d867793251e646d421fc30498ad74e`
 - Both runtime features are disabled by default.
-- Automated tests cover observer gating, native impact preparation, WZ
+- Automated tests cover observer gating, server impact preparation, WZ
   knockback rules, latest-attacker transfer, server pursuit, lifecycle cleanup,
   stale-spawn rejection, and the absence of a second damage route.
 - Actual v83 client parity remains a live-validation gate. Do not enable these
@@ -40,7 +40,7 @@ Agent attack:
 AgentCombatAttackRuntime builds the ordinary AttackInfo
   -> AgentAttackExecutionProvider.applyAttackRoute
   -> AgentMobHitReactionService (before every attack route, including Heal vs undead)
-  -> CosmicMobReactionGateway prepares a real simulation controller
+  -> CosmicMobReactionGateway prepares the observed reaction boundary
   -> existing Agent attack route broadcasts the attack once
   -> AbstractDealDamageHandler.applyAttack
   -> Monster.aggroMonsterDamage (analytics and legacy-controller suppression)
@@ -88,8 +88,11 @@ and character ID. A headless Agent is never selected as network controller.
 
 `LifeFactory` loads the authoritative WZ `info/pushed` and `info/speed` values
 into `MonsterStats`. `MonsterStats.copy()` preserves them. The attack packet
-contains every damage line and the per-target impact delay, so the real v83
-controller receives the foreign attack before the server proxy can take over.
+contains every damage line and the per-target impact delay. Live v83 validation
+showed that an observing client renders the Agent attack but does not answer it
+with the monster's command-2 knockback movement. The integration retains that
+delay and emits one server-authored impact only after Cosmic confirms that HP
+actually decreased.
 
 Knockback preparation requires at least one positive line where:
 
@@ -97,11 +100,17 @@ Knockback preparation requires at least one positive line where:
 damage line >= MonsterStats.pushed
 ```
 
-The monster must also be mobile and not have fixed stance. Normal client
-handling remains responsible for the immediate hurt/flinch and native
-knockback command. `MoveLifeHandler` records the accepted first movement
-command; command 2 confirms native knockback for diagnostics. Rush, Power
-Knockback, and other skill movement are not synthesized a second time.
+The monster must also be mobile and not have fixed stance. At impact time the
+server emits the ordinary v83 `MOVE_MONSTER` shape with relative movement
+command 2, updates the authoritative map position to the same bounded
+destination, and marks the impact consumed before broadcasting. Repeated
+scheduler ticks therefore cannot replay one accepted hit. Rush, Power
+Knockback, and other skill-owned movement are not synthesized a second time.
+
+Ground displacement is kept on valid foothold geometry, rejected across walls,
+and limited to a small horizontal step. Flying displacement is bounded to the
+map. Both paths use the accepted hit direction and WZ `pushed`; below-threshold,
+fixed, and immobile hits receive no synthetic displacement.
 
 Prepared reactions retain the exact Monster object, map, attacker, and target
 delay. A replacement spawn that reuses the same OID cannot consume stale state.
@@ -127,9 +136,11 @@ character, so it cannot be instructed to chase a different headless Agent.
 
 The implementation therefore uses two phases:
 
-1. A real observer controls the mob through the Agent attack's impact frame.
-   This preserves native hurt/flinch and eligible knockback behavior.
-2. After the target hit delay plus a 300 ms settle window, only an Agent-target
+1. A real observer makes the map eligible for full simulation and receives the
+   ordinary Agent attack broadcast. At the accepted hit delay, the server
+   releases that controller and emits exactly one command-2 impact for eligible
+   knockback.
+2. After the impact plus a 300 ms settle window, only an Agent-target
    mob releases that client controller and enters narrow server-side pursuit.
 
 The centralized pursuit task runs every 120 ms only while targets exist. It:
@@ -156,7 +167,7 @@ invalid geometry.
 OID alone. It clears or replaces a target when the monster or target:
 
 - dies or is disposed;
-- disconnects or leaves the world;
+- is a player that disconnects or leaves the world;
 - changes map or begins a map transition;
 - is removed from Agent ownership;
 - is replaced by another spawn with the same OID;
@@ -188,7 +199,7 @@ Startup logs warn independently when either experimental feature is enabled.
   pursuit moves, unreachable targets, and observer losses.
 - `!mobaggro <mob oid>` shows HP, WZ `pushed`, observer state, target and target
   type, real controller, active simulator, latest damage/reaction, and latest
-  movement result.
+  movement result, plus whether a delayed impact is still pending.
 
 ## Automated Coverage
 
@@ -204,7 +215,8 @@ Focused tests cover:
 - delayed pursuit and replacement-spawn rejection;
 - one movement broadcast with multiple observers;
 - one bounded scheduler registration;
-- client command 2 knockback diagnostics;
+- one-shot server command-2 impact timing and native-command fallback diagnostics;
+- headless Agent validity without player login state and removal invalidation;
 - multi-hit/multi-target preparation without a second damage call;
 - actual HP delta rather than requested damage at the acceptance boundary;
 - rejected zero-delta hits producing no accepted callback;
@@ -236,8 +248,8 @@ where possible, capture the real-player and Agent `MOVE_MONSTER` sequences.
    and normal hurt feedback without displacement.
 5. Hit equal to and above threshold. Both clients must see the same native
    knockback and converge on the same mob position.
-6. Confirm `knockbackApplied` increments after the controller reports command
-   2, then confirm pursuit begins after the impact delay.
+6. Confirm `knockbackApplied` increments once after the accepted impact delay,
+   `movement=server-proxy-knockback`, and pursuit begins after the settle window.
 7. Run `!mobaggro <oid>` and confirm `targetType=agent` and
    `simulator=server-proxy` during pursuit.
 8. Hit with player A. Confirm target and native controller transfer to player

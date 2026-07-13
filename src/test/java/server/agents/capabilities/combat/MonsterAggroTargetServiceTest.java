@@ -1,7 +1,9 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.integration.AgentPresence;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -13,6 +15,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class MonsterAggroTargetServiceTest {
+    @AfterEach
+    void resetAgentPresence() {
+        AgentPresence.install(null);
+    }
+
     @Test
     void recordsAndClearsLatestTarget() {
         MapleMap map = mock(MapleMap.class);
@@ -78,6 +85,8 @@ class MonsterAggroTargetServiceTest {
         MapleMap map = mock(MapleMap.class);
         Monster monster = mock(Monster.class);
         Character target = validTarget(11, "agent", map);
+        when(target.isLoggedinWorld()).thenReturn(false);
+        AgentPresence.install(candidate -> candidate == target);
         when(monster.getMap()).thenReturn(map);
         when(monster.getObjectId()).thenReturn(100);
         when(monster.isAlive()).thenReturn(true);
@@ -94,6 +103,47 @@ class MonsterAggroTargetServiceTest {
     }
 
     @Test
+    void headlessAgentTargetRemainsValidWithoutPlayerLoginState() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character agent = validTarget(11, "headless-agent", map);
+        when(agent.isLoggedinWorld()).thenReturn(false);
+        when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
+        AgentPresence.install(candidate -> candidate == agent);
+
+        MonsterAggroTargetService.record(monster, agent, null, true,
+                150, 100, "client-knockback-eligible", 1_000L, 400L);
+
+        assertTrue(MonsterAggroTargetService.inspect(
+                monster, 1_001L, 10_000L).hasTarget());
+        assertEquals(1, MonsterAggroTargetService.activeTargets(
+                1_001L, 10_000L).size());
+    }
+
+    @Test
+    void removingHeadlessAgentInvalidatesTarget() {
+        MapleMap map = mock(MapleMap.class);
+        Monster monster = mock(Monster.class);
+        Character agent = validTarget(11, "headless-agent", map);
+        when(agent.isLoggedinWorld()).thenReturn(false);
+        when(monster.getMap()).thenReturn(map);
+        when(monster.getObjectId()).thenReturn(100);
+        when(monster.isAlive()).thenReturn(true);
+        when(map.getMonsterByOid(100)).thenReturn(monster);
+        AgentPresence.install(candidate -> candidate == agent);
+        MonsterAggroTargetService.record(monster, agent, null, true,
+                150, 100, "client-knockback-eligible", 1_000L, 400L);
+
+        AgentPresence.install(candidate -> false);
+
+        assertFalse(MonsterAggroTargetService.inspect(
+                monster, 1_001L, 10_000L).hasTarget());
+    }
+
+    @Test
     void acceptedClientKnockbackCommandIsRecordedWithoutApplyingDamage() {
         MapleMap map = mock(MapleMap.class);
         Monster monster = mock(Monster.class);
@@ -102,6 +152,7 @@ class MonsterAggroTargetServiceTest {
         when(monster.getObjectId()).thenReturn(100);
         when(monster.isAlive()).thenReturn(true);
         when(map.getMonsterByOid(100)).thenReturn(monster);
+        AgentPresence.install(candidate -> candidate == target);
         long appliedBefore = AgentMobReactionMetrics.snapshot().knockbackApplied();
 
         MonsterAggroTargetService.record(monster, target, target, true,
@@ -123,6 +174,7 @@ class MonsterAggroTargetServiceTest {
         when(monster.getObjectId()).thenReturn(100);
         when(monster.isAlive()).thenReturn(true);
         when(map.getMonsterByOid(100)).thenReturn(monster);
+        AgentPresence.install(candidate -> candidate == target);
 
         MonsterAggroTargetService.record(monster, target, target, true,
                 100, 1, "hurt-only", 1_000L, 0L);

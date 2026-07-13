@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import server.agents.capabilities.combat.MonsterAggroTargetService;
+import server.agents.capabilities.combat.AcceptedMobHitResult;
 import server.integration.AgentPresence;
 import server.life.Monster;
 import server.life.MonsterStats;
@@ -34,13 +35,16 @@ import static org.mockito.Mockito.when;
 
 class CosmicMonsterPursuitRuntimeTest {
     private boolean originalAggroEnabled;
+    private boolean originalReactionEnabled;
     private long originalTimeout;
 
     @BeforeEach
     void enableFeature() {
         originalAggroEnabled = YamlConfig.config.agents.combat.lastHitAggro.enabled;
+        originalReactionEnabled = YamlConfig.config.agents.combat.observedMobReaction.enabled;
         originalTimeout = YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs;
         YamlConfig.config.agents.combat.lastHitAggro.enabled = true;
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = false;
         YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs = 10_000L;
         ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
         CosmicMonsterPursuitRuntime.installLoopSchedulerForTest((action, period) -> scheduled);
@@ -49,6 +53,7 @@ class CosmicMonsterPursuitRuntimeTest {
     @AfterEach
     void restoreGlobals() {
         YamlConfig.config.agents.combat.lastHitAggro.enabled = originalAggroEnabled;
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = originalReactionEnabled;
         YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs = originalTimeout;
         AgentPresence.install(null);
         CosmicMonsterPursuitRuntime.resetForTest();
@@ -57,6 +62,7 @@ class CosmicMonsterPursuitRuntimeTest {
     @Test
     void groundAgentTargetUsesOneValidServerMovementPacket() {
         Fixture fixture = fixture(false, 0, true);
+        when(fixture.agent.getPosition()).thenReturn(new Point(20, 99));
         MonsterAggroTargetService.record(fixture.monster, fixture.agent, fixture.observer,
                 true, 100, 1, "client-knockback-eligible", 1_000L, 0L);
 
@@ -65,9 +71,51 @@ class CosmicMonsterPursuitRuntimeTest {
         verify(fixture.monster).aggroRemoveController();
         ArgumentCaptor<Point> destination = ArgumentCaptor.forClass(Point.class);
         verify(fixture.map).moveMonster(eq(fixture.monster), destination.capture());
-        assertTrue(destination.getValue().x > 0);
+        assertTrue(destination.getValue().x < 0);
         assertEquals(99, destination.getValue().y);
         verify(fixture.map).broadcastMessage(any(Packet.class), any(Point.class));
+    }
+
+    @Test
+    void acceptedImpactWaitsForDelayAndIsAppliedOnlyOnceBeforePursuit() {
+        Fixture fixture = fixture(false, 0, true);
+        when(fixture.agent.getPosition()).thenReturn(new Point(20, 99));
+        AcceptedMobHitResult hit = new AcceptedMobHitResult(
+                fixture.agent, true, 100, 100, true, false,
+                true, 1, 200L, true, "client-knockback-eligible");
+        MonsterAggroTargetService.record(fixture.monster, hit, fixture.observer,
+                1, 1_000L, 500L);
+
+        CosmicMonsterPursuitRuntime.tickNowForTest(1_199L);
+        verify(fixture.map, never()).moveMonster(any(), any());
+
+        CosmicMonsterPursuitRuntime.tickNowForTest(1_200L);
+        CosmicMonsterPursuitRuntime.tickNowForTest(1_300L);
+
+        verify(fixture.map, times(1)).moveMonster(eq(fixture.monster), any(Point.class));
+        verify(fixture.map, times(1)).broadcastMessage(any(Packet.class), any(Point.class));
+        assertEquals("server-proxy-knockback", MonsterAggroTargetService.inspect(
+                fixture.monster, 1_301L, 10_000L).latestMovement());
+    }
+
+    @Test
+    void reactionOnlyModeAppliesImpactThenRestoresNativeControl() {
+        Fixture fixture = fixture(false, 0, true);
+        when(fixture.agent.getPosition()).thenReturn(new Point(20, 99));
+        YamlConfig.config.agents.combat.lastHitAggro.enabled = false;
+        YamlConfig.config.agents.combat.observedMobReaction.enabled = true;
+        AcceptedMobHitResult hit = new AcceptedMobHitResult(
+                fixture.agent, true, 100, 100, true, false,
+                true, 1, 0L, true, "client-knockback-eligible");
+        MonsterAggroTargetService.record(fixture.monster, hit, fixture.observer,
+                1, 1_000L, 300L);
+
+        CosmicMonsterPursuitRuntime.tickNowForTest(1_001L);
+
+        verify(fixture.map, times(1)).moveMonster(eq(fixture.monster), any(Point.class));
+        verify(fixture.monster).aggroUpdateController();
+        assertTrue(MonsterAggroTargetService.activeTargets(
+                1_002L, 10_000L).isEmpty());
     }
 
     @Test
@@ -89,7 +137,7 @@ class CosmicMonsterPursuitRuntimeTest {
     void fixedMonsterNeverReceivesProxyDisplacement() {
         Fixture fixture = fixture(false, 4, true);
         MonsterAggroTargetService.record(fixture.monster, fixture.agent, fixture.observer,
-                true, 100, 1, "hurt-only", 1_000L, 0L);
+                true, 100, 1, "client-knockback-eligible", 1_000L, 0L);
 
         CosmicMonsterPursuitRuntime.tickNowForTest(1_001L);
 
@@ -114,7 +162,7 @@ class CosmicMonsterPursuitRuntimeTest {
     void observerLossStopsProxyAndClearsLogicalTarget() {
         Fixture fixture = fixture(false, 0, false);
         MonsterAggroTargetService.record(fixture.monster, fixture.agent, fixture.observer,
-                true, 100, 1, "hurt-only", 1_000L, 0L);
+                true, 100, 1, "client-knockback-eligible", 1_000L, 0L);
 
         CosmicMonsterPursuitRuntime.tickNowForTest(1_001L);
 
@@ -129,7 +177,7 @@ class CosmicMonsterPursuitRuntimeTest {
         Monster replacement = mock(Monster.class);
         when(fixture.map.getMonsterByOid(100)).thenReturn(replacement);
         MonsterAggroTargetService.record(fixture.monster, fixture.agent, fixture.observer,
-                true, 100, 1, "hurt-only", 1_000L, 500L);
+                true, 100, 1, "client-knockback-eligible", 1_000L, 500L);
 
         CosmicMonsterPursuitRuntime.tickNowForTest(2_000L);
 
@@ -206,6 +254,7 @@ class CosmicMonsterPursuitRuntimeTest {
         when(map.getFootholds()).thenReturn(tree);
 
         Character agent = character(10, map, new Point(100, 99));
+        when(agent.isLoggedinWorld()).thenReturn(false);
         Character observer = character(20, map, new Point(-100, 99));
         AgentPresence.install(candidate -> candidate == agent);
         when(map.getAllPlayers()).thenReturn(List.of(agent, observer));

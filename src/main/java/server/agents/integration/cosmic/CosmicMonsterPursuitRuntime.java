@@ -14,6 +14,7 @@ import server.maps.FootholdTree;
 import server.maps.MapleMap;
 import server.movement.AbsoluteLifeMovement;
 import server.movement.LifeMovementFragment;
+import server.movement.RelativeLifeMovement;
 import tools.PacketCreator;
 
 import java.awt.Point;
@@ -33,6 +34,10 @@ final class CosmicMonsterPursuitRuntime {
     private static final int TARGET_REACHED_X = 38;
     private static final int TARGET_REACHED_Y = 48;
     private static final int MAX_GROUND_Y_DELTA = 28;
+    private static final int KNOCKBACK_DISTANCE = 20;
+    private static final int KNOCKBACK_VELOCITY_X = 125;
+    private static final int KNOCKBACK_VELOCITY_Y = -80;
+    private static final int KNOCKBACK_DURATION_MS = 180;
 
     private static final Object lifecycleLock = new Object();
     private static final AtomicLong lastFailureLog = new AtomicLong();
@@ -109,13 +114,41 @@ final class CosmicMonsterPursuitRuntime {
                 restoreNativeController(monster);
                 continue;
             }
+
+            boolean proxyReleasedForImpact = false;
+            MonsterAggroTargetService.PendingImpact impact =
+                    MonsterAggroTargetService.claimPendingImpact(monster, now);
+            if (impact != null) {
+                // No v83 client will synthesize MOVE_LIFE command 2 for a
+                // server-side Agent attack. Release the observer controller and
+                // emit that one accepted impact from the server instead.
+                stopProxy(monster);
+                proxyReleasedForImpact = true;
+                ImpactStep impactStep = calculateImpact(monster, impact);
+                if (impactStep != null) {
+                    applyImpact(monster, impactStep);
+                    MonsterAggroTargetService.markReachable(
+                            monster, "server-proxy-knockback");
+                    AgentMobReactionMetrics.knockbackApplied();
+                } else {
+                    MonsterAggroTargetService.markReachable(
+                            monster, "server-proxy-knockback-blocked");
+                }
+            }
+            if (!lastHitAggroEnabled()) {
+                MonsterAggroTargetService.clear(monster);
+                restoreNativeController(monster);
+                continue;
+            }
             if (now < state.pursuitStartAt()) {
                 continue;
             }
 
-            // The real client supplied the native impact/knockback first. Remove its
-            // control before proxy movement so two movement authorities cannot race.
-            stopProxy(monster);
+            // The server supplied the Agent impact above. Keep the real observer
+            // released while proxy movement owns pursuit so two authorities cannot race.
+            if (!proxyReleasedForImpact) {
+                stopProxy(monster);
+            }
             PursuitStep step = calculateStep(monster, target);
             if (step == null) {
                 if (MonsterAggroTargetService.markUnreachable(
@@ -137,6 +170,67 @@ final class CosmicMonsterPursuitRuntime {
         if (!MonsterAggroTargetService.hasTargets()) {
             stopScheduler();
         }
+    }
+
+    private static ImpactStep calculateImpact(
+            Monster monster, MonsterAggroTargetService.PendingImpact impact) {
+        if (!monster.isMobile() || monster.getStats().getFixedStance() != 0) {
+            return null;
+        }
+        Point from = new Point(monster.getPosition());
+        int direction = Integer.signum(impact.hitDirection());
+        if (direction == 0 && impact.target() != null) {
+            direction = Integer.signum(from.x - impact.target().getPosition().x);
+        }
+        if (direction == 0) {
+            direction = 1;
+        }
+        int stance = monster.getStance();
+        if (stance < 0) {
+            stance = direction < 0 ? 3 : 2;
+        }
+
+        if (monster.getStats().isFlying()) {
+            Point destination = constrainToMap(monster.getMap(), new Point(
+                    from.x + direction * KNOCKBACK_DISTANCE, from.y));
+            if (destination.equals(from)) {
+                return null;
+            }
+            return new ImpactStep(from, destination,
+                    new Point(direction * KNOCKBACK_VELOCITY_X,
+                            KNOCKBACK_VELOCITY_Y), stance);
+        }
+
+        Point constrained = constrainToMap(monster.getMap(), new Point(
+                from.x + direction * KNOCKBACK_DISTANCE, from.y));
+        if (constrained.equals(from)
+                || crossesWall(monster.getMap().getFootholds(), from, constrained)) {
+            return null;
+        }
+        Foothold foothold = monster.getMap().getFootholds() == null ? null
+                : monster.getMap().getFootholds().findBelow(
+                        new Point(constrained.x, from.y - 16));
+        if (foothold == null || foothold.isWall()) {
+            return null;
+        }
+        int footingY = footingAt(foothold, constrained.x) - 1;
+        if (Math.abs(footingY - from.y) > MAX_GROUND_Y_DELTA) {
+            return null;
+        }
+        return new ImpactStep(from, new Point(constrained.x, footingY),
+                new Point(direction * KNOCKBACK_VELOCITY_X,
+                        KNOCKBACK_VELOCITY_Y), stance);
+    }
+
+    private static void applyImpact(Monster monster, ImpactStep step) {
+        RelativeLifeMovement movement = new RelativeLifeMovement(
+                2, step.velocity(), KNOCKBACK_DURATION_MS, step.stance());
+        Packet packet = PacketCreator.moveMonster(monster.getObjectId(), step.from(),
+                List.<LifeMovementFragment>of(movement));
+
+        monster.setStance(step.stance());
+        monster.getMap().broadcastMessage(packet, step.from());
+        monster.getMap().moveMonster(monster, step.to());
     }
 
     private static PursuitStep calculateStep(Monster monster, Character target) {
@@ -289,6 +383,16 @@ final class CosmicMonsterPursuitRuntime {
     }
 
     private static boolean featuresEnabled() {
+        return observedReactionEnabled() || lastHitAggroEnabled();
+    }
+
+    private static boolean observedReactionEnabled() {
+        return YamlConfig.config.agents != null && YamlConfig.config.agents.combat != null
+                && YamlConfig.config.agents.combat.observedMobReaction != null
+                && YamlConfig.config.agents.combat.observedMobReaction.enabled;
+    }
+
+    private static boolean lastHitAggroEnabled() {
         return YamlConfig.config.agents != null && YamlConfig.config.agents.combat != null
                 && YamlConfig.config.agents.combat.lastHitAggro != null
                 && YamlConfig.config.agents.combat.lastHitAggro.enabled;
@@ -302,6 +406,9 @@ final class CosmicMonsterPursuitRuntime {
 
     record PursuitStep(Point from, Point to, int stance, int footholdId,
                        boolean moved, boolean flying) {
+    }
+
+    record ImpactStep(Point from, Point to, Point velocity, int stance) {
     }
 
     @FunctionalInterface

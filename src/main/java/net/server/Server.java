@@ -1060,7 +1060,7 @@ public class Server {
         if (YamlConfig.config.agents != null && YamlConfig.config.agents.combat != null
                 && YamlConfig.config.agents.combat.observedMobReaction != null
                 && YamlConfig.config.agents.combat.observedMobReaction.enabled) {
-            log.warn("Experimental Agent feature enabled: observed mob hurt/knockback reactions use a real client controller.");
+            log.warn("Experimental Agent feature enabled: observed mob hurt/knockback reactions use a bounded server impact proxy.");
         }
         if (YamlConfig.config.agents != null && YamlConfig.config.agents.combat != null
                 && YamlConfig.config.agents.combat.lastHitAggro != null

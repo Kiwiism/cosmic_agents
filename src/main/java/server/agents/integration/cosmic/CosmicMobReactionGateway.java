@@ -66,10 +66,8 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
             }
             String reaction = thresholdSatisfied && movable
                     ? "client-knockback-eligible" : "hurt-only";
-            if (lastHitAggroEnabled()) {
-                MonsterAggroTargetService.prepareReaction(monster, agent, damage, threshold,
-                        reaction, Math.max(0, targetEntry.getValue().delay()));
-            }
+            MonsterAggroTargetService.prepareReaction(monster, agent, damage, threshold,
+                    reaction, Math.max(0, targetEntry.getValue().delay()));
         }
     }
 
@@ -123,7 +121,7 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
             AgentMobReactionMetrics.hurtReaction();
         }
 
-        MonsterAggroTargetService.PreparedReaction prepared = lastHitPolicy
+        MonsterAggroTargetService.PreparedReaction prepared = reactionPolicy || lastHitPolicy
                 ? MonsterAggroTargetService.consumePreparedReaction(monster, attacker) : null;
         int threshold = prepared == null ? monster.getStats().getPushed() : prepared.threshold();
         boolean movable = monsterAlive && !monsterKilled && monster.isMobile()
@@ -144,7 +142,7 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
                 monsterAlive, monsterKilled, acceptedKnockback, hitDirection,
                 hitDelayMs, observed, reaction);
 
-        if (lastHitPolicy) {
+        if (lastHitPolicy || acceptedKnockback) {
             if (result.monsterKilled() || !result.monsterAlive()) {
                 MonsterAggroTargetService.clear(monster);
                 return true;
@@ -195,6 +193,8 @@ public enum CosmicMobReactionGateway implements MobReactionGateway {
                 ? "server-proxy" : "client")
                 + " lastDamage=" + target.damage() + " reaction=" + target.reaction()
                 + " knockbackEligible=" + target.knockbackEligible()
+                + " impactPending=" + target.impactPending()
+                + " impactAt=" + target.impactAt()
                 + " hitDirection=" + target.hitDirection()
                 + " aliveAtHit=" + target.monsterAliveAtHit()
                 + " observedAtHit=" + target.observedAtHit()

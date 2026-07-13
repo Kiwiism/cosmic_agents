@@ -27,7 +27,7 @@ public class AgentMobDebugCommand extends Command {
                 || YamlConfig.config.agents.combat.lastHitAggro == null
                 ? 10_000L : YamlConfig.config.agents.combat.lastHitAggro.targetTimeoutMs;
 
-        player.dropMessage(6, "Agent mob response: observedReaction=" + reactionEnabled
+        player.dropMessage(6, "Agent mob response: implementation=server-impact-v2 observedReaction=" + reactionEnabled
                 + " lastHitAggro=" + aggroEnabled + " targetTimeoutMs=" + timeoutMs);
         player.dropMessage(6, AgentMobReactionMetrics.snapshot().summary());
     }

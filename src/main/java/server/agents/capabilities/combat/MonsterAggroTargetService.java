@@ -1,6 +1,7 @@
 package server.agents.capabilities.combat;
 
 import client.Character;
+import server.integration.AgentPresence;
 import server.life.Monster;
 import server.maps.MapleMap;
 
@@ -44,9 +45,11 @@ public final class MonsterAggroTargetService {
                 threshold,
                 reaction,
                 now + Math.max(0L, reactionDelayMs),
+                now + Math.max(0L, reactionDelayMs),
                 0L,
                 "pending",
                 reaction != null && reaction.contains("knockback"),
+                agentTarget && reaction != null && reaction.contains("knockback"),
                 0,
                 true,
                 false,
@@ -72,10 +75,12 @@ public final class MonsterAggroTargetService {
                 result.appliedDamage(),
                 threshold,
                 result.reaction(),
+                now + Math.max(0L, result.reactionDelayMs()),
                 now + Math.max(0L, pursuitDelayMs),
                 0L,
                 "pending",
                 result.knockbackEligible(),
+                result.agentTarget() && result.knockbackEligible(),
                 result.hitDirection(),
                 result.monsterAlive(),
                 result.monsterKilled(),
@@ -133,7 +138,7 @@ public final class MonsterAggroTargetService {
                 TargetState state = entry.getValue();
                 Character target = state.target.get();
                 MapleMap map = state.map.get();
-                if (!isValidTarget(monster, target, map)
+                if (!isValidTarget(monster, target, map, state.agentTarget)
                         || unreachableExpired(state, now, unreachableTimeoutMs)) {
                     iterator.remove();
                     expiredTargets.offer(new WeakReference<>(monster));
@@ -143,7 +148,8 @@ public final class MonsterAggroTargetService {
                 result.add(new PursuitTarget(monster, target, state.controller.get(),
                         state.agentTarget, state.changedAt, state.damage, state.threshold,
                         state.reaction, state.pursuitStartAt, state.unreachableSince,
-                        state.latestMovement));
+                        state.latestMovement, state.impactAt, state.impactPending,
+                        state.knockbackEligible, state.hitDirection));
             }
         }
         return result;
@@ -158,7 +164,7 @@ public final class MonsterAggroTargetService {
             Character target = state.target.get();
             Character controller = state.controller.get();
             MapleMap map = state.map.get();
-            if (!isValidTarget(monster, target, map)
+            if (!isValidTarget(monster, target, map, state.agentTarget)
                     || unreachableExpired(state, now, unreachableTimeoutMs)) {
                 targets.remove(monster);
                 expiredTargets.offer(new WeakReference<>(monster));
@@ -171,7 +177,27 @@ public final class MonsterAggroTargetService {
                     state.changedAt, state.damage, state.threshold, state.reaction,
                     state.pursuitStartAt, state.unreachableSince, state.latestMovement,
                     state.knockbackEligible, state.hitDirection, state.monsterAliveAtHit,
-                    state.monsterKilledByHit, state.observedAtHit);
+                    state.monsterKilledByHit, state.observedAtHit, state.impactAt,
+                    state.impactPending);
+        }
+    }
+
+    /**
+     * Claims an Agent impact once its accepted attack delay has elapsed. Claiming
+     * is destructive so overlapping scheduler ticks cannot emit duplicate
+     * knockback packets for one accepted hit.
+     */
+    public static PendingImpact claimPendingImpact(Monster monster, long now) {
+        synchronized (targets) {
+            TargetState state = targets.get(monster);
+            if (state == null || !state.agentTarget || !state.knockbackEligible
+                    || !state.impactPending || now < state.impactAt
+                    || !isValidTarget(monster, state.target.get(), state.map.get(), true)) {
+                return null;
+            }
+            state.impactPending = false;
+            return new PendingImpact(state.target.get(), state.hitDirection,
+                    state.impactAt, state.damage, state.threshold);
         }
     }
 
@@ -217,8 +243,9 @@ public final class MonsterAggroTargetService {
                 return;
             }
             state.latestMovement = "client-command-" + movementCommand;
-            if (movementCommand == 2 && state.reaction.contains("knockback")
+            if (movementCommand == 2 && state.knockbackEligible && state.impactPending
                     && now - state.changedAt <= 1_500L) {
+                state.impactPending = false;
                 AgentMobReactionMetrics.knockbackApplied();
             }
         }
@@ -246,7 +273,7 @@ public final class MonsterAggroTargetService {
             if (state == null || !state.agentTarget || now < state.pursuitStartAt) {
                 return false;
             }
-            return isValidTarget(monster, state.target.get(), state.map.get());
+            return isValidTarget(monster, state.target.get(), state.map.get(), true);
         }
     }
 
@@ -268,11 +295,19 @@ public final class MonsterAggroTargetService {
                 && map.getMonsterByOid(monster.getObjectId()) == monster;
     }
 
-    private static boolean isValidTarget(Monster monster, Character target, MapleMap map) {
-        return target != null && map != null && monster != null && monster.isAlive()
+    private static boolean isValidTarget(Monster monster, Character target, MapleMap map,
+                                         boolean agentTarget) {
+        boolean commonValid = target != null && map != null && monster != null && monster.isAlive()
                 && monster.getMap() == map && isCurrentSpawn(monster, map)
-                && target.isAlive() && target.isLoggedinWorld()
+                && target.isAlive()
                 && !target.isChangingMaps() && target.getMap() == map;
+        if (!commonValid) {
+            return false;
+        }
+        if (agentTarget) {
+            return AgentPresence.isAgent(target);
+        }
+        return !AgentPresence.isAgent(target) && target.isLoggedinWorld();
     }
 
     private static boolean unreachableExpired(TargetState state, long now, long timeoutMs) {
@@ -289,10 +324,12 @@ public final class MonsterAggroTargetService {
         private final int damage;
         private final int threshold;
         private final String reaction;
+        private final long impactAt;
         private final long pursuitStartAt;
         private long unreachableSince;
         private String latestMovement;
         private final boolean knockbackEligible;
+        private boolean impactPending;
         private final int hitDirection;
         private final boolean monsterAliveAtHit;
         private final boolean monsterKilledByHit;
@@ -301,8 +338,9 @@ public final class MonsterAggroTargetService {
         private TargetState(WeakReference<MapleMap> map, WeakReference<Character> target,
                             WeakReference<Character> controller, boolean agentTarget,
                             long changedAt, int damage, int threshold, String reaction,
-                            long pursuitStartAt, long unreachableSince, String latestMovement,
-                            boolean knockbackEligible, int hitDirection,
+                            long impactAt, long pursuitStartAt, long unreachableSince,
+                            String latestMovement, boolean knockbackEligible,
+                            boolean impactPending, int hitDirection,
                             boolean monsterAliveAtHit, boolean monsterKilledByHit,
                             boolean observedAtHit) {
             this.map = map;
@@ -313,10 +351,12 @@ public final class MonsterAggroTargetService {
             this.damage = damage;
             this.threshold = threshold;
             this.reaction = reaction;
+            this.impactAt = impactAt;
             this.pursuitStartAt = pursuitStartAt;
             this.unreachableSince = unreachableSince;
             this.latestMovement = latestMovement;
             this.knockbackEligible = knockbackEligible;
+            this.impactPending = impactPending;
             this.hitDirection = hitDirection;
             this.monsterAliveAtHit = monsterAliveAtHit;
             this.monsterKilledByHit = monsterKilledByHit;
@@ -337,7 +377,13 @@ public final class MonsterAggroTargetService {
     public record PursuitTarget(Monster monster, Character target, Character controller,
                                 boolean agentTarget, long changedAt, int damage,
                                 int threshold, String reaction, long pursuitStartAt,
-                                long unreachableSince, String latestMovement) {
+                                long unreachableSince, String latestMovement,
+                                long impactAt, boolean impactPending,
+                                boolean knockbackEligible, int hitDirection) {
+    }
+
+    public record PendingImpact(Character target, int hitDirection, long impactAt,
+                                int damage, int threshold) {
     }
 
     public record Snapshot(int targetId, String targetName, boolean agentTarget,
@@ -346,10 +392,12 @@ public final class MonsterAggroTargetService {
                            long pursuitStartAt, long unreachableSince,
                            String latestMovement, boolean knockbackEligible,
                            int hitDirection, boolean monsterAliveAtHit,
-                           boolean monsterKilledByHit, boolean observedAtHit) {
+                           boolean monsterKilledByHit, boolean observedAtHit,
+                           long impactAt, boolean impactPending) {
         static Snapshot empty() {
             return new Snapshot(0, "none", false, 0, "none", 0, 0, 0,
-                    "none", 0, 0, "none", false, 0, false, false, false);
+                    "none", 0, 0, "none", false, 0, false, false, false,
+                    0, false);
         }
 
         public boolean hasTarget() {
