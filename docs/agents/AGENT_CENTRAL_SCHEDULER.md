@@ -77,6 +77,11 @@ cumulative-only metrics, and no priority/budget/shard runtime. The repository
 therefore has a useful migration foundation, not the completed centralized
 scheduler.
 
+Phase 0 baseline evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-0`. It covers deterministic
+legacy and central-sequential callback behavior at 50, 100, 250, and 500
+sessions. It does not represent live gameplay or production load evidence.
+
 ## Rollback
 
 Remove or set `agents.scheduler.central.enabled=false` and restart. Registration
