@@ -52,6 +52,21 @@ class SkillEligibilityPolicyTest {
         assertEquals(SkillEligibilityPolicy.Rejection.WEAPON_OR_AMMO, equipment.rejection());
     }
 
+    @Test
+    void rejectsSessionBorrowedSkillEvenWhenItIsLoadedAtTheClaimedLevel() {
+        Character character = mock(Character.class);
+        Skill skill = skill(4111002, false, character);
+        when(character.getJob()).thenReturn(Job.HERMIT);
+        when(character.isPartnerSessionBorrowedSkill(4111002)).thenReturn(true);
+
+        SkillEligibilityPolicy.Result result = SkillEligibilityPolicy.evaluate(
+                character, skill, 1, false, () -> true);
+
+        assertFalse(result.allowed());
+        assertEquals(SkillEligibilityPolicy.Rejection.PARTNER_BORROWED_SKILL, result.rejection());
+        assertFalse(SkillEligibilityPolicy.isLearnedAndAllowedJob(character, skill));
+    }
+
     private static Skill skill(int id, boolean beginner, Character character) {
         Skill skill = mock(Skill.class);
         StatEffect effect = mock(StatEffect.class);

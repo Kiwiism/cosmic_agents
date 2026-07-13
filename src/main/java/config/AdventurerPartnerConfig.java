@@ -17,6 +17,18 @@ public class AdventurerPartnerConfig {
     public long SWITCH_COOLDOWN_MS = 5_000L;
     public boolean SAME_MAP_REQUIRED = true;
     public boolean PUBLIC_PRESENTATION = true;
+    public boolean PRESENT_JOB = true;
+    public boolean PRESENT_STATS = true;
+    public boolean PRESENT_SKILLS = true;
+    public boolean PRESENT_KEY_BINDINGS = true;
+    public boolean PRESENT_EQUIPMENT = true;
+    public boolean PRESENT_INVENTORY = true;
+    public boolean PRESENT_PETS = true;
+    public boolean PRESENT_BUFFS = true;
+    public boolean PRESENT_DISEASES = true;
+    public boolean PRESENT_COOLDOWNS = true;
+    public boolean PRESENT_PUBLIC_LOOK = true;
+    public boolean PRESENT_SWITCH_EFFECT = true;
     public List<Integer> TRIGGER_SKILL_IDS = new ArrayList<>(List.of(
             Beginner.NIMBLE_FEET,
             Noblesse.NIMBLE_FEET,

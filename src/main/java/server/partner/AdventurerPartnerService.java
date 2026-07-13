@@ -299,9 +299,6 @@ public final class AdventurerPartnerService {
             player.reattachAccountPersistenceOwner();
             validateLoadedProfile(player, partnerCharacterId, partnerHolder);
             transitions.prepareProfiles(player, partnerHolder);
-            if (spawned != null) {
-                transitions.prepareAgent(spawned.runtimeEntry(), partnerHolder);
-            }
 
             PartnerSessionRuntime runtime = new PartnerSessionRuntime(
                     journal.id(), link.id(), player.getId(),
@@ -323,10 +320,14 @@ public final class AdventurerPartnerService {
             repository.updateSession(
                     journal.id(), ProfileOrientation.CANONICAL, runtime.generation(),
                     PartnerLifecycleStatus.ACTIVE, null);
+            transitions.prepareSkillUnion(journal.id(), player, partnerHolder);
             if (mode == PartnerMode.SOLO_TAG) {
                 partnerHolder.suspendProfileRuntimeTasks();
                 transitions.prepareSessionSkills(
                         journal.id(), mode, player, partnerHolder);
+            }
+            if (spawned != null) {
+                transitions.prepareAgent(spawned.runtimeEntry(), partnerHolder);
             }
             resetTriggerSkillCooldowns(player);
             log.info("partner_activation link={} session={} player={} partner={} mode={}",
@@ -356,8 +357,8 @@ public final class AdventurerPartnerService {
     }
 
     public void onSkillPointAssigned(Character source, Skill skill) {
-        if (!config.ENABLED || !config.SOLO_TAG_BUFF_SHARING_ENABLED
-                || source == null || skill == null) {
+        if (!config.ENABLED || source == null || skill == null
+                || source.isPartnerSessionBorrowedSkill(skill.getId())) {
             return;
         }
         Optional<ActivePartnerSession> found =
@@ -368,8 +369,7 @@ public final class AdventurerPartnerService {
         ActivePartnerSession active = found.get();
         active.enterLifecycleOperation();
         try {
-            if (active.runtime().mode() != PartnerMode.SOLO_TAG
-                    || active.runtime().status() != PartnerLifecycleStatus.ACTIVE
+            if (active.runtime().status() != PartnerLifecycleStatus.ACTIVE
                     || active.isJournalClosed()) {
                 return;
             }
@@ -384,18 +384,24 @@ public final class AdventurerPartnerService {
                 return;
             }
             int level = source.getSkillLevel(skill);
-            if (!buffSharing.isLearnedSelfBuffSkill(skill, level)) {
-                return;
+            boolean synchronizedUnion = sessionSkills.synchronizeUnionSkill(
+                    active.runtime().sessionId(), source, recipient, skill);
+            if (!synchronizedUnion) {
+                if (active.runtime().mode() != PartnerMode.SOLO_TAG
+                        || !config.SOLO_TAG_BUFF_SHARING_ENABLED
+                        || !buffSharing.isLearnedSelfBuffSkill(skill, level)) {
+                    return;
+                }
+                sessionSkills.grant(
+                        active.runtime().sessionId(),
+                        new SoloTagBuffSharingService.SkillGrant(
+                                recipient,
+                                skill,
+                                (byte) level,
+                                source.getMasterLevel(skill),
+                                source.getSkillExpiration(skill)));
             }
-            sessionSkills.grant(
-                    active.runtime().sessionId(),
-                    new SoloTagBuffSharingService.SkillGrant(
-                            recipient,
-                            skill,
-                            (byte) level,
-                            source.getMasterLevel(skill),
-                            source.getSkillExpiration(skill)));
-            log.info("partner_self_buff_skill synchronized session={} sourceProfile={} "
+            log.info("partner_session_skill synchronized session={} sourceProfile={} "
                             + "recipientProfile={} skill={} level={}",
                     active.runtime().sessionId(), sourceOwnerId,
                     recipient.getProfileOwnerCharacterId(), skill.getId(), level);
@@ -434,11 +440,14 @@ public final class AdventurerPartnerService {
             }
             long now = System.currentTimeMillis();
             if (!active.tryAcquireSwitchCooldown(now, config.SWITCH_COOLDOWN_MS)) {
-                log.info("partner_switch rejected session={} generation={} reason=cooldown remainingMs={}",
-                        active.runtime().sessionId(), active.runtime().generation(),
-                        active.remainingSwitchCooldownMs(now));
-                return TriggerResult.rejected(
-                        "Partner switch is cooling down for " + active.remainingSwitchCooldownMs(now) + " ms.");
+                long remainingMs = active.remainingSwitchCooldownMs(now);
+                if (active.tryAcquireCooldownNotice(now)) {
+                    log.info("partner_switch rejected session={} generation={} reason=cooldown remainingMs={}",
+                            active.runtime().sessionId(), active.runtime().generation(), remainingMs);
+                    return TriggerResult.rejected(
+                            "Partner switch is cooling down for " + remainingMs + " ms.");
+                }
+                return TriggerResult.rejected(null);
             }
 
             ProfileTransitionCoordinator.TransitionResult transition = transitions.transition(

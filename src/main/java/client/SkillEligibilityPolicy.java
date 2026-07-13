@@ -19,6 +19,9 @@ public final class SkillEligibilityPolicy {
             return Result.rejected(Rejection.UNKNOWN_SKILL);
         }
         int skillId = skill.getId();
+        if (character.isPartnerSessionBorrowedSkill(skillId)) {
+            return Result.rejected(Rejection.PARTNER_BORROWED_SKILL);
+        }
         int learnedLevel = character.getSkillLevel(skill);
         if (!allowUnlearnedEventSkill && (learnedLevel <= 0 || learnedLevel != claimedSkillLevel)) {
             return Result.rejected(Rejection.NOT_LEARNED_AT_LEVEL);
@@ -52,6 +55,9 @@ public final class SkillEligibilityPolicy {
         if (character == null || skill == null || character.getSkillLevel(skill) <= 0) {
             return false;
         }
+        if (character.isPartnerSessionBorrowedSkill(skill.getId())) {
+            return false;
+        }
         if (!character.isGM() && GameConstants.isGMSkills(skill.getId())) {
             return false;
         }
@@ -67,7 +73,8 @@ public final class SkillEligibilityPolicy {
         EVENT_PERMISSION,
         COOLDOWN,
         HP_MP_COST,
-        WEAPON_OR_AMMO
+        WEAPON_OR_AMMO,
+        PARTNER_BORROWED_SKILL
     }
 
     public record Result(boolean allowed, int executionLevel, Rejection rejection) {

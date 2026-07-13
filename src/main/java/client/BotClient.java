@@ -2,6 +2,8 @@ package client;
 
 import net.packet.Packet;
 
+import java.util.List;
+
 /**
  * A headless client for bot/companion characters that have no real network connection.
  * sendPacket is a no-op, isLoggedIn always returns true, and updateLoginState/disconnect
@@ -15,6 +17,11 @@ public class BotClient extends Client {
 
     @Override
     public void sendPacket(Packet packet) {
+        // no-op: bot has no network socket
+    }
+
+    @Override
+    public void sendPackets(List<Packet> packets) {
         // no-op: bot has no network socket
     }
 

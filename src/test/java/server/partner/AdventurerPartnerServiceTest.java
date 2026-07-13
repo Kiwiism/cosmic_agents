@@ -113,6 +113,7 @@ class AdventurerPartnerServiceTest {
         assertEquals(ProfileLeaseRegistry.DETACHED_ACTOR,
                 leases.leaseForProfile(20).orElseThrow().actorCharacterId());
         assertTrue(runtimes.findByHumanActorId(10).isPresent());
+        verify(transitions).prepareSkillUnion(7L, player, partner);
         verify(transitions).prepareSessionSkills(
                 7L, PartnerMode.SOLO_TAG, player, partner);
         assertTriggerCooldownsReset();
@@ -186,6 +187,7 @@ class AdventurerPartnerServiceTest {
         assertTriggerCooldownsReset();
         verify(agents).spawnFollowing(player, 20, "Yoona");
         verify(profiles).restoreTransientState(partner);
+        verify(transitions).prepareSkillUnion(8L, player, partner);
     }
 
     @Test
@@ -334,6 +336,31 @@ class AdventurerPartnerServiceTest {
             executor.shutdownNow();
             service.release(player, "simultaneous trigger test cleanup");
         }
+    }
+
+    @Test
+    void repeatedCooldownRejectionsOnlyReturnOneChatMessage() throws Exception {
+        config.SWITCH_COOLDOWN_MS = 5_000L;
+        when(profiles.loadDetached(20, 0, 1)).thenReturn(partner);
+        when(triggerPolicy.validate(any(), any()))
+                .thenReturn(new PartnerTriggerPolicy.Result(true, null));
+        when(transitions.transition(any(), any(), any(), any(), anyLong()))
+                .thenReturn(new ProfileTransitionCoordinator.TransitionResult(
+                        true, true, 1L, 1L, 0L,
+                        ProfilePresentationService.RefreshMetrics.none(), null));
+        service.activate(player, PartnerMode.SOLO_TAG);
+
+        AdventurerPartnerService.TriggerResult switched =
+                service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
+        AdventurerPartnerService.TriggerResult firstRejected =
+                service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
+        AdventurerPartnerService.TriggerResult repeatedRejected =
+                service.handleSwitchTrigger(player, config.TRIGGER_SKILL_IDS.getFirst());
+
+        assertTrue(switched.switched());
+        assertTrue(firstRejected.message().contains("cooling down"));
+        org.junit.jupiter.api.Assertions.assertNull(repeatedRejected.message());
+        service.release(player, "cooldown message test cleanup");
     }
 
     @Test

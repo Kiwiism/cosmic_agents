@@ -93,6 +93,14 @@ public final class ProfileTransitionCoordinator {
         presentation.prepare(firstProfile, secondProfile);
     }
 
+    public void prepareSkillUnion(long sessionId,
+                                  Character firstProfile,
+                                  Character secondProfile) {
+        if (sessionSkills != null) {
+            sessionSkills.prepareUnion(sessionId, firstProfile, secondProfile);
+        }
+    }
+
     public void prepareSessionSkills(long sessionId,
                                      PartnerMode mode,
                                      Character humanProfile,

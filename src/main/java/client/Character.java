@@ -327,6 +327,7 @@ public class Character extends AbstractCharacterObject {
     private final Map<Integer, String> entered = new LinkedHashMap<>();
     private final Set<MapObject> visibleMapObjects = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private Map<Skill, SkillEntry> skills = new LinkedHashMap<>();
+    private Set<Integer> partnerSessionBorrowedSkills = new LinkedHashSet<>();
     private Map<Integer, Integer> activeCoupons = new LinkedHashMap<>();
     private Map<Integer, Integer> activeCouponRates = new LinkedHashMap<>();
     private EnumMap<BuffStat, BuffStatValueHolder> effects = new EnumMap<>(BuffStat.class);
@@ -688,6 +689,7 @@ public class Character extends AbstractCharacterObject {
         private List<Integer> lastMonthFameIds;
         private Map<Short, QuestStatus> quests;
         private Map<Skill, SkillEntry> skills;
+        private Set<Integer> partnerSessionBorrowedSkills;
         private Map<Integer, KeyBinding> keymap;
         private byte[] quickslotLoaded;
         private QuickslotBinding quickslotMapped;
@@ -789,6 +791,7 @@ public class Character extends AbstractCharacterObject {
             state.lastMonthFameIds = character.lastmonthfameids;
             state.quests = character.quests;
             state.skills = character.skills;
+            state.partnerSessionBorrowedSkills = character.partnerSessionBorrowedSkills;
             state.keymap = character.keymap;
             state.quickslotLoaded = character.m_aQuickslotLoaded;
             state.quickslotMapped = character.m_pQuickslotKeyMapped;
@@ -891,6 +894,7 @@ public class Character extends AbstractCharacterObject {
             character.lastmonthfameids = lastMonthFameIds;
             character.quests = quests;
             character.skills = skills;
+            character.partnerSessionBorrowedSkills = partnerSessionBorrowedSkills;
             character.keymap = keymap;
             character.m_aQuickslotLoaded = quickslotLoaded;
             character.m_pQuickslotKeyMapped = quickslotMapped;
@@ -2483,6 +2487,16 @@ public class Character extends AbstractCharacterObject {
                                          byte level,
                                          int masterLevel,
                                          long expiration) {
+        applyPartnerSessionSkill(
+                expectedProfileOwnerId, skill, level, masterLevel, expiration, true);
+    }
+
+    public void applyPartnerSessionSkill(int expectedProfileOwnerId,
+                                         Skill skill,
+                                         byte level,
+                                         int masterLevel,
+                                         long expiration,
+                                         boolean announce) {
         if (skill == null) {
             throw new IllegalArgumentException("Partner-session skill is required");
         }
@@ -2500,7 +2514,36 @@ public class Character extends AbstractCharacterObject {
             chrLock.unlock();
         }
         markPersistenceDirty(PersistenceSection.SKILLS);
-        sendPacket(PacketCreator.updateSkill(skill.getId(), level, masterLevel, expiration));
+        if (announce) {
+            sendPacket(PacketCreator.updateSkill(skill.getId(), level, masterLevel, expiration));
+        }
+    }
+
+    public void markPartnerSessionSkillBorrowed(int expectedProfileOwnerId,
+                                                int skillId,
+                                                boolean borrowed) {
+        chrLock.lock();
+        try {
+            if (getProfileOwnerCharacterId() != expectedProfileOwnerId) {
+                throw new IllegalStateException("Partner-session skill profile ownership changed");
+            }
+            if (borrowed) {
+                partnerSessionBorrowedSkills.add(skillId);
+            } else {
+                partnerSessionBorrowedSkills.remove(skillId);
+            }
+        } finally {
+            chrLock.unlock();
+        }
+    }
+
+    public boolean isPartnerSessionBorrowedSkill(int skillId) {
+        chrLock.lock();
+        try {
+            return partnerSessionBorrowedSkills.contains(skillId);
+        } finally {
+            chrLock.unlock();
+        }
     }
 
     /** Restores the canonical skill state after its Partner session has ended. */
@@ -2524,6 +2567,7 @@ public class Character extends AbstractCharacterObject {
             } else {
                 skills.put(existingKey, originalState);
             }
+            partnerSessionBorrowedSkills.remove(skill.getId());
         } finally {
             chrLock.unlock();
         }
@@ -11260,6 +11304,10 @@ public class Character extends AbstractCharacterObject {
 
     public void sendPacket(Packet packet) {
         client.sendPacket(packet);
+    }
+
+    public void sendPackets(List<Packet> packets) {
+        client.sendPackets(packets);
     }
 
     @Override

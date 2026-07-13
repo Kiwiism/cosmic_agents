@@ -6,6 +6,8 @@ import client.Job;
 import client.MonsterBook;
 import client.QuestStatus;
 import client.Skill;
+import client.inventory.InventoryType;
+import client.inventory.Item;
 import config.YamlConfig;
 import net.opcodes.SendOpcode;
 import net.packet.Packet;
@@ -16,21 +18,81 @@ import server.quest.Quest;
 import tools.PacketCreator;
 
 import java.sql.ResultSet;
+import java.lang.reflect.Field;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CosmicProfilePresentationServiceTest {
+    @Test
+    void cachedInventoryPresentationCanCreateFreshOperationsForEverySwitch() {
+        Item cachedItem = new Item(2000000, (short) 1, (short) 10);
+        boolean previous = YamlConfig.config.adventurerPartner.PRESENT_INVENTORY;
+        YamlConfig.config.adventurerPartner.PRESENT_INVENTORY = true;
+        try {
+            List<client.inventory.ModifyInventory> first =
+                    CosmicProfilePresentationService.inventoryOperations(
+                            List.of(cachedItem), 3, YamlConfig.config.adventurerPartner);
+            PacketCreator.modifyInventory(false, first);
+
+            assertDoesNotThrow(() -> PacketCreator.modifyInventory(false,
+                    CosmicProfilePresentationService.inventoryOperations(
+                            List.of(cachedItem), 3, YamlConfig.config.adventurerPartner)));
+            assertEquals(InventoryType.USE, cachedItem.getInventoryType());
+        } finally {
+            YamlConfig.config.adventurerPartner.PRESENT_INVENTORY = previous;
+        }
+    }
+
+    @Test
+    void diagnosticComponentSwitchesCanReduceRefreshToEnableActionsOnly() throws Exception {
+        CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
+        Character human = character(890_001, "DiagA");
+        Character partner = character(890_002, "DiagB");
+        Client humanClient = mock(Client.class);
+        human.setClient(humanClient);
+        Map<Field, Boolean> previous = new LinkedHashMap<>();
+        for (Field field : YamlConfig.config.adventurerPartner.getClass().getFields()) {
+            if (field.getName().startsWith("PRESENT_")) {
+                previous.put(field, field.getBoolean(YamlConfig.config.adventurerPartner));
+                field.setBoolean(YamlConfig.config.adventurerPartner, false);
+            }
+        }
+        boolean previousPublicPresentation = YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION;
+        YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = false;
+        try {
+            presentation.prepare(human, partner);
+            Character.ProfileExchangeResult exchange =
+                    Character.exchangeProfileBindings(human, partner);
+
+            presentation.refresh(human, partner, PartnerMode.SOLO_TAG, exchange);
+
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Packet>> packets = ArgumentCaptor.forClass(List.class);
+            verify(humanClient).sendPackets(packets.capture());
+            assertEquals(1, packets.getValue().size());
+            assertArrayEquals(PacketCreator.enableActions().getBytes(),
+                    packets.getValue().getFirst().getBytes());
+        } finally {
+            YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
+            for (Map.Entry<Field, Boolean> entry : previous.entrySet()) {
+                entry.getKey().setBoolean(YamlConfig.config.adventurerPartner, entry.getValue());
+            }
+            presentation.discardPrepared(human, partner);
+        }
+    }
+
     @Test
     void partnerRefreshOnlySendsSkillRecordsThatDifferBetweenProfiles() throws Exception {
         CosmicProfilePresentationService presentation = CosmicProfilePresentationService.INSTANCE;
@@ -59,25 +121,21 @@ class CosmicProfilePresentationServiceTest {
 
             presentation.refresh(human, partner, PartnerMode.SOLO_TAG, exchange);
 
-            ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
-            verify(humanClient, atLeastOnce()).sendPacket(packets.capture());
-            List<byte[]> skillPackets = packets.getAllValues().stream()
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Packet>> packets = ArgumentCaptor.forClass(List.class);
+            verify(humanClient).sendPackets(packets.capture());
+            List<byte[]> skillPackets = packets.getValue().stream()
                     .filter(packet -> opcode(packet.getBytes()) == SendOpcode.UPDATE_SKILLS.getValue())
                     .map(Packet::getBytes)
                     .toList();
-            assertEquals(5, skillPackets.size());
-            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
-                    bytes, PacketCreator.updateSkill(1000001, -1, 0, -1L).getBytes())));
-            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
-                    bytes, PacketCreator.updateSkill(1000002, 1, 0, -1L).getBytes())));
-            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
-                    bytes, PacketCreator.updateSkill(1000003, 2, 0, -1L).getBytes())));
-            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
-                    bytes, PacketCreator.updateSkill(1000004, 1, 20, -1L).getBytes())));
-            assertTrue(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
-                    bytes, PacketCreator.updateSkill(1000005, 1, 0, 200L).getBytes())));
-            assertFalse(skillPackets.stream().anyMatch(bytes -> java.util.Arrays.equals(
-                    bytes, PacketCreator.updateSkill(1000000, 1, 0, -1L).getBytes())));
+            assertEquals(1, skillPackets.size());
+            assertArrayEquals(PacketCreator.updateSkills(List.of(
+                    new PacketCreator.SkillUpdate(1000001, -1, 0, -1L),
+                    new PacketCreator.SkillUpdate(1000002, 1, 0, -1L),
+                    new PacketCreator.SkillUpdate(1000003, 2, 0, -1L),
+                    new PacketCreator.SkillUpdate(1000004, 1, 20, -1L),
+                    new PacketCreator.SkillUpdate(1000005, 1, 0, 200L))).getBytes(),
+                    skillPackets.getFirst());
         } finally {
             YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION = previousPublicPresentation;
             presentation.discardPrepared(human, partner);
@@ -128,17 +186,16 @@ class CosmicProfilePresentationServiceTest {
             ProfilePresentationService.RefreshMetrics metrics = presentation.refresh(
                     human, partner, PartnerMode.DOUBLE_PARTNER, exchange);
 
-            ArgumentCaptor<Packet> packets = ArgumentCaptor.forClass(Packet.class);
-            verify(humanClient, atLeastOnce()).sendPacket(packets.capture());
-            List<Packet> sent = packets.getAllValues();
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Packet>> packets = ArgumentCaptor.forClass(List.class);
+            verify(humanClient).sendPackets(packets.capture());
+            List<Packet> sent = packets.getValue();
             List<Integer> opcodes = sent.stream().map(packet -> opcode(packet.getBytes())).toList();
             assertEquals(SendOpcode.STAT_CHANGED.getValue(), opcodes.getFirst());
-            assertTrue(opcodes.indexOf(SendOpcode.KEYMAP.getValue())
-                    < opcodes.indexOf(SendOpcode.QUICKSLOT_INIT.getValue()));
-            assertTrue(opcodes.indexOf(SendOpcode.QUICKSLOT_INIT.getValue())
-                    < opcodes.indexOf(SendOpcode.MACRO_SYS_DATA_INIT.getValue()));
-            assertTrue(opcodes.indexOf(SendOpcode.MACRO_SYS_DATA_INIT.getValue())
-                    < opcodes.indexOf(SendOpcode.INVENTORY_GROW.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.KEYMAP.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.QUICKSLOT_INIT.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.MACRO_SYS_DATA_INIT.getValue()));
+            assertFalse(opcodes.contains(SendOpcode.INVENTORY_GROW.getValue()));
             assertArrayEquals(PacketCreator.enableActions().getBytes(), sent.getLast().getBytes());
             assertTrue(sent.stream().anyMatch(packet -> java.util.Arrays.equals(
                     packet.getBytes(), PacketCreator.showSpecialEffect(8).getBytes())));

@@ -1531,6 +1531,22 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
     }
 
+    /** Writes an ordered packet batch with one transport flush. */
+    public void sendPackets(List<Packet> packets) {
+        if (packets == null || packets.isEmpty()) {
+            return;
+        }
+        announcerLock.lock();
+        try {
+            for (Packet packet : packets) {
+                ioChannel.write(packet);
+            }
+            ioChannel.flush();
+        } finally {
+            announcerLock.unlock();
+        }
+    }
+
     public void announceHint(String msg, int length) {
         sendPacket(PacketCreator.sendHint(msg, length, 10));
         sendPacket(PacketCreator.enableActions());

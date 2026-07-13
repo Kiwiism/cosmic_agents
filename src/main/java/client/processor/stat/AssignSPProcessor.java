@@ -48,6 +48,11 @@ public class AssignSPProcessor {
         }
 
         Character player = c.getPlayer();
+        if (player.isPartnerSessionBorrowedSkill(skillid)) {
+            player.message("That skill belongs to your Partner. Close and reopen the Skill window after switching.");
+            c.sendPacket(PacketCreator.enableActions());
+            return false;
+        }
         if ((!GameConstants.isPqSkillMap(player.getMapId()) && GameConstants.isPqSkill(skillid)) || (!player.isGM() && GameConstants.isGMSkills(skillid)) || (!GameConstants.isInJobTree(skillid, player.getJob().getId()) && !player.isGM())) {
             AutobanFactory.PACKET_EDIT.alert(player, "tried to packet edit in distributing sp.");
             log.warn("Chr {} tried to use skill {} without it being in their job.", c.getPlayer().getName(), skillid);

@@ -14,6 +14,7 @@ public final class ActivePartnerSession {
     private final Character partnerActorOrDormantProfile;
     private final AgentRuntimeEntry agentEntry;
     private final AtomicLong nextAllowedSwitchAtMs = new AtomicLong();
+    private final AtomicLong nextCooldownNoticeAtMs = new AtomicLong();
     private final AtomicBoolean journalClosed = new AtomicBoolean();
     private final ReentrantLock lifecycleOperationLock = new ReentrantLock(true);
 
@@ -36,6 +37,20 @@ public final class ActivePartnerSession {
                 return false;
             }
             if (nextAllowedSwitchAtMs.compareAndSet(current, nowMs + Math.max(0L, cooldownMs))) {
+                nextCooldownNoticeAtMs.set(0L);
+                return true;
+            }
+        }
+    }
+
+    public boolean tryAcquireCooldownNotice(long nowMs) {
+        while (true) {
+            long current = nextCooldownNoticeAtMs.get();
+            if (nowMs < current) {
+                return false;
+            }
+            long suppressUntil = Math.max(nowMs + 1L, nextAllowedSwitchAtMs.get());
+            if (nextCooldownNoticeAtMs.compareAndSet(current, suppressUntil)) {
                 return true;
             }
         }

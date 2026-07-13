@@ -22,7 +22,10 @@ class ActivePartnerSessionTest {
 
         assertTrue(active.tryAcquireSwitchCooldown(1_000L, 5_000L));
         assertFalse(active.tryAcquireSwitchCooldown(1_001L, 5_000L));
+        assertTrue(active.tryAcquireCooldownNotice(1_001L));
+        assertFalse(active.tryAcquireCooldownNotice(1_002L));
         assertTrue(active.tryAcquireSwitchCooldown(6_000L, 5_000L));
+        assertTrue(active.tryAcquireCooldownNotice(6_001L));
     }
 
     private static ActivePartnerSession session() {

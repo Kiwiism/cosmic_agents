@@ -3528,15 +3528,27 @@ public class PacketCreator {
     }
 
     public static Packet updateSkill(int skillId, int level, int masterlevel, long expiration) {
+        return updateSkills(List.of(new SkillUpdate(skillId, level, masterlevel, expiration)));
+    }
+
+    public static Packet updateSkills(List<SkillUpdate> skills) {
+        if (skills == null || skills.isEmpty() || skills.size() > 0xFFFF) {
+            throw new IllegalArgumentException("Skill update batch must contain 1 to 65535 entries");
+        }
         OutPacket p = OutPacket.create(SendOpcode.UPDATE_SKILLS);
         p.writeByte(1);
-        p.writeShort(1);
-        p.writeInt(skillId);
-        p.writeInt(level);
-        p.writeInt(masterlevel);
-        addExpirationTime(p, expiration);
+        p.writeShort(skills.size());
+        for (SkillUpdate skill : skills) {
+            p.writeInt(skill.skillId());
+            p.writeInt(skill.level());
+            p.writeInt(skill.masterLevel());
+            addExpirationTime(p, skill.expiration());
+        }
         p.writeByte(4);
         return p;
+    }
+
+    public record SkillUpdate(int skillId, int level, int masterLevel, long expiration) {
     }
 
     public static Packet getShowQuestCompletion(int id) {

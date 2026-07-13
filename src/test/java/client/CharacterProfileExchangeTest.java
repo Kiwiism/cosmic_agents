@@ -90,6 +90,8 @@ class CharacterProfileExchangeTest {
                 firstSkill, new Character.SkillEntry((byte) 11, 20, -1L))));
         setField(second, "skills", new LinkedHashMap<>(Map.of(
                 secondSkill, new Character.SkillEntry((byte) 7, 10, -1L))));
+        first.markPartnerSessionSkillBorrowed(10, 4_111_001, true);
+        second.markPartnerSessionSkillBorrowed(20, 2_101_001, true);
         QuestStatus firstQuest = mock(QuestStatus.class);
         QuestStatus secondQuest = mock(QuestStatus.class);
         questMap(first).put((short) 100, firstQuest);
@@ -145,6 +147,10 @@ class CharacterProfileExchangeTest {
         assertEquals(1_000, second.getMeso());
         assertTrue(first.getSkills().containsKey(secondSkill));
         assertTrue(second.getSkills().containsKey(firstSkill));
+        assertTrue(first.isPartnerSessionBorrowedSkill(2_101_001));
+        assertFalse(first.isPartnerSessionBorrowedSkill(4_111_001));
+        assertTrue(second.isPartnerSessionBorrowedSkill(4_111_001));
+        assertFalse(second.isPartnerSessionBorrowedSkill(2_101_001));
         assertSame(secondQuest, first.getQuestStatusesSnapshot().getFirst());
         assertSame(firstQuest, second.getQuestStatusesSnapshot().getFirst());
         assertSame(secondBook, first.getMonsterBook());

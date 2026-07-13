@@ -10,6 +10,7 @@ import client.inventory.Item;
 import client.inventory.ModifyInventory;
 import client.keybind.KeyBinding;
 import client.keybind.QuickslotBinding;
+import config.AdventurerPartnerConfig;
 import config.YamlConfig;
 import net.packet.Packet;
 import net.server.PlayerCoolDownValueHolder;
@@ -19,9 +20,11 @@ import tools.PacketCreator;
 import tools.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Cosmic packet adapter for deterministic local and public profile refresh. */
@@ -68,51 +71,91 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         PacketCounter counter = new PacketCounter(humanActor);
         PreparedStaticPresentation oldPresentation = prepared(partnerActorOrDormantProfile);
         PreparedStaticPresentation newPresentation = prepared(humanActor);
+        AdventurerPartnerConfig config = YamlConfig.config.adventurerPartner;
 
-        cancelOldLocalPresentation(counter, partnerActorOrDormantProfile);
-        counter.send("stats", PacketCreator.updatePlayerStats(fullStats(humanActor), false, humanActor));
-        refreshSkills(counter, oldPresentation, newPresentation);
-        counter.send("bindings", PacketCreator.getKeymap(newPresentation.keymap()));
-        counter.send("bindings", PacketCreator.QuickslotMappedInit(newPresentation.quickslots()));
-        counter.send("bindings", PacketCreator.getMacros(newPresentation.macros()));
-        refreshInventory(counter, oldPresentation, newPresentation);
-        refreshLocalPets(counter, partnerActorOrDormantProfile, humanActor);
-        refreshLocalBuffs(counter, humanActor);
-        refreshLocalDiseases(counter, humanActor);
-        refreshLocalCooldowns(counter, humanActor);
+        cancelOldLocalPresentation(counter, partnerActorOrDormantProfile, config);
+        List<Pair<Stat, Integer>> stats = selectedStats(humanActor, config);
+        if (!stats.isEmpty()) {
+            counter.send("stats", PacketCreator.updatePlayerStats(stats, false, humanActor));
+        }
+        if (config.PRESENT_SKILLS) {
+            refreshSkills(counter, oldPresentation, newPresentation);
+        }
+        if (config.PRESENT_KEY_BINDINGS) {
+            refreshBindings(counter, oldPresentation, newPresentation);
+        }
+        refreshInventory(counter, oldPresentation, newPresentation, config);
+        if (config.PRESENT_PETS) {
+            refreshLocalPets(counter, partnerActorOrDormantProfile, humanActor);
+        }
+        if (config.PRESENT_BUFFS) {
+            refreshLocalBuffs(counter, humanActor);
+        }
+        if (config.PRESENT_DISEASES) {
+            refreshLocalDiseases(counter, humanActor);
+        }
+        if (config.PRESENT_COOLDOWNS) {
+            refreshLocalCooldowns(counter, humanActor);
+        }
 
-        if (YamlConfig.config.adventurerPartner.PUBLIC_PRESENTATION) {
-            refreshPublicActor(counter, humanActor, partnerActorOrDormantProfile);
+        if (config.PUBLIC_PRESENTATION) {
+            refreshPublicActor(counter, humanActor, partnerActorOrDormantProfile, config);
             if (mode == PartnerMode.DOUBLE_PARTNER) {
-                refreshPublicActor(counter, partnerActorOrDormantProfile, humanActor);
+                refreshPublicActor(counter, partnerActorOrDormantProfile, humanActor, config);
             }
         }
-        refreshSwitchEffects(counter, humanActor, partnerActorOrDormantProfile, mode);
+        if (config.PRESENT_SWITCH_EFFECT) {
+            refreshSwitchEffects(counter, humanActor, partnerActorOrDormantProfile, mode);
+        }
         counter.send("actions", PacketCreator.enableActions());
+        counter.flush();
         long duration = System.nanoTime() - startedNs;
         log.info("partner_presentation packets={} bytes={} durationNs={} categories={}",
                 counter.packetCount, counter.packetBytes, duration, counter.categoryTotals);
         return new RefreshMetrics(counter.packetCount, counter.packetBytes, duration);
     }
 
-    private static void cancelOldLocalPresentation(PacketCounter counter, Character oldProfileHolder) {
-        List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
-        if (!oldBuffs.isEmpty()) {
-            counter.send("cancel", PacketCreator.cancelBuff(oldBuffs));
-        }
-        for (PlayerCoolDownValueHolder cooldown : oldProfileHolder.getAllCooldowns()) {
-            counter.send("cancel", PacketCreator.skillCooldown(cooldown.skillId, 0));
-        }
-        for (Character.DiseasePresentationSnapshot disease
-                : oldProfileHolder.getDiseasePresentationSnapshots()) {
-            counter.send("cancel", PacketCreator.cancelDebuff(disease.disease().getValue()));
-        }
-        for (byte slot = 0; slot < 3; slot++) {
-            if (oldProfileHolder.getPet(slot) != null) {
-                counter.send("cancel", PacketCreator.showPetAtIndex(
-                        counter.character, slot, oldProfileHolder.getPet(slot), true, false));
+    private static void cancelOldLocalPresentation(PacketCounter counter,
+                                                   Character oldProfileHolder,
+                                                   AdventurerPartnerConfig config) {
+        if (config.PRESENT_BUFFS) {
+            List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
+            if (!oldBuffs.isEmpty()) {
+                counter.send("cancel-buffs", PacketCreator.cancelBuff(oldBuffs));
             }
         }
+        if (config.PRESENT_COOLDOWNS) {
+            for (PlayerCoolDownValueHolder cooldown : oldProfileHolder.getAllCooldowns()) {
+                counter.send("cancel-cooldowns", PacketCreator.skillCooldown(cooldown.skillId, 0));
+            }
+        }
+        if (config.PRESENT_DISEASES) {
+            for (Character.DiseasePresentationSnapshot disease
+                    : oldProfileHolder.getDiseasePresentationSnapshots()) {
+                counter.send("cancel-diseases", PacketCreator.cancelDebuff(disease.disease().getValue()));
+            }
+        }
+        if (config.PRESENT_PETS) {
+            for (byte slot = 0; slot < 3; slot++) {
+                if (oldProfileHolder.getPet(slot) != null) {
+                    counter.send("cancel-pets", PacketCreator.showPetAtIndex(
+                            counter.character, slot, oldProfileHolder.getPet(slot), true, false));
+                }
+            }
+        }
+    }
+
+    private static List<Pair<Stat, Integer>> selectedStats(
+            Character character, AdventurerPartnerConfig config) {
+        List<Pair<Stat, Integer>> stats = fullStats(character);
+        if (config.PRESENT_STATS && config.PRESENT_JOB) {
+            return stats;
+        }
+        return stats.stream()
+                .filter(stat -> stat.getLeft() == Stat.JOB
+                        ? config.PRESENT_JOB
+                        : config.PRESENT_STATS)
+                .toList();
     }
 
     private static List<Pair<Stat, Integer>> fullStats(Character character) {
@@ -144,19 +187,22 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
                                PreparedStaticPresentation newProfile) {
         Map<Integer, SkillSnapshot> oldSkillsById = skillsById(oldProfile.skills());
         Map<Integer, SkillSnapshot> newSkillsById = skillsById(newProfile.skills());
+        List<PacketCreator.SkillUpdate> updates = new ArrayList<>();
 
         for (SkillSnapshot oldSkill : oldProfile.skills()) {
             if (!newSkillsById.containsKey(oldSkill.skillId())) {
-                counter.send("skills", PacketCreator.updateSkill(
-                        oldSkill.skillId(), -1, 0, -1));
+                updates.add(new PacketCreator.SkillUpdate(oldSkill.skillId(), -1, 0, -1));
             }
         }
         for (SkillSnapshot newSkill : newProfile.skills()) {
             if (!newSkill.equals(oldSkillsById.get(newSkill.skillId()))) {
-                counter.send("skills", PacketCreator.updateSkill(
+                updates.add(new PacketCreator.SkillUpdate(
                         newSkill.skillId(), newSkill.level(),
                         newSkill.masterLevel(), newSkill.expiration()));
             }
+        }
+        if (!updates.isEmpty()) {
+            counter.send("skills", PacketCreator.updateSkills(updates));
         }
     }
 
@@ -168,22 +214,105 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         return result;
     }
 
+    private static void refreshBindings(PacketCounter counter,
+                                        PreparedStaticPresentation oldProfile,
+                                        PreparedStaticPresentation newProfile) {
+        if (!sameKeymap(oldProfile.keymap(), newProfile.keymap())) {
+            counter.send("bindings", PacketCreator.getKeymap(newProfile.keymap()));
+        }
+        if (!Arrays.equals(
+                oldProfile.quickslots().GetKeybindings(),
+                newProfile.quickslots().GetKeybindings())) {
+            counter.send("bindings", PacketCreator.QuickslotMappedInit(newProfile.quickslots()));
+        }
+        if (!sameMacros(oldProfile.macros(), newProfile.macros())) {
+            counter.send("bindings", PacketCreator.getMacros(newProfile.macros()));
+        }
+    }
+
+    private static boolean sameKeymap(Map<Integer, KeyBinding> first,
+                                      Map<Integer, KeyBinding> second) {
+        if (!first.keySet().equals(second.keySet())) {
+            return false;
+        }
+        for (Map.Entry<Integer, KeyBinding> entry : first.entrySet()) {
+            KeyBinding other = second.get(entry.getKey());
+            if (other == null
+                    || entry.getValue().getType() != other.getType()
+                    || entry.getValue().getAction() != other.getAction()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean sameMacros(SkillMacro[] first, SkillMacro[] second) {
+        if (first.length != second.length) {
+            return false;
+        }
+        for (int index = 0; index < first.length; index++) {
+            SkillMacro left = first[index];
+            SkillMacro right = second[index];
+            if (left == right) {
+                continue;
+            }
+            if (left == null || right == null
+                    || left.getSkill1() != right.getSkill1()
+                    || left.getSkill2() != right.getSkill2()
+                    || left.getSkill3() != right.getSkill3()
+                    || !Objects.equals(left.getName(), right.getName())
+                    || left.getShout() != right.getShout()
+                    || left.getPosition() != right.getPosition()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static void refreshInventory(PacketCounter counter,
                                          PreparedStaticPresentation oldProfile,
-                                         PreparedStaticPresentation newProfile) {
-        for (List<ModifyInventory> chunk : oldProfile.inventoryRemovals()) {
-            counter.send("inventory", PacketCreator.modifyInventory(false, chunk));
-        }
+                                         PreparedStaticPresentation newProfile,
+                                         AdventurerPartnerConfig config) {
+        sendInventoryItems(counter, oldProfile.inventoryItems(), 3, config);
 
         for (InventoryType type : List.of(
                 InventoryType.EQUIP, InventoryType.USE, InventoryType.SETUP, InventoryType.ETC)) {
-            counter.send("inventory", PacketCreator.updateInventorySlotLimit(
-                    type.getType(), newProfile.slotLimits().get(type)));
+            if (presentsInventoryType(type, config)
+                    && !oldProfile.slotLimits().get(type).equals(newProfile.slotLimits().get(type))) {
+                counter.send("inventory", PacketCreator.updateInventorySlotLimit(
+                        type.getType(), newProfile.slotLimits().get(type)));
+            }
         }
 
-        for (List<ModifyInventory> chunk : newProfile.inventoryAdditions()) {
+        sendInventoryItems(counter, newProfile.inventoryItems(), 0, config);
+    }
+
+    private static void sendInventoryItems(PacketCounter counter,
+                                           List<Item> items,
+                                           int mode,
+                                           AdventurerPartnerConfig config) {
+        for (List<ModifyInventory> chunk
+                : InventoryPacketChunker.chunk(inventoryOperations(items, mode, config))) {
             counter.send("inventory", PacketCreator.modifyInventory(false, chunk));
         }
+    }
+
+    static List<ModifyInventory> inventoryOperations(List<Item> items,
+                                                     int mode,
+                                                     AdventurerPartnerConfig config) {
+        return items.stream()
+                .filter(item -> presentsInventoryType(item.getInventoryType(), config))
+                .map(item -> new ModifyInventory(mode, item))
+                .toList();
+    }
+
+    private static boolean presentsInventoryType(
+            InventoryType type, AdventurerPartnerConfig config) {
+        return switch (type) {
+            case EQUIPPED, EQUIP -> config.PRESENT_EQUIPMENT;
+            case USE, SETUP, ETC, CASH -> config.PRESENT_INVENTORY;
+            default -> false;
+        };
     }
 
     private PreparedStaticPresentation prepared(Character profile) {
@@ -241,52 +370,61 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
 
     private static void refreshPublicActor(PacketCounter counter,
                                            Character actor,
-                                           Character oldProfileHolder) {
+                                           Character oldProfileHolder,
+                                           AdventurerPartnerConfig config) {
         if (actor.getMap() == null) {
             return;
         }
-        var lookMetrics = actor.getMap().broadcastUpdateCharLookMessage(actor, actor);
-        counter.record("public-look", lookMetrics.packetCount(), lookMetrics.packetBytes());
-        List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
-        if (!oldBuffs.isEmpty()) {
-            Packet packet = PacketCreator.cancelForeignBuff(actor.getId(), oldBuffs);
-            counter.record("public", packet);
-            actor.getMap().broadcastMessage(actor, packet, false);
+        if (config.PRESENT_PUBLIC_LOOK) {
+            var lookMetrics = actor.getMap().broadcastUpdateCharLookMessage(actor, actor);
+            counter.record("public-look", lookMetrics.packetCount(), lookMetrics.packetBytes());
         }
-        for (Character.BuffPresentationSnapshot buff : actor.getBuffPresentationSnapshots()) {
-            Packet packet = PacketCreator.giveForeignBuff(actor.getId(), buff.statups());
-            counter.record("public", packet);
-            actor.getMap().broadcastMessage(actor, packet, false);
-        }
-        for (Character.DiseasePresentationSnapshot disease
-                : oldProfileHolder.getDiseasePresentationSnapshots()) {
-            Packet packet = disease.disease() == Disease.SLOW
-                    ? PacketCreator.cancelForeignSlowDebuff(actor.getId())
-                    : PacketCreator.cancelForeignDebuff(actor.getId(), disease.disease().getValue());
-            counter.record("public", packet);
-            actor.getMap().broadcastMessage(actor, packet, false);
-        }
-        for (Character.DiseasePresentationSnapshot disease : actor.getDiseasePresentationSnapshots()) {
-            List<Pair<Disease, Integer>> statups = List.of(
-                    new Pair<>(disease.disease(), disease.skill().getX()));
-            Packet packet = disease.disease() == Disease.SLOW
-                    ? PacketCreator.giveForeignSlowDebuff(actor.getId(), statups, disease.skill())
-                    : PacketCreator.giveForeignDebuff(actor.getId(), statups, disease.skill());
-            counter.record("public", packet);
-            actor.getMap().broadcastMessage(actor, packet, false);
-        }
-        for (byte slot = 0; slot < 3; slot++) {
-            if (oldProfileHolder.getPet(slot) != null) {
-                Packet packet = PacketCreator.showPetAtIndex(
-                        actor, slot, oldProfileHolder.getPet(slot), true, false);
-                counter.record("public", packet);
+        if (config.PRESENT_BUFFS) {
+            List<BuffStat> oldBuffs = oldProfileHolder.getActiveBuffStatsSnapshot();
+            if (!oldBuffs.isEmpty()) {
+                Packet packet = PacketCreator.cancelForeignBuff(actor.getId(), oldBuffs);
+                counter.record("public-buffs", packet);
                 actor.getMap().broadcastMessage(actor, packet, false);
             }
-            if (actor.getPet(slot) != null) {
-                Packet packet = PacketCreator.showPetAtIndex(
-                        actor, slot, actor.getPet(slot), false, false);
-                counter.record("public", packet);
+            for (Character.BuffPresentationSnapshot buff : actor.getBuffPresentationSnapshots()) {
+                Packet packet = PacketCreator.giveForeignBuff(actor.getId(), buff.statups());
+                counter.record("public-buffs", packet);
                 actor.getMap().broadcastMessage(actor, packet, false);
+            }
+        }
+        if (config.PRESENT_DISEASES) {
+            for (Character.DiseasePresentationSnapshot disease
+                    : oldProfileHolder.getDiseasePresentationSnapshots()) {
+                Packet packet = disease.disease() == Disease.SLOW
+                        ? PacketCreator.cancelForeignSlowDebuff(actor.getId())
+                        : PacketCreator.cancelForeignDebuff(actor.getId(), disease.disease().getValue());
+                counter.record("public-diseases", packet);
+                actor.getMap().broadcastMessage(actor, packet, false);
+            }
+            for (Character.DiseasePresentationSnapshot disease : actor.getDiseasePresentationSnapshots()) {
+                List<Pair<Disease, Integer>> statups = List.of(
+                        new Pair<>(disease.disease(), disease.skill().getX()));
+                Packet packet = disease.disease() == Disease.SLOW
+                        ? PacketCreator.giveForeignSlowDebuff(actor.getId(), statups, disease.skill())
+                        : PacketCreator.giveForeignDebuff(actor.getId(), statups, disease.skill());
+                counter.record("public-diseases", packet);
+                actor.getMap().broadcastMessage(actor, packet, false);
+            }
+        }
+        if (config.PRESENT_PETS) {
+            for (byte slot = 0; slot < 3; slot++) {
+                if (oldProfileHolder.getPet(slot) != null) {
+                    Packet packet = PacketCreator.showPetAtIndex(
+                            actor, slot, oldProfileHolder.getPet(slot), true, false);
+                    counter.record("public-pets", packet);
+                    actor.getMap().broadcastMessage(actor, packet, false);
+                }
+                if (actor.getPet(slot) != null) {
+                    Packet packet = PacketCreator.showPetAtIndex(
+                            actor, slot, actor.getPet(slot), false, false);
+                    counter.record("public-pets", packet);
+                    actor.getMap().broadcastMessage(actor, packet, false);
+                }
             }
         }
     }
@@ -316,6 +454,7 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
         private int packetCount;
         private long packetBytes;
         private final Map<String, CategoryTotal> categoryTotals = new LinkedHashMap<>();
+        private final List<Packet> localPackets = new ArrayList<>();
 
         private PacketCounter(Character character) {
             this.character = character;
@@ -323,7 +462,11 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
 
         private void send(String category, Packet packet) {
             record(category, packet);
-            character.sendPacket(packet);
+            localPackets.add(packet);
+        }
+
+        private void flush() {
+            character.sendPackets(localPackets);
         }
 
         private void record(String category, Packet packet) {
@@ -348,8 +491,7 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
             QuickslotBinding quickslots,
             SkillMacro[] macros,
             Map<InventoryType, Byte> slotLimits,
-            List<List<ModifyInventory>> inventoryRemovals,
-            List<List<ModifyInventory>> inventoryAdditions) {
+            List<Item> inventoryItems) {
         private static PreparedStaticPresentation capture(Character profile, long profileVersion) {
             List<SkillSnapshot> skills = profile.getSkills().entrySet().stream()
                     .map(entry -> new SkillSnapshot(
@@ -371,14 +513,11 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
             }
 
             Map<InventoryType, Byte> slotLimits = new LinkedHashMap<>();
-            List<ModifyInventory> removals = new ArrayList<>();
-            List<ModifyInventory> additions = new ArrayList<>();
+            List<Item> inventoryItems = new ArrayList<>();
             for (InventoryType type : DISPLAYED_INVENTORIES) {
                 slotLimits.put(type, profile.getInventory(type).getSlotLimit());
                 for (Item item : profile.getInventory(type).list()) {
-                    Item snapshot = item.copy();
-                    removals.add(new ModifyInventory(3, snapshot));
-                    additions.add(new ModifyInventory(0, snapshot));
+                    inventoryItems.add(item.copy());
                 }
             }
             return new PreparedStaticPresentation(
@@ -388,8 +527,7 @@ public final class CosmicProfilePresentationService implements ProfilePresentati
                     quickslots,
                     macros,
                     Map.copyOf(slotLimits),
-                    InventoryPacketChunker.chunk(removals),
-                    InventoryPacketChunker.chunk(additions));
+                    List.copyOf(inventoryItems));
         }
     }
 
