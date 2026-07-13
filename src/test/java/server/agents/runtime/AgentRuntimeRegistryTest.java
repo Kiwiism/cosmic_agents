@@ -86,9 +86,9 @@ class AgentRuntimeRegistryTest {
         Character leader = character(100, "Leader");
         Character alpha = character(200, "Alpha");
         AgentRuntimeEntry entry = new AgentRuntimeEntry(alpha, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
 
         assertSame(entry, AgentRuntimeRegistry.firstEntry(AgentRuntimeRegistry.entriesByLeaderId(), leader.getId()));
         assertSame(entry, AgentRuntimeRegistry.firstEntry(leader.getId()));
@@ -98,7 +98,7 @@ class AgentRuntimeRegistryTest {
         assertSame(leader, AgentRuntimeRegistry.activeLeaderByAgentCharacterId(alpha.getId()));
         assertTrue(AgentRuntimeRegistry.isFirstEntryForLeader(entry));
         assertEquals(List.of(entry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -106,18 +106,18 @@ class AgentRuntimeRegistryTest {
         Character leader = character(100, "Leader");
         Character alpha = character(200, "Alpha");
         Character beta = character(201, "Beta");
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(alpha, leader, null));
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(null, leader, null));
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(beta, leader, null));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(alpha, leader, null));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(null, leader, null));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(beta, leader, null));
 
         assertEquals(3, AgentRuntimeRegistry.activeAgentCountForLeader(leader.getId()));
         assertEquals(List.of(alpha, beta), AgentRuntimeRegistry.activeAgentCharactersForLeader(leader.getId()));
         assertEquals(0, AgentRuntimeRegistry.activeAgentCountForLeader(999));
         assertEquals(List.of(), AgentRuntimeRegistry.activeAgentCharactersForLeader(999));
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -127,17 +127,17 @@ class AgentRuntimeRegistryTest {
         Character player = character(201, "Player");
         when(agent.getClient()).thenReturn(mock(BotClient.class));
         when(player.getClient()).thenReturn(mock(Client.class));
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
         assertTrue(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(agent));
         assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(player));
         assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(null));
 
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(agent, leader, null));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(agent, leader, null));
 
         assertFalse(AgentRuntimeRegistry.isUnclaimedBotClientCharacter(agent));
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -147,19 +147,68 @@ class AgentRuntimeRegistryTest {
         Character player = character(201, "Player");
         when(agent.getClient()).thenReturn(mock(BotClient.class));
         when(player.getClient()).thenReturn(mock(Client.class));
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
         assertSame(agent, AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(
                 "Agent", 0, (world, name) -> agent));
         assertNull(AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(
                 "Player", 0, (world, name) -> player));
 
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(agent, leader, null));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(agent, leader, null));
 
         assertNull(AgentRuntimeRegistry.findUnclaimedOnlineAgentByName(
                 "Agent", 0, (world, name) -> agent));
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
+    }
+
+    @Test
+    void replacementKeepsOnlyNewestGenerationInConstantTimeIndex() {
+        Character leader = character(100, "Leader");
+        Character originalAgent = character(200, "Agent");
+        Character replacementAgent = character(200, "Agent");
+        AgentRuntimeEntry original = new AgentRuntimeEntry(originalAgent, leader, null);
+        AgentRuntimeEntry replacement = new AgentRuntimeEntry(replacementAgent, leader, null);
+        AgentRuntimeRegistry.clear();
+
+        AgentRuntimeRegistry.registerEntry(leader.getId(), original);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), replacement);
+
+        assertFalse(AgentRuntimeRegistry.isActiveSession(original, original.sessionGeneration()));
+        assertTrue(AgentRuntimeRegistry.isActiveSession(replacement, replacement.sessionGeneration()));
+        assertSame(replacement, AgentRuntimeRegistry.findByAgentCharacterId(replacementAgent.getId()));
+        assertEquals(leader.getId(), AgentRuntimeRegistry.leaderIdForAgentCharacter(replacementAgent.getId()));
+        assertEquals(List.of(replacement), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
+
+        AgentRuntimeRegistry.unregisterEntry(leader.getId(), original);
+        assertTrue(AgentRuntimeRegistry.isActiveSession(replacement, replacement.sessionGeneration()));
+
+        AgentRuntimeRegistry.unregisterEntry(leader.getId(), replacement);
+        assertFalse(AgentRuntimeRegistry.hasActiveAgentCharacterId(replacementAgent.getId()));
+        AgentRuntimeRegistry.clear();
+    }
+
+    @Test
+    void repeatedRegistrationIsIdempotentAndLeaderReplacementIsAtomic() {
+        Character originalLeader = character(100, "OriginalLeader");
+        Character replacementLeader = character(101, "ReplacementLeader");
+        Character agent = character(200, "Agent");
+        AgentRuntimeEntry original = new AgentRuntimeEntry(agent, originalLeader, null);
+        AgentRuntimeEntry replacement = new AgentRuntimeEntry(agent, replacementLeader, null);
+        AgentRuntimeRegistry.clear();
+
+        AgentRuntimeRegistry.registerEntry(originalLeader.getId(), original);
+        AgentRuntimeRegistry.registerEntry(originalLeader.getId(), original);
+
+        assertEquals(List.of(original), AgentRuntimeRegistry.entriesForLeader(originalLeader.getId()));
+
+        AgentRuntimeRegistry.registerEntry(replacementLeader.getId(), replacement);
+
+        assertEquals(List.of(), AgentRuntimeRegistry.entriesForLeader(originalLeader.getId()));
+        assertEquals(List.of(replacement), AgentRuntimeRegistry.entriesForLeader(replacementLeader.getId()));
+        assertFalse(AgentRuntimeRegistry.isActiveSession(original, original.sessionGeneration()));
+        assertTrue(AgentRuntimeRegistry.isActiveSession(replacement, replacement.sessionGeneration()));
+        AgentRuntimeRegistry.clear();
     }
 
     private static Character character(int id, String name) {

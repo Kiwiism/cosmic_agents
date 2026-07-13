@@ -22,47 +22,43 @@ public final class AgentRuntimeCleanupService {
     }
 
     public static void removeAgentsForLeader(int leaderCharId) {
-        List<Integer> agentIds = AgentRuntimeRegistry.entriesForLeader(leaderCharId).stream()
+        List<AgentRuntimeEntry> removedEntries = AgentRuntimeRegistry.unregisterLeader(leaderCharId);
+        List<Integer> agentIds = removedEntries.stream()
                 .map(AgentRuntimeIdentityRuntime::bot)
                 .filter(java.util.Objects::nonNull)
                 .map(Character::getId)
                 .toList();
-        AgentLifecycleService.removeLeaderEntries(
-                AgentRuntimeRegistry.entriesByLeaderId(),
-                AgentFormationService.formationsByLeaderId(),
-                AgentLeaderSafetyService.townClusterAnchorsByLeaderId(),
-                leaderCharId,
-                AgentLifecycleService::cancelScheduledTickIfPresent);
+        removedEntries.forEach(AgentLifecycleService::cancelScheduledTickIfPresent);
+        AgentFormationService.formationsByLeaderId().remove(leaderCharId);
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderCharId);
         agentIds.forEach(AgentRuntimeCleanupService::clearAgentStateIfInactive);
         clearLeaderStateIfInactive(leaderCharId);
     }
 
     public static boolean removeAgentByCharacterId(int agentCharId) {
-        List<Integer> leaderIds = AgentRuntimeRegistry.entriesByLeaderId().entrySet().stream()
-                .filter(entry -> entry.getValue().stream()
-                        .anyMatch(runtime -> AgentRuntimeIdentityRuntime.botIs(runtime, agentCharId)))
-                .map(java.util.Map.Entry::getKey)
-                .toList();
-        boolean removed = AgentLifecycleService.removeAgentByCharacterId(
-                AgentRuntimeRegistry.entriesByLeaderId(),
-                AgentFormationService.formationsByLeaderId(),
-                AgentLeaderSafetyService.townClusterAnchorsByLeaderId(),
-                agentCharId,
-                AgentLifecycleService::cancelScheduledTickIfPresent);
+        int leaderId = AgentRuntimeRegistry.leaderIdForAgentCharacter(agentCharId);
+        AgentRuntimeEntry removedEntry = AgentRuntimeRegistry.unregisterAgentCharacter(agentCharId);
+        boolean removed = removedEntry != null;
+        if (removed) {
+            AgentLifecycleService.cancelScheduledTickIfPresent(removedEntry);
+        }
         clearAgentStateIfInactive(agentCharId);
-        leaderIds.forEach(AgentRuntimeCleanupService::clearLeaderStateIfInactive);
+        if (leaderId >= 0) {
+            clearLeaderStateIfInactive(leaderId);
+        }
         return removed;
     }
 
     public static boolean removeAgent(AgentRuntimeEntry entry) {
         Character agent = AgentRuntimeIdentityRuntime.bot(entry);
         Character leader = AgentRuntimeIdentityRuntime.owner(entry);
-        boolean removed = AgentLifecycleService.removeAgentEntry(
-                AgentRuntimeRegistry.entriesByLeaderId(),
-                AgentFormationService.formationsByLeaderId(),
-                AgentLeaderSafetyService.townClusterAnchorsByLeaderId(),
-                entry,
-                AgentLifecycleService::cancelScheduledTickIfPresent);
+        int leaderId = leader == null
+                ? AgentRuntimeRegistry.leaderIdForAgentCharacter(AgentRuntimeIdentityRuntime.botId(entry))
+                : leader.getId();
+        boolean removed = leaderId >= 0 && AgentRuntimeRegistry.unregisterEntry(leaderId, entry);
+        if (removed) {
+            AgentLifecycleService.cancelScheduledTickIfPresent(entry);
+        }
         if (agent != null) {
             clearAgentStateIfInactive(agent.getId());
         }
@@ -85,14 +81,7 @@ public final class AgentRuntimeCleanupService {
     }
 
     private static AgentRuntimeEntry findEntryForCharacterInstance(Character agent) {
-        for (List<AgentRuntimeEntry> entries : AgentRuntimeRegistry.entriesByLeaderId().values()) {
-            for (AgentRuntimeEntry entry : entries) {
-                if (AgentRuntimeIdentityRuntime.bot(entry) == agent) {
-                    return entry;
-                }
-            }
-        }
-        return null;
+        return AgentRuntimeRegistry.findByCharacterInstance(agent);
     }
 
     private static void clearAgentStateIfInactive(int agentId) {
@@ -110,6 +99,8 @@ public final class AgentRuntimeCleanupService {
         if (!AgentRuntimeRegistry.entriesForLeader(leaderId).isEmpty()) {
             return;
         }
+        AgentFormationService.formationsByLeaderId().remove(leaderId);
+        AgentLeaderSafetyService.townClusterAnchorsByLeaderId().remove(leaderId);
         AgentPotionService.clearLeaderRuntimeState(leaderId);
         AgentAmmoService.clearLeaderRuntimeState(leaderId);
         AgentNavigationWarmupService.clearLeaderRuntimeState(leaderId);

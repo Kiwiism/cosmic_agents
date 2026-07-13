@@ -32,6 +32,7 @@ class AgentTransferServiceTest {
                 new AgentTransferService.Hooks(
                         leaderId -> entries,
                         (leaderId, agentName) -> entry,
+                        (leaderId, removedEntry) -> entries.remove(removedEntry),
                         (tickLeader, targetName) -> target,
                         (tickTarget, resolvedAgent) -> {
                             calls.add("authorize:" + resolvedAgent.name());
@@ -74,6 +75,7 @@ class AgentTransferServiceTest {
                 new AgentTransferService.Hooks(
                         leaderId -> null,
                         (leaderId, agentName) -> null,
+                        (leaderId, removedEntry) -> false,
                         (tickLeader, targetName) -> null,
                         (tickTarget, resolvedAgent) -> AgentAuthorizationResult.allowed(false),
                         tickEntry -> { },

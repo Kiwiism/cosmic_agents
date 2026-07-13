@@ -12,6 +12,8 @@ import server.agents.auth.AgentOwnershipService;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.scheduler.AgentScheduleHandle;
+import server.agents.runtime.scheduler.AgentSchedulerMode;
 import server.maps.MapleMap;
 
 import java.awt.Point;
@@ -46,7 +48,7 @@ class AgentLifecycleServiceTest {
         AtomicReference<AgentRuntimeEntry> tickedEntry = new AtomicReference<>();
         AtomicReference<AgentRuntimeEntry> normalizedEntry = new AtomicReference<>();
         AtomicBoolean normalized = new AtomicBoolean();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
         AgentFormationService.formationsByLeaderId().clear();
 
         try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
@@ -84,7 +86,7 @@ class AgentLifecycleServiceTest {
             assertSame(entry, tickedEntry.get());
             status.verify(() -> AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(entry, agent, 123L));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
             AgentFormationService.formationsByLeaderId().clear();
         }
     }
@@ -95,7 +97,7 @@ class AgentLifecycleServiceTest {
         Character agent = character(200, "Alpha");
         ScheduledFuture<?> scheduledTask = mock(ScheduledFuture.class);
         AtomicReference<AgentRuntimeEntry> tickedEntry = new AtomicReference<>();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
         try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
             AgentRuntimeEntry entry = AgentLifecycleService.registerAgent(
@@ -118,9 +120,11 @@ class AgentLifecycleServiceTest {
                             () -> 123L));
 
             assertSame(entry, tickedEntry.get());
-            assertSame(scheduledTask, entry.scheduledTaskState().task());
+            AgentScheduleHandle handle = (AgentScheduleHandle) entry.scheduledTaskState().task();
+            assertEquals(AgentSchedulerMode.LEGACY_PER_AGENT, handle.mode());
+            assertEquals(entry.sessionGeneration(), handle.sessionId().generation());
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -128,7 +132,7 @@ class AgentLifecycleServiceTest {
     void schedulingFailureRollsBackRegistryPublication() {
         Character leader = character(100, "Leader");
         Character agent = character(200, "Alpha");
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
         try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
             assertThrows(IllegalStateException.class, () -> AgentLifecycleService.registerAgent(
@@ -147,7 +151,7 @@ class AgentLifecycleServiceTest {
             assertTrue(AgentRuntimeRegistry.entriesForLeader(leader.getId()).isEmpty());
             status.verifyNoInteractions();
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -158,8 +162,8 @@ class AgentLifecycleServiceTest {
         AgentRuntimeEntry oldEntry = new AgentRuntimeEntry(agent, leader, mock(ScheduledFuture.class));
         ScheduledFuture<?> newTask = mock(ScheduledFuture.class);
         AtomicInteger cancelled = new AtomicInteger();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(oldEntry);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), oldEntry);
 
         try (MockedStatic<AgentLifecycleStatusCoordinator> status = mockStatic(AgentLifecycleStatusCoordinator.class)) {
             AgentRuntimeEntry newEntry = AgentLifecycleService.registerAgent(
@@ -185,7 +189,7 @@ class AgentLifecycleServiceTest {
             assertEquals(List.of(newEntry), AgentRuntimeRegistry.entriesForLeader(leader.getId()));
             status.verify(() -> AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(newEntry, agent, 456L));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -316,7 +320,7 @@ class AgentLifecycleServiceTest {
 
     @Test
     void dismissAgentByNameReturnsFalseWhenMissing() {
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
         boolean dismissed = AgentLifecycleService.dismissAgentByName(
                 100,
@@ -335,8 +339,8 @@ class AgentLifecycleServiceTest {
         AtomicInteger cancelled = new AtomicInteger();
         AtomicInteger stopped = new AtomicInteger();
         AtomicReference<String> said = new AtomicReference<>();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
 
         boolean dismissed = AgentLifecycleService.dismissAgentByName(
                 leader.getId(),
@@ -367,7 +371,7 @@ class AgentLifecycleServiceTest {
         assertEquals(1, stopped.get());
         delayedAction.get().run();
         assertEquals("ok", said.get());
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -382,7 +386,7 @@ class AgentLifecycleServiceTest {
         AtomicInteger placed = new AtomicInteger();
         AtomicInteger followed = new AtomicInteger();
         AtomicInteger changedMap = new AtomicInteger();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
         when(map.getId()).thenReturn(100000000);
         when(leader.getMap()).thenReturn(map);
         when(leader.getPosition()).thenReturn(leaderPosition);
@@ -404,7 +408,7 @@ class AgentLifecycleServiceTest {
                         (leaderId, resolvedLeader, resolvedAgent) -> {
                             registered.incrementAndGet();
                             AgentRuntimeEntry entry = new AgentRuntimeEntry(resolvedAgent, resolvedLeader, null);
-                            AgentRuntimeRegistry.mutableEntriesForLeader(leaderId).add(entry);
+                            AgentRuntimeRegistry.registerEntry(leaderId, entry);
                             return entry;
                         },
                         (charId, world, channel, targetMap, desiredPosition) -> {
@@ -431,7 +435,7 @@ class AgentLifecycleServiceTest {
         assertEquals(1, placed.get());
         assertEquals(1, followed.get());
         assertEquals(1, changedMap.get());
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -441,8 +445,9 @@ class AgentLifecycleServiceTest {
         Character agent = character(200, "Alpha", new BotClient(0, 0));
         MapleMap map = mock(MapleMap.class);
         AgentOwnershipService ownership = mock(AgentOwnershipService.class);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(otherLeader.getId()).add(new AgentRuntimeEntry(agent, otherLeader, null));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(
+                otherLeader.getId(), new AgentRuntimeEntry(agent, otherLeader, null));
         when(map.getId()).thenReturn(100000000);
         when(leader.getMap()).thenReturn(map);
         when(leader.getPosition()).thenReturn(new Point(10, 20));
@@ -458,7 +463,7 @@ class AgentLifecycleServiceTest {
 
         assertFalse(result.success());
         assertEquals("Bot 'Alpha' is controlled by Other.", result.errorMessage());
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test

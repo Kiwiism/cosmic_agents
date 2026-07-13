@@ -3,6 +3,7 @@ package server.agents.runtime;
 import client.Character;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.scheduler.AgentTickScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ import static org.mockito.Mockito.mock;
 class AgentSchedulerParityTest {
     @AfterEach
     void tearDown() {
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -41,7 +42,7 @@ class AgentSchedulerParityTest {
         AtomicLong now = new AtomicLong(1_000L);
         AgentTickScheduler scheduler = new AgentTickScheduler(now::get, (loop, period) -> future);
         AgentRuntimeEntry centralEntry = new AgentRuntimeEntry(mock(Character.class), null, null);
-        AgentRuntimeRegistry.mutableEntriesForLeader(1).add(centralEntry);
+        AgentRuntimeRegistry.registerEntry(1, centralEntry);
         scheduler.register(centralEntry, () -> central.add(1), 50L);
         for (int i = 0; i < 3; i++) {
             scheduler.tickAll();

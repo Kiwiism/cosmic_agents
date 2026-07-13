@@ -22,9 +22,9 @@ class AgentScriptTaskExecutionServiceTest {
         Character agent = character(200, 100000000, new Point(0, 0), true);
         Character sibling = character(300, 100000000, new Point(20, 0), true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(sibling, leader, null));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(sibling, leader, null));
 
         try (MockedStatic<AgentMovementCommandRuntime> movement =
                      mockStatic(AgentMovementCommandRuntime.class)) {
@@ -32,7 +32,7 @@ class AgentScriptTaskExecutionServiceTest {
 
             movement.verify(() -> AgentMovementCommandRuntime.follow(entry, sibling));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -42,15 +42,15 @@ class AgentScriptTaskExecutionServiceTest {
         Character agent = character(200, 100000000, new Point(0, 0), true);
         Character sibling = character(300, 100000000, new Point(20, 0), true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(sibling, leader, null));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(sibling, leader, null));
 
         try {
             assertTrue(AgentScriptTaskExecutionService.isComplete(
                     entry, AgentTask.followUntilNear(sibling, 25), 50));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 

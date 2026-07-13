@@ -22,14 +22,14 @@ class AgentTargetSnapshotCoordinatorTest {
         Character sibling = character(300, "Sibling", new Point(30, 40));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), siblingEntry);
         AgentModeStateRuntime.startFollowing(entry, sibling.getId());
 
         try {
             assertSame(sibling, AgentTargetSnapshotCoordinator.resolveFollowAnchor(entry, leader));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -42,9 +42,9 @@ class AgentTargetSnapshotCoordinatorTest {
         AgentRuntimeEntry siblingEntry = new AgentRuntimeEntry(sibling, leader, null);
         AgentFormationService.FormationState formation =
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.RIGHT, 40, 0);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
         AgentFormationService.formationsByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(siblingEntry);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), siblingEntry);
         AgentFormationService.formationsByLeaderId().put(leader.getId(), formation);
         AgentModeStateRuntime.startFollowing(entry, sibling.getId());
         AgentFormationStateRuntime.setFollowOffsetX(entry, formation.offsetFor(0, 1));
@@ -57,7 +57,7 @@ class AgentTargetSnapshotCoordinatorTest {
             assertEquals("follow-target", snapshot.primaryTargetSource());
             assertEquals(formation, snapshot.formation());
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
             AgentFormationService.formationsByLeaderId().clear();
         }
     }

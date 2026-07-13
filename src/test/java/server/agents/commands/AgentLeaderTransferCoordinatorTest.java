@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mock;
 class AgentLeaderTransferCoordinatorTest {
     @AfterEach
     void clearRegistry() {
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test

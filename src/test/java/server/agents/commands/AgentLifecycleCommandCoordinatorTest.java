@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 class AgentLifecycleCommandCoordinatorTest {
     @BeforeEach
     void clearRegistry() {
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test

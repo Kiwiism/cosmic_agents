@@ -1,9 +1,12 @@
-package server.agents.runtime;
+package server.agents.runtime.scheduler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentSchedulerMetrics;
+import server.agents.runtime.AgentRuntimeEntry;
+import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.AgentSchedulerRuntime;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,23 +37,32 @@ public final class AgentTickScheduler {
     private final Object lifecycleLock = new Object();
     private final LongSupplier nowMs;
     private final BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler;
+    private final AgentSchedulerConfig config;
     private volatile ScheduledFuture<?> centralTask;
 
     public static AgentTickScheduler instance() {
         return INSTANCE;
     }
 
-    AgentTickScheduler(LongSupplier nowMs, BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler) {
-        this.nowMs = nowMs;
-        this.loopScheduler = loopScheduler;
+    public AgentTickScheduler(LongSupplier nowMs, BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler) {
+        this(nowMs, loopScheduler, AgentSchedulerConfig.fromSystemProperties());
     }
 
-    public ScheduledFuture<?> register(AgentRuntimeEntry entry, Runnable tick, long periodMs) {
+    AgentTickScheduler(LongSupplier nowMs,
+                       BiFunction<Runnable, Long, ScheduledFuture<?>> loopScheduler,
+                       AgentSchedulerConfig config) {
+        this.nowMs = nowMs;
+        this.loopScheduler = loopScheduler;
+        this.config = config;
+    }
+
+    public AgentScheduleHandle register(AgentRuntimeEntry entry, Runnable tick, long periodMs) {
         if (entry == null || tick == null) {
             throw new IllegalArgumentException("Agent entry and tick are required");
         }
         Registration registration = new Registration(
                 this,
+                AgentSessionId.from(entry),
                 entry,
                 tick,
                 Math.max(1L, periodMs),
@@ -85,7 +97,7 @@ public final class AgentTickScheduler {
             }
             due.sort(Comparator.comparingLong(Registration::sequence));
 
-            int limit = AgentSchedulerConfig.maxAgentsPerTick();
+            int limit = config.maxAgentsPerTick();
             int updateCount = limit == 0 ? due.size() : Math.min(limit, due.size());
             if (updateCount < due.size()) {
                 AgentSchedulerMetrics.recordSkipped(due.size() - updateCount);
@@ -94,7 +106,7 @@ public final class AgentTickScheduler {
                     ? 0
                     : (int) Math.floorMod(roundRobinCursor.getAndAdd(updateCount), due.size());
             for (int i = 0; i < updateCount; i++) {
-                update(due.get((start + i) % due.size()), now);
+                update(due.get((start + i) % due.size()), now, config);
             }
         } finally {
             ticking.set(false);
@@ -117,11 +129,11 @@ public final class AgentTickScheduler {
         }
     }
 
-    int registrationCount() {
+    public int registrationCount() {
         return registrations.size();
     }
 
-    private void update(Registration registration, long now) {
+    private void update(Registration registration, long now, AgentSchedulerConfig config) {
         if (!registration.prepare(now)) {
             AgentSchedulerMetrics.recordSkipped(1);
             return;
@@ -131,15 +143,14 @@ public final class AgentTickScheduler {
             registration.tick.run();
         } catch (Throwable failure) {
             AgentSchedulerMetrics.recordFailure();
-            log.warn("Central Agent scheduler tick failed for session {}",
-                    registration.entry.sessionGeneration(), failure);
+            log.warn("Central Agent scheduler tick failed for session {}", registration.sessionId, failure);
         } finally {
             long elapsedNs = System.nanoTime() - started;
-            boolean slow = elapsedNs >= TimeUnit.MILLISECONDS.toNanos(AgentSchedulerConfig.slowTickMs());
+            boolean slow = elapsedNs >= TimeUnit.MILLISECONDS.toNanos(config.slowTickMs());
             AgentSchedulerMetrics.recordUpdated(now - registration.claimedDueMs, slow);
-            if (slow && AgentSchedulerConfig.logSlowTicks()) {
+            if (slow && config.logSlowTicks()) {
                 log.warn("Slow central Agent tick session={} elapsedMs={}",
-                        registration.entry.sessionGeneration(), elapsedNs / 1_000_000L);
+                        registration.sessionId, elapsedNs / 1_000_000L);
             }
         }
     }
@@ -147,7 +158,9 @@ public final class AgentTickScheduler {
     private void ensureCentralTask() {
         synchronized (lifecycleLock) {
             if (centralTask == null || centralTask.isCancelled() || centralTask.isDone()) {
-                centralTask = loopScheduler.apply(this::tickAll, AgentSchedulerConfig.baseTickMs());
+                centralTask = loopScheduler.apply(
+                        this::tickAll,
+                        config.baseTickMs());
             }
         }
     }
@@ -162,8 +175,9 @@ public final class AgentTickScheduler {
         }
     }
 
-    private static final class Registration implements ScheduledFuture<Void> {
+    private static final class Registration implements AgentScheduleHandle {
         private final AgentTickScheduler owner;
+        private final AgentSessionId sessionId;
         private final AgentRuntimeEntry entry;
         private final Runnable tick;
         private final long periodMs;
@@ -174,12 +188,14 @@ public final class AgentTickScheduler {
         private volatile long claimedDueMs;
 
         private Registration(AgentTickScheduler owner,
+                             AgentSessionId sessionId,
                              AgentRuntimeEntry entry,
                              Runnable tick,
                              long periodMs,
                              long firstDueMs,
                              long sequence) {
             this.owner = owner;
+            this.sessionId = sessionId;
             this.entry = entry;
             this.tick = tick;
             this.periodMs = periodMs;
@@ -198,7 +214,8 @@ public final class AgentTickScheduler {
         private boolean prepare(long now) {
             if (cancelled.get() || paused.get()
                     || entry.actionMailbox().isClosed()
-                    || !AgentRuntimeRegistry.isActiveSession(entry, entry.sessionGeneration())
+                    || !sessionId.matches(entry)
+                    || !AgentRuntimeRegistry.isActiveSession(entry, sessionId.generation())
                     || AgentRuntimeIdentityRuntime.bot(entry) == null) {
                 return false;
             }
@@ -213,6 +230,16 @@ public final class AgentTickScheduler {
         private static long nextDueAfter(long due, long now, long periodMs) {
             long missedPeriods = Math.max(0L, (now - due) / periodMs);
             return due + (missedPeriods + 1L) * periodMs;
+        }
+
+        @Override
+        public AgentSessionId sessionId() {
+            return sessionId;
+        }
+
+        @Override
+        public AgentSchedulerMode mode() {
+            return AgentSchedulerMode.CENTRAL_SEQUENTIAL;
         }
 
         @Override

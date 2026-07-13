@@ -1747,7 +1747,8 @@ class BotCombatManagerTest {
         AgentModeStateRuntime.setGrinding(siblingEntry, true);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry, siblingEntry)));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), siblingEntry);
         try (MockedStatic<AgentNavigationGraphService> graphProvider =
                      Mockito.mockStatic(AgentNavigationGraphService.class, Mockito.CALLS_REAL_METHODS)) {
             graphProvider.when(() -> AgentNavigationGraphService.peekGraph(map, AgentMovementProfile.base()))
@@ -1757,7 +1758,7 @@ class BotCombatManagerTest {
 
             assertEquals(openTarget, target);
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 

@@ -39,7 +39,8 @@ class AgentAmmoServiceTest {
         when(owner.getTrade()).thenReturn(null);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(entry, donorEntry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), donorEntry);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class);
              MockedStatic<AgentAmmoRuntime> scheduler = mockStatic(AgentAmmoRuntime.class)) {
@@ -52,7 +53,7 @@ class AgentAmmoServiceTest {
             scheduler.verify(() -> AgentAmmoRuntime.randomDelayMs(900, 1400));
             scheduler.verify(() -> AgentAmmoRuntime.afterDelay(eq(donorEntry), eq(99L), any(Runnable.class)));
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 

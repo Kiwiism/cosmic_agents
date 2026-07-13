@@ -16,15 +16,14 @@ import static org.mockito.Mockito.when;
 class AgentFollowTargetCommandCoordinatorTest {
     @AfterEach
     void clearRegistry() {
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
     void resolvesActiveAgentFromRuntimeRegistry() {
         Character leader = character(1, "Leader", true);
         Character sibling = character(2, "Sibling", true);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId())
-                .add(new AgentRuntimeEntry(sibling, leader, null));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(sibling, leader, null));
 
         assertEquals(List.of(leader, sibling), AgentFollowTargetCommandCoordinator.followTargetCandidates(leader));
         assertSame(sibling, AgentFollowTargetCommandCoordinator.resolveFollowTarget(leader, "sib"));

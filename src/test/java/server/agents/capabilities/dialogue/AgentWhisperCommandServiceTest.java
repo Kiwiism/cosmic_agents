@@ -59,8 +59,8 @@ class AgentWhisperCommandServiceTest {
         Character leader = character(1, mock(Client.class));
         Character target = character(2, new BotClient(0, 0));
         AgentRuntimeEntry entry = new AgentRuntimeEntry(target, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), List.of(entry));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
 
         try (MockedStatic<AgentChatRuntime> chat = mockStatic(AgentChatRuntime.class)) {
             CosmicAgentWhisperCommandBridge.handleWhisperToAgent(leader, target, "follow me");
@@ -68,7 +68,7 @@ class AgentWhisperCommandServiceTest {
             assertEquals(AgentReplyChannel.WHISPER, AgentReplyChannelStateRuntime.replyChannel(entry));
             chat.verify(() -> AgentChatRuntime.handleChat(eq("follow me"), any()));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 

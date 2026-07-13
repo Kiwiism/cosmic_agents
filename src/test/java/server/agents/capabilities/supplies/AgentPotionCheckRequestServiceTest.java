@@ -48,7 +48,7 @@ class AgentPotionCheckRequestServiceTest {
     void runtimeIgnoresNonAgentCharacters() {
         Character player = mock(Character.class);
         when(player.getClient()).thenReturn(mock(Client.class));
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
 
         CosmicAgentPotionCheckRequestBridge.requestPotionCheckSoon(player);
 
@@ -65,8 +65,8 @@ class AgentPotionCheckRequestServiceTest {
         when(leader.getId()).thenReturn(77);
         when(agent.getId()).thenReturn(88);
         when(agent.getClient()).thenReturn(new BotClient(0, 0));
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), List.of(entry));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
         AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = 123;
 
         try {
@@ -75,7 +75,7 @@ class AgentPotionCheckRequestServiceTest {
             assertEquals(123, AgentPotionStateRuntime.potCheckTimerMs(entry));
         } finally {
             AgentRuntimeConfig.cfg.POT_CHECK_RETRY_SOON_MS = oldDelay;
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 

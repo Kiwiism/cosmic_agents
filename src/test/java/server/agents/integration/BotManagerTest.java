@@ -158,14 +158,15 @@ class BotManagerTest {
         when(observerBot.getId()).thenReturn(11);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(sourceEntry, observerEntry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), sourceEntry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), observerEntry);
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceBot);
 
             offers.verifyNoInteractions();
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 
@@ -181,7 +182,7 @@ class BotManagerTest {
         when(owner.getId()).thenReturn(78);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(observerEntry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), observerEntry);
 
         TimerManager inlineTimer = mock(TimerManager.class);
         ScheduledFuture<?> scheduledFuture = mock(ScheduledFuture.class);
@@ -197,7 +198,7 @@ class BotManagerTest {
 
             offers.verify(() -> AgentOfferService.notifyOwnerGainedEquip(observerEntry, observerBot, tradedEquip));
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 
@@ -624,7 +625,7 @@ class BotManagerTest {
 
         AgentRuntimeEntry entry = new AgentRuntimeEntry(bot, owner, task);
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
         try {
             assertTrue(AgentRuntimeCleanupService.cleanupAgentRuntimeState(bot));
 
@@ -637,7 +638,7 @@ class BotManagerTest {
             verify(bot).setAutopotHpAlert(0f);
             verify(bot).setAutopotMpAlert(0f);
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 
@@ -663,7 +664,7 @@ class BotManagerTest {
         AgentMoveTargetStateRuntime.setMoveTarget(entry, new Point(100, 100), false);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), new CopyOnWriteArrayList<>(List.of(entry)));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
         try {
             AgentTickFailureRuntime.handleFailure(entry, owner.getId(), bot.getId(), new NullPointerException("bad drop"));
             assertTrue(bots.containsKey(owner.getId()));
@@ -683,7 +684,7 @@ class BotManagerTest {
             assertFalse(bots.containsKey(owner.getId()));
             verify(task).cancel(false);
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 
@@ -843,13 +844,13 @@ class BotManagerTest {
         doReturn(List.of(loot)).when(map).getDroppedItems();
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
-        AgentRuntimeRegistry.entriesByLeaderId().put(1, new CopyOnWriteArrayList<>(List.of(new AgentRuntimeEntry(dropBot, dropBotOwner, null))));
+        AgentRuntimeRegistry.registerEntry(1, new AgentRuntimeEntry(dropBot, dropBotOwner, null));
         try {
 
             assertNull(AgentLootTargetService.findNearestGrindLootTarget(
                     entry, bot, AgentRuntimeConfig.cfg.LOOT_RADIUS, AgentGrindLootStateRuntime::isRetrySuppressed));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -870,13 +871,13 @@ class BotManagerTest {
         when(loot.getDropTime()).thenReturn(System.currentTimeMillis() - 14_000L);
         doReturn(loot).when(map).getMapObject(lootObjectId);
 
-        AgentRuntimeRegistry.entriesByLeaderId().put(1, new CopyOnWriteArrayList<>(List.of(new AgentRuntimeEntry(dropBot, dropBotOwner, null))));
+        AgentRuntimeRegistry.registerEntry(1, new AgentRuntimeEntry(dropBot, dropBotOwner, null));
         try {
 
             assertNull(AgentGrindTargetPositionService.convenientLootTarget(entry, bot.getPosition(), new Point(500, 100)));
             assertNull(AgentGrindLootStateRuntime.grindLootTarget(entry));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -1001,7 +1002,8 @@ class BotManagerTest {
         AgentRuntimeEntry anchorEntry = new AgentRuntimeEntry(followAnchor, owner, null);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(followerEntry, anchorEntry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), followerEntry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), anchorEntry);
         try {
             AgentNavigationGraph graph = AgentNavigationGraphService.peekGraph(map);
             int targetRegionId = AgentNavigationRegionService.resolveTargetRegionId(
@@ -1013,7 +1015,7 @@ class BotManagerTest {
                     "botA follow botB should resolve navigation against botB, not owner's rope");
             assertEquals("BotB", AgentTargetSnapshotCoordinator.captureTargetSnapshot(followerEntry).followAnchorName());
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 
@@ -1162,7 +1164,7 @@ class BotManagerTest {
         @SuppressWarnings("unchecked")
         Map<Integer, Long> mpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareMpBackoffUntil").get(null);
 
-        bots.put(owner.getId(), List.of(entry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
         sharedCooldown.remove(owner.getId());
         hpBackoff.remove(owner.getId());
         mpBackoff.remove(owner.getId());
@@ -1185,7 +1187,7 @@ class BotManagerTest {
             assertFalse((Boolean) requestPotShare.invoke(null, entry, bot, false),
                     "MP request should remain blocked by its own 10 min backoff");
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
             sharedCooldown.remove(owner.getId());
             hpBackoff.remove(owner.getId());
             mpBackoff.remove(owner.getId());
@@ -1206,7 +1208,6 @@ class BotManagerTest {
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
 
-        bots.put(owner.getId(), List.of());
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         hpBackoff.put(owner.getId(), Long.MAX_VALUE);
         try {
@@ -1214,7 +1215,7 @@ class BotManagerTest {
                     AgentPotionService.offerPotShareToOwner(entry, true),
                     "manual owner requests should still attempt donor lookup while automatic share cooldowns are active");
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
             sharedCooldown.remove(owner.getId());
             hpBackoff.remove(owner.getId());
         }
@@ -1236,7 +1237,6 @@ class BotManagerTest {
         Map<String, Long> backoff = (Map<String, Long>) field(AgentAmmoService.class, "ammoShareBackoffUntil").get(null);
         String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
 
-        bots.put(owner.getId(), List.of());
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         backoff.put(backoffKey, Long.MAX_VALUE);
         try {
@@ -1247,7 +1247,7 @@ class BotManagerTest {
                             mock(server.agents.integration.InventoryGateway.class)),
                     "manual owner ammo requests should still attempt donor lookup while automatic share cooldowns are active");
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
             sharedCooldown.remove(owner.getId());
             backoff.remove(backoffKey);
         }
@@ -1271,7 +1271,7 @@ class BotManagerTest {
         Map<Integer, Long> sharedCooldown = (Map<Integer, Long>) field(AgentPotionService.class, "potShareCooldownUntil").get(null);
         Map<Integer, Long> hpBackoff = (Map<Integer, Long>) field(AgentPotionService.class, "potShareHpBackoffUntil").get(null);
 
-        bots.put(owner.getId(), List.of(entry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         hpBackoff.put(owner.getId(), Long.MAX_VALUE);
 
@@ -1281,7 +1281,7 @@ class BotManagerTest {
             assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
             assertEquals(Long.MAX_VALUE, hpBackoff.get(owner.getId()));
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
             sharedCooldown.remove(owner.getId());
             hpBackoff.remove(owner.getId());
         }
@@ -1304,7 +1304,7 @@ class BotManagerTest {
         Map<String, Long> backoff = (Map<String, Long>) field(AgentAmmoService.class, "ammoShareBackoffUntil").get(null);
         String backoffKey = owner.getId() + ":" + WeaponType.BOW.name();
 
-        bots.put(owner.getId(), List.of(entry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
         sharedCooldown.put(owner.getId(), Long.MAX_VALUE);
         backoff.put(backoffKey, Long.MAX_VALUE);
 
@@ -1320,7 +1320,7 @@ class BotManagerTest {
             assertEquals(Long.MAX_VALUE, sharedCooldown.get(owner.getId()));
             assertEquals(Long.MAX_VALUE, backoff.get(backoffKey));
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
             sharedCooldown.remove(owner.getId());
             backoff.remove(backoffKey);
         }
@@ -1345,7 +1345,11 @@ class BotManagerTest {
 
         @SuppressWarnings("unchecked")
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(needyEntry, nonBow600Entry, bow3000Entry, ignored499Entry, nonBow800Entry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), needyEntry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), nonBow600Entry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), bow3000Entry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), ignored499Entry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), nonBow800Entry);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class, invocation -> {
             Character character = invocation.getArgument(0);
@@ -1362,7 +1366,7 @@ class BotManagerTest {
             assertEquals(800, plan.donationQty());
             assertFalse(plan.donorNeedsSameAmmo());
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 
@@ -1379,7 +1383,8 @@ class BotManagerTest {
 
         @SuppressWarnings("unchecked")
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(needyEntry, bow3000Entry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), needyEntry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), bow3000Entry);
 
         try (MockedStatic<AgentAttackExecutionProvider> attacks = mockStatic(AgentAttackExecutionProvider.class,
                 invocation -> WeaponType.BOW)) {
@@ -1390,7 +1395,7 @@ class BotManagerTest {
             assertTrue(plan.donorNeedsSameAmmo());
             assertEquals(1250, plan.donationQty());
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 

@@ -66,8 +66,8 @@ class AgentSchedulerRuntimeTest {
         Character agent = mock(Character.class);
         Character leader = mock(Character.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(1).add(entry);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(1, entry);
 
         try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
             runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
@@ -78,7 +78,7 @@ class AgentSchedulerRuntimeTest {
 
             assertEquals(1, calls.get());
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -92,21 +92,21 @@ class AgentSchedulerRuntimeTest {
         Character leader = mock(Character.class);
         AgentRuntimeEntry stale = new AgentRuntimeEntry(agent, leader, null);
         AgentRuntimeEntry replacement = new AgentRuntimeEntry(agent, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(1).add(stale);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(1, stale);
 
         try (MockedStatic<AgentSchedulerGatewayRuntime> runtime = mockStatic(AgentSchedulerGatewayRuntime.class)) {
             runtime.when(AgentSchedulerGatewayRuntime::scheduler).thenReturn(scheduler);
             doReturn(scheduled).when(scheduler).schedule(callback.capture(), eq(250L));
 
             AgentSchedulerRuntime.schedule(stale, calls::incrementAndGet, 250L);
-            AgentRuntimeRegistry.mutableEntriesForLeader(1).clear();
-            AgentRuntimeRegistry.mutableEntriesForLeader(1).add(replacement);
+            AgentRuntimeRegistry.unregisterEntry(1, stale);
+            AgentRuntimeRegistry.registerEntry(1, replacement);
             callback.getValue().run();
 
             assertEquals(0, calls.get());
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 }

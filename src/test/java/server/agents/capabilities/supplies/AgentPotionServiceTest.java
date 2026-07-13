@@ -34,7 +34,8 @@ class AgentPotionServiceTest {
         when(donorBot.getMapId()).thenReturn(100000000);
 
         Map<Integer, List<AgentRuntimeEntry>> bots = AgentRuntimeRegistry.entriesByLeaderId();
-        bots.put(owner.getId(), List.of(entry, donorEntry));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), entry);
+        AgentRuntimeRegistry.registerEntry(owner.getId(), donorEntry);
 
         try (MockedStatic<AgentPotionService> potions = mockStatic(AgentPotionService.class, CALLS_REAL_METHODS);
              MockedStatic<AgentPotionRuntime> scheduler = mockStatic(AgentPotionRuntime.class)) {
@@ -47,7 +48,7 @@ class AgentPotionServiceTest {
             scheduler.verify(() -> AgentPotionRuntime.randomDelayMs(900, 1400));
             scheduler.verify(() -> AgentPotionRuntime.afterDelay(eq(donorEntry), eq(77L), any(Runnable.class)));
         } finally {
-            bots.remove(owner.getId());
+            AgentRuntimeRegistry.unregisterLeader(owner.getId());
         }
     }
 }

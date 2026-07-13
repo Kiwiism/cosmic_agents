@@ -59,8 +59,11 @@ Classifications:
 | `AgentScheduledTaskRuntime` | `RUNTIME_ADAPTER` | Exposes scheduled-task cancellation on a live runtime entry. |
 | `AgentScheduledTaskScope` | `RUNTIME_STATE` | Tracks and cancels delayed callbacks belonging to one live session generation. |
 | `AgentScheduledTaskState` | `RUNTIME_STATE` | Stores and cancels the scheduled tick handle for one session. |
-| `AgentSchedulerConfig` | `RUNTIME_STATE` | Reads central scheduler feature flags, cadence, caps, and slow-tick thresholds. |
-| `AgentSchedulerMode` | `RUNTIME_STATE` | Identifies legacy per-Agent and optional central scheduling modes. |
+| `runtime.scheduler.AgentScheduler` | `RUNTIME_SERVICE` | Stable lifecycle-facing facade selecting a validated scheduler mode. |
+| `runtime.scheduler.AgentSchedulerConfig` | `RUNTIME_STATE` | Immutable validated scheduler mode, cadence, cap, and slow-tick configuration. |
+| `runtime.scheduler.AgentSchedulerMode` | `RUNTIME_STATE` | Identifies legacy, central-sequential, and reserved central-sharded modes. |
+| `runtime.scheduler.AgentSessionId` | `RUNTIME_STATE` | Typed Agent character and session-generation registration identity. |
+| `runtime.scheduler.AgentScheduleHandle` | `RUNTIME_STATE` | Generation-bound scheduler lifecycle handle. |
 | `AgentSchedulerRuntime` | `RUNTIME_SERVICE` | Shared delayed-callback facade preserving existing random delay behavior. |
 | `AgentSession` | `RUNTIME_STATE` | Stable public session identity contract for future entry-state replacement. |
 | `AgentSessionControlRuntime` | `RUNTIME_ADAPTER` | Adapts session registry and leader-safety services for session command coordination. |
@@ -80,7 +83,7 @@ Classifications:
 | `AgentTickPreflightRuntime` | `RUNTIME_ADAPTER` | Wires preflight checks to identity, lifecycle, and heartbeat integrations. |
 | `AgentTickPreflightService` | `RUNTIME_SERVICE` | Validates session/character readiness and determines AI cadence eligibility. |
 | `AgentTickRuntime` | `LEGITIMATE_RUNTIME_ORCHESTRATION` | Public callback target connecting scheduled sessions to the core tick runtime. |
-| `AgentTickScheduler` | `RUNTIME_SERVICE` | Optional central due-time dispatcher with stable ordering and isolated Agent updates. |
+| `runtime.scheduler.AgentTickScheduler` | `RUNTIME_SERVICE` | Optional central-sequential due-time dispatcher with stable ordering and isolated Agent updates. |
 | `AgentTickSchedulingService` | `RUNTIME_SERVICE` | Selects legacy or central tick registration without changing lifecycle callers. |
 | `AgentTickState` | `RUNTIME_STATE` | Stores tick timestamps, heartbeat, follow-idle, and cadence counters. |
 | `AgentTickStateRuntime` | `RUNTIME_ADAPTER` | Exposes tick state held by the live runtime entry. |

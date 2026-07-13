@@ -35,10 +35,11 @@ class AgentRuntimeCleanupServiceTest {
         AgentRuntimeEntry firstEntry = new AgentRuntimeEntry(firstAgent, leader, firstTask);
         AgentRuntimeEntry secondEntry = new AgentRuntimeEntry(secondAgent, leader, secondTask);
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
         AgentFormationService.formationsByLeaderId().clear();
         AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
-        AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), new java.util.concurrent.CopyOnWriteArrayList<>(List.of(firstEntry, secondEntry)));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), firstEntry);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), secondEntry);
         AgentFormationService.formationsByLeaderId().put(leader.getId(),
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 0));
         AgentLeaderSafetyService.townClusterAnchorsByLeaderId().put(leader.getId(), new Point(1, 2));
@@ -52,7 +53,7 @@ class AgentRuntimeCleanupServiceTest {
             verify(firstTask).cancel(false);
             verify(secondTask).cancel(false);
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
             AgentFormationService.formationsByLeaderId().clear();
             AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
         }
@@ -65,10 +66,10 @@ class AgentRuntimeCleanupServiceTest {
         ScheduledFuture<?> task = mock(ScheduledFuture.class);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, task);
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
         AgentFormationService.formationsByLeaderId().clear();
         AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
-        AgentRuntimeRegistry.entriesByLeaderId().put(leader.getId(), new java.util.concurrent.CopyOnWriteArrayList<>(List.of(entry)));
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
         AgentFormationService.formationsByLeaderId().put(leader.getId(),
                 new AgentFormationService.FormationState(AgentFormationService.FormationType.STACK, 0, 0));
         AgentLeaderSafetyService.townClusterAnchorsByLeaderId().put(leader.getId(), new Point(1, 2));
@@ -81,7 +82,7 @@ class AgentRuntimeCleanupServiceTest {
             assertFalse(AgentLeaderSafetyService.townClusterAnchorsByLeaderId().containsKey(leader.getId()));
             verify(task).cancel(false);
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
             AgentFormationService.formationsByLeaderId().clear();
             AgentLeaderSafetyService.townClusterAnchorsByLeaderId().clear();
         }
@@ -113,8 +114,8 @@ class AgentRuntimeCleanupServiceTest {
         Character leader = character(77);
         Character agent = character(88);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
         AgentAutoEquipThrottle.clearAgentRuntimeState(agent.getId());
 
         try {
@@ -125,7 +126,7 @@ class AgentRuntimeCleanupServiceTest {
 
             assertTrue(AgentAutoEquipThrottle.shouldRun(agent, 1_000L, false));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
             AgentAutoEquipThrottle.clearAgentRuntimeState(agent.getId());
         }
     }
@@ -137,15 +138,15 @@ class AgentRuntimeCleanupServiceTest {
         Character replacementAgent = character(88);
         when(staleAgent.getKeymap()).thenReturn(new LinkedHashMap<>());
         AgentRuntimeEntry replacementEntry = new AgentRuntimeEntry(replacementAgent, leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(replacementEntry);
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), replacementEntry);
 
         try {
             assertFalse(AgentRuntimeCleanupService.cleanupAgentRuntimeState(staleAgent));
             assertSame(replacementEntry,
                     AgentRuntimeRegistry.findByCharacterId(leader.getId(), replacementAgent.getId()));
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 

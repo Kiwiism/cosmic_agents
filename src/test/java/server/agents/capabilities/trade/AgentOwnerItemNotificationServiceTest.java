@@ -31,17 +31,16 @@ class AgentOwnerItemNotificationServiceTest {
         when(sourceAgent.getId()).thenReturn(10);
         when(sourceAgent.getClient()).thenReturn(new BotClient(0, 0));
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.entriesByLeaderId().put(owner.getId(), List.of(
-                new AgentRuntimeEntry(sourceAgent, owner, null),
-                new AgentRuntimeEntry(observerAgent, owner, null)));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(owner.getId(), new AgentRuntimeEntry(sourceAgent, owner, null));
+        AgentRuntimeRegistry.registerEntry(owner.getId(), new AgentRuntimeEntry(observerAgent, owner, null));
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class)) {
             AgentOwnerItemNotificationService.notifyOwnerGainedTradeItem(owner, tradedEquip, sourceAgent);
 
             offers.verifyNoInteractions();
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 
@@ -61,8 +60,8 @@ class AgentOwnerItemNotificationServiceTest {
             return scheduledFuture;
         });
 
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.entriesByLeaderId().put(owner.getId(), List.of(observerEntry));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(owner.getId(), observerEntry);
 
         try (MockedStatic<AgentOfferService> offers = mockStatic(AgentOfferService.class);
              MockedStatic<TimerManager> timer = mockStatic(TimerManager.class)) {
@@ -73,7 +72,7 @@ class AgentOwnerItemNotificationServiceTest {
             offers.verify(() -> AgentOfferService.notifyOwnerGainedEquip(observerEntry, observerAgent, tradedEquip));
             verify(inlineTimer).schedule(any(Runnable.class), anyLong());
         } finally {
-            AgentRuntimeRegistry.entriesByLeaderId().clear();
+            AgentRuntimeRegistry.clear();
         }
     }
 }

@@ -16,7 +16,6 @@ import java.awt.Point;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
@@ -213,20 +212,14 @@ public final class AgentLifecycleService {
                                                   Character agent,
                                                   boolean normalizeSpawnState,
                                                   RegisterHooks hooks) {
-        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.mutableEntriesForLeader(leaderCharId);
-        List<AgentRuntimeEntry> replacedEntries = new ArrayList<>();
-        for (AgentRuntimeEntry existingEntry : entries) {
-            if (AgentRuntimeIdentityRuntime.botIs(existingEntry, agent.getId())) {
-                replacedEntries.add(existingEntry);
-            }
-        }
-        entries.removeAll(replacedEntries);
-
         int agentCharId = agent.getId();
+        List<AgentRuntimeEntry> replacedEntries = AgentRuntimeRegistry.unregisterAgentCharacter(
+                leaderCharId, agentCharId);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(agent, leader, null);
         AgentMovementStateRuntime.refreshMovementProfile(entry, agent);
         AgentNavigationGraphService.warmGraphAsync(agent.getMap(), AgentMovementStateRuntime.movementProfile(entry));
-        entries.add(entry);
+        AgentRuntimeRegistry.registerEntry(leaderCharId, entry);
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.entriesForLeader(leaderCharId);
 
         AgentFormationService.FormationState formation = AgentFormationService.stateForLeader(
                 AgentFormationService.formationsByLeaderId(), leaderCharId, hooks.defaultFormation());
@@ -244,12 +237,10 @@ public final class AgentLifecycleService {
                     hooks.tickScheduler());
             entry.scheduledTaskState().attachScheduledTask(task);
         } catch (RuntimeException | Error failure) {
-            entries.remove(entry);
-            entries.addAll(replacedEntries);
+            AgentRuntimeRegistry.unregisterEntry(leaderCharId, entry);
+            replacedEntries.forEach(replacedEntry -> AgentRuntimeRegistry.registerEntry(leaderCharId, replacedEntry));
+            entries = AgentRuntimeRegistry.entriesForLeader(leaderCharId);
             AgentFormationService.applyOffsets(entries, formation);
-            if (entries.isEmpty()) {
-                AgentRuntimeRegistry.entriesByLeaderId().remove(leaderCharId, entries);
-            }
             throw failure;
         }
 
@@ -304,7 +295,7 @@ public final class AgentLifecycleService {
             return false;
         }
 
-        entries.remove(entry);
+        AgentRuntimeRegistry.unregisterEntry(leaderCharId, entry);
         hooks.cancelTask().accept(entry);
         hooks.stopAgent().accept(entry);
         hooks.delayedActionScheduler().schedule(hooks.farewellDelayMs().getAsLong(), () ->

@@ -35,6 +35,7 @@ public final class AgentLeaderTransferCoordinator {
                 new AgentTransferService.Hooks(
                         AgentLeaderTransferCoordinator::entriesByLeader,
                         AgentRuntimeRegistry::findByName,
+                        AgentRuntimeRegistry::unregisterEntry,
                         (candidateLeader, target) -> candidateLeader.getMap().getCharacterByName(target),
                         (target, agent) -> AgentOwnershipService.getInstance().ensureCanControl(target, agent),
                         AgentScheduledTaskRuntime::cancelScheduledTask,
@@ -52,6 +53,7 @@ public final class AgentLeaderTransferCoordinator {
 
     @SuppressWarnings("unchecked")
     private static List<AgentRuntimeEntry> entriesByLeader(int leaderCharId) {
-        return (List<AgentRuntimeEntry>) (List<?>) AgentRuntimeRegistry.entriesByLeaderId().get(leaderCharId);
+        List<AgentRuntimeEntry> entries = AgentRuntimeRegistry.entriesForLeader(leaderCharId);
+        return entries.isEmpty() ? null : entries;
     }
 }

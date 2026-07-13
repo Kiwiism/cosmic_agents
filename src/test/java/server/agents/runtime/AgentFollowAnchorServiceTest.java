@@ -148,14 +148,14 @@ class AgentFollowAnchorServiceTest {
         Character leader = character(100, true);
         Character siblingAgent = character(300, true);
         AgentRuntimeEntry entry = new AgentRuntimeEntry(character(200, true), leader, null);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(entry);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leader.getId()).add(new AgentRuntimeEntry(siblingAgent, leader, null));
+        AgentRuntimeRegistry.clear();
+        AgentRuntimeRegistry.registerEntry(leader.getId(), entry);
+        AgentRuntimeRegistry.registerEntry(leader.getId(), new AgentRuntimeEntry(siblingAgent, leader, null));
 
         Character resolved = AgentFollowAnchorService.resolveTargetFromRuntimeRegistry(entry, siblingAgent.getId());
 
         assertSame(siblingAgent, resolved);
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     private static Character character(int id, boolean loggedIn) {

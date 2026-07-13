@@ -16,6 +16,7 @@ public final class AgentTransferService {
 
     public record Hooks(EntriesByLeader entriesByLeader,
                         AgentEntryByName agentEntryByName,
+                        AgentEntryRemover agentEntryRemover,
                         MapCharacterByName mapCharacterByName,
                         TransferAuthorization transferAuthorization,
                         ScheduledTaskCanceler scheduledTaskCanceler,
@@ -35,6 +36,11 @@ public final class AgentTransferService {
     @FunctionalInterface
     public interface AgentEntryByName {
         AgentRuntimeEntry find(int leaderCharId, String agentName);
+    }
+
+    @FunctionalInterface
+    public interface AgentEntryRemover {
+        boolean remove(int leaderCharId, AgentRuntimeEntry entry);
     }
 
     @FunctionalInterface
@@ -110,7 +116,7 @@ public final class AgentTransferService {
             return auth.failureMessage();
         }
 
-        entries.remove(found);
+        hooks.agentEntryRemover().remove(leaderCharId, found);
         hooks.scheduledTaskCanceler().cancel(found);
         hooks.agentStopper().stop(found);
 

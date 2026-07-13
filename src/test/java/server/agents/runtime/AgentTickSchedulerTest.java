@@ -4,6 +4,9 @@ import client.Character;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.scheduler.AgentSchedulerConfig;
+import server.agents.runtime.scheduler.AgentSchedulerMode;
+import server.agents.runtime.scheduler.AgentTickScheduler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +30,7 @@ class AgentTickSchedulerTest {
     @BeforeEach
     void setUp() {
         clearProperties();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
         centralFuture = mock(ScheduledFuture.class);
         scheduler = new AgentTickScheduler(now::get, (loop, period) -> {
             centralLoop.set(loop);
@@ -38,7 +41,7 @@ class AgentTickSchedulerTest {
     @AfterEach
     void tearDown() {
         clearProperties();
-        AgentRuntimeRegistry.entriesByLeaderId().clear();
+        AgentRuntimeRegistry.clear();
     }
 
     @Test
@@ -60,7 +63,7 @@ class AgentTickSchedulerTest {
         AgentRuntimeEntry removed = entry(102);
         AgentRuntimeEntry despawning = activeEntry(1, 103);
         AgentRuntimeEntry invalid = new AgentRuntimeEntry(null, null, null);
-        AgentRuntimeRegistry.mutableEntriesForLeader(1).add(invalid);
+        AgentRuntimeRegistry.registerEntry(1, invalid);
         AtomicInteger ticks = new AtomicInteger();
         scheduler.register(paused, ticks::incrementAndGet, 50L);
         scheduler.pause(paused);
@@ -105,6 +108,10 @@ class AgentTickSchedulerTest {
     @Test
     void cappedCyclesContinueWithNextDueAgent() {
         System.setProperty("agents.scheduler.maxAgentsPerTick", "1");
+        scheduler = new AgentTickScheduler(now::get, (loop, period) -> {
+            centralLoop.set(loop);
+            return centralFuture;
+        });
         AgentRuntimeEntry first = activeEntry(1, 101);
         AgentRuntimeEntry second = activeEntry(1, 102);
         List<Integer> order = new ArrayList<>();
@@ -130,15 +137,16 @@ class AgentTickSchedulerTest {
 
     @Test
     void centralSchedulerIsDisabledByDefault() {
-        assertFalse(AgentSchedulerConfig.centralEnabled());
-        assertEquals(AgentSchedulerMode.LEGACY_PER_AGENT, AgentSchedulerConfig.mode());
+        assertEquals(AgentSchedulerMode.LEGACY_PER_AGENT, AgentSchedulerConfig.fromSystemProperties().mode());
         System.setProperty("agents.scheduler.central.enabled", "true");
-        assertEquals(AgentSchedulerMode.CENTRAL, AgentSchedulerConfig.mode());
+        assertEquals(AgentSchedulerMode.CENTRAL_SEQUENTIAL, AgentSchedulerConfig.fromSystemProperties().mode());
+        System.setProperty("agents.scheduler.mode", "central-sharded");
+        assertEquals(AgentSchedulerMode.CENTRAL_SHARDED, AgentSchedulerConfig.fromSystemProperties().mode());
     }
 
     private AgentRuntimeEntry activeEntry(int leaderId, int agentId) {
         AgentRuntimeEntry entry = entry(agentId);
-        AgentRuntimeRegistry.mutableEntriesForLeader(leaderId).add(entry);
+        AgentRuntimeRegistry.registerEntry(leaderId, entry);
         return entry;
     }
 
@@ -150,6 +158,7 @@ class AgentTickSchedulerTest {
 
     private static void clearProperties() {
         System.clearProperty("agents.scheduler.central.enabled");
+        System.clearProperty("agents.scheduler.mode");
         System.clearProperty("agents.scheduler.maxAgentsPerTick");
         System.clearProperty("agents.scheduler.baseTickMs");
         System.clearProperty("agents.scheduler.logSlowTicks");

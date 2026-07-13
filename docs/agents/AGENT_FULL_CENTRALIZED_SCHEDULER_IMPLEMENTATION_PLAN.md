@@ -52,6 +52,17 @@ they do not bypass Agent runtime ownership.
 
 ## Current Implementation Baseline
 
+Implementation progress on `feature/agent-central-scheduler-runtime`:
+
+- Phase 0 baseline evidence is committed under
+  `docs/agents/evidence/central-scheduler/phase-0`.
+- Phase 1 moves scheduler types under `server.agents.runtime.scheduler`, adds
+  the stable `AgentScheduler` facade, immutable validated mode configuration,
+  typed generation-bound handles, and an O(1) active-session index.
+- `LEGACY_PER_AGENT` remains the default and `CENTRAL_SHARDED` remains
+  unavailable until its implementation phase.
+- Phase 2 mailbox ownership and asynchronous result delivery remain pending.
+
 The repository already contains a safe foundation:
 
 - `AgentTickSchedulingService` selects legacy or central scheduling.
@@ -113,12 +124,12 @@ The design is complete enough to begin Phase 0 and Phase 1. It is not safe to
 jump directly to `CENTRAL_SHARDED`, enable mailboxes by default, or change
 gameplay cadence. The following source facts are mandatory migration inputs:
 
-- `AgentSchedulerMode` currently exposes only `LEGACY_PER_AGENT` and
-  `CENTRAL`; the explicit three-mode contract is not implemented.
+- `AgentSchedulerMode` now exposes all three rollout modes. Only legacy and
+  central-sequential have implementations at the Phase 1 checkpoint.
 - `AgentTickScheduler` is a useful sequential parity dispatcher, but performs
   a global registration scan and due-list sort on every cycle.
-- `AgentRuntimeRegistry.isActiveSession` scans all leader entry lists. Calling
-  it for each due Agent can multiply scheduler scan cost at scale.
+- `AgentRuntimeRegistry.isActiveSession` now uses the generation-stamped O(1)
+  Agent character index maintained at lifecycle registration and removal.
 - `AgentActionMailbox` is bounded and generation-stamped, but
   `agents.mailbox.enabled` defaults to `false` and only selected ingress paths
   use it.
