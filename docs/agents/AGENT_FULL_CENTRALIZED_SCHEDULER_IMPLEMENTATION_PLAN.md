@@ -1342,6 +1342,11 @@ Run:
 2000 Agents -> 8-hour, 24-hour, then multi-day soak
 ```
 
+The bounded GM6 `@agentscheduler` command is the scheduler-side operator
+snapshot for these stages. It is read-only and must be captured alongside
+`@serverhealth`; neither command replaces visible-client parity or duration
+gates.
+
 Only change the production default after:
 
 - no unbounded scheduler or mailbox growth.

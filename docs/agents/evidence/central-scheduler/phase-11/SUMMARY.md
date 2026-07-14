@@ -11,6 +11,9 @@ The locally automatable part of Phase 11 is complete:
 - cancellation drains registration, owned-registration, due-heap, ready, and
   ingress state back to zero;
 - legacy parity and rollback tests remain in the focused scheduler suite.
+- GM6 `@agentscheduler` exposes a bounded, read-only snapshot of scheduler,
+  shard, load-shedding, quiescence, and Agent async-queue metrics for live
+  evidence capture.
 
 This evidence validates scheduler mechanics only. Phase 11 and the production
 default change remain blocked on live-client behavior and sustained server

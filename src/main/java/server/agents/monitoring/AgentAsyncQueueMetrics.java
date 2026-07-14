@@ -1,7 +1,9 @@
 package server.agents.monitoring;
 
-import java.util.Map;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -150,6 +152,16 @@ public final class AgentAsyncQueueMetrics {
 
     public static Snapshot snapshot(String queue) {
         MutableMetrics metrics = metrics(queue);
+        return snapshot(metrics);
+    }
+
+    public static Map<String, Snapshot> snapshots() {
+        Map<String, Snapshot> snapshots = new TreeMap<>();
+        METRICS.forEach((queue, metrics) -> snapshots.put(queue, snapshot(metrics)));
+        return Collections.unmodifiableMap(snapshots);
+    }
+
+    private static Snapshot snapshot(MutableMetrics metrics) {
         DurationPercentiles durations = metrics.durations.snapshot();
         return new Snapshot(
                 metrics.submitted.sum(),

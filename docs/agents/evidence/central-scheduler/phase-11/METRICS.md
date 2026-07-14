@@ -15,6 +15,12 @@ The four-shard gate also requires:
 - zero owned registrations after cancellation;
 - zero due, ready, and ingress entries after cancellation.
 
+Runtime operator evidence is available through the bounded GM6
+`@agentscheduler` command. The command reads the same rolling metrics used by
+the deterministic gates and includes initialized async-lane depth, capacity,
+high-water, rejection, timeout, and stale counts. Use `@serverhealth` for the
+complementary JVM, database, and core server snapshot.
+
 Heap plateau, GC pause, database-pool wait, real-player latency, scheduler p95/
 p99 stabilization, and shutdown elapsed time require a running server and are
 not inferred from this unit-scale gate.

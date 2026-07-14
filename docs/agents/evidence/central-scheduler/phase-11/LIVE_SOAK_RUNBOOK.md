@@ -40,6 +40,11 @@ Do not enable background abstraction.
 
 ## Capture Every 5 Minutes
 
+Run `@agentscheduler` from a GM6 character for the bounded Agent scheduler,
+shard, load-shedding, quiescence, and async-queue snapshot. Run
+`@serverhealth` beside it for JVM, database-pool, and core server health.
+Record both outputs with a timestamp and current stage/population.
+
 - Agent population and per-shard registration counts;
 - ingress, due, and ready depths plus high-water marks;
 - scheduler delay and work-duration p50/p95/p99;
@@ -50,6 +55,9 @@ Do not enable background abstraction.
 - database pool active/waiting counts;
 - real-player login, map-change, combat, NPC, trade, and shop latency;
 - spawned, removed, replaced, dead/recovered, and stuck Agent counts.
+
+`@agentscheduler` is read-only. It caps detail at eight shards and twelve
+initialized async queues so diagnostics cannot create an unbounded chat dump.
 
 ## Live Parity Script
 

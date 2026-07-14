@@ -256,6 +256,12 @@ work, rejected admissions, and reason-coded counts.
 aggregate depth gauges sum all reporting shards. Registration imbalance is the
 largest shard population minus the smallest.
 
+GM6 `@agentscheduler` formats these counters as a bounded, read-only operator
+snapshot. It includes current mode and active population, up to eight shard
+details, the highest load-shedding level, quiescence outcomes, and up to twelve
+initialized Agent async queues. Pair it with `@serverhealth` during staged live
+and soak validation.
+
 Enable slow-tick logging during soak validation, then compare movement, combat,
 loot, dialogue, and lifecycle
 parity against legacy mode before considering central scheduling as the default.
