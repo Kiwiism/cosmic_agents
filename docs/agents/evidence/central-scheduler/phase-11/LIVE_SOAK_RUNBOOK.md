@@ -52,6 +52,34 @@ record resolves to one of those characters. After startup, run a bounded
 `@agentpop sweep` and verify through `@agentpop status` that live sessions
 converge toward the configured target before starting timed evidence capture.
 
+For a new disposable database, the opt-in test-only
+`AgentSoakRosterProvisionMain` can create an idempotent roster through the
+normal Agent account, account-lock, and backing-character gateways. It refuses
+the normal `cosmic` database, requires the exact
+`cosmic_scheduler_soak_*` database name and confirmation token, and writes the
+runtime roster outside the worktree. It never clones rows or changes schema.
+After pointing the local uncommitted `config.yaml` at the disposable database:
+
+```powershell
+.\mvnw.cmd -q -DskipTests test-compile
+.\mvnw.cmd -q dependency:build-classpath "-Dmdep.outputFile=$env:TEMP/agent-soak-classpath.txt" "-Dmdep.includeScope=test"
+$deps = (Get-Content -Raw "$env:TEMP/agent-soak-classpath.txt").Trim()
+$cp = "target/test-classes;target/classes;$deps"
+& "$env:JAVA_HOME\bin\java.exe" -Xms512m -Xmx2048m -cp $cp `
+  server.agents.integration.live.AgentSoakRosterProvisionMain `
+  --target=250 `
+  --prefix=Sched `
+  --expected-database=cosmic_scheduler_soak_20260714 `
+  "--output=$env:TEMP\cosmic-agent-scheduler-live-gate\population.json" `
+  --confirm=PROVISION_DISPOSABLE_AGENT_ROSTER
+```
+
+The process starts and cleanly stops a dedicated Cosmic server because normal
+backing-character creation needs game data. Required ports must be free. A
+partial interrupted run is safe to repeat: eligible deterministic names are
+reused and only missing names are created. Do not run it against a retained or
+production database.
+
 Omit `-AllowClientLaunchAfterServer` when a targetable client can remain open
 before server startup. When the switch is used, launch the client only after
 all server listeners are online and do not record live evidence until the

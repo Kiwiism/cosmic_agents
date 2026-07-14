@@ -20,17 +20,18 @@ The current population runtime only reconciles explicitly managed, eligible
 backing characters from the external `population.json`. The checked-in soak
 population preset is data-only, and the dedicated soak-harness specification
 forbids live integration until its simulation, background-action,
-observability, cleanup, and test-Agent identification gates exist. Therefore a
-real pre-provisioned roster remains an operator/environment prerequisite; this
-scheduler branch must not add an ad hoc synthetic or production provisioning
-shortcut and call it live 2,000-Agent evidence.
+observability, cleanup, and test-Agent identification gates exist. A guarded
+test-only roster provisioner now prepares real Agent-only backing characters
+through the normal creation gateways on an explicitly named disposable
+database. It is not a synthetic population path, is not production-exposed,
+and does not by itself count as live 2,000-Agent evidence.
 
 A read-only 2026-07-14 audit of `cosmic_scheduler_soak_20260714` initially found
 30 characters but zero characters on Agent-only backing accounts. The live
 smoke safely provisioned one Agent-only backing character through the normal
 guarded GM command, which is enough for the single-Agent smoke but not any
-staged population gate. A dedicated test roster remains an external
-prerequisite.
+staged population gate. The guarded provisioner removes the tooling gap, but
+the roster still must be created and verified before the first populated gate.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
