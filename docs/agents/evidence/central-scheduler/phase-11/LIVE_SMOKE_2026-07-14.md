@@ -8,6 +8,9 @@ Status: `INCOMPLETE`
 - Disposable database: `cosmic_scheduler_soak_20260714`
 - Database clone verification: 80/80 tables, 27/27 accounts, and 30/30
   characters compared with the local `cosmic` source database.
+- A follow-up read-only capacity audit found zero characters on Agent-only
+  backing accounts in the disposable clone. It cannot run a populated Agent
+  stage until a dedicated test roster is provisioned outside this branch.
 - Agent population and navigation cache paths were redirected under
   `%TEMP%\cosmic-agent-scheduler-live-gate`.
 - The shared WZ junction was treated as read-only.

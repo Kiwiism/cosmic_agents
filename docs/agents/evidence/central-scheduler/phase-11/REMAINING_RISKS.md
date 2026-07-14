@@ -24,6 +24,11 @@ real pre-provisioned roster remains an operator/environment prerequisite; this
 scheduler branch must not add an ad hoc synthetic or production provisioning
 shortcut and call it live 2,000-Agent evidence.
 
+A read-only 2026-07-14 audit of `cosmic_scheduler_soak_20260714` found 30
+characters but zero characters on Agent-only backing accounts. The disposable
+clone therefore cannot satisfy even the first populated stage until a
+dedicated test roster is provisioned externally.
+
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
 

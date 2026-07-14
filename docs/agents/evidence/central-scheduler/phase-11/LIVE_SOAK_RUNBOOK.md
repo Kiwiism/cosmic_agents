@@ -31,9 +31,26 @@ For stages with a managed population, also pass
 runtime roster whose multiplier yields at least that target and rejects
 malformed or duplicate Agent records. It does not create or validate backing
 characters against the database. After startup, use `@agentpop status` and a
-bounded `@agentpop list` review to confirm the roster is eligible before
-enabling reconciliation. A population preset is data-only and must not be
-treated as a runtime roster.
+bounded `@agentpop list` review to confirm that the expected roster and target
+were loaded. A population preset is data-only and must not be treated as a
+runtime roster.
+
+Before a populated stage, verify that the disposable database contains at
+least the requested number of eligible backing characters. This read-only
+query must return a count greater than or equal to the stage target:
+
+```sql
+SELECT COUNT(*) AS eligible_agent_characters
+FROM characters ch
+JOIN accounts a ON a.id = ch.accountid
+WHERE a.banned = 1
+  AND a.banreason = 'Agent-only backing account';
+```
+
+This verifies capacity only. It does not prove that every `population.json`
+record resolves to one of those characters. After startup, run a bounded
+`@agentpop sweep` and verify through `@agentpop status` that live sessions
+converge toward the configured target before starting timed evidence capture.
 
 Omit `-AllowClientLaunchAfterServer` when a targetable client can remain open
 before server startup. When the switch is used, launch the client only after
