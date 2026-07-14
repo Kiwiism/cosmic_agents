@@ -10,6 +10,7 @@ import server.agents.runtime.mailbox.AgentMailboxSubmissionStatus;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.LongSupplier;
@@ -24,8 +25,10 @@ public final class AgentActionMailbox {
 
     private final ArrayDeque<Envelope<?>> actions = new ArrayDeque<>();
     private final int capacity;
+    private final int criticalReserve;
     private final LongSupplier nowMs;
     private boolean closed;
+    private boolean ordinaryWorkFrozen;
 
     public AgentActionMailbox(int capacity) {
         this(capacity, System::currentTimeMillis);
@@ -33,6 +36,7 @@ public final class AgentActionMailbox {
 
     AgentActionMailbox(int capacity, LongSupplier nowMs) {
         this.capacity = Math.max(1, capacity);
+        this.criticalReserve = Math.max(1, Math.min(32, this.capacity / 4));
         this.nowMs = nowMs;
     }
 
@@ -68,7 +72,10 @@ public final class AgentActionMailbox {
                     actions.remove(replaced);
                 }
             }
-            if (actions.size() >= capacity) {
+            int capacityLimit = options.workClass().quiescenceCritical()
+                    ? capacity + criticalReserve
+                    : capacity;
+            if (actions.size() >= capacityLimit) {
                 return rejected(result, AgentMailboxSubmissionStatus.REJECTED_FULL,
                         AgentMailboxFailureReason.FULL, "Agent mailbox is full", actions.size());
             }
@@ -93,7 +100,7 @@ public final class AgentActionMailbox {
         while (drained < limit) {
             Envelope<?> envelope;
             synchronized (this) {
-                envelope = actions.pollFirst();
+                envelope = pollNextRunnable();
                 AgentAsyncQueueMetrics.recordDepth("mailbox", actions.size());
             }
             if (envelope == null) {
@@ -112,6 +119,7 @@ public final class AgentActionMailbox {
                 return;
             }
             closed = true;
+            ordinaryWorkFrozen = false;
             pending = new ArrayList<>(actions);
             actions.clear();
             AgentAsyncQueueMetrics.recordDepth("mailbox", 0);
@@ -133,6 +141,32 @@ public final class AgentActionMailbox {
         return actions.size();
     }
 
+    public synchronized int quiescenceCriticalSize() {
+        int count = 0;
+        for (Envelope<?> envelope : actions) {
+            if (envelope.options().workClass().quiescenceCritical()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public synchronized boolean beginQuiescence() {
+        if (closed) {
+            return false;
+        }
+        ordinaryWorkFrozen = true;
+        return true;
+    }
+
+    public synchronized void endQuiescence() {
+        ordinaryWorkFrozen = false;
+    }
+
+    public synchronized boolean ordinaryWorkFrozen() {
+        return ordinaryWorkFrozen;
+    }
+
     public synchronized boolean isClosed() {
         return closed;
     }
@@ -140,6 +174,21 @@ public final class AgentActionMailbox {
     private Envelope<?> findByCoalescingKey(String key) {
         for (Envelope<?> envelope : actions) {
             if (key.equals(envelope.options().coalescingKey())) {
+                return envelope;
+            }
+        }
+        return null;
+    }
+
+    private Envelope<?> pollNextRunnable() {
+        if (!ordinaryWorkFrozen) {
+            return actions.pollFirst();
+        }
+        Iterator<Envelope<?>> iterator = actions.iterator();
+        while (iterator.hasNext()) {
+            Envelope<?> envelope = iterator.next();
+            if (envelope.options().workClass().quiescenceCritical()) {
+                iterator.remove();
                 return envelope;
             }
         }

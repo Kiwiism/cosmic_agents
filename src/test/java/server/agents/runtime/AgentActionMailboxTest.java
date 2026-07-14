@@ -206,6 +206,61 @@ class AgentActionMailboxTest {
         verify(handle).wake();
     }
 
+    @Test
+    void quiescenceFreezesOrdinaryWorkButDrainsCriticalCompletion() {
+        AgentRuntimeEntry entry = entry();
+        AgentActionMailbox mailbox = entry.actionMailbox();
+        List<String> executed = new ArrayList<>();
+        AgentMailboxSubmission<String> ordinary = mailbox.submit(
+                entry.sessionGeneration(),
+                ignored -> {
+                    executed.add("ordinary");
+                    return "ordinary";
+                },
+                AgentMailboxOptions.fifo());
+        AgentMailboxSubmission<String> completion = mailbox.submit(
+                entry.sessionGeneration(),
+                ignored -> {
+                    executed.add("completion");
+                    return "completion";
+                },
+                AgentMailboxOptions.completionCoalesceLatest("completion"));
+
+        assertTrue(mailbox.beginQuiescence());
+        assertEquals(1, mailbox.drain(entry, 8));
+
+        assertEquals(List.of("completion"), executed);
+        assertFalse(ordinary.result().isDone());
+        assertEquals("completion", completion.result().join());
+        assertEquals(1, mailbox.size());
+        assertEquals(0, mailbox.quiescenceCriticalSize());
+
+        mailbox.endQuiescence();
+        assertEquals(1, mailbox.drain(entry, 8));
+        assertEquals(List.of("completion", "ordinary"), executed);
+        assertEquals("ordinary", ordinary.result().join());
+    }
+
+    @Test
+    void criticalReserveAcceptsCompletionWhenOrdinaryCapacityIsFull() {
+        AgentRuntimeEntry entry = entry();
+        AgentActionMailbox mailbox = new AgentActionMailbox(1);
+        AgentMailboxSubmission<Integer> ordinary = mailbox.submit(
+                entry.sessionGeneration(), ignored -> 1, AgentMailboxOptions.fifo());
+
+        AgentMailboxSubmission<Integer> completion = mailbox.submit(
+                entry.sessionGeneration(),
+                ignored -> 2,
+                AgentMailboxOptions.completionCoalesceLatest("completion"));
+
+        assertTrue(completion.accepted());
+        assertEquals(2, mailbox.size());
+        assertTrue(mailbox.beginQuiescence());
+        assertEquals(1, mailbox.drain(entry, 2));
+        assertEquals(2, completion.result().join());
+        assertFalse(ordinary.result().isDone());
+    }
+
     private static AgentRuntimeEntry entry() {
         return new AgentRuntimeEntry(null, null, null);
     }

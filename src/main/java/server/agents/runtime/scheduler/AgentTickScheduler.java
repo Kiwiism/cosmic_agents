@@ -17,10 +17,12 @@ import server.agents.runtime.simulation.AgentSimulationScheduleDecision;
 import server.agents.runtime.simulation.AgentSimulationSchedulePolicy;
 import server.agents.runtime.simulation.AgentSimulationTransitionService;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
@@ -439,18 +441,27 @@ public final class AgentTickScheduler {
 
     /* The registration callback owns either one compact tick or one bounded frame turn. */
     private long update(Registration registration, long now, AgentSchedulerConfig config) {
-        if (!registration.prepare(now)) {
+        if (!registration.quiescence.checkLiveness() || !registration.prepare(now)) {
             AgentSchedulerMetrics.recordSkipped(1);
             return 0L;
         }
         long started = nanoTime.getAsLong();
         long elapsedNs;
+        AgentQuiescenceController.ExecutionMode executionMode = registration.quiescence.beforeExecution();
+        if (executionMode == AgentQuiescenceController.ExecutionMode.SKIP) {
+            return 0L;
+        }
         try {
-            registration.tick.run();
+            if (executionMode == AgentQuiescenceController.ExecutionMode.QUIESCENCE_MAINTENANCE) {
+                registration.quiescence.runMaintenance();
+            } else {
+                registration.tick.run();
+            }
         } catch (Throwable failure) {
             AgentSchedulerMetrics.recordFailure();
             log.warn("Central Agent scheduler tick failed for session {}", registration.sessionId, failure);
         } finally {
+            registration.quiescence.afterExecution();
             elapsedNs = Math.max(0L, nanoTime.getAsLong() - started);
             registration.recordCost(elapsedNs);
             boolean slow = elapsedNs >= TimeUnit.MILLISECONDS.toNanos(config.slowTickMs());
@@ -488,7 +499,8 @@ public final class AgentTickScheduler {
 
     private boolean shouldSchedule(Registration registration) {
         return !registration.cancelled.get()
-                && !registration.paused.get()
+                && !registration.quiescence.quiescent()
+                && (!registration.paused.get() || registration.quiescence.requested())
                 && registrations.get(registration.entry) == registration;
     }
 
@@ -527,6 +539,7 @@ public final class AgentTickScheduler {
             if (!registration.cancelled.compareAndSet(false, true)) {
                 return false;
             }
+            registration.quiescence.close();
             registration.completion.complete(null);
             registrations.remove(registration.entry, registration);
             requireSync(registration);
@@ -538,7 +551,8 @@ public final class AgentTickScheduler {
     private boolean wake(Registration registration) {
         synchronized (lifecycleLock) {
             if (registration.cancelled.get()
-                    || registration.paused.get()
+                    || (registration.paused.get() && !registration.quiescence.requested())
+                    || registration.quiescence.quiescent()
                     || registrations.get(registration.entry) != registration
                     || !registration.sessionId.matches(registration.entry)) {
                 return false;
@@ -605,6 +619,7 @@ public final class AgentTickScheduler {
         private final AtomicBoolean paused = new AtomicBoolean();
         private final AtomicBoolean cancelled = new AtomicBoolean();
         private final CompletableFuture<Void> completion = new CompletableFuture<>();
+        private final AgentQuiescenceController quiescence;
         private volatile long nextDueMs;
         private volatile long claimedDueMs;
         private long simulationPeriodMs;
@@ -636,6 +651,7 @@ public final class AgentTickScheduler {
             this.sequence = sequence;
             this.baseWorkClass = workClass;
             this.basePriority = priority;
+            this.quiescence = AgentScheduler.controller(entry, sessionId, owner.nowMs);
             this.simulationPeriodMs = periodMs;
             this.periodMs = periodMs;
             this.workClass = workClass;
@@ -735,7 +751,10 @@ public final class AgentTickScheduler {
         }
 
         private boolean prepare(long now) {
-            if (cancelled.get() || paused.get() || now < nextDueMs) {
+            if (cancelled.get()
+                    || quiescence.quiescent()
+                    || (paused.get() && !quiescence.requested())
+                    || now < nextDueMs) {
                 return false;
             }
             long due = nextDueMs;
@@ -769,6 +788,7 @@ public final class AgentTickScheduler {
 
         private void cancelForReplacement() {
             if (cancelled.compareAndSet(false, true)) {
+                quiescence.close();
                 completion.complete(null);
                 owner.requireSync(this);
             }
@@ -776,6 +796,7 @@ public final class AgentTickScheduler {
 
         private void cancelWithoutSync() {
             cancelled.set(true);
+            quiescence.close();
             completion.complete(null);
         }
 
@@ -797,6 +818,55 @@ public final class AgentTickScheduler {
         @Override
         public boolean wake() {
             return owner.wake(this);
+        }
+
+        @Override
+        public CompletionStage<AgentQuiescenceToken> quiesce(
+                AgentQuiescenceReason reason,
+                Duration timeout) {
+            CompletionStage<AgentQuiescenceToken> result;
+            synchronized (owner.lifecycleLock) {
+                if (cancelled.get() || owner.registrations.get(entry) != this) {
+                    return CompletableFuture.failedFuture(new AgentQuiescenceException(
+                            AgentQuiescenceException.Reason.CLOSED,
+                            "Agent scheduler registration is closed"));
+                }
+                result = quiescence.request(reason, timeout);
+                if (quiescence.requested()) {
+                    requestWake(owner.nowMs.getAsLong());
+                    owner.requireSync(this);
+                }
+            }
+            if (quiescence.requested()) {
+                owner.queueWake();
+            }
+            return result;
+        }
+
+        @Override
+        public boolean resume(AgentQuiescenceToken token) {
+            boolean resumed;
+            synchronized (owner.lifecycleLock) {
+                resumed = quiescence.resume(token);
+                if (resumed) {
+                    requestWake(owner.nowMs.getAsLong());
+                    owner.requireSync(this);
+                }
+            }
+            if (resumed) {
+                owner.queueWake();
+            }
+            return resumed;
+        }
+
+        @Override
+        public boolean validatesQuiescence(AgentQuiescenceToken token) {
+            return quiescence.validates(token);
+        }
+
+        @Override
+        public boolean isQuiescent() {
+            return quiescence.quiescent();
         }
 
         @Override

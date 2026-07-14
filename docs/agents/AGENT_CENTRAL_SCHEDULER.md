@@ -71,6 +71,7 @@ agents.scheduler.loadShedding.heapLevel3Percent=85
 agents.scheduler.loadShedding.gcPauseLevel3Ms=250
 agents.scheduler.loadShedding.backgroundCadenceMultiplier=2
 agents.scheduler.loadShedding.maxActiveAgents=2000
+agents.scheduler.quiescenceTimeoutMs=5000
 ```
 
 `shardCount` is read at scheduler initialization and must remain between 1 and
@@ -194,6 +195,30 @@ decisions. Every transition, suppression, and admission rejection records a
 reason code. The 2000 value is a safety ceiling, not evidence that the 2000-
 Agent soak gate has passed.
 
+## Strong quiescence
+
+`AgentQuiescenceService` exposes a generation-bound mutation barrier for
+future profile exchange, character transfer, consistent snapshot, release,
+and maintenance operations. It works in legacy, central-sequential, and
+central-sharded modes. The default request timeout is five seconds and may be
+changed with `agents.scheduler.quiescenceTimeoutMs`.
+
+A successful token is issued only after the current bounded tick frame has
+finished, no session-scoped async request remains pending, and all critical
+completion mailbox work has drained. Ordinary mailbox actions remain queued
+and frozen in FIFO order. Async completion and lifecycle work use a separate
+bounded critical reserve so a full ordinary queue cannot prevent cleanup.
+
+Quiescent central registrations leave the due/ready queues. Resume requires
+the exact token for the same session generation. Timeout restores ordinary
+execution and fails the request; cancellation, replacement, and shutdown fail
+an outstanding request instead of returning a false-safe token. The legacy
+timer path uses the same guard and remains the rollback mode.
+
+The removed Double Agent proof of concept is not reintroduced here. Any future
+profile operation must call `AgentQuiescenceService.requireValidToken` before
+mutation and must prove canonical restoration before save/release.
+
 ## Isolation and lifecycle
 
 - Removed or replaced sessions are unregistered through their existing
@@ -258,6 +283,7 @@ Phase 6 gateway affinity and stable-hash sharding: locally complete, explicit op
 Phase 7 simulation-aware cadence and transition hooks: locally complete, disabled by default
 Phase 8 bounded guarded-tick slicing: locally complete, disabled by default
 Phase 9 load shedding and admission control: locally complete, disabled by default
+Phase 10 scheduler quiescence contract: locally complete
 production default switch: blocked on parity and staged soak evidence
 ```
 
@@ -300,6 +326,10 @@ slice-metric evidence is recorded under
 Phase 9 overload levels, hysteresis, protected-work, async suppression, and
 atomic admission evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-9`.
+Phase 10 generation-bound quiescence, frozen ordinary ingress, critical
+completion drain, timeout, cancellation, legacy compatibility, and metric
+evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-10`.
 
 ## Rollback
 

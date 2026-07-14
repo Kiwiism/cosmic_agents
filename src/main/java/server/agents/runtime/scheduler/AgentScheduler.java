@@ -1,9 +1,14 @@
 package server.agents.runtime.scheduler;
 
+import server.agents.integration.AgentGatewayAffinityCatalog;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
-import server.agents.integration.AgentGatewayAffinityCatalog;
+import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.async.AgentAsyncTaskGateway;
 
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -29,9 +34,7 @@ public final class AgentScheduler {
                 config.maxSlicesPerTurn(),
                 config.maxContinuationsPerFrame());
         return switch (config.mode()) {
-            case LEGACY_PER_AGENT -> new LegacyScheduleHandle(
-                    AgentSessionId.from(entry),
-                    legacyScheduler.schedule(tick, periodMs));
+            case LEGACY_PER_AGENT -> registerLegacy(entry, tick, periodMs, legacyScheduler);
             case CENTRAL_SEQUENTIAL -> AgentTickScheduler.instance().register(entry, tick, periodMs);
             case CENTRAL_SHARDED -> {
                 if (!AgentGatewayAffinityCatalog.multiShardReady()) {
@@ -50,16 +53,112 @@ public final class AgentScheduler {
         return handle.sessionId().matches(entry) && handle.wake();
     }
 
+    public static CompletionStage<AgentQuiescenceToken> quiesce(
+            AgentRuntimeEntry entry,
+            AgentQuiescenceReason reason) {
+        return quiesce(entry, reason, Duration.ofMillis(defaultQuiescenceTimeoutMs()));
+    }
+
+    public static CompletionStage<AgentQuiescenceToken> quiesce(
+            AgentRuntimeEntry entry,
+            AgentQuiescenceReason reason,
+            Duration timeout) {
+        AgentScheduleHandle handle = handle(entry);
+        if (handle == null) {
+            return CompletableFuture.failedFuture(new AgentQuiescenceException(
+                    AgentQuiescenceException.Reason.CLOSED,
+                    "Agent session has no active schedule handle"));
+        }
+        return handle.quiesce(reason, timeout);
+    }
+
+    public static boolean resume(AgentRuntimeEntry entry, AgentQuiescenceToken token) {
+        AgentScheduleHandle handle = handle(entry);
+        return handle != null && handle.resume(token);
+    }
+
+    public static boolean validatesQuiescence(AgentRuntimeEntry entry, AgentQuiescenceToken token) {
+        AgentScheduleHandle handle = handle(entry);
+        return handle != null && handle.validatesQuiescence(token);
+    }
+
+    private static AgentScheduleHandle registerLegacy(
+            AgentRuntimeEntry entry,
+            Runnable tick,
+            long periodMs,
+            AgentLifecycleService.AgentTickScheduler legacyScheduler) {
+        AgentSessionId sessionId = AgentSessionId.from(entry);
+        AgentQuiescenceController controller = controller(entry, sessionId, System::currentTimeMillis);
+        LegacyTickGuard guard = new LegacyTickGuard(tick, controller);
+        return new LegacyScheduleHandle(
+                sessionId,
+                legacyScheduler.schedule(guard::run, periodMs),
+                controller);
+    }
+
+    static AgentQuiescenceController controller(
+            AgentRuntimeEntry entry,
+            AgentSessionId sessionId,
+            java.util.function.LongSupplier nowMs) {
+        return new AgentQuiescenceController(
+                entry,
+                sessionId,
+                nowMs,
+                () -> AgentAsyncTaskGateway.runtime().pendingCount(sessionId),
+                () -> AgentRuntimeRegistry.isActiveSession(entry, sessionId.generation()));
+    }
+
+    private static AgentScheduleHandle handle(AgentRuntimeEntry entry) {
+        if (entry == null || !(entry.scheduledTaskState().task() instanceof AgentScheduleHandle handle)) {
+            return null;
+        }
+        return handle.sessionId().matches(entry) ? handle : null;
+    }
+
+    private static long defaultQuiescenceTimeoutMs() {
+        return Math.max(1L, Long.getLong("agents.scheduler.quiescenceTimeoutMs", 5_000L));
+    }
+
+    private static final class LegacyTickGuard {
+        private final Runnable tick;
+        private final AgentQuiescenceController controller;
+
+        private LegacyTickGuard(Runnable tick, AgentQuiescenceController controller) {
+            this.tick = tick;
+            this.controller = controller;
+        }
+
+        private void run() {
+            AgentQuiescenceController.ExecutionMode executionMode = controller.beforeExecution();
+            if (executionMode == AgentQuiescenceController.ExecutionMode.SKIP) {
+                return;
+            }
+            try {
+                if (executionMode == AgentQuiescenceController.ExecutionMode.QUIESCENCE_MAINTENANCE) {
+                    controller.runMaintenance();
+                } else {
+                    tick.run();
+                }
+            } finally {
+                controller.afterExecution();
+            }
+        }
+    }
+
     private static final class LegacyScheduleHandle implements AgentScheduleHandle {
         private final AgentSessionId sessionId;
         private final ScheduledFuture<?> delegate;
+        private final AgentQuiescenceController quiescence;
 
-        private LegacyScheduleHandle(AgentSessionId sessionId, ScheduledFuture<?> delegate) {
+        private LegacyScheduleHandle(AgentSessionId sessionId,
+                                     ScheduledFuture<?> delegate,
+                                     AgentQuiescenceController quiescence) {
             if (delegate == null) {
                 throw new IllegalArgumentException("Legacy scheduler returned no handle");
             }
             this.sessionId = sessionId;
             this.delegate = delegate;
+            this.quiescence = quiescence;
         }
 
         @Override
@@ -78,6 +177,28 @@ public final class AgentScheduler {
         }
 
         @Override
+        public CompletionStage<AgentQuiescenceToken> quiesce(
+                AgentQuiescenceReason reason,
+                Duration timeout) {
+            return quiescence.request(reason, timeout);
+        }
+
+        @Override
+        public boolean resume(AgentQuiescenceToken token) {
+            return quiescence.resume(token);
+        }
+
+        @Override
+        public boolean validatesQuiescence(AgentQuiescenceToken token) {
+            return quiescence.validates(token);
+        }
+
+        @Override
+        public boolean isQuiescent() {
+            return quiescence.quiescent();
+        }
+
+        @Override
         public long getDelay(TimeUnit unit) {
             return delegate.getDelay(unit);
         }
@@ -89,6 +210,7 @@ public final class AgentScheduler {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
+            quiescence.close();
             return delegate.cancel(mayInterruptIfRunning);
         }
 

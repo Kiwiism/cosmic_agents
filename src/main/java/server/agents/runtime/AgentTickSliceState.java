@@ -33,6 +33,10 @@ public final class AgentTickSliceState {
         return continuationPending;
     }
 
+    public boolean frameActive() {
+        return frame != null;
+    }
+
     AgentTickFrame frame() {
         return frame;
     }

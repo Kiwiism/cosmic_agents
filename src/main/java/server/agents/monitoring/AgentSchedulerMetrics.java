@@ -72,6 +72,17 @@ public final class AgentSchedulerMetrics {
                                        Map<AgentLoadSheddingReason, Long> rejectedAdmissionsByReason) {
     }
 
+    public record QuiescenceSnapshot(long requested,
+                                     long completed,
+                                     long timedOut,
+                                     long cancelled,
+                                     long resumed,
+                                     long durationP50Ms,
+                                     long durationP95Ms,
+                                     long durationP99Ms,
+                                     int sampleCount) {
+    }
+
     private static final int ROLLING_WINDOW_CAPACITY = 2_048;
     private static final LongAdder CYCLES = new LongAdder();
     private static final LongAdder UPDATED = new LongAdder();
@@ -90,6 +101,11 @@ public final class AgentSchedulerMetrics {
     private static final LongAdder LOAD_SHEDDING_TRANSITIONS = new LongAdder();
     private static final LongAdder LOAD_SHEDDING_SUPPRESSED = new LongAdder();
     private static final LongAdder AGENT_ADMISSIONS_REJECTED = new LongAdder();
+    private static final LongAdder QUIESCENCE_REQUESTED = new LongAdder();
+    private static final LongAdder QUIESCENCE_COMPLETED = new LongAdder();
+    private static final LongAdder QUIESCENCE_TIMED_OUT = new LongAdder();
+    private static final LongAdder QUIESCENCE_CANCELLED = new LongAdder();
+    private static final LongAdder QUIESCENCE_RESUMED = new LongAdder();
     private static final AtomicLong INGRESS_DEPTH = new AtomicLong();
     private static final AtomicLong INGRESS_HIGH_WATER_MARK = new AtomicLong();
     private static final AtomicLong DUE_HEAP_DEPTH = new AtomicLong();
@@ -97,6 +113,8 @@ public final class AgentSchedulerMetrics {
     private static final AgentSchedulerRollingWindow QUEUE_LAG_WINDOW =
             new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY);
     private static final AgentSchedulerRollingWindow WORK_DURATION_WINDOW =
+            new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY);
+    private static final AgentSchedulerRollingWindow QUIESCENCE_DURATION_MS_WINDOW =
             new AgentSchedulerRollingWindow(ROLLING_WINDOW_CAPACITY);
     private static final Map<AgentWorkClass, AgentSchedulerRollingWindow> WORK_CLASS_WINDOWS =
             new EnumMap<>(AgentWorkClass.class);
@@ -241,6 +259,27 @@ public final class AgentSchedulerMetrics {
         ADMISSION_REJECTIONS_BY_REASON.get(reason).increment();
     }
 
+    public static void recordQuiescenceRequested() {
+        QUIESCENCE_REQUESTED.increment();
+    }
+
+    public static void recordQuiescenceCompleted(long durationMs) {
+        QUIESCENCE_COMPLETED.increment();
+        QUIESCENCE_DURATION_MS_WINDOW.add(Math.max(0L, durationMs));
+    }
+
+    public static void recordQuiescenceTimedOut() {
+        QUIESCENCE_TIMED_OUT.increment();
+    }
+
+    public static void recordQuiescenceCancelled() {
+        QUIESCENCE_CANCELLED.increment();
+    }
+
+    public static void recordQuiescenceResumed() {
+        QUIESCENCE_RESUMED.increment();
+    }
+
     public static void recordDepths(int ingressDepth,
                                     int ingressHighWaterMark,
                                     int dueHeapDepth,
@@ -333,6 +372,20 @@ public final class AgentSchedulerMetrics {
                 reasonCounts(ADMISSION_REJECTIONS_BY_REASON));
     }
 
+    public static QuiescenceSnapshot quiescenceSnapshot() {
+        AgentSchedulerRollingWindow.Percentiles duration = QUIESCENCE_DURATION_MS_WINDOW.percentiles();
+        return new QuiescenceSnapshot(
+                QUIESCENCE_REQUESTED.sum(),
+                QUIESCENCE_COMPLETED.sum(),
+                QUIESCENCE_TIMED_OUT.sum(),
+                QUIESCENCE_CANCELLED.sum(),
+                QUIESCENCE_RESUMED.sum(),
+                duration.p50(),
+                duration.p95(),
+                duration.p99(),
+                duration.sampleCount());
+    }
+
     static void reset() {
         CYCLES.reset();
         UPDATED.reset();
@@ -351,12 +404,18 @@ public final class AgentSchedulerMetrics {
         LOAD_SHEDDING_TRANSITIONS.reset();
         LOAD_SHEDDING_SUPPRESSED.reset();
         AGENT_ADMISSIONS_REJECTED.reset();
+        QUIESCENCE_REQUESTED.reset();
+        QUIESCENCE_COMPLETED.reset();
+        QUIESCENCE_TIMED_OUT.reset();
+        QUIESCENCE_CANCELLED.reset();
+        QUIESCENCE_RESUMED.reset();
         INGRESS_DEPTH.set(0L);
         INGRESS_HIGH_WATER_MARK.set(0L);
         DUE_HEAP_DEPTH.set(0L);
         READY_DEPTH.set(0L);
         QUEUE_LAG_WINDOW.reset();
         WORK_DURATION_WINDOW.reset();
+        QUIESCENCE_DURATION_MS_WINDOW.reset();
         WORK_CLASS_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         SIMULATION_MODE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);
         TICK_SLICE_WINDOWS.values().forEach(AgentSchedulerRollingWindow::reset);

@@ -134,4 +134,23 @@ class AgentSchedulerMetricsTest {
         assertEquals(1L, snapshot.suppressedByReason().get(AgentLoadSheddingReason.READY_BACKLOG));
         assertEquals(1L, snapshot.rejectedAdmissionsByReason().get(AgentLoadSheddingReason.POPULATION_LIMIT));
     }
+
+    @Test
+    void recordsBoundedQuiescenceLifecycleAndDurationMetrics() {
+        AgentSchedulerMetrics.recordQuiescenceRequested();
+        AgentSchedulerMetrics.recordQuiescenceCompleted(25L);
+        AgentSchedulerMetrics.recordQuiescenceTimedOut();
+        AgentSchedulerMetrics.recordQuiescenceCancelled();
+        AgentSchedulerMetrics.recordQuiescenceResumed();
+
+        AgentSchedulerMetrics.QuiescenceSnapshot snapshot = AgentSchedulerMetrics.quiescenceSnapshot();
+        assertEquals(1L, snapshot.requested());
+        assertEquals(1L, snapshot.completed());
+        assertEquals(1L, snapshot.timedOut());
+        assertEquals(1L, snapshot.cancelled());
+        assertEquals(1L, snapshot.resumed());
+        assertEquals(25L, snapshot.durationP50Ms());
+        assertEquals(25L, snapshot.durationP99Ms());
+        assertEquals(1, snapshot.sampleCount());
+    }
 }

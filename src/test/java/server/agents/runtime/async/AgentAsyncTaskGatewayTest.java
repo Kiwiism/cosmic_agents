@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
+import server.agents.runtime.scheduler.AgentSessionId;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -54,11 +55,13 @@ class AgentAsyncTaskGatewayTest {
         assertTrue(submission.accepted());
         awaitMailbox(entry);
         assertEquals(1, gateway.pendingCount());
+        assertEquals(1, gateway.pendingCount(AgentSessionId.from(entry)));
         assertEquals(1, entry.actionMailbox().drain(entry, 8));
         assertEquals("result", delivered.get().result());
         assertEquals(entry.sessionGeneration(), delivered.get().sessionId().generation());
         assertEquals(submission.requestId(), delivered.get().requestId());
         assertEquals(0, gateway.pendingCount());
+        assertEquals(0, gateway.pendingCount(AgentSessionId.from(entry)));
     }
 
     @Test
@@ -150,6 +153,27 @@ class AgentAsyncTaskGatewayTest {
         assertEquals(null, delivered.get().result());
     }
 
+    @Test
+    void completionDeliveryRemainsRunnableWhileOrdinaryMailboxWorkIsFrozen() throws Exception {
+        AgentAsyncTaskGateway gateway = new AgentAsyncTaskGateway(executors);
+        AtomicReference<String> delivered = new AtomicReference<>();
+        entry.actionMailbox().submit(entry.sessionGeneration(), ignored -> "ordinary");
+        assertTrue(entry.actionMailbox().beginQuiescence());
+
+        gateway.submit(
+                entry,
+                AgentAsyncWorkKind.ECONOMY_ANALYSIS,
+                "quiescence",
+                () -> "result",
+                (ignored, completion) -> delivered.set(completion.result()));
+
+        awaitMailboxDepth(entry, 2);
+        assertEquals(1, entry.actionMailbox().drain(entry, 8));
+        assertEquals("result", delivered.get());
+        assertEquals(1, entry.actionMailbox().size());
+        assertEquals(0, gateway.pendingCount(AgentSessionId.from(entry)));
+    }
+
     private static AgentRuntimeEntry entry(int agentId) {
         Character agent = mock(Character.class);
         when(agent.getId()).thenReturn(agentId);
@@ -162,6 +186,14 @@ class AgentAsyncTaskGatewayTest {
             Thread.sleep(5L);
         }
         assertTrue(runtimeEntry.actionMailbox().size() > 0, "completion did not reach mailbox");
+    }
+
+    private static void awaitMailboxDepth(AgentRuntimeEntry runtimeEntry, int expected) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (runtimeEntry.actionMailbox().size() < expected && System.nanoTime() < deadline) {
+            Thread.sleep(5L);
+        }
+        assertEquals(expected, runtimeEntry.actionMailbox().size(), "completion did not reach mailbox");
     }
 
     private static void awaitPendingCount(AgentAsyncTaskGateway gateway, int expected) throws InterruptedException {

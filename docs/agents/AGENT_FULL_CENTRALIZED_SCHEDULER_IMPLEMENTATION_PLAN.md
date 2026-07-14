@@ -134,8 +134,10 @@ The production target must address these gaps:
    callbacks.
 6. Load shedding is implemented but disabled by default and lacks live-player
    responsiveness plus staged overload/recovery evidence.
-7. Pause/resume does not yet expose a wait-for-quiescence contract required by
-    profile exchange and Double Agent operations.
+7. The scheduler now exposes a generation-bound wait-for-quiescence contract.
+   The removed Double Agent/profile implementation still does not exist, so
+   canonical profile restoration remains a future feature gate rather than a
+   scheduler-runtime claim.
 
 ## Implementation Readiness Audit
 
@@ -1300,6 +1302,15 @@ Exit:
 - critical cleanup is never shed.
 
 ### Phase 10: Quiescence And Profile Operations
+
+Status: scheduler contract locally complete on
+`feature/agent-central-scheduler-runtime`. Evidence is recorded under
+`docs/agents/evidence/central-scheduler/phase-10`. Legacy and central handles
+share generation-bound quiescence, timeout rollback, ordinary mailbox freeze,
+critical completion drain, partial-frame completion, token validation, and
+lifecycle cancellation. The removed Double Agent POC was not recreated;
+profile exchange and canonical restoration remain gated future consumers of
+this contract.
 
 Work:
 

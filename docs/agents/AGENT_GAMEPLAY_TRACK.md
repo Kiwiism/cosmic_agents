@@ -133,6 +133,11 @@ removed field-copy POC before the reconstruction gates in the specification are
 met. Historical findings are retained in
 `docs/agents/DOUBLE_AGENT_POC_RETROSPECTIVE.md`.
 
+The scheduler-side generation-bound quiescence token and validation guard now
+exist. No profile exchange, canonical restoration, persistence rebinding, or
+client refresh implementation was added; those remain separate gameplay and
+persistence work behind the specification's remaining gates.
+
 ### Account Quest Inheritance
 
 Primary doc:

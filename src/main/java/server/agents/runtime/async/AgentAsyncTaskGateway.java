@@ -132,6 +132,19 @@ public final class AgentAsyncTaskGateway {
         return pending.size();
     }
 
+    public int pendingCount(AgentSessionId sessionId) {
+        if (sessionId == null) {
+            return 0;
+        }
+        int count = 0;
+        for (PendingKey key : pending.keySet()) {
+            if (key.sessionId().equals(sessionId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public boolean isLatest(AgentRuntimeEntry entry,
                             AgentAsyncWorkKind kind,
                             String requestKey,
@@ -199,7 +212,7 @@ public final class AgentAsyncTaskGateway {
                     }
                     return null;
                 },
-                AgentMailboxOptions.coalesceLatest(coalescingKey));
+                AgentMailboxOptions.completionCoalesceLatest(coalescingKey));
         delivery.result().whenComplete((ignored, failure) -> {
             if (failure != null) {
                 pending.remove(key, request);

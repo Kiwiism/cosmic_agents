@@ -72,6 +72,13 @@ Current scheduler implementation checkpoint on
   low-priority background ticks, and new admission shed in order; visible,
   critical, navigation, and mailbox/completion work stay admitted. The
   configured 2000-session ceiling does not replace staged soak evidence.
+- Phase 10's scheduler-owned quiescence contract is locally complete in all
+  scheduler modes. Generation-bound tokens wait for bounded frame completion,
+  session async work, and critical completion delivery while ordinary mailbox
+  actions remain frozen. Timeout and lifecycle cancellation fail safely. The
+  removed Double Agent/profile runtime was not recreated; a future profile
+  implementation must consume this boundary and separately prove canonical
+  restoration.
 
 ## Track Split
 
