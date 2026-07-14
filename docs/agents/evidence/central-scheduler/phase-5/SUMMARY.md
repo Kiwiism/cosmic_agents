@@ -20,6 +20,8 @@ Phase 5 isolates scheduler-reachable blocking and external work:
   legacy synchronous path in `LEGACY_PER_AGENT`.
 - fixed 2048-sample windows expose async p50/p95/p99 duration plus outcome,
   stale, active-worker, capacity, and depth counters.
+- process shutdown closes admission, drains or cancels pending requests, and
+  stops every initialized Agent async lane within the configured deadline.
 
 No gameplay result, cadence, schema, WZ data, or visible behavior is
 intentionally changed. Legacy per-Agent scheduling remains the default.

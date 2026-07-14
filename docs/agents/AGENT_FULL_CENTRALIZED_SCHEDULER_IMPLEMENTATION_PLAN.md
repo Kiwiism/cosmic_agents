@@ -1226,6 +1226,12 @@ Exit:
 
 ### Phase 5: Async Completion Contract
 
+Status: complete on `feature/agent-central-scheduler-runtime`. Evidence is
+recorded under `docs/agents/evidence/central-scheduler/phase-5`. Blocking
+workload lanes are bounded and generation/request stamped, completions return
+through owning mailboxes, source scans find no scheduler-reachable blocking
+wait, and process shutdown now closes every initialized Agent async lane.
+
 Work:
 
 - define `AgentAsyncTaskGateway` and generation-stamped completions.
