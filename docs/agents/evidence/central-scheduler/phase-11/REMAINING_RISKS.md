@@ -42,3 +42,9 @@ configuration because it targets the normal `cosmic` database. Live parity and
 soak work must not begin until `config.yaml` points to an explicitly named
 disposable database and the preflight passes. No server process or database
 connection was started by this check.
+
+A subsequent isolated smoke used a verified disposable clone and passed all
+preflight checks. The server accepted a localhost v83 login connection and
+shut down with no remaining Agent work or unterminated executors. Windows
+capture timed out before character authentication, so the complete live parity
+script and every populated soak stage remain required.

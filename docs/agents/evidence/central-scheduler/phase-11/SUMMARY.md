@@ -37,6 +37,11 @@ junction, external runtime/cache paths, free server ports, running client, and
 an explicitly pinned disposable database before a live process is started. It
 is read-only and rejects the normal `cosmic` database.
 
+The first guarded disposable-database smoke reached all server listeners and
+accepted a v83 login connection, then completed bounded Agent/runtime and
+channel shutdown. Client capture failed before authentication, so no Agent was
+spawned and visible parity remains unproven. See `LIVE_SMOKE_2026-07-14.md`.
+
 The final local validation reran the explicit 2,000-session scale gates after
 the observability work; they passed. See `REMAINING_RISKS.md` for the unrelated
 failures observed during an optional incomplete full-repository test run.
