@@ -15,6 +15,11 @@
   legacy, central-sequential, and four-shard scheduling. Every mode cancelled
   all 250 sessions and left no pending/remaining scheduler work. This supports
   lifecycle parity but does not prove packet or visual parity.
+- The server-only 500-character roster also reached the same live-session
+  count under central-sequential and four-shard scheduling. Both modes
+  cancelled all 500 sessions, stopped every initialized Agent async lane, and
+  left no scheduler work. This extends lifecycle parity evidence but still
+  does not prove client-visible parity.
 - Rollback remains a restart with `agents.scheduler.mode=legacy`.
 - Normal runtime behavior is unchanged. The shutdown path executes only during
   process shutdown/restart, before Cosmic tears down channels and timers.

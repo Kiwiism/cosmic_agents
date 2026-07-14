@@ -62,3 +62,10 @@ ordering remain unchanged.
 The final local validation reran the explicit 2,000-session scale gates after
 the observability work; they passed. See `REMAINING_RISKS.md` for the unrelated
 failures observed during an optional incomplete full-repository test run.
+
+The disposable roster has now been expanded to 500 real backing characters.
+Server-only central-sequential and four-shard gates each reached all 500 at
+`load=NORMAL`, with no failed Agent updates, DB waiters, remaining scheduler
+state, or unterminated async lane. Four shards lowered queue-lag p95/p99 and
+deferred work, while one short process sample showed higher sharded memory and
+requires normalized follow-up. See `POPULATED_500_SERVER_GATE_2026-07-15.md`.

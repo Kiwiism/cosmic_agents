@@ -38,8 +38,9 @@ smoke safely provisioned one Agent-only backing character through the normal
 guarded GM command, which is enough for the single-Agent smoke but not any
 staged population gate. The guarded provisioner removes the tooling gap, but
 the roster still must be created and verified before each populated gate. A
-250-character roster has now been created and exercised server-side; 500 and
-larger rosters remain unprovisioned.
+500-character roster has now been created and exercised server-side in both
+central-sequential and four-shard modes; 1,000 and larger rosters remain
+unprovisioned.
 
 Population convergence starts at most 20 sessions per sweep. The fast-start
 window launches the first 140 sessions, then steady reconciliation runs once
@@ -47,6 +48,12 @@ per minute. Population lifecycle I/O now executes on a bounded single-worker
 async lane, and repeated timer wake-ups coalesce while work is outstanding.
 The default action limit and ordering are unchanged. Larger stages still need
 measured convergence evidence before any rate tuning is considered.
+
+One short 500-Agent process sample showed materially higher working/private
+memory in the four-shard process even though its periodic heap sample was
+lower. The run was not normalized for cache state, GC, or paging, so this is
+not evidence of a scheduler leak. Retain it as a risk until repeated sustained
+stages show a heap plateau and comparable post-GC process memory.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.

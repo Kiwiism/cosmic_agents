@@ -83,3 +83,20 @@ p50/p95/p99, and 381,706 deferred items. Shutdown stopped three initialized
 async executors with no unterminated lane, cancelled all 250 sessions, and
 left zero scheduler registrations. This short rerun verifies the new lane and
 shutdown boundary; it is not added to the normalized comparison table.
+
+Populated 500-Agent server-only gate:
+
+| Metric | Central sequential | Central sharded (4) |
+|---|---:|---:|
+| Agent updates | 7,516,252 | 7,962,111 |
+| failed / slow updates | 0 / 2 | 0 / 8 |
+| queue lag p50 / p95 / p99 | 31 / 68 / 75 ms | 17 / 42 / 48 ms |
+| work p50 / p95 / p99 | 93.3 / 142.4 / 519.2 us | 131.3 / 259.6 / 513.3 us |
+| budget exhaustion | 92,399 | 62,753 |
+| deferred work | 15,186,756 | 1,909,683 |
+| shutdown sessions / cancellations / remaining | 500 / 500 / 0 | 500 / 500 / 0 |
+
+Both modes remained `load=NORMAL`, with zero DB waiters and failed Agent
+updates. The short non-normalized process sample used less average CPU in the
+sharded run but more working/private memory; sustained normalized evidence is
+required before treating either difference as a stable result.
