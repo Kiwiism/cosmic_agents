@@ -13,6 +13,7 @@ public record AgentSchedulerRegistrationSnapshot(
         AgentWorkClass workClass,
         AgentPriorityClass priority,
         AgentSimulationMode simulationMode,
+        boolean ready,
         boolean paused,
         boolean quiescent) {
     public AgentSchedulerRegistrationSnapshot {

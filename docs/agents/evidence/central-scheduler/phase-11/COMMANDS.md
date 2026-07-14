@@ -31,6 +31,7 @@ Live operator snapshots (GM6):
 ```text
 @agentscheduler
 @agentscheduler shards
+@agentscheduler costs
 @agentscheduler top slow
 @agentscheduler top overdue
 @agentscheduler top maps
@@ -42,9 +43,11 @@ Live operator snapshots (GM6):
 @serverhealth
 ```
 
-`@agentscheduler` reports scheduler mode, active Agent count, cadence metrics,
-queue pressure, bounded shard detail, load shedding, quiescence, and initialized
-Agent async queues without mutating runtime state.
+`@agentscheduler` reports scheduler mode, active Agent count, live registration
+state, cadence and cycle-budget metrics, lifecycle transitions, queue pressure,
+bounded shard detail, load shedding, quiescence, and initialized Agent async
+queues without mutating runtime state. `@agentscheduler costs` reports bounded
+work-class, simulation-mode, and tick-slice percentiles.
 All top/detail outputs are read-only and capped at ten rows.
 
 The live and long-duration commands are environment-specific and must use the

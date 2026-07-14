@@ -59,7 +59,23 @@ public final class AgentSchedulerDiagnostics {
     }
 
     public static List<String> lines() {
-        return format(capture());
+        Snapshot snapshot = capture();
+        List<String> lines = new ArrayList<>(format(snapshot));
+        lines.addAll(AgentSchedulerDetailDiagnostics.stateLines(
+                snapshot.mode(), snapshot.activeAgents(), System.currentTimeMillis()));
+        AgentSchedulerConfig config = AgentSchedulerConfig.fromSystemProperties();
+        long budgetNs = TimeUnit.MILLISECONDS.toNanos(config.cycleBudgetMs());
+        long averageCycleNs = snapshot.scheduler().cycles() == 0L
+                ? 0L
+                : snapshot.scheduler().totalCycleNs() / snapshot.scheduler().cycles();
+        lines.add("Scheduler cycle budget: configuredMs=" + config.cycleBudgetMs()
+                + " avgUtil=" + formatPercent(averageCycleNs, budgetNs)
+                + "% maxUtil=" + formatPercent(snapshot.scheduler().maxCycleNs(), budgetNs) + "%");
+        AgentSchedulerMetrics.LifecycleSnapshot lifecycle = AgentSchedulerMetrics.lifecycleSnapshot();
+        lines.add("Scheduler lifecycle: registered=" + lifecycle.registered()
+                + " replaced=" + lifecycle.replaced() + " cancel=" + lifecycle.cancellationRequests()
+                + " cleanup=" + lifecycle.cleanedUp());
+        return List.copyOf(lines);
     }
 
     public static List<String> lines(String[] params) {
@@ -70,6 +86,9 @@ public final class AgentSchedulerDiagnostics {
             return format(capture()).stream()
                     .filter(line -> line.startsWith("Scheduler shards:") || line.startsWith("  shard="))
                     .toList();
+        }
+        if (params[0].equalsIgnoreCase("costs")) {
+            return AgentSchedulerDetailDiagnostics.costLines();
         }
         return AgentSchedulerDetailDiagnostics.lines(params);
     }
@@ -168,7 +187,8 @@ public final class AgentSchedulerDiagnostics {
                     + queue.capacity() + " high=" + queue.maxDepth() + " active=" + queue.active()
                     + " submitted=" + queue.submitted() + " coalesced=" + queue.coalesced()
                     + " rejected=" + queue.rejected() + " failed=" + queue.failed()
-                    + " timeout=" + queue.timedOut() + " stale=" + queue.stale());
+                    + " timeout=" + queue.timedOut() + " stale=" + queue.stale()
+                    + " expired=" + queue.expired() + " drained=" + queue.drained());
         }
     }
 
@@ -178,6 +198,11 @@ public final class AgentSchedulerDiagnostics {
 
     private static String formatMillis(long nanoseconds) {
         return String.format(Locale.ROOT, "%.3f", Math.max(0L, nanoseconds) / 1_000_000.0);
+    }
+
+    private static String formatPercent(long value, long total) {
+        double percent = Math.max(0L, value) * 100.0 / Math.max(1L, total);
+        return String.format(Locale.ROOT, "%.1f", percent);
     }
 
     private static <K extends Comparable<? super K>, V> Map<K, V> immutableSortedMap(Map<K, V> values) {

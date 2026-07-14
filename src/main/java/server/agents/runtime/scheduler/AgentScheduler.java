@@ -1,6 +1,7 @@
 package server.agents.runtime.scheduler;
 
 import server.agents.integration.AgentGatewayAffinityCatalog;
+import server.agents.monitoring.AgentSchedulerMetrics;
 import server.agents.runtime.AgentLifecycleService;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
@@ -38,7 +39,7 @@ public final class AgentScheduler {
                 config.mode() != AgentSchedulerMode.LEGACY_PER_AGENT && config.tickSlicingEnabled(),
                 config.maxSlicesPerTurn(),
                 config.maxContinuationsPerFrame());
-        return switch (config.mode()) {
+        AgentScheduleHandle handle = switch (config.mode()) {
             case LEGACY_PER_AGENT -> registerLegacy(entry, tick, periodMs, legacyScheduler);
             case CENTRAL_SEQUENTIAL -> AgentTickScheduler.instance().register(entry, tick, periodMs);
             case CENTRAL_SHARDED -> {
@@ -49,6 +50,8 @@ public final class AgentScheduler {
                 yield AgentShardedTickScheduler.instance().register(entry, tick, periodMs);
             }
         };
+        AgentSchedulerMetrics.recordLifecycleRegistered();
+        return handle;
     }
 
     public static boolean wake(AgentRuntimeEntry entry) {

@@ -83,6 +83,12 @@ public final class AgentSchedulerMetrics {
                                      int sampleCount) {
     }
 
+    public record LifecycleSnapshot(long registered,
+                                    long replaced,
+                                    long cancellationRequests,
+                                    long cleanedUp) {
+    }
+
     private static final int ROLLING_WINDOW_CAPACITY = 2_048;
     private static final LongAdder CYCLES = new LongAdder();
     private static final LongAdder UPDATED = new LongAdder();
@@ -106,6 +112,10 @@ public final class AgentSchedulerMetrics {
     private static final LongAdder QUIESCENCE_TIMED_OUT = new LongAdder();
     private static final LongAdder QUIESCENCE_CANCELLED = new LongAdder();
     private static final LongAdder QUIESCENCE_RESUMED = new LongAdder();
+    private static final LongAdder LIFECYCLE_REGISTERED = new LongAdder();
+    private static final LongAdder LIFECYCLE_REPLACED = new LongAdder();
+    private static final LongAdder LIFECYCLE_CANCELLATION_REQUESTS = new LongAdder();
+    private static final LongAdder LIFECYCLE_CLEANED_UP = new LongAdder();
     private static final AtomicLong INGRESS_DEPTH = new AtomicLong();
     private static final AtomicLong INGRESS_HIGH_WATER_MARK = new AtomicLong();
     private static final AtomicLong DUE_HEAP_DEPTH = new AtomicLong();
@@ -280,6 +290,24 @@ public final class AgentSchedulerMetrics {
         QUIESCENCE_RESUMED.increment();
     }
 
+    public static void recordLifecycleRegistered() {
+        LIFECYCLE_REGISTERED.increment();
+    }
+
+    public static void recordLifecycleReplaced(long count) {
+        if (count > 0L) {
+            LIFECYCLE_REPLACED.add(count);
+        }
+    }
+
+    public static void recordLifecycleCancellationRequested() {
+        LIFECYCLE_CANCELLATION_REQUESTS.increment();
+    }
+
+    public static void recordLifecycleCleanedUp() {
+        LIFECYCLE_CLEANED_UP.increment();
+    }
+
     public static void recordDepths(int ingressDepth,
                                     int ingressHighWaterMark,
                                     int dueHeapDepth,
@@ -386,6 +414,14 @@ public final class AgentSchedulerMetrics {
                 duration.sampleCount());
     }
 
+    public static LifecycleSnapshot lifecycleSnapshot() {
+        return new LifecycleSnapshot(
+                LIFECYCLE_REGISTERED.sum(),
+                LIFECYCLE_REPLACED.sum(),
+                LIFECYCLE_CANCELLATION_REQUESTS.sum(),
+                LIFECYCLE_CLEANED_UP.sum());
+    }
+
     static void reset() {
         CYCLES.reset();
         UPDATED.reset();
@@ -409,6 +445,10 @@ public final class AgentSchedulerMetrics {
         QUIESCENCE_TIMED_OUT.reset();
         QUIESCENCE_CANCELLED.reset();
         QUIESCENCE_RESUMED.reset();
+        LIFECYCLE_REGISTERED.reset();
+        LIFECYCLE_REPLACED.reset();
+        LIFECYCLE_CANCELLATION_REQUESTS.reset();
+        LIFECYCLE_CLEANED_UP.reset();
         INGRESS_DEPTH.set(0L);
         INGRESS_HIGH_WATER_MARK.set(0L);
         DUE_HEAP_DEPTH.set(0L);

@@ -1,6 +1,7 @@
 package server.agents.runtime;
 
 import org.junit.jupiter.api.Test;
+import server.agents.monitoring.AgentAsyncQueueMetrics;
 import server.agents.runtime.scheduler.AgentScheduleHandle;
 import server.agents.runtime.scheduler.AgentSessionId;
 import server.agents.runtime.mailbox.AgentMailboxFailureReason;
@@ -51,6 +52,7 @@ class AgentActionMailboxTest {
     void rejectsStaleSessionActionWithoutExecutingIt() {
         AgentRuntimeEntry entry = entry();
         AtomicInteger executions = new AtomicInteger();
+        AgentAsyncQueueMetrics.Snapshot before = AgentAsyncQueueMetrics.snapshot("mailbox");
         CompletableFuture<Integer> result = entry.actionMailbox().submit(
                 entry.sessionGeneration() + 1,
                 ignored -> executions.incrementAndGet());
@@ -59,6 +61,9 @@ class AgentActionMailboxTest {
 
         assertEquals(0, executions.get());
         assertThrows(Exception.class, result::join);
+        AgentAsyncQueueMetrics.Snapshot after = AgentAsyncQueueMetrics.snapshot("mailbox");
+        assertEquals(before.stale() + 1L, after.stale());
+        assertEquals(before.drained() + 1L, after.drained());
     }
 
     @Test
@@ -138,6 +143,7 @@ class AgentActionMailboxTest {
         AtomicLong now = new AtomicLong(1_000L);
         AgentActionMailbox mailbox = new AgentActionMailbox(2, now::get);
         AtomicInteger executions = new AtomicInteger();
+        AgentAsyncQueueMetrics.Snapshot before = AgentAsyncQueueMetrics.snapshot("mailbox");
         AgentMailboxSubmission<Integer> submission = mailbox.submit(
                 entry.sessionGeneration(), ignored -> executions.incrementAndGet(),
                 AgentMailboxOptions.expiringAt(1_050L));
@@ -147,6 +153,9 @@ class AgentActionMailboxTest {
 
         assertEquals(0, executions.get());
         assertEquals(AgentMailboxFailureReason.EXPIRED, rejectionReason(submission.result()));
+        AgentAsyncQueueMetrics.Snapshot after = AgentAsyncQueueMetrics.snapshot("mailbox");
+        assertEquals(before.expired() + 1L, after.expired());
+        assertEquals(before.drained() + 1L, after.drained());
     }
 
     @Test

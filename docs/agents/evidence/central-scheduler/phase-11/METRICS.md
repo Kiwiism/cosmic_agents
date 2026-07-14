@@ -18,8 +18,12 @@ The four-shard gate also requires:
 Runtime operator evidence is available through the bounded GM6
 `@agentscheduler` command. The command reads the same rolling metrics used by
 the deterministic gates and includes initialized async-lane depth, capacity,
-high-water, rejection, timeout, and stale counts. Use `@serverhealth` for the
-complementary JVM, database, and core server snapshot.
+high-water, rejection, timeout, stale, expired, and drained counts. It also
+reports registration state and ready priority, cycle-budget utilization, and
+lifecycle register/replace/cancel/cleanup counts. `@agentscheduler costs`
+reports bounded p50/p95/p99 work-class, simulation-mode, and tick-slice cost.
+Use `@serverhealth` for the complementary JVM, database, and core server
+snapshot.
 
 Detail diagnostics expose bounded current registration cost/overdue state,
 active map population, mailbox depth, current failure-window count, and the

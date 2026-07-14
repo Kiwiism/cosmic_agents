@@ -256,6 +256,14 @@ work, rejected admissions, and reason-coded counts.
 aggregate depth gauges sum all reporting shards. Registration imbalance is the
 largest shard population minus the smallest.
 
+The operator snapshot also reports live central registration state (ready,
+waiting, paused, quiescent, and overdue), ready work by priority, cycle-budget
+average/maximum utilization, lifecycle register/replace/cancel/cleanup counts,
+and mailbox stale/expired/drained counts. `@agentscheduler costs` exposes the
+bounded p50/p95/p99 windows by work class, simulation mode, and tick slice.
+In legacy mode, central registration-state detail is explicitly unavailable;
+the active population is still reported.
+
 GM6 `@agentscheduler` formats these counters as a bounded, read-only operator
 snapshot. It includes current mode and active population, up to eight shard
 details, the highest load-shedding level, quiescence outcomes, and up to twelve
@@ -264,6 +272,7 @@ and soak validation.
 
 Bounded detail views are available through `@agentscheduler top slow`, `top
 overdue`, `top maps`, `top capabilities`, `top mailboxes`, and `top failures`.
+`@agentscheduler costs` reports the current bounded scheduler cost windows.
 `@agentscheduler agent <name|id>` and `@agentscheduler map <mapId>` provide
 current read-only drill-down. Each list is capped at ten rows. Registration
 detail is read directly from live central scheduler records, runtime/map/

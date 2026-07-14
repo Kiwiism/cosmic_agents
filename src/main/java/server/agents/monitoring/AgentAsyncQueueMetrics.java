@@ -23,6 +23,8 @@ public final class AgentAsyncQueueMetrics {
                            long failed,
                            long timedOut,
                            long stale,
+                           long expired,
+                           long drained,
                            long durationP50Ns,
                            long durationP95Ns,
                            long durationP99Ns,
@@ -37,6 +39,8 @@ public final class AgentAsyncQueueMetrics {
         private final LongAdder failed = new LongAdder();
         private final LongAdder timedOut = new LongAdder();
         private final LongAdder stale = new LongAdder();
+        private final LongAdder expired = new LongAdder();
+        private final LongAdder drained = new LongAdder();
         private final AtomicInteger currentDepth = new AtomicInteger();
         private final AtomicInteger maxDepth = new AtomicInteger();
         private final AtomicInteger capacity = new AtomicInteger();
@@ -150,6 +154,16 @@ public final class AgentAsyncQueueMetrics {
         metrics(queue).stale.increment();
     }
 
+    public static void recordExpired(String queue) {
+        metrics(queue).expired.increment();
+    }
+
+    public static void recordDrained(String queue, long count) {
+        if (count > 0L) {
+            metrics(queue).drained.add(count);
+        }
+    }
+
     public static Snapshot snapshot(String queue) {
         MutableMetrics metrics = metrics(queue);
         return snapshot(metrics);
@@ -175,6 +189,8 @@ public final class AgentAsyncQueueMetrics {
                 metrics.failed.sum(),
                 metrics.timedOut.sum(),
                 metrics.stale.sum(),
+                metrics.expired.sum(),
+                metrics.drained.sum(),
                 durations.p50(),
                 durations.p95(),
                 durations.p99(),

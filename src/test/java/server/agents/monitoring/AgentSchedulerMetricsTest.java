@@ -153,4 +153,18 @@ class AgentSchedulerMetricsTest {
         assertEquals(25L, snapshot.durationP99Ms());
         assertEquals(1, snapshot.sampleCount());
     }
+
+    @Test
+    void recordsSchedulerRegistrationAndCleanupLifecycle() {
+        AgentSchedulerMetrics.recordLifecycleRegistered();
+        AgentSchedulerMetrics.recordLifecycleReplaced(2L);
+        AgentSchedulerMetrics.recordLifecycleCancellationRequested();
+        AgentSchedulerMetrics.recordLifecycleCleanedUp();
+
+        AgentSchedulerMetrics.LifecycleSnapshot snapshot = AgentSchedulerMetrics.lifecycleSnapshot();
+        assertEquals(1L, snapshot.registered());
+        assertEquals(2L, snapshot.replaced());
+        assertEquals(1L, snapshot.cancellationRequests());
+        assertEquals(1L, snapshot.cleanedUp());
+    }
 }

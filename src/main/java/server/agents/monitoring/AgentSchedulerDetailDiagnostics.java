@@ -4,15 +4,20 @@ import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentTickFailureStateRuntime;
+import server.agents.runtime.AgentTickSliceKind;
+import server.agents.runtime.scheduler.AgentPriorityClass;
 import server.agents.runtime.scheduler.AgentScheduleHandle;
 import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.agents.runtime.scheduler.AgentSchedulerMode;
 import server.agents.runtime.scheduler.AgentSessionId;
 import server.agents.runtime.scheduler.AgentShardedTickScheduler;
 import server.agents.runtime.scheduler.AgentTickScheduler;
+import server.agents.runtime.scheduler.AgentWorkClass;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -75,6 +80,75 @@ final class AgentSchedulerDetailDiagnostics {
         };
     }
 
+    static List<String> stateLines(AgentSchedulerMode mode, int activeAgents, long nowMs) {
+        List<AgentSchedulerRegistrationSnapshot> registrations = captureRegistrations(mode);
+        if (mode == AgentSchedulerMode.LEGACY_PER_AGENT) {
+            return List.of("Scheduler registrations: mode=LEGACY_PER_AGENT active=" + Math.max(0, activeAgents)
+                    + " central-state=unavailable");
+        }
+        int ready = 0;
+        int paused = 0;
+        int quiescent = 0;
+        int overdue = 0;
+        Map<AgentPriorityClass, Integer> readyByPriority = new EnumMap<>(AgentPriorityClass.class);
+        for (AgentSchedulerRegistrationSnapshot registration : registrations) {
+            if (registration.quiescent()) {
+                quiescent++;
+            } else if (registration.paused()) {
+                paused++;
+            } else if (registration.ready()) {
+                ready++;
+                readyByPriority.merge(registration.priority(), 1, Integer::sum);
+            }
+            if (registration.overdueMs(nowMs) > 0L) {
+                overdue++;
+            }
+        }
+        int waiting = Math.max(0, registrations.size() - ready - paused - quiescent);
+        return List.of(
+                "Scheduler registrations: registered=" + registrations.size() + " ready=" + ready
+                        + " waiting=" + waiting + " paused=" + paused + " quiescent=" + quiescent
+                        + " overdue=" + overdue,
+                "Scheduler ready priority: " + readyPrioritySummary(readyByPriority));
+    }
+
+    static List<String> costLines() {
+        List<String> lines = new ArrayList<>();
+        lines.add("Scheduler work-class p99 cost (us):");
+        java.util.Arrays.stream(AgentWorkClass.values())
+                .map(workClass -> Map.entry(workClass, AgentSchedulerMetrics.workClassSnapshot(workClass)))
+                .filter(entry -> entry.getValue().sampleCount() > 0)
+                .sorted(Map.Entry.<AgentWorkClass, AgentSchedulerMetrics.WorkClassSnapshot>comparingByValue(
+                        Comparator.comparingLong(AgentSchedulerMetrics.WorkClassSnapshot::durationP99Ns)).reversed())
+                .limit(MAX_TOP)
+                .forEach(entry -> lines.add("  work=" + entry.getKey() + " p50/p95/p99="
+                        + micros(entry.getValue().durationP50Ns()) + "/"
+                        + micros(entry.getValue().durationP95Ns()) + "/"
+                        + micros(entry.getValue().durationP99Ns()) + " n=" + entry.getValue().sampleCount()));
+        if (lines.size() == 1) {
+            lines.add("  no work samples");
+        }
+        lines.add("Scheduler simulation-mode p99 cost (us):");
+        for (AgentSimulationMode mode : AgentSimulationMode.values()) {
+            AgentSchedulerMetrics.SimulationModeSnapshot snapshot = AgentSchedulerMetrics.simulationModeSnapshot(mode);
+            if (snapshot.sampleCount() > 0) {
+                lines.add("  mode=" + mode + " p50/p95/p99=" + micros(snapshot.durationP50Ns()) + "/"
+                        + micros(snapshot.durationP95Ns()) + "/" + micros(snapshot.durationP99Ns())
+                        + " n=" + snapshot.sampleCount());
+            }
+        }
+        lines.add("Scheduler tick-slice p99 cost (us):");
+        for (AgentTickSliceKind slice : AgentTickSliceKind.values()) {
+            AgentSchedulerMetrics.TickSliceSnapshot snapshot = AgentSchedulerMetrics.tickSliceSnapshot(slice);
+            if (snapshot.sampleCount() > 0) {
+                lines.add("  slice=" + slice + " p50/p95/p99=" + micros(snapshot.durationP50Ns()) + "/"
+                        + micros(snapshot.durationP95Ns()) + "/" + micros(snapshot.durationP99Ns())
+                        + " n=" + snapshot.sampleCount());
+            }
+        }
+        return List.copyOf(lines);
+    }
+
     static List<String> top(String[] params,
                             List<AgentView> agents,
                             List<AgentSchedulerRegistrationSnapshot> registrations,
@@ -114,7 +188,7 @@ final class AgentSchedulerDetailDiagnostics {
                 scheduleMode);
     }
 
-    private static List<AgentSchedulerRegistrationSnapshot> captureRegistrations(AgentSchedulerMode mode) {
+    static List<AgentSchedulerRegistrationSnapshot> captureRegistrations(AgentSchedulerMode mode) {
         return switch (mode) {
             case LEGACY_PER_AGENT -> List.of();
             case CENTRAL_SEQUENTIAL -> AgentTickScheduler.instance().registrationSnapshots();
@@ -347,8 +421,21 @@ final class AgentSchedulerDetailDiagnostics {
         return String.format(Locale.ROOT, "%.3f", Math.max(0L, nanoseconds) / 1_000_000.0);
     }
 
+    private static long micros(long nanoseconds) {
+        return TimeUnit.NANOSECONDS.toMicros(Math.max(0L, nanoseconds));
+    }
+
+    private static String readyPrioritySummary(Map<AgentPriorityClass, Integer> readyByPriority) {
+        if (readyByPriority.isEmpty()) {
+            return "none";
+        }
+        return readyByPriority.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(java.util.stream.Collectors.joining(","));
+    }
+
     private static List<String> usage() {
-        return List.of("Usage: @agentscheduler status|shards|top slow|overdue|maps|capabilities|mailboxes|failures"
+        return List.of("Usage: @agentscheduler status|shards|costs|top slow|overdue|maps|capabilities|mailboxes|failures"
                 + "|agent <name|id>|map <mapId>");
     }
 }

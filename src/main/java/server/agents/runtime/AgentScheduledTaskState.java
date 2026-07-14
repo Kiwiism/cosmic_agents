@@ -35,11 +35,14 @@ public final class AgentScheduledTaskState {
         return task.get() != null;
     }
 
-    public void cancelScheduledTask() {
-        cancellationRequested.set(true);
+    public boolean cancelScheduledTask() {
+        if (!cancellationRequested.compareAndSet(false, true)) {
+            return false;
+        }
         ScheduledFuture<?> scheduledTask = task.get();
         if (scheduledTask != null) {
             scheduledTask.cancel(false);
         }
+        return true;
     }
 }

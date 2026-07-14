@@ -46,13 +46,18 @@ shard, load-shedding, quiescence, and async-queue snapshot. Run
 Record both outputs with a timestamp and current stage/population.
 Use the bounded `@agentscheduler top slow`, `top overdue`, `top maps`, `top
 mailboxes`, and `top failures` views when the aggregate snapshot shows pressure.
+Use `@agentscheduler costs` to compare work-class, simulation-mode, and
+tick-slice p50/p95/p99 cost between stages.
 Enable the existing Agent performance monitor before using `top capabilities`.
 
 - Agent population and per-shard registration counts;
 - ingress, due, and ready depths plus high-water marks;
 - scheduler delay and work-duration p50/p95/p99;
+- cycle-budget average/maximum utilization and ready work by priority;
 - budget exhaustion, deferral, starvation, failure, and stale counts;
-- mailbox and async-lane depth, rejection, timeout, and stale counts;
+- mailbox and async-lane depth, rejection, timeout, stale, expired, and drained
+  counts;
+- lifecycle register, replacement, cancellation, and cleanup counts;
 - load-shedding level, reason, suppression, and recovery counts;
 - heap used after full GC trend, GC pause trend, process CPU, and thread count;
 - database pool active/waiting counts;

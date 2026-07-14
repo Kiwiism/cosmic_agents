@@ -8,6 +8,7 @@ import server.agents.capabilities.navigation.AgentNavigationGraphService;
 import server.agents.capabilities.dialogue.AgentEmote;
 import server.agents.capabilities.movement.AgentMovementStateRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
+import server.agents.monitoring.AgentSchedulerMetrics;
 import server.agents.registry.AgentResolvedCharacter;
 import server.agents.integration.AgentClientGatewayRuntime;
 import server.agents.runtime.scheduler.AgentAdmissionDecision;
@@ -253,6 +254,7 @@ public final class AgentLifecycleService {
             throw failure;
         }
 
+        AgentSchedulerMetrics.recordLifecycleReplaced(replacedEntries.size());
         replacedEntries.forEach(hooks.cancelExistingTask());
         AgentLifecycleStatusCoordinator.scheduleSpawnStatusCheck(
                 entry, agent, hooks.spawnStatusDelayMs().getAsLong());
@@ -330,7 +332,10 @@ public final class AgentLifecycleService {
     public static void cancelScheduledTickIfPresent(AgentRuntimeEntry entry) {
         if (entry != null) {
             if (entry.scheduledTaskState().hasScheduledTask()) {
-                entry.scheduledTaskState().cancelScheduledTask();
+                if (entry.scheduledTaskState().cancelScheduledTask()) {
+                    AgentSchedulerMetrics.recordLifecycleCancellationRequested();
+                    AgentSchedulerMetrics.recordLifecycleCleanedUp();
+                }
             }
             entry.scheduledTaskScope().cancelAll();
             entry.tickSliceState().clear();

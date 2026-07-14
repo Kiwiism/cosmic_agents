@@ -729,7 +729,7 @@ public final class AgentTickScheduler {
         private volatile AgentWorkClass workClass;
         private volatile AgentPriorityClass priority;
         private volatile AgentSimulationMode simulationMode = AgentSimulationMode.PRESENTATION;
-        private long readySinceMs = -1L;
+        private volatile long readySinceMs = -1L;
         private long readyDueMs;
         private volatile long estimatedCostNs = 100_000L;
         private boolean costObserved;
@@ -816,6 +816,7 @@ public final class AgentTickScheduler {
                     workClass,
                     priority,
                     simulationMode,
+                    readySinceMs >= 0L,
                     paused.get(),
                     quiescence.quiescent());
         }

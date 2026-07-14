@@ -2,6 +2,7 @@ package server.agents.monitoring;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import server.agents.runtime.AgentTickSliceKind;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
 import server.agents.runtime.scheduler.AgentLoadSheddingReason;
 import server.agents.runtime.scheduler.AgentLoadSheddingState;
@@ -47,7 +48,7 @@ class AgentSchedulerDiagnosticsTest {
         AgentAsyncQueueMetrics.recordSubmitted("navigation", 3);
 
         AgentSchedulerDiagnostics.Snapshot snapshot = AgentSchedulerDiagnostics.capture();
-        List<String> lines = AgentSchedulerDiagnostics.format(snapshot);
+        List<String> lines = AgentSchedulerDiagnostics.lines();
 
         assertEquals("CENTRAL_SHARDED", snapshot.mode().name());
         assertEquals(2, snapshot.shards().size());
@@ -57,6 +58,9 @@ class AgentSchedulerDiagnosticsTest {
         assertTrue(lines.stream().anyMatch(line -> line.contains("shard=0 agents=12")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("level=SUPPRESS_COSMETIC")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("queue=navigation depth=3/64")));
+        assertTrue(lines.stream().anyMatch(line -> line.startsWith("Scheduler registrations:")));
+        assertTrue(lines.stream().anyMatch(line -> line.startsWith("Scheduler cycle budget:")));
+        assertTrue(lines.stream().anyMatch(line -> line.startsWith("Scheduler lifecycle:")));
     }
 
     @Test
@@ -73,7 +77,7 @@ class AgentSchedulerDiagnosticsTest {
 
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more shard(s)")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more queue(s)")));
-        assertTrue(lines.size() <= 29);
+        assertTrue(lines.size() <= 33);
     }
 
     @Test
@@ -96,6 +100,7 @@ class AgentSchedulerDiagnosticsTest {
                     AgentWorkClass.PRESENTATION_GAMEPLAY,
                     AgentPriorityClass.VISIBLE,
                     AgentSimulationMode.PRESENTATION,
+                    true,
                     false,
                     false));
         }
@@ -146,5 +151,22 @@ class AgentSchedulerDiagnosticsTest {
                 List.of("No central Agent registration is currently overdue."),
                 AgentSchedulerDetailDiagnostics.top(
                         new String[] {"top", "overdue"}, List.of(), List.of(), List.of(), 0L));
+    }
+
+    @Test
+    void costViewReportsWorkSimulationAndTickSlicePercentiles() {
+        AgentSchedulerMetrics.recordUpdated(
+                2L,
+                4_000L,
+                AgentWorkClass.PRESENTATION_GAMEPLAY,
+                AgentSimulationMode.PRESENTATION,
+                false);
+        AgentSchedulerMetrics.recordTickSlice(AgentTickSliceKind.CAPABILITY_AND_MOVEMENT, 6_000L);
+
+        List<String> lines = AgentSchedulerDiagnostics.lines(new String[] {"costs"});
+
+        assertTrue(lines.stream().anyMatch(line -> line.contains("work=PRESENTATION_GAMEPLAY")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("mode=PRESENTATION")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("slice=CAPABILITY_AND_MOVEMENT")));
     }
 }

@@ -108,6 +108,7 @@ public final class AgentActionMailbox {
             }
             execute(entry, envelope);
             drained++;
+            AgentAsyncQueueMetrics.recordDrained("mailbox", 1L);
         }
         return drained;
     }
@@ -225,10 +226,12 @@ public final class AgentActionMailbox {
         if (entry == null || envelope.sessionGeneration() != entry.sessionGeneration()) {
             reject(envelope, AgentMailboxFailureReason.STALE_SESSION,
                     "Agent action belongs to a stale session");
+            AgentAsyncQueueMetrics.recordStale("mailbox");
             return;
         }
         if (envelope.options().expired(nowMs.getAsLong())) {
             reject(envelope, AgentMailboxFailureReason.EXPIRED, "Agent mailbox action expired");
+            AgentAsyncQueueMetrics.recordExpired("mailbox");
             return;
         }
         try {

@@ -23,6 +23,8 @@ class AgentAsyncQueueMetricsTest {
         AgentAsyncQueueMetrics.recordFailed("test", 20L);
         AgentAsyncQueueMetrics.recordTimedOut("test", 30L);
         AgentAsyncQueueMetrics.recordStale("test");
+        AgentAsyncQueueMetrics.recordExpired("test");
+        AgentAsyncQueueMetrics.recordDrained("test", 4L);
         AgentAsyncQueueMetrics.recordWorkerStopped("test", 0);
         AgentAsyncQueueMetrics.recordDepth("test", 0);
 
@@ -38,6 +40,8 @@ class AgentAsyncQueueMetricsTest {
         assertEquals(1, snapshot.failed());
         assertEquals(1, snapshot.timedOut());
         assertEquals(1, snapshot.stale());
+        assertEquals(1, snapshot.expired());
+        assertEquals(4, snapshot.drained());
         assertEquals(20L, snapshot.durationP50Ns());
         assertEquals(30L, snapshot.durationP95Ns());
         assertEquals(30L, snapshot.durationP99Ns());
