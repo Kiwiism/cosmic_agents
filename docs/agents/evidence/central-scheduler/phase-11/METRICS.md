@@ -57,3 +57,21 @@ The live server reported `Load level: NORMAL`, zero database-pool waiters, and
 zero failed saves. Heap plateau, GC pause, real-player latency under load,
 scheduler p95/p99 stabilization at roster scale, and long-run shutdown trends
 still require the staged populated soaks.
+
+Populated 250-Agent server-only comparison:
+
+| Metric | Central sequential | Central sharded (4) |
+|---|---:|---:|
+| Agent updates | 1,447,200 | 1,707,059 |
+| failed / slow updates | 0 / 1 | 0 / 4 |
+| queue lag p50 / p95 / p99 | 47 / 65 / 68 ms | 21 / 48 / 55 ms |
+| work p50 / p95 / p99 | 164.6 / 558.0 / 2,642.2 us | 139.9 / 396.3 / 1,414.2 us |
+| budget exhaustion | 37,158 | 34,252 |
+| deferred work | 4,236,431 | 614,852 |
+| ingress high-water | 250 | 74 |
+| shutdown sessions / cancellations / remaining | 250 / 250 / 0 | 250 / 250 / 0 |
+
+Legacy also reached and drained 250 sessions; centralized scheduler counters
+correctly remained zero in that mode. These short server-only runs demonstrate
+bounded mechanics and clean lifecycle behavior, not a normalized performance
+benchmark or a replacement for client-visible and long-duration evidence.

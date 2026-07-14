@@ -44,6 +44,14 @@ same-map movement/navigation, basic combat, and loot/meso behavior. GM6
 diagnostics confirmed one central-sharded registration, and shutdown drained
 the live session with no remaining work. See `LIVE_SMOKE_2026-07-14.md`.
 
+A guarded test-only provisioner subsequently created a 250-character external
+roster through the same normal backing-character gateways. Server-only runs in
+legacy, central-sequential, and four-shard modes each reached 250 sessions and
+drained every session on shutdown with zero scheduler failures or remaining
+work. Four shards reduced p95/p99 lag and deferred work compared with the
+sequential bridge. See `POPULATED_250_SERVER_SMOKE_2026-07-15.md`. Client
+parity and sustained soak gates remain open.
+
 The final local validation reran the explicit 2,000-session scale gates after
 the observability work; they passed. See `REMAINING_RISKS.md` for the unrelated
 failures observed during an optional incomplete full-repository test run.

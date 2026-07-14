@@ -16,6 +16,12 @@ Do not change the production default until all of these are recorded:
   async work, or unterminated lanes in 631 ms;
 - restart rollback rehearsal in legacy mode.
 
+Server-only legacy, central-sequential, and four-shard runs now provide a
+250-session loaded-shutdown sample. All three cancelled 250 sessions and left
+zero scheduler registrations, pending async work, or unterminated lanes. The
+formal 250 gate still requires observing clients, and restart/rollback remains
+unrehearsed.
+
 The current population runtime only reconciles explicitly managed, eligible
 backing characters from the external `population.json`. The checked-in soak
 population preset is data-only, and the dedicated soak-harness specification
@@ -31,7 +37,16 @@ A read-only 2026-07-14 audit of `cosmic_scheduler_soak_20260714` initially found
 smoke safely provisioned one Agent-only backing character through the normal
 guarded GM command, which is enough for the single-Agent smoke but not any
 staged population gate. The guarded provisioner removes the tooling gap, but
-the roster still must be created and verified before the first populated gate.
+the roster still must be created and verified before each populated gate. A
+250-character roster has now been created and exercised server-side; 500 and
+larger rosters remain unprovisioned.
+
+Population convergence currently starts at most 20 sessions per sweep. The
+fast-start window launches the first 140 sessions, then steady reconciliation
+runs once per minute. Simply raising the batch would perform more blocking
+character loads on the timer callback. Before larger practical stages, move
+population lifecycle I/O to a bounded async lane while keeping the current
+limit and behavior as the default.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.

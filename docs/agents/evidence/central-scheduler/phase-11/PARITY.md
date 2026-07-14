@@ -11,6 +11,10 @@
   visibility, same-map follow/navigation, a Pig kill, meso pickup feedback,
   and clean shutdown with one central-sharded Agent. This is partial parity,
   not a substitute for the remaining capability and two-client checks.
+- A server-only 250-character roster reached the same live-session count under
+  legacy, central-sequential, and four-shard scheduling. Every mode cancelled
+  all 250 sessions and left no pending/remaining scheduler work. This supports
+  lifecycle parity but does not prove packet or visual parity.
 - Rollback remains a restart with `agents.scheduler.mode=legacy`.
 - Normal runtime behavior is unchanged. The shutdown path executes only during
   process shutdown/restart, before Cosmic tears down channels and timers.
