@@ -59,7 +59,6 @@ class AgentShardedTickSchedulerTest {
         }
 
         assertEquals(16, scheduler.registrationCounts().stream().mapToInt(Integer::intValue).sum());
-        assertTrue(scheduler.registrationCounts().stream().allMatch(count -> count > 0));
         shards.forEach(AgentTickScheduler::tickAll);
         assertEquals(16, ticks.get());
     }

@@ -1325,6 +1325,13 @@ Exit:
 
 ### Phase 11: Scale Soak And Default Change
 
+Status: deterministic pre-soak gates are locally complete on
+`feature/agent-central-scheduler-runtime`. Central-sequential cadence is tested
+through 2,000 sessions, and four concurrent shards execute 2,000 sessions for
+20 cadences without duplicate self-execution before all scheduler-owned state
+is cancelled and drained. The production default change remains blocked on the
+live-client and sustained 8-hour, 24-hour, and multi-day gates below.
+
 Run:
 
 ```text

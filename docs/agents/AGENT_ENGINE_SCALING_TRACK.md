@@ -79,6 +79,11 @@ Current scheduler implementation checkpoint on
   removed Double Agent/profile runtime was not recreated; a future profile
   implementation must consume this boundary and separately prove canonical
   restoration.
+- Phase 11's deterministic pre-soak gate runs central-sequential cadence through
+  2,000 sessions and four stable-hash shards through 40,000 updates. It rejects
+  duplicate self-execution and verifies that registrations, due/ready state,
+  ingress, and scheduler ownership all return to zero after cancellation.
+  This is not a substitute for live-client or sustained server soak evidence.
 
 ## Track Split
 

@@ -26,9 +26,9 @@ class AgentTickSchedulerSoakTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {50, 100, 250, 500})
+    @ValueSource(ints = {50, 100, 250, 500, 1_000, 1_500, 2_000})
     void centralSequentialDispatchesTwentyCadencesAcrossBaselinePopulations(int population) {
-        System.setProperty("agents.scheduler.maxWorkItemsPerCycle", "1000");
+        System.setProperty("agents.scheduler.maxWorkItemsPerCycle", "4096");
         System.setProperty("agents.scheduler.cycleBudgetMs", "60000");
         AtomicLong now = new AtomicLong(1_000L);
         ScheduledFuture<?> centralFuture = mock(ScheduledFuture.class);

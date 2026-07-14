@@ -284,6 +284,7 @@ Phase 7 simulation-aware cadence and transition hooks: locally complete, disable
 Phase 8 bounded guarded-tick slicing: locally complete, disabled by default
 Phase 9 load shedding and admission control: locally complete, disabled by default
 Phase 10 scheduler quiescence contract: locally complete
+Phase 11 deterministic 2000-session scale/cleanup gate: locally complete
 production default switch: blocked on parity and staged soak evidence
 ```
 
@@ -330,6 +331,9 @@ Phase 10 generation-bound quiescence, frozen ordinary ingress, critical
 completion drain, timeout, cancellation, legacy compatibility, and metric
 evidence is recorded under
 `docs/agents/evidence/central-scheduler/phase-10`.
+Phase 11 deterministic central-sequential and four-shard scale/cleanup evidence,
+plus the live rollout runbook, is recorded under
+`docs/agents/evidence/central-scheduler/phase-11`.
 
 ## Rollback
 
