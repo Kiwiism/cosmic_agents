@@ -69,3 +69,10 @@ Server-only central-sequential and four-shard gates each reached all 500 at
 state, or unterminated async lane. Four shards lowered queue-lag p95/p99 and
 deferred work, while one short process sample showed higher sharded memory and
 requires normalized follow-up. See `POPULATED_500_SERVER_GATE_2026-07-15.md`.
+
+The disposable roster was then expanded to 1,000 real backing characters.
+The four-shard background-active attempt was deliberately aborted at 220 live
+Agents when host free memory fell below the 2 GiB guard. Java remained below
+1 GiB and `load=NORMAL`; a separate desktop process accounted for the host
+pressure. The partial run still drained all 220 sessions cleanly, but it is not
+a 1,000-Agent pass. See `POPULATED_1000_GATE_ATTEMPT_2026-07-15.md`.

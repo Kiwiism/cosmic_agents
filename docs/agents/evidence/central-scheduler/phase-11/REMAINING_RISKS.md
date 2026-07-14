@@ -39,8 +39,11 @@ guarded GM command, which is enough for the single-Agent smoke but not any
 staged population gate. The guarded provisioner removes the tooling gap, but
 the roster still must be created and verified before each populated gate. A
 500-character roster has now been created and exercised server-side in both
-central-sequential and four-shard modes; 1,000 and larger rosters remain
-unprovisioned.
+central-sequential and four-shard modes. A 1,000-character roster is also
+provisioned, but its first runtime gate was aborted at 220 sessions by the host
+memory guard. The server itself remained below 1 GiB; a separate desktop
+process held most physical memory. The 1,000 gate remains open, and 1,500 and
+larger rosters remain unprovisioned.
 
 Population convergence starts at most 20 sessions per sweep. The fast-start
 window launches the first 140 sessions, then steady reconciliation runs once
@@ -54,6 +57,10 @@ memory in the four-shard process even though its periodic heap sample was
 lower. The run was not normalized for cache state, GC, or paging, so this is
 not evidence of a scheduler leak. Retain it as a risk until repeated sustained
 stages show a heap plateau and comparable post-GC process memory.
+
+The next 1,000-Agent attempt requires a clean host with at least 8 GiB reliably
+free after tooling is started. Do not weaken the 2 GiB abort threshold or
+continue to larger stages merely to obtain a nominal population count.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
