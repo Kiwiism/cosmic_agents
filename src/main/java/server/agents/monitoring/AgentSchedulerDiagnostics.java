@@ -62,6 +62,18 @@ public final class AgentSchedulerDiagnostics {
         return format(capture());
     }
 
+    public static List<String> lines(String[] params) {
+        if (params == null || params.length == 0 || params[0].equalsIgnoreCase("status")) {
+            return lines();
+        }
+        if (params[0].equalsIgnoreCase("shards")) {
+            return format(capture()).stream()
+                    .filter(line -> line.startsWith("Scheduler shards:") || line.startsWith("  shard="))
+                    .toList();
+        }
+        return AgentSchedulerDetailDiagnostics.lines(params);
+    }
+
     static List<String> format(Snapshot snapshot) {
         AgentSchedulerMetrics.Snapshot scheduler = snapshot.scheduler();
         List<String> lines = new ArrayList<>();

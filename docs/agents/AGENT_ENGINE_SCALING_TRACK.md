@@ -268,6 +268,11 @@ Must provide:
 - top slow maps.
 - command/debug views.
 
+Current scheduler implementation provides bounded top slow/overdue Agent,
+map, mailbox, current failure-window, and instrumented capability views plus
+per-Agent and per-map drill-down. Plan/objective and memory/journal counts
+remain capability-observability work outside scheduler ownership.
+
 Why first:
 
 - Without observability, scaling work becomes guessing.

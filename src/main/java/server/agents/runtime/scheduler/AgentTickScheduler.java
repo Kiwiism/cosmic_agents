@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import server.agents.integration.AgentMapGatewayRuntime;
 import server.agents.integration.AgentRuntimeIdentityRuntime;
 import server.agents.monitoring.AgentSchedulerMetrics;
+import server.agents.monitoring.AgentSchedulerRegistrationSnapshot;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentRuntimeRegistry;
 import server.agents.runtime.AgentSchedulerRuntime;
@@ -20,6 +21,7 @@ import server.agents.runtime.simulation.AgentSimulationTransitionService;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -483,6 +485,17 @@ public final class AgentTickScheduler {
         return registrations.size();
     }
 
+    public List<AgentSchedulerRegistrationSnapshot> registrationSnapshots() {
+        return registrations.values().stream()
+                .filter(registration -> !registration.cancelled.get())
+                .map(Registration::snapshot)
+                .sorted(Comparator
+                        .comparingInt((AgentSchedulerRegistrationSnapshot snapshot) ->
+                                snapshot.sessionId().agentCharacterId())
+                        .thenComparingLong(snapshot -> snapshot.sessionId().generation()))
+                .toList();
+    }
+
     int ownedRegistrationCount() {
         return ownedRegistrations.size();
     }
@@ -713,12 +726,12 @@ public final class AgentTickScheduler {
         private volatile long claimedDueMs;
         private long simulationPeriodMs;
         private long periodMs;
-        private AgentWorkClass workClass;
-        private AgentPriorityClass priority;
-        private AgentSimulationMode simulationMode = AgentSimulationMode.PRESENTATION;
+        private volatile AgentWorkClass workClass;
+        private volatile AgentPriorityClass priority;
+        private volatile AgentSimulationMode simulationMode = AgentSimulationMode.PRESENTATION;
         private long readySinceMs = -1L;
         private long readyDueMs;
-        private long estimatedCostNs = 100_000L;
+        private volatile long estimatedCostNs = 100_000L;
         private boolean costObserved;
         private int recordedPromotionLevels;
 
@@ -793,6 +806,18 @@ public final class AgentTickScheduler {
 
         private int mapId() {
             return AgentRuntimeIdentityRuntime.botMapId(entry);
+        }
+
+        private AgentSchedulerRegistrationSnapshot snapshot() {
+            return new AgentSchedulerRegistrationSnapshot(
+                    sessionId,
+                    nextDueMs,
+                    estimatedCostNs,
+                    workClass,
+                    priority,
+                    simulationMode,
+                    paused.get(),
+                    quiescence.quiescent());
         }
 
         private boolean isLifecycleCritical() {

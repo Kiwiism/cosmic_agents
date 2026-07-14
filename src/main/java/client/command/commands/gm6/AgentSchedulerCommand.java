@@ -15,7 +15,7 @@ public final class AgentSchedulerCommand extends Command {
     public void execute(Client client, String[] params) {
         Character player = client.getPlayer();
         try {
-            for (String line : AgentSchedulerDiagnostics.lines()) {
+            for (String line : AgentSchedulerDiagnostics.lines(params)) {
                 player.dropMessage(6, line);
             }
         } catch (IllegalArgumentException failure) {

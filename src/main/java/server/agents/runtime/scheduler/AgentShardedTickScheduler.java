@@ -1,5 +1,6 @@
 package server.agents.runtime.scheduler;
 
+import server.agents.monitoring.AgentSchedulerRegistrationSnapshot;
 import server.agents.runtime.AgentRuntimeEntry;
 import server.agents.runtime.AgentSchedulerRuntime;
 
@@ -55,6 +56,16 @@ public final class AgentShardedTickScheduler {
             maximum = Math.max(maximum, count);
         }
         return maximum - minimum;
+    }
+
+    public List<AgentSchedulerRegistrationSnapshot> registrationSnapshots() {
+        return shards.stream()
+                .flatMap(shard -> shard.registrationSnapshots().stream())
+                .sorted(java.util.Comparator
+                        .comparingInt((AgentSchedulerRegistrationSnapshot snapshot) ->
+                                snapshot.sessionId().agentCharacterId())
+                        .thenComparingLong(snapshot -> snapshot.sessionId().generation()))
+                .toList();
     }
 
     public void start() {

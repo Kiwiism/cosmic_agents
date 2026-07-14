@@ -21,6 +21,11 @@ the deterministic gates and includes initialized async-lane depth, capacity,
 high-water, rejection, timeout, and stale counts. Use `@serverhealth` for the
 complementary JVM, database, and core server snapshot.
 
+Detail diagnostics expose bounded current registration cost/overdue state,
+active map population, mailbox depth, current failure-window count, and the
+existing instrumented capability totals. They retain no new per-tick history
+and cap every operator ranking at ten rows.
+
 The shutdown report records sessions observed, schedule cancellation requests,
 session IDs that failed cancellation, pending async requests invalidated,
 remaining scheduler registrations, async executors stopped, queued tasks

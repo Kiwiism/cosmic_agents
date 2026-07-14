@@ -262,6 +262,15 @@ details, the highest load-shedding level, quiescence outcomes, and up to twelve
 initialized Agent async queues. Pair it with `@serverhealth` during staged live
 and soak validation.
 
+Bounded detail views are available through `@agentscheduler top slow`, `top
+overdue`, `top maps`, `top capabilities`, `top mailboxes`, and `top failures`.
+`@agentscheduler agent <name|id>` and `@agentscheduler map <mapId>` provide
+current read-only drill-down. Each list is capped at ten rows. Registration
+detail is read directly from live central scheduler records, runtime/map/
+mailbox/failure detail is derived from the active-session registry, and
+capability ranking uses the existing opt-in bounded performance monitor. No
+per-tick diagnostic history or Agent reference is added.
+
 Enable slow-tick logging during soak validation, then compare movement, combat,
 loot, dialogue, and lifecycle
 parity against legacy mode before considering central scheduling as the default.

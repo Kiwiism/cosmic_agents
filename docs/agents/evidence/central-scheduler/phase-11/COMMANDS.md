@@ -30,12 +30,22 @@ Live operator snapshots (GM6):
 
 ```text
 @agentscheduler
+@agentscheduler shards
+@agentscheduler top slow
+@agentscheduler top overdue
+@agentscheduler top maps
+@agentscheduler top capabilities
+@agentscheduler top mailboxes
+@agentscheduler top failures
+@agentscheduler agent <name|id>
+@agentscheduler map <mapId>
 @serverhealth
 ```
 
 `@agentscheduler` reports scheduler mode, active Agent count, cadence metrics,
 queue pressure, bounded shard detail, load shedding, quiescence, and initialized
 Agent async queues without mutating runtime state.
+All top/detail outputs are read-only and capped at ten rows.
 
 The live and long-duration commands are environment-specific and must use the
 staged settings in `LIVE_SOAK_RUNBOOK.md`.

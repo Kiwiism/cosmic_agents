@@ -5,8 +5,13 @@ import org.junit.jupiter.api.Test;
 import server.agents.runtime.scheduler.AgentLoadSheddingLevel;
 import server.agents.runtime.scheduler.AgentLoadSheddingReason;
 import server.agents.runtime.scheduler.AgentLoadSheddingState;
+import server.agents.runtime.scheduler.AgentPriorityClass;
+import server.agents.runtime.scheduler.AgentSchedulerMode;
+import server.agents.runtime.scheduler.AgentSessionId;
 import server.agents.runtime.scheduler.AgentWorkClass;
+import server.agents.runtime.simulation.AgentSimulationMode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -69,5 +74,77 @@ class AgentSchedulerDiagnosticsTest {
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more shard(s)")));
         assertTrue(lines.stream().anyMatch(line -> line.contains("4 more queue(s)")));
         assertTrue(lines.size() <= 29);
+    }
+
+    @Test
+    void detailViewsRankAndBoundLiveSchedulerState() {
+        List<AgentSchedulerDetailDiagnostics.AgentView> agents = new ArrayList<>();
+        List<AgentSchedulerRegistrationSnapshot> registrations = new ArrayList<>();
+        for (int id = 1; id <= 12; id++) {
+            agents.add(new AgentSchedulerDetailDiagnostics.AgentView(
+                    id,
+                    id,
+                    "agent" + id,
+                    id <= 7 ? 100 : 200,
+                    id,
+                    id == 12 ? 2 : 0,
+                    AgentSchedulerMode.CENTRAL_SEQUENTIAL));
+            registrations.add(new AgentSchedulerRegistrationSnapshot(
+                    new AgentSessionId(id, id),
+                    1_000L - id,
+                    id * 1_000L,
+                    AgentWorkClass.PRESENTATION_GAMEPLAY,
+                    AgentPriorityClass.VISIBLE,
+                    AgentSimulationMode.PRESENTATION,
+                    false,
+                    false));
+        }
+
+        List<String> slow = AgentSchedulerDetailDiagnostics.top(
+                new String[] {"top", "slow"}, agents, registrations, List.of(), 2_000L);
+        List<String> overdue = AgentSchedulerDetailDiagnostics.top(
+                new String[] {"top", "overdue"}, agents, registrations, List.of(), 2_000L);
+        List<String> maps = AgentSchedulerDetailDiagnostics.top(
+                new String[] {"top", "maps"}, agents, registrations, List.of(), 2_000L);
+        List<String> mailboxes = AgentSchedulerDetailDiagnostics.top(
+                new String[] {"top", "mailboxes"}, agents, registrations, List.of(), 2_000L);
+        List<String> failures = AgentSchedulerDetailDiagnostics.top(
+                new String[] {"top", "failures"}, agents, registrations, List.of(), 2_000L);
+
+        assertEquals(11, slow.size());
+        assertTrue(slow.get(1).contains("agent12"));
+        assertEquals(11, overdue.size());
+        assertTrue(overdue.get(1).contains("agent12"));
+        assertTrue(maps.get(1).contains("map=100 agents=7"));
+        assertEquals(11, mailboxes.size());
+        assertTrue(mailboxes.get(1).contains("agent12"));
+        assertEquals(2, failures.size());
+        assertTrue(failures.get(1).contains("agent12"));
+    }
+
+    @Test
+    void capabilityViewUsesExistingBoundedPerformanceSamples() {
+        List<AgentPerformanceMonitor.SectionSnapshot> sections = List.of(
+                new AgentPerformanceMonitor.SectionSnapshot("movement", 4, 20_000_000L, 8_000_000L, 0, 0),
+                new AgentPerformanceMonitor.SectionSnapshot("combat", 2, 30_000_000L, 20_000_000L, 0, 0));
+
+        List<String> lines = AgentSchedulerDetailDiagnostics.top(
+                new String[] {"top", "capabilities"}, List.of(), List.of(), sections, 0L);
+
+        assertEquals(3, lines.size());
+        assertTrue(lines.get(1).contains("section=combat"));
+        assertTrue(lines.get(2).contains("section=movement"));
+    }
+
+    @Test
+    void detailCommandsReturnBoundedEmptyStateMessages() {
+        assertEquals(
+                List.of("No active Agent mailbox contains queued work."),
+                AgentSchedulerDetailDiagnostics.top(
+                        new String[] {"top", "mailboxes"}, List.of(), List.of(), List.of(), 0L));
+        assertEquals(
+                List.of("No central Agent registration is currently overdue."),
+                AgentSchedulerDetailDiagnostics.top(
+                        new String[] {"top", "overdue"}, List.of(), List.of(), List.of(), 0L));
     }
 }

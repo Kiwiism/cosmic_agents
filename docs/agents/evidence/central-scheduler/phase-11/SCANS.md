@@ -12,7 +12,8 @@ The mandatory scans were rerun after bounded process shutdown was added.
   `LEGACY_PER_AGENT` is still the required rollback mode.
 - `ScheduledFuture` matches remain central/legacy lifecycle handles, scoped
   delayed-action ownership, scheduler gateways, and shutdown verification of
-  already-owned handles. The shutdown coordinator introduces no repeating
+  already-owned handles. Detail diagnostics only read an existing handle's
+  scheduler mode. Neither shutdown nor diagnostics introduces a repeating
   per-Agent future.
 
 The scan classifications are unchanged by shutdown. New runtime admission,

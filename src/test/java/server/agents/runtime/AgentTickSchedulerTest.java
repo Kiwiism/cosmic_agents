@@ -4,6 +4,7 @@ import client.Character;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import server.agents.monitoring.AgentSchedulerRegistrationSnapshot;
 import server.agents.runtime.scheduler.AgentSchedulerConfig;
 import server.agents.runtime.scheduler.AgentSchedulerMode;
 import server.agents.runtime.scheduler.AgentScheduleHandle;
@@ -218,6 +219,19 @@ class AgentTickSchedulerTest {
         assertTrue(scheduler.acceptingRegistrations());
         assertTrue(restarted.cancel(false));
         scheduler.tickAll();
+    }
+
+    @Test
+    void exposesImmutableCurrentRegistrationIdentityForDiagnostics() {
+        AgentRuntimeEntry entry = activeEntry(1, 101);
+        scheduler.register(entry, () -> { }, 50L);
+
+        List<AgentSchedulerRegistrationSnapshot> snapshots = scheduler.registrationSnapshots();
+
+        assertEquals(1, snapshots.size());
+        assertEquals(101, snapshots.getFirst().sessionId().agentCharacterId());
+        assertEquals(entry.sessionGeneration(), snapshots.getFirst().sessionId().generation());
+        assertTrue(snapshots.getFirst().estimatedCostNs() > 0L);
     }
 
     @Test

@@ -1026,17 +1026,29 @@ Required correlation:
 Metrics must use bounded rolling windows. Do not retain one event per tick for
 30 days.
 
+Implementation status: bounded scheduler registration snapshots and GM6 top-N
+views are locally complete. Slow/overdue views use current central registration
+state; map/mailbox/failure views use active runtime state; capability cost uses
+the existing bounded opt-in performance monitor. Each operator list is capped
+at ten rows. Long-duration correlation with player latency, heap/GC, DB/save
+pressure, and broadcast pressure remains a live soak evidence task paired with
+`@serverhealth`.
+
 ## Administrative Diagnostics
 
 Provide read-only diagnostics first:
 
 ```text
-!agentscheduler status
-!agentscheduler shards
-!agentscheduler top slow
-!agentscheduler top overdue
-!agentscheduler agent <name|id>
-!agentscheduler map <mapId>
+@agentscheduler status
+@agentscheduler shards
+@agentscheduler top slow
+@agentscheduler top overdue
+@agentscheduler top maps
+@agentscheduler top capabilities
+@agentscheduler top mailboxes
+@agentscheduler top failures
+@agentscheduler agent <name|id>
+@agentscheduler map <mapId>
 ```
 
 Later guarded operations may include:
