@@ -2,17 +2,18 @@
 
 Do not change the production default until all of these are recorded:
 
-- one-client visible movement, navigation, climb, combat, loot, dialogue,
-  trade, death, recovery, and map-transition parity;
+- one-client climb, dialogue, trade, death, recovery, and cross-map-transition
+  parity; spawn, same-map movement/navigation, basic combat, and basic
+  loot/meso behavior have one authenticated smoke pass;
 - two-client packet and position consistency;
 - player login, map change, combat, NPC, trade, and shop responsiveness under
   500/1,000/1,500/2,000-Agent load;
 - mixed presentation/background transition and materialization validation;
 - load-shedding escalation and recovery without a wake-up storm;
 - 2,000-Agent 8-hour, 24-hour, and multi-day heap/GC/queue/latency evidence;
-- live shutdown and restart within the configured deadline, confirming the
-  structured Agent shutdown report has no failed sessions, remaining
-  registrations, or unterminated async lanes;
+- loaded shutdown/restart behavior beyond one Agent; the one-Agent live
+  shutdown drained one session with zero remaining registrations, pending
+  async work, or unterminated lanes in 631 ms;
 - restart rollback rehearsal in legacy mode.
 
 The current population runtime only reconciles explicitly managed, eligible
@@ -24,10 +25,12 @@ real pre-provisioned roster remains an operator/environment prerequisite; this
 scheduler branch must not add an ad hoc synthetic or production provisioning
 shortcut and call it live 2,000-Agent evidence.
 
-A read-only 2026-07-14 audit of `cosmic_scheduler_soak_20260714` found 30
-characters but zero characters on Agent-only backing accounts. The disposable
-clone therefore cannot satisfy even the first populated stage until a
-dedicated test roster is provisioned externally.
+A read-only 2026-07-14 audit of `cosmic_scheduler_soak_20260714` initially found
+30 characters but zero characters on Agent-only backing accounts. The live
+smoke safely provisioned one Agent-only backing character through the normal
+guarded GM command, which is enough for the single-Agent smoke but not any
+staged population gate. A dedicated test roster remains an external
+prerequisite.
 
 The repository-wide baseline test issues recorded in Phase 10 remain separate
 from the scheduler-focused release gate.
@@ -57,8 +60,9 @@ soak work must not begin until `config.yaml` points to an explicitly named
 disposable database and the preflight passes. No server process or database
 connection was started by this check.
 
-A subsequent isolated smoke used a verified disposable clone and passed all
-preflight checks. The server accepted a localhost v83 login connection and
-shut down with no remaining Agent work or unterminated executors. Windows
-capture timed out before character authentication, so the complete live parity
-script and every populated soak stage remain required.
+A subsequent isolated smoke used the verified disposable clone, passed all
+preflight checks, authenticated a v83 client, and ran one Agent under
+central-sharded scheduling. Spawn/party visibility, same-map follow/navigation,
+basic combat, meso pickup feedback, diagnostics, and live-Agent shutdown passed.
+The remaining one-client capabilities, two-client consistency, every populated
+soak stage, and rollback rehearsal are still required.

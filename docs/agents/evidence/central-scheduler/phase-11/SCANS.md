@@ -1,7 +1,7 @@
 # Phase 11 Source Scans
 
-The mandatory scans were rerun after bounded process shutdown and scheduler
-observability were added.
+The mandatory scans were rerun after bounded process shutdown, scheduler
+observability, and the authenticated one-Agent live smoke.
 
 - No `Future.get(..., TimeUnit)`, `CompletableFuture.join()`, or
   `Thread.sleep()` call remains in production Agent code.
@@ -17,6 +17,6 @@ observability were added.
   scheduler mode. Neither shutdown nor diagnostics introduces a repeating
   per-Agent future.
 
-The scan classifications are unchanged by shutdown or observability. New
-runtime admission, drain, executor teardown, lifecycle counters, and read-only
-diagnostic paths are bounded and covered by focused tests.
+The scan classifications are unchanged by shutdown, observability, or the live
+smoke. New runtime admission, drain, executor teardown, lifecycle counters,
+and read-only diagnostic paths are bounded and covered by focused tests.

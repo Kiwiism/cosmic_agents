@@ -37,6 +37,23 @@ remaining scheduler registrations, async executors stopped, queued tasks
 cancelled, unterminated lanes, interruption/timeout state, elapsed time, and the
 final scheduler snapshot.
 
-Heap plateau, GC pause, database-pool wait, real-player latency, scheduler p95/
-p99 stabilization, and shutdown elapsed time require a running server and are
-not inferred from this unit-scale gate.
+Authenticated one-Agent live smoke:
+
+| Metric | Result |
+|---|---:|
+| registered Agents | 1 |
+| initialized shard | 3 |
+| cycles / Agent updates | 33,848 / 30,419 |
+| failed / slow Agent updates | 0 / 3 |
+| queue lag p50 / p95 / p99 | 42 / 50 / 51 ms |
+| work p50 / p95 / p99 | 187.8 / 418.2 / 598.8 us |
+| maximum cycle | 948.3035 ms warm-up outlier |
+| budget exhaustion / deferred / starvation | 0 / 0 / 0 |
+| shutdown sessions / cancellations / remaining | 1 / 1 / 0 |
+| shutdown pending async / unterminated | 0 / 0 |
+| Agent shutdown elapsed | 631 ms |
+
+The live server reported `Load level: NORMAL`, zero database-pool waiters, and
+zero failed saves. Heap plateau, GC pause, real-player latency under load,
+scheduler p95/p99 stabilization at roster scale, and long-run shutdown trends
+still require the staged populated soaks.

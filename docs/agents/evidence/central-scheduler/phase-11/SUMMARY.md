@@ -28,8 +28,9 @@ The locally automatable part of Phase 11 is complete:
 - deterministic shutdown tests cover timeout, eventual cleanup, idempotency,
   and clean restart admission.
 
-This evidence validates scheduler mechanics only. Phase 11 and the production
-default change remain blocked on live-client behavior and sustained server
+This evidence validates scheduler mechanics plus a partial authenticated
+one-Agent live-client smoke. Phase 11 and the production default change remain
+blocked on complete live parity, multi-client validation, and sustained server
 soaks.
 
 The live-gate preflight now verifies the scheduler branch and build, shared WZ
@@ -37,10 +38,11 @@ junction, external runtime/cache paths, free server ports, running client, and
 an explicitly pinned disposable database before a live process is started. It
 is read-only and rejects the normal `cosmic` database.
 
-The first guarded disposable-database smoke reached all server listeners and
-accepted a v83 login connection, then completed bounded Agent/runtime and
-channel shutdown. Client capture failed before authentication, so no Agent was
-spawned and visible parity remains unproven. See `LIVE_SMOKE_2026-07-14.md`.
+The guarded disposable-database smoke authenticated a v83 client, provisioned
+and spawned one Agent through the normal command path, and visibly exercised
+same-map movement/navigation, basic combat, and loot/meso behavior. GM6
+diagnostics confirmed one central-sharded registration, and shutdown drained
+the live session with no remaining work. See `LIVE_SMOKE_2026-07-14.md`.
 
 The final local validation reran the explicit 2,000-session scale gates after
 the observability work; they passed. See `REMAINING_RISKS.md` for the unrelated
